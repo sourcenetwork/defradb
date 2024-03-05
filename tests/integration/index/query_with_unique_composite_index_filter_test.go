@@ -229,8 +229,8 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Chris"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -412,13 +412,13 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
-					{"name": "John"},
 					{"name": "Bruno"},
 					{"name": "Chris"},
+					{"name": "John"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 					{"name": "Shahzad"},
 				},
 			},
@@ -583,9 +583,9 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -733,10 +733,10 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Bruno"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -1083,9 +1083,9 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						}
 					}`,
 				Results: []map[string]any{
-					{"about": "nil_22"},
 					{"about": "nil_nil_2"},
 					{"about": "nil_nil_1"},
+					{"about": "nil_22"},
 				},
 			},
 			testUtils.Request{
@@ -1218,8 +1218,8 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						}
 					}`,
 				Results: []map[string]any{
-					{"about": "nil_nil -> nil_22"},
 					{"about": "bob_nil -> nil_nil"},
+					{"about": "nil_nil -> nil_22"},
 				},
 			},
 			testUtils.Request{

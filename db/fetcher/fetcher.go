@@ -58,7 +58,7 @@ type Fetcher interface {
 		ctx context.Context,
 		txn datastore.Txn,
 		col client.Collection,
-		fields []client.FieldDescription,
+		fields []client.FieldDefinition,
 		filter *mapper.Filter,
 		docmapper *core.DocumentMapping,
 		reverse bool,
@@ -94,8 +94,8 @@ type DocumentFetcher struct {
 	ranFilter    bool // did we run the filter
 	passedFilter bool // did we pass the filter
 
-	filterFields map[uint32]client.FieldDescription
-	selectFields map[uint32]client.FieldDescription
+	filterFields map[uint32]client.FieldDefinition
+	selectFields map[uint32]client.FieldDefinition
 
 	// static bitset to which stores the IDs of fields
 	// needed for filtering.
@@ -138,7 +138,7 @@ func (df *DocumentFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
 	reverse bool,
@@ -164,7 +164,7 @@ func (df *DocumentFetcher) Init(
 
 func (df *DocumentFetcher) init(
 	col client.Collection,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
 	reverse bool,
@@ -194,12 +194,12 @@ func (df *DocumentFetcher) init(
 	}
 	df.kvIter = nil
 
-	df.selectFields = make(map[uint32]client.FieldDescription, len(fields))
+	df.selectFields = make(map[uint32]client.FieldDefinition, len(fields))
 	// if we haven't been told to get specific fields
 	// get them all
-	var targetFields []client.FieldDescription
+	var targetFields []client.FieldDefinition
 	if len(fields) == 0 {
-		targetFields = df.col.Schema().Fields
+		targetFields = df.col.Definition().GetFields()
 	} else {
 		targetFields = fields
 	}
@@ -210,11 +210,11 @@ func (df *DocumentFetcher) init(
 
 	if df.filter != nil {
 		conditions := df.filter.ToMap(df.mapping)
-		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema())
+		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Definition())
 		if err != nil {
 			return err
 		}
-		df.filterFields = make(map[uint32]client.FieldDescription, len(parsedfilterFields))
+		df.filterFields = make(map[uint32]client.FieldDefinition, len(parsedfilterFields))
 		df.filterSet = bitset.New(uint(len(col.Schema().Fields)))
 		for _, field := range parsedfilterFields {
 			df.filterFields[uint32(field.ID)] = field

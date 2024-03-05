@@ -11,12 +11,11 @@
 package fetcher
 
 import (
-	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"strings"
 
-	"github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -63,55 +62,57 @@ type indexIterResult struct {
 }
 
 type queryResultIterator struct {
-	resultIter query.Results
+	resultIter    query.Results
+	indexDesc     client.IndexDescription
+	indexedFields []client.FieldDefinition
 }
 
-func (i *queryResultIterator) Next() (indexIterResult, error) {
-	res, hasVal := i.resultIter.NextSync()
+func (iter *queryResultIterator) Next() (indexIterResult, error) {
+	res, hasVal := iter.resultIter.NextSync()
 	if res.Error != nil {
 		return indexIterResult{}, res.Error
 	}
 	if !hasVal {
 		return indexIterResult{}, nil
 	}
-	key, err := core.NewIndexDataStoreKey(res.Key)
+	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc, iter.indexedFields)
 	if err != nil {
 		return indexIterResult{}, err
 	}
+
 	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
 }
 
-func (i *queryResultIterator) Close() error {
-	return i.resultIter.Close()
+func (iter *queryResultIterator) Close() error {
+	return iter.resultIter.Close()
 }
 
 type eqPrefixIndexIterator struct {
+	queryResultIterator
 	indexKey core.IndexDataStoreKey
 	execInfo *ExecInfo
 	matchers []valueMatcher
-
-	queryResultIterator
 }
 
-func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	resultIter, err := store.Query(ctx, query.Query{
-		Prefix: i.indexKey.ToString(),
+		Prefix: iter.indexKey.ToString(),
 	})
 	if err != nil {
 		return err
 	}
-	i.resultIter = resultIter
+	iter.resultIter = resultIter
 	return nil
 }
 
-func (i *eqPrefixIndexIterator) Next() (indexIterResult, error) {
+func (iter *eqPrefixIndexIterator) Next() (indexIterResult, error) {
 	for {
-		res, err := i.queryResultIterator.Next()
+		res, err := iter.queryResultIterator.Next()
 		if err != nil || !res.foundKey {
 			return res, err
 		}
-		i.execInfo.IndexesFetched++
-		doesMatch, err := executeValueMatchers(i.matchers, res.key.FieldValues)
+		iter.execInfo.IndexesFetched++
+		doesMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 		if err != nil {
 			return indexIterResult{}, err
 		}
@@ -123,39 +124,33 @@ func (i *eqPrefixIndexIterator) Next() (indexIterResult, error) {
 }
 
 type eqSingleIndexIterator struct {
-	indexKey       core.IndexDataStoreKey
-	keyFieldValues [][]byte
-	execInfo       *ExecInfo
+	indexKey core.IndexDataStoreKey
+	execInfo *ExecInfo
 
 	ctx   context.Context
 	store datastore.DSReaderWriter
 }
 
-func (i *eqSingleIndexIterator) SetKeyFieldValue(value []byte) {
-	i.keyFieldValues = [][]byte{value}
-}
-
-func (i *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.ctx = ctx
-	i.store = store
+func (iter *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter.ctx = ctx
+	iter.store = store
 	return nil
 }
 
-func (i *eqSingleIndexIterator) Next() (indexIterResult, error) {
-	if i.store == nil {
+func (iter *eqSingleIndexIterator) Next() (indexIterResult, error) {
+	if iter.store == nil {
 		return indexIterResult{}, nil
 	}
-	i.indexKey.FieldValues = i.keyFieldValues
-	val, err := i.store.Get(i.ctx, i.indexKey.ToDS())
+	val, err := iter.store.Get(iter.ctx, iter.indexKey.ToDS())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
-			return indexIterResult{key: i.indexKey}, nil
+			return indexIterResult{key: iter.indexKey}, nil
 		}
 		return indexIterResult{}, err
 	}
-	i.store = nil
-	i.execInfo.IndexesFetched++
-	return indexIterResult{key: i.indexKey, value: val, foundKey: true}, nil
+	iter.store = nil
+	iter.execInfo.IndexesFetched++
+	return indexIterResult{key: iter.indexKey, value: val, foundKey: true}, nil
 }
 
 func (i *eqSingleIndexIterator) Close() error {
@@ -164,55 +159,55 @@ func (i *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
-	inValues     [][]byte
+	inValues     []any
 	nextValIndex int
 	ctx          context.Context
 	store        datastore.DSReaderWriter
 	hasIterator  bool
 }
 
-func (i *inIndexIterator) nextIterator() (bool, error) {
-	if i.nextValIndex > 0 {
-		err := i.indexIterator.Close()
+func (iter *inIndexIterator) nextIterator() (bool, error) {
+	if iter.nextValIndex > 0 {
+		err := iter.indexIterator.Close()
 		if err != nil {
 			return false, err
 		}
 	}
 
-	if i.nextValIndex >= len(i.inValues) {
+	if iter.nextValIndex >= len(iter.inValues) {
 		return false, nil
 	}
 
-	switch fieldIter := i.indexIterator.(type) {
+	switch fieldIter := iter.indexIterator.(type) {
 	case *eqPrefixIndexIterator:
-		fieldIter.indexKey.FieldValues[0] = i.inValues[i.nextValIndex]
+		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	case *eqSingleIndexIterator:
-		fieldIter.keyFieldValues[0] = i.inValues[i.nextValIndex]
+		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	}
-	err := i.indexIterator.Init(i.ctx, i.store)
+	err := iter.indexIterator.Init(iter.ctx, iter.store)
 	if err != nil {
 		return false, err
 	}
-	i.nextValIndex++
+	iter.nextValIndex++
 	return true, nil
 }
 
-func (i *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.ctx = ctx
-	i.store = store
+func (iter *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter.ctx = ctx
+	iter.store = store
 	var err error
-	i.hasIterator, err = i.nextIterator()
+	iter.hasIterator, err = iter.nextIterator()
 	return err
 }
 
-func (i *inIndexIterator) Next() (indexIterResult, error) {
-	for i.hasIterator {
-		res, err := i.indexIterator.Next()
+func (iter *inIndexIterator) Next() (indexIterResult, error) {
+	for iter.hasIterator {
+		res, err := iter.indexIterator.Next()
 		if err != nil {
 			return indexIterResult{}, err
 		}
 		if !res.foundKey {
-			i.hasIterator, err = i.nextIterator()
+			iter.hasIterator, err = iter.nextIterator()
 			if err != nil {
 				return indexIterResult{}, err
 			}
@@ -223,19 +218,13 @@ func (i *inIndexIterator) Next() (indexIterResult, error) {
 	return indexIterResult{}, nil
 }
 
-func (i *inIndexIterator) Close() error {
+func (iter *inIndexIterator) Close() error {
 	return nil
 }
 
-type errorCheckingFilter struct {
-	matchers []valueMatcher
-	err      error
-	execInfo *ExecInfo
-}
-
-func executeValueMatchers(matchers []valueMatcher, values [][]byte) (bool, error) {
+func executeValueMatchers(matchers []valueMatcher, fields []core.IndexedField) (bool, error) {
 	for i := range matchers {
-		res, err := matchers[i].Match(values[i])
+		res, err := matchers[i].Match(fields[i].Value)
 		if err != nil {
 			return false, err
 		}
@@ -246,90 +235,149 @@ func executeValueMatchers(matchers []valueMatcher, values [][]byte) (bool, error
 	return true, nil
 }
 
-func (f *errorCheckingFilter) Filter(e query.Entry) bool {
-	if f.err != nil {
-		return false
-	}
-	f.execInfo.IndexesFetched++
-
-	indexKey, err := core.NewIndexDataStoreKey(e.Key)
-	if err != nil {
-		f.err = err
-		return false
-	}
-
-	var res bool
-	res, f.err = executeValueMatchers(f.matchers, indexKey.FieldValues)
-	return res
-}
-
 type scanningIndexIterator struct {
 	queryResultIterator
 	indexKey core.IndexDataStoreKey
 	matchers []valueMatcher
-	filter   errorCheckingFilter
 	execInfo *ExecInfo
 }
 
-func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.filter.matchers = i.matchers
-	i.filter.execInfo = i.execInfo
-
-	iter, err := store.Query(ctx, query.Query{
-		Prefix:  i.indexKey.ToString(),
-		Filters: []query.Filter{&i.filter},
+func (iter *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	resultIter, err := store.Query(ctx, query.Query{
+		Prefix: iter.indexKey.ToString(),
 	})
 	if err != nil {
 		return err
 	}
-	i.resultIter = iter
+	iter.resultIter = resultIter
 
 	return nil
 }
 
-func (i *scanningIndexIterator) Next() (indexIterResult, error) {
-	res, err := i.queryResultIterator.Next()
-	if i.filter.err != nil {
-		return indexIterResult{}, i.filter.err
+func (iter *scanningIndexIterator) Next() (indexIterResult, error) {
+	for {
+		res, err := iter.queryResultIterator.Next()
+		if err != nil || !res.foundKey {
+			return indexIterResult{}, err
+		}
+		iter.execInfo.IndexesFetched++
+
+		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
+
+		if didMatch {
+			return res, err
+		}
 	}
-	return res, err
 }
 
 // checks if the value satisfies the condition
 type valueMatcher interface {
-	Match([]byte) (bool, error)
+	Match(any) (bool, error)
 }
 
-// indexByteValuesMatcher is a filter that compares the index value with a given value.
-// It uses bytes.Compare to compare the values and evaluate the result with evalFunc.
-type indexByteValuesMatcher struct {
-	value []byte
-	// evalFunc receives a result of bytes.Compare
-	evalFunc func(int) bool
+type intMatcher struct {
+	value    int64
+	evalFunc func(int64, int64) bool
 }
 
-func (m *indexByteValuesMatcher) Match(value []byte) (bool, error) {
-	res := bytes.Compare(value, m.value)
-	return m.evalFunc(res), nil
+func (m *intMatcher) Match(value any) (bool, error) {
+	intVal, ok := value.(int64)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[int64](value)
+	}
+	return m.evalFunc(intVal, m.value), nil
+}
+
+type floatMatcher struct {
+	value    float64
+	evalFunc func(float64, float64) bool
+}
+
+func (m *floatMatcher) Match(value any) (bool, error) {
+	floatVal, ok := value.(float64)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[float64](value)
+	}
+	return m.evalFunc(m.value, floatVal), nil
+}
+
+type stringMatcher struct {
+	value    string
+	evalFunc func(string, string) bool
+}
+
+func (m *stringMatcher) Match(value any) (bool, error) {
+	stringVal, ok := value.(string)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[string](value)
+	}
+	return m.evalFunc(m.value, stringVal), nil
+}
+
+type nilMatcher struct{}
+
+func (m *nilMatcher) Match(value any) (bool, error) {
+	return value == nil, nil
 }
 
 // checks if the index value is or is not in the given array
 type indexInArrayMatcher struct {
-	values map[string]bool
-	isIn   bool
+	inValues []any
+	isIn     bool
 }
 
-func newNinIndexCmp(values [][]byte, isIn bool) *indexInArrayMatcher {
-	valuesMap := make(map[string]bool)
-	for _, v := range values {
-		valuesMap[string(v)] = true
+func newNinIndexCmp(values []any, kind client.FieldKind, isIn bool) (*indexInArrayMatcher, error) {
+	normalizeValueFunc := getNormalizeValueFunc(kind)
+	for i := range values {
+		normalized, err := normalizeValueFunc(values[i])
+		if err != nil {
+			return nil, err
+		}
+		values[i] = normalized
 	}
-	return &indexInArrayMatcher{values: valuesMap, isIn: isIn}
+	return &indexInArrayMatcher{inValues: values, isIn: isIn}, nil
 }
 
-func (m *indexInArrayMatcher) Match(value []byte) (bool, error) {
-	_, found := m.values[string(value)]
-	return found == m.isIn, nil
+func getNormalizeValueFunc(kind client.FieldKind) func(any) (any, error) {
+	switch kind {
+	case client.FieldKind_NILLABLE_INT:
+		return func(value any) (any, error) {
+			if v, ok := value.(int64); ok {
+				return v, nil
+			}
+			if v, ok := value.(int32); ok {
+				return int64(v), nil
+			}
+			return nil, ErrInvalidInOperatorValue
+		}
+	case client.FieldKind_NILLABLE_FLOAT:
+		return func(value any) (any, error) {
+			if v, ok := value.(float64); ok {
+				return v, nil
+			}
+			if v, ok := value.(float32); ok {
+				return float64(v), nil
+			}
+			return nil, ErrInvalidInOperatorValue
+		}
+	case client.FieldKind_NILLABLE_STRING:
+		return func(value any) (any, error) {
+			if v, ok := value.(string); ok {
+				return v, nil
+			}
+			return nil, ErrInvalidInOperatorValue
+		}
+	}
+	return nil
+}
+
+func (m *indexInArrayMatcher) Match(value any) (bool, error) {
+	for _, inVal := range m.inValues {
+		if inVal == value {
+			return m.isIn, nil
+		}
+	}
+	return !m.isIn, nil
 }
 
 // checks if the index value satisfies the LIKE condition
@@ -341,7 +389,7 @@ type indexLikeMatcher struct {
 	value       string
 }
 
-func newLikeIndexCmp(filterValue string, isLike bool) *indexLikeMatcher {
+func newLikeIndexCmp(filterValue string, isLike bool) (*indexLikeMatcher, error) {
 	matcher := &indexLikeMatcher{
 		isLike: isLike,
 	}
@@ -360,14 +408,13 @@ func newLikeIndexCmp(filterValue string, isLike bool) *indexLikeMatcher {
 	}
 	matcher.value = filterValue
 
-	return matcher
+	return matcher, nil
 }
 
-func (m *indexLikeMatcher) Match(value []byte) (bool, error) {
-	var currentVal string
-	err := cbor.Unmarshal(value, &currentVal)
-	if err != nil {
-		return false, err
+func (m *indexLikeMatcher) Match(value any) (bool, error) {
+	currentVal, ok := value.(string)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[string](currentVal)
 	}
 
 	return m.doesMatch(currentVal) == m.isLike, nil
@@ -392,62 +439,211 @@ func (m *indexLikeMatcher) doesMatch(currentVal string) bool {
 
 type anyMatcher struct{}
 
-func (m *anyMatcher) Match([]byte) (bool, error) { return true, nil }
+func (m *anyMatcher) Match(any) (bool, error) { return true, nil }
 
-func createValueMatcher(op string, filterVal any) (valueMatcher, error) {
-	switch op {
+// newPrefixIndexIterator creates a new eqPrefixIndexIterator for fetching indexed data.
+// It can modify the input matchers slice.
+func (f *IndexFetcher) newPrefixIndexIterator(
+	fieldConditions []fieldFilterCond,
+	matchers []valueMatcher,
+) (*eqPrefixIndexIterator, error) {
+	keyFieldValues := make([]any, 0, len(fieldConditions))
+	for i := range fieldConditions {
+		if fieldConditions[i].op != opEq {
+			// prefix can be created only for subsequent _eq conditions
+			// if we encounter any other condition, we built the longest prefix we could
+			break
+		}
+
+		keyFieldValues = append(keyFieldValues, fieldConditions[i].val)
+	}
+
+	// iterators for _eq filter already iterate over keys with first field value
+	// matching the filter value, so we can skip the first matcher
+	if len(matchers) > 1 {
+		matchers[0] = &anyMatcher{}
+	}
+
+	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+
+	return &eqPrefixIndexIterator{
+		queryResultIterator: f.newQueryResultIterator(),
+		indexKey:            key,
+		execInfo:            &f.execInfo,
+		matchers:            matchers,
+	}, nil
+}
+
+func (f *IndexFetcher) newQueryResultIterator() queryResultIterator {
+	return queryResultIterator{indexDesc: f.indexDesc, indexedFields: f.indexedFields}
+}
+
+// newInIndexIterator creates a new inIndexIterator for fetching indexed data.
+// It can modify the input matchers slice.
+func (f *IndexFetcher) newInIndexIterator(
+	fieldConditions []fieldFilterCond,
+	matchers []valueMatcher,
+) (*inIndexIterator, error) {
+	inArr, ok := fieldConditions[0].val.([]any)
+	if !ok {
+		return nil, ErrInvalidInOperatorValue
+	}
+	inValues := make([]any, 0, len(inArr))
+	for _, v := range inArr {
+		fieldVal := client.NewFieldValue(client.NONE_CRDT, v)
+		inValues = append(inValues, fieldVal.Value())
+	}
+
+	// iterators for _in filter already iterate over keys with first field value
+	// matching the filter value, so we can skip the first matcher
+	if len(matchers) > 1 {
+		matchers[0] = &anyMatcher{}
+	}
+
+	var iter indexIterator
+	if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
+		keyFieldValues := make([]any, len(fieldConditions))
+		for i := range fieldConditions {
+			keyFieldValues[i] = fieldConditions[i].val
+		}
+
+		key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+
+		iter = &eqSingleIndexIterator{
+			indexKey: key,
+			execInfo: &f.execInfo,
+		}
+	} else {
+		indexKey := f.newIndexDataStoreKey()
+		indexKey.Fields = []core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
+
+		iter = &eqPrefixIndexIterator{
+			queryResultIterator: f.newQueryResultIterator(),
+			indexKey:            indexKey,
+			execInfo:            &f.execInfo,
+			matchers:            matchers,
+		}
+	}
+	return &inIndexIterator{
+		indexIterator: iter,
+		inValues:      inValues,
+	}, nil
+}
+
+func (f *IndexFetcher) newIndexDataStoreKey() core.IndexDataStoreKey {
+	key := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
+	return key
+}
+
+func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []any) core.IndexDataStoreKey {
+	fields := make([]core.IndexedField, len(values))
+	for i := range values {
+		fields[i].Value = values[i]
+		fields[i].Descending = f.indexDesc.Fields[i].Descending
+	}
+	return core.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
+}
+
+func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
+	fieldConditions := f.determineFieldFilterConditions()
+
+	matchers, err := createValueMatchers(fieldConditions)
+	if err != nil {
+		return nil, err
+	}
+
+	switch fieldConditions[0].op {
+	case opEq:
+		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
+			keyFieldValues := make([]any, len(fieldConditions))
+			for i := range fieldConditions {
+				keyFieldValues[i] = fieldConditions[i].val
+			}
+
+			key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+
+			return &eqSingleIndexIterator{
+				indexKey: key,
+				execInfo: &f.execInfo,
+			}, nil
+		} else {
+			return f.newPrefixIndexIterator(fieldConditions, matchers)
+		}
+	case opIn:
+		return f.newInIndexIterator(fieldConditions, matchers)
+	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
+		return &scanningIndexIterator{
+			queryResultIterator: f.newQueryResultIterator(),
+			indexKey:            f.newIndexDataStoreKey(),
+			matchers:            matchers,
+			execInfo:            &f.execInfo,
+		}, nil
+	}
+
+	return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
+}
+
+func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
+	if condition.op == "" {
+		return &anyMatcher{}, nil
+	}
+
+	if client.IsNillableKind(condition.kind) && condition.val == nil {
+		return &nilMatcher{}, nil
+	}
+
+	switch condition.op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
-		fieldValue := client.NewFieldValue(client.LWW_REGISTER, filterVal)
-
-		valueBytes, err := fieldValue.Bytes()
-		if err != nil {
-			return nil, err
+		switch condition.kind {
+		case client.FieldKind_NILLABLE_INT:
+			var intVal int64
+			switch v := condition.val.(type) {
+			case int64:
+				intVal = v
+			case int32:
+				intVal = int64(v)
+			case int:
+				intVal = int64(v)
+			default:
+				return nil, NewErrUnexpectedTypeValue[int64](condition.val)
+			}
+			return &intMatcher{value: intVal, evalFunc: getCompareValsFunc[int64](condition.op)}, nil
+		case client.FieldKind_NILLABLE_FLOAT:
+			floatVal, ok := condition.val.(float64)
+			if !ok {
+				return nil, NewErrUnexpectedTypeValue[float64](condition.val)
+			}
+			return &floatMatcher{value: floatVal, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
+		case client.FieldKind_DocID, client.FieldKind_NILLABLE_STRING:
+			strVal, ok := condition.val.(string)
+			if !ok {
+				return nil, NewErrUnexpectedTypeValue[string](condition.val)
+			}
+			return &stringMatcher{value: strVal, evalFunc: getCompareValsFunc[string](condition.op)}, nil
 		}
-
-		m := &indexByteValuesMatcher{value: valueBytes}
-		switch op {
-		case opEq:
-			m.evalFunc = func(res int) bool { return res == 0 }
-		case opGt:
-			m.evalFunc = func(res int) bool { return res > 0 }
-		case opGe:
-			m.evalFunc = func(res int) bool { return res > 0 || res == 0 }
-		case opLt:
-			m.evalFunc = func(res int) bool { return res < 0 }
-		case opLe:
-			m.evalFunc = func(res int) bool { return res < 0 || res == 0 }
-		case opNe:
-			m.evalFunc = func(res int) bool { return res != 0 }
-		}
-		return m, nil
 	case opIn, opNin:
-		inArr, ok := filterVal.([]any)
+		inArr, ok := condition.val.([]any)
 		if !ok {
 			return nil, ErrInvalidInOperatorValue
 		}
-		valArr := make([][]byte, 0, len(inArr))
-		for _, v := range inArr {
-			fieldValue := client.NewFieldValue(client.LWW_REGISTER, v)
-			valueBytes, err := fieldValue.Bytes()
-			if err != nil {
-				return nil, err
-			}
-			valArr = append(valArr, valueBytes)
-		}
-		return newNinIndexCmp(valArr, op == opIn), nil
+		return newNinIndexCmp(inArr, condition.kind, condition.op == opIn)
 	case opLike, opNlike:
-		return newLikeIndexCmp(filterVal.(string), op == opLike), nil
+		strVal, ok := condition.val.(string)
+		if !ok {
+			return nil, NewErrUnexpectedTypeValue[string](condition.val)
+		}
+		return newLikeIndexCmp(strVal, condition.op == opLike)
 	case opAny:
 		return &anyMatcher{}, nil
 	}
 
-	return nil, NewErrInvalidFilterOperator(op)
+	return nil, NewErrInvalidFilterOperator(condition.op)
 }
 
 func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
 	matchers := make([]valueMatcher, 0, len(conditions))
 	for i := range conditions {
-		m, err := createValueMatcher(conditions[i].op, conditions[i].val)
+		m, err := createValueMatcher(&conditions[i])
 		if err != nil {
 			return nil, err
 		}
@@ -457,10 +653,14 @@ func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
 }
 
 type fieldFilterCond struct {
-	op  string
-	val any
+	op   string
+	val  any
+	kind client.FieldKind
 }
 
+// determineFieldFilterConditions determines the conditions and their corresponding operation
+// for each indexed field.
+// It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
 func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
 	for i := range f.indexedFields {
@@ -478,7 +678,11 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 			condMap := indexFilterCond.(map[connor.FilterKey]any)
 			for key, filterVal := range condMap {
 				opKey := key.(*mapper.Operator)
-				result = append(result, fieldFilterCond{op: opKey.Operation, val: filterVal})
+				result = append(result, fieldFilterCond{
+					op:   opKey.Operation,
+					val:  filterVal,
+					kind: f.indexedFields[i].Kind,
+				})
 				break
 			}
 			break
@@ -510,147 +714,27 @@ func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fie
 	return res
 }
 
-func getFieldsBytes(conditions []fieldFilterCond) ([][]byte, error) {
-	result := make([][]byte, 0, len(conditions))
-	for i := range conditions {
-		fieldVal := client.NewFieldValue(client.LWW_REGISTER, conditions[i].val)
-		keyFieldBytes, err := fieldVal.Bytes()
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, keyFieldBytes)
-	}
-	return result, nil
-}
-
-// newPrefixIndexIterator creates a new eqPrefixIndexIterator for fetching indexed data.
-// It can modify the input matchers slice.
-func (f *IndexFetcher) newPrefixIndexIterator(
-	fieldConditions []fieldFilterCond,
-	matchers []valueMatcher,
-) (*eqPrefixIndexIterator, error) {
-	keyFieldValues := make([][]byte, 0, len(fieldConditions))
-	for i := range fieldConditions {
-		if fieldConditions[i].op != opEq {
-			// prefix can be created only for subsequent _eq conditions
-			// if we encounter any other condition, we built the longest prefix we could
-			break
-		}
-
-		fieldVal := client.NewFieldValue(client.LWW_REGISTER, fieldConditions[i].val)
-
-		keyValueBytes, err := fieldVal.Bytes()
-		if err != nil {
-			return nil, err
-		}
-
-		keyFieldValues = append(keyFieldValues, keyValueBytes)
-	}
-
-	// iterators for _eq filter already iterate over keys with first field value
-	// matching the filter value, so we can skip the first matcher
-	if len(matchers) > 1 {
-		matchers[0] = &anyMatcher{}
-	}
-
-	indexKey := f.newIndexDataStoreKey()
-	indexKey.FieldValues = keyFieldValues
-	return &eqPrefixIndexIterator{
-		indexKey: indexKey,
-		execInfo: &f.execInfo,
-		matchers: matchers,
-	}, nil
-}
-
-// newInIndexIterator creates a new inIndexIterator for fetching indexed data.
-// It can modify the input matchers slice.
-func (f *IndexFetcher) newInIndexIterator(
-	fieldConditions []fieldFilterCond,
-	matchers []valueMatcher,
-) (*inIndexIterator, error) {
-	inArr, ok := fieldConditions[0].val.([]any)
-	if !ok {
-		return nil, ErrInvalidInOperatorValue
-	}
-	keyFieldArr := make([][]byte, 0, len(inArr))
-	for _, v := range inArr {
-		fieldVal := client.NewFieldValue(client.LWW_REGISTER, v)
-		keyFieldBytes, err := fieldVal.Bytes()
-		if err != nil {
-			return nil, err
-		}
-		keyFieldArr = append(keyFieldArr, keyFieldBytes)
-	}
-
-	// iterators for _in filter already iterate over keys with first field value
-	// matching the filter value, so we can skip the first matcher
-	if len(matchers) > 1 {
-		matchers[0] = &anyMatcher{}
-	}
-
-	var iter indexIterator
-	if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-		keyFieldValues, e := getFieldsBytes(fieldConditions[1:])
-		if e != nil {
-			return nil, e
-		}
-		keyFieldValues = append([][]byte{{}}, keyFieldValues...)
-		iter = &eqSingleIndexIterator{
-			indexKey:       f.newIndexDataStoreKey(),
-			execInfo:       &f.execInfo,
-			keyFieldValues: keyFieldValues,
-		}
-	} else {
-		indexKey := f.newIndexDataStoreKey()
-		indexKey.FieldValues = [][]byte{{}}
-		iter = &eqPrefixIndexIterator{
-			indexKey: indexKey,
-			execInfo: &f.execInfo,
-			matchers: matchers,
-		}
-	}
-	return &inIndexIterator{
-		indexIterator: iter,
-		inValues:      keyFieldArr,
-	}, nil
-}
-
-func (f *IndexFetcher) newIndexDataStoreKey() core.IndexDataStoreKey {
-	return core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
-}
-
-func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
-	fieldConditions := f.determineFieldFilterConditions()
-
-	matchers, err := createValueMatchers(fieldConditions)
-	if err != nil {
-		return nil, err
-	}
-
-	switch fieldConditions[0].op {
+func getCompareValsFunc[T cmp.Ordered](op string) func(T, T) bool {
+	switch op {
+	case opGt:
+		return checkGT
+	case opGe:
+		return checkGE
+	case opLt:
+		return checkLT
+	case opLe:
+		return checkLE
 	case opEq:
-		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-			keyFieldsBytes, err := getFieldsBytes(fieldConditions)
-			if err != nil {
-				return nil, err
-			}
-			return &eqSingleIndexIterator{
-				indexKey:       f.newIndexDataStoreKey(),
-				keyFieldValues: keyFieldsBytes,
-				execInfo:       &f.execInfo,
-			}, nil
-		} else {
-			return f.newPrefixIndexIterator(fieldConditions, matchers)
-		}
-	case opIn:
-		return f.newInIndexIterator(fieldConditions, matchers)
-	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
-		return &scanningIndexIterator{
-			indexKey: f.newIndexDataStoreKey(),
-			matchers: matchers,
-			execInfo: &f.execInfo,
-		}, nil
+		return checkEQ
+	case opNe:
+		return checkNE
 	}
-
-	return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
+	return nil
 }
+
+func checkGE[T cmp.Ordered](a, b T) bool { return a >= b }
+func checkGT[T cmp.Ordered](a, b T) bool { return a > b }
+func checkLE[T cmp.Ordered](a, b T) bool { return a <= b }
+func checkLT[T cmp.Ordered](a, b T) bool { return a < b }
+func checkEQ[T cmp.Ordered](a, b T) bool { return a == b }
+func checkNE[T cmp.Ordered](a, b T) bool { return a != b }

@@ -214,14 +214,14 @@ func TestQueryWithUniqueIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
-					{"name": "Fred"},
-					{"name": "John"},
 					{"name": "Bruno"},
 					{"name": "Chris"},
+					{"name": "Fred"},
+					{"name": "John"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 					{"name": "Shahzad"},
 				},
 			},
@@ -443,13 +443,13 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
-					{"name": "Fred"},
 					{"name": "Bruno"},
+					{"name": "Fred"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{

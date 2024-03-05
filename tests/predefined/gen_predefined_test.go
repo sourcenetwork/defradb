@@ -508,7 +508,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			},
 // 			Schema: client.SchemaDescription{
 // 				Name: "User",
-// 				Fields: []client.FieldDescription{
+// 				Fields: []client.SchemaFieldDescription{
 // 					{
 // 						Name: "name",
 // 						Kind: client.FieldKind_STRING,
@@ -528,7 +528,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			},
 // 			Schema: client.SchemaDescription{
 // 				Name: "Device",
-// 				Fields: []client.FieldDescription{
+// 				Fields: []client.SchemaFieldDescription{
 // 					{
 // 						Name: "model",
 // 						Kind: client.FieldKind_STRING,

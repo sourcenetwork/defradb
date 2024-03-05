@@ -172,7 +172,8 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	return docs, nil
 }
 
-func isNillableKind(kind FieldKind) bool {
+// IsNillableKind returns true if the given FieldKind is nillable.
+func IsNillableKind(kind FieldKind) bool {
 	switch kind {
 	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON,
 		FieldKind_NILLABLE_BOOL, FieldKind_NILLABLE_FLOAT, FieldKind_NILLABLE_DATETIME,
@@ -187,8 +188,8 @@ func isNillableKind(kind FieldKind) bool {
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field FieldDescription) (any, error) {
-	if isNillableKind(field.Kind) {
+func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
+	if IsNillableKind(field.Kind) {
 		if val == nil {
 			return nil, nil
 		}
@@ -522,15 +523,15 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.schemaDescription.GetField(field)
+	fd, exists := doc.schemaDescription.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsRelation() && !fd.IsObjectArray() {
+	if fd.IsRelation() && !fd.Kind.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
-		fd, exists = doc.schemaDescription.GetField(field)
+		fd, exists = doc.schemaDescription.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}

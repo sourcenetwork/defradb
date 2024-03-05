@@ -36,13 +36,13 @@ func TestQueryCommits(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+						"cid": "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 					},
 					{
-						"cid": "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
+						"cid": "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
 					},
 					{
-						"cid": "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
+						"cid": "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
 					},
 				},
 			},
@@ -79,22 +79,22 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeifxmoq5yeukxrizqgncteztxao53d26ch6gqlyciakbrvlxwyob6a",
+						"cid": "bafybeibhain2764v7eltfiam6dgwivfj56mvbme34nbdsdbndrsjkc2cje",
 					},
 					{
-						"cid": "bafybeigkpb7jwgrsq3dq2nt2cnsarp3nq2ilefsuyz7jwcxfecot3qxwia",
+						"cid": "bafybeickrd5xayjhedyypf3yus55bkhpwd5dqlkdhivrcceexkpsgnic24",
 					},
 					{
-						"cid": "bafybeidacwdvdzz7y5r6lqsjgs3kom2zjnlarw6r3rgxlj3iw4kck4mer4",
+						"cid": "bafybeieqyyprwrkbgyn7x4jkzmlnupnzpdymvbulef37brkzn7blqbe6l4",
 					},
 					{
-						"cid": "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+						"cid": "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 					},
 					{
-						"cid": "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
+						"cid": "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
 					},
 					{
-						"cid": "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
+						"cid": "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
 					},
 				},
 			},
@@ -125,16 +125,16 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
-						"schemaVersionId": "bafkreidjvyxputjthx4wzyxtk33fce3shqguif3yhifykilybpn6canony",
+						"cid":             "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
+						"schemaVersionId": "bafkreidqkjb23ngp34eebeaxiogrlogkpfz62vjb3clnnyvhlbgdaywkg4",
 					},
 					{
-						"cid":             "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
-						"schemaVersionId": "bafkreidjvyxputjthx4wzyxtk33fce3shqguif3yhifykilybpn6canony",
+						"cid":             "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
+						"schemaVersionId": "bafkreidqkjb23ngp34eebeaxiogrlogkpfz62vjb3clnnyvhlbgdaywkg4",
 					},
 					{
-						"cid":             "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
-						"schemaVersionId": "bafkreidjvyxputjthx4wzyxtk33fce3shqguif3yhifykilybpn6canony",
+						"cid":             "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
+						"schemaVersionId": "bafkreidqkjb23ngp34eebeaxiogrlogkpfz62vjb3clnnyvhlbgdaywkg4",
 					},
 				},
 			},
@@ -349,7 +349,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"cid":          "bafybeiddpjl27ulw2yo4ohup6gr2wob3pwagqw2rbeaxxodv4ljelnu7ve",
+						"cid":          "bafybeicwg56ddi7smy3j2kkv5y4yghvdrj3twqqafzdwtinbkw5mlpxwz4",
 						"collectionID": int64(1),
 						"delta":        testUtils.CBORValue(22),
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
@@ -358,13 +358,13 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						"height":       int64(2),
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+								"cid":  "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 								"name": "_head",
 							},
 						},
 					},
 					{
-						"cid":          "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+						"cid":          "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 						"collectionID": int64(1),
 						"delta":        testUtils.CBORValue(21),
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
@@ -374,7 +374,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						"links":        []map[string]any{},
 					},
 					{
-						"cid":          "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
+						"cid":          "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
 						"collectionID": int64(1),
 						"delta":        testUtils.CBORValue("John"),
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
@@ -384,7 +384,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						"links":        []map[string]any{},
 					},
 					{
-						"cid":          "bafybeiekajrgheumrgamrc4mprmm66ulp2qr75sviowfcriuviggokydbm",
+						"cid":          "bafybeidxnkwhuzmkdw5wuippru3tp74vcmz5jvcziambpjadxeathdh26a",
 						"collectionID": int64(1),
 						"delta":        nil,
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
@@ -393,17 +393,17 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						"height":       int64(2),
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
+								"cid":  "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
 								"name": "_head",
 							},
 							{
-								"cid":  "bafybeiddpjl27ulw2yo4ohup6gr2wob3pwagqw2rbeaxxodv4ljelnu7ve",
+								"cid":  "bafybeicwg56ddi7smy3j2kkv5y4yghvdrj3twqqafzdwtinbkw5mlpxwz4",
 								"name": "age",
 							},
 						},
 					},
 					{
-						"cid":          "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
+						"cid":          "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
 						"collectionID": int64(1),
 						"delta":        nil,
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
@@ -412,11 +412,11 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						"height":       int64(1),
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+								"cid":  "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 								"name": "age",
 							},
 							{
-								"cid":  "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
+								"cid":  "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
 								"name": "name",
 							},
 						},

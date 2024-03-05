@@ -10,22 +10,12 @@
 
 package client
 
-// IndexDirection is the direction of an index.
-type IndexDirection string
-
-const (
-	// Ascending is the value to use for an ascending fields
-	Ascending IndexDirection = "ASC"
-	// Descending is the value to use for an descending fields
-	Descending IndexDirection = "DESC"
-)
-
 // IndexFieldDescription describes how a field is being indexed.
 type IndexedFieldDescription struct {
 	// Name contains the name of the field.
 	Name string
-	// Direction contains the direction of the index.
-	Direction IndexDirection
+	// Descending indicates whether the field is indexed in descending order.
+	Descending bool
 }
 
 // IndexDescription describes an index.
@@ -41,18 +31,19 @@ type IndexDescription struct {
 }
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
-func (d CollectionDescription) CollectIndexedFields(schema *SchemaDescription) []FieldDescription {
+func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 	fieldsMap := make(map[string]bool)
-	fields := make([]FieldDescription, 0, len(d.Indexes))
-	for _, index := range d.Indexes {
+	fields := make([]FieldDefinition, 0, len(d.Description.Indexes))
+	for _, index := range d.Description.Indexes {
 		for _, field := range index.Fields {
-			for i := range schema.Fields {
-				colField := schema.Fields[i]
-				if field.Name == colField.Name && !fieldsMap[field.Name] {
-					fieldsMap[field.Name] = true
-					fields = append(fields, colField)
-					break
-				}
+			if fieldsMap[field.Name] {
+				// If the FieldDescription has already been added to the result do not add it a second time
+				// this can happen if a field is referenced by multiple indexes
+				continue
+			}
+			colField, ok := d.GetFieldByName(field.Name)
+			if ok {
+				fields = append(fields, colField)
 			}
 		}
 	}

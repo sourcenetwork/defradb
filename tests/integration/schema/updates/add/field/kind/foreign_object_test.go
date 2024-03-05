@@ -58,7 +58,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_InvalidSchemaJson(t *testing.T) 
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16, "Schema": 123} }
 					]
 				`,
-				ExpectedError: "json: cannot unmarshal number into Go struct field FieldDescription.Fields.Schema of type string",
+				ExpectedError: "json: cannot unmarshal number into Go struct field SchemaFieldDescription.Fields.Schema of type string",
 			},
 		},
 	}

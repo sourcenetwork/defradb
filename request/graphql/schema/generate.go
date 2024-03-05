@@ -82,7 +82,7 @@ func (g *Generator) Generate(ctx context.Context, collections []client.Collectio
 // the given CollectionDescriptions.
 func (g *Generator) generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
 	// build base types
-	defs, err := g.buildTypes(ctx, collections)
+	defs, err := g.buildTypes(collections)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		return nil, err
 	}
 
-	if err := g.genAggregateFields(ctx); err != nil {
+	if err := g.genAggregateFields(); err != nil {
 		return nil, err
 	}
 	// resolve types
@@ -403,7 +403,6 @@ func (g *Generator) createExpandedFieldList(
 // Given a set of developer defined collection types
 // extract and return the correct gql.Object type(s)
 func (g *Generator) buildTypes(
-	ctx context.Context,
 	collections []client.CollectionDefinition,
 ) ([]*gql.Object, error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
@@ -594,7 +593,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 	return nil
 }
 
-func (g *Generator) genAggregateFields(ctx context.Context) error {
+func (g *Generator) genAggregateFields() error {
 	topLevelCountInputs := map[string]*gql.InputObject{}
 	topLevelNumericAggInputs := map[string]*gql.InputObject{}
 
@@ -1014,7 +1013,7 @@ func (g *Generator) GenerateQueryInputForGQLType(
 	types.groupBy = g.genTypeFieldsEnum(obj)
 	types.order = g.genTypeOrderArgInput(obj)
 
-	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
+	queryField := g.genTypeQueryableFieldList(obj, types)
 
 	return queryField, nil
 }
@@ -1249,7 +1248,6 @@ type queryInputTypeConfig struct {
 }
 
 func (g *Generator) genTypeQueryableFieldList(
-	ctx context.Context,
 	obj *gql.Object,
 	config queryInputTypeConfig,
 ) *gql.Field {

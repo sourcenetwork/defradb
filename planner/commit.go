@@ -345,7 +345,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 		// Because we only care about the schema, we can safely take the first - the schema is the same
 		// for all in the set.
-		field, ok := cols[0].Schema().GetField(fieldName.(string))
+		field, ok := cols[0].Definition().GetFieldByName(fieldName.(string))
 		if !ok {
 			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
 		}
