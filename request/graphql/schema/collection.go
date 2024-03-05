@@ -20,8 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
-
-	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -392,7 +390,7 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 			switch arg.Name.Value {
 			case "type":
 				cTypeString := arg.Value.GetValue().(string)
-				cType, validCRDTEnum := schemaTypes.CRDTEnum.ParseValue(cTypeString).(client.CType)
+				cType, validCRDTEnum := types.CRDTEnum.ParseValue(cTypeString).(client.CType)
 				if !validCRDTEnum {
 					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)
 				}
