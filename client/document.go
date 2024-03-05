@@ -199,7 +199,7 @@ func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
 	}
 
 	switch field.Kind {
-	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON:
+	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
 		return getString(val)
 
 	case FieldKind_STRING_ARRAY:
@@ -243,6 +243,9 @@ func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
 
 	case FieldKind_FOREIGN_OBJECT_ARRAY:
 		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+
+	case FieldKind_NILLABLE_JSON:
+		return getJSON(val)
 	}
 
 	return nil, NewErrUnhandledType("FieldKind", field.Kind)
@@ -316,6 +319,18 @@ func getDateTime(v any) (time.Time, error) {
 		s = val.(string)
 	}
 	return time.Parse(time.RFC3339, s)
+}
+
+func getJSON(v any) (string, error) {
+	s, err := getString(v)
+	if err != nil {
+		return "", err
+	}
+	val, err := fastjson.Parse(s)
+	if err != nil {
+		return "", NewErrInvalidJSONPaylaod(s)
+	}
+	return val.String(), nil
 }
 
 func getArray[T any](
