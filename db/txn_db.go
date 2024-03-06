@@ -79,7 +79,12 @@ func (db *implicitTxnDB) GetCollectionByName(ctx context.Context, name string) (
 
 // GetCollectionByName returns an existing collection within the database.
 func (db *explicitTxnDB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
-	return db.getCollectionByName(ctx, db.txn, name)
+	col, err := db.getCollectionByName(ctx, db.txn, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return col.WithTxn(db.txn), nil
 }
 
 // GetCollections gets all the currently defined collections.
@@ -101,7 +106,16 @@ func (db *explicitTxnDB) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	return db.getCollections(ctx, db.txn, options)
+	cols, err := db.getCollections(ctx, db.txn, options)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range cols {
+		cols[i] = cols[i].WithTxn(db.txn)
+	}
+
+	return cols, nil
 }
 
 // GetSchemaByVersionID returns the schema description for the schema version of the
