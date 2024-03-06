@@ -187,6 +187,9 @@ type Store interface {
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.
+	//
+	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
+	// made via the returned [Collection] will respect that transaction.
 	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
 	// GetCollections returns all collections and their descriptions matching the given options
@@ -194,6 +197,9 @@ type Store interface {
 	//
 	// Inactive collections are not returned by default unless a specific schema version ID
 	// is provided.
+	//
+	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
+	// made via the returned [Collection]s will respect that transaction.
 	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
 
 	// GetSchemaByVersionID returns the schema description for the schema version of the
