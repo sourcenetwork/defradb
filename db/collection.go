@@ -709,8 +709,11 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 	return cols[0], nil
 }
 
-// GetCollections returns all collections and their descriptions matching the given options
+// getCollections returns all collections and their descriptions matching the given options
 // that currently exist within this [Store].
+//
+// Inactive collections are not returned by default unless a specific schema version ID
+// is provided.
 func (db *db) getCollections(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -763,7 +766,8 @@ func (db *db) getCollections(
 				continue
 			}
 		}
-		if !options.IncludeInactive.Value() && !col.Name.HasValue() {
+		// By default, we don't return inactive collections unless a specific version is requested.
+		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.SchemaVersionID.HasValue() {
 			continue
 		}
 

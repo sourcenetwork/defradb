@@ -543,3 +543,43 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T) {
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
+
+	test := testUtils.TestCase{
+		Description: `Test schema update, with branching schema toggling between branches and gets the 
+collection at a specific version`,
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				// The second schema version will not be set as the active version, leaving the initial version active
+				SetAsDefaultVersion: immutable.Some(true),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					SchemaVersionID: immutable.Some(schemaVersion1ID),
+				},
+				ExpectedResults: []client.CollectionDescription{
+					{
+						// The original collection version is present, it has no source and is inactive (has no name).
+						ID:              1,
+						SchemaVersionID: schemaVersion1ID,
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

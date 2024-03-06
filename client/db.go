@@ -191,6 +191,9 @@ type Store interface {
 
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
+	//
+	// Inactive collections are not returned by default unless a specific schema version ID
+	// is provided.
 	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
 
 	// GetSchemaByVersionID returns the schema description for the schema version of the

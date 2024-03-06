@@ -33,10 +33,10 @@ Example: view all collections
 Example: view collection by name
   defradb client collection describe --name User
 		
-Example: view collection by schema id
+Example: view collection by schema root id
   defradb client collection describe --schema bae123
 		
-Example: view collection by version id
+Example: view collection by version id. This will also return inactive collections
   defradb client collection describe --version bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
