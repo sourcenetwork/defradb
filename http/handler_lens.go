@@ -88,10 +88,6 @@ func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
 	var value []map[string]any
 	err = enumerable.ForEach(result, func(item map[string]any) {
 		value = append(value, item)
