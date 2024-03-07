@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package index
+package field
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestPatching_ForCollectionWithIndex_StillWorks(t *testing.T) {
+func TestSchemaUpdatesAddFieldSimple_WithExistingIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test patching schema for collection with index still works",
 		Actions: []any{
