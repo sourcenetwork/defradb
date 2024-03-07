@@ -171,12 +171,18 @@ type Collection interface {
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
 
 	// CreateDocIndex creates an index for the given document.
+	// WARNING: This method is only for internal use and is not supposed to be called by the client
+	// as it might compromise the integrity of the database. This method will be removed in the future
 	CreateDocIndex(context.Context, *Document) error
 
 	// UpdateDocIndex updates the index for the given document.
+	// WARNING: This method is only for internal use and is not supposed to be called by the client
+	// as it might compromise the integrity of the database. This method will be removed in the future
 	UpdateDocIndex(ctx context.Context, oldDoc, newDoc *Document) error
 
 	// DeleteDocIndex deletes the index for the given document.
+	// WARNING: This method is only for internal use and is not supposed to be called by the client
+	// as it might compromise the integrity of the database. This method will be removed in the future
 	DeleteDocIndex(context.Context, *Document) error
 }
 
