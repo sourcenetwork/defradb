@@ -12,6 +12,7 @@ package node
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	gohttp "net/http"
 
@@ -167,7 +168,7 @@ func (n *Node) Start(ctx context.Context) error {
 		}
 		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", n.Server.Address()))
 		go func() {
-			if err := n.Server.Serve(); err != nil && err != gohttp.ErrServerClosed {
+			if err := n.Server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
 				log.FeedbackErrorE(ctx, "HTTP server stopped", err)
 			}
 		}()

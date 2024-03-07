@@ -113,6 +113,8 @@ func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
 	require.NoError(t, err)
 	err = srv.Serve()
 	require.ErrorContains(t, err, "no such file or directory")
+	err = srv.listener.Close()
+	require.NoError(t, err)
 }
 
 func TestServerListenAndServeWithAddress(t *testing.T) {
