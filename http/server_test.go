@@ -65,11 +65,28 @@ var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 })
 
+func TestServerServeWithNoListener(t *testing.T) {
+	srv, err := NewServer(testHandler)
+	require.NoError(t, err)
+
+	err = srv.Serve()
+	require.ErrorIs(t, err, ErrNoListener)
+}
+
+func TestServerServeWithTLSAndNoListener(t *testing.T) {
+	certPath, keyPath := writeTestCerts(t)
+	srv, err := NewServer(testHandler, WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	require.NoError(t, err)
+
+	err = srv.Serve()
+	require.ErrorIs(t, err, ErrNoListener)
+}
+
 func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
 	srv, err := NewServer(testHandler, WithAddress("invalid"))
 	require.NoError(t, err)
 
-	err = srv.ListenAndServe()
+	err = srv.SetListener()
 	require.ErrorContains(t, err, "address invalid")
 }
 
@@ -78,15 +95,23 @@ func TestServerListenAndServeWithTLSAndInvalidAddress(t *testing.T) {
 	srv, err := NewServer(testHandler, WithAddress("invalid"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
 	require.NoError(t, err)
 
-	err = srv.ListenAndServe()
+	err = srv.SetListener()
 	require.ErrorContains(t, err, "address invalid")
 }
 
 func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAddress("invalid"), WithTLSCertPath("invalid.crt"), WithTLSKeyPath("invalid.key"))
+	srv, err := NewServer(
+		testHandler,
+		WithAddress("invalid"),
+		WithTLSCertPath("invalid.crt"),
+		WithTLSKeyPath("invalid.key"),
+		WithAddress("127.0.0.1:30001"),
+	)
 	require.NoError(t, err)
 
-	err = srv.ListenAndServe()
+	err = srv.SetListener()
+	require.NoError(t, err)
+	err = srv.Serve()
 	require.ErrorContains(t, err, "no such file or directory")
 }
 
@@ -95,7 +120,9 @@ func TestServerListenAndServeWithAddress(t *testing.T) {
 	require.NoError(t, err)
 
 	go func() {
-		err := srv.ListenAndServe()
+		err := srv.SetListener()
+		require.NoError(t, err)
+		err = srv.Serve()
 		require.ErrorIs(t, http.ErrServerClosed, err)
 	}()
 
@@ -118,7 +145,9 @@ func TestServerListenAndServeWithTLS(t *testing.T) {
 	require.NoError(t, err)
 
 	go func() {
-		err := srv.ListenAndServe()
+		err := srv.SetListener()
+		require.NoError(t, err)
+		err = srv.Serve()
 		require.ErrorIs(t, http.ErrServerClosed, err)
 	}()
 
@@ -140,7 +169,9 @@ func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
 	require.NoError(t, err)
 
 	go func() {
-		err := srv.ListenAndServe()
+		err := srv.SetListener()
+		require.NoError(t, err)
+		err = srv.Serve()
 		require.ErrorIs(t, http.ErrServerClosed, err)
 	}()
 
