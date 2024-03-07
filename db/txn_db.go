@@ -196,17 +196,11 @@ func (db *implicitTxnDB) CreateDocIndex(
 	}
 	defer txn.Discard(ctx)
 
-	indexes, err := db.getCollectionIndexes(ctx, txn, col)
+	err = db.createDocIndex(ctx, txn, col, doc)
 	if err != nil {
 		return err
 	}
 
-	for _, index := range indexes {
-		err := index.Save(ctx, txn, doc)
-		if err != nil {
-			return err
-		}
-	}
 	return txn.Commit(ctx)
 }
 
@@ -216,13 +210,22 @@ func (db *explicitTxnDB) CreateDocIndex(
 	col client.Collection,
 	doc *client.Document,
 ) error {
-	indexes, err := db.getCollectionIndexes(ctx, db.txn, col)
+	return db.createDocIndex(ctx, db.txn, col, doc)
+}
+
+func (db *db) createDocIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	indexes, err := db.getCollectionIndexes(ctx, txn, col)
 	if err != nil {
 		return err
 	}
 
 	for _, index := range indexes {
-		err := index.Save(ctx, db.txn, doc)
+		err := index.Save(ctx, txn, doc)
 		if err != nil {
 			return err
 		}
@@ -243,17 +246,11 @@ func (db *implicitTxnDB) UpdateDocIndex(
 	}
 	defer txn.Discard(ctx)
 
-	indexes, err := db.getCollectionIndexes(ctx, txn, col)
+	err = db.updateDocIndex(ctx, txn, col, oldDoc, newDoc)
 	if err != nil {
 		return err
 	}
 
-	for _, index := range indexes {
-		err := index.Update(ctx, txn, oldDoc, newDoc)
-		if err != nil {
-			return err
-		}
-	}
 	return txn.Commit(ctx)
 }
 
@@ -264,13 +261,23 @@ func (db *explicitTxnDB) UpdateDocIndex(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	indexes, err := db.getCollectionIndexes(ctx, db.txn, col)
+	return db.updateDocIndex(ctx, db.txn, col, oldDoc, newDoc)
+}
+
+func (db *db) updateDocIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	col client.Collection,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	indexes, err := db.getCollectionIndexes(ctx, txn, col)
 	if err != nil {
 		return err
 	}
 
 	for _, index := range indexes {
-		err := index.Update(ctx, db.txn, oldDoc, newDoc)
+		err := index.Update(ctx, txn, oldDoc, newDoc)
 		if err != nil {
 			return err
 		}
@@ -290,17 +297,11 @@ func (db *implicitTxnDB) DeleteDocIndex(
 	}
 	defer txn.Discard(ctx)
 
-	indexes, err := db.getCollectionIndexes(ctx, txn, col)
+	err = db.deleteDocIndex(ctx, txn, col, doc)
 	if err != nil {
 		return err
 	}
 
-	for _, index := range indexes {
-		err := index.Delete(ctx, txn, doc)
-		if err != nil {
-			return err
-		}
-	}
 	return txn.Commit(ctx)
 }
 
@@ -310,13 +311,22 @@ func (db *explicitTxnDB) DeleteDocIndex(
 	col client.Collection,
 	doc *client.Document,
 ) error {
-	indexes, err := db.getCollectionIndexes(ctx, db.txn, col)
+	return db.deleteDocIndex(ctx, db.txn, col, doc)
+}
+
+func (db *db) deleteDocIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	indexes, err := db.getCollectionIndexes(ctx, txn, col)
 	if err != nil {
 		return err
 	}
 
 	for _, index := range indexes {
-		err := index.Delete(ctx, db.txn, doc)
+		err := index.Delete(ctx, txn, doc)
 		if err != nil {
 			return err
 		}
