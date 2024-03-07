@@ -169,6 +169,15 @@ type Collection interface {
 
 	// GetIndexes returns all the indexes that exist on the collection.
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+
+	// CreateDocIndex creates an index for the given document.
+	CreateDocIndex(context.Context, *Document) error
+
+	// UpdateDocIndex updates the index for the given document.
+	UpdateDocIndex(ctx context.Context, oldDoc, newDoc *Document) error
+
+	// DeleteDocIndex deletes the index for the given document.
+	DeleteDocIndex(context.Context, *Document) error
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

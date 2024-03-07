@@ -522,28 +522,3 @@ func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
 func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
 	return w.node.WaitForPushLogFromPeerEvent(id)
 }
-
-func (w *Wrapper) CreateDocIndex(
-	ctx context.Context,
-	col client.Collection,
-	doc *client.Document,
-) error {
-	panic("client side database")
-}
-
-func (w *Wrapper) UpdateDocIndex(
-	ctx context.Context,
-	col client.Collection,
-	oldDoc *client.Document,
-	newDoc *client.Document,
-) error {
-	panic("client side database")
-}
-
-func (w *Wrapper) DeleteDocIndex(
-	ctx context.Context,
-	col client.Collection,
-	newDoc *client.Document,
-) error {
-	panic("client side database")
-}

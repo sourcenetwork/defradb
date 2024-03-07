@@ -295,7 +295,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		session.Wait()
 		bp.mergeBlocks(ctx)
 
-		err = s.syncIndexedDocs(ctx, col.WithTxn(txn), docID, store)
+		err = s.syncIndexedDocs(ctx, col.WithTxn(txn), docID)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +358,6 @@ func (s *server) syncIndexedDocs(
 	ctx context.Context,
 	col client.Collection,
 	docID client.DocID,
-	store client.Store,
 ) error {
 	preTxnCol, err := s.db.GetCollectionByName(ctx, col.Name().Value())
 	if err != nil {
@@ -378,11 +377,11 @@ func (s *server) syncIndexedDocs(
 	}
 
 	if isDeletedDoc {
-		return store.DeleteDocIndex(ctx, col, oldDoc)
+		return preTxnCol.DeleteDocIndex(ctx, oldDoc)
 	} else if isNewDoc {
-		return store.CreateDocIndex(ctx, col, doc)
+		return col.CreateDocIndex(ctx, doc)
 	} else {
-		return store.UpdateDocIndex(ctx, col, oldDoc, doc)
+		return col.UpdateDocIndex(ctx, oldDoc, doc)
 	}
 }
 

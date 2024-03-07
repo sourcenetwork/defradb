@@ -107,24 +107,53 @@ func (db *db) fetchCollectionIndexDescriptions(
 	return indexDescriptions, nil
 }
 
-func (db *db) getCollectionIndexes(
-	ctx context.Context,
-	txn datastore.Txn,
-	col client.Collection,
-) ([]CollectionIndex, error) {
-	indexDescriptions, err := db.fetchCollectionIndexDescriptions(ctx, txn, col.ID())
+func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
+	txn, err := c.getTxn(ctx, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	colIndexes := make([]CollectionIndex, 0, len(indexDescriptions))
-	for _, indexDesc := range indexDescriptions {
-		index, err := NewCollectionIndex(col, indexDesc)
-		if err != nil {
-			return nil, err
-		}
-		colIndexes = append(colIndexes, index)
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.indexNewDoc(ctx, txn, doc)
+	if err != nil {
+		return err
 	}
-	return colIndexes, nil
+
+	return c.commitImplicitTxn(ctx, txn)
+}
+
+func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.deleteIndexedDoc(ctx, txn, oldDoc)
+	if err != nil {
+		return err
+	}
+	err = c.indexNewDoc(ctx, txn, newDoc)
+	if err != nil {
+		return err
+	}
+
+	return c.commitImplicitTxn(ctx, txn)
+}
+
+func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.deleteIndexedDoc(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	return c.commitImplicitTxn(ctx, txn)
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
@@ -162,6 +191,24 @@ func (c *collection) updateIndexedDoc(
 	}
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *collection) deleteIndexedDoc(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	err := c.loadIndexes(ctx, txn)
+	if err != nil {
+		return err
+	}
+	for _, index := range c.indexes {
+		err = index.Delete(ctx, txn, doc)
 		if err != nil {
 			return err
 		}

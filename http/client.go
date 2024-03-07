@@ -434,28 +434,3 @@ func (c *Client) Events() events.Events {
 func (c *Client) MaxTxnRetries() int {
 	panic("client side database")
 }
-
-func (c *Client) CreateDocIndex(
-	ctx context.Context,
-	col client.Collection,
-	doc *client.Document,
-) error {
-	panic("client side database")
-}
-
-func (c *Client) UpdateDocIndex(
-	ctx context.Context,
-	col client.Collection,
-	oldDoc *client.Document,
-	newDoc *client.Document,
-) error {
-	panic("client side database")
-}
-
-func (w *Client) DeleteDocIndex(
-	ctx context.Context,
-	col client.Collection,
-	newDoc *client.Document,
-) error {
-	panic("client side database")
-}
