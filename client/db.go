@@ -215,6 +215,15 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
+	// CreateDocIndex creates an index for the given document.
+	CreateDocIndex(context.Context, Collection, *Document) error
+
+	// UpdateDocIndex updates the index for the given document.
+	UpdateDocIndex(ctx context.Context, col Collection, oldDoc, newDoc *Document) error
+
+	// DeleteDocIndex deletes the index for the given document.
+	DeleteDocIndex(context.Context, Collection, *Document) error
+
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(context.Context, string) *RequestResult
 }

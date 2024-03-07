@@ -57,8 +57,8 @@ func (db *db) dropCollectionIndex(
 	return col.DropIndex(ctx, indexName)
 }
 
-// getAllIndexes returns all the indexes in the database.
-func (db *db) getAllIndexes(
+// getAllIndexDescriptions returns all the index descriptions in the database.
+func (db *db) getAllIndexDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -107,6 +107,22 @@ func (db *db) fetchCollectionIndexDescriptions(
 	return indexDescriptions, nil
 }
 
+func (db *db) getCollectionIndexes(ctx context.Context, txn datastore.Txn, col client.Collection) ([]CollectionIndex, error) {
+	indexDescriptions, err := db.fetchCollectionIndexDescriptions(ctx, txn, col.ID())
+	if err != nil {
+		return nil, err
+	}
+	colIndexes := make([]CollectionIndex, 0, len(indexDescriptions))
+	for _, indexDesc := range indexDescriptions {
+		index, err := NewCollectionIndex(col, indexDesc)
+		if err != nil {
+			return nil, err
+		}
+		colIndexes = append(colIndexes, index)
+	}
+	return colIndexes, nil
+}
+
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	err := c.loadIndexes(ctx, txn)
 	if err != nil {
@@ -133,7 +149,8 @@ func (c *collection) updateIndexedDoc(
 	oldDoc, err := c.get(
 		ctx,
 		txn,
-		c.getPrimaryKeyFromDocID(doc.ID()), c.Definition().CollectIndexedFields(),
+		c.getPrimaryKeyFromDocID(doc.ID()),
+		c.Definition().CollectIndexedFields(),
 		false,
 	)
 	if err != nil {

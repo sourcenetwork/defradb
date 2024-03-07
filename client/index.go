@@ -10,6 +10,12 @@
 
 package client
 
+import (
+	"context"
+
+	"github.com/sourcenetwork/defradb/datastore"
+)
+
 // IndexFieldDescription describes how a field is being indexed.
 type IndexedFieldDescription struct {
 	// Name contains the name of the field.
@@ -28,6 +34,20 @@ type IndexDescription struct {
 	Fields []IndexedFieldDescription
 	// Unique indicates whether the index is unique.
 	Unique bool
+}
+
+// CollectionIndex is an interface for indexing documents in a collection.
+type CollectionIndex interface {
+	// Save indexes a document by storing it
+	Save(context.Context, datastore.Txn, *Document) error
+	// Update updates an existing document in the index
+	Update(context.Context, datastore.Txn, *Document, *Document) error
+	// Delete deletes an existing document from the index
+	Delete(context.Context, datastore.Txn, *Document) error
+	// Name returns the name of the index
+	Name() string
+	// Description returns the description of the index
+	Description() IndexDescription
 }
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.

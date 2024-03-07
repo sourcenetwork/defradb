@@ -226,3 +226,28 @@ func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
 func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
 	return w.node.WaitForPushLogFromPeerEvent(id)
 }
+
+func (w *Wrapper) CreateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	return w.client.CreateDocIndex(ctx, col, doc)
+}
+
+func (w *Wrapper) UpdateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	return w.client.UpdateDocIndex(ctx, col, oldDoc, newDoc)
+}
+
+func (w *Wrapper) DeleteDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	return w.client.DeleteDocIndex(ctx, col, doc)
+}

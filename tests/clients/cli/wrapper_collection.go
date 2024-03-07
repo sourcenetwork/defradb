@@ -364,7 +364,7 @@ func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResul
 	args := []string{"client", "collection", "docIDs"}
 	args = append(args, "--name", c.Description().Name.Value())
 
-	stdOut, _, err := c.cmd.executeStream(ctx, args)
+	stdOut, _, err := c.cmd.executeStream(args)
 	if err != nil {
 		return nil, err
 	}

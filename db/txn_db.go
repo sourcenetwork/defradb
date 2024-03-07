@@ -174,14 +174,154 @@ func (db *implicitTxnDB) GetAllIndexes(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllIndexes(ctx, txn)
+	return db.getAllIndexDescriptions(ctx, txn)
 }
 
 // GetAllIndexes gets all the indexes in the database.
 func (db *explicitTxnDB) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return db.getAllIndexes(ctx, db.txn)
+	return db.getAllIndexDescriptions(ctx, db.txn)
+}
+
+// CreateDocIndex creates a new index for the given document.
+func (db *implicitTxnDB) CreateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	indexes, err := db.getCollectionIndexes(ctx, txn, col)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := index.Save(ctx, txn, doc)
+		if err != nil {
+			return err
+		}
+	}
+	return txn.Commit(ctx)
+}
+
+// CreateDocIndex creates a new index for the given document.
+func (db *explicitTxnDB) CreateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	indexes, err := db.getCollectionIndexes(ctx, db.txn, col)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := index.Save(ctx, db.txn, doc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UpdateDocIndex updates the indexes for the given document.
+func (db *implicitTxnDB) UpdateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	indexes, err := db.getCollectionIndexes(ctx, txn, col)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := index.Update(ctx, txn, oldDoc, newDoc)
+		if err != nil {
+			return err
+		}
+	}
+	return txn.Commit(ctx)
+}
+
+// UpdateDocIndex updates the indexes for the given document.
+func (db *explicitTxnDB) UpdateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	indexes, err := db.getCollectionIndexes(ctx, db.txn, col)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := index.Update(ctx, db.txn, oldDoc, newDoc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DeleteDocIndex deletes the indexes for the given document.
+func (db *implicitTxnDB) DeleteDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	indexes, err := db.getCollectionIndexes(ctx, txn, col)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := index.Delete(ctx, txn, doc)
+		if err != nil {
+			return err
+		}
+	}
+	return txn.Commit(ctx)
+}
+
+// DeleteDocIndex deletes the indexes for the given document.
+func (db *explicitTxnDB) DeleteDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	indexes, err := db.getCollectionIndexes(ctx, db.txn, col)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := index.Delete(ctx, db.txn, doc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,

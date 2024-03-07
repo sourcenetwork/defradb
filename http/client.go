@@ -344,7 +344,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
-		result.Pub = c.execRequestSubscription(ctx, res.Body)
+		result.Pub = c.execRequestSubscription(res.Body)
 		return result
 	}
 	// ignore close errors because they have
@@ -367,7 +367,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 	return result
 }
 
-func (c *Client) execRequestSubscription(ctx context.Context, r io.ReadCloser) *events.Publisher[events.Update] {
+func (c *Client) execRequestSubscription(r io.ReadCloser) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {
@@ -432,5 +432,30 @@ func (c *Client) Events() events.Events {
 }
 
 func (c *Client) MaxTxnRetries() int {
+	panic("client side database")
+}
+
+func (c *Client) CreateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	panic("client side database")
+}
+
+func (c *Client) UpdateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	panic("client side database")
+}
+
+func (w *Client) DeleteDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	newDoc *client.Document,
+) error {
 	panic("client side database")
 }

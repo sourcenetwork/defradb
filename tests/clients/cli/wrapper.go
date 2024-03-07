@@ -365,7 +365,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 
 	result := &client.RequestResult{}
 
-	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
+	stdOut, stdErr, err := w.cmd.executeStream(args)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
@@ -377,7 +377,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
-		result.Pub = w.execRequestSubscription(ctx, buffer)
+		result.Pub = w.execRequestSubscription(buffer)
 		return result
 	}
 	data, err := io.ReadAll(buffer)
@@ -405,7 +405,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 	return result
 }
 
-func (w *Wrapper) execRequestSubscription(ctx context.Context, r io.Reader) *events.Publisher[events.Update] {
+func (w *Wrapper) execRequestSubscription(r io.Reader) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {
@@ -521,4 +521,29 @@ func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
 
 func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
 	return w.node.WaitForPushLogFromPeerEvent(id)
+}
+
+func (w *Wrapper) CreateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+) error {
+	panic("client side database")
+}
+
+func (w *Wrapper) UpdateDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	panic("client side database")
+}
+
+func (w *Wrapper) DeleteDocIndex(
+	ctx context.Context,
+	col client.Collection,
+	newDoc *client.Document,
+) error {
+	panic("client side database")
 }
