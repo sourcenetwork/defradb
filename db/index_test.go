@@ -263,7 +263,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 }
 
 func (f *indexTestFixture) getAllIndexes() (map[client.CollectionName][]client.IndexDescription, error) {
-	return f.db.getAllIndexes(f.ctx, f.txn)
+	return f.db.getAllIndexDescriptions(f.ctx, f.txn)
 }
 
 func (f *indexTestFixture) getCollectionIndexes(colID uint32) ([]client.IndexDescription, error) {

@@ -25,16 +25,9 @@ import (
 // It abstracts away common index functionality to be implemented
 // by different index types: non-unique, unique, and composite
 type CollectionIndex interface {
-	// Save indexes a document by storing it
-	Save(context.Context, datastore.Txn, *client.Document) error
-	// Update updates an existing document in the index
-	Update(context.Context, datastore.Txn, *client.Document, *client.Document) error
+	client.CollectionIndex
 	// RemoveAll removes all documents from the index
 	RemoveAll(context.Context, datastore.Txn) error
-	// Name returns the name of the index
-	Name() string
-	// Description returns the description of the index
-	Description() client.IndexDescription
 }
 
 func canConvertIndexFieldValue[T any](val any) bool {
@@ -248,6 +241,14 @@ func (index *collectionSimpleIndex) Update(
 	return index.Save(ctx, txn, newDoc)
 }
 
+func (index *collectionSimpleIndex) Delete(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	return index.deleteDocIndex(ctx, txn, doc)
+}
+
 func (index *collectionSimpleIndex) deleteDocIndex(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -356,6 +357,14 @@ func (index *collectionUniqueIndex) prepareIndexRecordToStore(
 		}
 	}
 	return key, val, nil
+}
+
+func (index *collectionUniqueIndex) Delete(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	return index.deleteDocIndex(ctx, txn, doc)
 }
 
 func (index *collectionUniqueIndex) Update(

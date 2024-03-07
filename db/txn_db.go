@@ -174,14 +174,14 @@ func (db *implicitTxnDB) GetAllIndexes(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllIndexes(ctx, txn)
+	return db.getAllIndexDescriptions(ctx, txn)
 }
 
 // GetAllIndexes gets all the indexes in the database.
 func (db *explicitTxnDB) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return db.getAllIndexes(ctx, db.txn)
+	return db.getAllIndexDescriptions(ctx, db.txn)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,

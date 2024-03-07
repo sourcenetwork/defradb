@@ -344,7 +344,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
-		result.Pub = c.execRequestSubscription(ctx, res.Body)
+		result.Pub = c.execRequestSubscription(res.Body)
 		return result
 	}
 	// ignore close errors because they have
@@ -367,7 +367,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 	return result
 }
 
-func (c *Client) execRequestSubscription(ctx context.Context, r io.ReadCloser) *events.Publisher[events.Update] {
+func (c *Client) execRequestSubscription(r io.ReadCloser) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {

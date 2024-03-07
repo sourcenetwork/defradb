@@ -247,7 +247,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return &pb.PushLogReply{}, nil
 	}
 
-	schemaRoot := string(req.Body.SchemaRoot)
 	dsKey := core.DataStoreKeyFromDocID(docID)
 
 	var txnErr error
@@ -263,24 +262,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		cols, err := store.GetCollections(
-			ctx,
-			client.CollectionFetchOptions{
-				SchemaRoot: immutable.Some(schemaRoot),
-			},
-		)
+		col, err := s.getActiveCollection(ctx, store, string(req.Body.SchemaRoot))
 		if err != nil {
-			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
-		}
-		if len(cols) == 0 {
-			return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
-		}
-		var col client.Collection
-		for _, c := range cols {
-			if col != nil && col.Name().HasValue() && !c.Name().HasValue() {
-				continue
-			}
-			col = c
+			return nil, err
 		}
 
 		// Create a new DAG service with the current transaction
@@ -311,6 +295,11 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		session.Wait()
 		bp.mergeBlocks(ctx)
 
+		err = s.syncIndexedDocs(ctx, col.WithTxn(txn), docID)
+		if err != nil {
+			return nil, err
+		}
+
 		// dagWorkers specific to the DocID will have been spawned within handleChildBlocks.
 		// Once we are done with the dag syncing process, we can get rid of those workers.
 		if s.peer.closeJob != nil {
@@ -336,6 +325,64 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
+}
+
+func (*server) getActiveCollection(
+	ctx context.Context,
+	store client.Store,
+	schemaRoot string,
+) (client.Collection, error) {
+	cols, err := store.GetCollections(
+		ctx,
+		client.CollectionFetchOptions{
+			SchemaRoot: immutable.Some(schemaRoot),
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
+	}
+	if len(cols) == 0 {
+		return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
+	}
+	var col client.Collection
+	for _, c := range cols {
+		if col != nil && col.Name().HasValue() && !c.Name().HasValue() {
+			continue
+		}
+		col = c
+	}
+	return col, nil
+}
+
+func (s *server) syncIndexedDocs(
+	ctx context.Context,
+	col client.Collection,
+	docID client.DocID,
+) error {
+	preTxnCol, err := s.db.GetCollectionByName(ctx, col.Name().Value())
+	if err != nil {
+		return err
+	}
+
+	oldDoc, err := preTxnCol.Get(ctx, docID, false)
+	isNewDoc := errors.Is(err, client.ErrDocumentNotFound)
+	if !isNewDoc && err != nil {
+		return err
+	}
+
+	doc, err := col.Get(ctx, docID, false)
+	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFound)
+	if !isDeletedDoc && err != nil {
+		return err
+	}
+
+	if isDeletedDoc {
+		return preTxnCol.DeleteDocIndex(ctx, oldDoc)
+	} else if isNewDoc {
+		return col.CreateDocIndex(ctx, doc)
+	} else {
+		return col.UpdateDocIndex(ctx, oldDoc, doc)
+	}
 }
 
 // GetHeadLog receives a get head log request
