@@ -327,7 +327,11 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
 }
 
-func (*server) getActiveCollection(ctx context.Context, store client.Store, schemaRoot string) (client.Collection, error) {
+func (*server) getActiveCollection(
+	ctx context.Context,
+	store client.Store,
+	schemaRoot string,
+) (client.Collection, error) {
 	cols, err := store.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
@@ -350,7 +354,12 @@ func (*server) getActiveCollection(ctx context.Context, store client.Store, sche
 	return col, nil
 }
 
-func (s *server) syncIndexedDocs(ctx context.Context, col client.Collection, docID client.DocID, store client.Store) error {
+func (s *server) syncIndexedDocs(
+	ctx context.Context,
+	col client.Collection,
+	docID client.DocID,
+	store client.Store,
+) error {
 	preTxnCol, err := s.db.GetCollectionByName(ctx, col.Name().Value())
 	if err != nil {
 		return err

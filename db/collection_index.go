@@ -107,7 +107,11 @@ func (db *db) fetchCollectionIndexDescriptions(
 	return indexDescriptions, nil
 }
 
-func (db *db) getCollectionIndexes(ctx context.Context, txn datastore.Txn, col client.Collection) ([]CollectionIndex, error) {
+func (db *db) getCollectionIndexes(
+	ctx context.Context,
+	txn datastore.Txn,
+	col client.Collection,
+) ([]CollectionIndex, error) {
 	indexDescriptions, err := db.fetchCollectionIndexDescriptions(ctx, txn, col.ID())
 	if err != nil {
 		return nil, err
