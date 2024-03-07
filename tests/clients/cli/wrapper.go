@@ -210,6 +210,16 @@ func (w *Wrapper) PatchSchema(
 	return err
 }
 
+func (w *Wrapper) PatchCollection(
+	ctx context.Context,
+	patch string,
+) error {
+	args := []string{"client", "collection", "patch"}
+	args = append(args, patch)
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	args := []string{"client", "schema", "set-active"}
 	args = append(args, schemaVersionID)

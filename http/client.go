@@ -161,6 +161,25 @@ func (c *Client) PatchSchema(
 	return err
 }
 
+func (c *Client) PatchCollection(
+	ctx context.Context,
+	patch string,
+) error {
+	methodURL := c.http.baseURL.JoinPath("collections")
+
+	body, err := json.Marshal(patch)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	methodURL := c.http.baseURL.JoinPath("schema", "default")
 

@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16} }
 					]
 				`,
-				ExpectedError: "a `Schema` [name] must be provided when adding a new relation field. Field: foo, Kind: 16",
+				ExpectedError: "a schema name must be provided when adding a new relation field. Field: foo, Kind: 16",
 			},
 		},
 	}

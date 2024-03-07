@@ -260,6 +260,9 @@ func performAction(
 	case SchemaPatch:
 		patchSchema(s, action)
 
+	case PatchCollection:
+		patchCollection(s, action)
+
 	case GetSchema:
 		getSchema(s, action)
 
@@ -995,6 +998,22 @@ func patchSchema(
 		}
 
 		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
+
+	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
+}
+
+func patchCollection(
+	s *state,
+	action PatchCollection,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.PatchCollection(s.ctx, action.Patch)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

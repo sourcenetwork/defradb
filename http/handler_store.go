@@ -92,6 +92,24 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
+
+	var patch string
+	err := requestJSON(req, &patch)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	err = store.PatchCollection(req.Context(), patch)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
@@ -476,6 +494,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDescribe.AddResponse(200, collectionsResponse)
 	collectionDescribe.Responses.Set("400", errorResponse)
 
+	patchCollection := openapi3.NewOperation()
+	patchCollection.OperationID = "patch_collection"
+	patchCollection.Description = "Update collection definitions"
+	patchCollection.Tags = []string{"collection"}
+	patchCollection.RequestBody = &openapi3.RequestBodyRef{
+		Value: openapi3.NewRequestBody().WithJSONSchema(openapi3.NewStringSchema()),
+	}
+	patchCollection.Responses = openapi3.NewResponses()
+	patchCollection.Responses.Set("200", successResponse)
+	patchCollection.Responses.Set("400", errorResponse)
+
 	collectionDefintionsSchema := openapi3.NewArraySchema()
 	collectionDefintionsSchema.Items = collectionDefinitionSchema
 
@@ -590,6 +619,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
+	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)

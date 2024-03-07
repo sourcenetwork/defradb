@@ -13,10 +13,13 @@ package db
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
@@ -524,6 +527,283 @@ func validateUpdateSchemaFields(
 		}
 	}
 	return hasChanged, nil
+}
+
+func (db *db) patchCollection(
+	ctx context.Context,
+	txn datastore.Txn,
+	patchString string,
+) error {
+	patch, err := jsonpatch.DecodePatch([]byte(patchString))
+	if err != nil {
+		return err
+	}
+
+	cols, err := description.GetCollections(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	existingColsByID := map[uint32]client.CollectionDescription{}
+	for _, col := range cols {
+		existingColsByID[col.ID] = col
+	}
+
+	existingDescriptionJson, err := json.Marshal(existingColsByID)
+	if err != nil {
+		return err
+	}
+
+	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
+	if err != nil {
+		return err
+	}
+
+	var newColsByID map[uint32]client.CollectionDescription
+	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&newColsByID)
+	if err != nil {
+		return err
+	}
+
+	err = db.validateCollectionChanges(existingColsByID, newColsByID)
+	if err != nil {
+		return err
+	}
+
+	for _, col := range newColsByID {
+		_, err := description.SaveCollection(ctx, txn, col)
+		if err != nil {
+			return err
+		}
+	}
+
+	return db.loadSchema(ctx, txn)
+}
+
+var patchCollectionValidators = []func(
+	map[uint32]client.CollectionDescription,
+	map[uint32]client.CollectionDescription,
+) error{
+	validateCollectionNameUnique,
+	validateSingleVersionActive,
+	validateSourcesNotModified,
+	validateIndexesNotModified,
+	validateFieldsNotModified,
+	validateIDNotZero,
+	validateIDUnique,
+	validateIDExists,
+	validateRootIDNotMutated,
+	validateSchemaVersionIDNotMutated,
+	validateCollectionNotRemoved,
+}
+
+func (db *db) validateCollectionChanges(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, validators := range patchCollectionValidators {
+		err := validators(oldColsByID, newColsByID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateCollectionNameUnique(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	names := map[string]struct{}{}
+	for _, col := range newColsByID {
+		if !col.Name.HasValue() {
+			continue
+		}
+
+		if _, ok := names[col.Name.Value()]; ok {
+			return NewErrCollectionAlreadyExists(col.Name.Value())
+		}
+		names[col.Name.Value()] = struct{}{}
+	}
+
+	return nil
+}
+
+func validateSingleVersionActive(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	rootsWithActiveCol := map[uint32]struct{}{}
+	for _, col := range newColsByID {
+		if !col.Name.HasValue() {
+			continue
+		}
+
+		if _, ok := rootsWithActiveCol[col.RootID]; ok {
+			return NewErrMultipleActiveCollectionVersions(col.Name.Value(), col.RootID)
+		}
+		rootsWithActiveCol[col.RootID] = struct{}{}
+	}
+
+	return nil
+}
+
+func validateSourcesNotModified(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		// DeepEqual is temporary, as this validation is temporary, for example soon
+		// users will be able to be able to change the migration
+		if !reflect.DeepEqual(oldCol.Sources, newCol.Sources) {
+			return NewErrCollectionSourcesCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validateIndexesNotModified(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		// DeepEqual is temporary, as this validation is temporary
+		if !reflect.DeepEqual(oldCol.Indexes, newCol.Indexes) {
+			return NewErrCollectionIndexesCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validateFieldsNotModified(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		// DeepEqual is temporary, as this validation is temporary
+		if !reflect.DeepEqual(oldCol.Fields, newCol.Fields) {
+			return NewErrCollectionFieldsCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validateIDNotZero(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		if newCol.ID == 0 {
+			return ErrCollectionIDCannotBeZero
+		}
+	}
+
+	return nil
+}
+
+func validateIDUnique(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	colIds := map[uint32]struct{}{}
+	for _, newCol := range newColsByID {
+		if _, ok := colIds[newCol.ID]; ok {
+			return NewErrCollectionIDAlreadyExists(newCol.ID)
+		}
+		colIds[newCol.ID] = struct{}{}
+	}
+
+	return nil
+}
+
+func validateIDExists(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		if _, ok := oldColsByID[newCol.ID]; !ok {
+			return NewErrAddCollectionIDWithPatch(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validateRootIDNotMutated(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		if newCol.RootID != oldCol.RootID {
+			return NewErrCollectionRootIDCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validateSchemaVersionIDNotMutated(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		if newCol.SchemaVersionID != oldCol.SchemaVersionID {
+			return NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validateCollectionNotRemoved(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+oldLoop:
+	for _, oldCol := range oldColsByID {
+		for _, newCol := range newColsByID {
+			// It is not enough to just match by the map index, in case the index does not pair
+			// up with the ID (this can happen if a user moves it)
+			if newCol.ID == oldCol.ID {
+				continue oldLoop
+			}
+		}
+
+		return NewErrCollectionsCannotBeDeleted(oldCol.ID)
+	}
+
+	return nil
 }
 
 // SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
