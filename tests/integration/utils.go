@@ -22,10 +22,6 @@ type RequestTestCase struct {
 	// of docs in stringified JSON format
 	Docs map[int][]string
 
-	// updates is a map from document index, to a list
-	// of changes in strinigied JSON format
-	Updates map[int]map[int][]string
-
 	Results []map[string]any
 
 	// The expected content of an expected error
@@ -53,21 +49,6 @@ func ExecuteRequestTestCase(
 					Doc:          doc,
 				},
 			)
-		}
-	}
-
-	for collectionIndex, docUpdates := range test.Updates {
-		for docIndex, docs := range docUpdates {
-			for _, doc := range docs {
-				actions = append(
-					actions,
-					UpdateDoc{
-						CollectionID: collectionIndex,
-						DocID:        docIndex,
-						Doc:          doc,
-					},
-				)
-			}
 		}
 	}
 
