@@ -110,8 +110,10 @@ func WithTLSKeyPath(path string) ServerOpt {
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
-	options *ServerOptions
-	server  *http.Server
+	options  *ServerOptions
+	server   *http.Server
+	listener net.Listener
+	isTLS    bool
 }
 
 // NewServer instantiates a new server with the given http.Handler.
@@ -148,25 +150,34 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-// ListenAndServe listens for and serves incoming connections.
-func (s *Server) ListenAndServe() error {
+// SetListener sets a new listener on the Server.
+func (s *Server) SetListener() (err error) {
+	s.listener, err = net.Listen("tcp", s.options.Address)
+	return err
+}
+
+// Serve serves incoming connections.
+func (s *Server) Serve() error {
 	if s.options.TLSCertPath == "" && s.options.TLSKeyPath == "" {
-		return s.listenAndServe()
+		return s.serve()
 	}
-	return s.listenAndServeTLS()
+	s.isTLS = true
+	return s.serveTLS()
 }
 
-// listenAndServe listens for and serves http connections.
-func (s *Server) listenAndServe() error {
-	listener, err := net.Listen("tcp", s.options.Address)
-	if err != nil {
-		return err
+// serve serves http connections.
+func (s *Server) serve() error {
+	if s.listener == nil {
+		return ErrNoListener
 	}
-	return s.server.Serve(listener)
+	return s.server.Serve(s.listener)
 }
 
-// listenAndServeTLS listens for and serves https connections.
-func (s *Server) listenAndServeTLS() error {
+// serveTLS serves https connections.
+func (s *Server) serveTLS() error {
+	if s.listener == nil {
+		return ErrNoListener
+	}
 	cert, err := tls.LoadX509KeyPair(s.options.TLSCertPath, s.options.TLSKeyPath)
 	if err != nil {
 		return err
@@ -177,9 +188,12 @@ func (s *Server) listenAndServeTLS() error {
 		CipherSuites: tlsCipherSuites,
 		Certificates: []tls.Certificate{cert},
 	}
-	listener, err := net.Listen("tcp", s.options.Address)
-	if err != nil {
-		return err
+	return s.server.Serve(tls.NewListener(s.listener, config))
+}
+
+func (s *Server) Address() string {
+	if s.isTLS {
+		return "https://" + s.listener.Addr().String()
 	}
-	return s.server.Serve(tls.NewListener(listener, config))
+	return "http://" + s.listener.Addr().String()
 }
