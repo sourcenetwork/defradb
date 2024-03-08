@@ -1,19 +1,20 @@
-## defradb client schema migration reload
+## defradb client schema set-active
 
-Reload the schema migrations within DefraDB
+Set the active collection version
 
 ### Synopsis
 
-Reload the schema migrations within DefraDB
+Activates all collection versions with the given schema version, and deactivates all
+those without it (if they share the same schema root).
 
 ```
-defradb client schema migration reload [flags]
+defradb client schema set-active [versionID] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for reload
+  -h, --help   help for set-active
 ```
 
 ### Options inherited from parent commands
@@ -40,5 +41,5 @@ defradb client schema migration reload [flags]
 
 ### SEE ALSO
 
-* [defradb client schema migration](defradb_client_schema_migration.md)	 - Interact with the schema migration system of a running DefraDB instance
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 
