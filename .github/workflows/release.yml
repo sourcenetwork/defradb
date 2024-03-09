@@ -71,11 +71,17 @@ jobs:
         shell: bash
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> ${GITHUB_ENV}
 
-      # Note: These saves don't actually happen right away, as if you notice there is
-      # no `dist` directory, when these are executed. The caching actually happens after
-      # the goreleaser is ran which populates the `dist` directory, which is then picked
-      # up in the job cleaning step that is ran end of this job. The step is a post-caching
-      # cleanup step which notices the target directory is now populated and caches it.
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser-pro
+          version: latest
+          args: release --clean --split ${{ env.flags }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+
       - name: Save cache on Linux
         if: matrix.os == 'ubuntu-latest'
         uses: actions/cache/save@v4
@@ -97,19 +103,6 @@ jobs:
           path: dist/windows_amd64
           key: windows-${{ env.sha_short }}
           enableCrossOsArchive: true
-
-      # This is the step that actually `populates` the `dist` directory.
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          distribution: goreleaser-pro
-          version: latest
-          args: release --clean --split ${{ env.flags }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-      # Cacheing actually happens, about here (once the above is ran).
 
   release:
     runs-on: ubuntu-latest
