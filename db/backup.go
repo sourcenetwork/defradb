@@ -122,7 +122,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getAllCollections(ctx, txn)
+		cols, err = db.getCollections(ctx, txn, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}
@@ -137,7 +137,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 	}
 	colNameCache := map[string]struct{}{}
 	for _, col := range cols {
-		colNameCache[col.Name()] = struct{}{}
+		colNameCache[col.Name().Value()] = struct{}{}
 	}
 
 	tempFile := config.Filepath + ".temp"
@@ -181,8 +181,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		// set collection
 		err = writeString(
 			f,
-			fmt.Sprintf("\"%s\":[", col.Name()),
-			fmt.Sprintf("  \"%s\": [\n", col.Name()),
+			fmt.Sprintf("\"%s\":[", col.Name().Value()),
+			fmt.Sprintf("  \"%s\": [\n", col.Name().Value()),
 			config.Pretty,
 		)
 		if err != nil {

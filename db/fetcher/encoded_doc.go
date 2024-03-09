@@ -31,7 +31,7 @@ type EncodedDocument interface {
 
 	// Properties returns a copy of the decoded property values mapped by their field
 	// description.
-	Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error)
+	Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error)
 
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
@@ -41,7 +41,7 @@ type EPTuple []encProperty
 
 // EncProperty is an encoded property of a EncodedDocument
 type encProperty struct {
-	Desc client.FieldDescription
+	Desc client.FieldDefinition
 	Raw  []byte
 
 	// Filter flag to determine if this flag
@@ -60,7 +60,7 @@ func (e encProperty) Decode() (any, error) {
 		return nil, err
 	}
 
-	return core.DecodeFieldValue(e.Desc, val)
+	return core.NormalizeFieldValue(e.Desc, val)
 }
 
 // @todo: Implement Encoded Document type
@@ -68,8 +68,8 @@ type encodedDocument struct {
 	id                   []byte
 	schemaVersionID      string
 	status               client.DocumentStatus
-	properties           map[client.FieldDescription]*encProperty
-	decodedPropertyCache map[client.FieldDescription]any
+	properties           map[client.FieldDefinition]*encProperty
+	decodedPropertyCache map[client.FieldDefinition]any
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -96,7 +96,7 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.properties = make(map[client.FieldDescription]*encProperty, 0)
+	encdoc.properties = make(map[client.FieldDefinition]*encProperty, 0)
 	encdoc.id = nil
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
@@ -172,10 +172,10 @@ func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter b
 	return doc, nil
 }
 
-func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
-	result := map[client.FieldDescription]any{}
+func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
+	result := map[client.FieldDefinition]any{}
 	if encdoc.decodedPropertyCache == nil {
-		encdoc.decodedPropertyCache = map[client.FieldDescription]any{}
+		encdoc.decodedPropertyCache = map[client.FieldDefinition]any{}
 	}
 
 	for _, prop := range encdoc.properties {

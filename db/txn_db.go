@@ -13,6 +13,9 @@ package db
 import (
 	"context"
 
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -76,15 +79,18 @@ func (db *implicitTxnDB) GetCollectionByName(ctx context.Context, name string) (
 
 // GetCollectionByName returns an existing collection within the database.
 func (db *explicitTxnDB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
-	return db.getCollectionByName(ctx, db.txn, name)
+	col, err := db.getCollectionByName(ctx, db.txn, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return col.WithTxn(db.txn), nil
 }
 
-// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
-//
-// If no matching collection is found an empty set will be returned.
-func (db *implicitTxnDB) GetCollectionsBySchemaRoot(
+// GetCollections gets all the currently defined collections.
+func (db *implicitTxnDB) GetCollections(
 	ctx context.Context,
-	schemaRoot string,
+	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
@@ -92,103 +98,24 @@ func (db *implicitTxnDB) GetCollectionsBySchemaRoot(
 	}
 	defer txn.Discard(ctx)
 
-	cols, err := db.getCollectionsBySchemaRoot(ctx, txn, schemaRoot)
+	return db.getCollections(ctx, txn, options)
+}
+
+// GetCollections gets all the currently defined collections.
+func (db *explicitTxnDB) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	cols, err := db.getCollections(ctx, db.txn, options)
 	if err != nil {
 		return nil, err
+	}
+
+	for i := range cols {
+		cols[i] = cols[i].WithTxn(db.txn)
 	}
 
 	return cols, nil
-}
-
-// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
-//
-// If no matching collection is found an empty set will be returned.
-func (db *explicitTxnDB) GetCollectionsBySchemaRoot(
-	ctx context.Context,
-	schemaRoot string,
-) ([]client.Collection, error) {
-	cols, err := db.getCollectionsBySchemaRoot(ctx, db.txn, schemaRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	return cols, nil
-}
-
-// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-//
-// If no matching collections are found an empty set will be returned.
-func (db *implicitTxnDB) GetCollectionsByVersionID(
-	ctx context.Context, schemaVersionID string,
-) ([]client.Collection, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	cols, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		collections[i] = col
-	}
-
-	return collections, nil
-}
-
-// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-//
-// If no matching collections are found an empty set will be returned.
-func (db *explicitTxnDB) GetCollectionsByVersionID(
-	ctx context.Context, schemaVersionID string,
-) ([]client.Collection, error) {
-	cols, err := db.getCollectionsByVersionID(ctx, db.txn, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		collections[i] = col
-	}
-
-	return collections, nil
-}
-
-// GetAllCollections gets all the currently defined collections.
-func (db *implicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getAllCollections(ctx, txn)
-}
-
-// GetAllCollections gets all the currently defined collections.
-func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	return db.getAllCollections(ctx, db.txn)
-}
-
-// GetSchemasByName returns the all schema versions with the given name.
-func (db *implicitTxnDB) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getSchemasByName(ctx, txn, name)
-}
-
-// GetSchemasByName returns the all schema versions with the given name.
-func (db *explicitTxnDB) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	return db.getSchemasByName(ctx, db.txn, name)
 }
 
 // GetSchemaByVersionID returns the schema description for the schema version of the
@@ -213,38 +140,28 @@ func (db *explicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID str
 	return db.getSchemaByVersionID(ctx, db.txn, versionID)
 }
 
-// GetSchemasByRoot returns the all schema versions for the given root.
-func (db *implicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+// GetSchemas returns all schema versions that currently exist within
+// this [Store].
+func (db *implicitTxnDB) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return db.getSchemasByRoot(ctx, txn, root)
+	return db.getSchemas(ctx, txn, options)
 }
 
-// GetSchemasByRoot returns the all schema versions for the given root.
-func (db *explicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
-	return db.getSchemasByRoot(ctx, db.txn, root)
-}
-
-// GetAllSchemas returns all schema versions that currently exist within
+// GetSchemas returns all schema versions that currently exist within
 // this [Store].
-func (db *implicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getAllSchemas(ctx, txn)
-}
-
-// GetAllSchemas returns all schema versions that currently exist within
-// this [Store].
-func (db *explicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	return db.getAllSchemas(ctx, db.txn)
+func (db *explicitTxnDB) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
+	return db.getSchemas(ctx, db.txn, options)
 }
 
 // GetAllIndexes gets all the indexes in the database.
@@ -257,14 +174,14 @@ func (db *implicitTxnDB) GetAllIndexes(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllIndexes(ctx, txn)
+	return db.getAllIndexDescriptions(ctx, txn)
 }
 
 // GetAllIndexes gets all the indexes in the database.
 func (db *explicitTxnDB) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return db.getAllIndexes(ctx, db.txn)
+	return db.getAllIndexDescriptions(ctx, db.txn)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -310,14 +227,19 @@ func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
+func (db *implicitTxnDB) PatchSchema(
+	ctx context.Context,
+	patchString string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchSchema(ctx, txn, patchString, setAsDefaultVersion)
+	err = db.patchSchema(ctx, txn, patchString, migration, setAsDefaultVersion)
 	if err != nil {
 		return err
 	}
@@ -336,18 +258,23 @@ func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, se
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
-	return db.patchSchema(ctx, db.txn, patchString, setAsDefaultVersion)
+func (db *explicitTxnDB) PatchSchema(
+	ctx context.Context,
+	patchString string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
+	return db.patchSchema(ctx, db.txn, patchString, migration, setAsDefaultVersion)
 }
 
-func (db *implicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (db *implicitTxnDB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.setDefaultSchemaVersion(ctx, txn, schemaVersionID)
+	err = db.setActiveSchemaVersion(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -355,8 +282,8 @@ func (db *implicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVers
 	return txn.Commit(ctx)
 }
 
-func (db *explicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return db.setDefaultSchemaVersion(ctx, db.txn, schemaVersionID)
+func (db *explicitTxnDB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return db.setActiveSchemaVersion(ctx, db.txn, schemaVersionID)
 }
 
 func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
@@ -366,7 +293,7 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 	}
 	defer txn.Discard(ctx)
 
-	err = db.lensRegistry.SetMigration(ctx, cfg)
+	err = db.setMigration(ctx, txn, cfg)
 	if err != nil {
 		return err
 	}
@@ -375,17 +302,22 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 }
 
 func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	return db.lensRegistry.SetMigration(ctx, cfg)
+	return db.setMigration(ctx, db.txn, cfg)
 }
 
-func (db *implicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+func (db *implicitTxnDB) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	defs, err := db.addView(ctx, txn, query, sdl)
+	defs, err := db.addView(ctx, txn, query, sdl, transform)
 	if err != nil {
 		return nil, err
 	}
@@ -398,8 +330,13 @@ func (db *implicitTxnDB) AddView(ctx context.Context, query string, sdl string) 
 	return defs, nil
 }
 
-func (db *explicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
-	return db.addView(ctx, db.txn, query, sdl)
+func (db *explicitTxnDB) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	return db.addView(ctx, db.txn, query, sdl, transform)
 }
 
 // BasicImport imports a json dataset.

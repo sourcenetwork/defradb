@@ -13,27 +13,26 @@ package lens
 import (
 	"context"
 
-	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/description"
 )
 
 // schemaHistoryLink represents an item in a particular schema's history, it
 // links to the previous and next version items if they exist.
 type schemaHistoryLink struct {
-	// The schema version id of this history item.
-	schemaVersionID string
+	// The collection as this point in history.
+	collection *client.CollectionDescription
 
-	// The history link to the next schema version, if there is one
-	// (for the most recent schema version this will be None).
-	next immutable.Option[*schemaHistoryLink]
+	// The history link to the next schema versions, if there are some
+	// (for the most recent schema version this will be empty).
+	next []*schemaHistoryLink
 
-	// The history link to the previous schema version, if there is
-	// one (for the initial schema version this will be None).
-	previous immutable.Option[*schemaHistoryLink]
+	// The history link to the previous schema versions, if there are
+	// some (for the initial schema version this will be empty).
+	previous []*schemaHistoryLink
 }
 
 // targetedSchemaHistoryLink represents an item in a particular schema's history, it
@@ -42,8 +41,8 @@ type schemaHistoryLink struct {
 // It also contains a vector which describes the distance and direction to the
 // target schema version (given as an input param on construction).
 type targetedSchemaHistoryLink struct {
-	// The schema version id of this history item.
-	schemaVersionID string
+	// The collection as this point in history.
+	collection *client.CollectionDescription
 
 	// The link to next schema version, if there is one
 	// (for the most recent schema version this will be None).
@@ -69,11 +68,10 @@ type targetedSchemaHistoryLink struct {
 func getTargetedSchemaHistory(
 	ctx context.Context,
 	txn datastore.Txn,
-	lensConfigs []client.LensConfig,
 	schemaRoot string,
 	targetSchemaVersionID string,
 ) (map[schemaVersionID]*targetedSchemaHistoryLink, error) {
-	history, err := getSchemaHistory(ctx, txn, lensConfigs, schemaRoot)
+	history, err := getSchemaHistory(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -81,18 +79,22 @@ func getTargetedSchemaHistory(
 	result := map[schemaVersionID]*targetedSchemaHistoryLink{}
 
 	for _, item := range history {
-		result[item.schemaVersionID] = &targetedSchemaHistoryLink{
-			schemaVersionID: item.schemaVersionID,
+		result[item.collection.SchemaVersionID] = &targetedSchemaHistoryLink{
+			collection: item.collection,
 		}
 	}
 
 	for _, item := range result {
-		schemaHistoryLink := history[item.schemaVersionID]
-		nextHistoryItem := schemaHistoryLink.next
-		if !nextHistoryItem.HasValue() {
+		schemaHistoryLink := history[item.collection.ID]
+		nextHistoryItems := schemaHistoryLink.next
+		if len(nextHistoryItems) == 0 {
 			continue
 		}
-		nextItem := result[nextHistoryItem.Value().schemaVersionID]
+
+		// WARNING: This line assumes that each collection can only have a single source, and so
+		// just takes the first item.  If/when collections can have multiple sources we will need to change
+		// this slightly.
+		nextItem := result[nextHistoryItems[0].collection.SchemaVersionID]
 		item.next = immutable.Some(nextItem)
 		nextItem.previous = immutable.Some(item)
 	}
@@ -100,7 +102,7 @@ func getTargetedSchemaHistory(
 	orphanSchemaVersions := map[string]struct{}{}
 
 	for schemaVersion, item := range result {
-		if item.schemaVersionID == targetSchemaVersionID {
+		if item.collection.SchemaVersionID == targetSchemaVersionID {
 			continue
 		}
 		if item.targetVector != 0 {
@@ -122,7 +124,7 @@ func getTargetedSchemaHistory(
 				wasFound = true
 				break
 			}
-			if currentItem.schemaVersionID == targetSchemaVersionID {
+			if currentItem.collection.SchemaVersionID == targetSchemaVersionID {
 				wasFound = true
 				break
 			}
@@ -143,7 +145,7 @@ func getTargetedSchemaHistory(
 					wasFound = true
 					break
 				}
-				if currentItem.schemaVersionID == targetSchemaVersionID {
+				if currentItem.collection.SchemaVersionID == targetSchemaVersionID {
 					wasFound = true
 					break
 				}
@@ -169,11 +171,6 @@ func getTargetedSchemaHistory(
 	return result, nil
 }
 
-type schemaHistoryPairing struct {
-	schemaVersionID     string
-	nextSchemaVersionID string
-}
-
 // getSchemaHistory returns the history of the schema of the given id as linked list
 // with each item mapped by schema version id.
 //
@@ -182,96 +179,35 @@ type schemaHistoryPairing struct {
 func getSchemaHistory(
 	ctx context.Context,
 	txn datastore.Txn,
-	lensConfigs []client.LensConfig,
 	schemaRoot string,
-) (map[schemaVersionID]*schemaHistoryLink, error) {
-	pairings := map[string]*schemaHistoryPairing{}
-
-	for _, config := range lensConfigs {
-		pairings[config.SourceSchemaVersionID] = &schemaHistoryPairing{
-			schemaVersionID:     config.SourceSchemaVersionID,
-			nextSchemaVersionID: config.DestinationSchemaVersionID,
-		}
-
-		if _, ok := pairings[config.DestinationSchemaVersionID]; !ok {
-			pairings[config.DestinationSchemaVersionID] = &schemaHistoryPairing{
-				schemaVersionID: config.DestinationSchemaVersionID,
-			}
-		}
-	}
-
-	prefix := core.NewSchemaHistoryKey(schemaRoot, "")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
-	})
+) (map[collectionID]*schemaHistoryLink, error) {
+	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	for res := range q.Next() {
-		// check for Done on context first
-		select {
-		case <-ctx.Done():
-			// we've been cancelled! ;)
-			return nil, q.Close()
-		default:
-			// noop, just continue on the with the for loop
-		}
+	history := map[collectionID]*schemaHistoryLink{}
 
-		if res.Error != nil {
-			err = q.Close()
-			if err != nil {
-				return nil, err
-			}
-			return nil, res.Error
-		}
-
-		key, err := core.NewSchemaHistoryKeyFromString(res.Key)
-		if err != nil {
-			err = q.Close()
-			if err != nil {
-				return nil, err
-			}
-			return nil, err
-		}
-
-		// The local schema version history takes priority over and migration-defined history
-		// and overwrites whatever already exists in the pairings (if any)
-		pairings[key.PreviousSchemaVersionID] = &schemaHistoryPairing{
-			schemaVersionID:     key.PreviousSchemaVersionID,
-			nextSchemaVersionID: string(res.Value),
-		}
-
-		if _, ok := pairings[string(res.Value)]; !ok {
-			pairings[string(res.Value)] = &schemaHistoryPairing{
-				schemaVersionID: string(res.Value),
-			}
-		}
-	}
-
-	err = q.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	history := map[schemaVersionID]*schemaHistoryLink{}
-
-	for _, pairing := range pairings {
+	for _, c := range cols {
+		col := c
 		// Convert the temporary types to the cleaner return type:
-		history[pairing.schemaVersionID] = &schemaHistoryLink{
-			schemaVersionID: pairing.schemaVersionID,
+		history[col.ID] = &schemaHistoryLink{
+			collection: &col,
 		}
 	}
 
-	for _, pairing := range pairings {
-		src := history[pairing.schemaVersionID]
+	for _, historyItem := range history {
+		for _, source := range historyItem.collection.CollectionSources() {
+			src := history[source.SourceCollectionID]
+			historyItem.previous = append(
+				historyItem.next,
+				src,
+			)
 
-		// Use the internal pairings to set the next/previous links. This must be
-		// done after the `history` map has been fully populated, else `src` and
-		// `next` may not yet have been added to the map.
-		if next, hasNext := history[pairing.nextSchemaVersionID]; hasNext {
-			src.next = immutable.Some(next)
-			next.previous = immutable.Some(src)
+			src.next = append(
+				src.next,
+				historyItem,
+			)
 		}
 	}
 

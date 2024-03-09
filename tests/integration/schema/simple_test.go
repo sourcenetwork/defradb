@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
-	schemaVersionID := "bafkreicavrlknsnfqey6nfwthyiguvv4dqcwhvywl5j6socx3vvjt4zqte"
+	schemaVersionID := "bafkreiegrxzoqa3mdgjsfz2vuatbpjbnqxub6yi23dvdumjpt4g3nhiwzq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -50,7 +50,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersionID,
 						Root:      schemaVersionID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,

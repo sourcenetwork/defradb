@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreig54q5pw7elljueepsyux4qgdspm3ozct5dqocr5b2kufpjwb2mae"
+	schemaVersionID := "bafkreib2rcnzkjrwabw6kx7qnncfuylugukoosilmb2dct5qylmgec7fdu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -38,15 +38,14 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersionID,
 						Root:      schemaVersionID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name: "points",
-								ID:   1,
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.PN_COUNTER,
 							},
 						},
@@ -60,7 +59,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreibaeypr2i2eg3kozq3mlfsibgtolqlrcozo5ufqfb725dfq3hx43e"
+	schemaVersionID := "bafkreiddz4h2oqi3qzfeqfbjt3wpwrvtm62r4l6uche2nxyullmlmezrsq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -78,15 +77,14 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersionID,
 						Root:      schemaVersionID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name: "points",
-								ID:   1,
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.PN_COUNTER,
 							},
 						},

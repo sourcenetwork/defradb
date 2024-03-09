@@ -53,7 +53,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	default:
 		// default to all collections
-		collections, err = p.db.WithTxn(txn).GetAllCollections(ctx)
+		collections, err = p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -94,7 +94,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	for _, col := range added {
 		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx)
 		if err != nil {
-			return NewErrReplicatorDocID(err, col.Name(), rep.Info.ID)
+			return NewErrReplicatorDocID(err, col.Name().Value(), rep.Info.ID)
 		}
 		p.pushToReplicator(ctx, txn, col, keysCh, rep.Info.ID)
 	}
@@ -139,7 +139,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 
 	default:
 		// default to all collections
-		collections, err = p.db.WithTxn(txn).GetAllCollections(ctx)
+		collections, err = p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}

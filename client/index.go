@@ -10,22 +10,18 @@
 
 package client
 
-// IndexDirection is the direction of an index.
-type IndexDirection string
+import (
+	"context"
 
-const (
-	// Ascending is the value to use for an ascending fields
-	Ascending IndexDirection = "ASC"
-	// Descending is the value to use for an descending fields
-	Descending IndexDirection = "DESC"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // IndexFieldDescription describes how a field is being indexed.
 type IndexedFieldDescription struct {
 	// Name contains the name of the field.
 	Name string
-	// Direction contains the direction of the index.
-	Direction IndexDirection
+	// Descending indicates whether the field is indexed in descending order.
+	Descending bool
 }
 
 // IndexDescription describes an index.
@@ -40,21 +36,48 @@ type IndexDescription struct {
 	Unique bool
 }
 
+// CollectionIndex is an interface for indexing documents in a collection.
+type CollectionIndex interface {
+	// Save indexes a document by storing it
+	Save(context.Context, datastore.Txn, *Document) error
+	// Update updates an existing document in the index
+	Update(context.Context, datastore.Txn, *Document, *Document) error
+	// Delete deletes an existing document from the index
+	Delete(context.Context, datastore.Txn, *Document) error
+	// Name returns the name of the index
+	Name() string
+	// Description returns the description of the index
+	Description() IndexDescription
+}
+
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
-func (d CollectionDescription) CollectIndexedFields(schema *SchemaDescription) []FieldDescription {
+func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 	fieldsMap := make(map[string]bool)
-	fields := make([]FieldDescription, 0, len(d.Indexes))
-	for _, index := range d.Indexes {
+	fields := make([]FieldDefinition, 0, len(d.Description.Indexes))
+	for _, index := range d.Description.Indexes {
 		for _, field := range index.Fields {
-			for i := range schema.Fields {
-				colField := schema.Fields[i]
-				if field.Name == colField.Name && !fieldsMap[field.Name] {
-					fieldsMap[field.Name] = true
-					fields = append(fields, colField)
-					break
-				}
+			if fieldsMap[field.Name] {
+				// If the FieldDescription has already been added to the result do not add it a second time
+				// this can happen if a field is referenced by multiple indexes
+				continue
+			}
+			colField, ok := d.GetFieldByName(field.Name)
+			if ok {
+				fields = append(fields, colField)
 			}
 		}
 	}
 	return fields
+}
+
+// GetIndexesOnField returns all indexes that are indexing the given field.
+// If the field is not the first field of a composite index, the index is not returned.
+func (d CollectionDescription) GetIndexesOnField(fieldName string) []IndexDescription {
+	result := []IndexDescription{}
+	for _, index := range d.Indexes {
+		if index.Fields[0].Name == fieldName {
+			result = append(result, index)
+		}
+	}
+	return result
 }

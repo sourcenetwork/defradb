@@ -36,7 +36,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 					]
 				`,
 			},
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: "",
 				ExpectedError:   "schema version ID can't be empty",
 			},
@@ -63,7 +63,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 					]
 				`,
 			},
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: "does not exist",
 				ExpectedError:   "datastore: key not found",
 			},
@@ -91,8 +91,8 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.SetDefaultSchemaVersion{
-				SchemaVersionID: "bafkreig3zt63qt7bkji47etyu2sqtzroa3tcfdxgwqc3ka2ijy63refq3a",
+			testUtils.SetActiveSchemaVersion{
+				SchemaVersionID: "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -128,8 +128,8 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.SetDefaultSchemaVersion{
-				SchemaVersionID: "bafkreiclwd4nrvczrzy7aj52olojyzvgm4ht6jpktwpxuqej5wk3ocxpqi",
+			testUtils.SetActiveSchemaVersion{
+				SchemaVersionID: "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4",
 			},
 			testUtils.Request{
 				Request: `query {

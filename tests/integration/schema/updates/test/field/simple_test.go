@@ -102,7 +102,7 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {
-							"ID":1, "Name": "name", "Kind": 11, "Schema":"","RelationName":"","Typ":1,"RelationType":0
+							"Name": "name", "Kind": 11, "Schema":"", "IsPrimaryRelation":false, "RelationName":"", "Typ":1
 						} }
 					]
 				`,
@@ -127,7 +127,7 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name", "value": {
-							"ID":1, "Kind": 11, "Schema":"","RelationName":"","Typ":1,"RelationType":0
+							"Kind": 11, "Schema":"", "IsPrimaryRelation":false, "RelationName":"", "Typ":1
 						} }
 					]
 				`,

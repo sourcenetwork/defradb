@@ -14,22 +14,17 @@ package client
 type Field interface {
 	Name() string
 	Type() CType //TODO Abstract into a Field Type interface
-	SchemaType() string
 }
 
 type simpleField struct {
-	name       string
-	crdtType   CType
-	schemaType string
+	name     string
+	crdtType CType
 }
 
-func (doc *Document) newField(t CType, name string, schemaType ...string) Field {
+func (doc *Document) newField(t CType, name string) Field {
 	f := simpleField{
 		name:     name,
 		crdtType: t,
-	}
-	if len(schemaType) > 0 {
-		f.schemaType = schemaType[0]
 	}
 	return f
 }
@@ -42,9 +37,4 @@ func (field simpleField) Name() string {
 // Type returns the type of the field.
 func (field simpleField) Type() CType {
 	return field.crdtType
-}
-
-// SchemaType returns the schema type of the field.
-func (field simpleField) SchemaType() string {
-	return field.schemaType
 }

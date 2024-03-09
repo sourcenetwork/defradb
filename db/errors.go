@@ -28,7 +28,6 @@ const (
 	errSchemaRootDoesntMatch              string = "SchemaRoot does not match existing"
 	errCannotModifySchemaName             string = "modifying the schema name is not supported"
 	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
-	errCannotSetFieldID                   string = "explicitly setting a field ID value is not supported"
 	errRelationalFieldMissingSchema       string = "a `Schema` [name] must be provided when adding a new relation field"
 	errRelationalFieldInvalidRelationType string = "invalid RelationType"
 	errRelationalFieldMissingIDField      string = "missing id field for relation object field"
@@ -52,7 +51,6 @@ const (
 	errNonZeroIndexIDProvided             string = "non-zero index ID provided"
 	errIndexFieldMissingName              string = "index field missing name"
 	errIndexFieldMissingDirection         string = "index field missing direction"
-	errIndexSingleFieldWrongDirection     string = "wrong direction for index with a single field"
 	errIndexWithNameAlreadyExists         string = "index with name already exists"
 	errInvalidStoredIndex                 string = "invalid stored index"
 	errInvalidStoredIndexKey              string = "invalid stored index key"
@@ -69,7 +67,6 @@ const (
 	errInvalidFieldValue                  string = "invalid field value"
 	errUnsupportedIndexFieldType          string = "unsupported index field type"
 	errIndexDescriptionHasNoFields        string = "index description has no fields"
-	errIndexDescHasNonExistingField       string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist        string = "The given field or alias to field does not exist"
 	errCreateFile                         string = "failed to create file"
 	errRemoveFile                         string = "failed to remove file"
@@ -86,28 +83,28 @@ const (
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
-	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
+	errCanNotIndexNonUniqueFields         string = "can not index a doc's field(s) that violates unique index"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
 var (
-	ErrFailedToGetCollection          = errors.New(errFailedToGetCollection)
-	ErrSubscriptionsNotAllowed        = errors.New("server does not accept subscriptions")
-	ErrInvalidFilter                  = errors.New("invalid filter")
-	ErrCollectionAlreadyExists        = errors.New("collection already exists")
-	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
-	ErrSchemaNameEmpty                = errors.New("schema name can't be empty")
-	ErrSchemaRootEmpty                = errors.New("schema root can't be empty")
-	ErrSchemaVersionIDEmpty           = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                       = errors.New("key cannot be empty")
-	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
-	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
-	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
-	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
-	ErrCorruptedIndex                 = errors.New(errCorruptedIndex)
-	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
-	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
-	ErrInvalidViewQuery               = errors.New(errInvalidViewQuery)
+	ErrFailedToGetCollection      = errors.New(errFailedToGetCollection)
+	ErrSubscriptionsNotAllowed    = errors.New("server does not accept subscriptions")
+	ErrInvalidFilter              = errors.New("invalid filter")
+	ErrCollectionAlreadyExists    = errors.New("collection already exists")
+	ErrCollectionNameEmpty        = errors.New("collection name can't be empty")
+	ErrSchemaNameEmpty            = errors.New("schema name can't be empty")
+	ErrSchemaRootEmpty            = errors.New("schema root can't be empty")
+	ErrSchemaVersionIDEmpty       = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                   = errors.New("key cannot be empty")
+	ErrCannotSetVersionID         = errors.New(errCannotSetVersionID)
+	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName      = errors.New(errIndexFieldMissingName)
+	ErrCorruptedIndex             = errors.New(errCorruptedIndex)
+	ErrExpectedJSONObject         = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray          = errors.New(errExpectedJSONArray)
+	ErrInvalidViewQuery           = errors.New(errInvalidViewQuery)
+	ErrCanNotIndexNonUniqueFields = errors.New(errCanNotIndexNonUniqueFields)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -237,28 +234,11 @@ func NewErrCannotModifySchemaName(existingName, proposedName string) error {
 	)
 }
 
-func NewErrCannotSetFieldID(name string, id client.FieldID) error {
-	return errors.New(
-		errCannotSetFieldID,
-		errors.NewKV("Field", name),
-		errors.NewKV("ID", id),
-	)
-}
-
 func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) error {
 	return errors.New(
 		errRelationalFieldMissingSchema,
 		errors.NewKV("Field", name),
 		errors.NewKV("Kind", kind),
-	)
-}
-
-func NewErrRelationalFieldInvalidRelationType(name string, expected any, actual client.RelationType) error {
-	return errors.New(
-		errRelationalFieldInvalidRelationType,
-		errors.NewKV("Field", name),
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
 	)
 }
 
@@ -307,19 +287,6 @@ func NewErrRelatedFieldKindMismatch(relationName string, expected client.FieldKi
 	)
 }
 
-func NewErrRelatedFieldRelationTypeMismatch(
-	relationName string,
-	expected client.RelationType,
-	actual client.RelationType,
-) error {
-	return errors.New(
-		errRelatedFieldRelationTypeMismatch,
-		errors.NewKV("RelationName", relationName),
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
-	)
-}
-
 func NewErrRelationalFieldIDInvalidType(name string, expected, actual client.FieldKind) error {
 	return errors.New(
 		errRelationalFieldIDInvalidType,
@@ -356,10 +323,9 @@ func NewErrDuplicateField(name string) error {
 	return errors.New(errDuplicateField, errors.NewKV("Name", name))
 }
 
-func NewErrCannotMutateField(id client.FieldID, name string) error {
+func NewErrCannotMutateField(name string) error {
 	return errors.New(
 		errCannotMutateField,
-		errors.NewKV("ID", id),
 		errors.NewKV("ProposedName", name),
 	)
 }
@@ -373,11 +339,10 @@ func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error 
 	)
 }
 
-func NewErrCannotDeleteField(name string, id client.FieldID) error {
+func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
 		errors.NewKV("Name", name),
-		errors.NewKV("ID", id),
 	)
 }
 
@@ -465,16 +430,6 @@ func NewErrIndexDescHasNoFields(desc client.IndexDescription) error {
 	return errors.New(
 		errIndexDescriptionHasNoFields,
 		errors.NewKV("Description", desc),
-	)
-}
-
-// NewErrIndexDescHasNonExistingField returns a new error indicating that the given index
-// description points to a field that does not exist.
-func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName string) error {
-	return errors.New(
-		errIndexDescHasNonExistingField,
-		errors.NewKV("Description", desc),
-		errors.NewKV("Field name", fieldName),
 	)
 }
 
@@ -566,13 +521,12 @@ func NewErrIndexDoesNotMatchName(index, name string) error {
 	)
 }
 
-func NewErrCanNotIndexNonUniqueField(docID, fieldName string, value any) error {
-	return errors.New(
-		errCanNotIndexNonUniqueField,
-		errors.NewKV("DocID", docID),
-		errors.NewKV("Field name", fieldName),
-		errors.NewKV("Field value", value),
-	)
+func NewErrCanNotIndexNonUniqueFields(docID string, fieldValues ...errors.KV) error {
+	kvPairs := make([]errors.KV, 0, len(fieldValues)+1)
+	kvPairs = append(kvPairs, errors.NewKV("DocID", docID))
+	kvPairs = append(kvPairs, fieldValues...)
+
+	return errors.New(errCanNotIndexNonUniqueFields, kvPairs...)
 }
 
 func NewErrInvalidViewQueryCastFailed(query string) error {

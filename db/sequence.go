@@ -22,17 +22,13 @@ import (
 )
 
 type sequence struct {
-	key core.SequenceKey
+	key core.Key
 	val uint64
 }
 
-func (db *db) getSequence(ctx context.Context, txn datastore.Txn, key string) (*sequence, error) {
-	if key == "" {
-		return nil, ErrKeyEmpty
-	}
-	seqKey := core.NewSequenceKey(key)
+func (db *db) getSequence(ctx context.Context, txn datastore.Txn, key core.Key) (*sequence, error) {
 	seq := &sequence{
-		key: seqKey,
+		key: key,
 		val: uint64(0),
 	}
 

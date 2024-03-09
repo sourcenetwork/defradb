@@ -15,7 +15,9 @@ import (
 	"net/http/httptest"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -36,7 +38,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *net.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node, http.ServerOptions{})
+	handler, err := http.NewHandler(node)
 	if err != nil {
 		return nil, err
 	}
@@ -95,16 +97,26 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
-func (w *Wrapper) PatchSchema(ctx context.Context, patch string, setAsDefaultVersion bool) error {
-	return w.client.PatchSchema(ctx, patch, setAsDefaultVersion)
+func (w *Wrapper) PatchSchema(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
+	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
 }
 
-func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetDefaultSchemaVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
 }
 
-func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
-	return w.client.AddView(ctx, query, sdl)
+func (w *Wrapper) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	return w.client.AddView(ctx, query, sdl, transform)
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
@@ -119,32 +131,22 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	return w.client.GetCollectionByName(ctx, name)
 }
 
-func (w *Wrapper) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
-	return w.client.GetCollectionsBySchemaRoot(ctx, schemaRoot)
-}
-
-func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
-	return w.client.GetCollectionsByVersionID(ctx, versionId)
-}
-
-func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	return w.client.GetAllCollections(ctx)
-}
-
-func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemasByName(ctx, name)
+func (w *Wrapper) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	return w.client.GetCollections(ctx, options)
 }
 
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
 	return w.client.GetSchemaByVersionID(ctx, versionID)
 }
 
-func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemasByRoot(ctx, root)
-}
-
-func (w *Wrapper) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	return w.client.GetAllSchemas(ctx)
+func (w *Wrapper) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
+	return w.client.GetSchemas(ctx, options)
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

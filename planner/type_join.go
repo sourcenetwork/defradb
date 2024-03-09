@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 /*
@@ -81,15 +80,14 @@ func (p *Planner) makeTypeIndexJoin(
 	var joinPlan planNode
 	var err error
 
-	typeFieldDesc, ok := parent.collection.Schema().GetField(subType.Name)
+	typeFieldDesc, ok := parent.collection.Schema().GetFieldByName(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
-	meta := typeFieldDesc.RelationType
-	if schema.IsOne(meta) { // One-to-One, or One side of One-to-Many
+	if typeFieldDesc.Kind == client.FieldKind_FOREIGN_OBJECT { // One-to-One, or One side of One-to-Many
 		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
-	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
+	} else if typeFieldDesc.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
 		return nil, ErrUnknownRelationType
@@ -222,9 +220,6 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 	}
 }
 
-// Merge implements mergeNode
-func (n *typeIndexJoin) Merge() bool { return true }
-
 // typeJoinOne is the plan node for a type index join
 // where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
@@ -244,14 +239,10 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := parent.collection.Schema().GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.collection.Schema().GetFieldByName(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
-
-	// determine relation direction (primary or secondary?)
-	// check if the field we're querying is the primary side of the relation
-	isPrimary := subTypeFieldDesc.RelationType.IsSet(client.Relation_Type_Primary)
 
 	subTypeCol, err := p.db.GetCollectionByName(p.ctx, subType.CollectionName)
 	if err != nil {
@@ -261,7 +252,7 @@ func (p *Planner) makeTypeJoinOne(
 
 	subTypeField, subTypeFieldNameFound := subTypeCol.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
-		parent.collection.Name(),
+		parent.collection.Name().Value(),
 		subTypeFieldDesc.Name,
 		&subTypeSchema,
 	)
@@ -270,7 +261,7 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	var secondaryFieldIndex immutable.Option[int]
-	if !isPrimary {
+	if !subTypeFieldDesc.IsPrimaryRelation {
 		idFieldName := subTypeFieldDesc.Name + request.RelatedObjectID
 		secondaryFieldIndex = immutable.Some(
 			parent.documentMapping.FirstIndexOfName(idFieldName),
@@ -292,7 +283,7 @@ func (p *Planner) makeTypeJoinOne(
 			subSelect:           subType,
 			rootName:            subTypeField.Name,
 			subTypeName:         subType.Name,
-			isSecondary:         !isPrimary,
+			isSecondary:         !subTypeFieldDesc.IsPrimaryRelation,
 			secondaryFieldIndex: secondaryFieldIndex,
 			secondaryFetchLimit: 1,
 			dir:                 dir,
@@ -359,7 +350,7 @@ func prepareScanNodeFilterForTypeJoin(
 		filter.RemoveField(scan.filter, subType.Field)
 	} else {
 		var parentFilter *mapper.Filter
-		scan.filter, parentFilter = filter.SplitByField(scan.filter, subType.Field)
+		scan.filter, parentFilter = filter.SplitByFields(scan.filter, subType.Field)
 		if parentFilter != nil {
 			if parent.filter == nil {
 				parent.filter = parentFilter
@@ -383,7 +374,7 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, err
 	}
 
-	subTypeFieldDesc, ok := parent.collection.Schema().GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.collection.Schema().GetFieldByName(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -396,7 +387,7 @@ func (p *Planner) makeTypeJoinMany(
 
 	rootField, rootNameFound := subTypeCol.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
-		parent.collection.Name(),
+		parent.collection.Name().Value(),
 		subTypeFieldDesc.Name,
 		&subTypeSchema,
 	)
@@ -606,12 +597,12 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 
 func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	fieldFilter *mapper.Filter,
-	field client.FieldDescription,
+	index client.IndexDescription,
 ) error {
 	subScan := getScanNode(join.subType)
 	subScan.tryAddField(join.rootName + request.RelatedObjectID)
 	subScan.filter = fieldFilter
-	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
+	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 
 	join.invert()
 

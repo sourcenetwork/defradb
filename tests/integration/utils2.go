@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/bxcodec/faker/support/slice"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -79,6 +80,8 @@ const (
 	// so we explicitly set it to a low value.
 	lensPoolSize = 2
 )
+
+const testJSONFile = "/test.json"
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
@@ -260,17 +263,17 @@ func performAction(
 	case GetSchema:
 		getSchema(s, action)
 
-	case SetDefaultSchemaVersion:
-		setDefaultSchemaVersion(s, action)
+	case GetCollections:
+		getCollections(s, action)
+
+	case SetActiveSchemaVersion:
+		setActiveSchemaVersion(s, action)
 
 	case CreateView:
 		createView(s, action)
 
 	case ConfigureMigration:
 		configureMigration(s, action)
-
-	case GetMigrations:
-		getMigrations(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -344,7 +347,7 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 		if err != nil {
 			s.t.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name.Value()], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -352,7 +355,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	collections := getNodeCollections(action.NodeID, s.collections)
 	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
 	for _, col := range collections[0] {
-		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name()) {
+		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name().Value()) {
 			defs = append(defs, col.Definition())
 		}
 	}
@@ -661,19 +664,18 @@ func restartNodes(
 			continue
 		}
 
-		key := s.nodePrivateKeys[i]
-		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		cfg.Net.P2PAddress = s.nodeAddresses[i].Addrs[0].String()
+		var addresses []string
+		for _, addr := range s.nodeAddresses[i].Addrs {
+			addresses = append(addresses, addr.String())
+		}
+
+		nodeOpts := s.nodeConfigs[i]
+		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
 		var n *net.Node
-		n, err = net.NewNode(
-			s.ctx,
-			db,
-			net.WithConfig(&cfg),
-			net.WithPrivateKey(key),
-		)
+		n, err = net.NewNode(s.ctx, db, nodeOpts...)
 		require.NoError(s.t, err)
 
 		if err := n.Start(); err != nil {
@@ -734,12 +736,12 @@ func refreshCollections(
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.GetAllCollections(s.ctx)
+		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
-				if collection.Name() == collectionName {
+				if collection.Name().Value() == collectionName {
 					s.collections[nodeID][i] = collection
 					break
 				}
@@ -762,21 +764,17 @@ func configureNode(
 		return
 	}
 
-	cfg := action()
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
 	require.NoError(s.t, err)
 
+	nodeOpts := action()
+	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
+
 	var n *net.Node
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-	n, err = net.NewNode(
-		s.ctx,
-		db,
-		net.WithConfig(&cfg),
-		net.WithPrivateKey(privateKey),
-	)
+	n, err = net.NewNode(s.ctx, db, nodeOpts...)
 	require.NoError(s.t, err)
 
 	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", n.PeerInfo()))
@@ -786,8 +784,7 @@ func configureNode(
 	}
 
 	s.nodeAddresses = append(s.nodeAddresses, n.PeerInfo())
-	s.nodeConfigs = append(s.nodeConfigs, cfg)
-	s.nodePrivateKeys = append(s.nodePrivateKeys, privateKey)
+	s.nodeConfigs = append(s.nodeConfigs, nodeOpts)
 
 	c, err := setupClient(s, n)
 	require.NoError(s.t, err)
@@ -997,7 +994,7 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
+		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1020,12 +1017,14 @@ func getSchema(
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
-		case action.Root.HasValue():
-			results, err = node.GetSchemasByRoot(s.ctx, action.Root.Value())
-		case action.Name.HasValue():
-			results, err = node.GetSchemasByName(s.ctx, action.Name.Value())
 		default:
-			results, err = node.GetAllSchemas(s.ctx)
+			results, err = node.GetSchemas(
+				s.ctx,
+				client.SchemaFetchOptions{
+					Root: action.Root,
+					Name: action.Name,
+				},
+			)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -1037,12 +1036,56 @@ func getSchema(
 	}
 }
 
-func setDefaultSchemaVersion(
+func getCollections(
 	s *state,
-	action SetDefaultSchemaVersion,
+	action GetCollections,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		err := node.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
+		db := getStore(s, node, action.TransactionID, "")
+		results, err := db.GetCollections(s.ctx, action.FilterOptions)
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
+			require.Equal(s.t, len(action.ExpectedResults), len(results))
+
+			for i, expected := range action.ExpectedResults {
+				actual := results[i].Description()
+				if expected.ID != 0 {
+					require.Equal(s.t, expected.ID, actual.ID)
+				}
+				if expected.RootID != 0 {
+					require.Equal(s.t, expected.RootID, actual.RootID)
+				}
+				if expected.SchemaVersionID != "" {
+					require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
+				}
+
+				require.Equal(s.t, expected.Name, actual.Name)
+
+				if expected.Indexes != nil || len(actual.Indexes) != 0 {
+					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
+					// This is to say each test action from having to bother declaring an empty slice (if there are no indexes)
+					require.Equal(s.t, expected.Indexes, actual.Indexes)
+				}
+
+				if expected.Sources != nil || len(actual.Sources) != 0 {
+					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
+					// This is to say each test action from having to bother declaring an empty slice (if there are no sources)
+					require.Equal(s.t, expected.Sources, actual.Sources)
+				}
+			}
+		}
+	}
+}
+
+func setActiveSchemaVersion(
+	s *state,
+	action SetActiveSchemaVersion,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1057,7 +1100,7 @@ func createView(
 	action CreateView,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.AddView(s.ctx, action.Query, action.SDL)
+		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1155,7 +1198,7 @@ func createDocViaGQL(
 				_docID
 			}
 		}`,
-		collection.Name(),
+		collection.Name().Value(),
 		input,
 	)
 
@@ -1302,7 +1345,7 @@ func updateDocViaGQL(
 				_docID
 			}
 		}`,
-		collection.Name(),
+		collection.Name().Value(),
 		doc.ID().String(),
 		input,
 	)
@@ -1337,11 +1380,11 @@ func createIndex(
 					Name: action.FieldName,
 				},
 			}
-		} else if len(action.FieldsNames) > 0 {
-			for i := range action.FieldsNames {
+		} else if len(action.Fields) > 0 {
+			for i := range action.Fields {
 				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
-					Name:      action.FieldsNames[i],
-					Direction: action.Directions[i],
+					Name:       action.Fields[i].Name,
+					Descending: action.Fields[i].Descending,
 				})
 			}
 		}
@@ -1399,7 +1442,7 @@ func backupExport(
 	action BackupExport,
 ) {
 	if action.Config.Filepath == "" {
-		action.Config.Filepath = s.t.TempDir() + "/test.json"
+		action.Config.Filepath = s.t.TempDir() + testJSONFile
 	}
 
 	var expectedErrorRaised bool
@@ -1425,7 +1468,7 @@ func backupImport(
 	action BackupImport,
 ) {
 	if action.Filepath == "" {
-		action.Filepath = s.t.TempDir() + "/test.json"
+		action.Filepath = s.t.TempDir() + testJSONFile
 	}
 
 	// we can avoid checking the error here as this would mean the filepath is invalid
@@ -1883,7 +1926,7 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	}
 	result := make(map[string]client.CollectionDefinition)
 	for _, col := range cols {
-		result[col.Description.Name] = col
+		result[col.Description.Name.Value()] = col
 	}
 	return result, nil
 }
@@ -1894,4 +1937,12 @@ func MustParseTime(timeString string) time.Time {
 		panic(err)
 	}
 	return t
+}
+
+func CBORValue(value any) []byte {
+	enc, err := cbor.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return enc
 }

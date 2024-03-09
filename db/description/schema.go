@@ -30,13 +30,6 @@ func CreateSchemaVersion(
 	txn datastore.Txn,
 	desc client.SchemaDescription,
 ) (client.SchemaDescription, error) {
-	for i := range desc.Fields {
-		// This is not wonderful and will probably break when we add the ability
-		// to delete fields, however it is good enough for now and matches the
-		// create behaviour.
-		desc.Fields[i].ID = client.FieldID(i)
-	}
-
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return client.SchemaDescription{}, err
@@ -47,7 +40,6 @@ func CreateSchemaVersion(
 		return client.SchemaDescription{}, err
 	}
 	versionID := scid.String()
-	previousSchemaVersionID := desc.VersionID
 	isNew := desc.Root == ""
 
 	desc.VersionID = versionID
@@ -69,9 +61,9 @@ func CreateSchemaVersion(
 	}
 
 	if !isNew {
-		// We don't need to add a history key if this is the first version
-		schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Root, previousSchemaVersionID)
-		err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(desc.VersionID))
+		// We don't need to add a root key if this is the first version
+		schemaVersionHistoryKey := core.NewSchemaRootKey(desc.Root, desc.VersionID)
+		err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte{})
 		if err != nil {
 			return client.SchemaDescription{}, err
 		}
@@ -152,7 +144,7 @@ func GetSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	cols, err := GetCollections(ctx, txn)
+	cols, err := GetActiveCollections(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +245,7 @@ func GetSchemaVersionIDs(
 	// It is not present in the history prefix.
 	schemaVersions := []string{schemaRoot}
 
-	prefix := core.NewSchemaHistoryKey(schemaRoot, "")
+	prefix := core.NewSchemaRootKey(schemaRoot, "")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
@@ -270,15 +262,12 @@ func GetSchemaVersionIDs(
 			return nil, err
 		}
 
-		key, err := core.NewSchemaHistoryKeyFromString(res.Key)
+		key, err := core.NewSchemaRootKeyFromString(res.Key)
 		if err != nil {
-			if err := q.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
 			return nil, err
 		}
 
-		schemaVersions = append(schemaVersions, key.PreviousSchemaVersionID)
+		schemaVersions = append(schemaVersions, key.SchemaVersionID)
 	}
 
 	return schemaVersions, nil

@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -34,7 +36,7 @@ func (c *Collection) Description() client.CollectionDescription {
 	return c.def.Description
 }
 
-func (c *Collection) Name() string {
+func (c *Collection) Name() immutable.Option[string] {
 	return c.Description().Name
 }
 
@@ -55,8 +57,12 @@ func (c *Collection) Definition() client.CollectionDefinition {
 }
 
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
+	if !c.Description().Name.HasValue() {
+		return client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 
 	document, err := doc.String()
 	if err != nil {
@@ -73,8 +79,12 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
+	if !c.Description().Name.HasValue() {
+		return client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 
 	docMapList := make([]map[string]any, len(docs))
 	for i, doc := range docs {
@@ -101,8 +111,12 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 }
 
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
+	if !c.Description().Name.HasValue() {
+		return client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 	args = append(args, "--docID", doc.ID().String())
 
 	document, err := doc.ToJSONPatch()
@@ -179,8 +193,12 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 	args = append(args, "--updater", updater)
 
 	filterJSON, err := json.Marshal(filter)
@@ -197,8 +215,12 @@ func (c *Collection) UpdateWithDocID(
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 	args = append(args, "--docID", docID.String())
 	args = append(args, "--updater", updater)
 
@@ -210,8 +232,12 @@ func (c *Collection) UpdateWithDocIDs(
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 	args = append(args, "--updater", updater)
 
 	strDocIDs := make([]string, len(docIDs))
@@ -252,8 +278,12 @@ func (c *Collection) deleteWith(
 }
 
 func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -265,16 +295,24 @@ func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.
 }
 
 func (c *Collection) DeleteWithDocID(ctx context.Context, docID client.DocID) (*client.DeleteResult, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 	args = append(args, "--docID", docID.String())
 
 	return c.deleteWith(ctx, args)
 }
 
 func (c *Collection) DeleteWithDocIDs(ctx context.Context, docIDs []client.DocID) (*client.DeleteResult, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 
 	strDocIDs := make([]string, len(docIDs))
 	for i, v := range docIDs {
@@ -286,8 +324,12 @@ func (c *Collection) DeleteWithDocIDs(ctx context.Context, docIDs []client.DocID
 }
 
 func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "collection", "get"}
-	args = append(args, "--name", c.Description().Name)
+	args = append(args, "--name", c.Description().Name.Value())
 	args = append(args, docID.String())
 
 	if showDeleted {
@@ -315,10 +357,14 @@ func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 }
 
 func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
-	args := []string{"client", "collection", "docIDs"}
-	args = append(args, "--name", c.Description().Name)
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
 
-	stdOut, _, err := c.cmd.executeStream(ctx, args)
+	args := []string{"client", "collection", "docIDs"}
+	args = append(args, "--name", c.Description().Name.Value())
+
+	stdOut, _, err := c.cmd.executeStream(args)
 	if err != nil {
 		return nil, err
 	}
@@ -354,8 +400,12 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescription,
 ) (index client.IndexDescription, err error) {
+	if !c.Description().Name.HasValue() {
+		return client.IndexDescription{}, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "index", "create"}
-	args = append(args, "--collection", c.Description().Name)
+	args = append(args, "--collection", c.Description().Name.Value())
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
 	}
@@ -380,8 +430,12 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
+	if !c.Description().Name.HasValue() {
+		return client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "index", "drop"}
-	args = append(args, "--collection", c.Description().Name)
+	args = append(args, "--collection", c.Description().Name.Value())
 	args = append(args, "--name", indexName)
 
 	_, err := c.cmd.execute(ctx, args)
@@ -389,8 +443,12 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+	if !c.Description().Name.HasValue() {
+		return nil, client.ErrOperationNotPermittedOnNamelessCols
+	}
+
 	args := []string{"client", "index", "list"}
-	args = append(args, "--collection", c.Description().Name)
+	args = append(args, "--collection", c.Description().Name.Value())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -401,4 +459,16 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		return nil, err
 	}
 	return indexes, nil
+}
+
+func (c *Collection) CreateDocIndex(context.Context, *client.Document) error {
+	return ErrMethodIsNotImplemented
+}
+
+func (c *Collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	return ErrMethodIsNotImplemented
+}
+
+func (c *Collection) DeleteDocIndex(context.Context, *client.Document) error {
+	return ErrMethodIsNotImplemented
 }

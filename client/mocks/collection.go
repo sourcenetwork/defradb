@@ -9,6 +9,8 @@ import (
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
+	immutable "github.com/sourcenetwork/immutable"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -821,14 +823,14 @@ func (_c *Collection_ID_Call) RunAndReturn(run func() uint32) *Collection_ID_Cal
 }
 
 // Name provides a mock function with given fields:
-func (_m *Collection) Name() string {
+func (_m *Collection) Name() immutable.Option[string] {
 	ret := _m.Called()
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
+	var r0 immutable.Option[string]
+	if rf, ok := ret.Get(0).(func() immutable.Option[string]); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(immutable.Option[string])
 	}
 
 	return r0
@@ -851,12 +853,12 @@ func (_c *Collection_Name_Call) Run(run func()) *Collection_Name_Call {
 	return _c
 }
 
-func (_c *Collection_Name_Call) Return(_a0 string) *Collection_Name_Call {
+func (_c *Collection_Name_Call) Return(_a0 immutable.Option[string]) *Collection_Name_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Collection_Name_Call) RunAndReturn(run func() string) *Collection_Name_Call {
+func (_c *Collection_Name_Call) RunAndReturn(run func() immutable.Option[string]) *Collection_Name_Call {
 	_c.Call.Return(run)
 	return _c
 }

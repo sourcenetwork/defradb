@@ -23,25 +23,25 @@ import (
 
 func MakeSchemaMigrationDownCommand() *cobra.Command {
 	var file string
-	var schemaVersionID string
+	var collectionID uint32
 	var cmd = &cobra.Command{
-		Use:   "down --version <version> <documents>",
-		Short: "Reverses the migration from the specified schema version.",
-		Long: `Reverses the migration from the specified schema version.
+		Use:   "down --collection <collectionID> <documents>",
+		Short: "Reverses the migration to the specified collection version.",
+		Long: `Reverses the migration to the specified collection version.
 Documents is a list of documents to reverse the migration from.
 
 Example: migrate from string
-  defradb client schema migration down --version bae123 '[{"name": "Bob"}]'
+  defradb client schema migration down --collection 2 '[{"name": "Bob"}]'
 
 Example: migrate from file
-  defradb client schema migration down --version bae123 -f documents.json
+  defradb client schema migration down --collection 2 -f documents.json
 
 Example: migrate from stdin
-  cat documents.json | defradb client schema migration down --version bae123 -
+  cat documents.json | defradb client schema migration down --collection 2 -
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			var srcData []byte
 			switch {
@@ -71,7 +71,8 @@ Example: migrate from stdin
 			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
 				lens = lens.WithTxn(tx)
 			}
-			out, err := lens.MigrateDown(cmd.Context(), enumerable.New(src), schemaVersionID)
+
+			out, err := lens.MigrateDown(cmd.Context(), enumerable.New(src), collectionID)
 			if err != nil {
 				return err
 			}
@@ -86,6 +87,6 @@ Example: migrate from stdin
 		},
 	}
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
-	cmd.Flags().StringVar(&schemaVersionID, "version", "", "Schema version id")
+	cmd.Flags().Uint32Var(&collectionID, "collection", 0, "Collection id")
 	return cmd
 }

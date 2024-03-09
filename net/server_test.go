@@ -49,7 +49,7 @@ type mockDBColError struct {
 	client.DB
 }
 
-func (mDB *mockDBColError) GetAllCollections(context.Context) ([]client.Collection, error) {
+func (mDB *mockDBColError) GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error) {
 	return nil, mockError
 }
 
@@ -85,7 +85,7 @@ type mockDBDocIDsError struct {
 	client.DB
 }
 
-func (mDB *mockDBDocIDsError) GetAllCollections(context.Context) ([]client.Collection, error) {
+func (mDB *mockDBDocIDsError) GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error) {
 	return []client.Collection{
 		&mockCollection{},
 	}, nil

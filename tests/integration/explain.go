@@ -56,6 +56,7 @@ var (
 		"updateNode":    {},
 		"valuesNode":    {},
 		"viewNode":      {},
+		"lensNode":      {},
 	}
 )
 

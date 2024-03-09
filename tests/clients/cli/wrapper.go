@@ -17,10 +17,13 @@ import (
 	"fmt"
 	"io"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
@@ -40,7 +43,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *net.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node, http.ServerOptions{})
+	handler, err := http.NewHandler(node)
 	if err != nil {
 		return nil, err
 	}
@@ -183,29 +186,55 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return cols, nil
 }
 
-func (w *Wrapper) PatchSchema(ctx context.Context, patch string, setDefault bool) error {
+func (w *Wrapper) PatchSchema(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+	setDefault bool,
+) error {
 	args := []string{"client", "schema", "patch"}
 	if setDefault {
-		args = append(args, "--set-default")
+		args = append(args, "--set-active")
 	}
 	args = append(args, patch)
+
+	if migration.HasValue() {
+		lenses, err := json.Marshal(migration.Value())
+		if err != nil {
+			return err
+		}
+		args = append(args, string(lenses))
+	}
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	args := []string{"client", "schema", "set-default"}
+func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	args := []string{"client", "schema", "set-active"}
 	args = append(args, schemaVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+func (w *Wrapper) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
+
+	if transform.HasValue() {
+		lenses, err := json.Marshal(transform.Value())
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, string(lenses))
+	}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -219,7 +248,18 @@ func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]clie
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
-	return w.LensRegistry().SetMigration(ctx, config)
+	args := []string{"client", "schema", "migration", "set"}
+
+	lenses, err := json.Marshal(config.Lens)
+	if err != nil {
+		return err
+	}
+	args = append(args, config.SourceSchemaVersionID)
+	args = append(args, config.DestinationSchemaVersionID)
+	args = append(args, string(lenses))
+
+	_, err = w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Wrapper) LensRegistry() client.LensRegistry {
@@ -227,23 +267,32 @@ func (w *Wrapper) LensRegistry() client.LensRegistry {
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	args := []string{"client", "collection", "describe"}
-	args = append(args, "--name", name)
-
-	data, err := w.cmd.execute(ctx, args)
+	cols, err := w.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := json.Unmarshal(data, &definition); err != nil {
-		return nil, err
-	}
-	return &Collection{w.cmd, definition}, nil
+
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
-func (w *Wrapper) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
+func (w *Wrapper) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
-	args = append(args, "--schema", schemaRoot)
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		args = append(args, "--version", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		args = append(args, "--schema", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -258,92 +307,32 @@ func (w *Wrapper) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot str
 		cols[i] = &Collection{w.cmd, v}
 	}
 	return cols, err
-}
-
-func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
-	args := []string{"client", "collection", "describe"}
-	args = append(args, "--version", versionId)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var colDesc []client.CollectionDefinition
-	if err := json.Unmarshal(data, &colDesc); err != nil {
-		return nil, err
-	}
-	cols := make([]client.Collection, len(colDesc))
-	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v}
-	}
-	return cols, err
-}
-
-func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	args := []string{"client", "collection", "describe"}
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var colDesc []client.CollectionDefinition
-	if err := json.Unmarshal(data, &colDesc); err != nil {
-		return nil, err
-	}
-	cols := make([]client.Collection, len(colDesc))
-	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v}
-	}
-	return cols, err
-}
-
-func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	args = append(args, "--name", name)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
-	}
-	return schema, err
 }
 
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	args = append(args, "--version", versionID)
-
-	data, err := w.cmd.execute(ctx, args)
+	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
-	var schema client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schema, err
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
-func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (w *Wrapper) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
-	args = append(args, "--root", root)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
+	if options.ID.HasValue() {
+		args = append(args, "--version", options.ID.Value())
 	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
+	if options.Root.HasValue() {
+		args = append(args, "--root", options.Root.Value())
 	}
-	return schema, err
-}
-
-func (w *Wrapper) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
+	}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -376,7 +365,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 
 	result := &client.RequestResult{}
 
-	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
+	stdOut, stdErr, err := w.cmd.executeStream(args)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
@@ -388,7 +377,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
-		result.Pub = w.execRequestSubscription(ctx, buffer)
+		result.Pub = w.execRequestSubscription(buffer)
 		return result
 	}
 	data, err := io.ReadAll(buffer)
@@ -416,7 +405,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 	return result
 }
 
-func (w *Wrapper) execRequestSubscription(ctx context.Context, r io.Reader) *events.Publisher[events.Update] {
+func (w *Wrapper) execRequestSubscription(r io.Reader) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {

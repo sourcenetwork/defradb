@@ -17,9 +17,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -134,12 +137,18 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 type patchSchemaRequest struct {
 	Patch               string
 	SetAsDefaultVersion bool
+	Migration           immutable.Option[model.Lens]
 }
 
-func (c *Client) PatchSchema(ctx context.Context, patch string, setAsDefaultVersion bool) error {
+func (c *Client) PatchSchema(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
-	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion})
+	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion, migration})
 	if err != nil {
 		return err
 	}
@@ -152,7 +161,7 @@ func (c *Client) PatchSchema(ctx context.Context, patch string, setAsDefaultVers
 	return err
 }
 
-func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	methodURL := c.http.baseURL.JoinPath("schema", "default")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
@@ -164,14 +173,20 @@ func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID st
 }
 
 type addViewRequest struct {
-	Query string
-	SDL   string
+	Query     string
+	SDL       string
+	Transform immutable.Option[model.Lens]
 }
 
-func (c *Client) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+func (c *Client) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
 	methodURL := c.http.baseURL.JoinPath("view")
 
-	body, err := json.Marshal(addViewRequest{query, sdl})
+	body, err := json.Marshal(addViewRequest{query, sdl, transform})
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +205,20 @@ func (c *Client) AddView(ctx context.Context, query string, sdl string) ([]clien
 }
 
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
-	return c.LensRegistry().SetMigration(ctx, config)
+	methodURL := c.http.baseURL.JoinPath("lens")
+
+	body, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *Client) LensRegistry() client.LensRegistry {
@@ -198,23 +226,34 @@ func (c *Client) LensRegistry() client.LensRegistry {
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	cols, err := c.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := c.http.requestJson(req, &definition); err != nil {
-		return nil, err
-	}
-	return &Collection{c.http, definition}, nil
+
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
-func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
+func (c *Client) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"schema_root": []string{schemaRoot}}.Encode()
+	params := url.Values{}
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		params.Add("version_id", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		params.Add("schema_root", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -229,92 +268,34 @@ func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot stri
 		collections[i] = &Collection{c.http, d}
 	}
 	return collections, nil
-}
-
-func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionId}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var descriptions []client.CollectionDefinition
-	if err := c.http.requestJson(req, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
-	}
-	return collections, nil
-}
-
-func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var descriptions []client.CollectionDefinition
-	if err := c.http.requestJson(req, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
-	}
-	return collections, nil
-}
-
-func (c *Client) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
-	}
-	return schema, nil
 }
 
 func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionID}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	schemas, err := c.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
-	var schema client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schema, nil
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
-func (c *Client) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (c *Client) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"root": []string{root}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
+	params := url.Values{}
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
 	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
+	if options.Root.HasValue() {
+		params.Add("root", options.Root.Value())
 	}
-	return schema, nil
-}
-
-func (c *Client) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
+	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -363,7 +344,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
-		result.Pub = c.execRequestSubscription(ctx, res.Body)
+		result.Pub = c.execRequestSubscription(res.Body)
 		return result
 	}
 	// ignore close errors because they have
@@ -386,7 +367,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 	return result
 }
 
-func (c *Client) execRequestSubscription(ctx context.Context, r io.ReadCloser) *events.Publisher[events.Update] {
+func (c *Client) execRequestSubscription(r io.ReadCloser) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {

@@ -14,6 +14,8 @@ import (
 	"context"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -98,8 +100,10 @@ type Store interface {
 	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
-	// present in the database. If true is provided, the new schema versions will be made default, otherwise
-	// [SetDefaultSchemaVersion] should be called to set them so.
+	// present in the database.
+	//
+	// If true is provided, the new schema versions will be made active and previous versions deactivated, otherwise
+	// [SetActiveSchemaVersion] should be called to do so.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
 	// requested, valid updates should the net result of the patch result in an invalid state.  The
@@ -112,16 +116,18 @@ type Store interface {
 	//
 	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
 	// [FieldKindStringToEnumMapping].
-	PatchSchema(context.Context, string, bool) error
+	//
+	// A lens configuration may also be provided, it will be added to all collections using the schema.
+	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
 
-	// SetDefaultSchemaVersion sets the default schema version to the ID provided.  It will be applied to all
-	// collections using the schema.
+	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
+	// those without it (if they share the same schema root).
 	//
 	// This will affect all operations interacting with the schema where a schema version is not explicitly
 	// provided.  This includes GQL queries and Collection operations.
 	//
 	// It will return an error if the provided schema version ID does not exist.
-	SetDefaultSchemaVersion(context.Context, string) error
+	SetActiveSchemaVersion(context.Context, string) error
 
 	// AddView creates a new Defra View.
 	//
@@ -149,12 +155,20 @@ type Store interface {
 	//
 	// It will return the collection definitions of the types defined in the SDL if successful, otherwise an error
 	// will be returned.  This function does not execute the given query.
-	AddView(ctx context.Context, gqlQuery string, sdl string) ([]CollectionDefinition, error)
-
-	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivalent to
-	// calling `LensRegistry().SetMigration(ctx, cfg)`.
 	//
-	// There may only be one migration per schema version id.  If another migration was registered it will be
+	// Optionally, a lens transform configuration may also be provided - it will execute after the query has run.
+	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
+	// those passed in from the underlying query.
+	AddView(
+		ctx context.Context,
+		gqlQuery string,
+		sdl string,
+		transform immutable.Option[model.Lens],
+	) ([]CollectionDefinition, error)
+
+	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
+	//
+	// There may only be one migration per collection version.  If another migration was registered it will be
 	// overwritten by this migration.
 	//
 	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
@@ -173,24 +187,20 @@ type Store interface {
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.
+	//
+	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
+	// made via the returned [Collection] will respect that transaction.
 	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
-	// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
+	// GetCollections returns all collections and their descriptions matching the given options
+	// that currently exist within this [Store].
 	//
-	// If no matching collection is found an empty set will be returned.
-	GetCollectionsBySchemaRoot(context.Context, string) ([]Collection, error)
-
-	// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
+	// Inactive collections are not returned by default unless a specific schema version ID
+	// is provided.
 	//
-	// If no matching collections are found an empty set will be returned.
-	GetCollectionsByVersionID(context.Context, string) ([]Collection, error)
-
-	// GetAllCollections returns all the collections and their descriptions that currently exist within
-	// this [Store].
-	GetAllCollections(context.Context) ([]Collection, error)
-
-	// GetSchemasByName returns the all schema versions with the given name.
-	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)
+	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
+	// made via the returned [Collection]s will respect that transaction.
+	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
 
 	// GetSchemaByVersionID returns the schema description for the schema version of the
 	// ID provided.
@@ -198,12 +208,9 @@ type Store interface {
 	// Will return an error if it is not found.
 	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
 
-	// GetSchemasByRoot returns the all schema versions for the given root.
-	GetSchemasByRoot(context.Context, string) ([]SchemaDescription, error)
-
-	// GetAllSchemas returns all schema versions that currently exist within
+	// GetSchemas returns all schema versions that currently exist within
 	// this [Store].
-	GetAllSchemas(context.Context) ([]SchemaDescription, error)
+	GetSchemas(context.Context, SchemaFetchOptions) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
@@ -236,4 +243,31 @@ type RequestResult struct {
 	// Pub contains a pointer to an event stream which channels any subscription results
 	// if the request was a GQL subscription.
 	Pub *events.Publisher[events.Update]
+}
+
+// CollectionFetchOptions represents a set of options used for fetching collections.
+type CollectionFetchOptions struct {
+	// If provided, only collections with this schema version id will be returned.
+	SchemaVersionID immutable.Option[string]
+
+	// If provided, only collections with schemas of this root will be returned.
+	SchemaRoot immutable.Option[string]
+
+	// If provided, only collections with this name will be returned.
+	Name immutable.Option[string]
+
+	// If IncludeInactive is true, then inactive collections will also be returned.
+	IncludeInactive immutable.Option[bool]
+}
+
+// SchemaFetchOptions represents a set of options used for fetching schemas.
+type SchemaFetchOptions struct {
+	// If provided, only schemas of this root will be returned.
+	Root immutable.Option[string]
+
+	// If provided, only schemas with this name will be returned.
+	Name immutable.Option[string]
+
+	// If provided, only the schema with this id will be returned.
+	ID immutable.Option[string]
 }

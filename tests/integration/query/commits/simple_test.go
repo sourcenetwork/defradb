@@ -36,13 +36,13 @@ func TestQueryCommits(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihfw5lufgs7ygv45to5rqvt3xkecjgikoccjyx6y2i7lnaclmrcjm",
+						"cid": "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 					},
 					{
-						"cid": "bafybeigmez6gtszsqx6aevzlanvpazhhezw5va4wizhqtqz5k4s2dqjb24",
+						"cid": "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
 					},
 					{
-						"cid": "bafybeiedu23doqe2nagdbmkvfyuouajnfxo7ezy57vbv34dqewhwbfg45u",
+						"cid": "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
 					},
 				},
 			},
@@ -79,22 +79,22 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeigdcaas33fnrv7jbigm5a5phxtxl76weuf74kqcrb5udjgttqssju",
+						"cid": "bafybeibhain2764v7eltfiam6dgwivfj56mvbme34nbdsdbndrsjkc2cje",
 					},
 					{
-						"cid": "bafybeiahfq2ji7uneqfqddeqsvz5t3rdkgo7wpnpswo2jon23kxpgvqdsa",
+						"cid": "bafybeickrd5xayjhedyypf3yus55bkhpwd5dqlkdhivrcceexkpsgnic24",
 					},
 					{
-						"cid": "bafybeihhadjgfxsyrlg5gftmi4ikppuhecyeqznjru47l3tup4c6sbzhga",
+						"cid": "bafybeieqyyprwrkbgyn7x4jkzmlnupnzpdymvbulef37brkzn7blqbe6l4",
 					},
 					{
-						"cid": "bafybeihfw5lufgs7ygv45to5rqvt3xkecjgikoccjyx6y2i7lnaclmrcjm",
+						"cid": "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
 					},
 					{
-						"cid": "bafybeigmez6gtszsqx6aevzlanvpazhhezw5va4wizhqtqz5k4s2dqjb24",
+						"cid": "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
 					},
 					{
-						"cid": "bafybeiedu23doqe2nagdbmkvfyuouajnfxo7ezy57vbv34dqewhwbfg45u",
+						"cid": "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
 					},
 				},
 			},
@@ -125,16 +125,16 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafybeihfw5lufgs7ygv45to5rqvt3xkecjgikoccjyx6y2i7lnaclmrcjm",
-						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
+						"cid":             "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
+						"schemaVersionId": "bafkreidqkjb23ngp34eebeaxiogrlogkpfz62vjb3clnnyvhlbgdaywkg4",
 					},
 					{
-						"cid":             "bafybeigmez6gtszsqx6aevzlanvpazhhezw5va4wizhqtqz5k4s2dqjb24",
-						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
+						"cid":             "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
+						"schemaVersionId": "bafkreidqkjb23ngp34eebeaxiogrlogkpfz62vjb3clnnyvhlbgdaywkg4",
 					},
 					{
-						"cid":             "bafybeiedu23doqe2nagdbmkvfyuouajnfxo7ezy57vbv34dqewhwbfg45u",
-						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
+						"cid":             "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
+						"schemaVersionId": "bafkreidqkjb23ngp34eebeaxiogrlogkpfz62vjb3clnnyvhlbgdaywkg4",
 					},
 				},
 			},
@@ -285,8 +285,6 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-
-
 						commits {
 							fieldId
 						}
@@ -307,6 +305,121 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 					},
 					{
 						"fieldId": "C",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							cid
+							collectionID
+							delta
+							docID
+							fieldId
+							fieldName
+							height
+							links {
+								cid
+								name
+							}
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"cid":          "bafybeicwg56ddi7smy3j2kkv5y4yghvdrj3twqqafzdwtinbkw5mlpxwz4",
+						"collectionID": int64(1),
+						"delta":        testUtils.CBORValue(22),
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "1",
+						"fieldName":    "age",
+						"height":       int64(2),
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
+								"name": "_head",
+							},
+						},
+					},
+					{
+						"cid":          "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
+						"collectionID": int64(1),
+						"delta":        testUtils.CBORValue(21),
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "1",
+						"fieldName":    "age",
+						"height":       int64(1),
+						"links":        []map[string]any{},
+					},
+					{
+						"cid":          "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
+						"collectionID": int64(1),
+						"delta":        testUtils.CBORValue("John"),
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "2",
+						"fieldName":    "name",
+						"height":       int64(1),
+						"links":        []map[string]any{},
+					},
+					{
+						"cid":          "bafybeidxnkwhuzmkdw5wuippru3tp74vcmz5jvcziambpjadxeathdh26a",
+						"collectionID": int64(1),
+						"delta":        nil,
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "C",
+						"fieldName":    nil,
+						"height":       int64(2),
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
+								"name": "_head",
+							},
+							{
+								"cid":  "bafybeicwg56ddi7smy3j2kkv5y4yghvdrj3twqqafzdwtinbkw5mlpxwz4",
+								"name": "age",
+							},
+						},
+					},
+					{
+						"cid":          "bafybeigvpf62j7j2wbpid5iavzxielbhbsbbirmgzqkw3wpptdvysuztwi",
+						"collectionID": int64(1),
+						"delta":        nil,
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "C",
+						"fieldName":    nil,
+						"height":       int64(1),
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeicvpgfinf2m2jufbbcy5mhv6jca6in5k4fzx5op7xvvcmbp7sceaa",
+								"name": "age",
+							},
+							{
+								"cid":  "bafybeib2espk2hq366wjnmazg45uvoswqbvf4plx7fgzayagxdn737onci",
+								"name": "name",
+							},
+						},
 					},
 				},
 			},

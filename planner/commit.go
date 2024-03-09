@@ -16,6 +16,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -328,7 +329,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		fieldName = nil
 
 	default:
-		cols, err := n.planner.db.GetCollectionsByVersionID(n.planner.ctx, schemaVersionId)
+		cols, err := n.planner.db.GetCollections(
+			n.planner.ctx,
+			client.CollectionFetchOptions{
+				IncludeInactive: immutable.Some(true),
+				SchemaVersionID: immutable.Some(schemaVersionId),
+			},
+		)
 		if err != nil {
 			return core.Doc{}, nil, err
 		}
@@ -338,7 +345,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 		// Because we only care about the schema, we can safely take the first - the schema is the same
 		// for all in the set.
-		field, ok := cols[0].Schema().GetField(fieldName.(string))
+		field, ok := cols[0].Definition().GetFieldByName(fieldName.(string))
 		if !ok {
 			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
 		}
@@ -346,7 +353,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, request.DeltaArgData)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta[request.DeltaArgData])
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
@@ -358,7 +365,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.DocIDArgName, string(docID))
 
-	cols, err := n.planner.db.GetCollectionsByVersionID(n.planner.ctx, schemaVersionId)
+	cols, err := n.planner.db.GetCollections(
+		n.planner.ctx,
+		client.CollectionFetchOptions{
+			IncludeInactive: immutable.Some(true),
+			SchemaVersionID: immutable.Some(schemaVersionId),
+		},
+	)
 	if err != nil {
 		return core.Doc{}, nil, err
 	}
@@ -400,5 +413,3 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	return commit, heads, nil
 }
-
-func (n *dagScanNode) Append() bool { return true }

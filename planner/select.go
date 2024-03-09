@@ -290,26 +290,29 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	}
 
 	if isScanNode {
-		origScan.initFetcher(n.selectReq.Cid, findFilteredByIndexedField(origScan))
+		origScan.initFetcher(n.selectReq.Cid, findIndexByFilteringField(origScan))
 	}
 
 	return aggregates, nil
 }
 
-func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.FieldDescription] {
-	if scanNode.filter != nil {
-		schema := scanNode.col.Schema()
-		indexedFields := scanNode.col.Description().CollectIndexedFields(&schema)
-		for i := range indexedFields {
-			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
-			if scanNode.filter.HasIndex(typeIndex) {
-				// we return the first found indexed field to keep it simple for now
-				// more sophisticated optimization logic can be added later
-				return immutable.Some(indexedFields[i])
-			}
+func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
+	if scanNode.filter == nil {
+		return immutable.None[client.IndexDescription]()
+	}
+	colDesc := scanNode.col.Description()
+
+	for _, field := range scanNode.col.Schema().Fields {
+		if _, isFiltered := scanNode.filter.ExternalConditions[field.Name]; !isFiltered {
+			continue
+		}
+		indexes := colDesc.GetIndexesOnField(field.Name)
+		if len(indexes) > 0 {
+			// we return the first found index. We will optimize it later.
+			return immutable.Some(indexes[0])
 		}
 	}
-	return immutable.None[client.FieldDescription]()
+	return immutable.None[client.IndexDescription]()
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
@@ -373,8 +376,9 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				// commit query link fields are always added and need no special treatment here
 				// WARNING: It is important to check collection name is nil and the parent select name
 				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
-			} else if n.collection.Description().BaseQuery == nil {
-				// Views only contain embedded objects and don't require a traditional join here
+			} else if !(n.collection != nil && len(n.collection.Description().QuerySources()) > 0) {
+				// Collections sourcing data from queries only contain embedded objects and don't require
+				// a traditional join here
 				err := n.addTypeIndexJoin(f)
 				if err != nil {
 					return nil, err

@@ -508,7 +508,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			},
 // 			Schema: client.SchemaDescription{
 // 				Name: "User",
-// 				Fields: []client.FieldDescription{
+// 				Fields: []client.SchemaFieldDescription{
 // 					{
 // 						Name: "name",
 // 						Kind: client.FieldKind_STRING,
@@ -517,7 +517,6 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 						Name:         "devices",
 // 						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
 // 						Schema:       "Device",
-// 						RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
 // 					},
 // 				},
 // 			},
@@ -529,7 +528,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			},
 // 			Schema: client.SchemaDescription{
 // 				Name: "Device",
-// 				Fields: []client.FieldDescription{
+// 				Fields: []client.SchemaFieldDescription{
 // 					{
 // 						Name: "model",
 // 						Kind: client.FieldKind_STRING,
@@ -538,9 +537,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 						Name:   "owner",
 // 						Kind:   client.FieldKind_FOREIGN_OBJECT,
 // 						Schema: "User",
-// 						RelationType: client.Relation_Type_ONE |
-// 							client.Relation_Type_ONEMANY |
-// 							client.Relation_Type_Primary,
+// 						IsPrimary: true,
 // 					},
 // 				},
 // 			},

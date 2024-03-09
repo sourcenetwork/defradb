@@ -12,6 +12,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"regexp"
 	"strings"
 	"sync"
@@ -171,13 +172,34 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	return docs, nil
 }
 
+// IsNillableKind returns true if the given FieldKind is nillable.
+func IsNillableKind(kind FieldKind) bool {
+	switch kind {
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON,
+		FieldKind_NILLABLE_BOOL, FieldKind_NILLABLE_FLOAT, FieldKind_NILLABLE_DATETIME,
+		FieldKind_NILLABLE_INT:
+		return true
+	default:
+		return false
+	}
+}
+
 // validateFieldSchema takes a given value as an interface,
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field FieldDescription) (any, error) {
+func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
+	if IsNillableKind(field.Kind) {
+		if val == nil {
+			return nil, nil
+		}
+		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+	}
+
 	switch field.Kind {
-	case FieldKind_DocID, FieldKind_STRING, FieldKind_BLOB:
+	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
 		return getString(val)
 
 	case FieldKind_STRING_ARRAY:
@@ -186,7 +208,7 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return getNillableArray(val, getString)
 
-	case FieldKind_BOOL:
+	case FieldKind_NILLABLE_BOOL:
 		return getBool(val)
 
 	case FieldKind_BOOL_ARRAY:
@@ -195,7 +217,7 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return getNillableArray(val, getBool)
 
-	case FieldKind_FLOAT:
+	case FieldKind_NILLABLE_FLOAT:
 		return getFloat64(val)
 
 	case FieldKind_FLOAT_ARRAY:
@@ -204,10 +226,10 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	case FieldKind_NILLABLE_FLOAT_ARRAY:
 		return getNillableArray(val, getFloat64)
 
-	case FieldKind_DATETIME:
+	case FieldKind_NILLABLE_DATETIME:
 		return getDateTime(val)
 
-	case FieldKind_INT:
+	case FieldKind_NILLABLE_INT:
 		return getInt64(val)
 
 	case FieldKind_INT_ARRAY:
@@ -221,6 +243,9 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 
 	case FieldKind_FOREIGN_OBJECT_ARRAY:
 		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+
+	case FieldKind_NILLABLE_JSON:
+		return getJSON(val)
 	}
 
 	return nil, NewErrUnhandledType("FieldKind", field.Kind)
@@ -294,6 +319,18 @@ func getDateTime(v any) (time.Time, error) {
 		s = val.(string)
 	}
 	return time.Parse(time.RFC3339, s)
+}
+
+func getJSON(v any) (string, error) {
+	s, err := getString(v)
+	if err != nil {
+		return "", err
+	}
+	val, err := fastjson.Parse(s)
+	if err != nil {
+		return "", NewErrInvalidJSONPaylaod(s)
+	}
+	return val.String(), nil
 }
 
 func getArray[T any](
@@ -448,6 +485,16 @@ func (doc *Document) GetValue(field string) (*FieldValue, error) {
 	}
 }
 
+// TryGetValue returns the value for a given field, if it exists.
+// If the field does not exist then return nil and an error.
+func (doc *Document) TryGetValue(field string) (*FieldValue, error) {
+	val, err := doc.GetValue(field)
+	if err != nil && errors.Is(err, ErrFieldNotExist) {
+		return nil, nil
+	}
+	return val, err
+}
+
 // GetValueWithField gets the Value type from a given Field type
 func (doc *Document) GetValueWithField(f Field) (*FieldValue, error) {
 	doc.mu.RLock()
@@ -491,15 +538,15 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.schemaDescription.GetField(field)
+	fd, exists := doc.schemaDescription.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsRelation() && !fd.IsObjectArray() {
+	if fd.IsRelation() && !fd.Kind.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
-		fd, exists = doc.schemaDescription.GetField(field)
+		fd, exists = doc.schemaDescription.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}
@@ -509,20 +556,6 @@ func (doc *Document) Set(field string, value any) error {
 		return err
 	}
 	return doc.setCBOR(fd.Typ, field, val)
-}
-
-// Delete removes a field, and marks it to be deleted on the following db.Update() call.
-func (doc *Document) Delete(fields ...string) error {
-	doc.mu.Lock()
-	defer doc.mu.Unlock()
-	for _, f := range fields {
-		field, exists := doc.fields[f]
-		if !exists {
-			return NewErrFieldNotExist(f)
-		}
-		doc.values[field].Delete()
-	}
-	return nil
 }
 
 func (doc *Document) set(t CType, field string, value *FieldValue) error {
@@ -622,9 +655,6 @@ func (doc *Document) ToJSONPatch() ([]byte, error) {
 		if !value.IsDirty() {
 			delete(docMap, field.Name())
 		}
-		if value.IsDelete() {
-			docMap[field.Name()] = nil
-		}
 	}
 
 	return json.Marshal(docMap)
@@ -635,9 +665,6 @@ func (doc *Document) Clean() {
 	for _, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
-			if val.IsDelete() {
-				doc.Set(v.Name(), nil) //nolint:errcheck
-			}
 			val.Clean()
 		}
 	}

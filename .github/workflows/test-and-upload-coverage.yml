@@ -75,7 +75,7 @@ jobs:
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v3
         with:
-          go-version: "1.20"
+          go-version: "1.21"
           check-latest: true
 
       - name: Build dependencies
@@ -105,7 +105,7 @@ jobs:
 
     needs: run-tests
 
-    # Important to know: 
+    # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
     # - `if: success()` is always implied unless `always()` or `failure()` is specified.
     if: success() || failure()

@@ -101,7 +101,7 @@ func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
 	reverse bool,
@@ -356,8 +356,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
-		schema := vf.col.Schema()
-		field, ok := vf.col.Description().GetFieldByName(l.Name, &schema)
+		field, ok := vf.col.Definition().GetFieldByName(l.Name)
 		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
@@ -379,7 +378,7 @@ func (vf *VersionedFetcher) processNode(
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		dsKey, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Description(), vf.col.Schema(), ctype, vf.dsKey, fieldName)
+		dsKey, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Definition(), ctype, vf.dsKey, fieldName)
 		if err != nil {
 			return err
 		}

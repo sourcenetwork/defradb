@@ -13,6 +13,7 @@ package lens
 import (
 	"context"
 
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -46,7 +47,7 @@ func (r *explicitTxnLensRegistry) WithTxn(txn datastore.Txn) client.LensRegistry
 	}
 }
 
-func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID uint32, cfg model.Lens) error {
 	txn, err := r.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -54,7 +55,7 @@ func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, cfg client.L
 	defer txn.Discard(ctx)
 	txnCtx := r.registry.getCtx(txn, false)
 
-	err = r.registry.setMigration(ctx, txnCtx, cfg)
+	err = r.registry.setMigration(ctx, txnCtx, collectionID, cfg)
 	if err != nil {
 		return err
 	}
@@ -62,8 +63,8 @@ func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, cfg client.L
 	return txn.Commit(ctx)
 }
 
-func (r *explicitTxnLensRegistry) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	return r.registry.setMigration(ctx, r.registry.getCtx(r.txn, false), cfg)
+func (r *explicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID uint32, cfg model.Lens) error {
+	return r.registry.setMigration(ctx, r.registry.getCtx(r.txn, false), collectionID, cfg)
 }
 
 func (r *implicitTxnLensRegistry) ReloadLenses(ctx context.Context) error {
@@ -89,7 +90,7 @@ func (r *explicitTxnLensRegistry) ReloadLenses(ctx context.Context) error {
 func (r *implicitTxnLensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
 	txn, err := r.db.NewTxn(ctx, true)
 	if err != nil {
@@ -98,21 +99,21 @@ func (r *implicitTxnLensRegistry) MigrateUp(
 	defer txn.Discard(ctx)
 	txnCtx := newTxnCtx(txn)
 
-	return r.registry.migrateUp(txnCtx, src, schemaVersionID)
+	return r.registry.migrateUp(txnCtx, src, collectionID)
 }
 
 func (r *explicitTxnLensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
-	return r.registry.migrateUp(r.registry.getCtx(r.txn, true), src, schemaVersionID)
+	return r.registry.migrateUp(r.registry.getCtx(r.txn, true), src, collectionID)
 }
 
 func (r *implicitTxnLensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
 	txn, err := r.db.NewTxn(ctx, true)
 	if err != nil {
@@ -121,43 +122,13 @@ func (r *implicitTxnLensRegistry) MigrateDown(
 	defer txn.Discard(ctx)
 	txnCtx := newTxnCtx(txn)
 
-	return r.registry.migrateDown(txnCtx, src, schemaVersionID)
+	return r.registry.migrateDown(txnCtx, src, collectionID)
 }
 
 func (r *explicitTxnLensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
-	return r.registry.migrateDown(r.registry.getCtx(r.txn, true), src, schemaVersionID)
-}
-
-func (r *implicitTxnLensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
-	txn, err := r.db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-	txnCtx := newTxnCtx(txn)
-
-	return r.registry.config(txnCtx), nil
-}
-
-func (r *explicitTxnLensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
-	return r.registry.config(r.registry.getCtx(r.txn, true)), nil
-}
-
-func (r *implicitTxnLensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
-	txn, err := r.db.NewTxn(ctx, true)
-	if err != nil {
-		return false, err
-	}
-	defer txn.Discard(ctx)
-	txnCtx := newTxnCtx(txn)
-
-	return r.registry.hasMigration(txnCtx, schemaVersionID), nil
-}
-
-func (r *explicitTxnLensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
-	return r.registry.hasMigration(r.registry.getCtx(r.txn, true), schemaVersionID), nil
+	return r.registry.migrateDown(r.registry.getCtx(r.txn, true), src, collectionID)
 }

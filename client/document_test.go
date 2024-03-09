@@ -30,16 +30,21 @@ var (
 	schemaDescriptions = []SchemaDescription{
 		{
 			Name: "User",
-			Fields: []FieldDescription{
+			Fields: []SchemaFieldDescription{
 				{
 					Name: "Name",
 					Typ:  LWW_REGISTER,
-					Kind: FieldKind_STRING,
+					Kind: FieldKind_NILLABLE_STRING,
 				},
 				{
 					Name: "Age",
 					Typ:  LWW_REGISTER,
-					Kind: FieldKind_INT,
+					Kind: FieldKind_NILLABLE_INT,
+				},
+				{
+					Name: "Custom",
+					Typ:  LWW_REGISTER,
+					Kind: FieldKind_NILLABLE_JSON,
 				},
 			},
 		},
@@ -134,4 +139,54 @@ func TestSetWithJSON(t *testing.T) {
 func TestNewDocsFromJSON_WithObjectInsteadOfArray_Error(t *testing.T) {
 	_, err := NewDocsFromJSON(testJSONObj, schemaDescriptions[0])
 	require.ErrorContains(t, err, "value doesn't contain array; it contains object")
+}
+
+func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
+	objWithJSONField := []byte(`{
+		"Name": "John",
+		"Age": 26,
+		"Custom": "{\"tree\":\"maple\", \"age\": 260}"
+	}`)
+	doc, err := NewDocFromJSON(objWithJSONField, schemaDescriptions[0])
+	if err != nil {
+		t.Error("Error creating new doc from JSON:", err)
+		return
+	}
+
+	// check field/value
+	// fields
+	assert.Equal(t, doc.fields["Name"].Name(), "Name")
+	assert.Equal(t, doc.fields["Name"].Type(), LWW_REGISTER)
+	assert.Equal(t, doc.fields["Age"].Name(), "Age")
+	assert.Equal(t, doc.fields["Age"].Type(), LWW_REGISTER)
+	assert.Equal(t, doc.fields["Custom"].Name(), "Custom")
+	assert.Equal(t, doc.fields["Custom"].Type(), LWW_REGISTER)
+
+	//values
+	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "John")
+	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
+	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(26))
+	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
+	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), "{\"tree\":\"maple\",\"age\":260}")
+	assert.Equal(t, doc.values[doc.fields["Custom"]].IsDocument(), false)
+}
+
+func TestNewFromJSON_WithInvalidJSONFieldValue_Error(t *testing.T) {
+	objWithJSONField := []byte(`{
+		"Name": "John",
+		"Age": 26,
+		"Custom": "{\"tree\":\"maple, \"age\": 260}"
+	}`)
+	_, err := NewDocFromJSON(objWithJSONField, schemaDescriptions[0])
+	require.ErrorContains(t, err, "invalid JSON payload. Payload: {\"tree\":\"maple, \"age\": 260}")
+}
+
+func TestNewFromJSON_WithInvalidJSONFieldValueSimpleString_Error(t *testing.T) {
+	objWithJSONField := []byte(`{
+		"Name": "John",
+		"Age": 26,
+		"Custom": "blah"
+	}`)
+	_, err := NewDocFromJSON(objWithJSONField, schemaDescriptions[0])
+	require.ErrorContains(t, err, "invalid JSON payload. Payload: blah")
 }

@@ -1387,6 +1387,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 																},
 															},
 															map[string]any{
+																"name": "_ilike",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
 																"name": "_in",
 																"type": map[string]any{
 																	"name": nil,
@@ -1400,6 +1406,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 															},
 															map[string]any{
 																"name": "_ne",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_nilike",
 																"type": map[string]any{
 																	"name": "String",
 																},
@@ -1525,6 +1537,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 																},
 															},
 															map[string]any{
+																"name": "_ilike",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
 																"name": "_in",
 																"type": map[string]any{
 																	"name": nil,
@@ -1538,6 +1556,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 															},
 															map[string]any{
 																"name": "_ne",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_nilike",
 																"type": map[string]any{
 																	"name": "String",
 																},

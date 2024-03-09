@@ -54,7 +54,7 @@ func AutoGenerate(definitions []client.CollectionDefinition, options ...Option) 
 	}
 	typeDefs := make(map[string]client.CollectionDefinition)
 	for _, def := range definitions {
-		typeDefs[def.Description.Name] = def
+		typeDefs[def.Description.Name.Value()] = def
 	}
 	generator := newRandomDocGenerator(typeDefs, nil)
 	return generator.generateDocs(options...)
@@ -119,7 +119,7 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 }
 
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
-func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.FieldDescription) string {
+func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.SchemaFieldDescription) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
 	return g.generatedDocs[field.Schema][ind].docID
 }
@@ -139,7 +139,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 					continue
 				}
 				if field.IsRelation() {
-					if field.IsPrimaryRelation() {
+					if field.IsPrimaryRelation {
 						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
 							newDoc[field.Name] = g.getNextPrimaryDocID(typeName, &field)
 						} else {
@@ -185,22 +185,22 @@ func (g *randomDocGenerator) generateRandomValue(
 
 func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, fieldConfig genConfig) func() any {
 	switch fieldKind {
-	case client.FieldKind_STRING:
+	case client.FieldKind_NILLABLE_STRING:
 		strLen := DefaultStrLen
 		if prop, ok := fieldConfig.props["len"]; ok {
 			strLen = prop.(int)
 		}
 		return func() any { return getRandomString(&g.random, strLen) }
-	case client.FieldKind_INT:
+	case client.FieldKind_NILLABLE_INT:
 		min, max := getMinMaxOrDefault(fieldConfig, DefaultIntMin, DefaultIntMax)
 		return func() any { return min + g.random.Intn(max-min+1) }
-	case client.FieldKind_BOOL:
+	case client.FieldKind_NILLABLE_BOOL:
 		ratio := 0.5
 		if prop, ok := fieldConfig.props["ratio"]; ok {
 			ratio = prop.(float64)
 		}
 		return func() any { return g.random.Float64() < ratio }
-	case client.FieldKind_FLOAT:
+	case client.FieldKind_NILLABLE_FLOAT:
 		min, max := getMinMaxOrDefault(fieldConfig, 0.0, 1.0)
 		return func() any { return min + g.random.Float64()*(max-min) }
 	}
@@ -212,27 +212,27 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 	colNames := make(map[string]struct{})
 	fieldRefs := []string{}
 	for _, def := range definitions {
-		if def.Description.Name == "" {
+		if def.Description.Name.Value() == "" {
 			return NewErrIncompleteColDefinition("description name is empty")
 		}
 		if def.Schema.Name == "" {
 			return NewErrIncompleteColDefinition("schema name is empty")
 		}
-		if def.Description.Name != def.Schema.Name {
+		if def.Description.Name.Value() != def.Schema.Name {
 			return NewErrIncompleteColDefinition("description name and schema name do not match")
 		}
 		for _, field := range def.Schema.Fields {
 			if field.Name == "" {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
-			if field.IsObject() {
+			if field.Kind.IsObject() {
 				if field.Schema == "" {
 					return NewErrIncompleteColDefinition("field schema is empty")
 				}
 				fieldRefs = append(fieldRefs, field.Schema)
 			}
 		}
-		colNames[def.Description.Name] = struct{}{}
+		colNames[def.Description.Name.Value()] = struct{}{}
 		colIDs[def.Description.ID] = struct{}{}
 	}
 	for _, ref := range fieldRefs {

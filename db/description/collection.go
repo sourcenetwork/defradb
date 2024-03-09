@@ -13,6 +13,7 @@ package description
 import (
 	"context"
 	"encoding/json"
+	"sort"
 
 	"github.com/ipfs/go-datastore/query"
 
@@ -39,15 +40,17 @@ func SaveCollection(
 		return client.CollectionDescription{}, err
 	}
 
-	idBuf, err := json.Marshal(desc.ID)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
+	if desc.Name.HasValue() {
+		idBuf, err := json.Marshal(desc.ID)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
 
-	nameKey := core.NewCollectionNameKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
-	if err != nil {
-		return client.CollectionDescription{}, err
+		nameKey := core.NewCollectionNameKey(desc.Name.Value())
+		err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
 	}
 
 	// The need for this key is temporary, we should replace it with the global collection ID
@@ -59,6 +62,26 @@ func SaveCollection(
 	}
 
 	return desc, nil
+}
+
+func GetCollectionByID(
+	ctx context.Context,
+	txn datastore.Txn,
+	id uint32,
+) (client.CollectionDescription, error) {
+	key := core.NewCollectionKey(id)
+	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
+	var col client.CollectionDescription
+	err = json.Unmarshal(buf, &col)
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
+	return col, nil
 }
 
 // GetCollectionByName returns the collection with the given name.
@@ -81,19 +104,7 @@ func GetCollectionByName(
 		return client.CollectionDescription{}, err
 	}
 
-	key := core.NewCollectionKey(id)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	var col client.CollectionDescription
-	err = json.Unmarshal(buf, &col)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	return col, nil
+	return GetCollectionByID(ctx, txn, id)
 }
 
 // GetCollectionsBySchemaVersionID returns all collections that use the given
@@ -183,6 +194,8 @@ func GetCollectionsBySchemaRoot(
 }
 
 // GetCollections returns all collections in the system.
+//
+// This includes inactive collections.
 func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -214,6 +227,47 @@ func GetCollections(
 
 		cols = append(cols, col)
 	}
+
+	return cols, nil
+}
+
+// GetActiveCollections returns all active collections in the system.
+func GetActiveCollections(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.CollectionDescription, error) {
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: core.NewCollectionNameKey("").ToString(),
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+
+	cols := make([]client.CollectionDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseCollectionQuery(err)
+			}
+			return nil, err
+		}
+
+		var id uint32
+		err = json.Unmarshal(res.Value, &id)
+		if err != nil {
+			return nil, err
+		}
+
+		col, err := GetCollectionByID(ctx, txn, id)
+		if err != nil {
+			return nil, err
+		}
+
+		cols = append(cols, col)
+	}
+
+	// Sort the results by ID, so that the order matches that of [GetCollections].
+	sort.Slice(cols, func(i, j int) bool { return cols[i].ID < cols[j].ID })
 
 	return cols, nil
 }

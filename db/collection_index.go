@@ -18,10 +18,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
@@ -54,12 +57,12 @@ func (db *db) dropCollectionIndex(
 	return col.DropIndex(ctx, indexName)
 }
 
-// getAllIndexes returns all the indexes in the database.
-func (db *db) getAllIndexes(
+// getAllIndexDescriptions returns all the index descriptions in the database.
+func (db *db) getAllIndexDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	prefix := core.NewCollectionIndexKey("", "")
+	prefix := core.NewCollectionIndexKey(immutable.None[uint32](), "")
 
 	keys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
@@ -75,8 +78,14 @@ func (db *db) getAllIndexes(
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
-		indexes[indexKey.CollectionName] = append(
-			indexes[indexKey.CollectionName],
+
+		col, err := description.GetCollectionByID(ctx, txn, indexKey.CollectionID.Value())
+		if err != nil {
+			return nil, err
+		}
+
+		indexes[col.Name.Value()] = append(
+			indexes[col.Name.Value()],
 			indexDescriptions[i],
 		)
 	}
@@ -87,15 +96,64 @@ func (db *db) getAllIndexes(
 func (db *db) fetchCollectionIndexDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
-	colName string,
+	colID uint32,
 ) ([]client.IndexDescription, error) {
-	prefix := core.NewCollectionIndexKey(colName, "")
+	prefix := core.NewCollectionIndexKey(immutable.Some(colID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
 	if err != nil {
 		return nil, err
 	}
 	return indexDescriptions, nil
+}
+
+func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.indexNewDoc(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	return c.commitImplicitTxn(ctx, txn)
+}
+
+func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.deleteIndexedDoc(ctx, txn, oldDoc)
+	if err != nil {
+		return err
+	}
+	err = c.indexNewDoc(ctx, txn, newDoc)
+	if err != nil {
+		return err
+	}
+
+	return c.commitImplicitTxn(ctx, txn)
+}
+
+func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.deleteIndexedDoc(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	return c.commitImplicitTxn(ctx, txn)
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
@@ -121,12 +179,11 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
-	desc := c.Description()
-	schema := c.Schema()
 	oldDoc, err := c.get(
 		ctx,
 		txn,
-		c.getPrimaryKeyFromDocID(doc.ID()), desc.CollectIndexedFields(&schema),
+		c.getPrimaryKeyFromDocID(doc.ID()),
+		c.Definition().CollectIndexedFields(),
 		false,
 	)
 	if err != nil {
@@ -134,6 +191,24 @@ func (c *collection) updateIndexedDoc(
 	}
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *collection) deleteIndexedDoc(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	err := c.loadIndexes(ctx, txn)
+	if err != nil {
+		return err
+	}
+	for _, index := range c.indexes {
+		err = index.Delete(ctx, txn, doc)
 		if err != nil {
 			return err
 		}
@@ -186,7 +261,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	err = c.checkExistingFields(ctx, desc.Fields)
+	err = c.checkExistingFields(desc.Fields)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +271,11 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	colSeq, err := c.db.getSequence(ctx, txn, fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID()))
+	colSeq, err := c.db.getSequence(
+		ctx,
+		txn,
+		core.NewIndexIDSequenceKey(c.ID()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +302,8 @@ func (c *collection) createIndex(
 	c.indexes = append(c.indexes, colIndex)
 	err = c.indexExistingDocs(ctx, txn, colIndex)
 	if err != nil {
-		return nil, err
+		removeErr := colIndex.RemoveAll(ctx, txn)
+		return nil, errors.Join(err, removeErr)
 	}
 	return colIndex, nil
 }
@@ -231,7 +311,7 @@ func (c *collection) createIndex(
 func (c *collection) iterateAllDocs(
 	ctx context.Context,
 	txn datastore.Txn,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	exec func(doc *client.Document) error,
 ) error {
 	df := c.newFetcher()
@@ -275,14 +355,11 @@ func (c *collection) indexExistingDocs(
 	txn datastore.Txn,
 	index CollectionIndex,
 ) error {
-	fields := make([]client.FieldDescription, 0, 1)
+	fields := make([]client.FieldDefinition, 0, 1)
 	for _, field := range index.Description().Fields {
-		for i := range c.Schema().Fields {
-			colField := c.Schema().Fields[i]
-			if field.Name == colField.Name {
-				fields = append(fields, colField)
-				break
-			}
+		colField, ok := c.Definition().GetFieldByName(field.Name)
+		if ok {
+			fields = append(fields, colField)
 		}
 	}
 
@@ -338,7 +415,7 @@ func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName
 			break
 		}
 	}
-	key := core.NewCollectionIndexKey(c.Name(), indexName)
+	key := core.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -348,7 +425,7 @@ func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName
 }
 
 func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) error {
-	prefix := core.NewCollectionIndexKey(c.Name(), "")
+	prefix := core.NewCollectionIndexKey(immutable.Some(c.ID()), "")
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
@@ -366,7 +443,7 @@ func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) erro
 }
 
 func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
-	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, txn, c.Name())
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, txn, c.ID())
 	if err != nil {
 		return err
 	}
@@ -399,7 +476,6 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 }
 
 func (c *collection) checkExistingFields(
-	ctx context.Context,
 	fields []client.IndexedFieldDescription,
 ) error {
 	collectionFields := c.Schema().Fields
@@ -428,7 +504,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = core.NewCollectionIndexKey(c.Name(), desc.Name)
+			indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 			if err != nil {
 				return core.CollectionIndexKey{}, err
@@ -439,7 +515,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = core.NewCollectionIndexKey(c.Name(), desc.Name)
+		indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 		if err != nil {
 			return core.CollectionIndexKey{}, err
@@ -458,15 +534,9 @@ func validateIndexDescription(desc client.IndexDescription) error {
 	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields
 	}
-	if len(desc.Fields) == 1 && desc.Fields[0].Direction == client.Descending {
-		return ErrIndexSingleFieldWrongDirection
-	}
 	for i := range desc.Fields {
 		if desc.Fields[i].Name == "" {
 			return ErrIndexFieldMissingName
-		}
-		if desc.Fields[i].Direction == "" {
-			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return nil
@@ -477,7 +547,11 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	// at the moment we support only single field indexes that can be stored only in
 	// ascending order. This will change once we introduce composite indexes.
 	direction := "ASC"
-	sb.WriteString(col.Name())
+	if col.Name().HasValue() {
+		sb.WriteString(col.Name().Value())
+	} else {
+		sb.WriteString(fmt.Sprint(col.ID()))
+	}
 	sb.WriteByte('_')
 	// we can safely assume that there is at least one field in the slice
 	// because we validate it before calling this function

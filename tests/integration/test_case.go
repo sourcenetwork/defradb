@@ -13,10 +13,11 @@ package tests
 import (
 	"testing"
 
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
@@ -54,7 +55,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() config.Config
+type ConfigureNode func() []net.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -90,7 +91,10 @@ type SchemaPatch struct {
 	// If SetAsDefaultVersion has a value, and that value is false then the schema version
 	// resulting from this patch will not be made default.
 	SetAsDefaultVersion immutable.Option[bool]
-	ExpectedError       string
+
+	Lens immutable.Option[model.Lens]
+
+	ExpectedError string
 }
 
 // GetSchema is an action that fetches schema using the provided options.
@@ -118,9 +122,37 @@ type GetSchema struct {
 	ExpectedError string
 }
 
-// SetDefaultSchemaVersion is an action that will set the default schema version to the
+// GetCollections is an action that fetches collections using the provided options.
+//
+// ID, RootID and SchemaVersionID will only be asserted on if an expected value is provided.
+type GetCollections struct {
+	// NodeID may hold the ID (index) of a node to apply this patch to.
+	//
+	// If a value is not provided the patch will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
+
+	// The expected results.
+	//
+	// Each item will be compared individually, if ID, RootID or SchemaVersionID on the
+	// expected item are default they will not be compared with the actual.
+	//
+	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
+	// to allow their ommission in most cases).
+	ExpectedResults []client.CollectionDescription
+
+	// An optional set of fetch options for the collections.
+	FilterOptions client.CollectionFetchOptions
+
+	// Any error expected from the action. Optional.
+	ExpectedError string
+}
+
+// SetActiveSchemaVersion is an action that will set the active schema version to the
 // given value.
-type SetDefaultSchemaVersion struct {
+type SetActiveSchemaVersion struct {
 	// NodeID may hold the ID (index) of a node to set the default schema version on.
 	//
 	// If a value is not provided the default will be set on all nodes.
@@ -142,6 +174,9 @@ type CreateView struct {
 
 	// The SDL containing all types used by the view output.
 	SDL string
+
+	// An optional Lens transform to add to the view.
+	Transform immutable.Option[model.Lens]
 
 	// Any error expected from the action. Optional.
 	//
@@ -226,6 +261,14 @@ type UpdateDoc struct {
 	DontSync bool
 }
 
+// IndexField describes a field to be indexed.
+type IndexedField struct {
+	// Name contains the name of the field.
+	Name string
+	// Descending indicates whether the field is indexed in descending order.
+	Descending bool
+}
+
 // CreateIndex will attempt to create the given secondary index for the given collection
 // using the collection api.
 type CreateIndex struct {
@@ -243,10 +286,8 @@ type CreateIndex struct {
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The names of the fields to index. Used only for composite indexes.
-	FieldsNames []string
-	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
-	Directions []client.IndexDirection
+	// The fields to index. Used only for composite indexes.
+	Fields []IndexedField
 
 	// If Unique is true, the index will be created as a unique index.
 	Unique bool

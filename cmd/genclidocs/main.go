@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/cobra/doc"
 
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/config"
 )
 
 var path string
@@ -33,7 +32,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	defraCmd := cli.NewDefraCommand()
 	defraCmd.DisableAutoGenTag = true
 
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {

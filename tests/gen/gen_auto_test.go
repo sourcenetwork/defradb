@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -71,7 +72,7 @@ func getDocIDsFromDocs(docs []*client.Document) []string {
 func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
 	var result []*client.Document
 	for _, doc := range docs {
-		if doc.Col.Description.Name == name {
+		if doc.Col.Description.Name.Value() == name {
 			result = append(result, doc.Doc)
 		}
 	}
@@ -1200,44 +1201,41 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		return []client.CollectionDefinition{
 			{
 				Description: client.CollectionDescription{
-					Name: "User",
+					Name: immutable.Some("User"),
 					ID:   0,
 				},
 				Schema: client.SchemaDescription{
 					Name: "User",
-					Fields: []client.FieldDescription{
+					Fields: []client.SchemaFieldDescription{
 						{
 							Name: "name",
-							Kind: client.FieldKind_INT,
+							Kind: client.FieldKind_NILLABLE_INT,
 						},
 						{
-							Name:         "device",
-							Kind:         client.FieldKind_FOREIGN_OBJECT,
-							Schema:       "Device",
-							RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
+							Name:   "device",
+							Kind:   client.FieldKind_FOREIGN_OBJECT,
+							Schema: "Device",
 						},
 					},
 				},
 			},
 			{
 				Description: client.CollectionDescription{
-					Name: "Device",
+					Name: immutable.Some("Device"),
 					ID:   1,
 				},
 				Schema: client.SchemaDescription{
 					Name: "Device",
-					Fields: []client.FieldDescription{
+					Fields: []client.SchemaFieldDescription{
 						{
 							Name: "model",
-							Kind: client.FieldKind_STRING,
+							Kind: client.FieldKind_NILLABLE_STRING,
 						},
 						{
-							Name:   "owner",
-							Kind:   client.FieldKind_FOREIGN_OBJECT,
-							Schema: "User",
-							RelationType: client.Relation_Type_ONE |
-								client.Relation_Type_ONEONE |
-								client.Relation_Type_Primary,
+							Name:              "owner",
+							Kind:              client.FieldKind_FOREIGN_OBJECT,
+							Schema:            "User",
+							IsPrimaryRelation: true,
 						},
 					},
 				},
@@ -1252,7 +1250,13 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		{
 			name: "description name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = ""
+				defs[0].Description.Name = immutable.Some("")
+			},
+		},
+		{
+			name: "description name is none",
+			changeDefs: func(defs []client.CollectionDefinition) {
+				defs[0].Description.Name = immutable.None[string]()
 			},
 		},
 		{
@@ -1312,49 +1316,50 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Description: client.CollectionDescription{
-				Name: "User",
+				Name: immutable.Some("User"),
 				ID:   0,
 			},
 			Schema: client.SchemaDescription{
 				Name: "User",
-				Fields: []client.FieldDescription{
+				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "name",
-						Kind: client.FieldKind_STRING,
+						Kind: client.FieldKind_NILLABLE_STRING,
 					},
 					{
 						Name: "age",
-						Kind: client.FieldKind_INT,
+						Kind: client.FieldKind_NILLABLE_INT,
 					},
 					{
 						Name: "rating",
-						Kind: client.FieldKind_FLOAT,
+						Kind: client.FieldKind_NILLABLE_FLOAT,
 					},
 					{
 						Name:         "devices",
 						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
 						Schema:       "Device",
-						RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
+						RelationName: "Device_owner",
 					},
 				},
 			},
 		},
 		{
 			Description: client.CollectionDescription{
-				Name: "Device",
+				Name: immutable.Some("Device"),
 				ID:   1,
 			},
 			Schema: client.SchemaDescription{
 				Name: "Device",
-				Fields: []client.FieldDescription{
+				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "model",
-						Kind: client.FieldKind_STRING,
+						Kind: client.FieldKind_NILLABLE_STRING,
 					},
 					{
 						Name:         "owner_id",
 						Kind:         client.FieldKind_DocID,
-						RelationType: client.Relation_Type_INTERNAL_ID,
+						RelationName: "Device_owner",
+						Schema:       "User",
 					},
 				},
 			},

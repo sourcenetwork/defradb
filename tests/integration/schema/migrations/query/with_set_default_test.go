@@ -22,7 +22,7 @@ import (
 )
 
 func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *testing.T) {
-	schemaVersionID2 := "bafkreidvp3xozpau2zanh7s5or4fhr7kchm6klznsyzd7fpcm3sh2xlgfm"
+	schemaVersionID2 := "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -47,25 +47,19 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreibgg4ex7aya4w4x3dnrlyov4juyuffjjokzkjrpoupncfuvsyi6du",
-					DestinationSchemaVersionID: schemaVersionID2,
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.SetDefaultModulePath,
-								Arguments: map[string]any{
-									"dst":   "verified",
-									"value": true,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.SetDefaultModulePath,
+							Arguments: map[string]any{
+								"dst":   "verified",
+								"value": true,
 							},
 						},
 					},
-				},
+				}),
 			},
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID2,
 			},
 			testUtils.Request{
@@ -89,8 +83,8 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 }
 
 func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t *testing.T) {
-	schemaVersionID1 := "bafkreibgg4ex7aya4w4x3dnrlyov4juyuffjjokzkjrpoupncfuvsyi6du"
-	schemaVersionID2 := "bafkreidvp3xozpau2zanh7s5or4fhr7kchm6klznsyzd7fpcm3sh2xlgfm"
+	schemaVersionID1 := "bafkreiaqs2jvnjgddkkhxzhhfmrr6o4yohhqymbi55b7ltynxo4tmge4wu"
+	schemaVersionID2 := "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -111,7 +105,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID2,
 			},
 			// Create John using the new schema version
@@ -139,7 +133,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 				},
 			},
 			// Set the schema version back to the original
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID1,
 			},
 			testUtils.Request{
@@ -164,8 +158,8 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 }
 
 func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt_ClearsMigrations(t *testing.T) {
-	schemaVersionID1 := "bafkreibgg4ex7aya4w4x3dnrlyov4juyuffjjokzkjrpoupncfuvsyi6du"
-	schemaVersionID2 := "bafkreidvp3xozpau2zanh7s5or4fhr7kchm6klznsyzd7fpcm3sh2xlgfm"
+	schemaVersionID1 := "bafkreiaqs2jvnjgddkkhxzhhfmrr6o4yohhqymbi55b7ltynxo4tmge4wu"
+	schemaVersionID2 := "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -211,7 +205,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 				},
 			},
 			// Set the schema version back to the original
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID1,
 			},
 			testUtils.Request{

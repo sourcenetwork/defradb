@@ -1,3 +1,71 @@
+<a name="v0.10.0"></a>
+## [v0.10.0](https://github.com/sourcenetwork/defradb/compare/v0.9.0...v0.10.0)
+
+> 2024-03-08
+
+DefraDB v0.10 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.9.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Add case insensitive `like` operator ([#2368](https://github.com/sourcenetwork/defradb/issues/2368))
+* Reverted order for indexed fields ([#2335](https://github.com/sourcenetwork/defradb/issues/2335))
+* Rework GetCollection/SchemaByFoo funcs into single ([#2319](https://github.com/sourcenetwork/defradb/issues/2319))
+* Add support for views with Lens transforms ([#2311](https://github.com/sourcenetwork/defradb/issues/2311))
+* Model Col. SchemaVersions and migrations on Cols ([#2286](https://github.com/sourcenetwork/defradb/issues/2286))
+* Replace FieldDescription.RelationType with IsPrimary ([#2288](https://github.com/sourcenetwork/defradb/issues/2288))
+* Multiple docs with nil value on unique-indexed field ([#2276](https://github.com/sourcenetwork/defradb/issues/2276))
+* Allow setting null values on doc fields ([#2273](https://github.com/sourcenetwork/defradb/issues/2273))
+* Add JSON scalar ([#2254](https://github.com/sourcenetwork/defradb/issues/2254))
+* Generate OpenAPI command ([#2235](https://github.com/sourcenetwork/defradb/issues/2235))
+* Add composite indexes ([#2226](https://github.com/sourcenetwork/defradb/issues/2226))
+
+### Fixes
+
+* Add `latest` image tag for ghcr ([#2340](https://github.com/sourcenetwork/defradb/issues/2340))
+* Move field id off of schema ([#2336](https://github.com/sourcenetwork/defradb/issues/2336))
+* Make returned collections respect explicit transactions ([#2385](https://github.com/sourcenetwork/defradb/issues/2385))
+* Update GetCollections behaviour ([#2378](https://github.com/sourcenetwork/defradb/issues/2378))
+* Add missing directive definitions ([#2369](https://github.com/sourcenetwork/defradb/issues/2369))
+* Add validation to JSON fields ([#2375](https://github.com/sourcenetwork/defradb/issues/2375))
+* Make peers sync secondary index ([#2390](https://github.com/sourcenetwork/defradb/issues/2390))
+* Load root dir before loading config ([#2266](https://github.com/sourcenetwork/defradb/issues/2266))
+* Mark docs as deleted when querying in delete mut ([#2298](https://github.com/sourcenetwork/defradb/issues/2298))
+* Add missing logs at startup ([#2391](https://github.com/sourcenetwork/defradb/issues/2391))
+* Add missing delta payload ([#2306](https://github.com/sourcenetwork/defradb/issues/2306))
+* Fix compound relational filters in aggregates ([#2297](https://github.com/sourcenetwork/defradb/issues/2297))
+
+### Refactoring
+
+* Generate field ids using a sequence ([#2339](https://github.com/sourcenetwork/defradb/issues/2339))
+* Make config internal to CLI ([#2310](https://github.com/sourcenetwork/defradb/issues/2310))
+* Node config ([#2296](https://github.com/sourcenetwork/defradb/issues/2296))
+* HTTP config ([#2278](https://github.com/sourcenetwork/defradb/issues/2278))
+* Remove unused Delete field from client.Document ([#2275](https://github.com/sourcenetwork/defradb/issues/2275))
+* Decouple net config ([#2258](https://github.com/sourcenetwork/defradb/issues/2258))
+* Make CollectionDescription.Name Option ([#2223](https://github.com/sourcenetwork/defradb/issues/2223))
+
+### Chore
+
+* Bump to GoLang v1.21 ([#2195](https://github.com/sourcenetwork/defradb/issues/2195))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 05-02-2024 ([#2372](https://github.com/sourcenetwork/defradb/issues/2372))
+* Update dependencies (bulk dependabot PRs) 02-27-2024 ([#2353](https://github.com/sourcenetwork/defradb/issues/2353))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.21.0 to 7.0.1 in /playground ([#2331](https://github.com/sourcenetwork/defradb/issues/2331))
+* Bump google.golang.org/grpc from 1.61.0 to 1.61.1 ([#2320](https://github.com/sourcenetwork/defradb/issues/2320))
+* Update dependencies (bulk dependabot PRs) 2024-02-19 ([#2330](https://github.com/sourcenetwork/defradb/issues/2330))
+* Bump vite from 5.1.1 to 5.1.2 in /playground ([#2317](https://github.com/sourcenetwork/defradb/issues/2317))
+* Bump golang.org/x/net from 0.20.0 to 0.21.0 ([#2301](https://github.com/sourcenetwork/defradb/issues/2301))
+* Update dependencies (bulk dependabot PRs) 2023-02-14 ([#2313](https://github.com/sourcenetwork/defradb/issues/2313))
+* Update dependencies (bulk dependabot PRs) 02-07-2024 ([#2294](https://github.com/sourcenetwork/defradb/issues/2294))
+* Update dependencies (bulk dependabot PRs) 30-01-2024 ([#2270](https://github.com/sourcenetwork/defradb/issues/2270))
+* Update dependencies (bulk dependabot PRs) 23-01-2024 ([#2252](https://github.com/sourcenetwork/defradb/issues/2252))
+* Bump vite from 5.0.11 to 5.0.12 in /playground ([#2236](https://github.com/sourcenetwork/defradb/issues/2236))
+* Bump github.com/evanphx/json-patch/v5 from 5.7.0 to 5.8.1 ([#2233](https://github.com/sourcenetwork/defradb/issues/2233))
+
 <a name="v0.9.0"></a>
 ## [v0.9.0](https://github.com/sourcenetwork/defradb/compare/v0.8.0...v0.9.0)
 

@@ -58,3 +58,44 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If blob field is set to null, should set to nil",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						data: Blob
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"data": "00FE"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"data": null
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Users {
+							data
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"data": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

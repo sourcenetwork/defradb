@@ -203,6 +203,16 @@ The not-like operator - if the target value does not contain the given sub-strin
  pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
  the string 'Quentin Tarantino'.
 `
+	ilikeStringOperatorDescription string = `
+The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+ will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+ ending in 'Ritchie'.
+`
+	nilikeStringOperatorDescription string = `
+The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+ the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+ the string 'Quentin Tarantino'.
+`
 	AndOperatorDescription string = `
 The and operator - all checks within this clause must pass in order for this check to pass.
 `
@@ -217,6 +227,9 @@ Sort the results in ascending order, e.g. null,1,2,3,a,b,c.
 `
 	descOrderDescription string = `
 Sort the results in descending order, e.g. c,b,a,3,2,1,null.
+`
+	crdtDirectiveDescription string = `
+Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister.
 `
 	primaryDirectiveDescription string = `
 Indicate the primary side of a one-to-one relationship.

@@ -111,9 +111,12 @@ func defaultMutationType() *gql.Object {
 // default directives type.
 func defaultDirectivesType() []*gql.Directive {
 	return []*gql.Directive{
+		schemaTypes.CRDTFieldDirective,
 		schemaTypes.ExplainDirective,
 		schemaTypes.IndexDirective,
 		schemaTypes.IndexFieldDirective,
+		schemaTypes.PrimaryDirective,
+		schemaTypes.RelationDirective,
 	}
 }
 
@@ -143,6 +146,7 @@ func defaultTypes() []gql.Type {
 
 		// Custom Scalar types
 		schemaTypes.BlobScalarType,
+		schemaTypes.JSONScalarType,
 
 		// Base Query types
 
@@ -165,6 +169,7 @@ func defaultTypes() []gql.Type {
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
 
+		schemaTypes.CRDTEnum,
 		schemaTypes.ExplainEnum,
 	}
 }

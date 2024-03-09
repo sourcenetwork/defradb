@@ -49,49 +49,35 @@ type LensRegistry interface {
 	// after this has been created, the results of those commits will be visible within this scope.
 	WithTxn(datastore.Txn) LensRegistry
 
-	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivalent to
-	// calling `Store.SetMigration(ctx, cfg)`.
+	// SetMigration caches the migration for the given collection ID. It does not persist the migration in long
+	// term storage, for that one should call [Store.SetMigration(ctx, cfg)].
 	//
-	// There may only be one migration per schema version id.  If another migration was registered it will be
+	// There may only be one migration per collection.  If another migration was registered it will be
 	// overwritten by this migration.
-	//
-	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
-	// This is to allow the migration of documents of schema versions unknown to the local node received by the
-	// P2P system.
 	//
 	// Migrations will only run if there is a complete path from the document schema version to the latest local
 	// schema version.
-	SetMigration(context.Context, LensConfig) error
+	SetMigration(context.Context, uint32, model.Lens) error
 
 	// ReloadLenses clears any cached migrations, loads their configurations from the database and re-initializes
 	// them.  It is run on database start if the database already existed.
 	ReloadLenses(context.Context) error
 
 	// MigrateUp returns an enumerable that feeds the given source through the Lens migration for the given
-	// schema version id if one is found, if there is no matching migration the given source will be returned.
+	// collection id if one is found, if there is no matching migration the given source will be returned.
 	MigrateUp(
 		context.Context,
 		enumerable.Enumerable[map[string]any],
-		string,
+		uint32,
 	) (enumerable.Enumerable[map[string]any], error)
 
-	// MigrateDown returns an enumerable that feeds the given source through the Lens migration for the schema
-	// version that precedes the given schema version id in reverse, if one is found, if there is no matching
-	// migration the given source will be returned.
+	// MigrateDown returns an enumerable that feeds the given source through the Lens migration for the given
+	// collection id in reverse if one is found, if there is no matching migration the given source will be returned.
 	//
 	// This downgrades any documents in the source enumerable if/when enumerated.
 	MigrateDown(
 		context.Context,
 		enumerable.Enumerable[map[string]any],
-		string,
+		uint32,
 	) (enumerable.Enumerable[map[string]any], error)
-
-	// Config returns a slice of the configurations of the currently loaded migrations.
-	//
-	// Modifying the slice does not affect the loaded configurations.
-	Config(context.Context) ([]LensConfig, error)
-
-	// HasMigration returns true if there is a migration registered for the given schema version id, otherwise
-	// will return false.
-	HasMigration(context.Context, string) (bool, error)
 }

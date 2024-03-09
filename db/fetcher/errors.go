@@ -11,11 +11,13 @@
 package fetcher
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errFieldIdNotFound              string = "unable to find FieldDescription for given FieldId"
+	errFieldIdNotFound              string = "unable to find SchemaFieldDescription for given FieldId"
 	errFailedToDecodeCIDForVFetcher string = "failed to decode CID for VersionedFetcher"
 	errFailedToSeek                 string = "seek failed"
 	errFailedToMergeState           string = "failed merging state"
@@ -26,6 +28,9 @@ const (
 	errVFetcherFailedToGetDagLink   string = "(version fetcher) failed to get node link from DAG"
 	errFailedToGetDagNode           string = "failed to get DAG Node"
 	errMissingMapper                string = "missing document mapper"
+	errInvalidInOperatorValue       string = "invalid _in/_nin value"
+	errInvalidFilterOperator        string = "invalid filter operator is provided"
+	errUnexpectedTypeValue          string = "unexpected type value"
 )
 
 var (
@@ -41,6 +46,9 @@ var (
 	ErrFailedToGetDagNode           = errors.New(errFailedToGetDagNode)
 	ErrMissingMapper                = errors.New(errMissingMapper)
 	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
+	ErrInvalidInOperatorValue       = errors.New(errInvalidInOperatorValue)
+	ErrInvalidFilterOperator        = errors.New(errInvalidFilterOperator)
+	ErrUnexpectedTypeValue          = errors.New(errUnexpectedTypeValue)
 )
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
@@ -92,4 +100,15 @@ func NewErrVFetcherFailedToGetDagLink(inner error) error {
 // NewErrFailedToGetDagNode returns an error indicating that the given DAG node could not be retrieved.
 func NewErrFailedToGetDagNode(inner error) error {
 	return errors.Wrap(errFailedToGetDagNode, inner)
+}
+
+// NewErrInvalidFilterOperator returns an error indicating that the given filter operator is invalid.
+func NewErrInvalidFilterOperator(operator string) error {
+	return errors.New(errInvalidFilterOperator, errors.NewKV("Operator", operator))
+}
+
+// NewErrUnexpectedTypeValue returns an error indicating that the given value is of an unexpected type.
+func NewErrUnexpectedTypeValue[T any](value any) error {
+	var t T
+	return errors.New(errUnexpectedTypeValue, errors.NewKV("Value", value), errors.NewKV("Type", fmt.Sprintf("%T", t)))
 }

@@ -240,6 +240,9 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 	case *viewNode:
 		return p.expandPlan(n.source, parentPlan)
 
+	case *lensNode:
+		return p.expandPlan(n.source, parentPlan)
+
 	default:
 		return nil
 	}
@@ -342,18 +345,17 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	)
 	slct := node.subType.(*selectTopNode).selectNode
 	desc := slct.collection.Description()
-	schema := slct.collection.Schema()
-	indexedFields := desc.CollectIndexedFields(&schema)
-	for _, indField := range indexedFields {
-		if ind, ok := filteredSubFields[indField.Name]; ok {
+	for subFieldName, subFieldInd := range filteredSubFields {
+		indexes := desc.GetIndexesOnField(subFieldName)
+		if len(indexes) > 0 {
 			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
 			relatedField := mapper.Field{Name: node.subTypeName, Index: subInd}
 			fieldFilter := filter.UnwrapRelation(filter.CopyField(
 				parentPlan.selectNode.filter,
 				relatedField,
-				mapper.Field{Name: indField.Name, Index: ind},
+				mapper.Field{Name: subFieldName, Index: subFieldInd},
 			), relatedField)
-			err := node.invertJoinDirectionWithIndex(fieldFilter, indField)
+			err := node.invertJoinDirectionWithIndex(fieldFilter, indexes[0])
 			if err != nil {
 				return err
 			}

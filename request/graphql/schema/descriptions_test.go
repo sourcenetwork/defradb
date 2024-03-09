@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -33,12 +34,12 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "User",
+						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -46,17 +47,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: client.FieldKind_BOOL,
+								Kind: client.FieldKind_NILLABLE_BOOL,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -82,12 +83,12 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "User",
+						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -95,17 +96,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: client.FieldKind_BOOL,
+								Kind: client.FieldKind_NILLABLE_BOOL,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -113,12 +114,12 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -126,17 +127,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "publisher",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -162,12 +163,12 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -179,22 +180,20 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
 								Schema:       "Author",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
-								Name:         "author_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "author_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -202,12 +201,12 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -215,27 +214,26 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
-								Name:         "published",
-								RelationName: "author_book",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
-								Typ:          client.NONE_CRDT,
-								Schema:       "Book",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+								Name:              "published",
+								RelationName:      "author_book",
+								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Typ:               client.NONE_CRDT,
+								Schema:            "Book",
+								IsPrimaryRelation: true,
 							},
 							{
-								Name:         "published_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "published_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -260,12 +258,12 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "User",
+						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -273,17 +271,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: client.FieldKind_BOOL,
+								Kind: client.FieldKind_NILLABLE_BOOL,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -291,12 +289,12 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -304,17 +302,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "publisher",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -340,12 +338,12 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -357,22 +355,20 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
 								Schema:       "Author",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
-								Name:         "author_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "author_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -380,12 +376,12 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -393,27 +389,26 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
-								Name:         "published",
-								RelationName: "book_authors",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
-								Typ:          client.NONE_CRDT,
-								Schema:       "Book",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+								Name:              "published",
+								RelationName:      "book_authors",
+								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Typ:               client.NONE_CRDT,
+								Schema:            "Book",
+								IsPrimaryRelation: true,
 							},
 							{
-								Name:         "published_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "published_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -438,39 +433,38 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
 								Typ:  client.NONE_CRDT,
 							},
 							{
-								Name:         "author",
-								RelationName: "author_book",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
-								Typ:          client.NONE_CRDT,
-								Schema:       "Author",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+								Name:              "author",
+								RelationName:      "author_book",
+								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Typ:               client.NONE_CRDT,
+								Schema:            "Author",
+								IsPrimaryRelation: true,
 							},
 							{
-								Name:         "author_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "author_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -478,12 +472,12 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -491,12 +485,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -505,13 +499,11 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
 								Schema:       "Book",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
-								Name:         "published_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "published_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -536,39 +528,38 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
 								Typ:  client.NONE_CRDT,
 							},
 							{
-								Name:         "author",
-								RelationName: "author_book",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
-								Typ:          client.NONE_CRDT,
-								Schema:       "Author",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEMANY | client.Relation_Type_Primary,
+								Name:              "author",
+								RelationName:      "author_book",
+								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Typ:               client.NONE_CRDT,
+								Schema:            "Author",
+								IsPrimaryRelation: true,
 							},
 							{
-								Name:         "author_id",
-								Kind:         client.FieldKind_DocID,
-								Typ:          client.LWW_REGISTER,
-								RelationType: client.Relation_Type_INTERNAL_ID,
+								Name: "author_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -576,12 +567,12 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -589,12 +580,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -603,7 +594,6 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
 								Typ:          client.NONE_CRDT,
 								Schema:       "Book",
-								RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
 							},
 						},
 					},

@@ -20,6 +20,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -59,6 +60,10 @@ type indexTestFixture struct {
 }
 
 func (f *indexTestFixture) addUsersCollection() client.Collection {
+	if f.users != nil {
+		return f.users
+	}
+
 	_, err := f.db.AddSchema(
 		f.ctx,
 		fmt.Sprintf(
@@ -136,14 +141,14 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 func (f *indexTestFixture) createCollectionIndex(
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	return f.createCollectionIndexFor(f.users.Name(), desc)
+	return f.createCollectionIndexFor(f.users.Name().Value(), desc)
 }
 
 func getUsersIndexDescOnName() client.IndexDescription {
 	return client.IndexDescription{
 		Name: testUsersColIndexName,
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersNameFieldName, Direction: client.Ascending},
+			{Name: usersNameFieldName},
 		},
 	}
 }
@@ -152,7 +157,7 @@ func getUsersIndexDescOnAge() client.IndexDescription {
 	return client.IndexDescription{
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersAgeFieldName, Direction: client.Ascending},
+			{Name: usersAgeFieldName},
 		},
 	}
 }
@@ -161,7 +166,7 @@ func getUsersIndexDescOnWeight() client.IndexDescription {
 	return client.IndexDescription{
 		Name: testUsersColIndexWeight,
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersWeightFieldName, Direction: client.Ascending},
+			{Name: usersWeightFieldName},
 		},
 	}
 }
@@ -170,13 +175,13 @@ func getProductsIndexDescOnCategory() client.IndexDescription {
 	return client.IndexDescription{
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
-			{Name: productsCategoryFieldName, Direction: client.Ascending},
+			{Name: productsCategoryFieldName},
 		},
 	}
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	return newDesc
 }
@@ -188,13 +193,27 @@ func makeUnique(indexDesc client.IndexDescription) client.IndexDescription {
 
 func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexDescription {
 	indexDesc := makeUnique(getUsersIndexDescOnName())
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+	return newDesc
+}
+
+func addFieldToIndex(indexDesc client.IndexDescription, fieldName string) client.IndexDescription {
+	indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+		Name: fieldName,
+	})
+	return indexDesc
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnNameAndAge() client.IndexDescription {
+	indexDesc := addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
 	require.NoError(f.t, err)
 	return newDesc
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnAge())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
 	return newDesc
 }
@@ -203,8 +222,8 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 	return f.db.dropCollectionIndex(f.ctx, f.txn, colName, indexName)
 }
 
-func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {
-	prefix := core.NewCollectionIndexKey(usersColName, indexName)
+func (f *indexTestFixture) countIndexPrefixes(indexName string) int {
+	prefix := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), indexName)
 	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
 		Prefix: prefix.ToString(),
 	})
@@ -244,11 +263,11 @@ func (f *indexTestFixture) createCollectionIndexFor(
 }
 
 func (f *indexTestFixture) getAllIndexes() (map[client.CollectionName][]client.IndexDescription, error) {
-	return f.db.getAllIndexes(f.ctx, f.txn)
+	return f.db.getAllIndexDescriptions(f.ctx, f.txn)
 }
 
-func (f *indexTestFixture) getCollectionIndexes(colName string) ([]client.IndexDescription, error) {
-	return f.db.fetchCollectionIndexDescriptions(f.ctx, f.txn, colName)
+func (f *indexTestFixture) getCollectionIndexes(colID uint32) ([]client.IndexDescription, error) {
+	return f.db.fetchCollectionIndexDescriptions(f.ctx, f.txn, colID)
 }
 
 func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
@@ -270,7 +289,7 @@ func TestCreateIndex_IfIndexDescriptionIDIsNotZero_ReturnError(t *testing.T) {
 			Name: "some_index_name",
 			ID:   id,
 			Fields: []client.IndexedFieldDescription{
-				{Name: usersNameFieldName, Direction: client.Ascending},
+				{Name: usersNameFieldName},
 			},
 		}
 		_, err := f.createCollectionIndex(desc)
@@ -285,7 +304,7 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	desc := client.IndexDescription{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersNameFieldName, Direction: client.Ascending},
+			{Name: usersNameFieldName},
 		},
 	}
 	resultDesc, err := f.createCollectionIndex(desc)
@@ -302,7 +321,7 @@ func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 	desc := client.IndexDescription{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
-			{Name: "", Direction: client.Ascending},
+			{Name: ""},
 		},
 	}
 	_, err := f.createCollectionIndex(desc)
@@ -319,20 +338,7 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	}
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
-	assert.Equal(t, client.Ascending, newDesc.Fields[0].Direction)
-}
-
-func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	defer f.db.Close()
-
-	desc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{
-			{Name: usersNameFieldName, Direction: client.Descending},
-		},
-	}
-	_, err := f.createCollectionIndex(desc)
-	assert.EqualError(t, err, errIndexSingleFieldWrongDirection)
+	assert.False(t, newDesc.Fields[0].Descending)
 }
 
 func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
@@ -392,7 +398,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	_, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
 
-	key := core.NewCollectionIndexKey(f.users.Name(), name)
+	key := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), name)
 	data, err := f.txn.Systemstore().Get(f.ctx, key.ToDS())
 	assert.NoError(t, err)
 	var deserialized client.IndexDescription
@@ -435,16 +441,16 @@ func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCol
 	makeIndex := func(fieldName string) client.IndexDescription {
 		return client.IndexDescription{
 			Fields: []client.IndexedFieldDescription{
-				{Name: fieldName, Direction: client.Ascending},
+				{Name: fieldName},
 			},
 		}
 	}
 
 	createIndexAndAssert := func(col client.Collection, fieldName string, expectedID uint32) {
-		desc, err := f.createCollectionIndexFor(col.Name(), makeIndex(fieldName))
+		desc, err := f.createCollectionIndexFor(col.Name().Value(), makeIndex(fieldName))
 		require.NoError(t, err)
 		assert.Equal(t, expectedID, desc.ID)
-		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, col.ID()))
+		seqKey := core.NewIndexIDSequenceKey(col.ID())
 		storedSeqKey, err := f.txn.Systemstore().Get(f.ctx, seqKey.ToDS())
 		assert.NoError(t, err)
 		storedSeqVal := binary.BigEndian.Uint64(storedSeqKey)
@@ -517,14 +523,14 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 
 	indexDesc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: "field", Direction: client.Ascending},
+			{Name: "field"},
 		},
 	}
 
 	f.txn, err = f.db.NewTxn(f.ctx, false)
 	require.NoError(f.t, err)
 
-	_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
+	_, err = f.createCollectionIndexFor(collection.Name().Value(), indexDesc)
 	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 }
 
@@ -562,7 +568,7 @@ func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
 	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
 	assert.NoError(t, err)
 
@@ -574,12 +580,12 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
 	key := ds.NewKey(indexKey.ToString() + "/invalid")
 	desc := client.IndexDescription{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersNameFieldName, Direction: client.Ascending},
+			{Name: usersNameFieldName},
 		},
 	}
 	descData, _ := json.Marshal(desc)
@@ -663,7 +669,7 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
 
-	f.getProductsCollectionDesc()
+	products := f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
 		Name:   "products_description_index",
 		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
@@ -675,13 +681,13 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	_, err = f.createCollectionIndexFor(productsColName, productsIndexDesc)
 	assert.NoError(t, err)
 
-	userIndexes, err := f.getCollectionIndexes(usersColName)
+	userIndexes, err := f.getCollectionIndexes(f.users.ID())
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(userIndexes))
 	usersIndexDesc.ID = 1
 	assert.Equal(t, usersIndexDesc, userIndexes[0])
 
-	productIndexes, err := f.getCollectionIndexes(productsColName)
+	productIndexes, err := f.getCollectionIndexes(products.ID())
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(productIndexes))
 	productsIndexDesc.ID = 1
@@ -700,7 +706,7 @@ func TestGetCollectionIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore)
 
-	_, err := f.getCollectionIndexes(usersColName)
+	_, err := f.getCollectionIndexes(f.users.ID())
 	assert.ErrorIs(t, err, testErr)
 }
 
@@ -716,7 +722,7 @@ func TestGetCollectionIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore)
 
-	_, _ = f.getCollectionIndexes(usersColName)
+	_, _ = f.getCollectionIndexes(f.users.ID())
 }
 
 func TestGetCollectionIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *testing.T) {
@@ -732,7 +738,7 @@ func TestGetCollectionIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *tes
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore)
 
-	_, err := f.getCollectionIndexes(usersColName)
+	_, err := f.getCollectionIndexes(f.users.ID())
 	assert.ErrorIs(t, err, testErr)
 }
 
@@ -740,11 +746,11 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
 	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
 	assert.NoError(t, err)
 
-	_, err = f.getCollectionIndexes(usersColName)
+	_, err = f.getCollectionIndexes(f.users.ID())
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
@@ -866,7 +872,6 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	f.addUsersCollection()
 
 	const unsupportedKind = client.FieldKind_BOOL_ARRAY
 	_, err := f.db.AddSchema(
@@ -886,7 +891,7 @@ func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *te
 
 	indexDesc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: "field", Direction: client.Ascending},
+			{Name: "field"},
 		},
 	}
 	indexDescData, err := json.Marshal(indexDesc)
@@ -1007,11 +1012,11 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 		indexDesc := client.IndexDescription{
 			Name: indexNamePrefix + iStr,
 			Fields: []client.IndexedFieldDescription{
-				{Name: fieldNamePrefix + iStr, Direction: client.Ascending},
+				{Name: fieldNamePrefix + iStr},
 			},
 		}
 
-		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+		_, err := f.createCollectionIndexFor(collection.Name().Value(), indexDesc)
 		require.NoError(t, err)
 	}
 
@@ -1032,7 +1037,7 @@ func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	err := f.dropIndex(usersColName, desc.Name)
 	assert.NoError(t, err)
 
-	indexKey := core.NewCollectionIndexKey(usersColName, desc.Name)
+	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), desc.Name)
 	_, err = f.txn.Systemstore().Get(f.ctx, indexKey.ToDS())
 	assert.Error(t, err)
 }
@@ -1148,24 +1153,24 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 	defer f.db.Close()
 	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersNameFieldName, Direction: client.Ascending},
+			{Name: usersNameFieldName},
 		},
 	})
 	assert.NoError(f.t, err)
 
 	_, err = f.createCollectionIndexFor(usersColName, client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: usersAgeFieldName, Direction: client.Ascending},
+			{Name: usersAgeFieldName},
 		},
 	})
 	assert.NoError(f.t, err)
 
-	assert.Equal(t, 2, f.countIndexPrefixes(usersColName, ""))
+	assert.Equal(t, 2, f.countIndexPrefixes(""))
 
 	err = f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 0, f.countIndexPrefixes(usersColName, ""))
+	assert.Equal(t, 0, f.countIndexPrefixes(""))
 }
 
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
@@ -1269,5 +1274,5 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 	desc := getUsersIndexDescOnName()
 	desc.Fields[0].Name = "non_existing_field"
 	_, err := NewCollectionIndex(f.users, desc)
-	require.ErrorIs(t, err, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name))
+	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
 }

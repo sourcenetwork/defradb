@@ -46,11 +46,71 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsString(t *testin
 	executeTestCase(t, test)
 }
 
+func TestQuerySimple_WithNotCaseInsensitiveLikeString_ShouldMatchString(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not case insensitive like-string filter contains string",
+		Request: `query {
+					Users(filter: {Name: {_nilike: "%stormborn%"}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Viserys I Targaryen, King of the Andals",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithNotLikeStringContainsFilterBlockAsPrefixString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with string as prefix",
 		Request: `query {
 					Users(filter: {Name: {_nlike: "Viserys%"}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNotCaseInsensitiveLikeString_ShouldMatchPrefixString(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not case insensitive like-string filter with string as prefix",
+		Request: `query {
+					Users(filter: {Name: {_nilike: "viserys%"}}) {
 						Name
 					}
 				}`,
@@ -106,11 +166,71 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockAsSuffixString(t *testin
 	executeTestCase(t, test)
 }
 
+func TestQuerySimple_WithNotCaseInsensitiveLikeString_ShouldMatchSuffixString(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not like-string filter with string as suffix",
+		Request: `query {
+					Users(filter: {Name: {_nilike: "%andals"}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithNotLikeStringContainsFilterBlockExactString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with string as suffix",
 		Request: `query {
 					Users(filter: {Name: {_nlike: "Daenerys Stormborn of House Targaryen, the First of Her Name"}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Viserys I Targaryen, King of the Andals",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNotCaseInsensitiveLikeString_MatchExactString(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not case insensitive like-string filter with string as suffix",
+		Request: `query {
+					Users(filter: {Name: {_nilike: "daenerys stormborn of house targaryen, the first of her name"}}) {
 						Name
 					}
 				}`,

@@ -291,15 +291,15 @@ func (c *collection) updateWithFilter(
 }
 
 // isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
-func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (client.FieldDescription, bool) {
-	if fieldDesc.RelationType != client.Relation_Type_INTERNAL_ID {
-		return client.FieldDescription{}, false
+func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (client.FieldDefinition, bool) {
+	if fieldDesc.RelationName == "" || fieldDesc.Kind != client.FieldKind_DocID {
+		return client.FieldDefinition{}, false
 	}
 
-	relationFieldDescription, valid := c.Schema().GetField(
+	relationFieldDescription, valid := c.Definition().GetFieldByName(
 		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
 	)
-	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
+	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation
 }
 
 // patchPrimaryDoc patches the (primary) document linked to from the document of the given DocID via the
@@ -312,7 +312,7 @@ func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
 	txn datastore.Txn,
 	secondaryCollectionName string,
-	relationFieldDescription client.FieldDescription,
+	relationFieldDescription client.FieldDefinition,
 	docID string,
 	fieldValue string,
 ) error {
@@ -338,7 +338,7 @@ func (c *collection) patchPrimaryDoc(
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
 	}
 
-	primaryIDField, ok := primaryCol.Schema().GetField(primaryField.Name + request.RelatedObjectID)
+	primaryIDField, ok := primaryCol.Definition().GetFieldByName(primaryField.Name + request.RelatedObjectID)
 	if !ok {
 		return client.NewErrFieldNotExist(primaryField.Name + request.RelatedObjectID)
 	}
@@ -402,7 +402,7 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
-		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
+		f, err = c.db.parser.NewFilterFromString(c.Name().Value(), fval)
 		if err != nil {
 			return nil, err
 		}
@@ -432,14 +432,14 @@ func (c *collection) makeSelectionPlan(
 func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
-			Name: c.Name(),
+			Name: c.Name().Value(),
 		},
 		Filter: filter,
 		Fields: make([]request.Selection, 0),
 	}
 
 	for _, fd := range c.Schema().Fields {
-		if fd.IsObject() {
+		if fd.Kind.IsObject() {
 			continue
 		}
 		slct.Fields = append(slct.Fields, &request.Field{

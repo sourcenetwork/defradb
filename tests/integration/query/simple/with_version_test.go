@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
+						"cid": "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeigcmjyt2ux4mzfckbsz5snkoqrr42vfkesgk7rdw6xzblrowrzfg4",
+								"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeihkekm4kfn2ttx3wb33l2ps7aductuzd7hrmu6n7zloaicrj5n75u",
+								"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
 								"name": "Name",
 							},
 						},
@@ -90,7 +90,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 				"Name": "John",
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreidvd63bawkelxe3wtf7a65klkq4x3dvenqafyasndyal6fvffkeam",
+						"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
 					},
 				},
 			},
@@ -171,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
+						"cid": "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeigcmjyt2ux4mzfckbsz5snkoqrr42vfkesgk7rdw6xzblrowrzfg4",
+								"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeihkekm4kfn2ttx3wb33l2ps7aductuzd7hrmu6n7zloaicrj5n75u",
+								"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
 								"name": "Name",
 							},
 						},
@@ -197,4 +197,175 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	}
 
 	executeTestCase(t, test)
+}
+
+func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
+	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+
+	test := testUtils.TestCase{
+		Description: "Embedded commits query within object query with document ID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: userCollectionGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						_docID
+						_version {
+							cid
+							collectionID
+							delta
+							docID
+							fieldId
+							fieldName
+							height
+							links {
+								cid
+								name
+							}
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name":   "John",
+						"_docID": docID,
+						"_version": []map[string]any{
+							{
+								"cid":          "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
+								"collectionID": int64(1),
+								"delta":        nil,
+								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"fieldId":      "C",
+								"fieldName":    nil,
+								"height":       int64(1),
+								"links": []map[string]any{
+									{
+										"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
+										"name": "Age",
+									},
+									{
+										"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
+										"name": "Name",
+									},
+								},
+								"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
+	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+
+	test := testUtils.TestCase{
+		Description: "Embedded commits query within object query with document ID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: userCollectionGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"Age": 22}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_docID
+						_version {
+							cid
+							collectionID
+							delta
+							docID
+							fieldId
+							fieldName
+							height
+							links {
+								cid
+								name
+							}
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name":   "John",
+						"Age":    int64(22),
+						"_docID": docID,
+						"_version": []map[string]any{
+							{
+								"cid":          "bafybeigcjabzlkuj4j35boczgcl4jmars7gz5a7dfvpq3m344bzth7ebqq",
+								"collectionID": int64(1),
+								"delta":        nil,
+								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"fieldId":      "C",
+								"fieldName":    nil,
+								"height":       int64(2),
+								"links": []map[string]any{
+									{
+										"cid":  "bafybeihzra5nmcai4omdv2hkplrpexjsau62eaa2ndrf2b7ksxvl7hx3qm",
+										"name": "Age",
+									},
+									{
+										"cid":  "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
+										"name": "_head",
+									},
+								},
+								"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
+							},
+							{
+								"cid":          "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
+								"collectionID": int64(1),
+								"delta":        nil,
+								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"fieldId":      "C",
+								"fieldName":    nil,
+								"height":       int64(1),
+								"links": []map[string]any{
+									{
+										"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
+										"name": "Age",
+									},
+									{
+										"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
+										"name": "Name",
+									},
+								},
+								"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }

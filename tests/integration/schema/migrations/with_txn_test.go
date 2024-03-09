@@ -43,23 +43,35 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetMigrations{
+			testUtils.GetCollections{
 				TransactionID: immutable.Some(0),
-				// This is the bug - although the GetMigrations call and migration are on the same transaction
-				// the migration is not returned in the results.
-				ExpectedResults: []client.LensConfig{
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
+				ExpectedResults: []client.CollectionDescription{
 					{
-						SourceSchemaVersionID:      "does not exist",
-						DestinationSchemaVersionID: "also does not exist",
-						Lens: model.Lens{
-							Lenses: []model.LensModule{
-								{
-									Path: lenses.SetDefaultModulePath,
-									Arguments: map[string]any{
-										"dst":   "verified",
-										"value": false,
+						ID:              1,
+						SchemaVersionID: "does not exist",
+					},
+					{
+						ID:              2,
+						SchemaVersionID: "also does not exist",
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: 1,
+								Transform: immutable.Some(
+									model.Lens{
+										Lenses: []model.LensModule{
+											{
+												Path: lenses.SetDefaultModulePath,
+												Arguments: map[string]any{
+													"dst":   "verified",
+													"value": false,
+												},
+											},
+										},
 									},
-								},
+								),
 							},
 						},
 					},

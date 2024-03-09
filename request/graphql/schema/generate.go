@@ -82,7 +82,7 @@ func (g *Generator) Generate(ctx context.Context, collections []client.Collectio
 // the given CollectionDescriptions.
 func (g *Generator) generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
 	// build base types
-	defs, err := g.buildTypes(ctx, collections)
+	defs, err := g.buildTypes(collections)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		var isEmbedded bool
 		for _, definition := range collections {
-			if t.Name() == definition.Schema.Name && definition.Description.Name == "" {
+			if t.Name() == definition.Schema.Name && !definition.Description.Name.HasValue() {
 				isEmbedded = true
 				break
 			}
@@ -129,7 +129,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		return nil, err
 	}
 
-	if err := g.genAggregateFields(ctx); err != nil {
+	if err := g.genAggregateFields(); err != nil {
 		return nil, err
 	}
 	// resolve types
@@ -194,8 +194,8 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var isReadOnly bool
 		var collectionFound bool
 		for _, definition := range collections {
-			if t.Name() == definition.Description.Name {
-				isReadOnly = definition.Description.BaseQuery != nil
+			if t.Name() == definition.Description.Name.Value() {
+				isReadOnly = len(definition.Description.QuerySources()) > 0
 				collectionFound = true
 				break
 			}
@@ -403,7 +403,6 @@ func (g *Generator) createExpandedFieldList(
 // Given a set of developer defined collection types
 // extract and return the correct gql.Object type(s)
 func (g *Generator) buildTypes(
-	ctx context.Context,
 	collections []client.CollectionDefinition,
 ) ([]*gql.Object, error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
@@ -416,15 +415,16 @@ func (g *Generator) buildTypes(
 		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
-		isEmbeddedObject := collection.Description.Name == ""
-		isViewObject := isEmbeddedObject || collection.Description.BaseQuery != nil
+		isEmbeddedObject := !collection.Description.Name.HasValue()
+		isQuerySource := len(collection.Description.QuerySources()) > 0
+		isViewObject := isEmbeddedObject || isQuerySource
 
 		var objectName string
 		if isEmbeddedObject {
 			// If this is an embedded object, take the type name from the Schema
 			objectName = collection.Schema.Name
 		} else {
-			objectName = collection.Description.Name
+			objectName = collection.Description.Name.Value()
 		}
 
 		// check if type exists
@@ -529,7 +529,7 @@ func (g *Generator) buildTypes(
 // for collection create and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
 	for _, c := range collections {
-		if c.Description.Name == "" {
+		if !c.Description.Name.HasValue() {
 			// If the definition's collection is empty, this must be a collectionless
 			// schema, in which case users cannot mutate documents through it and we
 			// have no need to build mutation input types for it.
@@ -541,7 +541,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
-		mutationInputName := collection.Description.Name + "MutationInputArg"
+		mutationInputName := collection.Description.Name.Value() + "MutationInputArg"
 
 		// check if mutation input type exists
 		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {
@@ -593,7 +593,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 	return nil
 }
 
-func (g *Generator) genAggregateFields(ctx context.Context) error {
+func (g *Generator) genAggregateFields() error {
 	topLevelCountInputs := map[string]*gql.InputObject{}
 	topLevelNumericAggInputs := map[string]*gql.InputObject{}
 
@@ -1013,7 +1013,7 @@ func (g *Generator) GenerateQueryInputForGQLType(
 	types.groupBy = g.genTypeFieldsEnum(obj)
 	types.order = g.genTypeOrderArgInput(obj)
 
-	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
+	queryField := g.genTypeQueryableFieldList(obj, types)
 
 	return queryField, nil
 }
@@ -1248,7 +1248,6 @@ type queryInputTypeConfig struct {
 }
 
 func (g *Generator) genTypeQueryableFieldList(
-	ctx context.Context,
 	obj *gql.Object,
 	config queryInputTypeConfig,
 ) *gql.Field {

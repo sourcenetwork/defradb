@@ -57,7 +57,7 @@ run:
 
   # Define the Go version limit.
   # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`.
-  go: "1.20"
+  go: "1.21"
 
 #=====================================================================================[ Output Configuration Options ]
 output:
@@ -149,7 +149,7 @@ issues:
         - errorlint
 
     # Exclude running header check in these paths
-    - path: "(net|datastore/badger/v4/compat_logger.go|datastore/badger/v4/datastore.go|connor)"
+    - path: "(net|datastore/badger/v4/compat_logger.go|datastore/badger/v4/datastore.go|connor|encoding)"
       linters:
         - goheader
 
@@ -263,7 +263,7 @@ linters-settings:
 
   gosimple:
     # Select the Go version to target.
-    go: "1.20"
+    go: "1.21"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
@@ -287,6 +287,7 @@ linters-settings:
     # run `go tool vet help` to see all analyzers
     enable:
       - atomicalign
+      - nilness
 
     enable-all: false
 
@@ -355,13 +356,13 @@ linters-settings:
 
   staticcheck:
     # Select the Go version to target.
-    go: "1.20"
+    go: "1.21"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
   unused:
     # Select the Go version to target.
-    go: "1.20"
+    go: "1.21"
 
   whitespace:
     # Enforces newlines (or comments) after every multi-line if statement.

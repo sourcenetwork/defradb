@@ -194,35 +194,35 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 // from the filter conditions“
 func ParseFilterFieldsForDescription(
 	conditions map[string]any,
-	schema client.SchemaDescription,
-) ([]client.FieldDescription, error) {
-	return parseFilterFieldsForDescriptionMap(conditions, schema)
+	col client.CollectionDefinition,
+) ([]client.FieldDefinition, error) {
+	return parseFilterFieldsForDescriptionMap(conditions, col)
 }
 
 func parseFilterFieldsForDescriptionMap(
 	conditions map[string]any,
-	schema client.SchemaDescription,
-) ([]client.FieldDescription, error) {
-	fields := make([]client.FieldDescription, 0)
+	col client.CollectionDefinition,
+) ([]client.FieldDefinition, error) {
+	fields := make([]client.FieldDefinition, 0)
 	for k, v := range conditions {
 		switch k {
 		case "_or", "_and":
 			conds := v.([]any)
-			parsedFileds, err := parseFilterFieldsForDescriptionSlice(conds, schema)
+			parsedFileds, err := parseFilterFieldsForDescriptionSlice(conds, col)
 			if err != nil {
 				return nil, err
 			}
 			fields = append(fields, parsedFileds...)
 		case "_not":
 			conds := v.(map[string]any)
-			parsedFileds, err := parseFilterFieldsForDescriptionMap(conds, schema)
+			parsedFileds, err := parseFilterFieldsForDescriptionMap(conds, col)
 			if err != nil {
 				return nil, err
 			}
 			fields = append(fields, parsedFileds...)
 		default:
-			f, found := schema.GetField(k)
-			if !found || f.IsObject() {
+			f, found := col.GetFieldByName(k)
+			if !found || f.Kind.IsObject() {
 				continue
 			}
 			fields = append(fields, f)
@@ -233,9 +233,9 @@ func parseFilterFieldsForDescriptionMap(
 
 func parseFilterFieldsForDescriptionSlice(
 	conditions []any,
-	schema client.SchemaDescription,
-) ([]client.FieldDescription, error) {
-	fields := make([]client.FieldDescription, 0)
+	schema client.CollectionDefinition,
+) ([]client.FieldDefinition, error) {
+	fields := make([]client.FieldDefinition, 0)
 	for _, v := range conditions {
 		switch cond := v.(type) {
 		case map[string]any:
@@ -250,21 +250,3 @@ func parseFilterFieldsForDescriptionSlice(
 	}
 	return fields, nil
 }
-
-/*
-userCollection := db.getCollection("users")
-doc := userCollection.NewFromJSON("{
-	"title": "Painted House",
-	"description": "...",
-	"genres": ["bae-123", "bae-def", "bae-456"]
-	"author_id": "bae-999",
-}")
-doc.Save()
-
-doc := document.New(schema).FromJSON
-
-------------------------------------
-
-
-
-*/

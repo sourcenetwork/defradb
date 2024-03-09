@@ -28,62 +28,48 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code into the directory
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.21"
+          check-latest: true
+          cache: true
+
       - name: Apply tag
         run: git tag ${{ github.event.inputs.tag }}
-        
+
       - name: Build modules
         run: make deps:modules
-      
+
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
         if: matrix.os == 'ubuntu-latest'
+        uses: docker/setup-qemu-action@v2
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
         if: matrix.os == 'ubuntu-latest'
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v2
         if: matrix.os == 'ubuntu-latest'
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Setup Go environment explicitly
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.20"
-          check-latest: true
-          cache: true
 
-      - shell: bash
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        if: matrix.os == 'ubuntu-latest'
-        with:
-          path: dist/linux_amd64
-          key: linux-${{ env.sha_short }}
-      - uses: actions/cache@v4
-        if: matrix.os == 'macos-latest'
-        with:
-          path: dist/darwin_amd64
-          key: darwin-${{ env.sha_short }}
-      - uses: actions/cache@v4
-        if: matrix.os == 'windows-latest'
-        with:
-          path: dist/windows_amd64
-          key: windows-${{ env.sha_short }}
-          enableCrossOsArchive: true
+      - name: Run command to get SHA environment
+        shell: bash
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> ${GITHUB_ENV}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
@@ -95,12 +81,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-  
+
+      - name: Save cache on Linux
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/cache/save@v4
+        with:
+          path: dist/linux_amd64
+          key: linux-${{ env.sha_short }}
+
+      - name: Save cache on MacOS
+        if: matrix.os == 'macos-latest'
+        uses: actions/cache/save@v4
+        with:
+          path: dist/darwin_amd64
+          key: darwin-${{ env.sha_short }}
+
+      - name: Save cache on Windows
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/save@v4
+        with:
+          path: dist/windows_amd64
+          key: windows-${{ env.sha_short }}
+          enableCrossOsArchive: true
+
   release:
     runs-on: ubuntu-latest
     needs: prepare
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -110,37 +119,57 @@ jobs:
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v3
         with:
-          go-version: "1.20"
+          go-version: "1.21"
           check-latest: true
           cache: true
-      
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # copy the cashes from prepare
-      - shell: bash
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
+      - name: Run command to get SHA environment
+        shell: bash
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> ${GITHUB_ENV}
+
+      # Restore the cashes that were prepared for all OS
+      - name: Restore from cache on Linux
+        id: restore-linux
+        uses: actions/cache/restore@v4
         with:
           path: dist/linux_amd64
           key: linux-${{ env.sha_short }}
-      - uses: actions/cache@v4
+          fail-on-cache-miss: true
+
+      - name: Save from cache on MacOS
+        id: restore-macos
+        uses: actions/cache/restore@v4
         with:
           path: dist/darwin_amd64
           key: darwin-${{ env.sha_short }}
-      - uses: actions/cache@v4
+          fail-on-cache-miss: true
+
+      - name: Restore from cache on Windows
+        id: restore-windows
+        uses: actions/cache/restore@v4
         with:
           path: dist/windows_amd64
           key: windows-${{ env.sha_short }}
+          fail-on-cache-miss: true
           enableCrossOsArchive: true
 
+      # Technically the following should never happen as we are using the `fail-on-cache-miss=true`
+      # so it would fail before reaching here, but leaving for now incase the option is removed.
+      - name: Exit if failed to restore cache for any OS
+        if: |
+          steps.restore-linux.outputs.cache-hit != 'true' ||
+          steps.restore-macos.outputs.cache-hit != 'true' ||
+          steps.restore-windows.outputs.cache-hit != 'true'
+        run: exit 1
 
-      # release
-      - uses: goreleaser/goreleaser-action@v5
-        if: steps.cache.outputs.cache-hit != 'true' # do not run if cache hit
+      - name: Do the release, only if all OS caches were restored
+        uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser-pro
           version: latest
@@ -149,7 +178,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-  
+
   pull-docker-image:
     name: Pull docker image job
     runs-on: ubuntu-latest
@@ -168,7 +197,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          
+
       - name: Pull Docker image
         run: docker pull ${{ matrix.image_tag }}
 

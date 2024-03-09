@@ -23,19 +23,18 @@ import (
 // IndexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type IndexFetcher struct {
-	docFetcher        Fetcher
-	col               client.Collection
-	txn               datastore.Txn
-	indexFilter       *mapper.Filter
-	docFilter         *mapper.Filter
-	doc               *encodedDocument
-	mapping           *core.DocumentMapping
-	indexedField      client.FieldDescription
-	docFields         []client.FieldDescription
-	indexDesc         client.IndexDescription
-	indexIter         indexIterator
-	indexDataStoreKey core.IndexDataStoreKey
-	execInfo          ExecInfo
+	docFetcher    Fetcher
+	col           client.Collection
+	txn           datastore.Txn
+	indexFilter   *mapper.Filter
+	docFilter     *mapper.Filter
+	doc           *encodedDocument
+	mapping       *core.DocumentMapping
+	indexedFields []client.FieldDefinition
+	docFields     []client.FieldDefinition
+	indexDesc     client.IndexDescription
+	indexIter     indexIterator
+	execInfo      ExecInfo
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -43,13 +42,13 @@ var _ Fetcher = (*IndexFetcher)(nil)
 // NewIndexFetcher creates a new IndexFetcher.
 func NewIndexFetcher(
 	docFetcher Fetcher,
-	indexedFieldDesc client.FieldDescription,
+	indexDesc client.IndexDescription,
 	indexFilter *mapper.Filter,
 ) *IndexFetcher {
 	return &IndexFetcher{
-		docFetcher:   docFetcher,
-		indexedField: indexedFieldDesc,
-		indexFilter:  indexFilter,
+		docFetcher:  docFetcher,
+		indexDesc:   indexDesc,
+		indexFilter: indexFilter,
 	}
 }
 
@@ -57,7 +56,7 @@ func (f *IndexFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
 	reverse bool,
@@ -69,24 +68,25 @@ func (f *IndexFetcher) Init(
 	f.mapping = docMapper
 	f.txn = txn
 
-	for _, index := range col.Description().Indexes {
-		if index.Fields[0].Name == f.indexedField.Name {
-			f.indexDesc = index
-			f.indexDataStoreKey.IndexID = index.ID
-			break
+	for _, indexedField := range f.indexDesc.Fields {
+		field, ok := f.col.Definition().GetFieldByName(indexedField.Name)
+		if ok {
+			f.indexedFields = append(f.indexedFields, field)
 		}
 	}
 
-	f.indexDataStoreKey.CollectionID = f.col.ID()
-
+	f.docFields = make([]client.FieldDefinition, 0, len(fields))
+outer:
 	for i := range fields {
-		if fields[i].Name == f.indexedField.Name {
-			f.docFields = append(fields[:i], fields[i+1:]...)
-			break
+		for j := range f.indexedFields {
+			if fields[i].Name == f.indexedFields[j].Name {
+				continue outer
+			}
 		}
+		f.docFields = append(f.docFields, fields[i])
 	}
 
-	iter, err := createIndexIterator(f.indexDataStoreKey, f.indexFilter, &f.execInfo, f.indexDesc.Unique)
+	iter, err := f.createIndexIterator()
 	if err != nil {
 		return err
 	}
@@ -123,18 +123,36 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			return nil, f.execInfo, nil
 		}
 
-		property := &encProperty{
-			Desc: f.indexedField,
-			Raw:  res.key.FieldValues[0],
+		hasNilField := false
+		for i, indexedField := range f.indexedFields {
+			property := &encProperty{Desc: indexedField}
+
+			field := res.key.Fields[i]
+			if field.Value == nil {
+				hasNilField = true
+			}
+
+			// We need to convert it to cbor bytes as this is what it will be encoded from on value retrieval.
+			// In the future we have to either get rid of CBOR or properly handle different encoding
+			// for properties in a single document.
+			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, field.Value).Bytes()
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			property.Raw = fieldBytes
+
+			f.doc.properties[indexedField] = property
 		}
 
-		if f.indexDesc.Unique {
+		if f.indexDesc.Unique && !hasNilField {
 			f.doc.id = res.value
 		} else {
-			f.doc.id = res.key.FieldValues[1]
+			docID, ok := res.key.Fields[len(res.key.Fields)-1].Value.(string)
+			if !ok {
+				return nil, ExecInfo{}, err
+			}
+			f.doc.id = []byte(docID)
 		}
-		f.doc.properties[f.indexedField] = property
-		f.execInfo.FieldsFetched++
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {
 			targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), string(f.doc.id))

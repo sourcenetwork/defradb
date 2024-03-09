@@ -15,6 +15,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -26,6 +29,7 @@ func (db *db) addView(
 	txn datastore.Txn,
 	inputQuery string,
 	sdl string,
+	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
@@ -57,12 +61,16 @@ func (db *db) addView(
 	}
 
 	for i := range newDefinitions {
-		newDefinitions[i].Description.BaseQuery = baseQuery
+		source := client.QuerySource{
+			Query:     *baseQuery,
+			Transform: transform,
+		}
+		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
 
 	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
 	for i, definition := range newDefinitions {
-		if definition.Description.Name == "" {
+		if !definition.Description.Name.HasValue() {
 			schema, err := description.CreateSchemaVersion(ctx, txn, definition.Schema)
 			if err != nil {
 				return nil, err
@@ -77,6 +85,15 @@ func (db *db) addView(
 				return nil, err
 			}
 			returnDescriptions[i] = col.Definition()
+
+			for _, source := range col.Description().QuerySources() {
+				if source.Transform.HasValue() {
+					err = db.LensRegistry().SetMigration(ctx, col.ID(), source.Transform.Value())
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
 		}
 	}
 

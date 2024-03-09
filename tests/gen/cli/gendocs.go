@@ -20,16 +20,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
 const defaultBatchSize = 1000
 
-func MakeGenDocCommand(cfg *config.Config) *cobra.Command {
+func MakeGenDocCommand() *cobra.Command {
 	var demandJSON string
-
+	var url string
 	var cmd = &cobra.Command{
 		Use:   "gendocs --demand <demand_json>",
 		Short: "Automatically generates documents for existing collections.",
@@ -39,11 +38,7 @@ Example: The following command generates 100 User documents and 500 Device docum
   gendocs --demand '{"User": 100, "Device": 500 }'`,
 		ValidArgs: []string{"demand"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// cobra does not chain pre run calls so we have to run them again here
-			if err := loadConfig(cfg); err != nil {
-				return err
-			}
-			store, err := http.NewClient(cfg.API.Address)
+			store, err := http.NewClient(url)
 			if err != nil {
 				return err
 			}
@@ -54,7 +49,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return NewErrInvalidDemandValue(err)
 			}
 
-			collections, err := store.GetAllCollections(cmd.Context())
+			collections, err := store.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
 			if err != nil {
 				return err
 			}
@@ -100,6 +95,8 @@ Example: The following command generates 100 User documents and 500 Device docum
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&url, "url", "localhost:9181", "URL of HTTP endpoint to listen on or connect to")
 	cmd.Flags().StringVarP(&demandJSON, "demand", "d", "", "Documents' demand in JSON format")
 
 	return cmd
@@ -123,7 +120,7 @@ func saveBatchToCollections(
 ) error {
 	for colName, colDocs := range colDocsMap {
 		for _, col := range collections {
-			if col.Description().Name == colName {
+			if col.Description().Name.Value() == colName {
 				err := col.CreateMany(context.Background(), colDocs)
 				if err != nil {
 					return err
@@ -138,7 +135,7 @@ func saveBatchToCollections(
 func groupDocsByCollection(docs []gen.GeneratedDoc) map[string][]*client.Document {
 	result := make(map[string][]*client.Document)
 	for _, doc := range docs {
-		result[doc.Col.Description.Name] = append(result[doc.Col.Description.Name], doc.Doc)
+		result[doc.Col.Description.Name.Value()] = append(result[doc.Col.Description.Name.Value()], doc.Doc)
 	}
 	return result
 }
@@ -149,11 +146,4 @@ func colsToDefs(cols []client.Collection) []client.CollectionDefinition {
 		colDefs = append(colDefs, col.Definition())
 	}
 	return colDefs
-}
-
-func loadConfig(cfg *config.Config) error {
-	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
-		return err
-	}
-	return cfg.LoadWithRootdir(cfg.ConfigFileExists())
 }
