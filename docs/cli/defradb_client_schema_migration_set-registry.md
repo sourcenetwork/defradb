@@ -1,19 +1,25 @@
-## defradb client schema migration reload
+## defradb client schema migration set-registry
 
-Reload the schema migrations within DefraDB
+Set a schema migration within the DefraDB LensRegistry
 
 ### Synopsis
 
-Reload the schema migrations within DefraDB
+Set a migration to a collection within the LensRegistry of the local DefraDB node.
+Does not persist the migration after restart.
+
+Example: set from an argument string:
+  defradb client schema migration set-registry 2 '{"lenses": [...'
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client schema migration reload [flags]
+defradb client schema migration set-registry [collectionID] [cfg] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for reload
+  -h, --help   help for set-registry
 ```
 
 ### Options inherited from parent commands
