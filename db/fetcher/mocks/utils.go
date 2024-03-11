@@ -28,6 +28,7 @@ func NewStubbedFetcher(t *testing.T) *Fetcher {
 		mock.Anything,
 		mock.Anything,
 		mock.Anything,
+		mock.Anything,
 	).Maybe().Return(nil)
 	f.EXPECT().Start(mock.Anything, mock.Anything).Maybe().Return(nil)
 	f.EXPECT().FetchNext(mock.Anything).Maybe().Return(nil, nil)
