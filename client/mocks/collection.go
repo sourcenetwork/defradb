@@ -27,13 +27,13 @@ func (_m *Collection) EXPECT() *Collection_Expecter {
 	return &Collection_Expecter{mock: &_m.Mock}
 }
 
-// Create provides a mock function with given fields: _a0, _a1
-func (_m *Collection) Create(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
+// Create provides a mock function with given fields: ctx, identity, doc
+func (_m *Collection) Create(ctx context.Context, identity immutable.Option[string], doc *client.Document) error {
+	ret := _m.Called(ctx, identity, doc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], *client.Document) error); ok {
+		r0 = rf(ctx, identity, doc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -47,15 +47,16 @@ type Collection_Create_Call struct {
 }
 
 // Create is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) Create(_a0 interface{}, _a1 interface{}) *Collection_Create_Call {
-	return &Collection_Create_Call{Call: _e.mock.On("Create", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - doc *client.Document
+func (_e *Collection_Expecter) Create(ctx interface{}, identity interface{}, doc interface{}) *Collection_Create_Call {
+	return &Collection_Create_Call{Call: _e.mock.On("Create", ctx, identity, doc)}
 }
 
-func (_c *Collection_Create_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_Create_Call {
+func (_c *Collection_Create_Call) Run(run func(ctx context.Context, identity immutable.Option[string], doc *client.Document)) *Collection_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(*client.Document))
 	})
 	return _c
 }
@@ -65,7 +66,7 @@ func (_c *Collection_Create_Call) Return(_a0 error) *Collection_Create_Call {
 	return _c
 }
 
-func (_c *Collection_Create_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_Create_Call {
+func (_c *Collection_Create_Call) RunAndReturn(run func(context.Context, immutable.Option[string], *client.Document) error) *Collection_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -166,13 +167,13 @@ func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context.Context, cl
 	return _c
 }
 
-// CreateMany provides a mock function with given fields: _a0, _a1
-func (_m *Collection) CreateMany(_a0 context.Context, _a1 []*client.Document) error {
-	ret := _m.Called(_a0, _a1)
+// CreateMany provides a mock function with given fields: ctx, identity, docs
+func (_m *Collection) CreateMany(ctx context.Context, identity immutable.Option[string], docs []*client.Document) error {
+	ret := _m.Called(ctx, identity, docs)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*client.Document) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], []*client.Document) error); ok {
+		r0 = rf(ctx, identity, docs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -186,15 +187,16 @@ type Collection_CreateMany_Call struct {
 }
 
 // CreateMany is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 []*client.Document
-func (_e *Collection_Expecter) CreateMany(_a0 interface{}, _a1 interface{}) *Collection_CreateMany_Call {
-	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docs []*client.Document
+func (_e *Collection_Expecter) CreateMany(ctx interface{}, identity interface{}, docs interface{}) *Collection_CreateMany_Call {
+	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany", ctx, identity, docs)}
 }
 
-func (_c *Collection_CreateMany_Call) Run(run func(_a0 context.Context, _a1 []*client.Document)) *Collection_CreateMany_Call {
+func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docs []*client.Document)) *Collection_CreateMany_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*client.Document))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].([]*client.Document))
 	})
 	return _c
 }
@@ -204,7 +206,7 @@ func (_c *Collection_CreateMany_Call) Return(_a0 error) *Collection_CreateMany_C
 	return _c
 }
 
-func (_c *Collection_CreateMany_Call) RunAndReturn(run func(context.Context, []*client.Document) error) *Collection_CreateMany_Call {
+func (_c *Collection_CreateMany_Call) RunAndReturn(run func(context.Context, immutable.Option[string], []*client.Document) error) *Collection_CreateMany_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -250,23 +252,23 @@ func (_c *Collection_Definition_Call) RunAndReturn(run func() client.CollectionD
 	return _c
 }
 
-// Delete provides a mock function with given fields: _a0, _a1
-func (_m *Collection) Delete(_a0 context.Context, _a1 client.DocID) (bool, error) {
-	ret := _m.Called(_a0, _a1)
+// Delete provides a mock function with given fields: ctx, identity, docID
+func (_m *Collection) Delete(ctx context.Context, identity immutable.Option[string], docID client.DocID) (bool, error) {
+	ret := _m.Called(ctx, identity, docID)
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID) (bool, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID) (bool, error)); ok {
+		return rf(ctx, identity, docID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID) bool); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID) bool); ok {
+		r0 = rf(ctx, identity, docID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], client.DocID) error); ok {
+		r1 = rf(ctx, identity, docID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -280,15 +282,16 @@ type Collection_Delete_Call struct {
 }
 
 // Delete is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 client.DocID
-func (_e *Collection_Expecter) Delete(_a0 interface{}, _a1 interface{}) *Collection_Delete_Call {
-	return &Collection_Delete_Call{Call: _e.mock.On("Delete", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docID client.DocID
+func (_e *Collection_Expecter) Delete(ctx interface{}, identity interface{}, docID interface{}) *Collection_Delete_Call {
+	return &Collection_Delete_Call{Call: _e.mock.On("Delete", ctx, identity, docID)}
 }
 
-func (_c *Collection_Delete_Call) Run(run func(_a0 context.Context, _a1 client.DocID)) *Collection_Delete_Call {
+func (_c *Collection_Delete_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docID client.DocID)) *Collection_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.DocID))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(client.DocID))
 	})
 	return _c
 }
@@ -298,7 +301,7 @@ func (_c *Collection_Delete_Call) Return(_a0 bool, _a1 error) *Collection_Delete
 	return _c
 }
 
-func (_c *Collection_Delete_Call) RunAndReturn(run func(context.Context, client.DocID) (bool, error)) *Collection_Delete_Call {
+func (_c *Collection_Delete_Call) RunAndReturn(run func(context.Context, immutable.Option[string], client.DocID) (bool, error)) *Collection_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -346,25 +349,25 @@ func (_c *Collection_DeleteDocIndex_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// DeleteWith provides a mock function with given fields: ctx, target
-func (_m *Collection) DeleteWith(ctx context.Context, target interface{}) (*client.DeleteResult, error) {
-	ret := _m.Called(ctx, target)
+// DeleteWith provides a mock function with given fields: ctx, identity, target
+func (_m *Collection) DeleteWith(ctx context.Context, identity immutable.Option[string], target interface{}) (*client.DeleteResult, error) {
+	ret := _m.Called(ctx, identity, target)
 
 	var r0 *client.DeleteResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) (*client.DeleteResult, error)); ok {
-		return rf(ctx, target)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}) (*client.DeleteResult, error)); ok {
+		return rf(ctx, identity, target)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) *client.DeleteResult); ok {
-		r0 = rf(ctx, target)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}) *client.DeleteResult); ok {
+		r0 = rf(ctx, identity, target)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.DeleteResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, interface{}) error); ok {
-		r1 = rf(ctx, target)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], interface{}) error); ok {
+		r1 = rf(ctx, identity, target)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -379,14 +382,15 @@ type Collection_DeleteWith_Call struct {
 
 // DeleteWith is a helper method to define mock.On call
 //   - ctx context.Context
+//   - identity immutable.Option[string]
 //   - target interface{}
-func (_e *Collection_Expecter) DeleteWith(ctx interface{}, target interface{}) *Collection_DeleteWith_Call {
-	return &Collection_DeleteWith_Call{Call: _e.mock.On("DeleteWith", ctx, target)}
+func (_e *Collection_Expecter) DeleteWith(ctx interface{}, identity interface{}, target interface{}) *Collection_DeleteWith_Call {
+	return &Collection_DeleteWith_Call{Call: _e.mock.On("DeleteWith", ctx, identity, target)}
 }
 
-func (_c *Collection_DeleteWith_Call) Run(run func(ctx context.Context, target interface{})) *Collection_DeleteWith_Call {
+func (_c *Collection_DeleteWith_Call) Run(run func(ctx context.Context, identity immutable.Option[string], target interface{})) *Collection_DeleteWith_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(interface{}))
 	})
 	return _c
 }
@@ -396,30 +400,30 @@ func (_c *Collection_DeleteWith_Call) Return(_a0 *client.DeleteResult, _a1 error
 	return _c
 }
 
-func (_c *Collection_DeleteWith_Call) RunAndReturn(run func(context.Context, interface{}) (*client.DeleteResult, error)) *Collection_DeleteWith_Call {
+func (_c *Collection_DeleteWith_Call) RunAndReturn(run func(context.Context, immutable.Option[string], interface{}) (*client.DeleteResult, error)) *Collection_DeleteWith_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteWithDocID provides a mock function with given fields: _a0, _a1
-func (_m *Collection) DeleteWithDocID(_a0 context.Context, _a1 client.DocID) (*client.DeleteResult, error) {
-	ret := _m.Called(_a0, _a1)
+// DeleteWithDocID provides a mock function with given fields: ctx, identity, docID
+func (_m *Collection) DeleteWithDocID(ctx context.Context, identity immutable.Option[string], docID client.DocID) (*client.DeleteResult, error) {
+	ret := _m.Called(ctx, identity, docID)
 
 	var r0 *client.DeleteResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID) (*client.DeleteResult, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID) (*client.DeleteResult, error)); ok {
+		return rf(ctx, identity, docID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID) *client.DeleteResult); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID) *client.DeleteResult); ok {
+		r0 = rf(ctx, identity, docID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.DeleteResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], client.DocID) error); ok {
+		r1 = rf(ctx, identity, docID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -433,15 +437,16 @@ type Collection_DeleteWithDocID_Call struct {
 }
 
 // DeleteWithDocID is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 client.DocID
-func (_e *Collection_Expecter) DeleteWithDocID(_a0 interface{}, _a1 interface{}) *Collection_DeleteWithDocID_Call {
-	return &Collection_DeleteWithDocID_Call{Call: _e.mock.On("DeleteWithDocID", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docID client.DocID
+func (_e *Collection_Expecter) DeleteWithDocID(ctx interface{}, identity interface{}, docID interface{}) *Collection_DeleteWithDocID_Call {
+	return &Collection_DeleteWithDocID_Call{Call: _e.mock.On("DeleteWithDocID", ctx, identity, docID)}
 }
 
-func (_c *Collection_DeleteWithDocID_Call) Run(run func(_a0 context.Context, _a1 client.DocID)) *Collection_DeleteWithDocID_Call {
+func (_c *Collection_DeleteWithDocID_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docID client.DocID)) *Collection_DeleteWithDocID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.DocID))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(client.DocID))
 	})
 	return _c
 }
@@ -451,30 +456,30 @@ func (_c *Collection_DeleteWithDocID_Call) Return(_a0 *client.DeleteResult, _a1 
 	return _c
 }
 
-func (_c *Collection_DeleteWithDocID_Call) RunAndReturn(run func(context.Context, client.DocID) (*client.DeleteResult, error)) *Collection_DeleteWithDocID_Call {
+func (_c *Collection_DeleteWithDocID_Call) RunAndReturn(run func(context.Context, immutable.Option[string], client.DocID) (*client.DeleteResult, error)) *Collection_DeleteWithDocID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteWithDocIDs provides a mock function with given fields: _a0, _a1
-func (_m *Collection) DeleteWithDocIDs(_a0 context.Context, _a1 []client.DocID) (*client.DeleteResult, error) {
-	ret := _m.Called(_a0, _a1)
+// DeleteWithDocIDs provides a mock function with given fields: ctx, identity, docIDs
+func (_m *Collection) DeleteWithDocIDs(ctx context.Context, identity immutable.Option[string], docIDs []client.DocID) (*client.DeleteResult, error) {
+	ret := _m.Called(ctx, identity, docIDs)
 
 	var r0 *client.DeleteResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []client.DocID) (*client.DeleteResult, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], []client.DocID) (*client.DeleteResult, error)); ok {
+		return rf(ctx, identity, docIDs)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []client.DocID) *client.DeleteResult); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], []client.DocID) *client.DeleteResult); ok {
+		r0 = rf(ctx, identity, docIDs)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.DeleteResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []client.DocID) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], []client.DocID) error); ok {
+		r1 = rf(ctx, identity, docIDs)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -488,15 +493,16 @@ type Collection_DeleteWithDocIDs_Call struct {
 }
 
 // DeleteWithDocIDs is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 []client.DocID
-func (_e *Collection_Expecter) DeleteWithDocIDs(_a0 interface{}, _a1 interface{}) *Collection_DeleteWithDocIDs_Call {
-	return &Collection_DeleteWithDocIDs_Call{Call: _e.mock.On("DeleteWithDocIDs", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docIDs []client.DocID
+func (_e *Collection_Expecter) DeleteWithDocIDs(ctx interface{}, identity interface{}, docIDs interface{}) *Collection_DeleteWithDocIDs_Call {
+	return &Collection_DeleteWithDocIDs_Call{Call: _e.mock.On("DeleteWithDocIDs", ctx, identity, docIDs)}
 }
 
-func (_c *Collection_DeleteWithDocIDs_Call) Run(run func(_a0 context.Context, _a1 []client.DocID)) *Collection_DeleteWithDocIDs_Call {
+func (_c *Collection_DeleteWithDocIDs_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docIDs []client.DocID)) *Collection_DeleteWithDocIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]client.DocID))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].([]client.DocID))
 	})
 	return _c
 }
@@ -506,30 +512,30 @@ func (_c *Collection_DeleteWithDocIDs_Call) Return(_a0 *client.DeleteResult, _a1
 	return _c
 }
 
-func (_c *Collection_DeleteWithDocIDs_Call) RunAndReturn(run func(context.Context, []client.DocID) (*client.DeleteResult, error)) *Collection_DeleteWithDocIDs_Call {
+func (_c *Collection_DeleteWithDocIDs_Call) RunAndReturn(run func(context.Context, immutable.Option[string], []client.DocID) (*client.DeleteResult, error)) *Collection_DeleteWithDocIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteWithFilter provides a mock function with given fields: ctx, filter
-func (_m *Collection) DeleteWithFilter(ctx context.Context, filter interface{}) (*client.DeleteResult, error) {
-	ret := _m.Called(ctx, filter)
+// DeleteWithFilter provides a mock function with given fields: ctx, identity, filter
+func (_m *Collection) DeleteWithFilter(ctx context.Context, identity immutable.Option[string], filter interface{}) (*client.DeleteResult, error) {
+	ret := _m.Called(ctx, identity, filter)
 
 	var r0 *client.DeleteResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) (*client.DeleteResult, error)); ok {
-		return rf(ctx, filter)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}) (*client.DeleteResult, error)); ok {
+		return rf(ctx, identity, filter)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) *client.DeleteResult); ok {
-		r0 = rf(ctx, filter)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}) *client.DeleteResult); ok {
+		r0 = rf(ctx, identity, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.DeleteResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, interface{}) error); ok {
-		r1 = rf(ctx, filter)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], interface{}) error); ok {
+		r1 = rf(ctx, identity, filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -544,14 +550,15 @@ type Collection_DeleteWithFilter_Call struct {
 
 // DeleteWithFilter is a helper method to define mock.On call
 //   - ctx context.Context
+//   - identity immutable.Option[string]
 //   - filter interface{}
-func (_e *Collection_Expecter) DeleteWithFilter(ctx interface{}, filter interface{}) *Collection_DeleteWithFilter_Call {
-	return &Collection_DeleteWithFilter_Call{Call: _e.mock.On("DeleteWithFilter", ctx, filter)}
+func (_e *Collection_Expecter) DeleteWithFilter(ctx interface{}, identity interface{}, filter interface{}) *Collection_DeleteWithFilter_Call {
+	return &Collection_DeleteWithFilter_Call{Call: _e.mock.On("DeleteWithFilter", ctx, identity, filter)}
 }
 
-func (_c *Collection_DeleteWithFilter_Call) Run(run func(ctx context.Context, filter interface{})) *Collection_DeleteWithFilter_Call {
+func (_c *Collection_DeleteWithFilter_Call) Run(run func(ctx context.Context, identity immutable.Option[string], filter interface{})) *Collection_DeleteWithFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(interface{}))
 	})
 	return _c
 }
@@ -561,7 +568,7 @@ func (_c *Collection_DeleteWithFilter_Call) Return(_a0 *client.DeleteResult, _a1
 	return _c
 }
 
-func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(context.Context, interface{}) (*client.DeleteResult, error)) *Collection_DeleteWithFilter_Call {
+func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(context.Context, immutable.Option[string], interface{}) (*client.DeleteResult, error)) *Collection_DeleteWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -650,23 +657,23 @@ func (_c *Collection_DropIndex_Call) RunAndReturn(run func(context.Context, stri
 	return _c
 }
 
-// Exists provides a mock function with given fields: _a0, _a1
-func (_m *Collection) Exists(_a0 context.Context, _a1 client.DocID) (bool, error) {
-	ret := _m.Called(_a0, _a1)
+// Exists provides a mock function with given fields: ctx, identity, docID
+func (_m *Collection) Exists(ctx context.Context, identity immutable.Option[string], docID client.DocID) (bool, error) {
+	ret := _m.Called(ctx, identity, docID)
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID) (bool, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID) (bool, error)); ok {
+		return rf(ctx, identity, docID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID) bool); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID) bool); ok {
+		r0 = rf(ctx, identity, docID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], client.DocID) error); ok {
+		r1 = rf(ctx, identity, docID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -680,15 +687,16 @@ type Collection_Exists_Call struct {
 }
 
 // Exists is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 client.DocID
-func (_e *Collection_Expecter) Exists(_a0 interface{}, _a1 interface{}) *Collection_Exists_Call {
-	return &Collection_Exists_Call{Call: _e.mock.On("Exists", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docID client.DocID
+func (_e *Collection_Expecter) Exists(ctx interface{}, identity interface{}, docID interface{}) *Collection_Exists_Call {
+	return &Collection_Exists_Call{Call: _e.mock.On("Exists", ctx, identity, docID)}
 }
 
-func (_c *Collection_Exists_Call) Run(run func(_a0 context.Context, _a1 client.DocID)) *Collection_Exists_Call {
+func (_c *Collection_Exists_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docID client.DocID)) *Collection_Exists_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.DocID))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(client.DocID))
 	})
 	return _c
 }
@@ -698,30 +706,30 @@ func (_c *Collection_Exists_Call) Return(_a0 bool, _a1 error) *Collection_Exists
 	return _c
 }
 
-func (_c *Collection_Exists_Call) RunAndReturn(run func(context.Context, client.DocID) (bool, error)) *Collection_Exists_Call {
+func (_c *Collection_Exists_Call) RunAndReturn(run func(context.Context, immutable.Option[string], client.DocID) (bool, error)) *Collection_Exists_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Get provides a mock function with given fields: ctx, docID, showDeleted
-func (_m *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-	ret := _m.Called(ctx, docID, showDeleted)
+// Get provides a mock function with given fields: ctx, identity, docID, showDeleted
+func (_m *Collection) Get(ctx context.Context, identity immutable.Option[string], docID client.DocID, showDeleted bool) (*client.Document, error) {
+	ret := _m.Called(ctx, identity, docID, showDeleted)
 
 	var r0 *client.Document
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID, bool) (*client.Document, error)); ok {
-		return rf(ctx, docID, showDeleted)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID, bool) (*client.Document, error)); ok {
+		return rf(ctx, identity, docID, showDeleted)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID, bool) *client.Document); ok {
-		r0 = rf(ctx, docID, showDeleted)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID, bool) *client.Document); ok {
+		r0 = rf(ctx, identity, docID, showDeleted)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.Document)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.DocID, bool) error); ok {
-		r1 = rf(ctx, docID, showDeleted)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], client.DocID, bool) error); ok {
+		r1 = rf(ctx, identity, docID, showDeleted)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -736,15 +744,16 @@ type Collection_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
+//   - identity immutable.Option[string]
 //   - docID client.DocID
 //   - showDeleted bool
-func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, showDeleted interface{}) *Collection_Get_Call {
-	return &Collection_Get_Call{Call: _e.mock.On("Get", ctx, docID, showDeleted)}
+func (_e *Collection_Expecter) Get(ctx interface{}, identity interface{}, docID interface{}, showDeleted interface{}) *Collection_Get_Call {
+	return &Collection_Get_Call{Call: _e.mock.On("Get", ctx, identity, docID, showDeleted)}
 }
 
-func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.DocID, showDeleted bool)) *Collection_Get_Call {
+func (_c *Collection_Get_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docID client.DocID, showDeleted bool)) *Collection_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.DocID), args[2].(bool))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(client.DocID), args[3].(bool))
 	})
 	return _c
 }
@@ -754,30 +763,30 @@ func (_c *Collection_Get_Call) Return(_a0 *client.Document, _a1 error) *Collecti
 	return _c
 }
 
-func (_c *Collection_Get_Call) RunAndReturn(run func(context.Context, client.DocID, bool) (*client.Document, error)) *Collection_Get_Call {
+func (_c *Collection_Get_Call) RunAndReturn(run func(context.Context, immutable.Option[string], client.DocID, bool) (*client.Document, error)) *Collection_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAllDocIDs provides a mock function with given fields: ctx
-func (_m *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
-	ret := _m.Called(ctx)
+// GetAllDocIDs provides a mock function with given fields: ctx, identity
+func (_m *Collection) GetAllDocIDs(ctx context.Context, identity immutable.Option[string]) (<-chan client.DocIDResult, error) {
+	ret := _m.Called(ctx, identity)
 
 	var r0 <-chan client.DocIDResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (<-chan client.DocIDResult, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string]) (<-chan client.DocIDResult, error)); ok {
+		return rf(ctx, identity)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) <-chan client.DocIDResult); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string]) <-chan client.DocIDResult); ok {
+		r0 = rf(ctx, identity)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(<-chan client.DocIDResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string]) error); ok {
+		r1 = rf(ctx, identity)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -792,13 +801,14 @@ type Collection_GetAllDocIDs_Call struct {
 
 // GetAllDocIDs is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Collection_Expecter) GetAllDocIDs(ctx interface{}) *Collection_GetAllDocIDs_Call {
-	return &Collection_GetAllDocIDs_Call{Call: _e.mock.On("GetAllDocIDs", ctx)}
+//   - identity immutable.Option[string]
+func (_e *Collection_Expecter) GetAllDocIDs(ctx interface{}, identity interface{}) *Collection_GetAllDocIDs_Call {
+	return &Collection_GetAllDocIDs_Call{Call: _e.mock.On("GetAllDocIDs", ctx, identity)}
 }
 
-func (_c *Collection_GetAllDocIDs_Call) Run(run func(ctx context.Context)) *Collection_GetAllDocIDs_Call {
+func (_c *Collection_GetAllDocIDs_Call) Run(run func(ctx context.Context, identity immutable.Option[string])) *Collection_GetAllDocIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]))
 	})
 	return _c
 }
@@ -808,7 +818,7 @@ func (_c *Collection_GetAllDocIDs_Call) Return(_a0 <-chan client.DocIDResult, _a
 	return _c
 }
 
-func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(context.Context) (<-chan client.DocIDResult, error)) *Collection_GetAllDocIDs_Call {
+func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(context.Context, immutable.Option[string]) (<-chan client.DocIDResult, error)) *Collection_GetAllDocIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -949,13 +959,13 @@ func (_c *Collection_Name_Call) RunAndReturn(run func() immutable.Option[string]
 	return _c
 }
 
-// Save provides a mock function with given fields: _a0, _a1
-func (_m *Collection) Save(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
+// Save provides a mock function with given fields: ctx, identity, doc
+func (_m *Collection) Save(ctx context.Context, identity immutable.Option[string], doc *client.Document) error {
+	ret := _m.Called(ctx, identity, doc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], *client.Document) error); ok {
+		r0 = rf(ctx, identity, doc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -969,15 +979,16 @@ type Collection_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) Save(_a0 interface{}, _a1 interface{}) *Collection_Save_Call {
-	return &Collection_Save_Call{Call: _e.mock.On("Save", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - doc *client.Document
+func (_e *Collection_Expecter) Save(ctx interface{}, identity interface{}, doc interface{}) *Collection_Save_Call {
+	return &Collection_Save_Call{Call: _e.mock.On("Save", ctx, identity, doc)}
 }
 
-func (_c *Collection_Save_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_Save_Call {
+func (_c *Collection_Save_Call) Run(run func(ctx context.Context, identity immutable.Option[string], doc *client.Document)) *Collection_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(*client.Document))
 	})
 	return _c
 }
@@ -987,7 +998,7 @@ func (_c *Collection_Save_Call) Return(_a0 error) *Collection_Save_Call {
 	return _c
 }
 
-func (_c *Collection_Save_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_Save_Call {
+func (_c *Collection_Save_Call) RunAndReturn(run func(context.Context, immutable.Option[string], *client.Document) error) *Collection_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1074,13 +1085,13 @@ func (_c *Collection_SchemaRoot_Call) RunAndReturn(run func() string) *Collectio
 	return _c
 }
 
-// Update provides a mock function with given fields: _a0, _a1
-func (_m *Collection) Update(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
+// Update provides a mock function with given fields: ctx, identity, docs
+func (_m *Collection) Update(ctx context.Context, identity immutable.Option[string], docs *client.Document) error {
+	ret := _m.Called(ctx, identity, docs)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], *client.Document) error); ok {
+		r0 = rf(ctx, identity, docs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1094,15 +1105,16 @@ type Collection_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) Update(_a0 interface{}, _a1 interface{}) *Collection_Update_Call {
-	return &Collection_Update_Call{Call: _e.mock.On("Update", _a0, _a1)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docs *client.Document
+func (_e *Collection_Expecter) Update(ctx interface{}, identity interface{}, docs interface{}) *Collection_Update_Call {
+	return &Collection_Update_Call{Call: _e.mock.On("Update", ctx, identity, docs)}
 }
 
-func (_c *Collection_Update_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_Update_Call {
+func (_c *Collection_Update_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docs *client.Document)) *Collection_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(*client.Document))
 	})
 	return _c
 }
@@ -1112,7 +1124,7 @@ func (_c *Collection_Update_Call) Return(_a0 error) *Collection_Update_Call {
 	return _c
 }
 
-func (_c *Collection_Update_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_Update_Call {
+func (_c *Collection_Update_Call) RunAndReturn(run func(context.Context, immutable.Option[string], *client.Document) error) *Collection_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1161,25 +1173,25 @@ func (_c *Collection_UpdateDocIndex_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// UpdateWith provides a mock function with given fields: ctx, target, updater
-func (_m *Collection) UpdateWith(ctx context.Context, target interface{}, updater string) (*client.UpdateResult, error) {
-	ret := _m.Called(ctx, target, updater)
+// UpdateWith provides a mock function with given fields: ctx, identity, target, updater
+func (_m *Collection) UpdateWith(ctx context.Context, identity immutable.Option[string], target interface{}, updater string) (*client.UpdateResult, error) {
+	ret := _m.Called(ctx, identity, target, updater)
 
 	var r0 *client.UpdateResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}, string) (*client.UpdateResult, error)); ok {
-		return rf(ctx, target, updater)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}, string) (*client.UpdateResult, error)); ok {
+		return rf(ctx, identity, target, updater)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}, string) *client.UpdateResult); ok {
-		r0 = rf(ctx, target, updater)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}, string) *client.UpdateResult); ok {
+		r0 = rf(ctx, identity, target, updater)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.UpdateResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, interface{}, string) error); ok {
-		r1 = rf(ctx, target, updater)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], interface{}, string) error); ok {
+		r1 = rf(ctx, identity, target, updater)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1194,15 +1206,16 @@ type Collection_UpdateWith_Call struct {
 
 // UpdateWith is a helper method to define mock.On call
 //   - ctx context.Context
+//   - identity immutable.Option[string]
 //   - target interface{}
 //   - updater string
-func (_e *Collection_Expecter) UpdateWith(ctx interface{}, target interface{}, updater interface{}) *Collection_UpdateWith_Call {
-	return &Collection_UpdateWith_Call{Call: _e.mock.On("UpdateWith", ctx, target, updater)}
+func (_e *Collection_Expecter) UpdateWith(ctx interface{}, identity interface{}, target interface{}, updater interface{}) *Collection_UpdateWith_Call {
+	return &Collection_UpdateWith_Call{Call: _e.mock.On("UpdateWith", ctx, identity, target, updater)}
 }
 
-func (_c *Collection_UpdateWith_Call) Run(run func(ctx context.Context, target interface{}, updater string)) *Collection_UpdateWith_Call {
+func (_c *Collection_UpdateWith_Call) Run(run func(ctx context.Context, identity immutable.Option[string], target interface{}, updater string)) *Collection_UpdateWith_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}), args[2].(string))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(interface{}), args[3].(string))
 	})
 	return _c
 }
@@ -1212,30 +1225,30 @@ func (_c *Collection_UpdateWith_Call) Return(_a0 *client.UpdateResult, _a1 error
 	return _c
 }
 
-func (_c *Collection_UpdateWith_Call) RunAndReturn(run func(context.Context, interface{}, string) (*client.UpdateResult, error)) *Collection_UpdateWith_Call {
+func (_c *Collection_UpdateWith_Call) RunAndReturn(run func(context.Context, immutable.Option[string], interface{}, string) (*client.UpdateResult, error)) *Collection_UpdateWith_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateWithDocID provides a mock function with given fields: ctx, docID, updater
-func (_m *Collection) UpdateWithDocID(ctx context.Context, docID client.DocID, updater string) (*client.UpdateResult, error) {
-	ret := _m.Called(ctx, docID, updater)
+// UpdateWithDocID provides a mock function with given fields: ctx, identity, docID, updater
+func (_m *Collection) UpdateWithDocID(ctx context.Context, identity immutable.Option[string], docID client.DocID, updater string) (*client.UpdateResult, error) {
+	ret := _m.Called(ctx, identity, docID, updater)
 
 	var r0 *client.UpdateResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID, string) (*client.UpdateResult, error)); ok {
-		return rf(ctx, docID, updater)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID, string) (*client.UpdateResult, error)); ok {
+		return rf(ctx, identity, docID, updater)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.DocID, string) *client.UpdateResult); ok {
-		r0 = rf(ctx, docID, updater)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], client.DocID, string) *client.UpdateResult); ok {
+		r0 = rf(ctx, identity, docID, updater)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.UpdateResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.DocID, string) error); ok {
-		r1 = rf(ctx, docID, updater)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], client.DocID, string) error); ok {
+		r1 = rf(ctx, identity, docID, updater)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1250,15 +1263,16 @@ type Collection_UpdateWithDocID_Call struct {
 
 // UpdateWithDocID is a helper method to define mock.On call
 //   - ctx context.Context
+//   - identity immutable.Option[string]
 //   - docID client.DocID
 //   - updater string
-func (_e *Collection_Expecter) UpdateWithDocID(ctx interface{}, docID interface{}, updater interface{}) *Collection_UpdateWithDocID_Call {
-	return &Collection_UpdateWithDocID_Call{Call: _e.mock.On("UpdateWithDocID", ctx, docID, updater)}
+func (_e *Collection_Expecter) UpdateWithDocID(ctx interface{}, identity interface{}, docID interface{}, updater interface{}) *Collection_UpdateWithDocID_Call {
+	return &Collection_UpdateWithDocID_Call{Call: _e.mock.On("UpdateWithDocID", ctx, identity, docID, updater)}
 }
 
-func (_c *Collection_UpdateWithDocID_Call) Run(run func(ctx context.Context, docID client.DocID, updater string)) *Collection_UpdateWithDocID_Call {
+func (_c *Collection_UpdateWithDocID_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docID client.DocID, updater string)) *Collection_UpdateWithDocID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.DocID), args[2].(string))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(client.DocID), args[3].(string))
 	})
 	return _c
 }
@@ -1268,30 +1282,30 @@ func (_c *Collection_UpdateWithDocID_Call) Return(_a0 *client.UpdateResult, _a1 
 	return _c
 }
 
-func (_c *Collection_UpdateWithDocID_Call) RunAndReturn(run func(context.Context, client.DocID, string) (*client.UpdateResult, error)) *Collection_UpdateWithDocID_Call {
+func (_c *Collection_UpdateWithDocID_Call) RunAndReturn(run func(context.Context, immutable.Option[string], client.DocID, string) (*client.UpdateResult, error)) *Collection_UpdateWithDocID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateWithDocIDs provides a mock function with given fields: _a0, _a1, _a2
-func (_m *Collection) UpdateWithDocIDs(_a0 context.Context, _a1 []client.DocID, _a2 string) (*client.UpdateResult, error) {
-	ret := _m.Called(_a0, _a1, _a2)
+// UpdateWithDocIDs provides a mock function with given fields: ctx, identity, docIDs, updater
+func (_m *Collection) UpdateWithDocIDs(ctx context.Context, identity immutable.Option[string], docIDs []client.DocID, updater string) (*client.UpdateResult, error) {
+	ret := _m.Called(ctx, identity, docIDs, updater)
 
 	var r0 *client.UpdateResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []client.DocID, string) (*client.UpdateResult, error)); ok {
-		return rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], []client.DocID, string) (*client.UpdateResult, error)); ok {
+		return rf(ctx, identity, docIDs, updater)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []client.DocID, string) *client.UpdateResult); ok {
-		r0 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], []client.DocID, string) *client.UpdateResult); ok {
+		r0 = rf(ctx, identity, docIDs, updater)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.UpdateResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []client.DocID, string) error); ok {
-		r1 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], []client.DocID, string) error); ok {
+		r1 = rf(ctx, identity, docIDs, updater)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1305,16 +1319,17 @@ type Collection_UpdateWithDocIDs_Call struct {
 }
 
 // UpdateWithDocIDs is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 []client.DocID
-//   - _a2 string
-func (_e *Collection_Expecter) UpdateWithDocIDs(_a0 interface{}, _a1 interface{}, _a2 interface{}) *Collection_UpdateWithDocIDs_Call {
-	return &Collection_UpdateWithDocIDs_Call{Call: _e.mock.On("UpdateWithDocIDs", _a0, _a1, _a2)}
+//   - ctx context.Context
+//   - identity immutable.Option[string]
+//   - docIDs []client.DocID
+//   - updater string
+func (_e *Collection_Expecter) UpdateWithDocIDs(ctx interface{}, identity interface{}, docIDs interface{}, updater interface{}) *Collection_UpdateWithDocIDs_Call {
+	return &Collection_UpdateWithDocIDs_Call{Call: _e.mock.On("UpdateWithDocIDs", ctx, identity, docIDs, updater)}
 }
 
-func (_c *Collection_UpdateWithDocIDs_Call) Run(run func(_a0 context.Context, _a1 []client.DocID, _a2 string)) *Collection_UpdateWithDocIDs_Call {
+func (_c *Collection_UpdateWithDocIDs_Call) Run(run func(ctx context.Context, identity immutable.Option[string], docIDs []client.DocID, updater string)) *Collection_UpdateWithDocIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]client.DocID), args[2].(string))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].([]client.DocID), args[3].(string))
 	})
 	return _c
 }
@@ -1324,30 +1339,30 @@ func (_c *Collection_UpdateWithDocIDs_Call) Return(_a0 *client.UpdateResult, _a1
 	return _c
 }
 
-func (_c *Collection_UpdateWithDocIDs_Call) RunAndReturn(run func(context.Context, []client.DocID, string) (*client.UpdateResult, error)) *Collection_UpdateWithDocIDs_Call {
+func (_c *Collection_UpdateWithDocIDs_Call) RunAndReturn(run func(context.Context, immutable.Option[string], []client.DocID, string) (*client.UpdateResult, error)) *Collection_UpdateWithDocIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateWithFilter provides a mock function with given fields: ctx, filter, updater
-func (_m *Collection) UpdateWithFilter(ctx context.Context, filter interface{}, updater string) (*client.UpdateResult, error) {
-	ret := _m.Called(ctx, filter, updater)
+// UpdateWithFilter provides a mock function with given fields: ctx, identity, filter, updater
+func (_m *Collection) UpdateWithFilter(ctx context.Context, identity immutable.Option[string], filter interface{}, updater string) (*client.UpdateResult, error) {
+	ret := _m.Called(ctx, identity, filter, updater)
 
 	var r0 *client.UpdateResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}, string) (*client.UpdateResult, error)); ok {
-		return rf(ctx, filter, updater)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}, string) (*client.UpdateResult, error)); ok {
+		return rf(ctx, identity, filter, updater)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}, string) *client.UpdateResult); ok {
-		r0 = rf(ctx, filter, updater)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[string], interface{}, string) *client.UpdateResult); ok {
+		r0 = rf(ctx, identity, filter, updater)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.UpdateResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, interface{}, string) error); ok {
-		r1 = rf(ctx, filter, updater)
+	if rf, ok := ret.Get(1).(func(context.Context, immutable.Option[string], interface{}, string) error); ok {
+		r1 = rf(ctx, identity, filter, updater)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1362,15 +1377,16 @@ type Collection_UpdateWithFilter_Call struct {
 
 // UpdateWithFilter is a helper method to define mock.On call
 //   - ctx context.Context
+//   - identity immutable.Option[string]
 //   - filter interface{}
 //   - updater string
-func (_e *Collection_Expecter) UpdateWithFilter(ctx interface{}, filter interface{}, updater interface{}) *Collection_UpdateWithFilter_Call {
-	return &Collection_UpdateWithFilter_Call{Call: _e.mock.On("UpdateWithFilter", ctx, filter, updater)}
+func (_e *Collection_Expecter) UpdateWithFilter(ctx interface{}, identity interface{}, filter interface{}, updater interface{}) *Collection_UpdateWithFilter_Call {
+	return &Collection_UpdateWithFilter_Call{Call: _e.mock.On("UpdateWithFilter", ctx, identity, filter, updater)}
 }
 
-func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, filter interface{}, updater string)) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, identity immutable.Option[string], filter interface{}, updater string)) *Collection_UpdateWithFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}), args[2].(string))
+		run(args[0].(context.Context), args[1].(immutable.Option[string]), args[2].(interface{}), args[3].(string))
 	})
 	return _c
 }
@@ -1380,7 +1396,7 @@ func (_c *Collection_UpdateWithFilter_Call) Return(_a0 *client.UpdateResult, _a1
 	return _c
 }
 
-func (_c *Collection_UpdateWithFilter_Call) RunAndReturn(run func(context.Context, interface{}, string) (*client.UpdateResult, error)) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateWithFilter_Call) RunAndReturn(run func(context.Context, immutable.Option[string], interface{}, string) (*client.UpdateResult, error)) *Collection_UpdateWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }
