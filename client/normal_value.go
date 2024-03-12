@@ -379,7 +379,7 @@ func NewNormalValue(val any) (NormalValue, error) {
 		case first.IsBool():
 			return convertAnyArrToTypedArr[bool](v)
 		case first.IsInt():
-			return convertAnyArrToIntOrFloatArr(v) // TOTEST: if filter _in is given with [23, 23.3]? It will convert it to [23, 23]
+			return convertAnyArrToIntOrFloatArr(v)
 		case first.IsFloat():
 			return convertAnyArrToFloatArr(v)
 		case first.IsString():

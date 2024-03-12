@@ -351,6 +351,59 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithIndex_WithInFilterOnFloat_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _in filter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						rate: Float @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"rate": 20.0
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"rate": 20.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"rate": 20.2
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"rate": 20.3
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {rate: {_in: [20, 20.2]}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{"name": "Islam"},
+					{"name": "Fred"},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_in: ["Islam"]}}) {
