@@ -188,69 +188,129 @@ func IsNillableKind(kind FieldKind) bool {
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
+func validateFieldSchema(val any, field SchemaFieldDescription) (NormalValue, error) {
 	if IsNillableKind(field.Kind) {
 		if val == nil {
-			return nil, nil
+			return NormalValue{}, nil
 		}
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
-			return nil, nil
+			return NormalValue{}, nil
 		}
 	}
 
 	if field.Kind.IsObjectArray() {
-		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+		return NormalValue{}, NewErrFieldOrAliasToFieldNotExist(field.Name)
 	}
 
 	if field.Kind.IsObject() {
-		return getString(val)
+		v, err := getString(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewStringNormalValue(v), nil
 	}
 
 	switch field.Kind {
 	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
-		return getString(val)
+		v, err := getString(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewStringNormalValue(v), nil
 
 	case FieldKind_STRING_ARRAY:
-		return getArray(val, getString)
+		v, err := getArray(val, getString)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewStringArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_STRING_ARRAY:
-		return getNillableArray(val, getString)
+		v, err := getNillableArray(val, getString)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewNillableStringArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_BOOL:
-		return getBool(val)
+		v, err := getBool(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewBoolNormalValue(v), nil
 
 	case FieldKind_BOOL_ARRAY:
-		return getArray(val, getBool)
+		v, err := getArray(val, getBool)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewBoolArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_BOOL_ARRAY:
-		return getNillableArray(val, getBool)
+		v, err := getNillableArray(val, getBool)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewNillableBoolArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_FLOAT:
-		return getFloat64(val)
+		v, err := getFloat64(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewFloatNormalValue(v), nil
 
 	case FieldKind_FLOAT_ARRAY:
-		return getArray(val, getFloat64)
+		v, err := getArray(val, getFloat64)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewFloatArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_FLOAT_ARRAY:
-		return getNillableArray(val, getFloat64)
+		v, err := getNillableArray(val, getFloat64)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewNillableFloatArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
-		return getDateTime(val)
+		v, err := getDateTime(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewTimeNormalValue(v), nil
 
 	case FieldKind_NILLABLE_INT:
-		return getInt64(val)
+		v, err := getInt64(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewIntNormalValue(v), nil
 
 	case FieldKind_INT_ARRAY:
-		return getArray(val, getInt64)
+		v, err := getArray(val, getInt64)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewIntArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_INT_ARRAY:
-		return getNillableArray(val, getInt64)
+		v, err := getNillableArray(val, getInt64)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewNillableIntArrayNormalValue(v), nil
 
 	case FieldKind_NILLABLE_JSON:
-		return getJSON(val)
+		v, err := getJSON(val)
+		if err != nil {
+			return NormalValue{}, err
+		}
+		return NewStringNormalValue(v), nil
 	}
 
-	return nil, NewErrUnhandledType("FieldKind", field.Kind)
+	return NormalValue{}, NewErrUnhandledType("FieldKind", field.Kind)
 }
 
 func getString(v any) (string, error) {
@@ -575,7 +635,7 @@ func (doc *Document) set(t CType, field string, value *FieldValue) error {
 	return nil
 }
 
-func (doc *Document) setCBOR(t CType, field string, val any) error {
+func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 	value := NewFieldValue(t, val)
 	return doc.set(t, field, value)
 }

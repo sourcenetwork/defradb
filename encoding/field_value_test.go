@@ -14,58 +14,59 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEncodeDecodeFieldValue(t *testing.T) {
 	tests := []struct {
 		name               string
-		inputVal           any
+		inputVal           client.NormalValue
 		expectedBytes      []byte
 		expectedBytesDesc  []byte
 		expectedDecodedVal any
 	}{
 		{
 			name:               "nil",
-			inputVal:           nil,
+			inputVal:           client.NewNilNormalValue(),
 			expectedBytes:      EncodeNullAscending(nil),
 			expectedBytesDesc:  EncodeNullDescending(nil),
-			expectedDecodedVal: nil,
+			expectedDecodedVal: client.NewNilNormalValue(),
 		},
 		{
 			name:               "bool true",
-			inputVal:           true,
+			inputVal:           client.NewBoolNormalValue(true),
 			expectedBytes:      EncodeVarintAscending(nil, 1),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 1),
-			expectedDecodedVal: int64(1),
+			expectedDecodedVal: client.NewIntNormalValue(1),
 		},
 		{
 			name:               "bool false",
-			inputVal:           false,
+			inputVal:           client.NewBoolNormalValue(false),
 			expectedBytes:      EncodeVarintAscending(nil, 0),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 0),
-			expectedDecodedVal: int64(0),
+			expectedDecodedVal: client.NewIntNormalValue(0),
 		},
 		{
 			name:               "int",
-			inputVal:           int64(55),
+			inputVal:           client.NewIntNormalValue(55),
 			expectedBytes:      EncodeVarintAscending(nil, 55),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 55),
-			expectedDecodedVal: int64(55),
+			expectedDecodedVal: client.NewIntNormalValue(55),
 		},
 		{
 			name:               "float",
-			inputVal:           0.2,
+			inputVal:           client.NewFloatNormalValue(0.2),
 			expectedBytes:      EncodeFloatAscending(nil, 0.2),
 			expectedBytesDesc:  EncodeFloatDescending(nil, 0.2),
-			expectedDecodedVal: 0.2,
+			expectedDecodedVal: client.NewFloatNormalValue(0.2),
 		},
 		{
 			name:               "string",
-			inputVal:           "str",
+			inputVal:           client.NewStringNormalValue("str"),
 			expectedBytes:      EncodeBytesAscending(nil, []byte("str")),
 			expectedBytesDesc:  EncodeBytesDescending(nil, []byte("str")),
-			expectedDecodedVal: []byte("str"),
+			expectedDecodedVal: client.NewStringNormalValue("str"),
 		},
 	}
 

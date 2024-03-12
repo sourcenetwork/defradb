@@ -17,11 +17,11 @@ import (
 
 type FieldValue struct {
 	t       CType
-	value   any
+	value   NormalValue
 	isDirty bool
 }
 
-func NewFieldValue(t CType, val any) *FieldValue {
+func NewFieldValue(t CType, val NormalValue) *FieldValue {
 	return &FieldValue{
 		t:       t,
 		value:   val,
@@ -30,6 +30,10 @@ func NewFieldValue(t CType, val any) *FieldValue {
 }
 
 func (val FieldValue) Value() any {
+	return val.value.value
+}
+
+func (val FieldValue) NormalValue() NormalValue {
 	return val.value
 }
 
@@ -38,10 +42,11 @@ func (val FieldValue) Type() CType {
 }
 
 func (val FieldValue) IsDocument() bool {
-	_, ok := val.value.(*Document)
+	_, ok := val.value.value.(*Document)
 	return ok
 }
 
+// fieldValue.Value.Value()
 // IsDirty returns if the value is marked as dirty (unsaved/changed)
 func (val FieldValue) IsDirty() bool {
 	return val.isDirty
@@ -62,7 +67,7 @@ func (val FieldValue) Bytes() ([]byte, error) {
 	}
 
 	var value any
-	switch tempVal := val.value.(type) {
+	switch tempVal := val.value.value.(type) {
 	case []immutable.Option[string]:
 		value = convertImmutable(tempVal)
 	case []immutable.Option[int64]:
@@ -72,7 +77,7 @@ func (val FieldValue) Bytes() ([]byte, error) {
 	case []immutable.Option[bool]:
 		value = convertImmutable(tempVal)
 	default:
-		value = val.value
+		value = val.value.value
 	}
 
 	return em.Marshal(value)

@@ -11,7 +11,6 @@
 package encoding
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -45,9 +44,9 @@ func NewErrInsufficientBytesToDecode(b []byte, decodeTarget string) error {
 }
 
 // NewErrCanNotDecodeFieldValue returns a new error indicating that the encoded
-// bytes could not be decoded into a client.FieldValue of a certain kind.
-func NewErrCanNotDecodeFieldValue(b []byte, kind client.FieldKind, innerErr ...error) error {
-	kvs := []errors.KV{errors.NewKV("Buffer", b), errors.NewKV("Kind", kind)}
+// bytes could not be decoded.
+func NewErrCanNotDecodeFieldValue(b []byte, innerErr ...error) error {
+	kvs := []errors.KV{errors.NewKV("Buffer", b)}
 	if len(innerErr) > 0 {
 		kvs = append(kvs, errors.NewKV("InnerErr", innerErr[0]))
 	}

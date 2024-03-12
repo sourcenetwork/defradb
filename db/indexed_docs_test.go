@@ -166,15 +166,15 @@ indexLoop:
 		hasNilValue := false
 		for i, fieldName := range b.fieldsNames {
 			fieldValue, err := b.doc.GetValue(fieldName)
-			var val any
+			var val client.NormalValue
 			if err != nil {
 				if !errors.Is(err, client.ErrFieldNotExist) {
 					require.NoError(b.f.t, err)
 				}
 			} else if fieldValue != nil {
-				val = fieldValue.Value()
+				val = fieldValue.NormalValue()
 			}
-			if val == nil {
+			if val.IsNil() {
 				hasNilValue = true
 			}
 			descending := false
@@ -185,7 +185,7 @@ indexLoop:
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.Fields = append(key.Fields, core.IndexedField{Value: b.doc.ID().String()})
+			key.Fields = append(key.Fields, core.IndexedField{Value: client.NewStringNormalValue(b.doc.ID().String())})
 		}
 	}
 
