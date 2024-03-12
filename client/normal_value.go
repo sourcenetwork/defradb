@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -484,10 +484,6 @@ func NewBoolArrayNormalValue(val []bool) NormalValue {
 	return NormalValue{value: val}
 }
 
-func NewStringArrayNormalValue(val []string) NormalValue {
-	return NormalValue{value: val}
-}
-
 func NewIntArrayNormalValue[T constraints.Integer | constraints.Float](val []T) NormalValue {
 	return normalizeNumberArr[int64](val)
 }
@@ -496,16 +492,20 @@ func NewFloatArrayNormalValue[T constraints.Integer | constraints.Float](val []T
 	return normalizeNumberArr[float64](val)
 }
 
-func NewNillableBoolArrayNormalValue(val []immutable.Option[bool]) NormalValue {
+func NewStringArrayNormalValue(val []string) NormalValue {
 	return NormalValue{value: val}
 }
 
-func NewNillableStringArrayNormalValue[T string | []byte](val []immutable.Option[T]) NormalValue {
-	return normalizeNillableCharsArr[string](val)
+func NewBytesArrayNormalValue(val [][]byte) NormalValue {
+	return NormalValue{value: val}
 }
 
-func NewNillableBytesArrayNormalValue[T string | []byte](val []immutable.Option[T]) NormalValue {
-	return normalizeNillableCharsArr[[]byte](val)
+func NewTimeArrayNormalValue(val []time.Time) NormalValue {
+	return NormalValue{value: val}
+}
+
+func NewNillableBoolArrayNormalValue(val []immutable.Option[bool]) NormalValue {
+	return NormalValue{value: val}
 }
 
 func NewNillableIntArrayNormalValue[T constraints.Integer | constraints.Float](val []immutable.Option[T]) NormalValue {
@@ -516,6 +516,18 @@ func NewNillableFloatArrayNormalValue[T constraints.Integer | constraints.Float]
 	val []immutable.Option[T],
 ) NormalValue {
 	return normalizeNillableNumberArr[float64](val)
+}
+
+func NewNillableStringArrayNormalValue[T string | []byte](val []immutable.Option[T]) NormalValue {
+	return normalizeNillableCharsArr[string](val)
+}
+
+func NewNillableBytesArrayNormalValue[T string | []byte](val []immutable.Option[T]) NormalValue {
+	return normalizeNillableCharsArr[[]byte](val)
+}
+
+func NewNillableTimeArrayNormalValue(val []immutable.Option[time.Time]) NormalValue {
+	return NormalValue{value: val}
 }
 
 func normalizeNillableCharsArr[R string | []byte, T string | []byte](val []immutable.Option[T]) NormalValue {
