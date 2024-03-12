@@ -88,25 +88,37 @@ func TestNormalValue_New_Is_Value(t *testing.T) {
 	}
 
 	newMap := map[nType]func(any) NormalValue{
-		NilType:             func(v any) NormalValue { return NewNilNormalValue() },
-		BoolType:            func(v any) NormalValue { return NewBoolNormalValue(v.(bool)) },
-		IntType:             func(v any) NormalValue { return NewIntNormalValue(v.(int64)) },
-		FloatType:           func(v any) NormalValue { return NewFloatNormalValue(v.(float64)) },
-		StringType:          func(v any) NormalValue { return NewStringNormalValue(v.(string)) },
-		BytesType:           func(v any) NormalValue { return NewBytesNormalValue(v.([]byte)) },
-		TimeType:            func(v any) NormalValue { return NewTimeNormalValue(v.(time.Time)) },
-		BoolArray:           func(v any) NormalValue { return NewBoolArrayNormalValue(v.([]bool)) },
-		IntArray:            func(v any) NormalValue { return NewIntArrayNormalValue(v.([]int64)) },
-		FloatArray:          func(v any) NormalValue { return NewFloatArrayNormalValue(v.([]float64)) },
-		StringArray:         func(v any) NormalValue { return NewStringArrayNormalValue(v.([]string)) },
-		BytesArray:          func(v any) NormalValue { return NewBytesArrayNormalValue(v.([][]byte)) },
-		TimeArray:           func(v any) NormalValue { return NewTimeArrayNormalValue(v.([]time.Time)) },
-		NillableBoolArray:   func(v any) NormalValue { return NewNillableBoolArrayNormalValue(v.([]immutable.Option[bool])) },
-		NillableIntArray:    func(v any) NormalValue { return NewNillableIntArrayNormalValue(v.([]immutable.Option[int64])) },
-		NillableFloatArray:  func(v any) NormalValue { return NewNillableFloatArrayNormalValue(v.([]immutable.Option[float64])) },
-		NillableStringArray: func(v any) NormalValue { return NewNillableStringArrayNormalValue(v.([]immutable.Option[string])) },
-		NillableBytesArray:  func(v any) NormalValue { return NewNillableBytesArrayNormalValue(v.([]immutable.Option[[]byte])) },
-		NillableTimeArray:   func(v any) NormalValue { return NewNillableTimeArrayNormalValue(v.([]immutable.Option[time.Time])) },
+		NilType:     func(v any) NormalValue { return NewNilNormalValue() },
+		BoolType:    func(v any) NormalValue { return NewBoolNormalValue(v.(bool)) },
+		IntType:     func(v any) NormalValue { return NewIntNormalValue(v.(int64)) },
+		FloatType:   func(v any) NormalValue { return NewFloatNormalValue(v.(float64)) },
+		StringType:  func(v any) NormalValue { return NewStringNormalValue(v.(string)) },
+		BytesType:   func(v any) NormalValue { return NewBytesNormalValue(v.([]byte)) },
+		TimeType:    func(v any) NormalValue { return NewTimeNormalValue(v.(time.Time)) },
+		BoolArray:   func(v any) NormalValue { return NewBoolArrayNormalValue(v.([]bool)) },
+		IntArray:    func(v any) NormalValue { return NewIntArrayNormalValue(v.([]int64)) },
+		FloatArray:  func(v any) NormalValue { return NewFloatArrayNormalValue(v.([]float64)) },
+		StringArray: func(v any) NormalValue { return NewStringArrayNormalValue(v.([]string)) },
+		BytesArray:  func(v any) NormalValue { return NewBytesArrayNormalValue(v.([][]byte)) },
+		TimeArray:   func(v any) NormalValue { return NewTimeArrayNormalValue(v.([]time.Time)) },
+		NillableBoolArray: func(v any) NormalValue {
+			return NewNillableBoolArrayNormalValue(v.([]immutable.Option[bool]))
+		},
+		NillableIntArray: func(v any) NormalValue {
+			return NewNillableIntArrayNormalValue(v.([]immutable.Option[int64]))
+		},
+		NillableFloatArray: func(v any) NormalValue {
+			return NewNillableFloatArrayNormalValue(v.([]immutable.Option[float64]))
+		},
+		NillableStringArray: func(v any) NormalValue {
+			return NewNillableStringArrayNormalValue(v.([]immutable.Option[string]))
+		},
+		NillableBytesArray: func(v any) NormalValue {
+			return NewNillableBytesArrayNormalValue(v.([]immutable.Option[[]byte]))
+		},
+		NillableTimeArray: func(v any) NormalValue {
+			return NewNillableTimeArrayNormalValue(v.([]immutable.Option[time.Time]))
+		},
 	}
 
 	tests := []struct {
@@ -229,4 +241,206 @@ func TestNormalValue_New_Is_Value(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNormalValue_NewIntArrayNormalValue(t *testing.T) {
+	i64Input := []int64{2}
+
+	v := NewIntArrayNormalValue(i64Input)
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]float32{2.5})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]int8{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]int16{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]int32{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]int64{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]int{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]uint8{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]uint16{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]uint32{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]uint64{2})
+	assert.Equal(t, i64Input, v.IntArray())
+
+	v = NewIntArrayNormalValue([]uint{2})
+	assert.Equal(t, i64Input, v.IntArray())
+}
+
+func TestNormalValue_NewFloatArrayNormalValue(t *testing.T) {
+	f64InputFrac := []float64{2.5}
+	f64Input := []float64{2.0}
+
+	v := NewFloatArrayNormalValue(f64InputFrac)
+	assert.Equal(t, f64InputFrac, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]float32{2.5})
+	assert.Equal(t, f64InputFrac, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]int8{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]int16{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]int32{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]int64{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]int{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]uint8{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]uint16{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]uint32{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]uint64{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+
+	v = NewFloatArrayNormalValue([]uint{2})
+	assert.Equal(t, f64Input, v.FloatArray())
+}
+
+func TestNormalValue_NewStringArrayNormalValue(t *testing.T) {
+	strInput := []string{"str"}
+
+	v := NewStringArrayNormalValue(strInput)
+	assert.Equal(t, strInput, v.StringArray())
+
+	v = NewStringArrayNormalValue([][]byte{{'s', 't', 'r'}})
+	assert.Equal(t, strInput, v.StringArray())
+}
+
+func TestNormalValue_NewBytesArrayNormalValue(t *testing.T) {
+	bytesInput := [][]byte{[]byte("str")}
+
+	v := NewBytesArrayNormalValue(bytesInput)
+	assert.Equal(t, bytesInput, v.BytesArray())
+
+	v = NewBytesArrayNormalValue([]string{"str"})
+	assert.Equal(t, bytesInput, v.BytesArray())
+}
+
+func TestNormalValue_NewNillableFloatArrayNormalValue(t *testing.T) {
+	f64InputFrac := []immutable.Option[float64]{immutable.Some(2.5)}
+	f64Input := []immutable.Option[float64]{immutable.Some(2.0)}
+
+	v := NewNillableFloatArrayNormalValue(f64InputFrac)
+	assert.Equal(t, f64InputFrac, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[float32]{immutable.Some[float32](2.5)})
+	assert.Equal(t, f64InputFrac, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[int8]{immutable.Some[int8](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[int16]{immutable.Some[int16](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[int32]{immutable.Some[int32](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[int64]{immutable.Some[int64](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[int]{immutable.Some[int](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[uint8]{immutable.Some[uint8](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[uint16]{immutable.Some[uint16](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[uint32]{immutable.Some[uint32](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[uint64]{immutable.Some[uint64](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+
+	v = NewNillableFloatArrayNormalValue([]immutable.Option[uint]{immutable.Some[uint](2)})
+	assert.Equal(t, f64Input, v.NillableFloatArray())
+}
+
+func TestNormalValue_NewNillableIntArrayNormalValue(t *testing.T) {
+	i64Input := []immutable.Option[int64]{immutable.Some[int64](2)}
+
+	v := NewNillableIntArrayNormalValue(i64Input)
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[float32]{immutable.Some[float32](2.5)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[float64]{immutable.Some[float64](2.5)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[int8]{immutable.Some[int8](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[int16]{immutable.Some[int16](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[int32]{immutable.Some[int32](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[int]{immutable.Some[int](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[uint8]{immutable.Some[uint8](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[uint16]{immutable.Some[uint16](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[uint32]{immutable.Some[uint32](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[uint64]{immutable.Some[uint64](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+
+	v = NewNillableIntArrayNormalValue([]immutable.Option[uint]{immutable.Some[uint](2)})
+	assert.Equal(t, i64Input, v.NillableIntArray())
+}
+
+func TestNormalValue_NewNillableStringArrayNormalValue(t *testing.T) {
+	strInput := []immutable.Option[string]{immutable.Some("str")}
+
+	v := NewNillableStringArrayNormalValue(strInput)
+	assert.Equal(t, strInput, v.NillableStringArray())
+
+	v = NewNillableStringArrayNormalValue([]immutable.Option[[]byte]{immutable.Some[[]byte]([]byte{'s', 't', 'r'})})
+	assert.Equal(t, strInput, v.NillableStringArray())
+}
+
+func TestNormalValue_NewNillableBytesArrayNormalValue(t *testing.T) {
+	bytesInput := []immutable.Option[[]byte]{immutable.Some[[]byte]([]byte("str"))}
+
+	v := NewNillableBytesArrayNormalValue(bytesInput)
+	assert.Equal(t, bytesInput, v.NillableBytesArray())
+
+	v = NewNillableBytesArrayNormalValue([]immutable.Option[string]{immutable.Some("str")})
+	assert.Equal(t, bytesInput, v.NillableBytesArray())
 }

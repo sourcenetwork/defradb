@@ -492,12 +492,12 @@ func NewFloatArrayNormalValue[T constraints.Integer | constraints.Float](val []T
 	return normalizeNumberArr[float64](val)
 }
 
-func NewStringArrayNormalValue(val []string) NormalValue {
-	return NormalValue{value: val}
+func NewStringArrayNormalValue[T string | []byte](val []T) NormalValue {
+	return normalizeCharsArr[string](val)
 }
 
-func NewBytesArrayNormalValue(val [][]byte) NormalValue {
-	return NormalValue{value: val}
+func NewBytesArrayNormalValue[T string | []byte](val []T) NormalValue {
+	return normalizeCharsArr[[]byte](val)
 }
 
 func NewTimeArrayNormalValue(val []time.Time) NormalValue {
@@ -528,6 +528,18 @@ func NewNillableBytesArrayNormalValue[T string | []byte](val []immutable.Option[
 
 func NewNillableTimeArrayNormalValue(val []immutable.Option[time.Time]) NormalValue {
 	return NormalValue{value: val}
+}
+
+func normalizeCharsArr[R string | []byte, T string | []byte](val []T) NormalValue {
+	var v any = val
+	if resultChars, ok := v.(R); ok {
+		return NormalValue{value: resultChars}
+	}
+	resultChars := make([]R, len(val))
+	for i, v := range val {
+		resultChars[i] = R(v)
+	}
+	return NormalValue{value: resultChars}
 }
 
 func normalizeNillableCharsArr[R string | []byte, T string | []byte](val []immutable.Option[T]) NormalValue {
