@@ -243,6 +243,106 @@ func TestNormalValue_New_Is_Value(t *testing.T) {
 	}
 }
 
+func TestNormalValue_NewIntNormalValue(t *testing.T) {
+	i64 := int64(2)
+	v := NewIntNormalValue(i64)
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(float32(2.5))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(float64(2.5))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(int8(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(int16(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(int32(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(int(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(uint8(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(uint16(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(uint32(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(uint64(2))
+	assert.Equal(t, i64, v.Int())
+
+	v = NewIntNormalValue(uint(2))
+	assert.Equal(t, i64, v.Int())
+}
+
+func TestNormalValue_NewFloatNormalValue(t *testing.T) {
+	f64Frac := float64(2.5)
+	f64 := float64(2)
+
+	v := NewFloatNormalValue(f64Frac)
+	assert.Equal(t, f64Frac, v.Float())
+
+	v = NewFloatNormalValue(float32(2.5))
+	assert.Equal(t, f64Frac, v.Float())
+
+	v = NewFloatNormalValue(int8(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(int16(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(int32(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(int64(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(int(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(uint8(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(uint16(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(uint32(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(uint64(2))
+	assert.Equal(t, f64, v.Float())
+
+	v = NewFloatNormalValue(uint(2))
+	assert.Equal(t, f64, v.Float())
+}
+
+func TestNormalValue_NewStringNormalValue(t *testing.T) {
+	strInput := "str"
+
+	v := NewStringNormalValue(strInput)
+	assert.Equal(t, strInput, v.String())
+
+	v = NewStringNormalValue([]byte{'s', 't', 'r'})
+	assert.Equal(t, strInput, v.String())
+}
+
+func TestNormalValue_NewBytesNormalValue(t *testing.T) {
+	bytesInput := []byte("str")
+
+	v := NewBytesNormalValue(bytesInput)
+	assert.Equal(t, bytesInput, v.Bytes())
+
+	v = NewBytesNormalValue("str")
+	assert.Equal(t, bytesInput, v.Bytes())
+}
+
 func TestNormalValue_NewIntArrayNormalValue(t *testing.T) {
 	i64Input := []int64{2}
 
