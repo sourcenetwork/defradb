@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -123,6 +124,18 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 			cfg.Set(key, filepath.Join(rootdir, path))
 		}
 	}
+
+	// set default logging config
+	corelog.SetConfig(corelog.Config{
+		Level:            cfg.GetString("log.level"),
+		Format:           cfg.GetString("log.format"),
+		Output:           cfg.GetString("log.output"),
+		EnableStackTrace: cfg.GetBool("log.stacktrace"),
+		EnableSource:     cfg.GetBool("log.source"),
+	})
+
+	// set logging config overrides
+	corelog.SetConfigOverrides(cfg.GetString("log.overrides"))
 
 	return cfg, nil
 }

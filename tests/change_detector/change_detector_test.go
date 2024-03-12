@@ -126,7 +126,7 @@ func execClone(t *testing.T, dir, url, branch string) {
 
 // execMakeDeps runs make:deps in the given directory.
 func execMakeDeps(t *testing.T, dir string) {
-	cmd := exec.Command("make", "deps:lens")
+	cmd := exec.Command("make", "deps:test")
 	cmd.Dir = dir
 
 	out, err := cmd.Output()

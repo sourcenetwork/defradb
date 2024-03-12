@@ -272,35 +272,63 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
-func (db *db) getSchemasByName(
-	ctx context.Context,
-	txn datastore.Txn,
-	name string,
-) ([]client.SchemaDescription, error) {
-	return description.GetSchemasByName(ctx, txn, name)
-}
-
 func (db *db) getSchemaByVersionID(
 	ctx context.Context,
 	txn datastore.Txn,
 	versionID string,
 ) (client.SchemaDescription, error) {
-	return description.GetSchemaVersion(ctx, txn, versionID)
+	schemas, err := db.getSchemas(ctx, txn, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
-func (db *db) getSchemasByRoot(
+func (db *db) getSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
-	root string,
+	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	return description.GetSchemasByRoot(ctx, txn, root)
-}
+	schemas := []client.SchemaDescription{}
 
-func (db *db) getAllSchemas(
-	ctx context.Context,
-	txn datastore.Txn,
-) ([]client.SchemaDescription, error) {
-	return description.GetAllSchemas(ctx, txn)
+	switch {
+	case options.ID.HasValue():
+		schema, err := description.GetSchemaVersion(ctx, txn, options.ID.Value())
+		if err != nil {
+			return nil, err
+		}
+		schemas = append(schemas, schema)
+
+	case options.Root.HasValue():
+		var err error
+		schemas, err = description.GetSchemasByRoot(ctx, txn, options.Root.Value())
+		if err != nil {
+			return nil, err
+		}
+	case options.Name.HasValue():
+		var err error
+		schemas, err = description.GetSchemasByName(ctx, txn, options.Name.Value())
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return description.GetAllSchemas(ctx, txn)
+	}
+
+	result := []client.SchemaDescription{}
+	for _, schema := range schemas {
+		if options.Root.HasValue() && schema.Root != options.Root.Value() {
+			continue
+		}
+		if options.Name.HasValue() && schema.Name != options.Name.Value() {
+			continue
+		}
+		result = append(result, schema)
+	}
+
+	return result, nil
 }
 
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
@@ -333,18 +361,18 @@ func getSubstituteFieldKind(
 	}
 }
 
-// isFieldOrInner returns true if the given path points to a FieldDescription or a property within it.
+// isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
 	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a FieldDescription.
+// isField returns true if the given path points to a SchemaFieldDescription.
 func isField(path []string) bool {
 	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a FieldDescription.Kind property.
+// isField returns true if the given path points to a SchemaFieldDescription.Kind property.
 func isFieldKind(path []string) bool {
 	return len(path) == 4 &&
 		path[fieldIndexPathIndex+1] == "Kind" &&

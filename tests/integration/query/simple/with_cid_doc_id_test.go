@@ -17,256 +17,279 @@ import (
 )
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with invalid cid and invalid docID",
-		Request: `query {
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users (
 							cid: "any non-nil string value - this will be ignored",
 							docID: "invalid docID"
 						) {
-						Name
+						name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+				ExpectedError: "invalid cid: selected encoding not supported",
 			},
 		},
-		ExpectedError: "invalid cid: selected encoding not supported",
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with unknown cid and invalid docID",
-		Request: `query {
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users (
 							cid: "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 							docID: "invalid docID"
 						) {
-						Name
+						name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+				ExpectedError: "failed to get block in blockstore: ipld: could not find",
 			},
 		},
-		ExpectedError: "failed to get block in blockstore: ipld: could not find",
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWithCidAndDocID(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with cid and docID",
-		Request: `query {
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users (
-							cid: "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
-							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+							cid: "bafybeidzstxabh7qktq7pkmmxvpjbnwklxz3h5l6d425ldvjy65xvvuxu4",
+							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 						) {
-						Name
+						name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Simple query with (first) cid and docID",
-		Request: `query {
-					Users (
-							cid: "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
-							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-						) {
-						Name
-						Age
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					// update to change age to 22 on document 0
-					`{"Age": 22}`,
-					// then update it again to change age to 23 on document 0
-					`{"Age": 23}`,
-				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(21),
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Simple query with (last) cid and docID",
-		Request: `query {
-					Users (
-							cid: "bafybeicehye3yrct3yaumy64sucndh2ab7i6ymj72klfm2gphigjx6yw5u"
-							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-						) {
-						Name
-						Age
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					// update to change age to 22 on document 0
-					`{"Age": 22}`,
-					// then update it again to change age to 23 on document 0
-					`{"Age": 23}`,
-				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(23),
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Simple query with (middle) cid and docID",
-		Request: `query {
-					Users (
-							cid: "bafybeie23a5xsx4qyoffa3riij3kei5to54bb6gq7m4lftfjujaohkabwu",
-							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-						) {
-						Name
-						Age
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					// update to change age to 22 on document 0
-					`{"Age": 22}`,
-					// then update it again to change age to 23 on document 0
-					`{"Age": 23}`,
-				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(22),
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Simple query with (first) cid and docID and yielded schema version",
-		Request: `query {
-					Users (					
-							cid: "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
-							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-						) {
-						Name
-						Age
-						_version {
-							schemaVersionId
-						}
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					// update to change age to 22 on document 0
-					`{"Age": 22}`,
-					// then update it again to change age to 23 on document 0
-					`{"Age": 23}`,
-				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(21),
-				"_version": []map[string]any{
+				Results: []map[string]any{
 					{
-						"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+						"name": "John",
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with (first) cid and docID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnn"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafybeidzstxabh7qktq7pkmmxvpjbnwklxz3h5l6d425ldvjy65xvvuxu4",
+							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+						) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with (last) cid and docID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnn"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafybeickytibhqnqtwhpjfi7ponnu5756ifo76oxb2ksxrz4iiqaywg3lu",
+							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+						) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Johnn",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with (middle) cid and docID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnn"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnnn"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafybeickytibhqnqtwhpjfi7ponnu5756ifo76oxb2ksxrz4iiqaywg3lu",
+							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+						) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Johnn",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with (first) cid and docID and yielded schema version",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnn"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafybeidzstxabh7qktq7pkmmxvpjbnwklxz3h5l6d425ldvjy65xvvuxu4",
+							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+						) {
+						name
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						"_version": []map[string]any{
+							{
+								"schemaVersionId": "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
@@ -301,7 +324,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeia4u3g4r3uolc7slho4thvhqfma5fkfrtho3lgapopatud2fl63lu",
+						cid: "bafybeiebqzqml6nn3laarr7yekakrsdnkn4nbgrl4xc5rshljp3in6au2m",
 						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
@@ -353,7 +376,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeicldbqzhmhu2hgowp6jazm4xpwh7tdurvc2xynuc54k4j7edn3vem",
+						cid: "bafybeifzuh74aq47vjngkwipjne4r2gi3v2clewgsruspqirihnps4vcmu",
 						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
 					) {
 						name

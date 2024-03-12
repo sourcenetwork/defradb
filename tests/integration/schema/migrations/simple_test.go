@@ -45,7 +45,9 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,
@@ -104,8 +106,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i",
-					DestinationSchemaVersionID: "bafkreih6o2jyurelxtpbg66gk23pio2tq6o3aed334z6w2u3qwve3at7ku",
+					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
+					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -120,7 +122,9 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,
@@ -150,11 +154,11 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					},
 					{
 						ID:              3,
-						SchemaVersionID: "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i",
+						SchemaVersionID: "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
 					},
 					{
 						ID:              4,
-						SchemaVersionID: "bafkreih6o2jyurelxtpbg66gk23pio2tq6o3aed334z6w2u3qwve3at7ku",
+						SchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 3,
@@ -222,7 +226,9 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,

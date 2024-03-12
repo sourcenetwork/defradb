@@ -28,7 +28,6 @@ const (
 	errSchemaRootDoesntMatch              string = "SchemaRoot does not match existing"
 	errCannotModifySchemaName             string = "modifying the schema name is not supported"
 	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
-	errCannotSetFieldID                   string = "explicitly setting a field ID value is not supported"
 	errRelationalFieldMissingSchema       string = "a `Schema` [name] must be provided when adding a new relation field"
 	errRelationalFieldInvalidRelationType string = "invalid RelationType"
 	errRelationalFieldMissingIDField      string = "missing id field for relation object field"
@@ -52,7 +51,6 @@ const (
 	errNonZeroIndexIDProvided             string = "non-zero index ID provided"
 	errIndexFieldMissingName              string = "index field missing name"
 	errIndexFieldMissingDirection         string = "index field missing direction"
-	errIndexSingleFieldWrongDirection     string = "wrong direction for index with a single field"
 	errIndexWithNameAlreadyExists         string = "index with name already exists"
 	errInvalidStoredIndex                 string = "invalid stored index"
 	errInvalidStoredIndexKey              string = "invalid stored index key"
@@ -90,24 +88,23 @@ const (
 )
 
 var (
-	ErrFailedToGetCollection          = errors.New(errFailedToGetCollection)
-	ErrSubscriptionsNotAllowed        = errors.New("server does not accept subscriptions")
-	ErrInvalidFilter                  = errors.New("invalid filter")
-	ErrCollectionAlreadyExists        = errors.New("collection already exists")
-	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
-	ErrSchemaNameEmpty                = errors.New("schema name can't be empty")
-	ErrSchemaRootEmpty                = errors.New("schema root can't be empty")
-	ErrSchemaVersionIDEmpty           = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                       = errors.New("key cannot be empty")
-	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
-	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
-	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
-	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
-	ErrCorruptedIndex                 = errors.New(errCorruptedIndex)
-	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
-	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
-	ErrInvalidViewQuery               = errors.New(errInvalidViewQuery)
-	ErrCanNotIndexNonUniqueFields     = errors.New(errCanNotIndexNonUniqueFields)
+	ErrFailedToGetCollection      = errors.New(errFailedToGetCollection)
+	ErrSubscriptionsNotAllowed    = errors.New("server does not accept subscriptions")
+	ErrInvalidFilter              = errors.New("invalid filter")
+	ErrCollectionAlreadyExists    = errors.New("collection already exists")
+	ErrCollectionNameEmpty        = errors.New("collection name can't be empty")
+	ErrSchemaNameEmpty            = errors.New("schema name can't be empty")
+	ErrSchemaRootEmpty            = errors.New("schema root can't be empty")
+	ErrSchemaVersionIDEmpty       = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                   = errors.New("key cannot be empty")
+	ErrCannotSetVersionID         = errors.New(errCannotSetVersionID)
+	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName      = errors.New(errIndexFieldMissingName)
+	ErrCorruptedIndex             = errors.New(errCorruptedIndex)
+	ErrExpectedJSONObject         = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray          = errors.New(errExpectedJSONArray)
+	ErrInvalidViewQuery           = errors.New(errInvalidViewQuery)
+	ErrCanNotIndexNonUniqueFields = errors.New(errCanNotIndexNonUniqueFields)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -237,14 +234,6 @@ func NewErrCannotModifySchemaName(existingName, proposedName string) error {
 	)
 }
 
-func NewErrCannotSetFieldID(name string, id client.FieldID) error {
-	return errors.New(
-		errCannotSetFieldID,
-		errors.NewKV("Field", name),
-		errors.NewKV("ID", id),
-	)
-}
-
 func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) error {
 	return errors.New(
 		errRelationalFieldMissingSchema,
@@ -334,10 +323,9 @@ func NewErrDuplicateField(name string) error {
 	return errors.New(errDuplicateField, errors.NewKV("Name", name))
 }
 
-func NewErrCannotMutateField(id client.FieldID, name string) error {
+func NewErrCannotMutateField(name string) error {
 	return errors.New(
 		errCannotMutateField,
-		errors.NewKV("ID", id),
 		errors.NewKV("ProposedName", name),
 	)
 }
@@ -351,11 +339,10 @@ func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error 
 	)
 }
 
-func NewErrCannotDeleteField(name string, id client.FieldID) error {
+func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
 		errors.NewKV("Name", name),
-		errors.NewKV("ID", id),
 	)
 }
 

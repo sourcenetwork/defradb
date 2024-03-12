@@ -11,12 +11,12 @@ import (
 // like is an operator which performs string equality
 // tests.
 func like(condition, data any) (bool, error) {
-	switch arr := data.(type) {
+	switch d := data.(type) {
 	case immutable.Option[string]:
-		if !arr.HasValue() {
+		if !d.HasValue() {
 			return condition == nil, nil
 		}
-		data = arr.Value()
+		data = d.Value()
 	}
 
 	switch cn := condition.(type) {

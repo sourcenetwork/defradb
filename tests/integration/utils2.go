@@ -736,7 +736,7 @@ func refreshCollections(
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.GetAllCollections(s.ctx, false)
+		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
@@ -1017,12 +1017,14 @@ func getSchema(
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
-		case action.Root.HasValue():
-			results, err = node.GetSchemasByRoot(s.ctx, action.Root.Value())
-		case action.Name.HasValue():
-			results, err = node.GetSchemasByName(s.ctx, action.Name.Value())
 		default:
-			results, err = node.GetAllSchemas(s.ctx)
+			results, err = node.GetSchemas(
+				s.ctx,
+				client.SchemaFetchOptions{
+					Root: action.Root,
+					Name: action.Name,
+				},
+			)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -1040,7 +1042,7 @@ func getCollections(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node, action.TransactionID, "")
-		results, err := db.GetAllCollections(s.ctx, action.GetInactive)
+		results, err := db.GetCollections(s.ctx, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1378,15 +1380,11 @@ func createIndex(
 					Name: action.FieldName,
 				},
 			}
-		} else if len(action.FieldsNames) > 0 {
-			for i := range action.FieldsNames {
-				dir := client.Ascending
-				if len(action.Directions) > i {
-					dir = action.Directions[i]
-				}
+		} else if len(action.Fields) > 0 {
+			for i := range action.Fields {
 				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
-					Name:      action.FieldsNames[i],
-					Direction: dir,
+					Name:       action.Fields[i].Name,
+					Descending: action.Fields[i].Descending,
 				})
 			}
 		}

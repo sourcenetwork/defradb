@@ -45,7 +45,9 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 			},
 			testUtils.GetCollections{
 				TransactionID: immutable.Some(0),
-				GetInactive:   true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,

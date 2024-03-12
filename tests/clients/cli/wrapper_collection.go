@@ -364,7 +364,7 @@ func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResul
 	args := []string{"client", "collection", "docIDs"}
 	args = append(args, "--name", c.Description().Name.Value())
 
-	stdOut, _, err := c.cmd.executeStream(ctx, args)
+	stdOut, _, err := c.cmd.executeStream(args)
 	if err != nil {
 		return nil, err
 	}
@@ -459,4 +459,16 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		return nil, err
 	}
 	return indexes, nil
+}
+
+func (c *Collection) CreateDocIndex(context.Context, *client.Document) error {
+	return ErrMethodIsNotImplemented
+}
+
+func (c *Collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	return ErrMethodIsNotImplemented
+}
+
+func (c *Collection) DeleteDocIndex(context.Context, *client.Document) error {
+	return ErrMethodIsNotImplemented
 }

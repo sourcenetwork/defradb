@@ -48,7 +48,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []err
 			}
 
 			parsedDirectives, err := parseDirectives(astOpDef.Directives)
-			if errs != nil {
+			if err != nil {
 				return nil, []error{err}
 			}
 			parsedQueryOpDef.Directives = parsedDirectives

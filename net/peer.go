@@ -176,6 +176,7 @@ func (p *Peer) Start() error {
 		go p.handleBroadcastLoop()
 	}
 
+	log.InfoContext(p.ctx, "Starting P2P node", "P2P addresses", p.host.Addrs())
 	// register the P2P gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)

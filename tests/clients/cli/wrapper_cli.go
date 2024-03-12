@@ -38,8 +38,8 @@ func (w *cliWrapper) withTxn(tx datastore.Txn) *cliWrapper {
 	}
 }
 
-func (w *cliWrapper) execute(ctx context.Context, args []string) ([]byte, error) {
-	stdOut, stdErr, err := w.executeStream(ctx, args)
+func (w *cliWrapper) execute(_ context.Context, args []string) ([]byte, error) {
+	stdOut, stdErr, err := w.executeStream(args)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (w *cliWrapper) execute(ctx context.Context, args []string) ([]byte, error)
 	return stdOutData, nil
 }
 
-func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCloser, error) {
+func (w *cliWrapper) executeStream(args []string) (io.ReadCloser, io.ReadCloser, error) {
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 

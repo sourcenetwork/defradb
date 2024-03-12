@@ -211,8 +211,8 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Chris"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -394,13 +394,13 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
-					{"name": "John"},
 					{"name": "Bruno"},
 					{"name": "Chris"},
+					{"name": "John"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 					{"name": "Shahzad"},
 				},
 			},
@@ -474,9 +474,9 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -624,10 +624,10 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Bruno"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{

@@ -58,7 +58,7 @@ func toSelect(
 		return nil, err
 	}
 
-	mapping, schema, err := getTopLevelInfo(ctx, store, selectRequest, collectionName)
+	mapping, definition, err := getTopLevelInfo(ctx, store, selectRequest, collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func toSelect(
 		fields,
 		mapping,
 		collectionName,
-		schema,
+		definition,
 		store,
 	)
 
@@ -99,8 +99,8 @@ func toSelect(
 		return nil, err
 	}
 
-	if len(schema.Fields) != 0 {
-		fields, err = resolveSecondaryRelationIDs(ctx, store, collectionName, schema, mapping, fields)
+	if len(definition.Schema.Fields) != 0 {
+		fields, err = resolveSecondaryRelationIDs(ctx, store, collectionName, definition.Schema, mapping, fields)
 		if err != nil {
 			return nil, err
 		}
@@ -111,10 +111,10 @@ func toSelect(
 		groupByFields := selectRequest.GroupBy.Value().Fields
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
-			fieldDesc, ok := schema.GetField(groupByField)
-			if ok && fieldDesc.IsObject() && !fieldDesc.IsObjectArray() {
+			fieldDesc, ok := definition.GetFieldByName(groupByField)
+			if ok && fieldDesc.Kind.IsObject() && !fieldDesc.Kind.IsObjectArray() {
 				groupByFields[index] = groupByField + request.RelatedObjectID
-			} else if ok && fieldDesc.IsObjectArray() {
+			} else if ok && fieldDesc.Kind.IsObjectArray() {
 				return nil, NewErrInvalidFieldToGroupBy(groupByField)
 			}
 		}
@@ -267,7 +267,7 @@ func resolveAggregates(
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
 	collectionName string,
-	schema client.SchemaDescription,
+	def client.CollectionDefinition,
 	store client.Store,
 ) ([]Requestable, error) {
 	fields := inputFields
@@ -287,9 +287,9 @@ func resolveAggregates(
 			var hasHost bool
 			var convertedFilter *Filter
 			if childIsMapped {
-				fieldDesc, isField := schema.GetField(target.hostExternalName)
+				fieldDesc, isField := def.GetFieldByName(target.hostExternalName)
 
-				if isField && !fieldDesc.IsObject() {
+				if isField && !fieldDesc.Kind.IsObject() {
 					var order *OrderBy
 					if target.order.HasValue() && len(target.order.Value().Conditions) > 0 {
 						// For inline arrays the order element will consist of just a direction
@@ -729,7 +729,7 @@ func getCollectionName(
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentCollection.Schema().GetField(selectRequest.Name)
+		hostFieldDesc, parentHasField := parentCollection.Definition().GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.RelationName != "" {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
@@ -746,17 +746,17 @@ func getTopLevelInfo(
 	store client.Store,
 	selectRequest *request.Select,
 	collectionName string,
-) (*core.DocumentMapping, client.SchemaDescription, error) {
+) (*core.DocumentMapping, client.CollectionDefinition, error) {
 	mapping := core.NewDocumentMapping()
 
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
-		return mapping, client.SchemaDescription{}, nil
+		return mapping, client.CollectionDefinition{}, nil
 	}
 
 	if selectRequest.Root == request.ObjectSelection {
-		var schema client.SchemaDescription
+		var definition client.CollectionDefinition
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			// If the collection is not found, check to see if a schema of that name exists,
@@ -764,29 +764,41 @@ func getTopLevelInfo(
 			//
 			// Note: This is a poor way to check if a collection exists or not, see
 			// https://github.com/sourcenetwork/defradb/issues/2146
-			schemas, err := store.GetSchemasByName(ctx, collectionName)
+			schemas, err := store.GetSchemas(
+				ctx,
+				client.SchemaFetchOptions{
+					Name: immutable.Some(collectionName),
+				},
+			)
 			if err != nil {
-				return nil, client.SchemaDescription{}, err
+				return nil, client.CollectionDefinition{}, err
 			}
 			if len(schemas) == 0 {
-				return nil, client.SchemaDescription{}, NewErrTypeNotFound(collectionName)
+				return nil, client.CollectionDefinition{}, NewErrTypeNotFound(collectionName)
 			}
-			// `schemas` will contain all versions of that name, as views cannot be updated atm this should
-			// be fine for now
-			schema = schemas[0]
+
+			for i, f := range schemas[0].Fields {
+				// As embedded objects do not have collections/field-ids, we just take the index
+				mapping.Add(int(i), f.Name)
+			}
+
+			definition = client.CollectionDefinition{
+				// `schemas` will contain all versions of that name, as views cannot be updated atm this should
+				// be fine for now
+				Schema: schemas[0],
+			}
 		} else {
 			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
-			schema = collection.Schema()
-		}
-
-		// Map all fields from schema into the map as they are fetched automatically
-		for _, f := range schema.Fields {
-			if f.IsObject() {
-				// Objects are skipped, as they are not fetched by default and
-				// have to be requested via selects.
-				continue
+			definition = collection.Definition()
+			// Map all fields from schema into the map as they are fetched automatically
+			for _, f := range definition.GetFields() {
+				if f.Kind.IsObject() {
+					// Objects are skipped, as they are not fetched by default and
+					// have to be requested via selects.
+					continue
+				}
+				mapping.Add(int(f.ID), f.Name)
 			}
-			mapping.Add(int(f.ID), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as
@@ -795,7 +807,7 @@ func getTopLevelInfo(
 
 		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
-		return mapping, schema, nil
+		return mapping, definition, nil
 	}
 
 	if selectRequest.Name == request.LinksFieldName {
@@ -816,7 +828,7 @@ func getTopLevelInfo(
 		mapping.SetTypeName(request.CommitTypeName)
 	}
 
-	return mapping, client.SchemaDescription{}, nil
+	return mapping, client.CollectionDefinition{}, nil
 }
 
 func resolveFilterDependencies(
@@ -1026,7 +1038,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		fieldDesc, descFound := schema.GetField(existingField.Name)
+		fieldDesc, descFound := schema.GetFieldByName(existingField.Name)
 		if !descFound {
 			continue
 		}

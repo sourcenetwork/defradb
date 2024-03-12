@@ -18,14 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// CollectionDefinition contains the metadata defining what a Collection is.
-type CollectionDefinition struct {
-	// Description returns the CollectionDescription of this Collection.
-	Description CollectionDescription `json:"description"`
-	// Schema returns the SchemaDescription used to define this Collection.
-	Schema SchemaDescription `json:"schema"`
-}
-
 // Collection represents a defradb collection.
 //
 // A Collection is mostly analogous to a SQL table, however a collection is specific to its
@@ -177,6 +169,21 @@ type Collection interface {
 
 	// GetIndexes returns all the indexes that exist on the collection.
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+
+	// CreateDocIndex creates an index for the given document.
+	// WARNING: This method is only for internal use and is not supposed to be called by the client
+	// as it might compromise the integrity of the database. This method will be removed in the future
+	CreateDocIndex(context.Context, *Document) error
+
+	// UpdateDocIndex updates the index for the given document.
+	// WARNING: This method is only for internal use and is not supposed to be called by the client
+	// as it might compromise the integrity of the database. This method will be removed in the future
+	UpdateDocIndex(ctx context.Context, oldDoc, newDoc *Document) error
+
+	// DeleteDocIndex deletes the index for the given document.
+	// WARNING: This method is only for internal use and is not supposed to be called by the client
+	// as it might compromise the integrity of the database. This method will be removed in the future
+	DeleteDocIndex(context.Context, *Document) error
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

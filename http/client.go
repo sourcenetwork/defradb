@@ -226,23 +226,34 @@ func (c *Client) LensRegistry() client.LensRegistry {
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	cols, err := c.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := c.http.requestJson(req, &definition); err != nil {
-		return nil, err
-	}
-	return &Collection{c.http, definition}, nil
+
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
-func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
+func (c *Client) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"schema_root": []string{schemaRoot}}.Encode()
+	params := url.Values{}
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		params.Add("version_id", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		params.Add("schema_root", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -257,93 +268,34 @@ func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot stri
 		collections[i] = &Collection{c.http, d}
 	}
 	return collections, nil
-}
-
-func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionId}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var descriptions []client.CollectionDefinition
-	if err := c.http.requestJson(req, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
-	}
-	return collections, nil
-}
-
-func (c *Client) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"get_inactive": []string{strconv.FormatBool(getInactive)}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var descriptions []client.CollectionDefinition
-	if err := c.http.requestJson(req, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
-	}
-	return collections, nil
-}
-
-func (c *Client) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
-	}
-	return schema, nil
 }
 
 func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionID}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	schemas, err := c.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
-	var schema client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schema, nil
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
-func (c *Client) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (c *Client) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"root": []string{root}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
+	params := url.Values{}
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
 	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
+	if options.Root.HasValue() {
+		params.Add("root", options.Root.Value())
 	}
-	return schema, nil
-}
-
-func (c *Client) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
+	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -392,7 +344,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
-		result.Pub = c.execRequestSubscription(ctx, res.Body)
+		result.Pub = c.execRequestSubscription(res.Body)
 		return result
 	}
 	// ignore close errors because they have
@@ -415,7 +367,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 	return result
 }
 
-func (c *Client) execRequestSubscription(ctx context.Context, r io.ReadCloser) *events.Publisher[events.Update] {
+func (c *Client) execRequestSubscription(r io.ReadCloser) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {

@@ -38,7 +38,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 					{
 						Name: "index1",
 						Fields: []IndexedFieldDescription{
-							{Name: "test", Direction: Ascending},
+							{Name: "test"},
 						},
 					},
 				},
@@ -48,7 +48,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 				{
 					Name: "index1",
 					Fields: []IndexedFieldDescription{
-						{Name: "test", Direction: Ascending},
+						{Name: "test"},
 					},
 				},
 			},
@@ -60,13 +60,13 @@ func TestCollectIndexesOnField(t *testing.T) {
 					{
 						Name: "index1",
 						Fields: []IndexedFieldDescription{
-							{Name: "test", Direction: Ascending},
+							{Name: "test"},
 						},
 					},
 					{
 						Name: "index2",
 						Fields: []IndexedFieldDescription{
-							{Name: "test", Direction: Descending},
+							{Name: "test", Descending: true},
 						},
 					},
 				},
@@ -76,13 +76,13 @@ func TestCollectIndexesOnField(t *testing.T) {
 				{
 					Name: "index1",
 					Fields: []IndexedFieldDescription{
-						{Name: "test", Direction: Ascending},
+						{Name: "test"},
 					},
 				},
 				{
 					Name: "index2",
 					Fields: []IndexedFieldDescription{
-						{Name: "test", Direction: Descending},
+						{Name: "test", Descending: true},
 					},
 				},
 			},
@@ -94,7 +94,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 					{
 						Name: "index1",
 						Fields: []IndexedFieldDescription{
-							{Name: "other", Direction: Ascending},
+							{Name: "other"},
 						},
 					},
 				},
@@ -109,8 +109,8 @@ func TestCollectIndexesOnField(t *testing.T) {
 					{
 						Name: "index1",
 						Fields: []IndexedFieldDescription{
-							{Name: "other", Direction: Ascending},
-							{Name: "test", Direction: Ascending},
+							{Name: "other"},
+							{Name: "test"},
 						},
 					},
 				},

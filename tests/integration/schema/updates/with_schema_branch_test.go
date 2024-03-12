@@ -20,9 +20,9 @@ import (
 )
 
 func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i"
-	schemaVersion2ID := "bafkreibzozorw6lqjn5bjogsqxeqcswoqedcatdvphhts4frd7mb4jn7x4"
-	schemaVersion3ID := "bafkreiahizg44dgnuniim3y75ztjtj67kkezkit7w445lfpirx6iq6ixg4"
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
+	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	schemaVersion3ID := "bafkreieilqyv4bydakul5tbikpysmzwhzvxdau4twcny5n46zvxhkv7oli"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema",
@@ -70,7 +70,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersion2ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -78,13 +78,11 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "email",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -110,7 +108,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersion3ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -118,13 +116,11 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "phone",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -133,7 +129,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -171,10 +169,10 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 }
 
 func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i"
-	schemaVersion2ID := "bafkreibzozorw6lqjn5bjogsqxeqcswoqedcatdvphhts4frd7mb4jn7x4"
-	schemaVersion3ID := "bafkreiahizg44dgnuniim3y75ztjtj67kkezkit7w445lfpirx6iq6ixg4"
-	schemaVersion4ID := "bafkreig2b545qyt3luwmt37uyofbka2flmbc3kkhoifsh7mv2rgqy7fgty"
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
+	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	schemaVersion3ID := "bafkreieilqyv4bydakul5tbikpysmzwhzvxdau4twcny5n46zvxhkv7oli"
+	schemaVersion4ID := "bafkreicy4llechrh44zwviafs2ptjnr7sloiajjvpp7buaknhwspfevnt4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with patch on branching schema",
@@ -232,7 +230,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersion4ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -240,19 +238,16 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "phone",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "discordName",
-								ID:   3,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -261,7 +256,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -310,9 +307,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *testing.T) {
-	schemaVersion1ID := "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i"
-	schemaVersion2ID := "bafkreibzozorw6lqjn5bjogsqxeqcswoqedcatdvphhts4frd7mb4jn7x4"
-	schemaVersion3ID := "bafkreiahizg44dgnuniim3y75ztjtj67kkezkit7w445lfpirx6iq6ixg4"
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
+	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	schemaVersion3ID := "bafkreieilqyv4bydakul5tbikpysmzwhzvxdau4twcny5n46zvxhkv7oli"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches",
@@ -367,7 +364,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				ExpectedError: `Cannot query field "phone" on type "Users".`,
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -404,10 +403,10 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPatch(t *testing.T) {
-	schemaVersion1ID := "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i"
-	schemaVersion2ID := "bafkreibzozorw6lqjn5bjogsqxeqcswoqedcatdvphhts4frd7mb4jn7x4"
-	schemaVersion3ID := "bafkreiahizg44dgnuniim3y75ztjtj67kkezkit7w445lfpirx6iq6ixg4"
-	schemaVersion4ID := "bafkreigtg424aidykeyhty44b7b6arhsaewxcg6kfcw37jxigfwskxgf2e"
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
+	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	schemaVersion3ID := "bafkreieilqyv4bydakul5tbikpysmzwhzvxdau4twcny5n46zvxhkv7oli"
+	schemaVersion4ID := "bafkreict4nqhcurfkjskxlek3djpep2acwlfkztughoum4dsvuwigkfqzi"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches then patch",
@@ -469,7 +468,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						Name:      "Users",
 						VersionID: schemaVersion4ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -477,19 +476,16 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "email",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "discordName",
-								ID:   3,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -498,7 +494,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -538,6 +536,46 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 								SourceCollectionID: 2,
 							},
 						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T) {
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
+
+	test := testUtils.TestCase{
+		Description: `Test schema update, with branching schema toggling between branches and gets the 
+collection at a specific version`,
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				// The second schema version will not be set as the active version, leaving the initial version active
+				SetAsDefaultVersion: immutable.Some(true),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					SchemaVersionID: immutable.Some(schemaVersion1ID),
+				},
+				ExpectedResults: []client.CollectionDescription{
+					{
+						// The original collection version is present, it has no source and is inactive (has no name).
+						ID:              1,
+						SchemaVersionID: schemaVersion1ID,
 					},
 				},
 			},

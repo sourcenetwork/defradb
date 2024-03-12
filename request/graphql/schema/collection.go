@@ -15,15 +15,14 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
-
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
@@ -44,11 +43,11 @@ func FromString(ctx context.Context, schemaString string) (
 		return nil, err
 	}
 
-	return fromAst(ctx, doc)
+	return fromAst(doc)
 }
 
 // fromAst parses a GQL AST into a set of collection descriptions.
-func fromAst(ctx context.Context, doc *ast.Document) (
+func fromAst(doc *ast.Document) (
 	[]client.CollectionDefinition,
 	error,
 ) {
@@ -58,7 +57,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := collectionFromAstDefinition(ctx, relationManager, defType)
+			description, err := collectionFromAstDefinition(relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
@@ -66,7 +65,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 			definitions = append(definitions, description)
 
 		case *ast.InterfaceDefinition:
-			description, err := schemaFromAstDefinition(ctx, relationManager, defType)
+			description, err := schemaFromAstDefinition(relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
@@ -98,11 +97,10 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 
 // collectionFromAstDefinition parses a AST object definition into a set of collection descriptions.
 func collectionFromAstDefinition(
-	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
 ) (client.CollectionDefinition, error) {
-	fieldDescriptions := []client.FieldDescription{
+	fieldDescriptions := []client.SchemaFieldDescription{
 		{
 			Name: request.DocIDFieldName,
 			Kind: client.FieldKind_DocID,
@@ -164,11 +162,10 @@ func collectionFromAstDefinition(
 }
 
 func schemaFromAstDefinition(
-	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.InterfaceDefinition,
 ) (client.SchemaDescription, error) {
-	fieldDescriptions := []client.FieldDescription{}
+	fieldDescriptions := []client.SchemaFieldDescription{}
 
 	for _, field := range def.Fields {
 		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
@@ -213,8 +210,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
 			{
-				Name:      field.Name.Value,
-				Direction: client.Ascending,
+				Name: field.Name.Value,
 			},
 		},
 	}
@@ -235,6 +231,14 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 			desc.Unique = boolVal.Value
+		case types.IndexDirectivePropDirection:
+			dirVal, ok := arg.Value.(*ast.EnumValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			if dirVal.Value == types.FieldOrderDESC {
+				desc.Fields[0].Descending = true
+			}
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -298,15 +302,11 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == string(client.Ascending) {
-				desc.Fields[i].Direction = client.Ascending
-			} else if dirVal.Value == string(client.Descending) {
-				desc.Fields[i].Direction = client.Descending
+			if dirVal.Value == types.FieldOrderASC {
+				desc.Fields[i].Descending = false
+			} else if dirVal.Value == types.FieldOrderDESC {
+				desc.Fields[i].Descending = true
 			}
-		}
-	} else {
-		for i := range desc.Fields {
-			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return desc, nil
@@ -315,7 +315,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 func fieldsFromAST(field *ast.FieldDefinition,
 	relationManager *RelationManager,
 	hostObjectName string,
-) ([]client.FieldDescription, error) {
+) ([]client.SchemaFieldDescription, error) {
 	kind, err := astTypeToKind(field.Type)
 	if err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 	relationName := ""
 	relationType := relationType(0)
 
-	fieldDescriptions := []client.FieldDescription{}
+	fieldDescriptions := []client.SchemaFieldDescription{}
 
 	if kind == client.FieldKind_FOREIGN_OBJECT || kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 		if kind == client.FieldKind_FOREIGN_OBJECT {
@@ -346,7 +346,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 
 		if kind == client.FieldKind_FOREIGN_OBJECT {
 			// An _id field is added for every 1-N relationship from this object.
-			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
+			fieldDescriptions = append(fieldDescriptions, client.SchemaFieldDescription{
 				Name:         fmt.Sprintf("%s_id", field.Name.Value),
 				Kind:         client.FieldKind_DocID,
 				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocID],
@@ -372,7 +372,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 		return nil, err
 	}
 
-	fieldDescription := client.FieldDescription{
+	fieldDescription := client.SchemaFieldDescription{
 		Name:         field.Name.Value,
 		Kind:         kind,
 		Typ:          cType,
@@ -389,18 +389,15 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 		for _, arg := range directive.Arguments {
 			switch arg.Name.Value {
 			case "type":
-				cType := arg.Value.GetValue().(string)
-				switch cType {
-				case client.PN_COUNTER.String():
-					if !client.PN_COUNTER.IsCompatibleWith(kind) {
-						return 0, client.NewErrCRDTKindMismatch(cType, kind.String())
-					}
-					return client.PN_COUNTER, nil
-				case client.LWW_REGISTER.String():
-					return client.LWW_REGISTER, nil
-				default:
-					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cType)
+				cTypeString := arg.Value.GetValue().(string)
+				cType, validCRDTEnum := types.CRDTEnum.ParseValue(cTypeString).(client.CType)
+				if !validCRDTEnum {
+					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)
 				}
+				if !cType.IsCompatibleWith(kind) {
+					return 0, client.NewErrCRDTKindMismatch(cType.String(), kind.String())
+				}
+				return cType, nil
 			}
 		}
 	}

@@ -456,3 +456,98 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiveLike_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query filter with compound operator and relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "A Time for Mercy",
+					"rating": 4.5,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Theif Lord",
+					"rating": 4.8,
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "The Lord of the Rings",
+					"rating": 5.0,
+					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
+				Doc: `{
+					"name": "John Tolkien",
+					"age": 70,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_or: [
+						{_and: [
+							{published: {rating: {_lt: 5.0}}},
+							{published: {rating: {_gt: 4.8}}}
+						]},
+						{_and: [
+							{age: {_le: 65}},
+							{published: {name: {_ilike: "%lord%"}}}
+						]},
+					]}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+					{
+						"name": "Cornelia Funke",
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

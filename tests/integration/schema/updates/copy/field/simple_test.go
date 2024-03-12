@@ -50,9 +50,9 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
+func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field, rename and remove IDs",
+		Description: "Test schema update, copy field and rename",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -63,12 +63,11 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 				`,
 			},
 			testUtils.SchemaPatch{
-				// Here we esentially use Email as a template, copying it, clearing the ID, and renaming the
+				// Here we esentially use Email as a template, copying it and renaming the
 				// clone.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/3" },
-						{ "op": "remove", "path": "/Users/Fields/3/ID" },
 						{ "op": "replace", "path": "/Users/Fields/3/Name", "value": "fax" }
 					]
 				`,
@@ -89,9 +88,9 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
-func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *testing.T) {
+func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field, rename, re-type, and remove IDs",
+		Description: "Test schema update, copy field, rename, re-type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -101,12 +100,11 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 				`,
 			},
 			testUtils.SchemaPatch{
-				// Here we esentially use Name as a template, copying it, clearing the ID, and renaming and
+				// Here we esentially use Name as a template, copying it, and renaming and
 				// re-typing the clone.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
-						{ "op": "remove", "path": "/Users/Fields/2/ID" },
 						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "age" },
 						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "Int" }
 					]
@@ -140,9 +138,9 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
-func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
+func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field, rename, re-type to invalid, and remove ID",
+		Description: "Test schema update, copy field, rename, re-type to invalid",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -152,12 +150,11 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndInvalidKindSubstitut
 				`,
 			},
 			testUtils.SchemaPatch{
-				// Here we esentially use Name as a template, copying it, clearing the ID, and renaming and
+				// Here we esentially use Name as a template, copying it and renaming and
 				// re-typing the clone.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Fields/2" },
-						{ "op": "remove", "path": "/Users/Fields/2/ID" },
 						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "Age" },
 						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "NotAValidKind" }
 					]

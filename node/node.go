@@ -12,6 +12,9 @@ package node
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	gohttp "net/http"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -159,8 +162,13 @@ func (n *Node) Start(ctx context.Context) error {
 		}
 	}
 	if n.Server != nil {
+		err := n.Server.SetListener()
+		if err != nil {
+			return err
+		}
+		log.InfoContext(ctx, fmt.Sprintf("Providing HTTP API at %s.", n.Server.Address()))
 		go func() {
-			if err := n.Server.ListenAndServe(); err != nil {
+			if err := n.Server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
 				log.ErrorContextE(ctx, "HTTP server stopped", err)
 			}
 		}()
