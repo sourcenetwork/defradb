@@ -1685,16 +1685,6 @@ func (c *collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
-	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
-	if err != nil {
-		return false, err
-	}
-	if !exists || isDeleted {
-		return false, client.ErrDocumentNotFound
-	}
-	if isDeleted {
-		return false, NewErrDocumentDeleted(primaryKey.DocID)
-	}
 
 	err = c.applyDelete(ctx, txn, primaryKey)
 	if err != nil {
