@@ -794,7 +794,7 @@ oldLoop:
 	for _, oldCol := range oldColsByID {
 		for _, newCol := range newColsByID {
 			// It is not enough to just match by the map index, in case the index does not pair
-			// up with the ID (this can happen if a user moves it)
+			// up with the ID (this can happen if a user moves the collection within the map)
 			if newCol.ID == oldCol.ID {
 				continue oldLoop
 			}
