@@ -38,6 +38,28 @@ func TestColDescrUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdateAddCollections_WithZeroedID_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/2", "value": {"ID": 0, "Name": "Dogs"} }
+					]
+				`,
+				ExpectedError: "collection ID cannot be zero",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
