@@ -103,6 +103,7 @@ type PatchCollection struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
+	// The Patch to apply to the collection description.
 	Patch string
 
 	ExpectedError string
