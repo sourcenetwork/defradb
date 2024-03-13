@@ -37,6 +37,7 @@ Example: patch from stdin:
   cat patch.json | defradb client collection patch -
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
+		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
@@ -54,7 +55,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 					return err
 				}
 				patch = string(data)
-			case len(args) >= 1:
+			case len(args) == 1:
 				patch = args[0]
 			default:
 				return fmt.Errorf("patch cannot be empty")
