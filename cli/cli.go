@@ -95,6 +95,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeCollectionUpdateCommand(),
 		MakeCollectionCreateCommand(),
 		MakeCollectionDescribeCommand(),
+		MakeCollectionPatchCommand(),
 	)
 
 	client := MakeClientCommand()

@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package index
+package replace
 
 import (
 	"testing"
@@ -16,36 +16,24 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestPatching_ForCollectionWithIndex_StillWorks(t *testing.T) {
+func TestColDescrUpdateReplaceFields_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test patching schema for collection with index still works",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
-						name: String @index
-						age:  Int    @index
-					}
+					type Users {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "replace", "path": "/1/Fields", "value": [{}] }
 					]
 				`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						age
-						email
-					}
-				}`,
-				Results: []map[string]any{},
+				ExpectedError: "collection fields cannot be mutated. CollectionID: 1",
 			},
 		},
 	}
+
 	testUtils.ExecuteTestCase(t, test)
 }

@@ -106,6 +106,13 @@ func (w *Wrapper) PatchSchema(
 	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
 }
 
+func (w *Wrapper) PatchCollection(
+	ctx context.Context,
+	patch string,
+) error {
+	return w.client.PatchCollection(ctx, patch)
+}
+
 func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
 }
