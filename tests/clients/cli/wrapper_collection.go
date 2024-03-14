@@ -167,7 +167,7 @@ func (c *Collection) Save(
 	if err == nil {
 		return c.Update(ctx, identity, doc)
 	}
-	if errors.Is(err, client.ErrDocumentNotFound) {
+	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return c.Create(ctx, identity, doc)
 	}
 	return err

@@ -1468,7 +1468,7 @@ func (c *collection) Update(
 		return err
 	}
 	if !exists {
-		return client.ErrDocumentNotFound
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
 		return NewErrDocumentDeleted(primaryKey.DocID)
@@ -1504,7 +1504,7 @@ func (c *collection) update(
 		return err
 	}
 	if !canUpdate {
-		return client.ErrInvalidACPPermToUpdateDocument
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	_, err = c.save(ctx, identity, txn, doc, false)
