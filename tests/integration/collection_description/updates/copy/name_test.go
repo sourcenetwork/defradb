@@ -18,6 +18,36 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestColDescrUpdateCopyName_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+				SetAsDefaultVersion: immutable.Some(false),
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "copy", "from": "/1/Name", "path": "/2/Name" }
+					]
+				`,
+				ExpectedError: "collection already exists. Name: Users",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdateCopyName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
