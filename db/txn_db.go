@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -422,20 +421,6 @@ func (db *explicitTxnDB) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
-func (db *implicitTxnDB) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return acp.NoACPModule, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.acp, txn.Commit(ctx)
-}
-
-func (db *explicitTxnDB) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
-	return db.acp, nil
-}
-
 func (db *implicitTxnDB) AddPolicy(
 	ctx context.Context,
 	creator string,
@@ -447,16 +432,11 @@ func (db *implicitTxnDB) AddPolicy(
 	}
 	defer txn.Discard(ctx)
 
-	acpModule, err := db.ACPModule(ctx)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	if !acpModule.HasValue() {
+	if !db.acp.HasValue() {
 		return client.AddPolicyResult{}, client.ErrPolicyAddFailureACPModuleNotFound
 	}
 
-	policyID, err := acpModule.Value().AddPolicy(
+	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
 		creator,
 		policy,
@@ -474,16 +454,11 @@ func (db *explicitTxnDB) AddPolicy(
 	creator string,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	acpModule, err := db.ACPModule(ctx)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	if !acpModule.HasValue() {
+	if !db.acp.HasValue() {
 		return client.AddPolicyResult{}, client.ErrPolicyAddFailureACPModuleNotFound
 	}
 
-	policyID, err := acpModule.Value().AddPolicy(
+	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
 		creator,
 		policy,

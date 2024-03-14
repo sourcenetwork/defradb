@@ -55,7 +55,13 @@ func (db *db) execRequest(
 		return res
 	}
 
-	planner := planner.New(ctx, identity, db.WithTxn(txn), txn)
+	planner := planner.New(
+		ctx,
+		identity,
+		db.acp,
+		db.WithTxn(txn),
+		txn,
+	)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {

@@ -17,7 +17,6 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -234,12 +233,17 @@ type Store interface {
 		request string,
 	) *RequestResult
 
-	// ACPModule returns the underlying acp module (optional). Incase the access control
-	// is turned off, then the returned acp module will have no value (will be empty).
-	ACPModule(context.Context) (immutable.Option[acp.ACPModule], error)
-
-	// AddPolicy attempts to add policy if the acp module exists, otherwise returns an error.
-	AddPolicy(context.Context, string, string) (AddPolicyResult, error)
+	// AddPolicy adds policy to acp module, if the acp module exists.
+	//
+	// If policy was successfully added to the acp module then a policyID is returned,
+	// otherwise if acp module was not found then returns the following error:
+	// `client.ErrPolicyAddFailureACPModuleNotFound`
+	//
+	// Detects the format of the policy automatically by assuming YAML format if JSON
+	// validation fails.
+	//
+	// Note: A policy can not be added without the creatorID (identity).
+	AddPolicy(ctx context.Context, creatorID string, policy string) (AddPolicyResult, error)
 }
 
 // GQLResult represents the immediate results of a GQL request.

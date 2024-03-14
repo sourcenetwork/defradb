@@ -438,6 +438,7 @@ func (c *collection) makeSelectionPlan(
 	planner := planner.New(
 		ctx,
 		identity,
+		c.db.acp,
 		c.db.WithTxn(txn),
 		txn,
 	)

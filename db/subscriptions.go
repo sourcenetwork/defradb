@@ -76,7 +76,13 @@ func (db *db) handleEvent(
 	evt events.Update,
 	r *request.ObjectSubscription,
 ) {
-	p := planner.New(ctx, identity, db.WithTxn(txn), txn)
+	p := planner.New(
+		ctx,
+		identity,
+		db.acp,
+		db.WithTxn(txn),
+		txn,
+	)
 
 	s := r.ToSelect(evt.DocID, evt.Cid.String())
 
