@@ -41,7 +41,7 @@ func (c *collection) Get(
 		return nil, err
 	}
 	if !found || (isDeleted && !showDeleted) {
-		return nil, client.ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	doc, err := c.get(ctx, identity, txn, primaryKey, nil, showDeleted)

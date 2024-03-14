@@ -358,7 +358,7 @@ func (s *server) syncIndexedDocs(
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
 	oldDoc, err := preTxnCol.Get(ctx, acpIdentity.NoIdentity, docID, false)
-	isNewDoc := errors.Is(err, client.ErrDocumentNotFound)
+	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isNewDoc && err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (s *server) syncIndexedDocs(
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
 	doc, err := col.Get(ctx, acpIdentity.NoIdentity, docID, false)
-	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFound)
+	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isDeletedDoc && err != nil {
 		return err
 	}

@@ -246,7 +246,7 @@ func (c *collection) applyDelete(
 		return err
 	}
 	if !found {
-		return client.ErrDocumentNotFound
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
 		return NewErrDocumentDeleted(primaryKey.DocID)
@@ -264,7 +264,7 @@ func (c *collection) applyDelete(
 		return err
 	}
 	if !canDelete {
-		return client.ErrInvalidACPPermToDeleteDocument
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	dsKey := primaryKey.ToDataStoreKey()
