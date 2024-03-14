@@ -26,7 +26,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -450,10 +449,6 @@ func (c *Client) Blockstore() blockstore.Blockstore {
 }
 
 func (c *Client) Peerstore() datastore.DSBatching {
-	panic("client side database")
-}
-
-func (c *Client) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
 	panic("client side database")
 }
 

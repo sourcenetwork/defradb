@@ -26,7 +26,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -511,10 +510,6 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {
 	return w.node.Peerstore()
-}
-
-func (w *Wrapper) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
-	return w.node.ACPModule(ctx)
 }
 
 func (w *Wrapper) AddPolicy(

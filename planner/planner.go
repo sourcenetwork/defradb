@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
@@ -86,6 +87,7 @@ type PlanContext struct {
 type Planner struct {
 	txn      datastore.Txn
 	identity immutable.Option[string]
+	acp      immutable.Option[acp.ACPModule]
 	db       client.Store
 
 	ctx context.Context
@@ -94,12 +96,14 @@ type Planner struct {
 func New(
 	ctx context.Context,
 	identity immutable.Option[string],
+	acp immutable.Option[acp.ACPModule],
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {
 	return &Planner{
 		txn:      txn,
 		identity: identity,
+		acp:      acp,
 		db:       db,
 		ctx:      ctx,
 	}

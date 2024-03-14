@@ -61,17 +61,12 @@ func (n *scanNode) Kind() string {
 }
 
 func (n *scanNode) Init() error {
-	acpModule, err := n.p.db.ACPModule(n.p.ctx)
-	if err != nil {
-		return err
-	}
-
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
 		n.p.identity,
 		n.p.txn,
-		acpModule,
+		n.p.acp,
 		n.col,
 		n.fields,
 		n.filter,
