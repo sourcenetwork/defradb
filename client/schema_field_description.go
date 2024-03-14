@@ -15,9 +15,6 @@ import "fmt"
 // FieldKind describes the type of a field.
 type FieldKind uint8
 
-// RelationType describes the type of relation between two types.
-type RelationType uint8
-
 // SchemaFieldDescription describes a field on a Schema and its associated metadata.
 type SchemaFieldDescription struct {
 	// Name contains the name of this field.
@@ -171,9 +168,4 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 // IsRelation returns true if this field is a relation.
 func (f SchemaFieldDescription) IsRelation() bool {
 	return f.RelationName != ""
-}
-
-// IsSet returns true if the target relation type is set.
-func (m RelationType) IsSet(target RelationType) bool {
-	return m&target > 0
 }
