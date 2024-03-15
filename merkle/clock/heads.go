@@ -18,6 +18,7 @@ import (
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -57,9 +58,9 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 	log.InfoContext(
 		ctx,
 		"Replacing DAG head",
-		"Old", old,
-		"CID", new,
-		"Height", height)
+		corelog.Any("Old", old),
+		corelog.Any("CID", new),
+		corelog.Uint64("Height", height))
 
 	err := hh.store.Delete(ctx, hh.key(old).ToDS())
 	if err != nil {

@@ -122,7 +122,6 @@ func (mc *MerkleClock) ProcessNode(
 	nodeCid := node.Cid()
 	priority := delta.GetPriority()
 
-	log.DebugContext(ctx, "Running ProcessNode", "CID", nodeCid)
 	err := mc.crdt.Merge(ctx, delta)
 	if err != nil {
 		return NewErrMergingDelta(nodeCid, err)
@@ -131,16 +130,13 @@ func (mc *MerkleClock) ProcessNode(
 	links := node.Links()
 	// check if we have any HEAD links
 	hasHeads := false
-	log.DebugContext(ctx, "Stepping through node links")
 	for _, l := range links {
-		log.DebugContext(ctx, "Checking link", "Name", l.Name, "CID", l.Cid)
 		if l.Name == "_head" {
 			hasHeads = true
 			break
 		}
 	}
 	if !hasHeads { // reached the bottom, at a leaf
-		log.DebugContext(ctx, "No heads found")
 		err := mc.headset.Write(ctx, nodeCid, priority)
 		if err != nil {
 			return NewErrAddingHead(nodeCid, err)
@@ -149,14 +145,12 @@ func (mc *MerkleClock) ProcessNode(
 
 	for _, l := range links {
 		linkCid := l.Cid
-		log.DebugContext(ctx, "Scanning for replacement heads", "Child", linkCid)
 		isHead, err := mc.headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return NewErrCheckingHead(linkCid, err)
 		}
 
 		if isHead {
-			log.DebugContext(ctx, "Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
 			err = mc.headset.Replace(ctx, linkCid, nodeCid, priority)
@@ -174,14 +168,13 @@ func (mc *MerkleClock) ProcessNode(
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			log.DebugContext(ctx, "Adding head")
 			err := mc.headset.Write(ctx, nodeCid, priority)
 			if err != nil {
 				log.ErrorContextE(
 					ctx,
 					"Failure adding head (when root is a new head)",
 					err,
-					"Root", nodeCid,
+					corelog.Any("Root", nodeCid),
 				)
 				// OR should this also return like below comment??
 				// return nil, errors.Wrap("error adding head (when root is new head): %s ", root, err)

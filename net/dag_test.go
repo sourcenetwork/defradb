@@ -188,7 +188,6 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 
 	var getter ipld.NodeGetter = n2.Peer.newDAGSyncerTxn(txn2)
 	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-		log.DebugContext(ctx, "Upgrading DAGSyncer with a session")
 		getter = sessionMaker.Session(ctx)
 	}
 

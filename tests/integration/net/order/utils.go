@@ -102,16 +102,16 @@ func setupDefraNode(
 
 	// parse peers and bootstrap
 	if len(peers) != 0 {
-		log.InfoContext(ctx, "Parsing bootstrap peers", "Peers", peers)
+		log.InfoContext(ctx, "Parsing bootstrap peers", corelog.Any("Peers", peers))
 		addrs, err := netutils.ParsePeers(peers)
 		if err != nil {
 			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", peers), err)
 		}
-		log.InfoContext(ctx, "Bootstrapping with peers", "Addresses", addrs)
+		log.InfoContext(ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 		n.Bootstrap(addrs)
 	}
 
-	log.InfoContext(ctx, "Starting P2P node", "P2P addresses", n.PeerInfo().Addrs)
+	log.InfoContext(ctx, "Starting P2P node", corelog.Any("P2P addresses", n.PeerInfo().Addrs))
 	if err := n.Start(); err != nil {
 		n.Close()
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)

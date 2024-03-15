@@ -32,13 +32,6 @@ var (
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
 func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) error {
-	log.DebugContext(
-		ctx,
-		"Preparing pushLog request",
-		"DocID", evt.DocID,
-		"CID", evt.Cid,
-		"SchemaRoot", evt.SchemaRoot)
-
 	body := &pb.PushLogRequest_Body{
 		DocID:      []byte(evt.DocID),
 		Cid:        evt.Cid.Bytes(),
@@ -51,13 +44,6 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 	req := &pb.PushLogRequest{
 		Body: body,
 	}
-
-	log.DebugContext(
-		ctx, "Pushing log",
-		"DocID", evt.DocID,
-		"CID", evt.Cid,
-		"PeerID", pid,
-	)
 
 	client, err := s.dial(pid) // grpc dial over P2P stream
 	if err != nil {

@@ -31,6 +31,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	peerstore "github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/core/routing"
+	"github.com/sourcenetwork/corelog"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -148,8 +149,8 @@ func (p *Peer) Start() error {
 				log.InfoContext(
 					p.ctx,
 					"Failure while reconnecting to a known peer",
-					"peer", id,
-					"error", err,
+					corelog.Any("peer", id),
+					corelog.Any("error", err),
 				)
 			}
 		}(id)
@@ -176,13 +177,16 @@ func (p *Peer) Start() error {
 		go p.handleBroadcastLoop()
 	}
 
-	log.InfoContext(p.ctx, "Starting P2P node", "P2P addresses", p.host.Addrs())
+	log.InfoContext(
+		p.ctx,
+		"Starting P2P node",
+		corelog.Any("P2P addresses", p.host.Addrs()))
 	// register the P2P gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalContextE(p.ctx, "Fatal P2P RPC server error", err)
+			log.ErrorContextE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
 
@@ -211,12 +215,12 @@ func (p *Peer) Close() {
 	// close event emitters
 	if p.server.pubSubEmitter != nil {
 		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close pubsub event emitter", "Error", err.Error())
+			log.InfoContext(p.ctx, "Could not close pubsub event emitter", corelog.Any("Error", err.Error()))
 		}
 	}
 	if p.server.pushLogEmitter != nil {
 		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close push log event emitter", "Error", err.Error())
+			log.InfoContext(p.ctx, "Could not close push log event emitter", corelog.Any("Error", err.Error()))
 		}
 	}
 
@@ -238,9 +242,7 @@ func (p *Peer) Close() {
 // handleBroadcast loop manages the transition of messages
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
-	log.DebugContext(p.ctx, "Waiting for messages on internal broadcaster")
 	for {
-		log.DebugContext(p.ctx, "Handling internal broadcast bus message")
 		update, isOpen := <-p.updateChannel
 		if !isOpen {
 			return
@@ -254,7 +256,7 @@ func (p *Peer) handleBroadcastLoop() {
 		} else if update.Priority > 1 {
 			err = p.handleDocUpdateLog(update)
 		} else {
-			log.InfoContext(p.ctx, "Skipping log with invalid priority of 0", "CID", update.Cid)
+			log.InfoContext(p.ctx, "Skipping log with invalid priority of 0", corelog.Any("CID", update.Cid))
 		}
 
 		if err != nil {
@@ -271,19 +273,13 @@ func (p *Peer) RegisterNewDocument(
 	nd ipld.Node,
 	schemaRoot string,
 ) error {
-	log.DebugContext(
-		p.ctx,
-		"Registering a new document for our peer node",
-		"DocID", docID.String(),
-	)
-
 	// register topic
 	if err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot)); err != nil {
 		log.ErrorContextE(
 			p.ctx,
 			"Failed to create new pubsub topic",
 			err,
-			"DocID", docID.String(),
+			corelog.String("DocID", docID.String()),
 		)
 		return err
 	}
@@ -328,9 +324,9 @@ func (p *Peer) pushToReplicator(
 				ctx,
 				"Failed to get heads",
 				err,
-				"DocID", docIDResult.ID.String(),
-				"PeerID", pid,
-				"Collection", collection.Name())
+				corelog.String("DocID", docIDResult.ID.String()),
+				corelog.Any("PeerID", pid),
+				corelog.Any("Collection", collection.Name()))
 			continue
 		}
 		// loop over heads, get block, make the required logs, and send
@@ -338,16 +334,16 @@ func (p *Peer) pushToReplicator(
 			blk, err := txn.DAGstore().Get(ctx, c)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to get block", err,
-					"CID", c,
-					"PeerID", pid,
-					"Collection", collection.Name())
+					corelog.Any("CID", c),
+					corelog.Any("PeerID", pid),
+					corelog.Any("Collection", collection.Name()))
 				continue
 			}
 
 			// @todo: remove encode/decode loop for core.Log data
 			nd, err := dag.DecodeProtobuf(blk.RawData())
 			if err != nil {
-				log.ErrorContextE(ctx, "Failed to decode protobuf", err, "CID", c)
+				log.ErrorContextE(ctx, "Failed to decode protobuf", err, corelog.Any("CID", c))
 				continue
 			}
 
@@ -363,8 +359,8 @@ func (p *Peer) pushToReplicator(
 					ctx,
 					"Failed to replicate log",
 					err,
-					"CID", c,
-					"PeerID", pid,
+					corelog.Any("CID", c),
+					corelog.Any("PeerID", pid),
 				)
 			}
 		}
@@ -396,7 +392,7 @@ func (p *Peer) loadReplicators(ctx context.Context) error {
 		// This will be used during connection and stream creation by libp2p.
 		p.host.Peerstore().AddAddrs(rep.Info.ID, rep.Info.Addrs, peerstore.PermanentAddrTTL)
 
-		log.InfoContext(ctx, "loaded replicators from datastore", "Replicator", rep)
+		log.InfoContext(ctx, "loaded replicators from datastore", corelog.Any("Replicator", rep))
 	}
 
 	return nil
@@ -432,7 +428,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 		return err
 	}
 	// push to each peer (replicator)
-	p.pushLogToReplicators(p.ctx, evt)
+	p.pushLogToReplicators(evt)
 
 	return nil
 }
@@ -442,12 +438,6 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
 	}
-	log.DebugContext(
-		p.ctx,
-		"Preparing pubsub pushLog request from broadcast",
-		"DocID", docID,
-		"CID", evt.Cid,
-		"SchemaRoot", evt.SchemaRoot)
 
 	body := &pb.PushLogRequest_Body{
 		DocID:      []byte(docID.String()),
@@ -463,7 +453,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	}
 
 	// push to each peer (replicator)
-	p.pushLogToReplicators(p.ctx, evt)
+	p.pushLogToReplicators(evt)
 
 	if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
 		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
@@ -476,7 +466,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
+func (p *Peer) pushLogToReplicators(lg events.Update) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
 	for _, peer := range p.ps.ListPeers(lg.DocID) {
@@ -503,9 +493,9 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 						p.ctx,
 						"Failed pushing log",
 						err,
-						"DocID", lg.DocID,
-						"CID", lg.Cid,
-						"PeerID", peerID)
+						corelog.String("DocID", lg.DocID),
+						corelog.Any("CID", lg.Cid),
+						corelog.Any("PeerID", peerID))
 				}
 			}(pid)
 		}

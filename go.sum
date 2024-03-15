@@ -510,8 +510,8 @@ github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIK
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276 h1:TpQDDPfucDgCNH0NVqVUk6SSq6T6G8p9HIocmwZh9Tg=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276/go.mod h1:lxiZTDBw0vheFMqSwX2OvB6RTDI1+/UtVCSU4rpThFM=
-github.com/sourcenetwork/corelog v0.0.4 h1:DGAzVeY+XODrgwmetPAER3LCCoNyAf2cldlqejCnp4Y=
-github.com/sourcenetwork/corelog v0.0.4/go.mod h1:mXsBA4ujUt0lAkDFoHoXuaIQjhdeXi+RfDNV7ZTiy5E=
+github.com/sourcenetwork/corelog v0.0.5 h1:7DynoceolaivI/Pd10KJpdYN7Vm6boJSGHGZss7Febg=
+github.com/sourcenetwork/corelog v0.0.5/go.mod h1:mXsBA4ujUt0lAkDFoHoXuaIQjhdeXi+RfDNV7ZTiy5E=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.13 h1:d/PeGZutd5NcDr6ltAv8ubN5PxsHMp1YUnhHY/QCWB4=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.13/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd h1:lmpW39/8wPJ0khWRhOcj7Bj0HYKbSmQ8rXMJw1cMB8U=

@@ -109,7 +109,6 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 }
 
 func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
-	log.DebugContext(ctx, "Loading: internal datastores")
 	multistore := datastore.MultiStoreFrom(rootstore)
 
 	parser, err := graphql.NewParser()
@@ -197,7 +196,6 @@ func (db *db) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	log.DebugContext(ctx, "Checking if DB has already been initialized...")
 	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
@@ -205,7 +203,6 @@ func (db *db) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and migrations and finish initialization
 	if exists {
-		log.DebugContext(ctx, "DB has already been initialized, continuing")
 		err = db.loadSchema(ctx, txn)
 		if err != nil {
 			return err
@@ -221,8 +218,6 @@ func (db *db) initialize(ctx context.Context) error {
 		// we have written to the datastores.
 		return txn.Commit(ctx)
 	}
-
-	log.DebugContext(ctx, "Opened a new DB, needs full initialization")
 
 	// init meta data
 	// collection sequence
@@ -286,7 +281,7 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	}
 
 	for r := range results.Next() {
-		log.InfoContext(ctx, "", r.Key, r.Value)
+		log.InfoContext(ctx, "", corelog.Any(r.Key, r.Value))
 	}
 
 	return results.Close()

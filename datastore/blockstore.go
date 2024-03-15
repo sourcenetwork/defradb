@@ -64,7 +64,6 @@ func (bs *bstore) HashOnRead(enabled bool) {
 // Get returns a block from the blockstore.
 func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
-		log.ErrorContext(ctx, "Undefined CID in blockstore")
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))

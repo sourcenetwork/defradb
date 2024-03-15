@@ -22,6 +22,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -68,8 +69,8 @@ func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 				ctx,
 				"Failed to process block",
 				err,
-				"DocID", bp.dsKey.DocID,
-				"CID", nd.Cid(),
+				corelog.String("DocID", bp.dsKey.DocID),
+				corelog.Any("CID", nd.Cid()),
 			)
 		}
 	}
@@ -77,7 +78,7 @@ func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
 func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field string) error {
-	crdt, err := initCRDTForType(ctx, bp.txn, bp.col, bp.dsKey, field)
+	crdt, err := initCRDTForType(bp.txn, bp.col, bp.dsKey, field)
 	if err != nil {
 		return err
 	}
@@ -110,8 +111,8 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 				ctx,
 				"Failed to process block",
 				err,
-				"DocID", bp.dsKey.DocID,
-				"CID", nd.Cid(),
+				corelog.String("DocID", bp.dsKey.DocID),
+				corelog.Any("CID", nd.Cid()),
 			)
 		}
 	}
@@ -120,7 +121,6 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 }
 
 func initCRDTForType(
-	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
@@ -130,7 +130,6 @@ func initCRDTForType(
 	var ctype client.CType
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
-		ctype = client.COMPOSITE
 		key = base.MakeDataStoreKeyWithCollectionDescription(
 			description,
 		).WithInstanceInfo(
@@ -139,7 +138,6 @@ func initCRDTForType(
 			core.COMPOSITE_NAMESPACE,
 		)
 
-		log.DebugContext(ctx, "Got CRDT Type", "CType", ctype, "Field", field)
 		return merklecrdt.NewMerkleCompositeDAG(
 			txn,
 			core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
@@ -156,7 +154,6 @@ func initCRDTForType(
 	fieldID := fd.ID.String()
 	key = base.MakeDataStoreKeyWithCollectionDescription(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 
-	log.DebugContext(ctx, "Got CRDT Type", "CType", ctype, "Field", field)
 	return merklecrdt.InstanceWithStore(
 		txn,
 		core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
@@ -182,8 +179,6 @@ func (bp *blockProcessor) processRemoteBlock(
 	nd ipld.Node,
 	isComposite bool,
 ) error {
-	log.DebugContext(ctx, "Running processLog")
-
 	if err := bp.txn.DAGstore().Put(ctx, nd); err != nil {
 		return err
 	}
@@ -220,12 +215,11 @@ func (bp *blockProcessor) handleChildBlocks(
 			log.ErrorContext(
 				ctx,
 				"Failed to check for existing block",
-				"CID", link.Cid,
-				"ERROR", err,
+				corelog.Any("CID", link.Cid),
+				corelog.Any("ERROR", err),
 			)
 		}
 		if exist {
-			log.DebugContext(ctx, "Already have block locally, skipping.", "CID", link.Cid)
 			continue
 		}
 

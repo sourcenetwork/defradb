@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -148,7 +149,7 @@ func connectPeers(
 	targetNode := s.nodes[cfg.TargetNodeID]
 
 	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
-	log.InfoContext(s.ctx, "Bootstrapping with peers", "Addresses", addrs)
+	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be

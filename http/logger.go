@@ -30,11 +30,11 @@ func (e *logEntry) Write(status, bytes int, header http.Header, elapsed time.Dur
 	log.InfoContext(
 		e.req.Context(),
 		"Request",
-		"Method", e.req.Method,
-		"Path", e.req.URL.Path,
-		"Status", status,
-		"LengthBytes", bytes,
-		"ElapsedTime", elapsed.String(),
+		corelog.String("Method", e.req.Method),
+		corelog.String("Path", e.req.URL.Path),
+		corelog.Int("Status", status),
+		corelog.Int("LengthBytes", bytes),
+		corelog.Duration("ElapsedTime", elapsed),
 	)
 }
 

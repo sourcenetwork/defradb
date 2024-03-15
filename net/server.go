@@ -21,6 +21,7 @@ import (
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
@@ -95,7 +96,6 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		}
 
 		// Get all DocIDs across all collections in the DB
-		log.DebugContext(p.ctx, "Getting all existing DocIDs...")
 		cols, err := s.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return nil, err
@@ -113,28 +113,22 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 			}
 
 			for docID := range docIDChan {
-				log.DebugContext(
-					p.ctx,
-					"Registering existing DocID pubsub topic",
-					"DocID", docID.ID.String(),
-				)
 				if err := s.addPubSubTopic(docID.ID.String(), true); err != nil {
 					return nil, err
 				}
 				i++
 			}
 		}
-		log.DebugContext(p.ctx, "Finished registering all DocID pubsub topics", "Count", i)
 	}
 
 	var err error
 	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
 	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", "Error", err.Error())
+		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
 	}
 	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", "Error", err.Error())
+		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
 	}
 
 	return s, nil
@@ -199,8 +193,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.DebugContext(ctx, "Received a PushLog request", "PeerID", pid)
-
 	cid, err := cid.Cast(req.Body.Cid)
 	if err != nil {
 		return nil, err
@@ -216,7 +208,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
-				log.InfoContext(ctx, "could not decode the PeerID of the log creator", "Error", err.Error())
+				log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
 			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
 				FromPeer: pid,
@@ -225,7 +217,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			if err != nil {
 				// logging instead of returning an error because the event bus should
 				// not break the PushLog execution.
-				log.InfoContext(ctx, "could not emit push log event", "Error", err.Error())
+				log.InfoContext(ctx, "could not emit push log event", corelog.String("Error", err.Error()))
 			}
 		}
 	}()
@@ -242,7 +234,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, errors.Wrap(fmt.Sprintf("failed to check for existing block %s", cid), err)
 	}
 	if exists {
-		log.DebugContext(ctx, fmt.Sprintf("Already have block %s locally, skipping.", cid))
 		return &pb.PushLogReply{}, nil
 	}
 
@@ -269,7 +260,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// Create a new DAG service with the current transaction
 		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)
 		if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-			log.DebugContext(ctx, "Upgrading DAGSyncer with a session")
 			getter = sessionMaker.Session(ctx)
 		}
 
@@ -287,8 +277,8 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 				ctx,
 				"Failed to process remote block",
 				err,
-				"DocID", dsKey.DocID,
-				"CID", cid,
+				corelog.String("DocID", dsKey.DocID),
+				corelog.Any("CID", cid),
 			)
 		}
 		session.Wait()
@@ -489,29 +479,11 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
 	}
-
-	cid, err := cid.Cast(req.Body.Cid)
-	if err != nil {
-		return err
-	}
-
-	log.DebugContext(
-		ctx,
-		"Published log",
-		"CID", cid,
-		"DocID", topic,
-	)
 	return nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	log.DebugContext(
-		s.peer.ctx,
-		"Handling new pubsub message",
-		"SenderID", from,
-		"Topic", topic,
-	)
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
 		log.ErrorContextE(s.peer.ctx, "Failed to unmarshal pubsub message %s", err)
@@ -522,7 +494,6 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		Addr: addr{from},
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
-		log.ErrorContextE(ctx, "Failed pushing log for doc", err, "Topic", topic)
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
@@ -533,9 +504,9 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 	log.InfoContext(
 		s.peer.ctx,
 		"Received new pubsub event",
-		"SenderId", from,
-		"Topic", topic,
-		"Message", string(msg),
+		corelog.Any("SenderId", from),
+		corelog.String("Topic", topic),
+		corelog.String("Message", string(msg)),
 	)
 
 	if s.pubSubEmitter != nil {
@@ -543,7 +514,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			Peer: from,
 		})
 		if err != nil {
-			log.InfoContext(s.peer.ctx, "could not emit pubsub event", "Error", err.Error())
+			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
 		}
 	}
 }

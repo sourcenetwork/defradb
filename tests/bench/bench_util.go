@@ -175,7 +175,7 @@ func BackfillBenchmarkDB(
 								log.InfoContext(
 									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
-									"DocID", doc.ID(),
+									corelog.Any("DocID", doc.ID()),
 								)
 								continue
 							} else if err != nil {

@@ -17,15 +17,10 @@ import (
 	"context"
 
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-)
-
-var (
-	log = corelog.NewLogger("merklecrdt")
 )
 
 type Stores interface {

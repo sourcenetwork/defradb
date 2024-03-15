@@ -38,6 +38,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 
 	"github.com/multiformats/go-multiaddr"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
 
 	// @TODO: https://github.com/sourcenetwork/defradb/issues/1902
@@ -146,8 +147,8 @@ func NewNode(
 	log.InfoContext(
 		ctx,
 		"Created LibP2P host",
-		"PeerId", h.ID(),
-		"Address", options.ListenAddresses,
+		corelog.Any("PeerId", h.ID()),
+		corelog.Any("Address", options.ListenAddresses),
 	)
 
 	var ps *pubsub.PubSub
@@ -213,10 +214,10 @@ func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 			defer wg.Done()
 			err := n.host.Connect(n.ctx, pinfo)
 			if err != nil {
-				log.InfoContext(n.ctx, "Cannot connect to peer", "Error", err)
+				log.InfoContext(n.ctx, "Cannot connect to peer", corelog.Any("Error", err))
 				return
 			}
-			log.InfoContext(n.ctx, "Connected", "PeerID", pinfo.ID)
+			log.InfoContext(n.ctx, "Connected", corelog.Any("PeerID", pinfo.ID))
 			atomic.AddUint64(&connected, 1)
 		}(pinfo)
 	}

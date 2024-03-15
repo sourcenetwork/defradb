@@ -177,15 +177,15 @@ func executeTestCase(
 	log.InfoContext(
 		ctx,
 		testCase.Description,
-		"database", dbt,
-		"client", clientType,
-		"mutationType", mutationType,
-		"databaseDir", databaseDir,
-		"changeDetector.Enabled", changeDetector.Enabled,
-		"changeDetector.SetupOnly", changeDetector.SetupOnly,
-		"changeDetector.SourceBranch", changeDetector.SourceBranch,
-		"changeDetector.TargetBranch", changeDetector.TargetBranch,
-		"changeDetector.Repository", changeDetector.Repository,
+		corelog.Any("database", dbt),
+		corelog.Any("client", clientType),
+		corelog.Any("mutationType", mutationType),
+		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
+		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
+		corelog.String("changeDetector.SourceBranch", changeDetector.SourceBranch),
+		corelog.String("changeDetector.TargetBranch", changeDetector.TargetBranch),
+		corelog.String("changeDetector.Repository", changeDetector.Repository),
 	)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
@@ -777,7 +777,7 @@ func configureNode(
 	n, err = net.NewNode(s.ctx, db, nodeOpts...)
 	require.NoError(s.t, err)
 
-	log.InfoContext(s.ctx, "Starting P2P node", "P2P address", n.PeerInfo())
+	log.InfoContext(s.ctx, "Starting P2P node", corelog.Any("P2P address", n.PeerInfo()))
 	if err := n.Start(); err != nil {
 		n.Close()
 		require.NoError(s.t, err)
@@ -1736,7 +1736,7 @@ func assertRequestResults(
 		return true
 	}
 
-	log.InfoContext(s.ctx, "", "RequestResults", result.Data)
+	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
 
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(resultantData),
