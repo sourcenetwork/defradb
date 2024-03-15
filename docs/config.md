@@ -67,7 +67,7 @@ https://docs.libp2p.io/concepts/circuit-relay/
 
 ## `log.level`
 
-Log level to use. Options are `debug`, `info`, `error`, `fatal`. Defaults to `info`.
+Log level to use. Options are `info` or `error`. Defaults to `info`.
 
 ## `log.output`
 
