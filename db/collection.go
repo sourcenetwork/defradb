@@ -437,14 +437,10 @@ func validateUpdateSchemaFields(
 		hasChanged = hasChanged || !fieldAlreadyExists
 
 		if !fieldAlreadyExists && proposedField.Kind.IsObject() {
-			if proposedField.Schema == "" {
-				return false, NewErrRelationalFieldMissingSchema(proposedField.Name, proposedField.Kind)
-			}
-
-			relatedDesc, relatedDescFound := descriptionsByName[proposedField.Schema]
+			relatedDesc, relatedDescFound := descriptionsByName[proposedField.Kind.Underlying()]
 
 			if !relatedDescFound {
-				return false, NewErrSchemaNotFound(proposedField.Name, proposedField.Schema)
+				return false, NewErrFieldKindNotFound(proposedField.Name, proposedField.Kind.Underlying())
 			}
 
 			if proposedField.RelationName == "" {
@@ -484,7 +480,7 @@ func validateUpdateSchemaFields(
 			}
 
 			if !relatedFieldFound {
-				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Schema)
+				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Kind.Underlying())
 			}
 
 			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
@@ -1542,7 +1538,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, err := c.db.getCollectionByName(ctx, txn, objFieldDescription.Schema)
+	otherCol, err := c.db.getCollectionByName(ctx, txn, objFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}

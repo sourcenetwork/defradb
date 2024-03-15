@@ -121,7 +121,7 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
 func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.SchemaFieldDescription) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	return g.generatedDocs[field.Schema][ind].docID
+	return g.generatedDocs[field.Kind.Underlying()][ind].docID
 }
 
 func (g *randomDocGenerator) generateRandomDocs(order []string) error {
@@ -226,10 +226,7 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
 			if field.Kind.IsObject() {
-				if field.Schema == "" {
-					return NewErrIncompleteColDefinition("field schema is empty")
-				}
-				fieldRefs = append(fieldRefs, field.Schema)
+				fieldRefs = append(fieldRefs, field.Kind.Underlying())
 			}
 		}
 		colNames[def.Description.Name.Value()] = struct{}{}

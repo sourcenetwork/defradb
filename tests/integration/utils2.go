@@ -746,6 +746,7 @@ func refreshCollections(
 			for _, collection := range allCollections {
 				if collection.Name().Value() == collectionName {
 					s.collections[nodeID][i] = collection
+					println(collection.Description().SchemaVersionID)
 					break
 				}
 			}

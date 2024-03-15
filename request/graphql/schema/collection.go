@@ -376,7 +376,6 @@ func fieldsFromAST(field *ast.FieldDefinition,
 		Name:         field.Name.Value,
 		Kind:         kind,
 		Typ:          cType,
-		Schema:       schema,
 		RelationName: relationName,
 	}
 
@@ -401,6 +400,15 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 			}
 		}
 	}
+
+	if kind.IsObjectArray() {
+		return client.NONE_CRDT, nil
+	}
+
+	if kind.IsObject() {
+		return client.LWW_REGISTER, nil
+	}
+
 	return defaultCRDTForFieldKind[kind], nil
 }
 
@@ -444,7 +452,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
 			default:
-				return client.FieldKind_FOREIGN_OBJECT_ARRAY, nil
+				return client.ObjectArrayKind(astTypeVal.Type.(*ast.Named).Name.Value), nil
 			}
 		}
 
@@ -467,7 +475,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		case typeJSON:
 			return client.FieldKind_NILLABLE_JSON, nil
 		default:
-			return client.FieldKind_FOREIGN_OBJECT, nil
+			return client.ObjectKind(astTypeVal.Name.Value), nil
 		}
 
 	case *ast.NonNull:
@@ -532,20 +540,20 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 				return err
 			}
 
-			_, fieldRelationType, ok := rel.getField(field.Schema, field.Name)
+			_, fieldRelationType, ok := rel.getField(field.Kind.Underlying(), field.Name)
 			if !ok {
-				return NewErrRelationMissingField(field.Schema, field.Name)
+				return NewErrRelationMissingField(field.Kind.Underlying(), field.Name)
 			}
 
 			// if not finalized then we are missing one side of the relationship
 			// unless this is an embedded object, which only have single-sided relations
-			_, shouldBeOneSidedRelation := embeddedObjNames[field.Schema]
+			_, shouldBeOneSidedRelation := embeddedObjNames[field.Kind.Underlying()]
 			if shouldBeOneSidedRelation && rel.finalized {
-				return NewErrViewRelationMustBeOneSided(field.Name, field.Schema)
+				return NewErrViewRelationMustBeOneSided(field.Name, field.Kind.Underlying())
 			}
 
 			if !shouldBeOneSidedRelation && !rel.finalized {
-				return client.NewErrRelationOneSided(field.Name, field.Schema)
+				return client.NewErrRelationOneSided(field.Name, field.Kind.Underlying())
 			}
 
 			field.IsPrimaryRelation = fieldRelationType.isSet(relation_Type_Primary)

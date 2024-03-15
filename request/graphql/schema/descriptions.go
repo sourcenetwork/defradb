@@ -54,8 +54,6 @@ var (
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_BLOB:         client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_JSON:         client.LWW_REGISTER,
-		client.FieldKind_FOREIGN_OBJECT:        client.LWW_REGISTER,
-		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )
 

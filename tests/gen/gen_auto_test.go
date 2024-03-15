@@ -1212,9 +1212,8 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 							Kind: client.FieldKind_NILLABLE_INT,
 						},
 						{
-							Name:   "device",
-							Kind:   client.FieldKind_FOREIGN_OBJECT,
-							Schema: "Device",
+							Name: "device",
+							Kind: client.ObjectKind("Device"),
 						},
 					},
 				},
@@ -1233,8 +1232,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 						},
 						{
 							Name:              "owner",
-							Kind:              client.FieldKind_FOREIGN_OBJECT,
-							Schema:            "User",
+							Kind:              client.ObjectKind("User"),
 							IsPrimaryRelation: true,
 						},
 					},
@@ -1283,18 +1281,6 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				defs[1].Description.ID = 0
 			},
 		},
-		{
-			name: "relation field is missing schema name",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[1].Schema.Fields[1].Schema = ""
-			},
-		},
-		{
-			name: "relation field references unknown schema",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[1].Schema.Fields[1].Schema = "Unknown"
-			},
-		},
 	}
 
 	for _, tc := range testCases {
@@ -1336,8 +1322,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 					},
 					{
 						Name:         "devices",
-						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
-						Schema:       "Device",
+						Kind:         client.ObjectArrayKind("Device"),
 						RelationName: "Device_owner",
 					},
 				},
@@ -1359,7 +1344,6 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 						Name:         "owner_id",
 						Kind:         client.FieldKind_DocID,
 						RelationName: "Device_owner",
-						Schema:       "User",
 					},
 				},
 			},

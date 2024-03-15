@@ -462,14 +462,14 @@ func (g *Generator) buildTypes(
 				var ttype gql.Type
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					var ok bool
-					ttype, ok = g.manager.schema.TypeMap()[field.Schema]
+					ttype, ok = g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema)
+						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
 				} else if field.Kind.IsObjectArray() {
-					t, ok := g.manager.schema.TypeMap()[field.Schema]
+					t, ok := g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema)
+						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
 					ttype = gql.NewList(t)
 				} else {

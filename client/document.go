@@ -198,6 +198,14 @@ func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
 		}
 	}
 
+	if field.Kind.IsObjectArray() {
+		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+	}
+
+	if field.Kind.IsObject() {
+		return getString(val)
+	}
+
 	switch field.Kind {
 	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
 		return getString(val)
@@ -237,12 +245,6 @@ func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
 
 	case FieldKind_NILLABLE_INT_ARRAY:
 		return getNillableArray(val, getInt64)
-
-	case FieldKind_FOREIGN_OBJECT:
-		return getString(val)
-
-	case FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
 
 	case FieldKind_NILLABLE_JSON:
 		return getJSON(val)

@@ -159,7 +159,7 @@ func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testi
 						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "NotAValidKind" }
 					]
 				`,
-				ExpectedError: "no type found for given name. Kind: NotAValidKind",
+				ExpectedError: "no type found for given name. Field: Age, Kind: NotAValidKind",
 			},
 		},
 	}

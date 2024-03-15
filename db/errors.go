@@ -28,7 +28,6 @@ const (
 	errSchemaRootDoesntMatch                    string = "SchemaRoot does not match existing"
 	errCannotModifySchemaName                   string = "modifying the schema name is not supported"
 	errCannotSetVersionID                       string = "setting the VersionID is not supported"
-	errRelationalFieldMissingSchema             string = "a schema name must be provided when adding a new relation field"
 	errRelationalFieldInvalidRelationType       string = "invalid RelationType"
 	errRelationalFieldMissingIDField            string = "missing id field for relation object field"
 	errRelationalFieldMissingRelationName       string = "missing relation name"
@@ -44,7 +43,6 @@ const (
 	errCannotDeleteField                        string = "deleting an existing field is not supported"
 	errFieldKindNotFound                        string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldSchema         string = "field Kind does not match field Schema"
-	errSchemaNotFound                           string = "no schema found for given name"
 	errDocumentAlreadyExists                    string = "a document with the given ID already exists"
 	errDocumentDeleted                          string = "a document with the given ID has been deleted"
 	errIndexMissingFields                       string = "index missing fields"
@@ -258,14 +256,6 @@ func NewErrCannotModifySchemaName(existingName, proposedName string) error {
 	)
 }
 
-func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) error {
-	return errors.New(
-		errRelationalFieldMissingSchema,
-		errors.NewKV("Field", name),
-		errors.NewKV("Kind", kind),
-	)
-}
-
 func NewErrRelationalFieldMissingIDField(name string, expectedName string) error {
 	return errors.New(
 		errRelationalFieldMissingIDField,
@@ -320,9 +310,10 @@ func NewErrRelationalFieldIDInvalidType(name string, expected, actual client.Fie
 	)
 }
 
-func NewErrFieldKindNotFound(kind string) error {
+func NewErrFieldKindNotFound(name string, kind string) error {
 	return errors.New(
 		errFieldKindNotFound,
+		errors.NewKV("Field", name),
 		errors.NewKV("Kind", kind),
 	)
 }
@@ -331,14 +322,6 @@ func NewErrFieldKindDoesNotMatchFieldSchema(kind string, schema string) error {
 	return errors.New(
 		errFieldKindDoesNotMatchFieldSchema,
 		errors.NewKV("Kind", kind),
-		errors.NewKV("Schema", schema),
-	)
-}
-
-func NewErrSchemaNotFound(name string, schema string) error {
-	return errors.New(
-		errSchemaNotFound,
-		errors.NewKV("Field", name),
 		errors.NewKV("Schema", schema),
 	)
 }

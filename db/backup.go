@@ -215,7 +215,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			// replace any foreign key if it needs to be changed
 			for _, field := range col.Schema().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					if _, ok := colNameCache[field.Schema]; !ok {
+					if _, ok := colNameCache[field.Kind.Underlying()]; !ok {
 						continue
 					}
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
@@ -229,9 +229,9 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignCol, err := db.getCollectionByName(ctx, txn, field.Schema)
+							foreignCol, err := db.getCollectionByName(ctx, txn, field.Kind.Underlying())
 							if err != nil {
-								return NewErrFailedToGetCollection(field.Schema, err)
+								return NewErrFailedToGetCollection(field.Kind.Underlying(), err)
 							}
 							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {
