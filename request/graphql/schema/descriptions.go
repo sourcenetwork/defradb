@@ -18,28 +18,6 @@ import (
 )
 
 var (
-	// this is only here as a reference, and not to be used
-	// directly. As it will yield incorrect and unexpected
-	// results
-
-	//nolint:unused
-	gqlTypeToFieldKindReference = map[gql.Type]client.FieldKind{
-		gql.ID:        client.FieldKind_DocID,
-		gql.Boolean:   client.FieldKind_NILLABLE_BOOL,
-		gql.Int:       client.FieldKind_NILLABLE_INT,
-		gql.Float:     client.FieldKind_NILLABLE_FLOAT,
-		gql.DateTime:  client.FieldKind_NILLABLE_DATETIME,
-		gql.String:    client.FieldKind_NILLABLE_STRING,
-		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
-		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
-		// Custom scalars
-		schemaTypes.BlobScalarType: client.FieldKind_NILLABLE_BLOB,
-		schemaTypes.JSONScalarType: client.FieldKind_NILLABLE_JSON,
-		// More custom ones to come
-		// - JSON
-		// - Counters
-	}
-
 	fieldKindToGQLType = map[client.FieldKind]gql.Type{
 		client.FieldKind_DocID:                 gql.ID,
 		client.FieldKind_NILLABLE_BOOL:         gql.Boolean,
@@ -59,7 +37,6 @@ var (
 		client.FieldKind_NILLABLE_JSON:         schemaTypes.JSONScalarType,
 	}
 
-	// This map is fine to use
 	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
 		client.FieldKind_DocID:                 client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_BOOL:         client.LWW_REGISTER,
