@@ -201,7 +201,7 @@ func (db *db) updateSchema(
 	}
 
 	for _, field := range schema.Fields {
-		if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+		if field.Kind.IsObject() && !field.Kind.IsArray() {
 			idFieldName := field.Name + "_id"
 			if _, ok := schema.GetFieldByName(idFieldName); !ok {
 				schema.Fields = append(schema.Fields, client.SchemaFieldDescription{
@@ -436,8 +436,7 @@ func validateUpdateSchemaFields(
 		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
 
-		if !fieldAlreadyExists && (proposedField.Kind == client.FieldKind_FOREIGN_OBJECT ||
-			proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY) {
+		if !fieldAlreadyExists && proposedField.Kind.IsObject() {
 			if proposedField.Schema == "" {
 				return false, NewErrRelationalFieldMissingSchema(proposedField.Name, proposedField.Kind)
 			}
@@ -453,12 +452,12 @@ func validateUpdateSchemaFields(
 			}
 
 			if proposedField.IsPrimaryRelation {
-				if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+				if proposedField.Kind.IsObjectArray() {
 					return false, NewErrPrimarySideOnMany(proposedField.Name)
 				}
 			}
 
-			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
+			if proposedField.Kind.IsObject() && !proposedField.Kind.IsArray() {
 				idFieldName := proposedField.Name + request.RelatedObjectID
 				idField, idFieldFound := proposedDesc.GetFieldByName(idFieldName)
 				if idFieldFound {
@@ -1539,7 +1538,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
-	if objFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+	if !(objFieldDescription.Kind.IsObject() && !objFieldDescription.Kind.IsArray()) {
 		return nil
 	}
 
@@ -1554,7 +1553,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		objFieldDescription.Name,
 		&otherSchema,
 	)
-	if otherObjFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+	if !(otherObjFieldDescription.Kind.IsObject() && !otherObjFieldDescription.Kind.IsArray()) {
 		// If the other field is not an object field then this is not a one to one relation and we can continue
 		return nil
 	}

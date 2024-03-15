@@ -327,14 +327,14 @@ func fieldsFromAST(field *ast.FieldDefinition,
 
 	fieldDescriptions := []client.SchemaFieldDescription{}
 
-	if kind == client.FieldKind_FOREIGN_OBJECT || kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-		if kind == client.FieldKind_FOREIGN_OBJECT {
+	if kind.IsObject() {
+		if !kind.IsArray() {
 			schema = field.Type.(*ast.Named).Name.Value
 			relationType = relation_Type_ONE
 			if _, exists := findDirective(field, "primary"); exists {
 				relationType |= relation_Type_Primary
 			}
-		} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+		} else {
 			schema = field.Type.(*ast.List).Type.(*ast.Named).Name.Value
 			relationType = relation_Type_MANY
 		}
@@ -344,7 +344,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 			return nil, err
 		}
 
-		if kind == client.FieldKind_FOREIGN_OBJECT {
+		if !kind.IsArray() {
 			// An _id field is added for every 1-N relationship from this object.
 			fieldDescriptions = append(fieldDescriptions, client.SchemaFieldDescription{
 				Name:         fmt.Sprintf("%s_id", field.Name.Value),
