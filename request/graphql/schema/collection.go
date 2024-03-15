@@ -430,7 +430,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
 			default:
-				return 0, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
+				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
 			}
 
 		default:
@@ -471,10 +471,10 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		}
 
 	case *ast.NonNull:
-		return 0, ErrNonNullNotSupported
+		return client.FieldKind_None, ErrNonNullNotSupported
 
 	default:
-		return 0, NewErrTypeNotFound(t.String())
+		return client.FieldKind_None, NewErrTypeNotFound(t.String())
 	}
 }
 
