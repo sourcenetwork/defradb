@@ -65,6 +65,16 @@ type CollectionDescription struct {
 
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
+
+	// Policy contains the policy information on this collection.
+	//
+	// It is possible for a collection to not have a policy, a collection
+	// without a policy has no access control.
+	//
+	// Note: The policy information must be validated using the acp module
+	// right after parsing is done, to avoid storing an invalid policyID
+	// or policy resource that may not even exist on acp module.
+	Policy immutable.Option[PolicyDescription]
 }
 
 // QuerySource represents a collection data source from a query.
@@ -166,6 +176,7 @@ type collectionDescription struct {
 	ID              uint32
 	RootID          uint32
 	SchemaVersionID string
+	Policy          immutable.Option[PolicyDescription]
 	Indexes         []IndexDescription
 	Fields          []CollectionFieldDescription
 
@@ -187,6 +198,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))
+	c.Policy = descMap.Policy
 
 	for i, source := range descMap.Sources {
 		sourceJson, err := json.Marshal(source)

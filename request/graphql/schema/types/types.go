@@ -29,6 +29,10 @@ const (
 	CRDTDirectiveLabel    = "crdt"
 	CRDTDirectivePropType = "type"
 
+	PolicySchemaDirectiveLabel        = "policy"
+	PolicySchemaDirectivePropID       = "id"
+	PolicySchemaDirectivePropResource = "resource"
+
 	IndexDirectiveLabel          = "index"
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"
@@ -91,6 +95,22 @@ var (
 		Locations: []string{
 			gql.DirectiveLocationQuery,
 			gql.DirectiveLocationMutation,
+		},
+	})
+
+	PolicyDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+		Name:        PolicySchemaDirectiveLabel,
+		Description: "@policy is a directive that can be used to link a policy on a collection type.",
+		Args: gql.FieldConfigArgument{
+			PolicySchemaDirectivePropID: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+			PolicySchemaDirectivePropResource: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationObject,
 		},
 	})
 
