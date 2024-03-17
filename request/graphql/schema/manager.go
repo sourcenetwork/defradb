@@ -113,6 +113,7 @@ func defaultDirectivesType() []*gql.Directive {
 	return []*gql.Directive{
 		schemaTypes.CRDTFieldDirective,
 		schemaTypes.ExplainDirective,
+		schemaTypes.PolicyDirective,
 		schemaTypes.IndexDirective,
 		schemaTypes.IndexFieldDirective,
 		schemaTypes.PrimaryDirective,

@@ -170,6 +170,37 @@ func (db *db) createCollection(
 	return db.getCollectionByID(ctx, txn, desc.ID)
 }
 
+// validateCollectionDefinitionPolicyDesc validates that the policy definition is valid, beyond syntax.
+//
+// Ensures that the information within the policy definition makes sense,
+// this function might also make relevant remote calls, like call the acp module.
+func (db *db) validateCollectionDefinitionPolicyDesc(
+	ctx context.Context,
+	policyDesc immutable.Option[client.PolicyDescription],
+) error {
+	if !policyDesc.HasValue() {
+		// No policy validation needed, whether acp module exists or not doesn't matter.
+		return nil
+	}
+
+	// If there is a policy specified, but the database does not have
+	// an acp module return an error, database must have an acp module
+	// to enable access control (inorder to adhere to the policy specified).
+	if !db.acp.HasValue() {
+		return ErrCanNotHavePolicyWithoutACPModule
+	}
+
+	// If we have the policy specified on the collection, and acp module exists,
+	// then using the acp module we need to ensure the policy id specified
+	// actually exists as a policy, and the resource name exists on that policy
+	// and that the resource is a valid DPI.
+	return db.acp.Value().ValidateResourceExistsOnValidDPI(
+		ctx,
+		policyDesc.Value().ID,
+		policyDesc.Value().ResourceName,
+	)
+}
+
 // updateSchema updates the persisted schema description matching the name of the given
 // description, to the values in the given description.
 //
