@@ -87,7 +87,7 @@ func TestColDescrUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 						{ "op": "replace", "path": "/2/ID", "value": 1 }
 					]
 				`,
-				ExpectedError: "collection sources cannot be mutated.",
+				ExpectedError: "collection sources cannot be added or removed.",
 			},
 		},
 	}
