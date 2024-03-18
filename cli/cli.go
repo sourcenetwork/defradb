@@ -114,6 +114,7 @@ func NewDefraCommand() *cobra.Command {
 	root := MakeRootCommand()
 	root.AddCommand(
 		client,
+		MakeInitCommand(),
 		MakeStartCommand(),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(),

@@ -31,6 +31,8 @@ func MakeServerDumpCmd() *cobra.Command {
 			}
 			storeOpts := []node.StoreOpt{
 				node.WithPath(cfg.GetString("datastore.badger.path")),
+				node.WithEncryptionKey(cfg.GetString("datastore.badger.encryptionkey")),
+				node.WithIndexCacheSize(cfg.GetInt64("datastore.badger.indexcachesize")),
 			}
 			rootstore, err := node.NewStore(storeOpts...)
 			if err != nil {

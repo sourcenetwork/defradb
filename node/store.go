@@ -11,6 +11,9 @@
 package node
 
 import (
+	"encoding/hex"
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
@@ -20,7 +23,8 @@ type StoreOptions struct {
 	path             string
 	inMemory         bool
 	valueLogFileSize int64
-	encryptionKey    []byte
+	encryptionKey    string
+	indexCacheSize   int64
 }
 
 // DefaultStoreOptions returns new options with default values.
@@ -56,9 +60,16 @@ func WithValueLogFileSize(size int64) StoreOpt {
 }
 
 // WithEncryptionKey sets the badger encryption key.
-func WithEncryptionKey(encryptionKey []byte) StoreOpt {
+func WithEncryptionKey(encryptionKey string) StoreOpt {
 	return func(o *StoreOptions) {
 		o.encryptionKey = encryptionKey
+	}
+}
+
+// WithIndexCacheSize sets the index cache size.
+func WithIndexCacheSize(size int64) StoreOpt {
+	return func(o *StoreOptions) {
+		o.indexCacheSize = size
 	}
 }
 
@@ -72,7 +83,15 @@ func NewStore(opts ...StoreOpt) (datastore.RootStore, error) {
 	badgerOpts := badger.DefaultOptions
 	badgerOpts.InMemory = options.inMemory
 	badgerOpts.ValueLogFileSize = options.valueLogFileSize
-	badgerOpts.EncryptionKey = options.encryptionKey
+	badgerOpts.IndexCacheSize = options.indexCacheSize
+
+	if len(options.encryptionKey) > 0 {
+		key, err := hex.DecodeString(options.encryptionKey)
+		if err != nil {
+			return nil, fmt.Errorf("invalid encryption key: %w", err)
+		}
+		badgerOpts.EncryptionKey = key
+	}
 
 	return badger.NewDatastore(options.path, &badgerOpts)
 }

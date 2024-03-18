@@ -12,6 +12,7 @@ package node
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,11 +38,19 @@ func TestWithValueLogFileSize(t *testing.T) {
 }
 
 func TestWithEncryptionKey(t *testing.T) {
-	encryptionKey := make([]byte, 32)
-	_, err := rand.Read(encryptionKey)
+	keyBytes := make([]byte, 32)
+	_, err := rand.Read(keyBytes)
 	require.NoError(t, err)
 
+	keyHex := hex.EncodeToString(keyBytes)
+
 	options := &StoreOptions{}
-	WithEncryptionKey(encryptionKey)(options)
-	assert.Equal(t, encryptionKey, options.encryptionKey)
+	WithEncryptionKey(keyHex)(options)
+	assert.Equal(t, keyHex, options.encryptionKey)
+}
+
+func TestWithIndexCacheSize(t *testing.T) {
+	options := &StoreOptions{}
+	WithIndexCacheSize(int64(10 << 20))(options)
+	assert.Equal(t, int64(10<<20), options.indexCacheSize)
 }

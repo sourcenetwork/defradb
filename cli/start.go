@@ -66,8 +66,10 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			storeOpts := []node.StoreOpt{
-				node.WithPath(cfg.GetString("datastore.badger.path")),
 				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+				node.WithPath(cfg.GetString("datastore.badger.path")),
+				node.WithEncryptionKey(cfg.GetString("datastore.badger.encryptionkey")),
+				node.WithIndexCacheSize(cfg.GetInt64("datastore.badger.indexcachesize")),
 			}
 
 			var peers []peer.AddrInfo

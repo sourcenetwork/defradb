@@ -22,6 +22,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 - [Start](#start)
 - [Configuration](#configuration)
 - [External port binding](#external-port-binding)
+- [Encryption at rest](#encryption-at-rest)
 - [Add a schema type](#add-a-schema-type)
 - [Create a document instance](#create-a-document-instance)
 - [Query documents](#query-documents)
@@ -82,6 +83,16 @@ By default the HTTP API and P2P network will use localhost. If you want to expos
 ```
 defradb start --p2paddr /ip4/0.0.0.0/tcp/9171 --url 0.0.0.0:9181
 ```
+
+## Encryption at rest
+
+Data can be stored in an encrypted format by initializing DefraDB with encryption.
+
+```shell
+defradb init -e
+```
+
+The encryption key cannot be changed or removed after it has been set.
 
 ## Add a schema type
 

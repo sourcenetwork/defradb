@@ -25,6 +25,20 @@ The path to the database data file(s). Defaults to `data`.
 
 Maximum file size of the value log files.
 
+## `datastore.badger.encryptionkey`
+
+Hex encoded encryption key used to encrypt the data with AES.
+
+Type of AES is used based on the key size. For example 16 bytes will use AES-128. 24 bytes will use AES-192. 32 bytes will use AES-256.
+
+## `datastore.badger.indexcachesize`
+
+This value specifies how much memory should be used by table indices. These indices include the block offsets and the bloomfilters. Badger uses bloom filters to speed up lookups. Each table has its own bloom filter and each bloom filter is approximately of 5 MB.
+
+Zero value for IndexCacheSize means all the indices will be kept in memory and the cache is disabled.
+
+The default value of IndexCacheSize is 0 which means all indices are kept in memory.
+
 ## `api.address`
 
 Address of the HTTP API to listen on or connect to. Defaults to `127.0.0.1:9181`.
