@@ -267,6 +267,31 @@ func (db *explicitTxnDB) PatchSchema(
 	return db.patchSchema(ctx, db.txn, patchString, migration, setAsDefaultVersion)
 }
 
+func (db *implicitTxnDB) PatchCollection(
+	ctx context.Context,
+	patchString string,
+) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.patchCollection(ctx, txn, patchString)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) PatchCollection(
+	ctx context.Context,
+	patchString string,
+) error {
+	return db.patchCollection(ctx, db.txn, patchString)
+}
+
 func (db *implicitTxnDB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {

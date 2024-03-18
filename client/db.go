@@ -120,6 +120,17 @@ type Store interface {
 	// A lens configuration may also be provided, it will be added to all collections using the schema.
 	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
 
+	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionDescriptions
+	// present in the database.
+	//
+	// It will also update the GQL types used by the query system. It will error and not apply any of the
+	// requested, valid updates should the net result of the patch result in an invalid state.  The
+	// individual operations defined in the patch do not need to result in a valid state, only the net result
+	// of the full patch.
+	//
+	// Currently only the collection name can be modified.
+	PatchCollection(context.Context, string) error
+
 	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
 	// those without it (if they share the same schema root).
 	//

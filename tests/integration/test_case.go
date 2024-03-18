@@ -97,6 +97,18 @@ type SchemaPatch struct {
 	ExpectedError string
 }
 
+type PatchCollection struct {
+	// NodeID may hold the ID (index) of a node to apply this patch to.
+	//
+	// If a value is not provided the patch will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// The Patch to apply to the collection description.
+	Patch string
+
+	ExpectedError string
+}
+
 // GetSchema is an action that fetches schema using the provided options.
 type GetSchema struct {
 	// NodeID may hold the ID (index) of a node to apply this patch to.
