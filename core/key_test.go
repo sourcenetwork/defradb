@@ -114,6 +114,35 @@ func TestNewDataStoreKey_GivenAStringWithExtraSuffix(t *testing.T) {
 	assert.ErrorIs(t, ErrInvalidKey, err)
 }
 
+func TestNewPolicyKey_GivenParam_ReturnKey(t *testing.T) {
+	key := NewCollectionPolicyKey(1)
+	assert.Equal(t, "/collection/policy/1", key.ToString())
+}
+
+func TestNewPolicyKeyFromString_GivenValidString_ReturnKey(t *testing.T) {
+	key, err := NewCollectionPolicyKeyFromString("/collection/policy/1")
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(1), key.CollectionID)
+}
+
+func TestNewPolicyKeyFromString_InvalidStrings_ReturnError(t *testing.T) {
+	for _, badKey := range []string{
+		"",
+		"/collection",
+		"/collection/notpolicy",
+		"/policy/collection",
+		"/collection/policy",
+	} {
+		_, err := NewCollectionPolicyKeyFromString(badKey)
+		assert.ErrorIs(t, err, ErrInvalidKey)
+	}
+}
+
+func TestNewPolicyKeyFromString_InvalidStringColID_ReturnError(t *testing.T) {
+	_, err := NewCollectionPolicyKeyFromString("/collection/policy/bad")
+	assert.NotNil(t, err)
+}
+
 func TestNewIndexKey_IfEmptyParam_ReturnPrefix(t *testing.T) {
 	key := NewCollectionIndexKey(immutable.None[uint32](), "")
 	assert.Equal(t, "/collection/index", key.ToString())

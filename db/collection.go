@@ -161,6 +161,7 @@ func (db *db) createCollection(
 	}
 
 	col := db.newCollection(desc, schema)
+
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
@@ -1056,7 +1057,13 @@ func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint3
 	}
 
 	collection := db.newCollection(col, schema)
+
 	err = collection.loadIndexes(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = collection.loadPolicy(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -1163,6 +1170,11 @@ func (db *db) getCollections(
 		if err != nil {
 			return nil, err
 		}
+
+		err = collection.loadPolicy(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return collections, nil
@@ -1185,6 +1197,11 @@ func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([
 		collection := db.newCollection(col, schema)
 
 		err = collection.loadIndexes(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
+
+		err = collection.loadPolicy(ctx, txn)
 		if err != nil {
 			return nil, err
 		}
@@ -1332,24 +1349,8 @@ func (c *collection) Create(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
-	err = c.commitImplicitTxn(ctx, txn)
-	if err != nil {
-		return err
-	}
 
-	//fmt.Println("333333333333333333333333333333333333")
-	//spew.Dump(c.)
-	//fmt.Println("333333333333333333333333333333333333")
-
-	//c.db.ACPModule().RegisterDocCreation(
-	//	ctx,
-	//	policyID "123",
-	//	collection string,
-	//	creator string,
-	//	docID string,
-	//)
-
-	return nil
+	return c.commitImplicitTxn(ctx, txn)
 }
 
 // CreateMany creates a collection of documents at once.
@@ -1386,6 +1387,38 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	return docID, primaryKey, nil
 }
 
+// tryRegisterDocWithACP handles the registeration of the document with acp module,
+// according to our registration logic based on weather (1) the request is permissioned,
+// (2) the collection is permissioned (has a policy), (3) acp module exists.
+//
+// Note: we only register the document with ACP if all (1) (2) and (3) are true.
+// In all other cases, nothing is registered with ACP.
+//
+// Moreover 8 states, upon document creation:
+// - (SignatureRequest, PermissionedCollection, ModuleExists)    => Register with ACP
+// - (SignatureRequest, PermissionedCollection, !ModuleExists)   => Normal/Public - Don't Register with ACP
+// - (SignatureRequest, !PermissionedCollection, ModuleExists)   => Normal/Public - Don't Register with ACP
+// - (SignatureRequest, !PermissionedCollection, !ModuleExists)  => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, PermissionedCollection, ModuleExists)   => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, !PermissionedCollection, ModuleExists)  => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, PermissionedCollection, !ModuleExists)  => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, !PermissionedCollection, !ModuleExists) => Normal/Public - Don't Register with ACP
+func (c *collection) tryRegisterDocWithACP(ctx context.Context, doc *client.Document) error {
+	if c.db.ACPModule().HasValue() {
+		if policyID, resourceName, hasPolicy := client.IsPermissioned(c); hasPolicy {
+			return c.db.ACPModule().Value().RegisterDocCreation(
+				ctx,
+				"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
+				policyID,
+				resourceName,
+				doc.ID().String(),
+			)
+		}
+	}
+
+	return nil
+}
+
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
@@ -1419,7 +1452,12 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	return c.indexNewDoc(ctx, txn, doc)
+	err = c.indexNewDoc(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	return c.tryRegisterDocWithACP(ctx, doc)
 }
 
 // Update an existing document with the new values.
