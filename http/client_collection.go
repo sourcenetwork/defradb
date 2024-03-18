@@ -81,7 +81,7 @@ func (c *Collection) Create(
 		return err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *Collection) Update(
 		return err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -194,7 +194,7 @@ func (c *Collection) Delete(
 		return false, err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -253,7 +253,7 @@ func (c *Collection) updateWith(
 		return nil, err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	var result client.UpdateResult
 	if err := c.http.requestJson(req, &result); err != nil {
@@ -352,7 +352,7 @@ func (c *Collection) deleteWith(
 		return nil, err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	var result client.DeleteResult
 	if err := c.http.requestJson(req, &result); err != nil {
@@ -430,7 +430,7 @@ func (c *Collection) Get(
 		return nil, err
 	}
 
-	addIdentityToAuthHeader(req, identity)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	data, err := c.http.request(req)
 	if err != nil {

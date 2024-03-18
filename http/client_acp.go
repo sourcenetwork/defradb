@@ -23,8 +23,6 @@ import (
 type AddPolicyRequest struct {
 	// Policy body in JSON or YAML format.
 	Policy string `json:"policy"`
-	// Policy Creator's identity.
-	Identity string `json:"identity"`
 }
 
 func (c *Client) AddPolicy(
@@ -35,8 +33,7 @@ func (c *Client) AddPolicy(
 	methodURL := c.http.baseURL.JoinPath("acp", "policy")
 
 	addPolicyRequest := AddPolicyRequest{
-		Policy:   policy,
-		Identity: creator,
+		Policy: policy,
 	}
 
 	addPolicyBody, err := json.Marshal(addPolicyRequest)
@@ -50,6 +47,8 @@ func (c *Client) AddPolicy(
 		methodURL.String(),
 		bytes.NewBuffer(addPolicyBody),
 	)
+
+	addIdentityToAuthHeader(req, creator)
 
 	if err != nil {
 		return client.AddPolicyResult{}, err

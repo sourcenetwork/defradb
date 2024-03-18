@@ -56,18 +56,22 @@ func parseError(msg any) error {
 	}
 }
 
-// getIdentityToAuthHeader adds the identity to auth header if it exsits, otherwise does nothing.
-func addIdentityToAuthHeader(req *http.Request, identity immutable.Option[string]) {
+// addIdentityToAuthHeader adds the identity to auth header as it must always exist.
+func addIdentityToAuthHeader(req *http.Request, identity string) {
+	// Create a bearer that will get added to authorization header.
+	bearerWithIdentity := authSchemaPrefix + identity
+
+	// Add the authorization header with the bearer containing identity.
+	req.Header.Add(authHeaderName, bearerWithIdentity)
+}
+
+// addIdentityToAuthHeaderIfExists adds the identity to auth header if it exsits, otherwise does nothing.
+func addIdentityToAuthHeaderIfExists(req *http.Request, identity immutable.Option[string]) {
 	// Do nothing if there is no identity to add.
 	if !identity.HasValue() {
 		return
 	}
-
-	// Create a bearer that will get added to authorization header.
-	bearerWithIdentity := authSchemaPrefix + identity.Value()
-
-	// Add the authorization header with the bearer containing identity.
-	req.Header.Add(authHeaderName, bearerWithIdentity)
+	addIdentityToAuthHeader(req, identity.Value())
 }
 
 // getIdentityFromAuthHeader tries to get the identity from the auth header, if it is found

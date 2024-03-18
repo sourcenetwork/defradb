@@ -15,6 +15,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -33,9 +34,15 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	identity := getIdentityFromAuthHeader(req)
+	if !identity.HasValue() {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{acp.ErrPolicyCreatorMustNotBeEmpty})
+		return
+	}
+
 	addPolicyResult, err := db.AddPolicy(
 		req.Context(),
-		addPolicyRequest.Identity,
+		identity.Value(),
 		addPolicyRequest.Policy,
 	)
 	if err != nil {
