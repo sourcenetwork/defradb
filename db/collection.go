@@ -1063,11 +1063,6 @@ func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint3
 		return nil, err
 	}
 
-	err = collection.loadPolicy(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
 	return collection, nil
 }
 
@@ -1170,11 +1165,6 @@ func (db *db) getCollections(
 		if err != nil {
 			return nil, err
 		}
-
-		err = collection.loadPolicy(ctx, txn)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return collections, nil
@@ -1197,11 +1187,6 @@ func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([
 		collection := db.newCollection(col, schema)
 
 		err = collection.loadIndexes(ctx, txn)
-		if err != nil {
-			return nil, err
-		}
-
-		err = collection.loadPolicy(ctx, txn)
 		if err != nil {
 			return nil, err
 		}

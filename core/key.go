@@ -48,7 +48,6 @@ const (
 	COLLECTION_NAME                = "/collection/name"
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
 	COLLECTION_INDEX               = "/collection/index"
-	COLLECTION_POLICY              = "/collection/policy"
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	COLLECTION_SEQ                 = "/seq/collection"
@@ -143,7 +142,7 @@ type CollectionSchemaVersionKey struct {
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
 
-// CollectionIndexKey points to a stored description of an index
+// CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
 	// CollectionID is the id of the collection that the index is on
 	CollectionID immutable.Option[uint32]
@@ -152,14 +151,6 @@ type CollectionIndexKey struct {
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
-
-// CollectionPolicyKey points to the stored policy description of the collection.
-type CollectionPolicyKey struct {
-	// CollectionID is the id of the collection that the policy is on
-	CollectionID uint32
-}
-
-var _ Key = (*CollectionPolicyKey)(nil)
 
 // SchemaVersionKey points to the json serialized schema at the specified version.
 //
@@ -321,52 +312,6 @@ func NewCollectionSchemaVersionKeyFromString(key string) (CollectionSchemaVersio
 		SchemaVersionId: elements[len(elements)-2],
 		CollectionID:    uint32(colID),
 	}, nil
-}
-
-// NewCollectionPolicyKey creates a new CollectionPolicyKey from a collectionID.
-func NewCollectionPolicyKey(
-	colID uint32,
-) CollectionPolicyKey {
-	return CollectionPolicyKey{
-		CollectionID: colID,
-	}
-}
-
-// NewCollectionPolicyKeyFromString creates a new CollectionPolicyKey from a string.
-// It expects the input string in the following format:
-//
-// /collection/policy/[CollectionID]
-//
-// Where [CollectionID] must not be omitted.
-func NewCollectionPolicyKeyFromString(key string) (CollectionPolicyKey, error) {
-	keyElements := strings.Split(key, "/")
-	if len(keyElements) != 4 || keyElements[1] != COLLECTION || keyElements[2] != "policy" {
-		return CollectionPolicyKey{}, ErrInvalidKey
-	}
-
-	colID, err := strconv.Atoi(keyElements[3])
-	if err != nil {
-		return CollectionPolicyKey{}, err
-	}
-
-	return CollectionPolicyKey{
-		CollectionID: uint32(colID),
-	}, nil
-}
-
-// ToString returns the string representation of the key
-// It is in the following format:
-// /collection/policy/[CollectionID]
-func (k CollectionPolicyKey) ToString() string {
-	return fmt.Sprintf("%s/%s", COLLECTION_POLICY, fmt.Sprint(k.CollectionID))
-}
-
-func (k CollectionPolicyKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k CollectionPolicyKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
 }
 
 // NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
