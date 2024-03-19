@@ -15,11 +15,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
-
-	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/corelog"
 )
 
-var log = logging.MustNewLogger("http")
+var log = corelog.NewLogger("http")
 
 type logEntry struct {
 	req *http.Request
@@ -28,14 +27,14 @@ type logEntry struct {
 var _ middleware.LogEntry = (*logEntry)(nil)
 
 func (e *logEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra any) {
-	log.Info(
+	log.InfoContext(
 		e.req.Context(),
 		"Request",
-		logging.NewKV("Method", e.req.Method),
-		logging.NewKV("Path", e.req.URL.Path),
-		logging.NewKV("Status", status),
-		logging.NewKV("LengthBytes", bytes),
-		logging.NewKV("ElapsedTime", elapsed.String()),
+		corelog.String("Method", e.req.Method),
+		corelog.String("Path", e.req.URL.Path),
+		corelog.Int("Status", status),
+		corelog.Int("LengthBytes", bytes),
+		corelog.Duration("ElapsedTime", elapsed),
 	)
 }
 
