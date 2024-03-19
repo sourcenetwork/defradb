@@ -49,6 +49,7 @@ var (
 	ErrFieldNotObject                      = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch                   = errors.New("value does not match indicated type")
 	ErrDocumentNotFound                    = errors.New("no document for the given ID exists")
+	ErrPolicyAddFailedACPModuleNotFound    = errors.New("failed to add policy because ACP module was not found")
 	ErrInvalidUpdateTarget                 = errors.New("the target document to update is of invalid type")
 	ErrInvalidUpdater                      = errors.New("the updater of a document is of invalid type")
 	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")

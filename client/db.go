@@ -17,6 +17,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -228,6 +229,9 @@ type Store interface {
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(context.Context, string) *RequestResult
+
+	// TODO-ACP Document
+	ACPModule() immutable.Option[acp.ACPModule]
 }
 
 // GQLResult represents the immediate results of a GQL request.
