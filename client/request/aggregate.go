@@ -10,7 +10,7 @@
 
 package request
 
-import immutables "github.com/sourcenetwork/immutable"
+import "github.com/sourcenetwork/immutable"
 
 type Aggregate struct {
 	Field
@@ -20,10 +20,10 @@ type Aggregate struct {
 
 type AggregateTarget struct {
 	HostName  string
-	ChildName immutables.Option[string]
+	ChildName immutable.Option[string]
 
-	Limit   immutables.Option[uint64]
-	Offset  immutables.Option[uint64]
-	OrderBy immutables.Option[OrderBy]
-	Filter  immutables.Option[Filter]
+	Limit   immutable.Option[uint64]
+	Offset  immutable.Option[uint64]
+	OrderBy immutable.Option[OrderBy]
+	Filter  immutable.Option[Filter]
 }
