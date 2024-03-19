@@ -22,37 +22,30 @@ import (
 // CheckAccessOfDocOnCollectionWithACP handles the check, which tells us if access to the target
 // document is valid, with respect to the permission type, and the specified collection.
 //
-// According to our access logic we have these components to worry about:
+// This function should only be called if acp module is available. As we have unrestricted
+// access when acp module is not available (acp turned off).
+//
+// Since we know acp is enabled we have these components to check in this function:
 // (1) the request is permissioned (has an identity),
 // (2) the collection is permissioned (has a policy),
-// (3) acp module exists (acp is enabled).
 //
-// Unrestricted Access (Read + Write) to target document if:
-// - Either of (2) or (3) is false.
-// - Document is public (unregistered), whether signatured request or not, doesn't matter.
-//
-// Otherwise, check with acp module to verify signature has the appropriate access.
+// Unrestricted Access to document if:
+// - (2) is false.
+// - Document is public (unregistered), whether signatured request or not doesn't matter.
 func CheckAccessOfDocOnCollectionWithACP(
 	ctx context.Context,
 	identityOptional immutable.Option[string],
-	acpModuleOptional immutable.Option[acp.ACPModule],
+	acpModule acp.ACPModule,
 	collection client.Collection,
 	permission acp.DPIPermission,
 	docID string,
 ) (bool, error) {
-	// If no acp module, then we have unrestricted access.
-	if !acpModuleOptional.HasValue() {
-		return true, nil
-	}
-
 	// Even if acp module exists, but there is no policy on the collection (unpermissioned collection)
 	// then we still have unrestricted access.
 	policyID, resourceName, hasPolicy := isPermissioned(collection)
 	if !hasPolicy {
 		return true, nil
 	}
-
-	acpModule := acpModuleOptional.Value()
 
 	// Now that we know acp module exists and the collection is permissioned, before checking access with
 	// acp module directly we need to make sure that the document is not public, as public documents will
