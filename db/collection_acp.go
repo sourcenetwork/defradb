@@ -39,10 +39,15 @@ func (c *collection) checkAccessOfDocWithACP(
 	dpiPermission acp.DPIPermission,
 	docID string,
 ) (bool, error) {
+	// If no acp module, then we have unrestricted access.
+	if !c.db.acp.HasValue() {
+		return true, nil
+	}
+
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		identity,
-		c.db.acp,
+		c.db.acp.Value(),
 		c,
 		dpiPermission,
 		docID,

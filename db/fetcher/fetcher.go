@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/permission"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
@@ -86,8 +87,9 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	identity immutable.Option[string]
-	acp      immutable.Option[acp.ACPModule]
+	identity              immutable.Option[string]
+	acp                   immutable.Option[acp.ACPModule]
+	passedPermissionCheck bool // have valid permission to access
 
 	col         client.Collection
 	reverse     bool
@@ -98,10 +100,9 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	filter                *mapper.Filter
-	passedPermissionCheck bool // have valid permission to access
-	ranFilter             bool // did we run the filter
-	passedFilter          bool // did we pass the filter
+	filter       *mapper.Filter
+	ranFilter    bool // did we run the filter
+	passedFilter bool // did we pass the filter
 
 	filterFields map[uint32]client.FieldDefinition
 	selectFields map[uint32]client.FieldDefinition
@@ -620,10 +621,27 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			}
 		}
 
-		// Check if can access document with current permissions/signature.
+		// Check if we have read access, for document on this collection, with the given identity.
 		if !df.passedPermissionCheck {
-			if err := df.runDocReadPermissionCheck(ctx); err != nil {
-				return nil, ExecInfo{}, err
+			if !df.acp.HasValue() {
+				// If no acp module, then we have unrestricted access.
+				df.passedPermissionCheck = true
+			} else {
+				hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
+					ctx,
+					df.identity,
+					df.acp.Value(),
+					df.col,
+					acp.ReadPermission,
+					df.kv.Key.DocID,
+				)
+
+				if err != nil {
+					df.passedPermissionCheck = false
+					return nil, ExecInfo{}, err
+				}
+
+				df.passedPermissionCheck = hasPermission
 			}
 		}
 
