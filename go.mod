@@ -1,6 +1,6 @@
 module github.com/sourcenetwork/defradb
 
-go 1.21
+go 1.21.3
 
 require (
 	github.com/bits-and-blooms/bitset v1.13.0
@@ -18,7 +18,6 @@ require (
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
 	github.com/ipfs/go-ipld-format v0.6.0
-	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
 	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
@@ -31,6 +30,7 @@ require (
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
+	github.com/sourcenetwork/corelog v0.0.6
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.13
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd
 	github.com/sourcenetwork/immutable v0.3.0
@@ -99,6 +99,7 @@ require (
 	github.com/ipfs/go-ipfs-pq v0.0.3 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.3 // indirect
 	github.com/ipfs/go-ipld-legacy v0.2.1 // indirect
+	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipfs/go-peertaskqueue v0.8.1 // indirect
 	github.com/ipfs/kubo v0.25.0 // indirect

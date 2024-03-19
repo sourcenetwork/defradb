@@ -78,10 +78,6 @@ type FieldDefinition struct {
 	// Must contain a valid value. It is currently immutable.
 	Kind FieldKind
 
-	// Schema contains the schema name of the type this field contains if this field is
-	// a relation field.  Otherwise this will be empty.
-	Schema string
-
 	// RelationName the name of the relationship that this field represents if this field is
 	// a relation field.  Otherwise this will be empty.
 	RelationName string
@@ -102,7 +98,6 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		Name:              global.Name,
 		ID:                local.ID,
 		Kind:              global.Kind,
-		Schema:            global.Schema,
 		RelationName:      global.RelationName,
 		Typ:               global.Typ,
 		IsPrimaryRelation: global.IsPrimaryRelation,

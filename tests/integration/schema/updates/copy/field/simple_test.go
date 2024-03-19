@@ -154,12 +154,12 @@ func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testi
 				// re-typing the clone.
 				Patch: `
 					[
-						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Fields/2" },
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
 						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "Age" },
 						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "NotAValidKind" }
 					]
 				`,
-				ExpectedError: "no type found for given name. Kind: NotAValidKind",
+				ExpectedError: "no type found for given name. Field: Age, Kind: NotAValidKind",
 			},
 		},
 	}

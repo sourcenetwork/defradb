@@ -55,7 +55,7 @@ func (db *db) handleSubscription(
 	for evt := range pub.Event() {
 		txn, err := db.NewTxn(ctx, false)
 		if err != nil {
-			log.Error(ctx, err.Error())
+			log.ErrorContext(ctx, err.Error())
 			continue
 		}
 

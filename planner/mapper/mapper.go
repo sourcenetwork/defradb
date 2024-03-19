@@ -733,7 +733,7 @@ func getCollectionName(
 		if parentHasField && hostFieldDesc.RelationName != "" {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
-			return hostFieldDesc.Schema, nil
+			return hostFieldDesc.Kind.Underlying(), nil
 		}
 	}
 

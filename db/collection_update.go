@@ -240,7 +240,7 @@ func (c *collection) updateWithFilter(
 	// If the plan isn't properly closed at any exit point log the error.
 	defer func() {
 		if err := selectionPlan.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close the selection plan, after filter update", err)
+			log.ErrorContextE(ctx, "Failed to close the selection plan, after filter update", err)
 		}
 	}()
 
@@ -321,7 +321,7 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Schema)
+	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}

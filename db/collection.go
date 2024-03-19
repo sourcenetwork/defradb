@@ -201,7 +201,7 @@ func (db *db) updateSchema(
 	}
 
 	for _, field := range schema.Fields {
-		if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+		if field.Kind.IsObject() && !field.Kind.IsArray() {
 			idFieldName := field.Name + "_id"
 			if _, ok := schema.GetFieldByName(idFieldName); !ok {
 				schema.Fields = append(schema.Fields, client.SchemaFieldDescription{
@@ -436,16 +436,11 @@ func validateUpdateSchemaFields(
 		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
 
-		if !fieldAlreadyExists && (proposedField.Kind == client.FieldKind_FOREIGN_OBJECT ||
-			proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY) {
-			if proposedField.Schema == "" {
-				return false, NewErrRelationalFieldMissingSchema(proposedField.Name, proposedField.Kind)
-			}
-
-			relatedDesc, relatedDescFound := descriptionsByName[proposedField.Schema]
+		if !fieldAlreadyExists && proposedField.Kind.IsObject() {
+			relatedDesc, relatedDescFound := descriptionsByName[proposedField.Kind.Underlying()]
 
 			if !relatedDescFound {
-				return false, NewErrSchemaNotFound(proposedField.Name, proposedField.Schema)
+				return false, NewErrFieldKindNotFound(proposedField.Name, proposedField.Kind.Underlying())
 			}
 
 			if proposedField.RelationName == "" {
@@ -453,12 +448,12 @@ func validateUpdateSchemaFields(
 			}
 
 			if proposedField.IsPrimaryRelation {
-				if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+				if proposedField.Kind.IsObjectArray() {
 					return false, NewErrPrimarySideOnMany(proposedField.Name)
 				}
 			}
 
-			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
+			if proposedField.Kind.IsObject() && !proposedField.Kind.IsArray() {
 				idFieldName := proposedField.Name + request.RelatedObjectID
 				idField, idFieldFound := proposedDesc.GetFieldByName(idFieldName)
 				if idFieldFound {
@@ -485,7 +480,7 @@ func validateUpdateSchemaFields(
 			}
 
 			if !relatedFieldFound {
-				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Schema)
+				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Kind.Underlying())
 			}
 
 			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
@@ -1151,7 +1146,7 @@ func (c *collection) getAllDocIDsChan(
 	go func() {
 		defer func() {
 			if err := q.Close(); err != nil {
-				log.ErrorE(ctx, errFailedtoCloseQueryReqAllIDs, err)
+				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
 			close(resCh)
 			c.discardImplicitTxn(ctx, txn)
@@ -1539,11 +1534,11 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
-	if objFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+	if !(objFieldDescription.Kind.IsObject() && !objFieldDescription.Kind.IsArray()) {
 		return nil
 	}
 
-	otherCol, err := c.db.getCollectionByName(ctx, txn, objFieldDescription.Schema)
+	otherCol, err := c.db.getCollectionByName(ctx, txn, objFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}
@@ -1554,7 +1549,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		objFieldDescription.Name,
 		&otherSchema,
 	)
-	if otherObjFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+	if !(otherObjFieldDescription.Kind.IsObject() && !otherObjFieldDescription.Kind.IsArray()) {
 		// If the other field is not an object field then this is not a one to one relation and we can continue
 		return nil
 	}

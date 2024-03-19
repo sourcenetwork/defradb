@@ -38,33 +38,39 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 
 	cmd.PersistentFlags().String(
-		"loglevel",
+		"log-level",
 		"info",
 		"Log level to use. Options are debug, info, error, fatal",
 	)
 
 	cmd.PersistentFlags().String(
-		"logoutput",
+		"log-output",
 		"stderr",
-		"Log output path",
+		"Log output path. Options are stderr or stdout.",
 	)
 
 	cmd.PersistentFlags().String(
-		"logformat",
-		"csv",
-		"Log format to use. Options are csv, json",
+		"log-format",
+		"text",
+		"Log format to use. Options are text or json",
 	)
 
 	cmd.PersistentFlags().Bool(
-		"logtrace",
+		"log-stacktrace",
 		false,
 		"Include stacktrace in error and fatal logs",
 	)
 
 	cmd.PersistentFlags().Bool(
-		"lognocolor",
+		"log-source",
 		false,
-		"Disable colored log output",
+		"Include source location in logs",
+	)
+
+	cmd.PersistentFlags().String(
+		"log-overrides",
+		"",
+		"Logger config overrides. Format <name>,<key>=<val>,...;<name>,...",
 	)
 
 	cmd.PersistentFlags().String(

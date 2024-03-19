@@ -14,12 +14,13 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
 
+	"github.com/sourcenetwork/corelog"
+
 	"github.com/sourcenetwork/defradb/datastore/iterable"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
-	log = logging.MustNewLogger("store")
+	log = corelog.NewLogger("store")
 )
 
 // RootStore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.

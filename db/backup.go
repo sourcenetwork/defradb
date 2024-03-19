@@ -72,7 +72,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			// check if self referencing and remove from docMap for key creation
 			resetMap := map[string]any{}
 			for _, field := range col.Schema().Fields {
-				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
 						if docMap[request.NewDocIDFieldName] == val {
 							resetMap[field.Name+request.RelatedObjectID] = val
@@ -214,9 +214,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			refFieldName := ""
 			// replace any foreign key if it needs to be changed
 			for _, field := range col.Schema().Fields {
-				switch field.Kind {
-				case client.FieldKind_FOREIGN_OBJECT:
-					if _, ok := colNameCache[field.Schema]; !ok {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
+					if _, ok := colNameCache[field.Kind.Underlying()]; !ok {
 						continue
 					}
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
@@ -230,9 +229,9 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignCol, err := db.getCollectionByName(ctx, txn, field.Schema)
+							foreignCol, err := db.getCollectionByName(ctx, txn, field.Kind.Underlying())
 							if err != nil {
-								return NewErrFailedToGetCollection(field.Schema, err)
+								return NewErrFailedToGetCollection(field.Kind.Underlying(), err)
 							}
 							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {

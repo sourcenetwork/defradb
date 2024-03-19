@@ -36,8 +36,12 @@ func canConvertIndexFieldValue[T any](val any) bool {
 }
 
 func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
+	if kind.IsObject() && !kind.IsArray() {
+		return canConvertIndexFieldValue[string]
+	}
+
 	switch kind {
-	case client.FieldKind_NILLABLE_STRING, client.FieldKind_FOREIGN_OBJECT:
+	case client.FieldKind_NILLABLE_STRING:
 		return canConvertIndexFieldValue[string]
 	case client.FieldKind_NILLABLE_INT:
 		return canConvertIndexFieldValue[int64]

@@ -15,12 +15,12 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
@@ -151,7 +151,7 @@ func assertExplainRequestResults(
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
 	resultantData := actualResult.Data.([]map[string]any)
-	log.Info(s.ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
+	log.InfoContext(s.ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
