@@ -66,7 +66,7 @@ func WithEncryptionKey(encryptionKey string) StoreOpt {
 	}
 }
 
-// WithIndexCacheSize sets the index cache size.
+// WithIndexCacheSize sets the rootstore index cache size.
 func WithIndexCacheSize(size int64) StoreOpt {
 	return func(o *StoreOptions) {
 		o.indexCacheSize = size

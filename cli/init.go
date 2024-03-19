@@ -46,7 +46,7 @@ Example: with encryption at rest
 			}
 
 			if encrypted {
-				// generate a random encryption key
+				// generate a random AES-256 (32 byte) encryption key
 				key := make([]byte, 32)
 				if _, err := rand.Read(key); err != nil {
 					return err
