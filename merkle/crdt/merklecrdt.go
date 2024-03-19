@@ -21,11 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
-)
-
-var (
-	log = logging.MustNewLogger("merklecrdt")
 )
 
 type Stores interface {

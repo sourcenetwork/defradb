@@ -108,11 +108,11 @@ func MakeStartCommand() *cobra.Command {
 
 			defer func() {
 				if err := n.Close(cmd.Context()); err != nil {
-					log.FeedbackErrorE(cmd.Context(), "Stopping DefraDB", err)
+					log.ErrorContextE(cmd.Context(), "Stopping DefraDB", err)
 				}
 			}()
 
-			log.FeedbackInfo(cmd.Context(), "Starting DefraDB")
+			log.InfoContext(cmd.Context(), "Starting DefraDB")
 			if err := n.Start(cmd.Context()); err != nil {
 				return err
 			}
@@ -122,9 +122,9 @@ func MakeStartCommand() *cobra.Command {
 
 			select {
 			case <-cmd.Context().Done():
-				log.FeedbackInfo(cmd.Context(), "Received context cancellation; shutting down...")
+				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
 			case <-signalCh:
-				log.FeedbackInfo(cmd.Context(), "Received interrupt; shutting down...")
+				log.InfoContext(cmd.Context(), "Received interrupt; shutting down...")
 			}
 
 			return nil

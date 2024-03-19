@@ -18,10 +18,10 @@ import (
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 // heads manages the current Merkle-CRDT heads.
@@ -55,12 +55,12 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
 
 // Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height uint64) error {
-	log.Info(
+	log.InfoContext(
 		ctx,
 		"Replacing DAG head",
-		logging.NewKV("Old", old),
-		logging.NewKV("CID", new),
-		logging.NewKV("Height", height))
+		corelog.Any("Old", old),
+		corelog.Any("CID", new),
+		corelog.Uint64("Height", height))
 
 	err := hh.store.Delete(ctx, hh.key(old).ToDS())
 	if err != nil {
@@ -91,7 +91,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	defer func() {
 		err := results.Close()
 		if err != nil {
-			log.ErrorE(ctx, "Error closing results", err)
+			log.ErrorContextE(ctx, "Error closing results", err)
 		}
 	}()
 

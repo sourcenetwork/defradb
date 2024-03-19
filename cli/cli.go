@@ -16,10 +16,10 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/corelog"
 )
 
-var log = logging.MustNewLogger("cli")
+var log = corelog.NewLogger("cli")
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
 func NewDefraCommand() *cobra.Command {
