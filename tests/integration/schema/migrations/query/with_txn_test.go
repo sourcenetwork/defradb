@@ -47,8 +47,8 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 			testUtils.ConfigureMigration{
 				TransactionID: immutable.Some(0),
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a",
+					DestinationSchemaVersionID: "bafkreifpgr7zjwxmrjpo3rtybd2kqye6mmf5copqwzv27a5fgpvbq4aqm4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -109,8 +109,8 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 			testUtils.ConfigureMigration{
 				TransactionID: immutable.Some(0),
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a",
+					DestinationSchemaVersionID: "bafkreifpgr7zjwxmrjpo3rtybd2kqye6mmf5copqwzv27a5fgpvbq4aqm4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

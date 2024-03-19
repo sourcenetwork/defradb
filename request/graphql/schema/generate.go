@@ -460,16 +460,16 @@ func (g *Generator) buildTypes(
 				}
 
 				var ttype gql.Type
-				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					var ok bool
-					ttype, ok = g.manager.schema.TypeMap()[field.Schema]
+					ttype, ok = g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema)
+						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
-				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-					t, ok := g.manager.schema.TypeMap()[field.Schema]
+				} else if field.Kind.IsObjectArray() {
+					t, ok := g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema)
+						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
 					ttype = gql.NewList(t)
 				} else {
@@ -566,9 +566,9 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 				}
 
 				var ttype gql.Type
-				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					ttype = gql.ID
-				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+				} else if field.Kind.IsObjectArray() {
 					ttype = gql.NewList(gql.ID)
 				} else {
 					var ok bool

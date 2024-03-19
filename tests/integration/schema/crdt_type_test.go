@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreib2rcnzkjrwabw6kx7qnncfuylugukoosilmb2dct5qylmgec7fdu"
+	schemaVersionID := "bafkreihg7aweuwitzdtturuipps2rxw774o5iu36ovxqawdncxa4yibpsq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -59,7 +59,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreiddz4h2oqi3qzfeqfbjt3wpwrvtm62r4l6uche2nxyullmlmezrsq"
+	schemaVersionID := "bafkreig7olui76coe4nmm6s7f6lza7d7i35rurktxhcbmrs4po7plcrnvu"
 
 	test := testUtils.TestCase{
 		Actions: []any{

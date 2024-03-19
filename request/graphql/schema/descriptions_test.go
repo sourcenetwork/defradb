@@ -177,9 +177,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:         "author",
 								RelationName: "author_book",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Kind:         client.ObjectKind("Author"),
 								Typ:          client.NONE_CRDT,
-								Schema:       "Author",
 							},
 							{
 								Name: "author_id",
@@ -225,9 +224,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:              "published",
 								RelationName:      "author_book",
-								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Kind:              client.ObjectKind("Book"),
 								Typ:               client.NONE_CRDT,
-								Schema:            "Book",
 								IsPrimaryRelation: true,
 							},
 							{
@@ -352,9 +350,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:         "author",
 								RelationName: "book_authors",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Kind:         client.ObjectKind("Author"),
 								Typ:          client.NONE_CRDT,
-								Schema:       "Author",
 							},
 							{
 								Name: "author_id",
@@ -400,9 +397,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:              "published",
 								RelationName:      "book_authors",
-								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Kind:              client.ObjectKind("Book"),
 								Typ:               client.NONE_CRDT,
-								Schema:            "Book",
 								IsPrimaryRelation: true,
 							},
 							{
@@ -447,9 +443,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:              "author",
 								RelationName:      "author_book",
-								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Kind:              client.ObjectKind("Author"),
 								Typ:               client.NONE_CRDT,
-								Schema:            "Author",
 								IsPrimaryRelation: true,
 							},
 							{
@@ -496,9 +491,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:         "published",
 								RelationName: "author_book",
-								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Kind:         client.ObjectKind("Book"),
 								Typ:          client.NONE_CRDT,
-								Schema:       "Book",
 							},
 							{
 								Name: "published_id",
@@ -542,9 +536,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:              "author",
 								RelationName:      "author_book",
-								Kind:              client.FieldKind_FOREIGN_OBJECT,
+								Kind:              client.ObjectKind("Author"),
 								Typ:               client.NONE_CRDT,
-								Schema:            "Author",
 								IsPrimaryRelation: true,
 							},
 							{
@@ -591,9 +584,8 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name:         "published",
 								RelationName: "author_book",
-								Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
+								Kind:         client.ObjectArrayKind("Book"),
 								Typ:          client.NONE_CRDT,
-								Schema:       "Book",
 							},
 						},
 					},

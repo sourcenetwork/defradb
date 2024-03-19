@@ -321,7 +321,7 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Schema)
+	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}
