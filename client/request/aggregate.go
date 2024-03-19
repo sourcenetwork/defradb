@@ -12,18 +12,41 @@ package request
 
 import "github.com/sourcenetwork/immutable"
 
+// Aggregate represents an aggregate operation upon a set of child properties.
+//
+// Which aggregate this represents (e.g. _count, _avg, etc.) is determined by its
+// [Name] property.
 type Aggregate struct {
 	Field
 
+	// Targets hosts the properties to aggregate.
+	//
+	// When multiple properties are selected, their values will be gathered into a single set
+	// upon which the aggregate will be performed.  For example, if this aggregate represents
+	// and average of the Friends.Age and Parents.Age fields, the result will be the average
+	// age of all their friends and parents, it will not be an average of their average ages.
 	Targets []*AggregateTarget
 }
 
+// AggregateTarget represents the target of an [Aggregate].
 type AggregateTarget struct {
 	Limitable
 	Offsetable
 	Orderable
 	Filterable
 
-	HostName  string
+	// HostName is the name of the immediate field on the object hosting the aggregate.
+	//
+	// For example if averaging Friends.Age on the User collection, this property would be
+	// "Friends".
+	HostName string
+
+	// ChildName is the name of the child field on the object navigated to via [HostName].
+	//
+	// It is optional, for example when counting the number of Friends on User, or when aggregating
+	// scalar arrays, this value will be None.
+	//
+	// When averaging Friends.Age on the User collection, this property would be
+	// "Age".
 	ChildName immutable.Option[string]
 }

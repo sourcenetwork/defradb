@@ -29,6 +29,8 @@ type Select struct {
 	CIDFilter
 	Groupable
 
+	// ShowDeleted will return deleted documents along with non-deleted ones
+	// if set to true.
 	ShowDeleted bool
 }
 

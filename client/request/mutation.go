@@ -28,12 +28,18 @@ type ObjectMutation struct {
 	Filterable
 	DocIDsFilter
 
+	// Type is the type of mutatation that this object represents.
+	//
+	// For example [CreateObjects].
 	Type MutationType
 
-	// Collection is the target collection name
-	// if this mutation is on an object.
+	// Collection is the target collection name.
 	Collection string
 
+	// Input is the json representation of the fieldName-value pairs of document properties
+	// to mutate.
+	//
+	// This is ignored for [DeleteObjects] mutations.
 	Input map[string]any
 }
 
