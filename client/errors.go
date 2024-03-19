@@ -32,6 +32,7 @@ const (
 	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
 	errInvalidJSONPayload                  string = "invalid JSON payload"
 	errCanNotNormalizeValue                string = "can not normalize value"
+	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
 )
 
 // Errors returnable from this package.
@@ -53,6 +54,7 @@ var (
 	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
 	ErrInvalidJSONPayload                  = errors.New(errInvalidJSONPayload)
 	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
+	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -80,6 +82,12 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 // NewCanNotNormalizeValue returns an error indicating that the given value can not be normalized.
 func NewCanNotNormalizeValue(val any) error {
 	return errors.New(errCanNotNormalizeValue, errors.NewKV("Value", val))
+}
+
+// NewCanNotTurnNormalValueIntoArray returns an error indicating that the given value can not be
+// turned into an array.
+func NewCanNotTurnNormalValueIntoArray(val any) error {
+	return errors.New(errCanNotTurnNormalValueIntoArray, errors.NewKV("Value", val))
 }
 
 // NewErrUnhandledType returns an error indicating that the given value is of

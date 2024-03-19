@@ -24,31 +24,61 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 			return EncodeNullAscending(b)
 		}
 	}
-	switch {
-	case val.IsBool():
+	if v, ok := val.Bool(); ok {
 		var boolInt int64 = 0
-		if val.Bool() {
+		if v {
 			boolInt = 1
 		}
 		if descending {
 			return EncodeVarintDescending(b, boolInt)
 		}
 		return EncodeVarintAscending(b, boolInt)
-	case val.IsInt():
-		if descending {
-			return EncodeVarintDescending(b, val.Int())
+	}
+	if v, ok := val.NillableBool(); ok {
+		var boolInt int64 = 0
+		if v.Value() {
+			boolInt = 1
 		}
-		return EncodeVarintAscending(b, val.Int())
-	case val.IsFloat():
 		if descending {
-			return EncodeFloatDescending(b, val.Float())
+			return EncodeVarintDescending(b, boolInt)
 		}
-		return EncodeFloatAscending(b, val.Float())
-	case val.IsString():
+		return EncodeVarintAscending(b, boolInt)
+	}
+	if v, ok := val.Int(); ok {
 		if descending {
-			return EncodeStringDescending(b, val.String())
+			return EncodeVarintDescending(b, v)
 		}
-		return EncodeStringAscending(b, val.String())
+		return EncodeVarintAscending(b, v)
+	}
+	if v, ok := val.NillableInt(); ok {
+		if descending {
+			return EncodeVarintDescending(b, v.Value())
+		}
+		return EncodeVarintAscending(b, v.Value())
+	}
+	if v, ok := val.Float(); ok {
+		if descending {
+			return EncodeFloatDescending(b, v)
+		}
+		return EncodeFloatAscending(b, v)
+	}
+	if v, ok := val.NillableFloat(); ok {
+		if descending {
+			return EncodeFloatDescending(b, v.Value())
+		}
+		return EncodeFloatAscending(b, v.Value())
+	}
+	if v, ok := val.String(); ok {
+		if descending {
+			return EncodeStringDescending(b, v)
+		}
+		return EncodeStringAscending(b, v)
+	}
+	if v, ok := val.NillableString(); ok {
+		if descending {
+			return EncodeStringDescending(b, v.Value())
+		}
+		return EncodeStringAscending(b, v.Value())
 	}
 
 	return b
@@ -61,7 +91,7 @@ func DecodeFieldValue(b []byte, descending bool) ([]byte, client.NormalValue, er
 	switch typ {
 	case Null:
 		b, _ = DecodeIfNull(b)
-		return b, client.NewNilNormalValue(), nil
+		return b, client.NewNormalNil(), nil
 	case Int:
 		var v int64
 		var err error
@@ -71,9 +101,9 @@ func DecodeFieldValue(b []byte, descending bool) ([]byte, client.NormalValue, er
 			b, v, err = DecodeVarintAscending(b)
 		}
 		if err != nil {
-			return nil, client.NormalValue{}, NewErrCanNotDecodeFieldValue(b, err)
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, err)
 		}
-		return b, client.NewIntNormalValue(v), nil
+		return b, client.NewNormalInt(v), nil
 	case Float:
 		var v float64
 		var err error
@@ -83,9 +113,9 @@ func DecodeFieldValue(b []byte, descending bool) ([]byte, client.NormalValue, er
 			b, v, err = DecodeFloatAscending(b)
 		}
 		if err != nil {
-			return nil, client.NormalValue{}, NewErrCanNotDecodeFieldValue(b, err)
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, err)
 		}
-		return b, client.NewFloatNormalValue(v), nil
+		return b, client.NewNormalFloat(v), nil
 	case Bytes, BytesDesc:
 		var v []byte
 		var err error
@@ -95,10 +125,10 @@ func DecodeFieldValue(b []byte, descending bool) ([]byte, client.NormalValue, er
 			b, v, err = DecodeBytesAscending(b)
 		}
 		if err != nil {
-			return nil, client.NormalValue{}, NewErrCanNotDecodeFieldValue(b, err)
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, err)
 		}
-		return b, client.NewStringNormalValue(v), nil
+		return b, client.NewNormalString(v), nil
 	}
 
-	return nil, client.NormalValue{}, NewErrCanNotDecodeFieldValue(b)
+	return nil, nil, NewErrCanNotDecodeFieldValue(b)
 }

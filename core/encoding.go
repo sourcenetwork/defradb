@@ -257,8 +257,10 @@ func DecodeIndexDataStoreKey(
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}
-		if i == len(indexDesc.Fields) && !val.IsString() {
-			return IndexDataStoreKey{}, NewErrInvalidFieldValue("docID is not a string")
+		if i == len(indexDesc.Fields) {
+			if _, ok := val.String(); !ok {
+				return IndexDataStoreKey{}, NewErrInvalidFieldValue("docID is not a string")
+			}
 		}
 
 		key.Fields = append(key.Fields, IndexedField{Value: val, Descending: descending})

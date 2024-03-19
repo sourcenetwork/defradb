@@ -283,10 +283,15 @@ type intMatcher struct {
 }
 
 func (m *intMatcher) Match(value client.NormalValue) (bool, error) {
-	if !value.IsInt() {
-		return false, NewErrUnexpectedTypeValue[int64](value)
+	intVal, ok := value.Int()
+	if ok {
+		return m.evalFunc(intVal, m.value), nil
 	}
-	return m.evalFunc(value.Int(), m.value), nil
+	intOptVal, ok := value.NillableInt()
+	if ok {
+		return m.evalFunc(intOptVal.Value(), m.value), nil
+	}
+	return false, NewErrUnexpectedTypeValue[int64](value)
 }
 
 type floatMatcher struct {
@@ -295,10 +300,15 @@ type floatMatcher struct {
 }
 
 func (m *floatMatcher) Match(value client.NormalValue) (bool, error) {
-	if !value.IsFloat() {
-		return false, NewErrUnexpectedTypeValue[float64](value)
+	floatVal, ok := value.Float()
+	if ok {
+		return m.evalFunc(floatVal, m.value), nil
 	}
-	return m.evalFunc(m.value, value.Float()), nil // TOTEST: index with filter _ge, get... on float
+	floatOptVal, ok := value.NillableFloat()
+	if ok {
+		return m.evalFunc(floatOptVal.Value(), m.value), nil
+	}
+	return false, NewErrUnexpectedTypeValue[float64](value)
 }
 
 type stringMatcher struct {
@@ -307,10 +317,15 @@ type stringMatcher struct {
 }
 
 func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
-	if !value.IsString() {
-		return false, NewErrUnexpectedTypeValue[string](value)
+	strVal, ok := value.String()
+	if ok {
+		return m.evalFunc(strVal, m.value), nil
 	}
-	return m.evalFunc(m.value, value.String()), nil
+	strOptVal, ok := value.NillableString()
+	if ok {
+		return m.evalFunc(strOptVal.Value(), m.value), nil
+	}
+	return false, NewErrUnexpectedTypeValue[string](value)
 }
 
 type nilMatcher struct{}
@@ -321,13 +336,13 @@ func (m *nilMatcher) Match(value client.NormalValue) (bool, error) {
 
 // checks if the index value is or is not in the given array
 type indexInArrayMatcher struct {
-	inValues []any
+	inValues []client.NormalValue
 	isIn     bool
 }
 
 func (m *indexInArrayMatcher) Match(value client.NormalValue) (bool, error) {
 	for _, inVal := range m.inValues {
-		if inVal == value.Value() {
+		if inVal.Any() == value.Any() {
 			return m.isIn, nil
 		}
 	}
@@ -372,11 +387,14 @@ func newLikeIndexCmp(filterValue string, isLike bool, isCaseInsensitive bool) (*
 }
 
 func (m *indexLikeMatcher) Match(value client.NormalValue) (bool, error) {
-	if !value.IsString() {
-		return false, NewErrUnexpectedTypeValue[string](value)
+	strVal, ok := value.String()
+	if !ok {
+		strOptVal, ok := value.NillableString()
+		if !ok {
+			return false, NewErrUnexpectedTypeValue[string](value)
+		}
+		strVal = strOptVal.Value()
 	}
-
-	strVal := value.String()
 	if m.isCaseInsensitive {
 		strVal = strings.ToLower(strVal)
 	}
@@ -451,7 +469,10 @@ func (f *IndexFetcher) newInIndexIterator(
 	if !fieldConditions[0].val.IsArray() {
 		return nil, ErrInvalidInOperatorValue
 	}
-	inValues := fieldConditions[0].val.ArrayOfNormalValues()
+	inValues, err := client.ToArrayOfNormalValues(fieldConditions[0].val)
+	if err != nil {
+		return nil, err
+	}
 
 	// iterators for _in filter already iterate over keys with first field value
 	// matching the filter value, so we can skip the first matcher
@@ -556,27 +577,42 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 
 	switch condition.op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
-		if condition.val.IsInt() {
-			return &intMatcher{value: condition.val.Int(), evalFunc: getCompareValsFunc[int64](condition.op)}, nil
+		if v, ok := condition.val.Int(); ok {
+			return &intMatcher{value: v, evalFunc: getCompareValsFunc[int64](condition.op)}, nil
 		}
-		if condition.val.IsFloat() {
-			return &floatMatcher{value: condition.val.Float(), evalFunc: getCompareValsFunc[float64](condition.op)}, nil
+		if v, ok := condition.val.NillableInt(); ok {
+			return &intMatcher{value: v.Value(), evalFunc: getCompareValsFunc[int64](condition.op)}, nil
 		}
-		if condition.val.IsString() {
-			return &stringMatcher{value: condition.val.String(), evalFunc: getCompareValsFunc[string](condition.op)}, nil
+		if v, ok := condition.val.Float(); ok {
+			return &floatMatcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
+		}
+		if v, ok := condition.val.NillableFloat(); ok {
+			return &floatMatcher{value: v.Value(), evalFunc: getCompareValsFunc[float64](condition.op)}, nil
+		}
+		if v, ok := condition.val.String(); ok {
+			return &stringMatcher{value: v, evalFunc: getCompareValsFunc[string](condition.op)}, nil
+		}
+		if v, ok := condition.val.NillableString(); ok {
+			return &stringMatcher{value: v.Value(), evalFunc: getCompareValsFunc[string](condition.op)}, nil
 		}
 	case opIn, opNin:
-		if !condition.val.IsArray() {
-			return nil, ErrInvalidInOperatorValue
+		inVals, err := client.ToArrayOfNormalValues(condition.val)
+		if err != nil {
+			return nil, err
 		}
-		return &indexInArrayMatcher{inValues: condition.val.Array(), isIn: condition.op == opIn}, nil
+		return &indexInArrayMatcher{inValues: inVals, isIn: condition.op == opIn}, nil
 	case opLike, opNlike, opILike, opNILike:
-		if !condition.val.IsString() {
-			return nil, NewErrUnexpectedTypeValue[string](condition.val)
+		strVal, ok := condition.val.String()
+		if !ok {
+			strOptVal, ok := condition.val.NillableString()
+			if !ok {
+				return nil, NewErrUnexpectedTypeValue[string](condition.val)
+			}
+			strVal = strOptVal.Value()
 		}
 		isLike := condition.op == opLike || condition.op == opILike
 		isCaseInsensitive := condition.op == opILike || condition.op == opNILike
-		return newLikeIndexCmp(condition.val.String(), isLike, isCaseInsensitive)
+		return newLikeIndexCmp(strVal, isLike, isCaseInsensitive)
 	case opAny:
 		return &anyMatcher{}, nil
 	}

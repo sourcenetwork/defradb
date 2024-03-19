@@ -17,193 +17,406 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type NormalValue struct {
-	value any
+type NormalValue interface {
+	Any() any
+
+	IsNil() bool
+	IsNillable() bool
+
+	Bool() (bool, bool)
+	Int() (int64, bool)
+	Float() (float64, bool)
+	String() (string, bool)
+	Bytes() ([]byte, bool)
+	Time() (time.Time, bool)
+	Document() (*Document, bool)
+
+	NillableBool() (immutable.Option[bool], bool)
+	NillableInt() (immutable.Option[int64], bool)
+	NillableFloat() (immutable.Option[float64], bool)
+	NillableString() (immutable.Option[string], bool)
+	NillableBytes() (immutable.Option[[]byte], bool)
+	NillableTime() (immutable.Option[time.Time], bool)
+	NillableDocument() (immutable.Option[*Document], bool)
+
+	IsArray() bool
+
+	BoolArray() ([]bool, bool)
+	IntArray() ([]int64, bool)
+	FloatArray() ([]float64, bool)
+	StringArray() ([]string, bool)
+	BytesArray() ([][]byte, bool)
+	TimeArray() ([]time.Time, bool)
+	DocumentArray() ([]*Document, bool)
+
+	BoolNillableArray() (immutable.Option[[]bool], bool)
+	IntNillableArray() (immutable.Option[[]int64], bool)
+	FloatNillableArray() (immutable.Option[[]float64], bool)
+	StringNillableArray() (immutable.Option[[]string], bool)
+	BytesNillableArray() (immutable.Option[[][]byte], bool)
+	TimeNillableArray() (immutable.Option[[]time.Time], bool)
+	DocumentNillableArray() (immutable.Option[[]*Document], bool)
+
+	NillableBoolArray() ([]immutable.Option[bool], bool)
+	NillableIntArray() ([]immutable.Option[int64], bool)
+	NillableFloatArray() ([]immutable.Option[float64], bool)
+	NillableStringArray() ([]immutable.Option[string], bool)
+	NillableBytesArray() ([]immutable.Option[[]byte], bool)
+	NillableTimeArray() ([]immutable.Option[time.Time], bool)
+	NillableDocumentArray() ([]immutable.Option[*Document], bool)
+
+	NillableBoolNillableArray() (immutable.Option[[]immutable.Option[bool]], bool)
+	NillableIntNillableArray() (immutable.Option[[]immutable.Option[int64]], bool)
+	NillableFloatNillableArray() (immutable.Option[[]immutable.Option[float64]], bool)
+	NillableStringNillableArray() (immutable.Option[[]immutable.Option[string]], bool)
+	NillableBytesNillableArray() (immutable.Option[[]immutable.Option[[]byte]], bool)
+	NillableTimeNillableArray() (immutable.Option[[]immutable.Option[time.Time]], bool)
+	NillableDocumentNillableArray() (immutable.Option[[]immutable.Option[*Document]], bool)
 }
 
-func (val NormalValue) Value() any {
-	return val.value
+type NormalVoid struct{}
+
+func (NormalVoid) IsNil() bool {
+	return false
 }
 
-func (val NormalValue) IsNil() bool {
-	return val.value == nil
+func (NormalVoid) IsNillable() bool {
+	return false
 }
 
-func (val NormalValue) IsBool() bool {
-	_, ok := val.value.(bool)
-	return ok
+func (NormalVoid) Bool() (bool, bool) {
+	return false, false
 }
 
-func (val NormalValue) IsInt() bool {
-	_, ok := val.value.(int64)
-	return ok
+func (NormalVoid) Int() (int64, bool) {
+	return 0, false
 }
 
-func (val NormalValue) IsFloat() bool {
-	_, ok := val.value.(float64)
-	return ok
+func (NormalVoid) Float() (float64, bool) {
+	return 0, false
 }
 
-func (val NormalValue) IsString() bool {
-	_, ok := val.value.(string)
-	return ok
+func (NormalVoid) String() (string, bool) {
+	return "", false
 }
 
-func (val NormalValue) IsBytes() bool {
-	_, ok := val.value.([]byte)
-	return ok
+func (NormalVoid) Bytes() ([]byte, bool) {
+	return nil, false
 }
 
-func (val NormalValue) IsTime() bool {
-	_, ok := val.value.(time.Time)
-	return ok
+func (NormalVoid) Time() (time.Time, bool) {
+	return time.Time{}, false
 }
 
-func (val NormalValue) IsBoolArray() bool {
-	_, ok := val.value.([]bool)
-	return ok
+func (NormalVoid) Document() (*Document, bool) {
+	return nil, false
 }
 
-func (val NormalValue) IsIntArray() bool {
-	_, ok := val.value.([]int64)
-	return ok
+func (NormalVoid) NillableBool() (immutable.Option[bool], bool) {
+	return immutable.None[bool](), false
 }
 
-func (val NormalValue) IsFloatArray() bool {
-	_, ok := val.value.([]float64)
-	return ok
+func (NormalVoid) NillableInt() (immutable.Option[int64], bool) {
+	return immutable.None[int64](), false
 }
 
-func (val NormalValue) IsStringArray() bool {
-	_, ok := val.value.([]string)
-	return ok
+func (NormalVoid) NillableFloat() (immutable.Option[float64], bool) {
+	return immutable.None[float64](), false
 }
 
-func (val NormalValue) IsBytesArray() bool {
-	_, ok := val.value.([][]byte)
-	return ok
+func (NormalVoid) NillableString() (immutable.Option[string], bool) {
+	return immutable.None[string](), false
 }
 
-func (val NormalValue) IsTimeArray() bool {
-	_, ok := val.value.([]time.Time)
-	return ok
+func (NormalVoid) NillableBytes() (immutable.Option[[]byte], bool) {
+	return immutable.None[[]byte](), false
 }
 
-func (val NormalValue) IsNillableBoolArray() bool {
-	_, ok := val.value.([]immutable.Option[bool])
-	return ok
+func (NormalVoid) NillableTime() (immutable.Option[time.Time], bool) {
+	return immutable.None[time.Time](), false
 }
 
-func (val NormalValue) IsNillableIntArray() bool {
-	_, ok := val.value.([]immutable.Option[int64])
-	return ok
+func (NormalVoid) NillableDocument() (immutable.Option[*Document], bool) {
+	return immutable.None[*Document](), false
 }
 
-func (val NormalValue) IsNillableFloatArray() bool {
-	_, ok := val.value.([]immutable.Option[float64])
-	return ok
+func (NormalVoid) IsArray() bool {
+	return false
 }
 
-func (val NormalValue) IsNillableStringArray() bool {
-	_, ok := val.value.([]immutable.Option[string])
-	return ok
+func (NormalVoid) BoolArray() ([]bool, bool) {
+	return nil, false
 }
 
-func (val NormalValue) IsNillableBytesArray() bool {
-	_, ok := val.value.([]immutable.Option[[]byte])
-	return ok
+func (NormalVoid) IntArray() ([]int64, bool) {
+	return nil, false
 }
 
-func (val NormalValue) IsNillableTimeArray() bool {
-	_, ok := val.value.([]immutable.Option[time.Time])
-	return ok
+func (NormalVoid) FloatArray() ([]float64, bool) {
+	return nil, false
 }
 
-func (val NormalValue) IsArray() bool {
-	switch val.value.(type) {
-	case []bool, []int64, []float64, []string, [][]byte, []time.Time:
-		return true
-	default:
-		return false
+func (NormalVoid) StringArray() ([]string, bool) {
+	return nil, false
+}
+
+func (NormalVoid) BytesArray() ([][]byte, bool) {
+	return nil, false
+}
+
+func (NormalVoid) TimeArray() ([]time.Time, bool) {
+	return nil, false
+}
+
+func (NormalVoid) DocumentArray() ([]*Document, bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableBoolArray() ([]immutable.Option[bool], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableIntArray() ([]immutable.Option[int64], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableFloatArray() ([]immutable.Option[float64], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableStringArray() ([]immutable.Option[string], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableBytesArray() ([]immutable.Option[[]byte], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableTimeArray() ([]immutable.Option[time.Time], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableDocumentArray() ([]immutable.Option[*Document], bool) {
+	return nil, false
+}
+
+func (NormalVoid) BoolNillableArray() (immutable.Option[[]bool], bool) {
+	return immutable.None[[]bool](), false
+}
+
+func (NormalVoid) IntNillableArray() (immutable.Option[[]int64], bool) {
+	return immutable.None[[]int64](), false
+}
+
+func (NormalVoid) FloatNillableArray() (immutable.Option[[]float64], bool) {
+	return immutable.None[[]float64](), false
+}
+
+func (NormalVoid) StringNillableArray() (immutable.Option[[]string], bool) {
+	return immutable.None[[]string](), false
+}
+
+func (NormalVoid) BytesNillableArray() (immutable.Option[[][]byte], bool) {
+	return immutable.None[[][]byte](), false
+}
+
+func (NormalVoid) TimeNillableArray() (immutable.Option[[]time.Time], bool) {
+	return immutable.None[[]time.Time](), false
+}
+
+func (NormalVoid) DocumentNillableArray() (immutable.Option[[]*Document], bool) {
+	return immutable.None[[]*Document](), false
+}
+
+func (NormalVoid) NillableBoolNillableArray() (immutable.Option[[]immutable.Option[bool]], bool) {
+	return immutable.None[[]immutable.Option[bool]](), false
+}
+
+func (NormalVoid) NillableIntNillableArray() (immutable.Option[[]immutable.Option[int64]], bool) {
+	return immutable.None[[]immutable.Option[int64]](), false
+}
+
+func (NormalVoid) NillableFloatNillableArray() (immutable.Option[[]immutable.Option[float64]], bool) {
+	return immutable.None[[]immutable.Option[float64]](), false
+}
+
+func (NormalVoid) NillableStringNillableArray() (immutable.Option[[]immutable.Option[string]], bool) {
+	return immutable.None[[]immutable.Option[string]](), false
+}
+
+func (NormalVoid) NillableBytesNillableArray() (immutable.Option[[]immutable.Option[[]byte]], bool) {
+	return immutable.None[[]immutable.Option[[]byte]](), false
+}
+
+func (NormalVoid) NillableTimeNillableArray() (immutable.Option[[]immutable.Option[time.Time]], bool) {
+	return immutable.None[[]immutable.Option[time.Time]](), false
+}
+
+func (NormalVoid) NillableDocumentNillableArray() (immutable.Option[[]immutable.Option[*Document]], bool) {
+	return immutable.None[[]immutable.Option[*Document]](), false
+}
+
+type baseNormalValue[T any] struct {
+	NormalVoid
+	val T
+}
+
+func (v baseNormalValue[T]) Any() any {
+	return v.val
+}
+
+func newBaseNormalValue[T any](val T) baseNormalValue[T] {
+	return baseNormalValue[T]{val: val}
+}
+
+type baseArrayNormalValue[T any] struct {
+	NormalVoid
+	val T
+}
+
+func (v baseArrayNormalValue[T]) Any() any {
+	return v.val
+}
+
+func (v baseArrayNormalValue[T]) IsArray() bool {
+	return true
+}
+
+func newBaseArrayNormalValue[T any](val T) baseArrayNormalValue[T] {
+	return baseArrayNormalValue[T]{val: val}
+}
+
+type baseNillableNormalValue[T any] struct {
+	baseNormalValue[immutable.Option[T]]
+}
+
+func (v baseNillableNormalValue[T]) IsNil() bool {
+	return !v.val.HasValue()
+}
+
+func (v baseNillableNormalValue[T]) IsNillable() bool {
+	return true
+}
+
+func newBaseNillableNormalValue[T any](val immutable.Option[T]) baseNillableNormalValue[T] {
+	return baseNillableNormalValue[T]{newBaseNormalValue(val)}
+}
+
+type baseNillableArrayNormalValue[T any] struct {
+	baseArrayNormalValue[immutable.Option[T]]
+}
+
+func (v baseNillableArrayNormalValue[T]) IsNil() bool {
+	return !v.val.HasValue()
+}
+
+func (v baseNillableArrayNormalValue[T]) IsNillable() bool {
+	return true
+}
+
+func (v baseNillableArrayNormalValue[T]) IsArray() bool {
+	return true
+}
+
+func newBaseNillableArrayNormalValue[T any](val immutable.Option[T]) baseNillableArrayNormalValue[T] {
+	return baseNillableArrayNormalValue[T]{newBaseArrayNormalValue(val)}
+}
+
+func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
+	if !val.IsArray() {
+		return nil, NewCanNotTurnNormalValueIntoArray(val)
 	}
-}
-
-func (val NormalValue) IsNillableArray() bool {
-	switch val.value.(type) {
-	case []immutable.Option[bool],
-		[]immutable.Option[int64],
-		[]immutable.Option[float64],
-		[]immutable.Option[string],
-		[]immutable.Option[[]byte],
-		[]immutable.Option[time.Time]:
-		return true
-	default:
-		return false
+	if !val.IsNillable() {
+		if v, ok := val.BoolArray(); ok {
+			return toNormalArray(v, NewNormalBool), nil
+		}
+		if v, ok := val.IntArray(); ok {
+			return toNormalArray(v, NewNormalInt), nil
+		}
+		if v, ok := val.FloatArray(); ok {
+			return toNormalArray(v, NewNormalFloat), nil
+		}
+		if v, ok := val.StringArray(); ok {
+			return toNormalArray(v, NewNormalString), nil
+		}
+		if v, ok := val.BytesArray(); ok {
+			return toNormalArray(v, NewNormalBytes), nil
+		}
+		if v, ok := val.TimeArray(); ok {
+			return toNormalArray(v, NewNormalTime), nil
+		}
+		if v, ok := val.DocumentArray(); ok {
+			return toNormalArray(v, NewNormalDocument), nil
+		}
+		if v, ok := val.NillableBoolArray(); ok {
+			return toNormalArray(v, NewNormalNillableBool), nil
+		}
+		if v, ok := val.NillableIntArray(); ok {
+			return toNormalArray(v, NewNormalNillableInt), nil
+		}
+		if v, ok := val.NillableFloatArray(); ok {
+			return toNormalArray(v, NewNormalNillableFloat), nil
+		}
+		if v, ok := val.NillableStringArray(); ok {
+			return toNormalArray(v, NewNormalNillableString), nil
+		}
+		if v, ok := val.NillableBytesArray(); ok {
+			return toNormalArray(v, NewNormalNillableBytes), nil
+		}
+		if v, ok := val.NillableTimeArray(); ok {
+			return toNormalArray(v, NewNormalNillableTime), nil
+		}
+		if v, ok := val.NillableDocumentArray(); ok {
+			return toNormalArray(v, NewNormalNillableDocument), nil
+		}
+	} else {
+		if val.IsNil() {
+			return nil, nil
+		}
+		if v, ok := val.NillableBoolNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableBool), nil
+		}
+		if v, ok := val.NillableIntNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableInt), nil
+		}
+		if v, ok := val.NillableFloatNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableFloat), nil
+		}
+		if v, ok := val.NillableStringNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableString), nil
+		}
+		if v, ok := val.NillableBytesNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableBytes), nil
+		}
+		if v, ok := val.NillableTimeNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableTime), nil
+		}
+		if v, ok := val.NillableDocumentNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableDocument), nil
+		}
+		if v, ok := val.BoolNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalBool), nil
+		}
+		if v, ok := val.IntNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalInt), nil
+		}
+		if v, ok := val.FloatNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalFloat), nil
+		}
+		if v, ok := val.StringNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalString), nil
+		}
+		if v, ok := val.BytesNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalBytes), nil
+		}
+		if v, ok := val.TimeNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalTime), nil
+		}
+		if v, ok := val.DocumentNillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalDocument), nil
+		}
 	}
-}
-
-func (val NormalValue) IsAnyArray() bool {
-	return val.IsArray() || val.IsNillableArray()
-}
-
-func (val NormalValue) Bool() bool {
-	return val.value.(bool)
-}
-
-func (val NormalValue) Int() int64 {
-	return val.value.(int64)
-}
-
-func (val NormalValue) Float() float64 {
-	return val.value.(float64)
-}
-
-func (val NormalValue) String() string {
-	return val.value.(string)
-}
-
-func (val NormalValue) Bytes() []byte {
-	return val.value.([]byte)
-}
-
-func (val NormalValue) Time() time.Time {
-	return val.value.(time.Time)
-}
-
-func (val NormalValue) Array() []any {
-	switch v := val.value.(type) {
-	case []bool:
-		return toAnyArray(v)
-	case []int64:
-		return toAnyArray(v)
-	case []float64:
-		return toAnyArray(v)
-	case []string:
-		return toAnyArray(v)
-	case [][]byte:
-		return toAnyArray(v)
-	case []time.Time:
-		return toAnyArray(v)
-	}
-	return nil
-}
-
-func (val NormalValue) ArrayOfNormalValues() []NormalValue {
-	switch v := val.value.(type) {
-	case []bool:
-		return toNormalArray(v, NewBoolNormalValue)
-	case []string:
-		return toNormalArray(v, NewStringNormalValue)
-	case []int64:
-		return toNormalArray(v, NewIntNormalValue)
-	case []float64:
-		return toNormalArray(v, NewFloatNormalValue)
-	case []time.Time:
-		return toNormalArray(v, NewTimeNormalValue)
-	case [][]byte:
-		return toNormalArray(v, NewBytesNormalValue)
-	}
-	return nil
+	return nil, NewCanNotTurnNormalValueIntoArray(val)
 }
 
 func toNormalArray[T any](val []T, f func(T) NormalValue) []NormalValue {
@@ -214,188 +427,630 @@ func toNormalArray[T any](val []T, f func(T) NormalValue) []NormalValue {
 	return res
 }
 
-func (val NormalValue) NillableArray() []immutable.Option[any] {
-	switch v := val.value.(type) {
-	case []immutable.Option[bool]:
-		return toAnyNillableArray(v)
-	case []immutable.Option[string]:
-		return toAnyNillableArray(v)
-	case []immutable.Option[int64]:
-		return toAnyNillableArray(v)
-	case []immutable.Option[float64]:
-		return toAnyNillableArray(v)
-	case []immutable.Option[time.Time]:
-		return toAnyNillableArray(v)
-	case []immutable.Option[[]byte]:
-		return toAnyNillableArray(v)
-	}
+type normalNil struct {
+	NormalVoid
+}
+
+func (normalNil) IsNil() bool {
+	return true
+}
+
+func (normalNil) IsNillable() bool {
+	return true
+}
+
+func (normalNil) Any() any {
 	return nil
 }
 
-func toAnyArray[T any](val []T) []any {
-	res := make([]any, len(val))
-	for i := range val {
-		res[i] = val[i]
-	}
-	return res
+type normalBool struct {
+	baseNormalValue[bool]
 }
 
-func toAnyNillableArray[T any](val []immutable.Option[T]) []immutable.Option[any] {
-	res := make([]immutable.Option[any], len(val))
-	for i := range val {
-		if val[i].HasValue() {
-			res[i] = immutable.Some[any](val[i].Value())
-		} else {
-			res[i] = immutable.None[any]()
-		}
-	}
-	return res
+func (v normalBool) Bool() (bool, bool) {
+	return v.val, true
 }
 
-func (val NormalValue) BoolArray() []bool {
-	return val.value.([]bool)
+type normalInt struct {
+	baseNormalValue[int64]
 }
 
-func (val NormalValue) IntArray() []int64 {
-	return val.value.([]int64)
+func (v normalInt) Int() (int64, bool) {
+	return v.val, true
 }
 
-func (val NormalValue) FloatArray() []float64 {
-	return val.value.([]float64)
+type normalFloat struct {
+	baseNormalValue[float64]
 }
 
-func (val NormalValue) StringArray() []string {
-	return val.value.([]string)
+func (v normalFloat) Float() (float64, bool) {
+	return v.val, true
 }
 
-func (val NormalValue) BytesArray() [][]byte {
-	return val.value.([][]byte)
+type normalString struct {
+	baseNormalValue[string]
 }
 
-func (val NormalValue) TimeArray() []time.Time {
-	return val.value.([]time.Time)
+func (v normalString) String() (string, bool) {
+	return v.val, true
 }
 
-func (val NormalValue) NillableBoolArray() []immutable.Option[bool] {
-	return val.value.([]immutable.Option[bool])
+type normalBytes struct {
+	baseNormalValue[[]byte]
 }
 
-func (val NormalValue) NillableIntArray() []immutable.Option[int64] {
-	return val.value.([]immutable.Option[int64])
+func (v normalBytes) Bytes() ([]byte, bool) {
+	return v.val, true
 }
 
-func (val NormalValue) NillableFloatArray() []immutable.Option[float64] {
-	return val.value.([]immutable.Option[float64])
+type normalTime struct {
+	baseNormalValue[time.Time]
 }
 
-func (val NormalValue) NillableStringArray() []immutable.Option[string] {
-	return val.value.([]immutable.Option[string])
+func (v normalTime) Time() (time.Time, bool) {
+	return v.val, true
 }
 
-func (val NormalValue) NillableBytesArray() []immutable.Option[[]byte] {
-	return val.value.([]immutable.Option[[]byte])
+type normalDocument struct {
+	baseNormalValue[*Document]
 }
 
-func (val NormalValue) NillableTimeArray() []immutable.Option[time.Time] {
-	return val.value.([]immutable.Option[time.Time])
+func (v normalDocument) Document() (*Document, bool) {
+	return v.val, true
+}
+
+type normalNillableBool struct {
+	baseNillableNormalValue[bool]
+}
+
+func (v normalNillableBool) NillableBool() (immutable.Option[bool], bool) {
+	return v.val, true
+}
+
+type normalNillableInt struct {
+	baseNillableNormalValue[int64]
+}
+
+func (v normalNillableInt) NillableInt() (immutable.Option[int64], bool) {
+	return v.val, true
+}
+
+type normalNillableFloat struct {
+	baseNillableNormalValue[float64]
+}
+
+func (v normalNillableFloat) NillableFloat() (immutable.Option[float64], bool) {
+	return v.val, true
+}
+
+type normalNillableString struct {
+	baseNillableNormalValue[string]
+}
+
+func (v normalNillableString) NillableString() (immutable.Option[string], bool) {
+	return v.val, true
+}
+
+type normalNillableBytes struct {
+	baseNillableNormalValue[[]byte]
+}
+
+func (v normalNillableBytes) NillableBytes() (immutable.Option[[]byte], bool) {
+	return v.val, true
+}
+
+type normalNillableTime struct {
+	baseNillableNormalValue[time.Time]
+}
+
+func (v normalNillableTime) NillableTime() (immutable.Option[time.Time], bool) {
+	return v.val, true
+}
+
+type normalNillableDocument struct {
+	baseNillableNormalValue[*Document]
+}
+
+func (v normalNillableDocument) NillableDocument() (immutable.Option[*Document], bool) {
+	return v.val, true
+}
+
+type normalBoolArray struct {
+	baseArrayNormalValue[[]bool]
+}
+
+func (v normalBoolArray) BoolArray() ([]bool, bool) {
+	return v.val, true
+}
+
+type normalIntArray struct {
+	baseArrayNormalValue[[]int64]
+}
+
+func (v normalIntArray) IntArray() ([]int64, bool) {
+	return v.val, true
+}
+
+type normalFloatArray struct {
+	baseArrayNormalValue[[]float64]
+}
+
+func (v normalFloatArray) FloatArray() ([]float64, bool) {
+	return v.val, true
+}
+
+type normalStringArray struct {
+	baseArrayNormalValue[[]string]
+}
+
+func (v normalStringArray) StringArray() ([]string, bool) {
+	return v.val, true
+}
+
+type normalBytesArray struct {
+	baseArrayNormalValue[[][]byte]
+}
+
+func (v normalBytesArray) BytesArray() ([][]byte, bool) {
+	return v.val, true
+}
+
+type normalTimeArray struct {
+	baseArrayNormalValue[[]time.Time]
+}
+
+func (v normalTimeArray) TimeArray() ([]time.Time, bool) {
+	return v.val, true
+}
+
+type normalDocumentArray struct {
+	baseArrayNormalValue[[]*Document]
+}
+
+func (v normalDocumentArray) DocumentArray() ([]*Document, bool) {
+	return v.val, true
+}
+
+type normalBoolNillableArray struct {
+	baseNillableArrayNormalValue[[]bool]
+}
+
+func (v normalBoolNillableArray) BoolNillableArray() (immutable.Option[[]bool], bool) {
+	return v.val, true
+}
+
+type normalIntNillableArray struct {
+	baseNillableArrayNormalValue[[]int64]
+}
+
+func (v normalIntNillableArray) IntNillableArray() (immutable.Option[[]int64], bool) {
+	return v.val, true
+}
+
+type normalFloatNillableArray struct {
+	baseNillableArrayNormalValue[[]float64]
+}
+
+func (v normalFloatNillableArray) FloatNillableArray() (immutable.Option[[]float64], bool) {
+	return v.val, true
+}
+
+type normalStringNillableArray struct {
+	baseNillableArrayNormalValue[[]string]
+}
+
+func (v normalStringNillableArray) StringNillableArray() (immutable.Option[[]string], bool) {
+	return v.val, true
+}
+
+type normalBytesNillableArray struct {
+	baseNillableArrayNormalValue[[][]byte]
+}
+
+func (v normalBytesNillableArray) BytesNillableArray() (immutable.Option[[][]byte], bool) {
+	return v.val, true
+}
+
+type normalTimeNillableArray struct {
+	baseNillableArrayNormalValue[[]time.Time]
+}
+
+func (v normalTimeNillableArray) TimeNillableArray() (immutable.Option[[]time.Time], bool) {
+	return v.val, true
+}
+
+type normalDocumentNillableArray struct {
+	baseNillableArrayNormalValue[[]*Document]
+}
+
+func (v normalDocumentNillableArray) DocumentNillableArray() (immutable.Option[[]*Document], bool) {
+	return v.val, true
+}
+
+type normalNillableBoolArray struct {
+	baseArrayNormalValue[[]immutable.Option[bool]]
+}
+
+func (v normalNillableBoolArray) NillableBoolArray() ([]immutable.Option[bool], bool) {
+	return v.val, true
+}
+
+type normalNillableIntArray struct {
+	baseArrayNormalValue[[]immutable.Option[int64]]
+}
+
+func (v normalNillableIntArray) NillableIntArray() ([]immutable.Option[int64], bool) {
+	return v.val, true
+}
+
+type normalNillableFloatArray struct {
+	baseArrayNormalValue[[]immutable.Option[float64]]
+}
+
+func (v normalNillableFloatArray) NillableFloatArray() ([]immutable.Option[float64], bool) {
+	return v.val, true
+}
+
+type normalNillableStringArray struct {
+	baseArrayNormalValue[[]immutable.Option[string]]
+}
+
+func (v normalNillableStringArray) NillableStringArray() ([]immutable.Option[string], bool) {
+	return v.val, true
+}
+
+type normalNillableBytesArray struct {
+	baseArrayNormalValue[[]immutable.Option[[]byte]]
+}
+
+func (v normalNillableBytesArray) NillableBytesArray() ([]immutable.Option[[]byte], bool) {
+	return v.val, true
+}
+
+type normalNillableTimeArray struct {
+	baseArrayNormalValue[[]immutable.Option[time.Time]]
+}
+
+func (v normalNillableTimeArray) NillableTimeArray() ([]immutable.Option[time.Time], bool) {
+	return v.val, true
+}
+
+type normalNillableDocumentArray struct {
+	baseArrayNormalValue[[]immutable.Option[*Document]]
+}
+
+func (v normalNillableDocumentArray) NillableDocumentArray() ([]immutable.Option[*Document], bool) {
+	return v.val, true
+}
+
+type normalNillableBoolNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[bool]]
+}
+
+func (v normalNillableBoolNillableArray) NillableBoolNillableArray() (
+	immutable.Option[[]immutable.Option[bool]], bool,
+) {
+	return v.val, true
+}
+
+type normalNillableIntNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[int64]]
+}
+
+func (v normalNillableIntNillableArray) NillableIntNillableArray() (
+	immutable.Option[[]immutable.Option[int64]], bool,
+) {
+	return v.val, true
+}
+
+type normalNillableFloatNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[float64]]
+}
+
+func (v normalNillableFloatNillableArray) NillableFloatNillableArray() (
+	immutable.Option[[]immutable.Option[float64]], bool,
+) {
+	return v.val, true
+}
+
+type normalNillableStringNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[string]]
+}
+
+func (v normalNillableStringNillableArray) NillableStringNillableArray() (
+	immutable.Option[[]immutable.Option[string]], bool,
+) {
+	return v.val, true
+}
+
+type normalNillableBytesNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[[]byte]]
+}
+
+func (v normalNillableBytesNillableArray) NillableBytesNillableArray() (
+	immutable.Option[[]immutable.Option[[]byte]], bool,
+) {
+	return v.val, true
+}
+
+type normalNillableTimeNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[time.Time]]
+}
+
+func (v normalNillableTimeNillableArray) NillableTimeNillableArray() (
+	immutable.Option[[]immutable.Option[time.Time]], bool,
+) {
+	return v.val, true
+}
+
+type normalNillableDocumentNillableArray struct {
+	baseNillableArrayNormalValue[[]immutable.Option[*Document]]
+}
+
+func (v normalNillableDocumentNillableArray) NillableDocumentNillableArray() (
+	immutable.Option[[]immutable.Option[*Document]], bool,
+) {
+	return v.val, true
+}
+
+func newNormalInt(val int64) NormalValue {
+	return normalInt{newBaseNormalValue(val)}
+}
+
+func newNormalFloat(val float64) NormalValue {
+	return normalFloat{newBaseNormalValue(val)}
 }
 
 func NewNormalValue(val any) (NormalValue, error) {
 	if val == nil {
-		return NormalValue{}, nil
+		return normalNil{}, nil
 	}
 	switch v := val.(type) {
-	case bool, int64, float64, string, []byte, time.Time, []bool, []int64, []float64, []string, [][]byte,
-		[]immutable.Option[bool], []immutable.Option[int64], []immutable.Option[float64], []immutable.Option[string],
-		[]immutable.Option[[]byte], []immutable.Option[time.Time]:
-		return NormalValue{value: val}, nil
+	case bool:
+		return NewNormalBool(v), nil
 	case int8:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case int16:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case int32:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
+	case int64:
+		return newNormalInt(v), nil
 	case int:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case uint8:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case uint16:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case uint32:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case uint64:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case uint:
-		return NormalValue{int64(v)}, nil
+		return newNormalInt(int64(v)), nil
 	case float32:
-		return NormalValue{value: float64(v)}, nil
+		return newNormalFloat(float64(v)), nil
+	case float64:
+		return newNormalFloat(v), nil
+	case string:
+		return NewNormalString(v), nil
+	case []byte:
+		return NewNormalBytes(v), nil
+	case time.Time:
+		return NewNormalTime(v), nil
+	case *Document:
+		return NewNormalDocument(v), nil
+
+	case immutable.Option[bool]:
+		return NewNormalNillableBool(v), nil
+	case immutable.Option[int8]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[int16]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[int32]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[int64]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[int]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[uint8]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[uint16]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[uint32]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[uint64]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[uint]:
+		return NewNormalNillableInt(v), nil
+	case immutable.Option[float32]:
+		return NewNormalNillableFloat(v), nil
+	case immutable.Option[float64]:
+		return NewNormalNillableFloat(v), nil
+	case immutable.Option[string]:
+		return NewNormalNillableString(v), nil
+	case immutable.Option[[]byte]:
+		return NewNormalNillableBytes(v), nil
+	case immutable.Option[time.Time]:
+		return NewNormalNillableTime(v), nil
+	case immutable.Option[*Document]:
+		return NewNormalNillableDocument(v), nil
+
+	case []bool:
+		return NewNormalBoolArray(v), nil
 	case []int8:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []int16:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []int32:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
+	case []int64:
+		return NewNormalIntArray(v), nil
 	case []int:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []uint16:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []uint32:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []uint64:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []uint:
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 	case []float32:
-		return NewFloatArrayNormalValue(v), nil
+		return NewNormalFloatArray(v), nil
+	case []float64:
+		return NewNormalFloatArray(v), nil
+	case []string:
+		return NewNormalStringArray(v), nil
+	case [][]byte:
+		return NewNormalBytesArray(v), nil
+	case []time.Time:
+		return NewNormalTimeArray(v), nil
+	case []*Document:
+		return NewNormalDocumentArray(v), nil
+
+	case []immutable.Option[bool]:
+		return NewNormalNillableBoolArray(v), nil
 	case []immutable.Option[int8]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[int16]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[int32]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
+	case []immutable.Option[int64]:
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[int]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[uint8]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[uint16]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[uint32]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[uint64]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[uint]:
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[float32]:
-		return NewNillableFloatArrayNormalValue(v), nil
+		return NewNormalNillableFloatArray(v), nil
+	case []immutable.Option[float64]:
+		return NewNormalNillableFloatArray(v), nil
+	case []immutable.Option[string]:
+		return NewNormalNillableStringArray(v), nil
+	case []immutable.Option[[]byte]:
+		return NewNormalNillableBytesArray(v), nil
+	case []immutable.Option[time.Time]:
+		return NewNormalNillableTimeArray(v), nil
+	case []immutable.Option[*Document]:
+		return NewNormalNillableDocumentArray(v), nil
+
+	case immutable.Option[[]bool]:
+		return NewNormalBoolNillableArray(v), nil
+	case immutable.Option[[]int8]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]int16]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]int32]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]int64]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]int]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]uint16]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]uint32]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]uint64]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]uint]:
+		return NewNormalIntNillableArray(v), nil
+	case immutable.Option[[]float32]:
+		return NewNormalFloatNillableArray(v), nil
+	case immutable.Option[[]float64]:
+		return NewNormalFloatNillableArray(v), nil
+	case immutable.Option[[]string]:
+		return NewNormalStringNillableArray(v), nil
+	case immutable.Option[[][]byte]:
+		return NewNormalBytesNillableArray(v), nil
+	case immutable.Option[[]time.Time]:
+		return NewNormalTimeNillableArray(v), nil
+	case immutable.Option[[]*Document]:
+		return NewNormalDocumentNillableArray(v), nil
+
+	case immutable.Option[[]immutable.Option[bool]]:
+		return NewNormalNillableBoolNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[int8]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[int16]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[int32]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[int64]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[int]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[uint8]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[uint16]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[uint32]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[uint64]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[uint]]:
+		return NewNormalNillableIntNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[float32]]:
+		return NewNormalNillableFloatNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[float64]]:
+		return NewNormalNillableFloatNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[string]]:
+		return NewNormalNillableStringNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[[]byte]]:
+		return NewNormalNillableBytesNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[time.Time]]:
+		return NewNormalNillableTimeNillableArray(v), nil
+	case immutable.Option[[]immutable.Option[*Document]]:
+		return NewNormalNillableDocumentNillableArray(v), nil
+
 	case []any:
 		if len(v) == 0 {
-			return NormalValue{}, NewCanNotNormalizeValue(val)
+			return nil, NewCanNotNormalizeValue(val)
 		}
 		first, err := NewNormalValue(v[0])
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		switch {
-		case first.IsBool():
-			return convertAnyArrToTypedArr[bool](v)
-		case first.IsInt():
+		if _, ok := first.Bool(); ok {
+			return convertAnyArrToTypedArr[bool](v, NewNormalBoolArray, NewNormalNillableBoolArray)
+		}
+		if _, ok := first.Int(); ok {
 			return convertAnyArrToIntOrFloatArr(v)
-		case first.IsFloat():
+		}
+		if _, ok := first.Float(); ok {
 			return convertAnyArrToFloatArr(v)
-		case first.IsString():
-			return convertAnyArrToTypedArr[string](v)
-		case first.IsBytes():
-			return convertAnyArrToTypedArr[[]byte](v)
-		case first.IsTime():
-			return convertAnyArrToTypedArr[time.Time](v)
+		}
+		if _, ok := first.String(); ok {
+			return convertAnyArrToTypedArr[string](v, NewNormalStringArray, NewNormalNillableStringArray)
+		}
+		if _, ok := first.Bytes(); ok {
+			return convertAnyArrToTypedArr[[]byte](v, NewNormalBytesArray, NewNormalNillableBytesArray)
+		}
+		if _, ok := first.Time(); ok {
+			return convertAnyArrToTypedArr[time.Time](v, NewNormalTimeArray, NewNormalNillableTimeArray)
+		}
+		if _, ok := first.Document(); ok {
+			return convertAnyArrToTypedArr[*Document](v, NewNormalDocumentArray, NewNormalNillableDocumentArray)
 		}
 	}
-	return NormalValue{}, NewCanNotNormalizeValue(val)
+	return nil, NewCanNotNormalizeValue(val)
 }
 
 func convertAnyArrToIntOrFloatArr(arr []any) (NormalValue, error) {
 	result := make([]int64, len(arr))
 	for i := range arr {
+		if arr[i] == nil {
+			return convertAnyArrToNillableIntOrFloatArr(arr)
+		}
 		switch v := arr[i].(type) {
 		case int64:
 			result[i] = v
@@ -420,172 +1075,457 @@ func convertAnyArrToIntOrFloatArr(arr []any) (NormalValue, error) {
 		case uint:
 			result[i] = int64(v)
 		default:
-			return NormalValue{}, NewCanNotNormalizeValue(arr)
+			return nil, NewCanNotNormalizeValue(arr)
 		}
 	}
-	return NormalValue{value: result}, nil
+	return NewNormalIntArray(result), nil
+}
+
+func convertAnyArrToNillableIntOrFloatArr(arr []any) (NormalValue, error) {
+	result := make([]immutable.Option[int64], len(arr))
+	for i := range arr {
+		if arr[i] == nil {
+			result[i] = immutable.None[int64]()
+			continue
+		}
+		var intVal int64
+		switch v := arr[i].(type) {
+		case int64:
+			intVal = v
+		case float64, float32:
+			return convertAnyArrToFloatArr(arr)
+		case int8:
+			intVal = int64(v)
+		case int16:
+			intVal = int64(v)
+		case int32:
+			intVal = int64(v)
+		case int:
+			intVal = int64(v)
+		case uint8:
+			intVal = int64(v)
+		case uint16:
+			intVal = int64(v)
+		case uint32:
+			intVal = int64(v)
+		case uint64:
+			intVal = int64(v)
+		case uint:
+			intVal = int64(v)
+		default:
+			return nil, NewCanNotNormalizeValue(arr)
+		}
+		result[i] = immutable.Some(intVal)
+	}
+	return NewNormalNillableIntArray(result), nil
 }
 
 func convertAnyArrToFloatArr(arr []any) (NormalValue, error) {
 	result := make([]float64, len(arr))
 	for i := range arr {
-		if v, ok := arr[i].(float64); ok {
-			result[i] = v
-		} else if v, ok := arr[i].(float32); ok {
-			result[i] = float64(v)
-		} else {
-			return NormalValue{}, NewCanNotNormalizeValue(arr)
+		if arr[i] == nil {
+			return convertAnyArrToNillableFloatArr(arr)
 		}
+
+		var floatVal float64
+		switch v := arr[i].(type) {
+		case float64:
+			floatVal = v
+		case float32:
+			floatVal = float64(v)
+		case int8:
+			floatVal = float64(v)
+		case int16:
+			floatVal = float64(v)
+		case int32:
+			floatVal = float64(v)
+		case int64:
+			floatVal = float64(v)
+		case int:
+			floatVal = float64(v)
+		case uint8:
+			floatVal = float64(v)
+		case uint16:
+			floatVal = float64(v)
+		case uint32:
+			floatVal = float64(v)
+		case uint64:
+			floatVal = float64(v)
+		case uint:
+			floatVal = float64(v)
+		default:
+			return nil, NewCanNotNormalizeValue(arr)
+		}
+		result[i] = floatVal
 	}
-	return NormalValue{value: result}, nil
+	return NewNormalFloatArray(result), nil
 }
 
-func convertAnyArrToTypedArr[T any](arr []any) (NormalValue, error) {
+func convertAnyArrToNillableFloatArr(arr []any) (NormalValue, error) {
+	result := make([]immutable.Option[float64], len(arr))
+	for i := range arr {
+		if arr[i] == nil {
+			result[i] = immutable.None[float64]()
+			continue
+		}
+		var floatVal float64
+		switch v := arr[i].(type) {
+		case float64:
+			floatVal = v
+		case float32:
+			floatVal = float64(v)
+		case int8:
+			floatVal = float64(v)
+		case int16:
+			floatVal = float64(v)
+		case int32:
+			floatVal = float64(v)
+		case int64:
+			floatVal = float64(v)
+		case int:
+			floatVal = float64(v)
+		case uint8:
+			floatVal = float64(v)
+		case uint16:
+			floatVal = float64(v)
+		case uint32:
+			floatVal = float64(v)
+		case uint64:
+			floatVal = float64(v)
+		case uint:
+			floatVal = float64(v)
+		default:
+			return nil, NewCanNotNormalizeValue(arr)
+		}
+		result[i] = immutable.Some(floatVal)
+	}
+	return NewNormalNillableFloatArray(result), nil
+}
+
+func convertAnyArrToTypedArr[T any](
+	arr []any,
+	newNormalArr func([]T) NormalValue,
+	newNormalNillableArr func([]immutable.Option[T]) NormalValue,
+) (NormalValue, error) {
 	result := make([]T, len(arr))
 	for i := range arr {
+		if arr[i] == nil {
+			return convertAnyArrToNillableTypedArr[T](arr, newNormalNillableArr)
+		}
 		if v, ok := arr[i].(T); ok {
 			result[i] = v
 		} else {
-			return NormalValue{}, NewCanNotNormalizeValue(arr)
+			return nil, NewCanNotNormalizeValue(arr)
 		}
 	}
-	return NormalValue{value: result}, nil
+	return newNormalArr(result), nil
 }
 
-func NewNilNormalValue() NormalValue {
-	return NormalValue{}
+func convertAnyArrToNillableTypedArr[T any](
+	arr []any,
+	newNormalNillableArr func([]immutable.Option[T]) NormalValue,
+) (NormalValue, error) {
+	result := make([]immutable.Option[T], len(arr))
+	for i := range arr {
+		if arr[i] == nil {
+			result[i] = immutable.None[T]()
+			continue
+		}
+		if v, ok := arr[i].(T); ok {
+			result[i] = immutable.Some(v)
+		} else {
+			return nil, NewCanNotNormalizeValue(arr)
+		}
+	}
+	return newNormalNillableArr(result), nil
 }
 
-func NewBoolNormalValue(val bool) NormalValue {
-	return NormalValue{value: val}
+func NewNormalNil() NormalValue {
+	return normalNil{}
 }
 
-func NewIntNormalValue[T constraints.Integer | constraints.Float](val T) NormalValue {
-	return NormalValue{value: int64(val)}
+func NewNormalBool(val bool) NormalValue {
+	return normalBool{baseNormalValue[bool]{val: val}}
 }
 
-func NewFloatNormalValue[T constraints.Integer | constraints.Float](val T) NormalValue {
-	return NormalValue{value: float64(val)}
+func NewNormalInt[T constraints.Integer | constraints.Float](val T) NormalValue {
+	return normalInt{baseNormalValue[int64]{val: int64(val)}}
 }
 
-func NewStringNormalValue[T string | []byte](val T) NormalValue {
-	return NormalValue{value: string(val)}
+func NewNormalFloat[T constraints.Integer | constraints.Float](val T) NormalValue {
+	return normalFloat{baseNormalValue[float64]{val: float64(val)}}
 }
 
-func NewBytesNormalValue[T string | []byte](val T) NormalValue {
-	return NormalValue{value: []byte(val)}
+func NewNormalString[T string | []byte](val T) NormalValue {
+	return normalString{baseNormalValue[string]{val: string(val)}}
 }
 
-func NewTimeNormalValue(val time.Time) NormalValue {
-	return NormalValue{value: val}
+func NewNormalBytes[T string | []byte](val T) NormalValue {
+	return normalBytes{baseNormalValue[[]byte]{val: []byte(val)}}
 }
 
-func NewBoolArrayNormalValue(val []bool) NormalValue {
-	return NormalValue{value: val}
+func NewNormalTime(val time.Time) NormalValue {
+	return normalTime{baseNormalValue[time.Time]{val: val}}
 }
 
-func NewIntArrayNormalValue[T constraints.Integer | constraints.Float](val []T) NormalValue {
-	return normalizeNumberArr[int64](val)
+func NewNormalDocument(val *Document) NormalValue {
+	return normalDocument{baseNormalValue[*Document]{val: val}}
 }
 
-func NewFloatArrayNormalValue[T constraints.Integer | constraints.Float](val []T) NormalValue {
-	return normalizeNumberArr[float64](val)
+func NewNormalNillableBool(val immutable.Option[bool]) NormalValue {
+	return normalNillableBool{newBaseNillableNormalValue(val)}
 }
 
-func NewStringArrayNormalValue[T string | []byte](val []T) NormalValue {
-	return normalizeCharsArr[string](val)
+func NewNormalNillableInt[T constraints.Integer | constraints.Float](val immutable.Option[T]) NormalValue {
+	return normalNillableInt{newBaseNillableNormalValue(normalizeNillableNum[int64](val))}
 }
 
-func NewBytesArrayNormalValue[T string | []byte](val []T) NormalValue {
-	return normalizeCharsArr[[]byte](val)
+func NewNormalNillableFloat[T constraints.Integer | constraints.Float](val immutable.Option[T]) NormalValue {
+	return normalNillableFloat{newBaseNillableNormalValue(normalizeNillableNum[float64](val))}
 }
 
-func NewTimeArrayNormalValue(val []time.Time) NormalValue {
-	return NormalValue{value: val}
+func NewNormalNillableString[T string | []byte](val immutable.Option[T]) NormalValue {
+	return normalNillableString{newBaseNillableNormalValue(normalizeNillableChars[string](val))}
 }
 
-func NewNillableBoolArrayNormalValue(val []immutable.Option[bool]) NormalValue {
-	return NormalValue{value: val}
+func NewNormalNillableBytes[T string | []byte](val immutable.Option[T]) NormalValue {
+	return normalNillableBytes{newBaseNillableNormalValue(normalizeNillableChars[[]byte](val))}
 }
 
-func NewNillableIntArrayNormalValue[T constraints.Integer | constraints.Float](val []immutable.Option[T]) NormalValue {
-	return normalizeNillableNumberArr[int64](val)
+func NewNormalNillableTime(val immutable.Option[time.Time]) NormalValue {
+	return normalNillableTime{newBaseNillableNormalValue(val)}
 }
 
-func NewNillableFloatArrayNormalValue[T constraints.Integer | constraints.Float](
+func NewNormalNillableDocument(val immutable.Option[*Document]) NormalValue {
+	return normalNillableDocument{newBaseNillableNormalValue(val)}
+}
+
+func NewNormalBoolArray(val []bool) NormalValue {
+	return normalBoolArray{newBaseArrayNormalValue(val)}
+}
+
+func NewNormalIntArray[T constraints.Integer | constraints.Float](val []T) NormalValue {
+	return normalIntArray{newBaseArrayNormalValue(normalizeNumArr[int64](val))}
+}
+
+func NewNormalFloatArray[T constraints.Integer | constraints.Float](val []T) NormalValue {
+	return normalFloatArray{newBaseArrayNormalValue(normalizeNumArr[float64](val))}
+}
+
+func NewNormalStringArray[T string | []byte](val []T) NormalValue {
+	return normalStringArray{newBaseArrayNormalValue(normalizeCharsArr[string](val))}
+}
+
+func NewNormalBytesArray[T string | []byte](val []T) NormalValue {
+	return normalBytesArray{newBaseArrayNormalValue(normalizeCharsArr[[]byte](val))}
+}
+
+func NewNormalTimeArray(val []time.Time) NormalValue {
+	return normalTimeArray{newBaseArrayNormalValue(val)}
+}
+
+func NewNormalDocumentArray(val []*Document) NormalValue {
+	return normalDocumentArray{newBaseArrayNormalValue(val)}
+}
+
+func NewNormalBoolNillableArray(val immutable.Option[[]bool]) NormalValue {
+	return normalBoolNillableArray{newBaseNillableArrayNormalValue(val)}
+}
+
+func NewNormalIntNillableArray[T constraints.Integer | constraints.Float](val immutable.Option[[]T]) NormalValue {
+	return normalIntNillableArray{newBaseNillableArrayNormalValue(normalizeNumNillableArr[int64](val))}
+}
+
+func NewNormalFloatNillableArray[T constraints.Integer | constraints.Float](val immutable.Option[[]T]) NormalValue {
+	return normalFloatNillableArray{newBaseNillableArrayNormalValue(normalizeNumNillableArr[float64](val))}
+}
+
+func NewNormalStringNillableArray[T string | []byte](val immutable.Option[[]T]) NormalValue {
+	return normalStringNillableArray{newBaseNillableArrayNormalValue(normalizeCharsNillableArr[string](val))}
+}
+
+func NewNormalBytesNillableArray[T string | []byte](val immutable.Option[[]T]) NormalValue {
+	return normalBytesNillableArray{newBaseNillableArrayNormalValue(normalizeCharsNillableArr[[]byte](val))}
+}
+
+func NewNormalTimeNillableArray(val immutable.Option[[]time.Time]) NormalValue {
+	return normalTimeNillableArray{newBaseNillableArrayNormalValue(val)}
+}
+
+func NewNormalDocumentNillableArray(val immutable.Option[[]*Document]) NormalValue {
+	return normalDocumentNillableArray{newBaseNillableArrayNormalValue(val)}
+}
+
+func NewNormalNillableBoolArray(val []immutable.Option[bool]) NormalValue {
+	return normalNillableBoolArray{newBaseArrayNormalValue(val)}
+}
+
+func NewNormalNillableIntArray[T constraints.Integer | constraints.Float](val []immutable.Option[T]) NormalValue {
+	return normalNillableIntArray{newBaseArrayNormalValue(normalizeNillableNumArr[int64](val))}
+}
+
+func NewNormalNillableFloatArray[T constraints.Integer | constraints.Float](
 	val []immutable.Option[T],
 ) NormalValue {
-	return normalizeNillableNumberArr[float64](val)
+	return normalNillableFloatArray{newBaseArrayNormalValue(normalizeNillableNumArr[float64](val))}
 }
 
-func NewNillableStringArrayNormalValue[T string | []byte](val []immutable.Option[T]) NormalValue {
-	return normalizeNillableCharsArr[string](val)
+func NewNormalNillableStringArray[T string | []byte](val []immutable.Option[T]) NormalValue {
+	return normalNillableStringArray{newBaseArrayNormalValue(normalizeNillableCharsArr[string](val))}
 }
 
-func NewNillableBytesArrayNormalValue[T string | []byte](val []immutable.Option[T]) NormalValue {
-	return normalizeNillableCharsArr[[]byte](val)
+func NewNormalNillableBytesArray[T string | []byte](val []immutable.Option[T]) NormalValue {
+	return normalNillableBytesArray{newBaseArrayNormalValue(normalizeNillableCharsArr[[]byte](val))}
 }
 
-func NewNillableTimeArrayNormalValue(val []immutable.Option[time.Time]) NormalValue {
-	return NormalValue{value: val}
+func NewNormalNillableTimeArray(val []immutable.Option[time.Time]) NormalValue {
+	return normalNillableTimeArray{newBaseArrayNormalValue(val)}
 }
 
-func normalizeCharsArr[R string | []byte, T string | []byte](val []T) NormalValue {
-	var v any = val
-	if resultChars, ok := v.(R); ok {
-		return NormalValue{value: resultChars}
-	}
-	resultChars := make([]R, len(val))
-	for i, v := range val {
-		resultChars[i] = R(v)
-	}
-	return NormalValue{value: resultChars}
+func NewNormalNillableDocumentArray(val []immutable.Option[*Document]) NormalValue {
+	return normalNillableDocumentArray{newBaseArrayNormalValue(val)}
 }
 
-func normalizeNillableCharsArr[R string | []byte, T string | []byte](val []immutable.Option[T]) NormalValue {
-	var v any = val
-	if resultChars, ok := v.(R); ok {
-		return NormalValue{value: resultChars}
-	}
-	resultChars := make([]immutable.Option[R], len(val))
-	for i, v := range val {
-		if v.HasValue() {
-			resultChars[i] = immutable.Some(R(v.Value()))
-		} else {
-			resultChars[i] = immutable.None[R]()
-		}
-	}
-	return NormalValue{value: resultChars}
+func NewNormalNillableBoolNillableArray(val immutable.Option[[]immutable.Option[bool]]) NormalValue {
+	return normalNillableBoolNillableArray{newBaseNillableArrayNormalValue(val)}
 }
 
-func normalizeNumberArr[R constraints.Integer | constraints.Float, T constraints.Integer | constraints.Float](
-	val []T,
+func NewNormalNillableIntNillableArray[T constraints.Integer | constraints.Float](
+	val immutable.Option[[]immutable.Option[T]],
 ) NormalValue {
-	var v any = val
-	if numArr, ok := v.([]R); ok {
-		return NormalValue{value: numArr}
+	return normalNillableIntNillableArray{
+		newBaseNillableArrayNormalValue(normalizeNillableNumNillableArr[int64](val)),
 	}
-	numArr := make([]R, len(val))
-	for i, v := range val {
-		numArr[i] = R(v)
-	}
-	return NormalValue{value: numArr}
 }
 
-func normalizeNillableNumberArr[R constraints.Integer | constraints.Float, T constraints.Integer | constraints.Float](
+func NewNormalNillableFloatNillableArray[T constraints.Integer | constraints.Float](
+	val immutable.Option[[]immutable.Option[T]],
+) NormalValue {
+	return normalNillableFloatNillableArray{
+		newBaseNillableArrayNormalValue(normalizeNillableNumNillableArr[float64](val)),
+	}
+}
+
+func NewNormalNillableStringNillableArray[T string | []byte](val immutable.Option[[]immutable.Option[T]]) NormalValue {
+	return normalNillableStringNillableArray{
+		newBaseNillableArrayNormalValue(normalizeNillableCharsNillableArr[string](val)),
+	}
+}
+
+func NewNormalNillableBytesNillableArray[T string | []byte](val immutable.Option[[]immutable.Option[T]]) NormalValue {
+	return normalNillableBytesNillableArray{
+		newBaseNillableArrayNormalValue(normalizeNillableCharsNillableArr[[]byte](val)),
+	}
+}
+
+func NewNormalNillableTimeNillableArray(val immutable.Option[[]immutable.Option[time.Time]]) NormalValue {
+	return normalNillableTimeNillableArray{newBaseNillableArrayNormalValue(val)}
+}
+
+func NewNormalNillableDocumentNillableArray(val immutable.Option[[]immutable.Option[*Document]]) NormalValue {
+	return normalNillableDocumentNillableArray{newBaseNillableArrayNormalValue(val)}
+}
+
+func normalizeNillableNum[R int64 | float64, T constraints.Integer | constraints.Float](
+	val immutable.Option[T],
+) immutable.Option[R] {
+	if val.HasValue() {
+		return immutable.Some(R(val.Value()))
+	}
+	return immutable.None[R]()
+}
+
+func normalizeNumArr[R int64 | float64, T constraints.Integer | constraints.Float](val []T) []R {
+	var v any = val
+	if arr, ok := v.([]R); ok {
+		return arr
+	}
+	arr := make([]R, len(val))
+	for i, v := range val {
+		arr[i] = R(v)
+	}
+	return arr
+}
+
+func normalizeNumNillableArr[R int64 | float64, T constraints.Integer | constraints.Float](
+	val immutable.Option[[]T],
+) immutable.Option[[]R] {
+	if val.HasValue() {
+		return immutable.Some(normalizeNumArr[R](val.Value()))
+	}
+	return immutable.None[[]R]()
+}
+
+func normalizeNillableNumArr[R int64 | float64, T constraints.Integer | constraints.Float](
 	val []immutable.Option[T],
-) NormalValue {
+) []immutable.Option[R] {
 	var v any = val
-	if numArr, ok := v.([]R); ok {
-		return NormalValue{value: numArr}
+	if arr, ok := v.([]immutable.Option[R]); ok {
+		return arr
 	}
-	numArr := make([]immutable.Option[R], len(val))
+	arr := make([]immutable.Option[R], len(val))
+	for i, v := range val {
+		arr[i] = normalizeNillableNum[R](v)
+	}
+	return arr
+}
+
+func normalizeNillableNumNillableArr[R int64 | float64, T constraints.Integer | constraints.Float](
+	val immutable.Option[[]immutable.Option[T]],
+) immutable.Option[[]immutable.Option[R]] {
+	if val.HasValue() {
+		return immutable.Some(normalizeNillableNumArr[R](val.Value()))
+	}
+	return immutable.None[[]immutable.Option[R]]()
+}
+
+func normalizeNillableChars[R string | []byte, T string | []byte](val immutable.Option[T]) immutable.Option[R] {
+	if val.HasValue() {
+		return immutable.Some(R(val.Value()))
+	}
+	return immutable.None[R]()
+}
+
+func normalizeCharsArr[R string | []byte, T string | []byte](val []T) []R {
+	var v any = val
+	if arr, ok := v.([]R); ok {
+		return arr
+	}
+	arr := make([]R, len(val))
+	for i, v := range val {
+		arr[i] = R(v)
+	}
+	return arr
+}
+
+func normalizeCharsNillableArr[R string | []byte, T string | []byte](val immutable.Option[[]T]) immutable.Option[[]R] {
+	if val.HasValue() {
+		return immutable.Some(normalizeCharsArr[R](val.Value()))
+	}
+	return immutable.None[[]R]()
+}
+
+func normalizeNillableCharsArr[R string | []byte, T string | []byte](val []immutable.Option[T]) []immutable.Option[R] {
+	var v any = val
+	if arr, ok := v.([]immutable.Option[R]); ok {
+		return arr
+	}
+	arr := make([]immutable.Option[R], len(val))
 	for i, v := range val {
 		if v.HasValue() {
-			numArr[i] = immutable.Some(R(v.Value()))
+			arr[i] = immutable.Some(R(v.Value()))
 		} else {
-			numArr[i] = immutable.None[R]()
+			arr[i] = immutable.None[R]()
 		}
 	}
-	return NormalValue{value: numArr}
+	return arr
+}
+
+func normalizeNillableCharsNillableArr[R string | []byte, T string | []byte](
+	val immutable.Option[[]immutable.Option[T]],
+) immutable.Option[[]immutable.Option[R]] {
+	if val.HasValue() {
+		return immutable.Some(normalizeNillableCharsArr[R](val.Value()))
+	}
+	return immutable.None[[]immutable.Option[R]]()
 }

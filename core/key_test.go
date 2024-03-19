@@ -220,26 +220,26 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 			Name:         "collection, index and one field",
 			CollectionID: 1,
 			IndexID:      2,
-			Fields:       []IndexedField{{Value: client.NewIntNormalValue(5)}},
+			Fields:       []IndexedField{{Value: client.NewNormalInt(5)}},
 			Expected:     encodeKey(1, 2, 5, false),
 		},
 		{
 			Name:         "collection, index and two fields",
 			CollectionID: 1,
 			IndexID:      2,
-			Fields:       []IndexedField{{Value: client.NewIntNormalValue(5)}, {Value: client.NewIntNormalValue(7)}},
+			Fields:       []IndexedField{{Value: client.NewNormalInt(5)}, {Value: client.NewNormalInt(7)}},
 			Expected:     encodeKey(1, 2, 5, false, 7, false),
 		},
 		{
 			Name:         "no index",
 			CollectionID: 1,
-			Fields:       []IndexedField{{Value: client.NewIntNormalValue(5)}},
+			Fields:       []IndexedField{{Value: client.NewNormalInt(5)}},
 			Expected:     encoding.EncodeUvarintAscending([]byte{'/'}, 1),
 		},
 		{
 			Name:     "no collection",
 			IndexID:  2,
-			Fields:   []IndexedField{{Value: client.NewIntNormalValue(5)}},
+			Fields:   []IndexedField{{Value: client.NewNormalInt(5)}},
 			Expected: []byte{},
 		},
 	}
@@ -255,12 +255,12 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 }
 
 func TestIndexDatastoreKey_ToString(t *testing.T) {
-	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: client.NewIntNormalValue(5)}})
+	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: client.NewNormalInt(5)}})
 	assert.Equal(t, key.ToString(), string(encodeKey(1, 2, 5, false)))
 }
 
 func TestIndexDatastoreKey_ToDS(t *testing.T) {
-	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: client.NewIntNormalValue(5)}})
+	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: client.NewNormalInt(5)}})
 	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 5, false))))
 }
 
@@ -288,7 +288,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 				Fields: []client.IndexedFieldDescription{{}},
 			},
 			inputBytes:     encodeKey(colID, indexID, 5, false),
-			expectedFields: []IndexedField{{Value: client.NewIntNormalValue(5)}},
+			expectedFields: []IndexedField{{Value: client.NewNormalInt(5)}},
 		},
 		{
 			name: "two fields (one descending)",
@@ -298,8 +298,8 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 			},
 			inputBytes: encodeKey(colID, indexID, 5, false, 7, true),
 			expectedFields: []IndexedField{
-				{Value: client.NewIntNormalValue(5)},
-				{Value: client.NewIntNormalValue(7), Descending: true},
+				{Value: client.NewNormalInt(5)},
+				{Value: client.NewNormalInt(7), Descending: true},
 			},
 		},
 		{
@@ -310,8 +310,8 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 			},
 			inputBytes: encoding.EncodeStringAscending(append(encodeKey(1, indexID, 5, false), '/'), "docID"),
 			expectedFields: []IndexedField{
-				{Value: client.NewIntNormalValue(5)},
-				{Value: client.NewStringNormalValue("docID")},
+				{Value: client.NewNormalInt(5)},
+				{Value: client.NewNormalString("docID")},
 			},
 			fieldKinds: []client.FieldKind{client.FieldKind_NILLABLE_INT},
 		},

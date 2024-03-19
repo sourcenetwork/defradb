@@ -30,7 +30,7 @@ func NewFieldValue(t CType, val NormalValue) *FieldValue {
 }
 
 func (val FieldValue) Value() any {
-	return val.value.value
+	return val.value.Any()
 }
 
 func (val FieldValue) NormalValue() NormalValue {
@@ -42,7 +42,7 @@ func (val FieldValue) Type() CType {
 }
 
 func (val FieldValue) IsDocument() bool {
-	_, ok := val.value.value.(*Document)
+	_, ok := val.value.Document()
 	return ok
 }
 
@@ -67,17 +67,16 @@ func (val FieldValue) Bytes() ([]byte, error) {
 	}
 
 	var value any
-	switch tempVal := val.value.value.(type) {
-	case []immutable.Option[string]:
-		value = convertImmutable(tempVal)
-	case []immutable.Option[int64]:
-		value = convertImmutable(tempVal)
-	case []immutable.Option[float64]:
-		value = convertImmutable(tempVal)
-	case []immutable.Option[bool]:
-		value = convertImmutable(tempVal)
-	default:
-		value = val.value.value
+	if v, ok := val.value.NillableStringArray(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableIntArray(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableFloatArray(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableBoolArray(); ok {
+		value = convertImmutable(v)
+	} else {
+		value = val.value.Any()
 	}
 
 	return em.Marshal(value)

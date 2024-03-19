@@ -148,10 +148,10 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			f.doc.id = res.value
 		} else {
 			lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-			if lastVal.IsString() {
-				f.doc.id = []byte(lastVal.String())
-			} else if lastVal.IsBytes() {
-				f.doc.id = lastVal.Bytes()
+			if str, ok := lastVal.String(); ok {
+				f.doc.id = []byte(str)
+			} else if bytes, ok := lastVal.Bytes(); ok {
+				f.doc.id = bytes
 			} else {
 				return nil, ExecInfo{}, err
 			}

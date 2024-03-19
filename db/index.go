@@ -124,7 +124,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 			return nil, err
 		}
 		if fieldVal == nil || fieldVal.Value() == nil {
-			result = append(result, client.NewNilNormalValue())
+			result = append(result, client.NewNormalNil())
 			continue
 		}
 		result = append(result, fieldVal.NormalValue())
@@ -211,7 +211,7 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.Fields = append(key.Fields, core.IndexedField{Value: client.NewStringNormalValue(doc.ID().String())})
+	key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	return key, nil
 }
 
@@ -334,7 +334,7 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, core.IndexedField{Value: client.NewStringNormalValue(doc.ID().String())})
+		key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 		return key, []byte{}, nil
 	} else {
 		return key, []byte(doc.ID().String()), nil

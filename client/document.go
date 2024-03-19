@@ -191,126 +191,126 @@ func IsNillableKind(kind FieldKind) bool {
 func validateFieldSchema(val any, field SchemaFieldDescription) (NormalValue, error) {
 	if IsNillableKind(field.Kind) {
 		if val == nil {
-			return NormalValue{}, nil
+			return NewNormalNil(), nil
 		}
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
-			return NormalValue{}, nil
+			return NewNormalNil(), nil
 		}
 	}
 
 	if field.Kind.IsObjectArray() {
-		return NormalValue{}, NewErrFieldOrAliasToFieldNotExist(field.Name)
+		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
 	}
 
 	if field.Kind.IsObject() {
 		v, err := getString(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewStringNormalValue(v), nil
+		return NewNormalString(v), nil
 	}
 
 	switch field.Kind {
 	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
 		v, err := getString(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewStringNormalValue(v), nil
+		return NewNormalString(v), nil
 
 	case FieldKind_STRING_ARRAY:
 		v, err := getArray(val, getString)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewStringArrayNormalValue(v), nil
+		return NewNormalStringArray(v), nil
 
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		v, err := getNillableArray(val, getString)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewNillableStringArrayNormalValue(v), nil
+		return NewNormalNillableStringArray(v), nil
 
 	case FieldKind_NILLABLE_BOOL:
 		v, err := getBool(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewBoolNormalValue(v), nil
+		return NewNormalBool(v), nil
 
 	case FieldKind_BOOL_ARRAY:
 		v, err := getArray(val, getBool)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewBoolArrayNormalValue(v), nil
+		return NewNormalBoolArray(v), nil
 
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		v, err := getNillableArray(val, getBool)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewNillableBoolArrayNormalValue(v), nil
+		return NewNormalNillableBoolArray(v), nil
 
 	case FieldKind_NILLABLE_FLOAT:
 		v, err := getFloat64(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewFloatNormalValue(v), nil
+		return NewNormalFloat(v), nil
 
 	case FieldKind_FLOAT_ARRAY:
 		v, err := getArray(val, getFloat64)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewFloatArrayNormalValue(v), nil
+		return NewNormalFloatArray(v), nil
 
 	case FieldKind_NILLABLE_FLOAT_ARRAY:
 		v, err := getNillableArray(val, getFloat64)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewNillableFloatArrayNormalValue(v), nil
+		return NewNormalNillableFloatArray(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
 		v, err := getDateTime(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewTimeNormalValue(v), nil
+		return NewNormalTime(v), nil
 
 	case FieldKind_NILLABLE_INT:
 		v, err := getInt64(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewIntNormalValue(v), nil
+		return NewNormalInt(v), nil
 
 	case FieldKind_INT_ARRAY:
 		v, err := getArray(val, getInt64)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewIntArrayNormalValue(v), nil
+		return NewNormalIntArray(v), nil
 
 	case FieldKind_NILLABLE_INT_ARRAY:
 		v, err := getNillableArray(val, getInt64)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewNillableIntArrayNormalValue(v), nil
+		return NewNormalNillableIntArray(v), nil
 
 	case FieldKind_NILLABLE_JSON:
 		v, err := getJSON(val)
 		if err != nil {
-			return NormalValue{}, err
+			return nil, err
 		}
-		return NewStringNormalValue(v), nil
+		return NewNormalString(v), nil
 	}
 
-	return NormalValue{}, NewErrUnhandledType("FieldKind", field.Kind)
+	return nil, NewErrUnhandledType("FieldKind", field.Kind)
 }
 
 func getString(v any) (string, error) {

@@ -171,8 +171,11 @@ indexLoop:
 				if !errors.Is(err, client.ErrFieldNotExist) {
 					require.NoError(b.f.t, err)
 				}
-			} else if fieldValue != nil {
+			}
+			if fieldValue != nil {
 				val = fieldValue.NormalValue()
+			} else {
+				val = client.NewNormalNil()
 			}
 			if val.IsNil() {
 				hasNilValue = true
@@ -185,7 +188,7 @@ indexLoop:
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.Fields = append(key.Fields, core.IndexedField{Value: client.NewStringNormalValue(b.doc.ID().String())})
+			key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(b.doc.ID().String())})
 		}
 	}
 
@@ -1196,7 +1199,7 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	assert.Len(t, data, 0)
 }
 
-func TestComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
+func TestUniqueComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
 	testCases := []struct {
 		Name   string
 		Doc    string
@@ -1238,34 +1241,36 @@ func TestComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		f := newIndexTestFixture(t)
-		defer f.db.Close()
+		t.Run(tc.Name, func(t *testing.T) {
+			f := newIndexTestFixture(t)
+			defer f.db.Close()
 
-		indexDesc := makeUnique(addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
-		_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
-		require.NoError(f.t, err)
-		f.commitTxn()
+			indexDesc := makeUnique(addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
+			_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+			require.NoError(f.t, err)
+			f.commitTxn()
 
-		doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Schema())
-		require.NoError(f.t, err)
+			doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Schema())
+			require.NoError(f.t, err)
 
-		f.saveDocToCollection(doc, f.users)
+			f.saveDocToCollection(doc, f.users)
 
-		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
-			Doc(doc).Unique().Build()
+			oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+				Doc(doc).Unique().Build()
 
-		require.NoError(t, doc.SetWithJSON([]byte(tc.Update)))
+			require.NoError(t, doc.SetWithJSON([]byte(tc.Update)))
 
-		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
-			Doc(doc).Unique().Build()
+			newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+				Doc(doc).Unique().Build()
 
-		require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
-		f.commitTxn()
+			require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
+			f.commitTxn()
 
-		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
-		require.Error(t, err, oldKey.ToString(), oldKey.ToDS(), tc.Name)
-		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
-		require.NoError(t, err, newKey.ToString(), newKey.ToDS(), tc.Name)
+			_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+			require.Error(t, err, oldKey.ToString(), oldKey.ToDS(), tc.Name)
+			_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+			require.NoError(t, err, newKey.ToString(), newKey.ToDS(), tc.Name)
+		})
 	}
 }
 
