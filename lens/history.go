@@ -69,7 +69,7 @@ func getTargetedSchemaHistory(
 
 	targetHistoryItem, ok := history[targetSchemaVersionID]
 	if !ok {
-		// If the target schema version is unknown then there are possible no migrations
+		// If the target schema version is unknown then there are no possible migrations
 		// that we can do.
 		return nil, nil
 	}
