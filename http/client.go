@@ -22,9 +22,11 @@ import (
 
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -443,6 +445,10 @@ func (c *Client) Blockstore() blockstore.Blockstore {
 }
 
 func (c *Client) Peerstore() datastore.DSBatching {
+	panic("client side database")
+}
+
+func (c *Client) ACPModule() immutable.Option[acp.ACPModule] {
 	panic("client side database")
 }
 

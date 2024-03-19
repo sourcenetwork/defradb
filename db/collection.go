@@ -1301,7 +1301,24 @@ func (c *collection) Create(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
-	return c.commitImplicitTxn(ctx, txn)
+	err = c.commitImplicitTxn(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	//fmt.Println("333333333333333333333333333333333333")
+	//spew.Dump(c.)
+	//fmt.Println("333333333333333333333333333333333333")
+
+	//c.db.ACPModule().RegisterDocCreation(
+	//	ctx,
+	//	policyID "123",
+	//	collection string,
+	//	creator string,
+	//	docID string,
+	//)
+
+	return nil
 }
 
 // CreateMany creates a collection of documents at once.

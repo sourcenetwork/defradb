@@ -17,8 +17,10 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -202,6 +204,10 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {
 	return w.node.Peerstore()
+}
+
+func (w *Wrapper) ACPModule() immutable.Option[acp.ACPModule] {
+	return w.node.ACPModule()
 }
 
 func (w *Wrapper) Close() {

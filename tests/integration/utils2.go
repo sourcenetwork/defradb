@@ -278,6 +278,9 @@ func performAction(
 	case ConfigureMigration:
 		configureMigration(s, action)
 
+	case AddPolicy:
+		addPolicyACP(s, action)
+
 	case CreateDoc:
 		createDoc(s, action)
 

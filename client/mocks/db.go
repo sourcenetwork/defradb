@@ -4,6 +4,8 @@ package mocks
 
 import (
 	blockstore "github.com/ipfs/boxo/blockstore"
+	acp "github.com/sourcenetwork/defradb/acp"
+
 	client "github.com/sourcenetwork/defradb/client"
 
 	context "context"
@@ -30,6 +32,47 @@ type DB_Expecter struct {
 
 func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
+}
+
+// ACPModule provides a mock function with given fields:
+func (_m *DB) ACPModule() immutable.Option[acp.ACPModule] {
+	ret := _m.Called()
+
+	var r0 immutable.Option[acp.ACPModule]
+	if rf, ok := ret.Get(0).(func() immutable.Option[acp.ACPModule]); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(immutable.Option[acp.ACPModule])
+	}
+
+	return r0
+}
+
+// DB_ACPModule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ACPModule'
+type DB_ACPModule_Call struct {
+	*mock.Call
+}
+
+// ACPModule is a helper method to define mock.On call
+func (_e *DB_Expecter) ACPModule() *DB_ACPModule_Call {
+	return &DB_ACPModule_Call{Call: _e.mock.On("ACPModule")}
+}
+
+func (_c *DB_ACPModule_Call) Run(run func()) *DB_ACPModule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_ACPModule_Call) Return(_a0 immutable.Option[acp.ACPModule]) *DB_ACPModule_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_ACPModule_Call) RunAndReturn(run func() immutable.Option[acp.ACPModule]) *DB_ACPModule_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddSchema provides a mock function with given fields: _a0, _a1
