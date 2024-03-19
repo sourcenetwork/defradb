@@ -85,6 +85,18 @@ type DB interface {
 	//
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
+
+	// AddPolicy adds policy to acp module, if the acp module exists.
+	//
+	// If policy was successfully added to the acp module then a policyID is returned,
+	// otherwise if acp module was not found then returns the following error:
+	// [client.ErrPolicyAddFailureACPModuleNotFound]
+	//
+	// Detects the format of the policy automatically by assuming YAML format if JSON
+	// validation fails.
+	//
+	// Note: A policy can not be added without the creatorID (identity).
+	AddPolicy(ctx context.Context, creatorID string, policy string) (AddPolicyResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.
@@ -232,18 +244,6 @@ type Store interface {
 		identity immutable.Option[string],
 		request string,
 	) *RequestResult
-
-	// AddPolicy adds policy to acp module, if the acp module exists.
-	//
-	// If policy was successfully added to the acp module then a policyID is returned,
-	// otherwise if acp module was not found then returns the following error:
-	// `client.ErrPolicyAddFailureACPModuleNotFound`
-	//
-	// Detects the format of the policy automatically by assuming YAML format if JSON
-	// validation fails.
-	//
-	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, creatorID string, policy string) (AddPolicyResult, error)
 }
 
 // GQLResult represents the immediate results of a GQL request.

@@ -207,6 +207,28 @@ func (db *db) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
+func (db *db) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	if !db.acp.HasValue() {
+		return client.AddPolicyResult{}, client.ErrPolicyAddFailureACPModuleNotFound
+	}
+
+	policyID, err := db.acp.Value().AddPolicy(
+		ctx,
+		creator,
+		policy,
+	)
+
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	return client.AddPolicyResult{PolicyID: policyID}, nil
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {
