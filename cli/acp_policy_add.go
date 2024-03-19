@@ -111,8 +111,8 @@ Example: add from stdin:
 				return ErrPolicyFileArgCanNotBeEmpty
 			}
 
-			store := mustGetContextStore(cmd)
-			policyResult, err := store.AddPolicy(
+			db := mustGetContextDB(cmd)
+			policyResult, err := db.AddPolicy(
 				cmd.Context(),
 				identityValue,
 				policy,
