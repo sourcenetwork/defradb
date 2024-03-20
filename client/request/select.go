@@ -32,6 +32,7 @@ type Select struct {
 
 	Limitable
 	Offsetable
+	Orderable
 
 	DocIDs immutable.Option[[]string]
 	CID    immutable.Option[string]
@@ -39,7 +40,6 @@ type Select struct {
 	// Root is the top level type of parsed request
 	Root SelectionType
 
-	OrderBy immutable.Option[OrderBy]
 	GroupBy immutable.Option[GroupBy]
 	Filter  immutable.Option[Filter]
 

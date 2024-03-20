@@ -21,10 +21,10 @@ type Aggregate struct {
 type AggregateTarget struct {
 	Limitable
 	Offsetable
+	Orderable
 
 	HostName  string
 	ChildName immutable.Option[string]
 
-	OrderBy immutable.Option[OrderBy]
-	Filter  immutable.Option[Filter]
+	Filter immutable.Option[Filter]
 }
