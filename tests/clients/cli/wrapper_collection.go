@@ -455,7 +455,10 @@ func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	}
 }
 
-func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (c *Collection) GetAllDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+) (<-chan client.DocIDResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}

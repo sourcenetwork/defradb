@@ -1216,17 +1216,21 @@ func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([
 //
 // @todo: We probably need a lock on the collection for this kind of op since
 // it hits every key and will cause Tx conflicts for concurrent Txs
-func (c *collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (c *collection) GetAllDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+) (<-chan client.DocIDResult, error) {
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.getAllDocIDsChan(ctx, txn)
+	return c.getAllDocIDsChan(ctx, identity, txn)
 }
 
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 ) (<-chan client.DocIDResult, error) {
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
@@ -1273,8 +1277,25 @@ func (c *collection) getAllDocIDsChan(
 				}
 				return
 			}
-			resCh <- client.DocIDResult{
-				ID: docID,
+
+			canRead, err := c.checkAccessOfDocWithACP(
+				ctx,
+				identity,
+				acp.ReadPermission,
+				docID.String(),
+			)
+
+			if err != nil {
+				resCh <- client.DocIDResult{
+					Err: err,
+				}
+				return
+			}
+
+			if canRead {
+				resCh <- client.DocIDResult{
+					ID: docID,
+				}
 			}
 		}
 	}()

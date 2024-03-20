@@ -197,7 +197,7 @@ type Collection interface {
 	WithTxn(datastore.Txn) Collection
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
+	GetAllDocIDs(ctx context.Context, identity immutable.Option[string]) (<-chan DocIDResult, error)
 
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.

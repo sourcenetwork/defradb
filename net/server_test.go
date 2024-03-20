@@ -18,6 +18,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -99,7 +100,11 @@ type mockCollection struct {
 func (mCol *mockCollection) SchemaRoot() string {
 	return "mockColID"
 }
-func (mCol *mockCollection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (mCol *mockCollection) GetAllDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+
+) (<-chan client.DocIDResult, error) {
 	return nil, mockError
 }
 

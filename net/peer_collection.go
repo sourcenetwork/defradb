@@ -16,6 +16,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -71,7 +72,8 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// from the pubsub topics to avoid receiving duplicate events.
 	removedTopics := []string{}
 	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocIDs(p.ctx)
+		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+		keyChan, err := col.GetAllDocIDs(p.ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return err
 		}
@@ -141,7 +143,8 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// to the pubsub topics.
 	addedTopics := []string{}
 	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocIDs(p.ctx)
+		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+		keyChan, err := col.GetAllDocIDs(p.ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return err
 		}

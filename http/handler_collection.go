@@ -283,7 +283,9 @@ func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	docIDsResult, err := col.GetAllDocIDs(req.Context())
+	identity := getIdentityFromAuthHeader(req)
+
+	docIDsResult, err := col.GetAllDocIDs(req.Context(), identity)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -108,7 +108,8 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 			if _, ok := colMap[col.SchemaRoot()]; ok {
 				continue
 			}
-			docIDChan, err := col.GetAllDocIDs(p.ctx)
+			// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+			docIDChan, err := col.GetAllDocIDs(p.ctx, acpIdentity.NoIdentity)
 			if err != nil {
 				return nil, err
 			}
