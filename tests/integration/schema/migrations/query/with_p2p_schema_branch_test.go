@@ -99,6 +99,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 				Request: `query {
 					Users {
 						name
+						verified
 					}
 				}`,
 				Results: []map[string]any{
