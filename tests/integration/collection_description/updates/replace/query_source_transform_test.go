@@ -88,8 +88,8 @@ func TestColDescrUpdateReplaceQuerySourceTransform(t *testing.T) {
 			testUtils.CreateDoc{
 				// Set the `name` field only
 				Doc: `{
-					"firstName":	"John",
-					"lastName":	"S"
+					"firstName": "John",
+					"lastName":  "S"
 				}`,
 			},
 			testUtils.Request{
