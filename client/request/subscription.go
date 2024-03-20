@@ -19,13 +19,12 @@ import (
 // arguments
 type ObjectSubscription struct {
 	Field
+	ChildSelect
 
 	Filterable
 
 	// Collection is the target collection name
 	Collection string
-
-	Fields []Selection
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
@@ -36,9 +35,9 @@ func (m ObjectSubscription) ToSelect(docID, cid string) *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		DocIDs:     immutable.Some([]string{docID}),
-		CID:        immutable.Some(cid),
-		Fields:     m.Fields,
-		Filterable: m.Filterable,
+		DocIDs:      immutable.Some([]string{docID}),
+		CID:         immutable.Some(cid),
+		ChildSelect: m.ChildSelect,
+		Filterable:  m.Filterable,
 	}
 }

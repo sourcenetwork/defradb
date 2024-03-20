@@ -18,6 +18,7 @@ var (
 
 type CommitSelect struct {
 	Field
+	ChildSelect
 
 	Limitable
 	Offsetable
@@ -28,8 +29,6 @@ type CommitSelect struct {
 	FieldID immutable.Option[string]
 	Cid     immutable.Option[string]
 	Depth   immutable.Option[uint64]
-
-	Fields []Selection
 }
 
 func (c CommitSelect) ToSelect() *Select {
@@ -38,11 +37,11 @@ func (c CommitSelect) ToSelect() *Select {
 			Name:  c.Name,
 			Alias: c.Alias,
 		},
-		Limitable:  c.Limitable,
-		Offsetable: c.Offsetable,
-		Orderable:  c.Orderable,
-		Groupable:  c.Groupable,
-		Fields:     c.Fields,
-		Root:       CommitSelection,
+		Limitable:   c.Limitable,
+		Offsetable:  c.Offsetable,
+		Orderable:   c.Orderable,
+		Groupable:   c.Groupable,
+		ChildSelect: c.ChildSelect,
+		Root:        CommitSelection,
 	}
 }

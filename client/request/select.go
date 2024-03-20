@@ -29,6 +29,7 @@ const (
 // Includes fields, and request arguments like filters, limits, etc.
 type Select struct {
 	Field
+	ChildSelect
 
 	Limitable
 	Offsetable
@@ -42,9 +43,17 @@ type Select struct {
 	// Root is the top level type of parsed request
 	Root SelectionType
 
-	Fields []Selection
-
 	ShowDeleted bool
+}
+
+// ChildSelect represents a type with selectable child properties.
+//
+// At least one child must be selected.
+type ChildSelect struct {
+	// Fields contains the set of child properties to return.
+	//
+	// At least one child propertt must be selected.
+	Fields []Selection
 }
 
 // Validate validates the Select.

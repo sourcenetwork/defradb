@@ -55,8 +55,10 @@ func parseQueryOperationDefinition(
 						Name:  parsed.Name,
 						Alias: parsed.Alias,
 					},
-					Fields: []request.Selection{
-						parsed,
+					ChildSelect: request.ChildSelect{
+						Fields: []request.Selection{
+							parsed,
+						},
 					},
 				}
 			} else {

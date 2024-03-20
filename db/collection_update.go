@@ -437,7 +437,9 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 		Filterable: request.Filterable{
 			Filter: filter,
 		},
-		Fields: make([]request.Selection, 0),
+		ChildSelect: request.ChildSelect{
+			Fields: make([]request.Selection, 0),
+		},
 	}
 
 	for _, fd := range c.Schema().Fields {

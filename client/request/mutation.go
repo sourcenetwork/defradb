@@ -25,6 +25,7 @@ const (
 // all the possible arguments.
 type ObjectMutation struct {
 	Field
+	ChildSelect
 
 	Filterable
 
@@ -36,8 +37,6 @@ type ObjectMutation struct {
 
 	IDs   immutable.Option[[]string]
 	Input map[string]any
-
-	Fields []Selection
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
@@ -48,8 +47,8 @@ func (m ObjectMutation) ToSelect() *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		Fields:     m.Fields,
-		DocIDs:     m.IDs,
-		Filterable: m.Filterable,
+		ChildSelect: m.ChildSelect,
+		DocIDs:      m.IDs,
+		Filterable:  m.Filterable,
 	}
 }
