@@ -310,7 +310,9 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				Limitable: request.Limitable{
 					Limit: limit,
 				},
-				Offset:  offset,
+				Offsetable: request.Offsetable{
+					Offset: offset,
+				},
 				OrderBy: order,
 			}
 		}

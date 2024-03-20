@@ -20,13 +20,13 @@ type CommitSelect struct {
 	Field
 
 	Limitable
+	Offsetable
 
 	DocID   immutable.Option[string]
 	FieldID immutable.Option[string]
 	Cid     immutable.Option[string]
 	Depth   immutable.Option[uint64]
 
-	Offset  immutable.Option[uint64]
 	OrderBy immutable.Option[OrderBy]
 	GroupBy immutable.Option[GroupBy]
 
@@ -39,11 +39,11 @@ func (c CommitSelect) ToSelect() *Select {
 			Name:  c.Name,
 			Alias: c.Alias,
 		},
-		Limitable: c.Limitable,
-		Offset:    c.Offset,
-		OrderBy:   c.OrderBy,
-		GroupBy:   c.GroupBy,
-		Fields:    c.Fields,
-		Root:      CommitSelection,
+		Limitable:  c.Limitable,
+		Offsetable: c.Offsetable,
+		OrderBy:    c.OrderBy,
+		GroupBy:    c.GroupBy,
+		Fields:     c.Fields,
+		Root:       CommitSelection,
 	}
 }

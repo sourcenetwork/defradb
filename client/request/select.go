@@ -31,6 +31,7 @@ type Select struct {
 	Field
 
 	Limitable
+	Offsetable
 
 	DocIDs immutable.Option[[]string]
 	CID    immutable.Option[string]
@@ -38,7 +39,6 @@ type Select struct {
 	// Root is the top level type of parsed request
 	Root SelectionType
 
-	Offset  immutable.Option[uint64]
 	OrderBy immutable.Option[OrderBy]
 	GroupBy immutable.Option[GroupBy]
 	Filter  immutable.Option[Filter]
@@ -117,11 +117,11 @@ type selectJson struct {
 	Field
 
 	Limitable
+	Offsetable
 
 	DocIDs      immutable.Option[[]string]
 	CID         immutable.Option[string]
 	Root        SelectionType
-	Offset      immutable.Option[uint64]
 	OrderBy     immutable.Option[OrderBy]
 	GroupBy     immutable.Option[GroupBy]
 	Filter      immutable.Option[Filter]
