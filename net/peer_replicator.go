@@ -18,6 +18,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -92,7 +93,8 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	// push all collection documents to the replicator peer
 	for _, col := range added {
-		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx)
+		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return NewErrReplicatorDocID(err, col.Name().Value(), rep.Info.ID)
 		}

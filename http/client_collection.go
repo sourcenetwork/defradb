@@ -452,7 +452,10 @@ func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	}
 }
 
-func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (c *Collection) GetAllDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+) (<-chan client.DocIDResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -463,7 +466,10 @@ func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResul
 	if err != nil {
 		return nil, err
 	}
+
 	c.http.setDefaultHeaders(req)
+
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	res, err := c.http.client.Do(req)
 	if err != nil {

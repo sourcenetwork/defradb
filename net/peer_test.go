@@ -479,7 +479,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
-	keysCh, err := col.GetAllDocIDs(ctx)
+	keysCh, err := col.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)

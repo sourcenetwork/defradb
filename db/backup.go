@@ -192,7 +192,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			return err
 		}
 		colTxn := col.WithTxn(txn)
-		docIDsCh, err := colTxn.GetAllDocIDs(ctx)
+		// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
+		docIDsCh, err := colTxn.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return err
 		}
