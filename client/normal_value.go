@@ -377,22 +377,6 @@ func newBaseNillableArrayNormalValue[T any](val immutable.Option[T]) baseNillabl
 	return baseNillableArrayNormalValue[T]{newBaseArrayNormalValue(val)}
 }
 
-type normalNil struct {
-	NormalVoid
-}
-
-func (normalNil) IsNil() bool {
-	return true
-}
-
-func (normalNil) IsNillable() bool {
-	return true
-}
-
-func (normalNil) Any() any {
-	return nil
-}
-
 type normalBool struct {
 	baseNormalValue[bool]
 }
@@ -760,10 +744,10 @@ func newNormalFloat(val float64) NormalValue {
 //   - `[]any{int32(1), int64(2)}` -> `[]int64{1, 2}`.
 //   - `[]any{int32(1), int64(2), float32(1.5)}` -> `[]float64{1.0, 2.0, 1.5}`.
 //   - `[]any{int32(1), nil}` -> `[]immutable.Option[int64]{immutable.Some(1), immutable.None[int64]()}`.
+//
+// This function will not check if the given value is `nil`. To normalize a `nil` value use the
+// `NewNormalNil` function.
 func NewNormalValue(val any) (NormalValue, error) {
-	if val == nil {
-		return normalNil{}, nil
-	}
 	switch v := val.(type) {
 	case bool:
 		return NewNormalBool(v), nil
@@ -1199,9 +1183,32 @@ func convertAnyArrToNillableTypedArr[T any](
 	return newNormalNillableArr(result), nil
 }
 
-// NewNormalNil creates a new NormalValue that represents a nil value.
-func NewNormalNil() NormalValue {
-	return normalNil{}
+// NewNormalNil creates a new NormalValue that represents a nil value of a given field kind.
+func NewNormalNil(kind FieldKind) (NormalValue, error) {
+	switch kind {
+	case FieldKind_NILLABLE_BOOL:
+		return NewNormalNillableBool(immutable.None[bool]()), nil
+	case FieldKind_NILLABLE_INT:
+		return NewNormalNillableInt(immutable.None[int64]()), nil
+	case FieldKind_NILLABLE_FLOAT:
+		return NewNormalNillableFloat(immutable.None[float64]()), nil
+	case FieldKind_NILLABLE_DATETIME:
+		return NewNormalNillableTime(immutable.None[time.Time]()), nil
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_JSON:
+		return NewNormalNillableString(immutable.None[string]()), nil
+	case FieldKind_NILLABLE_BLOB:
+		return NewNormalNillableBytes(immutable.None[[]byte]()), nil
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return NewNormalBoolNillableArray(immutable.None[[]bool]()), nil
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return NewNormalIntNillableArray(immutable.None[[]int64]()), nil
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return NewNormalFloatNillableArray(immutable.None[[]float64]()), nil
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return NewNormalStringNillableArray(immutable.None[[]string]()), nil
+	default:
+		return nil, NewCanNotMakeNormalNilFromFieldKind(kind)
+	}
 }
 
 // NewNormalBool creates a new NormalValue that represents a `bool` value.

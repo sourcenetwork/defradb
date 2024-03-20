@@ -15,11 +15,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestEncodeDecodeFieldValue(t *testing.T) {
+	normalNil, err := client.NewNormalNil(client.FieldKind_NILLABLE_INT)
+	require.NoError(t, err)
+
 	tests := []struct {
 		name               string
 		inputVal           client.NormalValue
@@ -29,10 +33,10 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 	}{
 		{
 			name:               "nil",
-			inputVal:           client.NewNormalNil(),
+			inputVal:           normalNil,
 			expectedBytes:      EncodeNullAscending(nil),
 			expectedBytesDesc:  EncodeNullDescending(nil),
-			expectedDecodedVal: client.NewNormalNil(),
+			expectedDecodedVal: normalNil,
 		},
 		{
 			name:               "bool true",
@@ -87,7 +91,7 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 					t.Errorf("EncodeFieldValue() = %v, want %v", encoded, expectedBytes)
 				}
 
-				_, decodedFieldVal, err := DecodeFieldValue(encoded, descending)
+				_, decodedFieldVal, err := DecodeFieldValue(encoded, descending, client.FieldKind_NILLABLE_INT)
 				assert.NoError(t, err)
 				if !reflect.DeepEqual(decodedFieldVal, tt.expectedDecodedVal) {
 					t.Errorf("DecodeFieldValue() = %v, want %v", decodedFieldVal, tt.expectedDecodedVal)
@@ -136,7 +140,7 @@ func TestDecodeInvalidFieldValue(t *testing.T) {
 				if descending {
 					inputBytes = tt.inputBytesDesc
 				}
-				_, _, err := DecodeFieldValue(inputBytes, descending)
+				_, _, err := DecodeFieldValue(inputBytes, descending, client.FieldKind_NILLABLE_INT)
 				assert.ErrorIs(t, err, ErrCanNotDecodeFieldValue)
 			})
 		}

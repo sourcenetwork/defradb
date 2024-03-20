@@ -175,7 +175,14 @@ indexLoop:
 			if fieldValue != nil {
 				val = fieldValue.NormalValue()
 			} else {
-				val = client.NewNormalNil()
+				kind := client.FieldKind_NILLABLE_STRING
+				if fieldName == usersAgeFieldName {
+					kind = client.FieldKind_NILLABLE_INT
+				} else if fieldName == usersWeightFieldName {
+					kind = client.FieldKind_NILLABLE_FLOAT
+				}
+				val, err = client.NewNormalNil(kind)
+				require.NoError(b.f.t, err)
 			}
 			if val.IsNil() {
 				hasNilValue = true

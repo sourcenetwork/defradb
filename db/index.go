@@ -124,7 +124,11 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 			return nil, err
 		}
 		if fieldVal == nil || fieldVal.Value() == nil {
-			result = append(result, client.NewNormalNil())
+			normalNil, err := client.NewNormalNil(index.fieldsDescs[iter].Kind)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, normalNil)
 			continue
 		}
 		result = append(result, fieldVal.NormalValue())

@@ -22,7 +22,6 @@ import (
 type nType string
 
 const (
-	NilType      nType = "Nil"
 	BoolType     nType = "Bool"
 	IntType      nType = "Int"
 	FloatType    nType = "Float"
@@ -74,7 +73,6 @@ const (
 
 func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 	typeAssertMap := map[nType]func(NormalValue) (any, bool){
-		NilType:             func(v NormalValue) (any, bool) { return nil, true },
 		BoolType:            func(v NormalValue) (any, bool) { return v.Bool() },
 		IntType:             func(v NormalValue) (any, bool) { return v.Int() },
 		FloatType:           func(v NormalValue) (any, bool) { return v.Float() },
@@ -96,8 +94,6 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 	}
 
 	newMap := map[nType]func(any) NormalValue{
-		NilType: func(v any) NormalValue { return NewNormalNil() },
-
 		BoolType:     func(v any) NormalValue { return NewNormalBool(v.(bool)) },
 		IntType:      func(v any) NormalValue { return NewNormalInt(v.(int64)) },
 		FloatType:    func(v any) NormalValue { return NewNormalFloat(v.(float64)) },
@@ -193,12 +189,6 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		isNil      bool
 		isArray    bool
 	}{
-		{
-			nType:      NilType,
-			input:      nil,
-			isNil:      true,
-			isNillable: true,
-		},
 		{
 			nType: BoolType,
 			input: true,
@@ -564,7 +554,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 					assert.Equal(t, tt.input, val, tStr+"() returned unexpected value")
 					newVal := newMap[nType](val)
 					assert.Equal(t, actual, newVal, "New"+tStr+"() returned unexpected NormalValue")
-				} else if nType != NilType {
+				} else {
 					assert.False(t, ok, string(nType)+"() should return false for "+tStr)
 				}
 			}
@@ -1337,10 +1327,27 @@ func TestNormalValue_NewNormalNillableBytesNillableArray(t *testing.T) {
 	assert.Equal(t, bytesInput, getNillableBytesNillableArray(v))
 }
 
+func TestNormalValue_NewNormalNil(t *testing.T) {
+	for _, kind := range FieldKindStringToEnumMapping {
+		if kind.IsNillable() {
+			v, err := NewNormalNil(kind)
+			require.NoError(t, err)
+
+			assert.True(t, v.IsNil())
+		} else {
+			_, err := NewNormalNil(kind)
+			require.Error(t, err)
+		}
+	}
+}
+
 func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 	now := time.Now()
 	doc1 := &Document{}
 	doc2 := &Document{}
+
+	normalNil, err := NewNormalNil(FieldKind_NILLABLE_INT)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name     string
@@ -1350,7 +1357,7 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 	}{
 		{
 			name:  "nil",
-			input: NewNormalNil(),
+			input: normalNil,
 		},
 		{
 			name:  "not array",

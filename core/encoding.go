@@ -253,7 +253,7 @@ func DecodeIndexDataStoreKey(
 		}
 
 		var val client.NormalValue
-		data, val, err = encoding.DecodeFieldValue(data, descending)
+		data, val, err = encoding.DecodeFieldValue(data, descending, fields[i].Kind)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}

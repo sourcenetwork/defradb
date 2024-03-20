@@ -86,12 +86,13 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 
 // DecodeFieldValue decodes a field value from a byte slice.
 // The decoded value is returned along with the remaining byte slice.
-func DecodeFieldValue(b []byte, descending bool) ([]byte, client.NormalValue, error) {
+func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte, client.NormalValue, error) {
 	typ := PeekType(b)
 	switch typ {
 	case Null:
 		b, _ = DecodeIfNull(b)
-		return b, client.NewNormalNil(), nil
+		nilVal, err := client.NewNormalNil(kind)
+		return b, nilVal, err
 	case Int:
 		var v int64
 		var err error

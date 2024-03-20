@@ -191,10 +191,10 @@ func IsNillableKind(kind FieldKind) bool {
 func validateFieldSchema(val any, field SchemaFieldDescription) (NormalValue, error) {
 	if IsNillableKind(field.Kind) {
 		if val == nil {
-			return NewNormalNil(), nil
+			return NewNormalNil(field.Kind)
 		}
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
-			return NewNormalNil(), nil
+			return NewNormalNil(field.Kind)
 		}
 	}
 
