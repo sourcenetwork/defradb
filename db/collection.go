@@ -624,7 +624,7 @@ var patchCollectionValidators = []func(
 ) error{
 	validateCollectionNameUnique,
 	validateSingleVersionActive,
-	validateSourcesNotModified,
+	validateSourcesNotRedefined,
 	validateIndexesNotModified,
 	validateFieldsNotModified,
 	validateIDNotZero,
@@ -687,7 +687,12 @@ func validateSingleVersionActive(
 	return nil
 }
 
-func validateSourcesNotModified(
+// validateSourcesNotRedefined specifies the limitations on how the collection sources
+// can be mutated.
+//
+// Currently new sources cannot be added, existing cannot be removed, and CollectionSources
+// cannot be redirected to other collections.
+func validateSourcesNotRedefined(
 	oldColsByID map[uint32]client.CollectionDescription,
 	newColsByID map[uint32]client.CollectionDescription,
 ) error {
