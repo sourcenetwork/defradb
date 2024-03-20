@@ -33,6 +33,7 @@ type Select struct {
 	Limitable
 	Offsetable
 	Orderable
+	Filterable
 
 	DocIDs immutable.Option[[]string]
 	CID    immutable.Option[string]
@@ -41,7 +42,6 @@ type Select struct {
 	Root SelectionType
 
 	GroupBy immutable.Option[GroupBy]
-	Filter  immutable.Option[Filter]
 
 	Fields []Selection
 

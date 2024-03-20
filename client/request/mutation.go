@@ -25,15 +25,17 @@ const (
 // all the possible arguments.
 type ObjectMutation struct {
 	Field
+
+	Filterable
+
 	Type MutationType
 
 	// Collection is the target collection name
 	// if this mutation is on an object.
 	Collection string
 
-	IDs    immutable.Option[[]string]
-	Filter immutable.Option[Filter]
-	Input  map[string]any
+	IDs   immutable.Option[[]string]
+	Input map[string]any
 
 	Fields []Selection
 }
@@ -46,8 +48,8 @@ func (m ObjectMutation) ToSelect() *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		Fields: m.Fields,
-		DocIDs: m.IDs,
-		Filter: m.Filter,
+		Fields:     m.Fields,
+		DocIDs:     m.IDs,
+		Filterable: m.Filterable,
 	}
 }

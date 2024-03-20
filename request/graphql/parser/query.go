@@ -306,7 +306,9 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 			targets[i] = &request.AggregateTarget{
 				HostName:  hostName,
 				ChildName: immutable.Some(childName),
-				Filter:    filter,
+				Filterable: request.Filterable{
+					Filter: filter,
+				},
 				Limitable: request.Limitable{
 					Limit: limit,
 				},

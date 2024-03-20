@@ -10,6 +10,8 @@
 
 package request
 
+import "github.com/sourcenetwork/immutable"
+
 const (
 	FilterOpOr  = "_or"
 	FilterOpAnd = "_and"
@@ -23,4 +25,12 @@ const (
 type Filter struct {
 	// parsed filter conditions
 	Conditions map[string]any
+}
+
+// Filterable is an embeddable struct that hosts a consistent set of properties
+// for filtering an aspect of a request.
+type Filterable struct {
+	// OrderBy is an optional set of conditions used to filter records prior to
+	// being processed by the request.
+	Filter immutable.Option[Filter]
 }

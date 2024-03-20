@@ -434,7 +434,9 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 		Field: request.Field{
 			Name: c.Name().Value(),
 		},
-		Filter: filter,
+		Filterable: request.Filterable{
+			Filter: filter,
+		},
 		Fields: make([]request.Selection, 0),
 	}
 
