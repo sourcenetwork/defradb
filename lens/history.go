@@ -20,49 +20,48 @@ import (
 	"github.com/sourcenetwork/defradb/db/description"
 )
 
-// schemaHistoryLink represents an item in a particular schema's history, it
+// collectionHistoryLink represents an item in a particular collection's schema history, it
 // links to the previous and next version items if they exist.
-type schemaHistoryLink struct {
+type collectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionDescription
 
-	// The history link to the next schema versions, if there are some
+	// The history link to the next collection versions, if there are some
 	// (for the most recent schema version this will be empty).
-	next []*schemaHistoryLink
+	next []*collectionHistoryLink
 
-	// The history link to the previous schema versions, if there are
-	// some (for the initial schema version this will be empty).
-	previous []*schemaHistoryLink
+	// The history link to the previous collection versions, if there are
+	// some (for the initial collection version this will be empty).
+	previous []*collectionHistoryLink
 }
 
-// targetedSchemaHistoryLink represents an item in a particular schema's history, it
+// targetedCollectionHistoryLink represents an item in a particular collection's schema history, it
 // links to the previous and next version items if they exist and are on the path to
 // the target schema version.
-type targetedSchemaHistoryLink struct {
+type targetedCollectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionDescription
 
-	// The link to next schema version, if there is one
-	// (for the most recent schema version this will be None).
-	next immutable.Option[*targetedSchemaHistoryLink]
+	// The link to next collection version, if there is one
+	// (for the most recent collection version this will be None).
+	next immutable.Option[*targetedCollectionHistoryLink]
 
-	// The link to the previous schema version, if there is
-	// one (for the initial schema version this will be None).
-	previous immutable.Option[*targetedSchemaHistoryLink]
+	// The link to the previous collection version, if there is
+	// one (for the initial collection version this will be None).
+	previous immutable.Option[*targetedCollectionHistoryLink]
 }
 
-// getTargetedSchemaHistory returns the history of the schema of the given id, relative
+// getTargetedCollectionHistory returns the history of the schema of the given id, relative
 // to the given target schema version id.
 //
-// This includes any history items that are only known via registered
-// schema migrations.
-func getTargetedSchemaHistory(
+// This includes any history items that are only known via registered schema migrations.
+func getTargetedCollectionHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaRoot string,
 	targetSchemaVersionID string,
-) (map[schemaVersionID]*targetedSchemaHistoryLink, error) {
-	history, err := getSchemaHistory(ctx, txn, schemaRoot)
+) (map[schemaVersionID]*targetedCollectionHistoryLink, error) {
+	history, err := getCollectionHistory(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +73,9 @@ func getTargetedSchemaHistory(
 		return nil, nil
 	}
 
-	result := map[schemaVersionID]*targetedSchemaHistoryLink{}
+	result := map[schemaVersionID]*targetedCollectionHistoryLink{}
 
-	targetLink := &targetedSchemaHistoryLink{
+	targetLink := &targetedCollectionHistoryLink{
 		collection: targetHistoryItem.collection,
 	}
 	result[targetLink.collection.SchemaVersionID] = targetLink
@@ -89,12 +88,12 @@ func getTargetedSchemaHistory(
 
 // linkForwards traverses and links the history forwards from the given starting point.
 //
-// Forward schema versions found will in turn be linked both forwards and backwards, allowing
-// schema branches to be correctly mapped to the target schema version.
+// Forward collection versions found will in turn be linked both forwards and backwards, allowing
+// branches to be correctly mapped to the target schema version.
 func linkForwards(
-	currentLink *targetedSchemaHistoryLink,
-	currentHistoryItem *schemaHistoryLink,
-	result map[schemaVersionID]*targetedSchemaHistoryLink,
+	currentLink *targetedCollectionHistoryLink,
+	currentHistoryItem *collectionHistoryLink,
+	result map[schemaVersionID]*targetedCollectionHistoryLink,
 ) {
 	for _, nextHistoryItem := range currentHistoryItem.next {
 		if _, ok := result[nextHistoryItem.collection.SchemaVersionID]; ok {
@@ -103,7 +102,7 @@ func linkForwards(
 			continue
 		}
 
-		nextLink := &targetedSchemaHistoryLink{
+		nextLink := &targetedCollectionHistoryLink{
 			collection: nextHistoryItem.collection,
 			previous:   immutable.Some(currentLink),
 		}
@@ -116,12 +115,12 @@ func linkForwards(
 
 // linkBackwards traverses and links the history backwards from the given starting point.
 //
-// Forward schema versions found will in turn be linked both forwards and backwards, allowing
-// schema branches to be correctly mapped to the target schema version.
+// Backward collection versions found will in turn be linked both forwards and backwards, allowing
+// branches to be correctly mapped to the target schema version.
 func linkBackwards(
-	currentLink *targetedSchemaHistoryLink,
-	currentHistoryItem *schemaHistoryLink,
-	result map[schemaVersionID]*targetedSchemaHistoryLink,
+	currentLink *targetedCollectionHistoryLink,
+	currentHistoryItem *collectionHistoryLink,
+	result map[schemaVersionID]*targetedCollectionHistoryLink,
 ) {
 	for _, prevHistoryItem := range currentHistoryItem.previous {
 		if _, ok := result[prevHistoryItem.collection.SchemaVersionID]; ok {
@@ -130,7 +129,7 @@ func linkBackwards(
 			continue
 		}
 
-		prevLink := &targetedSchemaHistoryLink{
+		prevLink := &targetedCollectionHistoryLink{
 			collection: prevHistoryItem.collection,
 			next:       immutable.Some(currentLink),
 		}
@@ -141,22 +140,21 @@ func linkBackwards(
 	}
 }
 
-// getSchemaHistory returns the history of the schema of the given id as linked list
+// getCollectionHistory returns the history of the collection of the given root id as linked list
 // with each item mapped by schema version id.
 //
-// This includes any history items that are only known via registered
-// schema migrations.
-func getSchemaHistory(
+// This includes any history items that are only known via registered schema migrations.
+func getCollectionHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaRoot string,
-) (map[schemaVersionID]*schemaHistoryLink, error) {
+) (map[schemaVersionID]*collectionHistoryLink, error) {
 	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	history := map[schemaVersionID]*schemaHistoryLink{}
+	history := map[schemaVersionID]*collectionHistoryLink{}
 	schemaVersionsByColID := map[uint32]schemaVersionID{}
 
 	for _, c := range cols {
@@ -165,7 +163,7 @@ func getSchemaHistory(
 		col := c
 
 		// Convert the temporary types to the cleaner return type:
-		history[col.SchemaVersionID] = &schemaHistoryLink{
+		history[col.SchemaVersionID] = &collectionHistoryLink{
 			collection: &col,
 		}
 		schemaVersionsByColID[col.ID] = col.SchemaVersionID

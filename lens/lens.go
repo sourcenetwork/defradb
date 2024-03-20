@@ -56,7 +56,7 @@ type lens struct {
 	outputPipe         enumerable.Concatenation[LensDoc]
 	unknownVersionPipe enumerable.Queue[LensDoc]
 
-	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink
+	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink
 
 	source enumerable.Queue[lensInput]
 }
@@ -67,18 +67,18 @@ func new(
 	ctx context.Context,
 	lensRegistry client.LensRegistry,
 	targetSchemaVersionID schemaVersionID,
-	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink,
+	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink,
 ) Lens {
 	targetSource := enumerable.NewQueue[LensDoc]()
 	outputPipe := enumerable.Concat[LensDoc](targetSource)
 
 	return &lens{
-		lensRegistry:         lensRegistry,
-		ctx:                  ctx,
-		source:               enumerable.NewQueue[lensInput](),
-		outputPipe:           outputPipe,
-		unknownVersionPipe:   targetSource,
-		schemaVersionHistory: schemaVersionHistory,
+		lensRegistry:       lensRegistry,
+		ctx:                ctx,
+		source:             enumerable.NewQueue[lensInput](),
+		outputPipe:         outputPipe,
+		unknownVersionPipe: targetSource,
+		collectionHistory:  collectionHistory,
 		lensInputPipesBySchemaVersionIDs: map[schemaVersionID]enumerable.Queue[LensDoc]{
 			targetSchemaVersionID: targetSource,
 		},
@@ -136,7 +136,7 @@ func (l *lens) Next() (bool, error) {
 		// up to the output via any intermediary pipes.
 		inputPipe = p
 	} else {
-		historyLocation, ok := l.schemaVersionHistory[doc.SchemaVersionID]
+		historyLocation, ok := l.collectionHistory[doc.SchemaVersionID]
 		if !ok {
 			// We may recieve documents of unknown schema versions, they should
 			// still be fed through the pipe system in order to preserve order.

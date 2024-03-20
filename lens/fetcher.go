@@ -76,7 +76,7 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := getTargetedSchemaHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
+	history, err := getTargetedCollectionHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
 	if err != nil {
 		return err
 	}
