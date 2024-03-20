@@ -35,10 +35,10 @@ type Select struct {
 	Offsetable
 	Orderable
 	Filterable
+	DocIDsFilter
 	Groupable
 
-	DocIDs immutable.Option[[]string]
-	CID    immutable.Option[string]
+	CID immutable.Option[string]
 
 	// Root is the top level type of parsed request
 	Root SelectionType
@@ -130,8 +130,8 @@ type selectJson struct {
 	Offsetable
 	Orderable
 	Filterable
+	DocIDsFilter
 	Groupable
-	DocIDs      immutable.Option[[]string]
 	CID         immutable.Option[string]
 	Root        SelectionType
 	ShowDeleted bool

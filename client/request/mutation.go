@@ -10,8 +10,6 @@
 
 package request
 
-import "github.com/sourcenetwork/immutable"
-
 type MutationType int
 
 const (
@@ -28,6 +26,7 @@ type ObjectMutation struct {
 	ChildSelect
 
 	Filterable
+	DocIDsFilter
 
 	Type MutationType
 
@@ -35,7 +34,6 @@ type ObjectMutation struct {
 	// if this mutation is on an object.
 	Collection string
 
-	IDs   immutable.Option[[]string]
 	Input map[string]any
 }
 
@@ -47,8 +45,8 @@ func (m ObjectMutation) ToSelect() *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		ChildSelect: m.ChildSelect,
-		DocIDs:      m.IDs,
-		Filterable:  m.Filterable,
+		ChildSelect:  m.ChildSelect,
+		DocIDsFilter: m.DocIDsFilter,
+		Filterable:   m.Filterable,
 	}
 }
