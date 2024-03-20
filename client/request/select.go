@@ -34,14 +34,13 @@ type Select struct {
 	Offsetable
 	Orderable
 	Filterable
+	Groupable
 
 	DocIDs immutable.Option[[]string]
 	CID    immutable.Option[string]
 
 	// Root is the top level type of parsed request
 	Root SelectionType
-
-	GroupBy immutable.Option[GroupBy]
 
 	Fields []Selection
 
