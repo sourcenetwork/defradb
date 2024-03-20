@@ -1235,7 +1235,7 @@ func (c *collection) getAllDocIDsChan(
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
 				resCh <- client.DocIDResult{
-					Err: res.Error,
+					Err: err,
 				}
 				return
 			}
