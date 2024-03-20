@@ -1097,7 +1097,7 @@ func ToCommitSelect(
 		DocID:   selectRequest.DocID,
 		FieldID: selectRequest.FieldID,
 		Depth:   selectRequest.Depth,
-		Cid:     selectRequest.Cid,
+		Cid:     selectRequest.CID,
 	}, nil
 }
 

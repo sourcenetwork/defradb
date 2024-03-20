@@ -12,8 +12,6 @@ package request
 
 import (
 	"encoding/json"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 // SelectionType is the type of selection.
@@ -36,9 +34,8 @@ type Select struct {
 	Orderable
 	Filterable
 	DocIDsFilter
+	CIDFilter
 	Groupable
-
-	CID immutable.Option[string]
 
 	// Root is the top level type of parsed request
 	Root SelectionType
@@ -131,8 +128,8 @@ type selectJson struct {
 	Orderable
 	Filterable
 	DocIDsFilter
+	CIDFilter
 	Groupable
-	CID         immutable.Option[string]
 	Root        SelectionType
 	ShowDeleted bool
 }

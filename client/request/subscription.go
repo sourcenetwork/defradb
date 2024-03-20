@@ -38,7 +38,9 @@ func (m ObjectSubscription) ToSelect(docID, cid string) *Select {
 		DocIDsFilter: DocIDsFilter{
 			DocIDs: immutable.Some([]string{docID}),
 		},
-		CID:         immutable.Some(cid),
+		CIDFilter: CIDFilter{
+			immutable.Some(cid),
+		},
 		ChildSelect: m.ChildSelect,
 		Filterable:  m.Filterable,
 	}

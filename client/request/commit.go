@@ -20,6 +20,8 @@ type CommitSelect struct {
 	Field
 	ChildSelect
 
+	CIDFilter
+
 	Limitable
 	Offsetable
 	Orderable
@@ -27,7 +29,6 @@ type CommitSelect struct {
 
 	DocID   immutable.Option[string]
 	FieldID immutable.Option[string]
-	Cid     immutable.Option[string]
 	Depth   immutable.Option[uint64]
 }
 
