@@ -120,27 +120,21 @@ func (s *Select) validateGroupBy() []error {
 }
 
 // selectJson is a private object used for handling json deserialization
-// of `Select` objects.
+// of [Select] objects.
+//
+// It contains everything minus the [ChildSelect], which uses a custom UnmarshalJSON
+// and is skipped over when embedding due to the way the std lib json pkg works.
 type selectJson struct {
 	Field
-
 	Limitable
 	Offsetable
-
+	Orderable
+	Filterable
+	Groupable
 	DocIDs      immutable.Option[[]string]
 	CID         immutable.Option[string]
 	Root        SelectionType
-	OrderBy     immutable.Option[OrderBy]
-	GroupBy     immutable.Option[GroupBy]
-	Filter      immutable.Option[Filter]
 	ShowDeleted bool
-
-	// Properties above this line match the `Select` object and
-	// are deserialized using the normal/default logic.
-	// Properties below this line require custom logic in `UnmarshalJSON`
-	// in order to be deserialized correctly.
-
-	Fields []map[string]json.RawMessage
 }
 
 func (s *Select) UnmarshalJSON(bytes []byte) error {
@@ -154,12 +148,37 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 	s.DocIDs = selectMap.DocIDs
 	s.CID = selectMap.CID
 	s.Root = selectMap.Root
-	s.Limit = selectMap.Limit
-	s.Offset = selectMap.Offset
-	s.OrderBy = selectMap.OrderBy
-	s.GroupBy = selectMap.GroupBy
-	s.Filter = selectMap.Filter
+	s.Limitable = selectMap.Limitable
+	s.Offsetable = selectMap.Offsetable
+	s.Orderable = selectMap.Orderable
+	s.Groupable = selectMap.Groupable
+	s.Filterable = selectMap.Filterable
 	s.ShowDeleted = selectMap.ShowDeleted
+
+	var childSelect ChildSelect
+	err = json.Unmarshal(bytes, &childSelect)
+	if err != nil {
+		return err
+	}
+
+	s.ChildSelect = childSelect
+
+	return nil
+}
+
+// childSelectJson is a private object used for handling json deserialization
+// of [ChildSelect] objects.
+type childSelectJson struct {
+	Fields []map[string]json.RawMessage
+}
+
+func (s *ChildSelect) UnmarshalJSON(bytes []byte) error {
+	var selectMap childSelectJson
+	err := json.Unmarshal(bytes, &selectMap)
+	if err != nil {
+		return err
+	}
+
 	s.Fields = make([]Selection, len(selectMap.Fields))
 
 	for i, field := range selectMap.Fields {
