@@ -43,6 +43,5 @@ func (c CommitSelect) ToSelect() *Select {
 		Orderable:   c.Orderable,
 		Groupable:   c.Groupable,
 		ChildSelect: c.ChildSelect,
-		Root:        CommitSelection,
 	}
 }

@@ -64,7 +64,7 @@ func parseQueryOperationDefinition(
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(schema, request.ObjectSelection, schema.QueryType(), node, i)
+				parsed, err := parseSelect(schema, schema.QueryType(), node, i)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -92,7 +92,6 @@ func parseQueryOperationDefinition(
 // filters, limits, orders, etc..
 func parseSelect(
 	schema gql.Schema,
-	rootType request.SelectionType,
 	parent *gql.Object,
 	field *ast.Field,
 	index int,
@@ -102,7 +101,6 @@ func parseSelect(
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
-		Root: rootType,
 	}
 
 	fieldDef := gql.GetFieldDef(schema, parent, slct.Name)
@@ -193,7 +191,7 @@ func parseSelect(
 		return nil, err
 	}
 
-	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
+	slct.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
 	if err != nil {
 		return nil, err
 	}

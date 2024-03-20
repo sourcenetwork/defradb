@@ -162,7 +162,6 @@ func getFieldAlias(field *ast.Field) immutable.Option[string] {
 
 func parseSelectFields(
 	schema gql.Schema,
-	root request.SelectionType,
 	parent *gql.Object,
 	fields *ast.SelectionSet) ([]request.Selection, error) {
 	selections := make([]request.Selection, len(fields.Selections))
@@ -179,13 +178,7 @@ func parseSelectFields(
 			} else if node.SelectionSet == nil { // regular field
 				selections[i] = parseField(node)
 			} else { // sub type with extra fields
-				subroot := root
-				switch node.Name.Value {
-				case request.VersionFieldName:
-					subroot = request.CommitSelection
-				}
-
-				s, err := parseSelect(schema, subroot, parent, node, i)
+				s, err := parseSelect(schema, parent, node, i)
 				if err != nil {
 					return nil, err
 				}

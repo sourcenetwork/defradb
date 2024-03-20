@@ -37,9 +37,6 @@ type Select struct {
 	CIDFilter
 	Groupable
 
-	// Root is the top level type of parsed request
-	Root SelectionType
-
 	ShowDeleted bool
 }
 
@@ -130,7 +127,6 @@ type selectJson struct {
 	DocIDsFilter
 	CIDFilter
 	Groupable
-	Root        SelectionType
 	ShowDeleted bool
 }
 
@@ -144,7 +140,6 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 	s.Field = selectMap.Field
 	s.DocIDs = selectMap.DocIDs
 	s.CID = selectMap.CID
-	s.Root = selectMap.Root
 	s.Limitable = selectMap.Limitable
 	s.Offsetable = selectMap.Offsetable
 	s.Orderable = selectMap.Orderable
@@ -190,8 +185,8 @@ func (s *ChildSelect) UnmarshalJSON(bytes []byte) error {
 		// They must be non-nillable as nil values may have their keys omitted from
 		// the json. This also relies on the fields being unique.  We may wish to change
 		// this later to custom-serialize with a `_type` property.
-		if _, ok := field["Root"]; ok {
-			// This must be a Select, as only the `Select` type has a `Root` field
+		if _, ok := field["Fields"]; ok {
+			// This must be a Select, as only the `Select` type has a `Fields` field
 			var fieldSelect Select
 			err := json.Unmarshal(fieldJson, &fieldSelect)
 			if err != nil {

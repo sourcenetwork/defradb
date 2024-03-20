@@ -112,7 +112,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		return nil, err
 	}
 
-	commit.Fields, err = parseSelectFields(schema, request.CommitSelection, fieldObject, field.SelectionSet)
+	commit.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
 
 	return commit, err
 }

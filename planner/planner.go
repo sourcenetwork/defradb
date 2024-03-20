@@ -114,7 +114,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newPlan(n.Selections[0])
 
 	case *request.Select:
-		m, err := mapper.ToSelect(p.ctx, p.db, n)
+		m, err := mapper.ToSelect(p.ctx, p.db, request.ObjectSelection, n)
 		if err != nil {
 			return nil, err
 		}
