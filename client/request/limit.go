@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,19 +12,9 @@ package request
 
 import "github.com/sourcenetwork/immutable"
 
-type Aggregate struct {
-	Field
-
-	Targets []*AggregateTarget
-}
-
-type AggregateTarget struct {
-	Limitable
-
-	HostName  string
-	ChildName immutable.Option[string]
-
-	Offset  immutable.Option[uint64]
-	OrderBy immutable.Option[OrderBy]
-	Filter  immutable.Option[Filter]
+// Limitable is an embeddable struct that hosts a consistent set of properties
+// for limiting an aspect of a request.
+type Limitable struct {
+	// Limit is an optional value that caps the number of results to the number provided.
+	Limit immutable.Option[uint64]
 }

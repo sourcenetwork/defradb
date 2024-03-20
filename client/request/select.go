@@ -30,13 +30,14 @@ const (
 type Select struct {
 	Field
 
+	Limitable
+
 	DocIDs immutable.Option[[]string]
 	CID    immutable.Option[string]
 
 	// Root is the top level type of parsed request
 	Root SelectionType
 
-	Limit   immutable.Option[uint64]
 	Offset  immutable.Option[uint64]
 	OrderBy immutable.Option[OrderBy]
 	GroupBy immutable.Option[GroupBy]
@@ -114,10 +115,12 @@ func (s *Select) validateGroupBy() []error {
 // of `Select` objects.
 type selectJson struct {
 	Field
+
+	Limitable
+
 	DocIDs      immutable.Option[[]string]
 	CID         immutable.Option[string]
 	Root        SelectionType
-	Limit       immutable.Option[uint64]
 	Offset      immutable.Option[uint64]
 	OrderBy     immutable.Option[OrderBy]
 	GroupBy     immutable.Option[GroupBy]
