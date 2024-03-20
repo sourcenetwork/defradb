@@ -95,8 +95,6 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				// Node 0 should yield results as they were defined, as the newer schema version is
-				// unknown to this node.
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
