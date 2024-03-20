@@ -19,7 +19,6 @@ import (
 )
 
 type schemaVersionID = string
-type collectionID = uint32
 
 // LensDoc represents a document that will be sent to/from a Lens.
 type LensDoc = map[string]any
@@ -57,7 +56,7 @@ type lens struct {
 	outputPipe         enumerable.Concatenation[LensDoc]
 	unknownVersionPipe enumerable.Queue[LensDoc]
 
-	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink
+	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink
 
 	source enumerable.Queue[lensInput]
 }
@@ -68,18 +67,18 @@ func new(
 	ctx context.Context,
 	lensRegistry client.LensRegistry,
 	targetSchemaVersionID schemaVersionID,
-	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink,
+	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink,
 ) Lens {
 	targetSource := enumerable.NewQueue[LensDoc]()
 	outputPipe := enumerable.Concat[LensDoc](targetSource)
 
 	return &lens{
-		lensRegistry:         lensRegistry,
-		ctx:                  ctx,
-		source:               enumerable.NewQueue[lensInput](),
-		outputPipe:           outputPipe,
-		unknownVersionPipe:   targetSource,
-		schemaVersionHistory: schemaVersionHistory,
+		lensRegistry:       lensRegistry,
+		ctx:                ctx,
+		source:             enumerable.NewQueue[lensInput](),
+		outputPipe:         outputPipe,
+		unknownVersionPipe: targetSource,
+		collectionHistory:  collectionHistory,
 		lensInputPipesBySchemaVersionIDs: map[schemaVersionID]enumerable.Queue[LensDoc]{
 			targetSchemaVersionID: targetSource,
 		},
@@ -137,7 +136,7 @@ func (l *lens) Next() (bool, error) {
 		// up to the output via any intermediary pipes.
 		inputPipe = p
 	} else {
-		historyLocation, ok := l.schemaVersionHistory[doc.SchemaVersionID]
+		historyLocation, ok := l.collectionHistory[doc.SchemaVersionID]
 		if !ok {
 			// We may recieve documents of unknown schema versions, they should
 			// still be fed through the pipe system in order to preserve order.
@@ -178,7 +177,7 @@ func (l *lens) Next() (bool, error) {
 				break
 			}
 
-			if historyLocation.targetVector > 0 {
+			if historyLocation.next.HasValue() {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
@@ -188,7 +187,7 @@ func (l *lens) Next() (bool, error) {
 				}
 
 				historyLocation = historyLocation.next.Value()
-			} else {
+			} else if historyLocation.previous.HasValue() {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.

@@ -20,185 +20,159 @@ import (
 	"github.com/sourcenetwork/defradb/db/description"
 )
 
-// schemaHistoryLink represents an item in a particular schema's history, it
+// collectionHistoryLink represents an item in a particular collection's schema history, it
 // links to the previous and next version items if they exist.
-type schemaHistoryLink struct {
+type collectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionDescription
 
-	// The history link to the next schema versions, if there are some
+	// The history link to the next collection versions, if there are some
 	// (for the most recent schema version this will be empty).
-	next []*schemaHistoryLink
+	next []*collectionHistoryLink
 
-	// The history link to the previous schema versions, if there are
-	// some (for the initial schema version this will be empty).
-	previous []*schemaHistoryLink
+	// The history link to the previous collection versions, if there are
+	// some (for the initial collection version this will be empty).
+	previous []*collectionHistoryLink
 }
 
-// targetedSchemaHistoryLink represents an item in a particular schema's history, it
-// links to the previous and next version items if they exist.
-//
-// It also contains a vector which describes the distance and direction to the
-// target schema version (given as an input param on construction).
-type targetedSchemaHistoryLink struct {
+// targetedCollectionHistoryLink represents an item in a particular collection's schema history, it
+// links to the previous and next version items if they exist and are on the path to
+// the target schema version.
+type targetedCollectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionDescription
 
-	// The link to next schema version, if there is one
-	// (for the most recent schema version this will be None).
-	next immutable.Option[*targetedSchemaHistoryLink]
+	// The link to next collection version, if there is one
+	// (for the most recent collection version this will be None).
+	next immutable.Option[*targetedCollectionHistoryLink]
 
-	// The link to the previous schema version, if there is
-	// one (for the initial schema version this will be None).
-	previous immutable.Option[*targetedSchemaHistoryLink]
-
-	// The distance and direction from this history item to the target.
-	//
-	// A zero value indicates that this is the target item. A positive value
-	// indicates that the target is more recent. A negative value indicates
-	// that the target predates this history item.
-	targetVector int
+	// The link to the previous collection version, if there is
+	// one (for the initial collection version this will be None).
+	previous immutable.Option[*targetedCollectionHistoryLink]
 }
 
-// getTargetedSchemaHistory returns the history of the schema of the given id, relative
+// getTargetedCollectionHistory returns the history of the schema of the given id, relative
 // to the given target schema version id.
 //
-// This includes any history items that are only known via registered
-// schema migrations.
-func getTargetedSchemaHistory(
+// This includes any history items that are only known via registered schema migrations.
+func getTargetedCollectionHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaRoot string,
 	targetSchemaVersionID string,
-) (map[schemaVersionID]*targetedSchemaHistoryLink, error) {
-	history, err := getSchemaHistory(ctx, txn, schemaRoot)
+) (map[schemaVersionID]*targetedCollectionHistoryLink, error) {
+	history, err := getCollectionHistory(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	result := map[schemaVersionID]*targetedSchemaHistoryLink{}
-
-	for _, item := range history {
-		result[item.collection.SchemaVersionID] = &targetedSchemaHistoryLink{
-			collection: item.collection,
-		}
+	targetHistoryItem, ok := history[targetSchemaVersionID]
+	if !ok {
+		// If the target schema version is unknown then there are no possible migrations
+		// that we can do.
+		return nil, nil
 	}
 
-	for _, item := range result {
-		schemaHistoryLink := history[item.collection.ID]
-		nextHistoryItems := schemaHistoryLink.next
-		if len(nextHistoryItems) == 0 {
-			continue
-		}
+	result := map[schemaVersionID]*targetedCollectionHistoryLink{}
 
-		// WARNING: This line assumes that each collection can only have a single source, and so
-		// just takes the first item.  If/when collections can have multiple sources we will need to change
-		// this slightly.
-		nextItem := result[nextHistoryItems[0].collection.SchemaVersionID]
-		item.next = immutable.Some(nextItem)
-		nextItem.previous = immutable.Some(item)
+	targetLink := &targetedCollectionHistoryLink{
+		collection: targetHistoryItem.collection,
 	}
+	result[targetLink.collection.SchemaVersionID] = targetLink
 
-	orphanSchemaVersions := map[string]struct{}{}
-
-	for schemaVersion, item := range result {
-		if item.collection.SchemaVersionID == targetSchemaVersionID {
-			continue
-		}
-		if item.targetVector != 0 {
-			continue
-		}
-
-		distanceTravelled := 0
-		currentItem := item
-		wasFound := false
-		for {
-			if !currentItem.next.HasValue() {
-				break
-			}
-
-			currentItem = currentItem.next.Value()
-			distanceTravelled++
-			if currentItem.targetVector != 0 {
-				distanceTravelled += currentItem.targetVector
-				wasFound = true
-				break
-			}
-			if currentItem.collection.SchemaVersionID == targetSchemaVersionID {
-				wasFound = true
-				break
-			}
-		}
-
-		if !wasFound {
-			// The target was not found going up the chain, try looking back.
-			// This is important for downgrading schema versions.
-			for {
-				if !currentItem.previous.HasValue() {
-					break
-				}
-
-				currentItem = currentItem.previous.Value()
-				distanceTravelled--
-				if currentItem.targetVector != 0 {
-					distanceTravelled += currentItem.targetVector
-					wasFound = true
-					break
-				}
-				if currentItem.collection.SchemaVersionID == targetSchemaVersionID {
-					wasFound = true
-					break
-				}
-			}
-		}
-
-		if !wasFound {
-			// This may happen if users define schema migrations to unknown schema versions
-			// with no migration path to known schema versions, esentially creating orphan
-			// migrations. These may become linked later and should remain persisted in the
-			// database, but we can drop them from the history here/now.
-			orphanSchemaVersions[schemaVersion] = struct{}{}
-			continue
-		}
-
-		item.targetVector = distanceTravelled
-	}
-
-	for schemaVersion := range orphanSchemaVersions {
-		delete(result, schemaVersion)
-	}
+	linkForwards(targetLink, targetHistoryItem, result)
+	linkBackwards(targetLink, targetHistoryItem, result)
 
 	return result, nil
 }
 
-// getSchemaHistory returns the history of the schema of the given id as linked list
+// linkForwards traverses and links the history forwards from the given starting point.
+//
+// Forward collection versions found will in turn be linked both forwards and backwards, allowing
+// branches to be correctly mapped to the target schema version.
+func linkForwards(
+	currentLink *targetedCollectionHistoryLink,
+	currentHistoryItem *collectionHistoryLink,
+	result map[schemaVersionID]*targetedCollectionHistoryLink,
+) {
+	for _, nextHistoryItem := range currentHistoryItem.next {
+		if _, ok := result[nextHistoryItem.collection.SchemaVersionID]; ok {
+			// As the history forms a DAG, this should only ever happen when
+			// iterating through the item we were at immediately before the current.
+			continue
+		}
+
+		nextLink := &targetedCollectionHistoryLink{
+			collection: nextHistoryItem.collection,
+			previous:   immutable.Some(currentLink),
+		}
+		result[nextLink.collection.SchemaVersionID] = nextLink
+
+		linkForwards(nextLink, nextHistoryItem, result)
+		linkBackwards(nextLink, nextHistoryItem, result)
+	}
+}
+
+// linkBackwards traverses and links the history backwards from the given starting point.
+//
+// Backward collection versions found will in turn be linked both forwards and backwards, allowing
+// branches to be correctly mapped to the target schema version.
+func linkBackwards(
+	currentLink *targetedCollectionHistoryLink,
+	currentHistoryItem *collectionHistoryLink,
+	result map[schemaVersionID]*targetedCollectionHistoryLink,
+) {
+	for _, prevHistoryItem := range currentHistoryItem.previous {
+		if _, ok := result[prevHistoryItem.collection.SchemaVersionID]; ok {
+			// As the history forms a DAG, this should only ever happen when
+			// iterating through the item we were at immediately before the current.
+			continue
+		}
+
+		prevLink := &targetedCollectionHistoryLink{
+			collection: prevHistoryItem.collection,
+			next:       immutable.Some(currentLink),
+		}
+		result[prevLink.collection.SchemaVersionID] = prevLink
+
+		linkForwards(prevLink, prevHistoryItem, result)
+		linkBackwards(prevLink, prevHistoryItem, result)
+	}
+}
+
+// getCollectionHistory returns the history of the collection of the given root id as linked list
 // with each item mapped by schema version id.
 //
-// This includes any history items that are only known via registered
-// schema migrations.
-func getSchemaHistory(
+// This includes any history items that are only known via registered schema migrations.
+func getCollectionHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaRoot string,
-) (map[collectionID]*schemaHistoryLink, error) {
+) (map[schemaVersionID]*collectionHistoryLink, error) {
 	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	history := map[collectionID]*schemaHistoryLink{}
+	history := map[schemaVersionID]*collectionHistoryLink{}
+	schemaVersionsByColID := map[uint32]schemaVersionID{}
 
 	for _, c := range cols {
+		// Todo - this `col := c` can be removed with Go 1.22:
+		// https://github.com/sourcenetwork/defradb/issues/2431
 		col := c
+
 		// Convert the temporary types to the cleaner return type:
-		history[col.ID] = &schemaHistoryLink{
+		history[col.SchemaVersionID] = &collectionHistoryLink{
 			collection: &col,
 		}
+		schemaVersionsByColID[col.ID] = col.SchemaVersionID
 	}
 
 	for _, historyItem := range history {
 		for _, source := range historyItem.collection.CollectionSources() {
-			src := history[source.SourceCollectionID]
+			srcSchemaVersion := schemaVersionsByColID[source.SourceCollectionID]
+			src := history[srcSchemaVersion]
 			historyItem.previous = append(
 				historyItem.next,
 				src,
