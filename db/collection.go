@@ -572,6 +572,47 @@ func (db *db) patchCollection(
 		if err != nil {
 			return err
 		}
+
+		existingCol, ok := existingColsByID[col.ID]
+		if ok {
+			// Clear any existing migrations in the registry, using this semi-hacky way
+			// to avoid adding more functions to a public interface that we wish to remove.
+
+			for _, src := range existingCol.CollectionSources() {
+				if src.Transform.HasValue() {
+					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					if err != nil {
+						return err
+					}
+				}
+			}
+			for _, src := range existingCol.QuerySources() {
+				if src.Transform.HasValue() {
+					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		for _, src := range col.CollectionSources() {
+			if src.Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		for _, src := range col.QuerySources() {
+			if src.Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return db.loadSchema(ctx, txn)
@@ -583,7 +624,7 @@ var patchCollectionValidators = []func(
 ) error{
 	validateCollectionNameUnique,
 	validateSingleVersionActive,
-	validateSourcesNotModified,
+	validateSourcesNotRedefined,
 	validateIndexesNotModified,
 	validateFieldsNotModified,
 	validateIDNotZero,
@@ -646,7 +687,12 @@ func validateSingleVersionActive(
 	return nil
 }
 
-func validateSourcesNotModified(
+// validateSourcesNotRedefined specifies the limitations on how the collection sources
+// can be mutated.
+//
+// Currently new sources cannot be added, existing cannot be removed, and CollectionSources
+// cannot be redirected to other collections.
+func validateSourcesNotRedefined(
 	oldColsByID map[uint32]client.CollectionDescription,
 	newColsByID map[uint32]client.CollectionDescription,
 ) error {
@@ -656,10 +702,28 @@ func validateSourcesNotModified(
 			continue
 		}
 
-		// DeepEqual is temporary, as this validation is temporary, for example soon
-		// users will be able to be able to change the migration
-		if !reflect.DeepEqual(oldCol.Sources, newCol.Sources) {
-			return NewErrCollectionSourcesCannotBeMutated(newCol.ID)
+		newColSources := newCol.CollectionSources()
+		oldColSources := oldCol.CollectionSources()
+
+		if len(newColSources) != len(oldColSources) {
+			return NewErrCollectionSourcesCannotBeAddedRemoved(newCol.ID)
+		}
+
+		for i := range newColSources {
+			if newColSources[i].SourceCollectionID != oldColSources[i].SourceCollectionID {
+				return NewErrCollectionSourceIDMutated(
+					newCol.ID,
+					newColSources[i].SourceCollectionID,
+					oldColSources[i].SourceCollectionID,
+				)
+			}
+		}
+
+		newQuerySources := newCol.QuerySources()
+		oldQuerySources := oldCol.QuerySources()
+
+		if len(newQuerySources) != len(oldQuerySources) {
+			return NewErrCollectionSourcesCannotBeAddedRemoved(newCol.ID)
 		}
 	}
 

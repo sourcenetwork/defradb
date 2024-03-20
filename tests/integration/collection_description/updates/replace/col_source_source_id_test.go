@@ -16,43 +16,35 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColDescrUpdateReplaceSources_Errors(t *testing.T) {
+func TestColDescrUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {}
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad"
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+					]
 				`,
 			},
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Sources", "value": [{"SourceCollectionID": 1}] }
+						{ "op": "replace", "path": "/2/Sources/0/SourceCollectionID", "value": 3 }
 					]
 				`,
-				ExpectedError: "collection sources cannot be added or removed. CollectionID: 1",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestColDescrUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {}
-				`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "replace", "path": "/1/Sources", "value": [{"Query": {"Name": "Users"}}] }
-					]
-				`,
-				ExpectedError: "collection sources cannot be added or removed. CollectionID: 1",
+				ExpectedError: "collection source ID cannot be mutated. CollectionID: 2, NewCollectionSourceID: 3, OldCollectionSourceID: 1",
 			},
 		},
 	}

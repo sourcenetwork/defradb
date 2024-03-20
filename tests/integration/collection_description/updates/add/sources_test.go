@@ -30,7 +30,7 @@ func TestColDescrUpdateAddSources_Errors(t *testing.T) {
 						{ "op": "add", "path": "/1/Sources/-", "value": {"SourceCollectionID": 1} }
 					]
 				`,
-				ExpectedError: "collection sources cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection sources cannot be added or removed. CollectionID: 1",
 			},
 		},
 	}

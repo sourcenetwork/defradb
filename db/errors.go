@@ -85,7 +85,8 @@ const (
 	errInvalidViewQuery                         string = "the query provided is not valid as a View"
 	errCollectionAlreadyExists                  string = "collection already exists"
 	errMultipleActiveCollectionVersions         string = "multiple versions of same collection cannot be active"
-	errCollectionSourcesCannotBeMutated         string = "collection sources cannot be mutated"
+	errCollectionSourcesCannotBeAddedRemoved    string = "collection sources cannot be added or removed"
+	errCollectionSourceIDMutated                string = "collection source ID cannot be mutated"
 	errCollectionIndexesCannotBeMutated         string = "collection indexes cannot be mutated"
 	errCollectionFieldsCannotBeMutated          string = "collection fields cannot be mutated"
 	errCollectionRootIDCannotBeMutated          string = "collection root ID cannot be mutated"
@@ -113,7 +114,8 @@ var (
 	ErrInvalidViewQuery                         = errors.New(errInvalidViewQuery)
 	ErrCanNotIndexNonUniqueFields               = errors.New(errCanNotIndexNonUniqueFields)
 	ErrMultipleActiveCollectionVersions         = errors.New(errMultipleActiveCollectionVersions)
-	ErrCollectionSourcesCannotBeMutated         = errors.New(errCollectionSourcesCannotBeMutated)
+	ErrCollectionSourcesCannotBeAddedRemoved    = errors.New(errCollectionSourcesCannotBeAddedRemoved)
+	ErrCollectionSourceIDMutated                = errors.New(errCollectionSourceIDMutated)
 	ErrCollectionIndexesCannotBeMutated         = errors.New(errCollectionIndexesCannotBeMutated)
 	ErrCollectionFieldsCannotBeMutated          = errors.New(errCollectionFieldsCannotBeMutated)
 	ErrCollectionRootIDCannotBeMutated          = errors.New(errCollectionRootIDCannotBeMutated)
@@ -573,10 +575,19 @@ func NewErrMultipleActiveCollectionVersions(name string, root uint32) error {
 	)
 }
 
-func NewErrCollectionSourcesCannotBeMutated(colID uint32) error {
+func NewErrCollectionSourcesCannotBeAddedRemoved(colID uint32) error {
 	return errors.New(
-		errCollectionSourcesCannotBeMutated,
+		errCollectionSourcesCannotBeAddedRemoved,
 		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionSourceIDMutated(colID uint32, newSrcID uint32, oldSrcID uint32) error {
+	return errors.New(
+		errCollectionSourceIDMutated,
+		errors.NewKV("CollectionID", colID),
+		errors.NewKV("NewCollectionSourceID", newSrcID),
+		errors.NewKV("OldCollectionSourceID", oldSrcID),
 	)
 }
 
