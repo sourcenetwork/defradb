@@ -160,7 +160,10 @@ func getSchemaHistory(
 	schemaVersionsByColID := map[uint32]schemaVersionID{}
 
 	for _, c := range cols {
+		// Todo - this `col := c` can be removed with Go 1.22:
+		// https://github.com/sourcenetwork/defradb/issues/2431
 		col := c
+
 		// Convert the temporary types to the cleaner return type:
 		history[col.SchemaVersionID] = &schemaHistoryLink{
 			collection: &col,
