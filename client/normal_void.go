@@ -16,8 +16,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// NormalVoid is dummy implementation of NormalValue to be embedded in other types.
+// NormalVoid is a default implementation of NormalValue to be embedded in other types.
+// It can be also used to realize Null Object pattern https://en.wikipedia.org/wiki/Null_object_pattern.
 type NormalVoid struct{}
+
+func (NormalVoid) Unwrap() any {
+	return nil
+}
 
 func (NormalVoid) IsNil() bool {
 	return false
