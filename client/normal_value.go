@@ -25,11 +25,8 @@ import (
 //
 // All nillable values are represented as immutable.Option[T].
 type NormalValue interface {
-	// Any returns the underlying value.
-	// If the value is nillable the result will be of type `immutable.Option[T]`.
-	Any() any
 	// Unwrap returns the underlying value.
-	// For not nillable values it will act as `Any()`
+	// For not nillable values it will the value as is.
 	// For nillable values it will return result of `Value()` of `immutable.Option` if it
 	// has value, otherwise it will return `nil`.
 	Unwrap() any

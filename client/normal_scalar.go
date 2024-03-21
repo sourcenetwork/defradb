@@ -22,10 +22,6 @@ type baseNormalValue[T any] struct {
 	val T
 }
 
-func (v baseNormalValue[T]) Any() any {
-	return v.val
-}
-
 func (v baseNormalValue[T]) Unwrap() any {
 	return v.val
 }

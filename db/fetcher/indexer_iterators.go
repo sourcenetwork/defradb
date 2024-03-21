@@ -342,7 +342,7 @@ type indexInArrayMatcher struct {
 
 func (m *indexInArrayMatcher) Match(value client.NormalValue) (bool, error) {
 	for _, inVal := range m.inValues {
-		if inVal.Any() == value.Any() {
+		if inVal.Unwrap() == value.Unwrap() {
 			return m.isIn, nil
 		}
 	}

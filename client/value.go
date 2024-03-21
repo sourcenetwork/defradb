@@ -30,7 +30,7 @@ func NewFieldValue(t CType, val NormalValue) *FieldValue {
 }
 
 func (val FieldValue) Value() any {
-	return val.value.Any()
+	return val.value.Unwrap()
 }
 
 func (val FieldValue) NormalValue() NormalValue {
