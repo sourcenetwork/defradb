@@ -27,7 +27,13 @@ import (
 // All nillable values are represented as immutable.Option[T].
 type NormalValue interface {
 	// Any returns the underlying value.
+	// If the value is nillable the result will be of type `immutable.Option[T]`.
 	Any() any
+	// Unwrap returns the underlying value.
+	// For not nillable values it will act as `Any()`
+	// For nillable values it will return result of `Value()` of `immutable.Option` if it 
+	// has value, otherwise it will return `nil`.
+	Unwrap() any
 
 	// IsNil returns if the value is nil.
 	IsNil() bool
@@ -320,6 +326,10 @@ func (v baseNormalValue[T]) Any() any {
 	return v.val
 }
 
+func (v baseNormalValue[T]) Unwrap() any {
+	return v.val
+}
+
 func newBaseNormalValue[T any](val T) baseNormalValue[T] {
 	return baseNormalValue[T]{val: val}
 }
@@ -333,6 +343,10 @@ func (v baseArrayNormalValue[T]) Any() any {
 	return v.val
 }
 
+func (v baseArrayNormalValue[T]) Unwrap() any {
+	return v.val
+}
+
 func (v baseArrayNormalValue[T]) IsArray() bool {
 	return true
 }
@@ -343,6 +357,13 @@ func newBaseArrayNormalValue[T any](val T) baseArrayNormalValue[T] {
 
 type baseNillableNormalValue[T any] struct {
 	baseNormalValue[immutable.Option[T]]
+}
+
+func (v baseNillableNormalValue[T]) Unwrap() any {
+	if v.val.HasValue() {
+		return v.val.Value()
+	}
+	return nil
 }
 
 func (v baseNillableNormalValue[T]) IsNil() bool {
@@ -359,6 +380,13 @@ func newBaseNillableNormalValue[T any](val immutable.Option[T]) baseNillableNorm
 
 type baseNillableArrayNormalValue[T any] struct {
 	baseArrayNormalValue[immutable.Option[T]]
+}
+
+func (v baseNillableArrayNormalValue[T]) Unwrap() any {
+	if v.val.HasValue() {
+		return v.val.Value()
+	}
+	return nil
 }
 
 func (v baseNillableArrayNormalValue[T]) IsNil() bool {
@@ -1185,6 +1213,9 @@ func convertAnyArrToNillableTypedArr[T any](
 
 // NewNormalNil creates a new NormalValue that represents a nil value of a given field kind.
 func NewNormalNil(kind FieldKind) (NormalValue, error) {
+	if kind.IsObject() {
+		return NewNormalNillableDocument(immutable.None[*Document]()), nil
+	}
 	switch kind {
 	case FieldKind_NILLABLE_BOOL:
 		return NewNormalNillableBool(immutable.None[bool]()), nil

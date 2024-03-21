@@ -244,8 +244,12 @@ func DecodeIndexDataStoreKey(
 
 		i := len(key.Fields)
 		descending := false
+		var kind client.FieldKind = client.FieldKind_DocID
 		// If the key has more values encoded then fields on the index description, the last
 		// value must be the docID and we treat it as a string.
+		if i < len(fields) {
+			kind = fields[i].Kind
+		}
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
 		} else if i > len(indexDesc.Fields) {
@@ -253,7 +257,7 @@ func DecodeIndexDataStoreKey(
 		}
 
 		var val client.NormalValue
-		data, val, err = encoding.DecodeFieldValue(data, descending, fields[i].Kind)
+		data, val, err = encoding.DecodeFieldValue(data, descending, kind)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}

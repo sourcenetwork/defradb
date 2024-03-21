@@ -571,10 +571,6 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		return &anyMatcher{}, nil
 	}
 
-	if client.IsNillableKind(condition.kind) && condition.val.IsNil() {
-		return &nilMatcher{}, nil
-	}
-
 	switch condition.op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
 		if v, ok := condition.val.Int(); ok {
@@ -615,6 +611,10 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		return newLikeIndexCmp(strVal, isLike, isCaseInsensitive)
 	case opAny:
 		return &anyMatcher{}, nil
+	}
+
+	if condition.kind.IsNillable() && condition.val.IsNil() {
+		return &nilMatcher{}, nil
 	}
 
 	return nil, NewErrInvalidFilterOperator(condition.op)
@@ -658,7 +658,13 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 			condMap := indexFilterCond.(map[connor.FilterKey]any)
 			for key, filterVal := range condMap {
 				opKey := key.(*mapper.Operator)
-				normalVal, err := client.NewNormalValue(filterVal)
+				var normalVal client.NormalValue
+				var err error
+				if filterVal == nil {
+					normalVal, err = client.NewNormalNil(f.indexedFields[i].Kind)
+				} else {
+					normalVal, err = client.NewNormalValue(filterVal)
+				}
 				if err != nil {
 					return nil, err
 				}

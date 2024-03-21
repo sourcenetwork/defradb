@@ -76,7 +76,7 @@ func (val FieldValue) Bytes() ([]byte, error) {
 	} else if v, ok := val.value.NillableBoolArray(); ok {
 		value = convertImmutable(v)
 	} else {
-		value = val.value.Any()
+		value = val.value.Unwrap()
 	}
 
 	return em.Marshal(value)

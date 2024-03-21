@@ -172,24 +172,12 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	return docs, nil
 }
 
-// IsNillableKind returns true if the given FieldKind is nillable.
-func IsNillableKind(kind FieldKind) bool {
-	switch kind {
-	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON,
-		FieldKind_NILLABLE_BOOL, FieldKind_NILLABLE_FLOAT, FieldKind_NILLABLE_DATETIME,
-		FieldKind_NILLABLE_INT:
-		return true
-	default:
-		return false
-	}
-}
-
 // validateFieldSchema takes a given value as an interface,
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
 func validateFieldSchema(val any, field SchemaFieldDescription) (NormalValue, error) {
-	if IsNillableKind(field.Kind) {
+	if field.Kind.IsNillable() {
 		if val == nil {
 			return NewNormalNil(field.Kind)
 		}

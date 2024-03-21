@@ -762,13 +762,6 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 	}
 }
 
-func TestNormalValue_NormalNil(t *testing.T) {
-	v, err := NewNormalValue(nil)
-	require.NoError(t, err)
-
-	assert.True(t, v.IsNil())
-}
-
 func TestNormalValue_NewNormalInt(t *testing.T) {
 	i64 := int64(2)
 	v := NewNormalInt(i64)
@@ -1328,7 +1321,14 @@ func TestNormalValue_NewNormalNillableBytesNillableArray(t *testing.T) {
 }
 
 func TestNormalValue_NewNormalNil(t *testing.T) {
+	fieldKinds := []FieldKind{}
 	for _, kind := range FieldKindStringToEnumMapping {
+		fieldKinds = append(fieldKinds, kind)
+	}
+	fieldKinds = append(fieldKinds, ObjectKind("Object"))
+	fieldKinds = append(fieldKinds, ObjectArrayKind("ObjectArr"))
+
+	for _, kind := range fieldKinds {
 		if kind.IsNillable() {
 			v, err := NewNormalNil(kind)
 			require.NoError(t, err)
