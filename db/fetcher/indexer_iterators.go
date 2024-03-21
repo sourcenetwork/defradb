@@ -328,10 +328,12 @@ func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
 	return false, NewErrUnexpectedTypeValue[string](value)
 }
 
-type nilMatcher struct{}
+type nilMatcher struct {
+	matchNil bool
+}
 
 func (m *nilMatcher) Match(value client.NormalValue) (bool, error) {
-	return value.IsNil(), nil
+	return value.IsNil() == m.matchNil, nil
 }
 
 // checks if the index value is or is not in the given array
@@ -571,6 +573,10 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		return &anyMatcher{}, nil
 	}
 
+	if condition.val.IsNil() {
+		return &nilMatcher{matchNil: condition.op == opEq}, nil
+	}
+
 	switch condition.op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
 		if v, ok := condition.val.Int(); ok {
@@ -611,10 +617,6 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		return newLikeIndexCmp(strVal, isLike, isCaseInsensitive)
 	case opAny:
 		return &anyMatcher{}, nil
-	}
-
-	if condition.kind.IsNillable() && condition.val.IsNil() {
-		return &nilMatcher{}, nil
 	}
 
 	return nil, NewErrInvalidFilterOperator(condition.op)
@@ -678,7 +680,11 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 			break
 		}
 		if !found {
-			result = append(result, fieldFilterCond{op: opAny})
+			result = append(result, fieldFilterCond{
+				op:   opAny,
+				val:  client.NormalVoid{},
+				kind: f.indexedFields[i].Kind,
+			})
 		}
 	}
 	return result, nil
