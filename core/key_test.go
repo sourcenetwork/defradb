@@ -332,14 +332,14 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 }
 
 func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
-	/*replace := func(b []byte, i int, v byte) []byte {
+	replace := func(b []byte, i int, v byte) []byte {
 		b = append([]byte{}, b...)
 		b[i] = v
 		return b
 	}
 	cutEnd := func(b []byte, l int) []byte {
 		return b[:len(b)-l]
-	}*/
+	}
 
 	const colID, indexID = 1, 2
 
@@ -348,7 +348,7 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 		val       []byte
 		numFields int
 	}{
-		/*{
+		{
 			name: "empty",
 			val:  []byte{},
 		},
@@ -389,7 +389,7 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 			name:      "no field description",
 			val:       encodeKey(colID, indexID, 5, false, 7, false, 9, false),
 			numFields: 2,
-		},*/
+		},
 		{
 			name:      "invalid docID value",
 			val:       encoding.EncodeUvarintAscending(append(encodeKey(colID, indexID, 5, false), '/'), 5),
