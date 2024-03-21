@@ -79,13 +79,11 @@ func (val FieldValue) Bytes() ([]byte, error) {
 }
 
 func convertImmutable[T any](vals []immutable.Option[T]) []any {
-	var out []any
-	for _, val := range vals {
-		if !val.HasValue() {
-			out = append(out, nil)
-			continue
+	out := make([]any, len(vals))
+	for i := range vals {
+		if vals[i].HasValue() {
+			out[i] = vals[i].Value()
 		}
-		out = append(out, val.Value())
 	}
 	return out
 }
