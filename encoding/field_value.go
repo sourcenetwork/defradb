@@ -102,7 +102,7 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			b, v, err = DecodeVarintAscending(b)
 		}
 		if err != nil {
-			return nil, nil, NewErrCanNotDecodeFieldValue(b, err)
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalInt(v), nil
 	case Float:
@@ -114,7 +114,7 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			b, v, err = DecodeFloatAscending(b)
 		}
 		if err != nil {
-			return nil, nil, NewErrCanNotDecodeFieldValue(b, err)
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalFloat(v), nil
 	case Bytes, BytesDesc:
@@ -126,10 +126,10 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			b, v, err = DecodeBytesAscending(b)
 		}
 		if err != nil {
-			return nil, nil, NewErrCanNotDecodeFieldValue(b, err)
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalString(v), nil
 	}
 
-	return nil, nil, NewErrCanNotDecodeFieldValue(b)
+	return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)
 }
