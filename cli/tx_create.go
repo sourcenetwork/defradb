@@ -13,7 +13,6 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -25,7 +24,7 @@ func MakeTxCreateCommand() *cobra.Command {
 		Short: "Create a new DefraDB transaction.",
 		Long:  `Create a new DefraDB transaction.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			db := cmd.Context().Value(dbContextKey).(client.DB)
+			db := mustGetContextDB(cmd)
 
 			var tx datastore.Txn
 			if concurrent {
