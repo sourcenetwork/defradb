@@ -14,14 +14,6 @@ import (
 	"encoding/json"
 )
 
-// SelectionType is the type of selection.
-type SelectionType int
-
-const (
-	ObjectSelection SelectionType = iota
-	CommitSelection
-)
-
 // Select is a complex Field with strong typing.
 // It is used for sub-types in a request.
 // Includes fields, and request arguments like filters, limits, etc.

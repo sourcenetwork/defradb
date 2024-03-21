@@ -33,6 +33,14 @@ var (
 	FilterEqOp = &Operator{Operation: "_eq"}
 )
 
+// SelectionType is the type of selection.
+type SelectionType int
+
+const (
+	ObjectSelection SelectionType = iota
+	CommitSelection
+)
+
 // ToSelect converts the given [parser.Select] into a [Select].
 //
 // In the process of doing so it will construct the document map required to access the data
@@ -40,7 +48,7 @@ var (
 func ToSelect(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	selectRequest *request.Select,
 ) (*Select, error) {
 	// the top-level select will always have index=0, and no parent collection name
@@ -54,15 +62,15 @@ func ToSelect(
 func toSelect(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	thisIndex int,
 	selectRequest *request.Select,
 	parentCollectionName string,
 ) (*Select, error) {
-	if rootSelectType == request.ObjectSelection && selectRequest.Name == request.VersionFieldName {
+	if rootSelectType == ObjectSelection && selectRequest.Name == request.VersionFieldName {
 		// WARNING: This is a weird quirk upon which some of the mapper code is dependent upon
 		// please remove it if/when you have chance to.
-		rootSelectType = request.CommitSelection
+		rootSelectType = CommitSelection
 	}
 
 	collectionName, err := getCollectionName(ctx, store, rootSelectType, selectRequest, parentCollectionName)
@@ -166,7 +174,7 @@ func toSelect(
 func resolveOrderDependencies(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	descName string,
 	source immutable.Option[request.OrderBy],
 	mapping *core.DocumentMapping,
@@ -244,7 +252,7 @@ outer:
 func resolveChildOrder(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	descName string,
 	orderChildField string,
 	mapping *core.DocumentMapping,
@@ -292,7 +300,7 @@ func resolveChildOrder(
 // updated with any new fields/aggregates.
 func resolveAggregates(
 	ctx context.Context,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
@@ -653,7 +661,7 @@ func appendIfNotExists(
 // consumed mapping data.
 func getRequestables(
 	ctx context.Context,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
 	collectionName string,
@@ -745,7 +753,7 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 func getCollectionName(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	parentCollectionName string,
 ) (string, error) {
@@ -755,7 +763,7 @@ func getCollectionName(
 
 	if selectRequest.Name == request.GroupFieldName {
 		return parentCollectionName, nil
-	} else if rootSelectType == request.CommitSelection {
+	} else if rootSelectType == CommitSelection {
 		return parentCollectionName, nil
 	}
 
@@ -780,7 +788,7 @@ func getCollectionName(
 func getTopLevelInfo(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	collectionName string,
 ) (*core.DocumentMapping, client.CollectionDefinition, error) {
@@ -792,7 +800,7 @@ func getTopLevelInfo(
 		return mapping, client.CollectionDefinition{}, nil
 	}
 
-	if rootSelectType == request.ObjectSelection {
+	if rootSelectType == ObjectSelection {
 		var definition client.CollectionDefinition
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
@@ -871,7 +879,7 @@ func getTopLevelInfo(
 func resolveFilterDependencies(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	parentCollectionName string,
 	source immutable.Option[request.Filter],
 	mapping *core.DocumentMapping,
@@ -896,7 +904,7 @@ func resolveFilterDependencies(
 func resolveInnerFilterDependencies(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	parentCollectionName string,
 	source map[string]any,
 	mapping *core.DocumentMapping,
@@ -1022,7 +1030,7 @@ func resolveInnerFilterDependencies(
 func constructEmptyJoin(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	parentCollectionName string,
 	parentMapping *core.DocumentMapping,
 	name string,
@@ -1069,7 +1077,7 @@ func constructEmptyJoin(
 func resolveSecondaryRelationIDs(
 	ctx context.Context,
 	store client.Store,
-	rootSelectType request.SelectionType,
+	rootSelectType SelectionType,
 	collectionName string,
 	schema client.SchemaDescription,
 	mapping *core.DocumentMapping,
@@ -1134,7 +1142,7 @@ func ToCommitSelect(
 	store client.Store,
 	selectRequest *request.CommitSelect,
 ) (*CommitSelect, error) {
-	underlyingSelect, err := ToSelect(ctx, store, request.CommitSelection, selectRequest.ToSelect())
+	underlyingSelect, err := ToSelect(ctx, store, CommitSelection, selectRequest.ToSelect())
 	if err != nil {
 		return nil, err
 	}
@@ -1152,7 +1160,7 @@ func ToCommitSelect(
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
 func ToMutation(ctx context.Context, store client.Store, mutationRequest *request.ObjectMutation) (*Mutation, error) {
-	underlyingSelect, err := ToSelect(ctx, store, request.ObjectSelection, mutationRequest.ToSelect())
+	underlyingSelect, err := ToSelect(ctx, store, ObjectSelection, mutationRequest.ToSelect())
 	if err != nil {
 		return nil, err
 	}

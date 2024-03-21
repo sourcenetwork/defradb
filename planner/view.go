@@ -12,7 +12,6 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -34,7 +33,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 	querySource := (col.Description().Sources[0].(*client.QuerySource))
 	hasTransform := querySource.Transform.HasValue()
 
-	m, err := mapper.ToSelect(p.ctx, p.db, request.ObjectSelection, &querySource.Query)
+	m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &querySource.Query)
 	if err != nil {
 		return nil, err
 	}
