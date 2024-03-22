@@ -98,6 +98,14 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
+func (w *Wrapper) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	return w.client.AddPolicy(ctx, creator, policy)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
@@ -207,14 +215,6 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {
 	return w.node.Peerstore()
-}
-
-func (w *Wrapper) AddPolicy(
-	ctx context.Context,
-	creator string,
-	policy string,
-) (client.AddPolicyResult, error) {
-	return w.node.AddPolicy(ctx, creator, policy)
 }
 
 func (w *Wrapper) Close() {
