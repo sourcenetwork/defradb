@@ -21,7 +21,7 @@ import (
 // or not, according to our access logic based on weather (1) the request is permissioned,
 // (2) the collection is permissioned (has a policy), (3) acp module exists.
 func (df *DocumentFetcher) runDocReadPermissionCheck(ctx context.Context) error {
-	hasPermission, err := permission.CheckDocPermissionedAccessOnCollection(
+	hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		df.identity,
 		df.acp,

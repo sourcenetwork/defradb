@@ -184,7 +184,7 @@ func (l *ACPLocal) ValidateResourceExistsOnValidDPI(
 	return nil
 }
 
-func (l *ACPLocal) RegisterDocCreation(
+func (l *ACPLocal) RegisterDocObject(
 	ctx context.Context,
 	actorID string,
 	policyID string,

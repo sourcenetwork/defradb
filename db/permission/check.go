@@ -19,11 +19,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// CheckDocPermissionedAccessOnCollection handles the check, which tells us if access to the target
+// CheckAccessOfDocOnCollectionWithACP handles the check, which tells us if access to the target
 // document is valid, with respect to the permission type, and the specified collection.
 //
 // According to our access logic we have these components to worry about:
-// (1) the request is permissioned (has an identity signature),
+// (1) the request is permissioned (has an identity),
 // (2) the collection is permissioned (has a policy),
 // (3) acp module exists (acp is enabled).
 //
@@ -32,7 +32,7 @@ import (
 // - Document is public (unregistered), whether signatured request or not, doesn't matter.
 //
 // Otherwise, check with acp module to verify signature has the appropriate access.
-func CheckDocPermissionedAccessOnCollection(
+func CheckAccessOfDocOnCollectionWithACP(
 	ctx context.Context,
 	identityOptional immutable.Option[string],
 	acpModuleOptional immutable.Option[acp.ACPModule],

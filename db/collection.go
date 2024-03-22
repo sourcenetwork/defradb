@@ -1445,7 +1445,7 @@ func (c *collection) create(
 		return err
 	}
 
-	return c.registerDocCreation(ctx, identity, doc.ID().String())
+	return c.registerDocWithACP(ctx, identity, doc.ID().String())
 }
 
 // Update an existing document with the new values.
@@ -1494,7 +1494,7 @@ func (c *collection) update(
 	doc *client.Document,
 ) error {
 	// Stop the update if the correct permissions aren't there.
-	canUpdate, err := c.checkDocPermissionedAccess(
+	canUpdate, err := c.checkAccessOfDocWithACP(
 		ctx,
 		identity,
 		acp.WritePermission,
@@ -1845,7 +1845,7 @@ func (c *collection) exists(
 	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
-	canRead, err := c.checkDocPermissionedAccess(
+	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
 		identity,
 		acp.ReadPermission,
