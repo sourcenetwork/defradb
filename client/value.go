@@ -46,7 +46,6 @@ func (val FieldValue) IsDocument() bool {
 	return ok
 }
 
-// fieldValue.Value.Value()
 // IsDirty returns if the value is marked as dirty (unsaved/changed)
 func (val FieldValue) IsDirty() bool {
 	return val.isDirty
