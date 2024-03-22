@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
@@ -70,7 +71,7 @@ func runQueryBenchGetSync(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		res := db.ExecRequest(ctx, query)
+		res := db.ExecRequest(ctx, acpIdentity.NoIdentity, query)
 		if len(res.GQL.Errors) > 0 {
 			return errors.New(fmt.Sprintf("Query error: %v", res.GQL.Errors))
 		}

@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
@@ -48,17 +49,17 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		CollectionCalls: map[string][]func(client.Collection){
 			"Users": []func(c client.Collection){
 				func(c client.Collection) {
-					err = c.Save(context.Background(), doc1)
+					err = c.Save(context.Background(), acpIdentity.NoIdentity, doc1)
 					assert.Nil(t, err)
 				},
 				func(c client.Collection) {
-					err = c.Save(context.Background(), doc2)
+					err = c.Save(context.Background(), acpIdentity.NoIdentity, doc2)
 					assert.Nil(t, err)
 				},
 				func(c client.Collection) {
 					// Update John
 					doc1.Set("name", "Johnnnnn")
-					err = c.Save(context.Background(), doc1)
+					err = c.Save(context.Background(), acpIdentity.NoIdentity, doc1)
 					assert.Nil(t, err)
 				},
 			},

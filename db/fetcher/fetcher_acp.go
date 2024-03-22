@@ -23,6 +23,7 @@ import (
 func (df *DocumentFetcher) runDocReadPermissionCheck(ctx context.Context) error {
 	hasPermission, err := permission.CheckDocPermissionedAccessOnCollection(
 		ctx,
+		df.identity,
 		df.acp,
 		df.col,
 		acp.ReadPermission,

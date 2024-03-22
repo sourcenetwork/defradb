@@ -32,16 +32,17 @@ import (
 // Eg: UpdateWithFilter or UpdateWithDocID
 func (c *collection) UpdateWith(
 	ctx context.Context,
+	identity immutable.Option[string],
 	target any,
 	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, t, updater)
+		return c.UpdateWithFilter(ctx, identity, t, updater)
 	case client.DocID:
-		return c.UpdateWithDocID(ctx, t, updater)
+		return c.UpdateWithDocID(ctx, identity, t, updater)
 	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, t, updater)
+		return c.UpdateWithDocIDs(ctx, identity, t, updater)
 	default:
 		return nil, client.ErrInvalidUpdateTarget
 	}
@@ -52,6 +53,7 @@ func (c *collection) UpdateWith(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithFilter(
 	ctx context.Context,
+	identity immutable.Option[string],
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -60,7 +62,7 @@ func (c *collection) UpdateWithFilter(
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithFilter(ctx, txn, filter, updater)
+	res, err := c.updateWithFilter(ctx, identity, txn, filter, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +74,7 @@ func (c *collection) UpdateWithFilter(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithDocID(
 	ctx context.Context,
+	identity immutable.Option[string],
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -80,7 +83,7 @@ func (c *collection) UpdateWithDocID(
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithDocID(ctx, txn, docID, updater)
+	res, err := c.updateWithDocID(ctx, identity, txn, docID, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +96,7 @@ func (c *collection) UpdateWithDocID(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithDocIDs(
 	ctx context.Context,
+	identity immutable.Option[string],
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -101,7 +105,7 @@ func (c *collection) UpdateWithDocIDs(
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithIDs(ctx, txn, docIDs, updater)
+	res, err := c.updateWithIDs(ctx, identity, txn, docIDs, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -111,6 +115,7 @@ func (c *collection) UpdateWithDocIDs(
 
 func (c *collection) updateWithDocID(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	docID client.DocID,
 	updater string,
@@ -127,7 +132,7 @@ func (c *collection) updateWithDocID(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	doc, err := c.Get(ctx, docID, false)
+	doc, err := c.Get(ctx, identity, docID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +146,7 @@ func (c *collection) updateWithDocID(
 		return nil, err
 	}
 
-	err = c.update(ctx, txn, doc)
+	err = c.update(ctx, identity, txn, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +160,7 @@ func (c *collection) updateWithDocID(
 
 func (c *collection) updateWithIDs(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	docIDs []client.DocID,
 	updater string,
@@ -175,7 +181,7 @@ func (c *collection) updateWithIDs(
 		DocIDs: make([]string, len(docIDs)),
 	}
 	for i, docIDs := range docIDs {
-		doc, err := c.Get(ctx, docIDs, false)
+		doc, err := c.Get(ctx, identity, docIDs, false)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +195,7 @@ func (c *collection) updateWithIDs(
 			return nil, err
 		}
 
-		err = c.update(ctx, txn, doc)
+		err = c.update(ctx, identity, txn, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -202,6 +208,7 @@ func (c *collection) updateWithIDs(
 
 func (c *collection) updateWithFilter(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	filter any,
 	updater string,
@@ -223,7 +230,7 @@ func (c *collection) updateWithFilter(
 	}
 
 	// Make a selection plan that will scan through only the documents with matching filter.
-	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, identity, txn, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +284,7 @@ func (c *collection) updateWithFilter(
 			}
 		}
 
-		err = c.update(ctx, txn, doc)
+		err = c.update(ctx, identity, txn, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -310,6 +317,7 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (clien
 // patched.
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	secondaryCollectionName string,
 	relationFieldDescription client.FieldDefinition,
@@ -345,9 +353,11 @@ func (c *collection) patchPrimaryDoc(
 
 	doc, err := primaryCol.Get(
 		ctx,
+		identity,
 		primaryDocID,
 		false,
 	)
+
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -358,7 +368,14 @@ func (c *collection) patchPrimaryDoc(
 	}
 
 	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
-	err = pc.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, primaryDocID.String(), primaryIDField, docID)
+	err = pc.validateOneToOneLinkDoesntAlreadyExist(
+		ctx,
+		identity,
+		txn,
+		primaryDocID.String(),
+		primaryIDField,
+		docID,
+	)
 	if err != nil {
 		return err
 	}
@@ -377,7 +394,7 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	err = primaryCol.Update(ctx, doc)
+	err = primaryCol.Update(ctx, identity, doc)
 	if err != nil {
 		return err
 	}
@@ -391,6 +408,7 @@ func (c *collection) patchPrimaryDoc(
 // Additionally it only requests for the root scalar fields of the object
 func (c *collection) makeSelectionPlan(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	filter any,
 ) (planner.RequestPlan, error) {
@@ -417,7 +435,13 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
-	planner := planner.New(ctx, c.db.WithTxn(txn), txn)
+	planner := planner.New(
+		ctx,
+		identity,
+		c.db.WithTxn(txn),
+		txn,
+	)
+
 	return planner.MakePlan(&request.Request{
 		Queries: []*request.OperationDefinition{
 			{

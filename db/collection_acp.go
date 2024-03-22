@@ -13,13 +13,20 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/db/permission"
 )
 
-func (c *collection) registerDocCreation(ctx context.Context, docID string) error {
+func (c *collection) registerDocCreation(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID string,
+) error {
 	return permission.RegisterDocCreationOnCollection(
 		ctx,
+		identity,
 		c.db.ACPModule(),
 		c,
 		docID,
@@ -28,11 +35,13 @@ func (c *collection) registerDocCreation(ctx context.Context, docID string) erro
 
 func (c *collection) checkDocPermissionedAccess(
 	ctx context.Context,
+	identity immutable.Option[string],
 	dpiPermission acp.DPIPermission,
 	docID string,
 ) (bool, error) {
 	return permission.CheckDocPermissionedAccessOnCollection(
 		ctx,
+		identity,
 		c.db.ACPModule(),
 		c,
 		dpiPermission,

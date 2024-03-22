@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
@@ -837,7 +838,12 @@ func refreshDocuments(
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(s.ctx, doc.ID(), false)
+			doc, err = collection.Get(
+				s.ctx,
+				acpIdentity.NewIdentity(action.Identity),
+				doc.ID(),
+				false,
+			)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1185,7 +1191,11 @@ func createDocViaColSave(
 		return nil, err
 	}
 
-	return doc, collections[action.CollectionID].Save(s.ctx, doc)
+	return doc, collections[action.CollectionID].Save(
+		s.ctx,
+		acpIdentity.NewIdentity(action.Identity),
+		doc,
+	)
 }
 
 func createDocViaColCreate(
@@ -1200,7 +1210,11 @@ func createDocViaColCreate(
 		return nil, err
 	}
 
-	return doc, collections[action.CollectionID].Create(s.ctx, doc)
+	return doc, collections[action.CollectionID].Create(
+		s.ctx,
+		acpIdentity.NewIdentity(action.Identity),
+		doc,
+	)
 }
 
 func createDocViaGQL(
@@ -1226,7 +1240,12 @@ func createDocViaGQL(
 
 	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
 
-	result := db.ExecRequest(s.ctx, request)
+	identity := acpIdentity.NewIdentity(action.Identity)
+	result := db.ExecRequest(
+		s.ctx,
+		identity,
+		request,
+	)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -1240,7 +1259,7 @@ func createDocViaGQL(
 	docID, err := client.NewDocIDFromString(docIDString)
 	require.NoError(s.t, err)
 
-	doc, err := collection.Get(s.ctx, docID, false)
+	doc, err := collection.Get(s.ctx, identity, docID, false)
 	require.NoError(s.t, err)
 
 	return doc, nil
@@ -1261,7 +1280,11 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithDocID(s.ctx, doc.ID())
+				_, err := collections[action.CollectionID].DeleteWithDocID(
+					s.ctx,
+					acpIdentity.NewIdentity(action.Identity),
+					doc.ID(),
+				)
 				return err
 			},
 		)
@@ -1311,7 +1334,13 @@ func updateDocViaColSave(
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
+	identity := acpIdentity.NewIdentity(action.Identity)
+	doc, err := collections[action.CollectionID].Get(
+		s.ctx,
+		identity,
+		cachedDoc.ID(),
+		true,
+	)
 	if err != nil {
 		return err
 	}
@@ -1323,7 +1352,11 @@ func updateDocViaColSave(
 
 	s.documents[action.CollectionID][action.DocID] = doc
 
-	return collections[action.CollectionID].Save(s.ctx, doc)
+	return collections[action.CollectionID].Save(
+		s.ctx,
+		identity,
+		doc,
+	)
 }
 
 func updateDocViaColUpdate(
@@ -1334,7 +1367,13 @@ func updateDocViaColUpdate(
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
+	identity := acpIdentity.NewIdentity(action.Identity)
+	doc, err := collections[action.CollectionID].Get(
+		s.ctx,
+		identity,
+		cachedDoc.ID(),
+		true,
+	)
 	if err != nil {
 		return err
 	}
@@ -1346,7 +1385,11 @@ func updateDocViaColUpdate(
 
 	s.documents[action.CollectionID][action.DocID] = doc
 
-	return collections[action.CollectionID].Update(s.ctx, doc)
+	return collections[action.CollectionID].Update(
+		s.ctx,
+		identity,
+		doc,
+	)
 }
 
 func updateDocViaGQL(
@@ -1374,7 +1417,11 @@ func updateDocViaGQL(
 
 	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
 
-	result := db.ExecRequest(s.ctx, request)
+	result := db.ExecRequest(
+		s.ctx,
+		acpIdentity.NewIdentity(action.Identity),
+		request,
+	)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -1590,7 +1637,11 @@ func executeRequest(
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node, action.TransactionID, action.ExpectedError)
-		result := db.ExecRequest(s.ctx, action.Request)
+		result := db.ExecRequest(
+			s.ctx,
+			acpIdentity.NewIdentity(action.Identity),
+			action.Request,
+		)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
@@ -1622,7 +1673,11 @@ func executeSubscriptionRequest(
 	subscriptionAssert := make(chan func())
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(
+			s.ctx,
+			acpIdentity.NoIdentity, // No Identity for subscription request.
+			action.Request,
+		)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
@@ -1804,7 +1859,11 @@ func assertIntrospectionResults(
 	action IntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(
+			s.ctx,
+			acpIdentity.NoIdentity, // No Identity for introspection requests.
+			action.Request,
+		)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -1835,7 +1894,11 @@ func assertClientIntrospectionResults(
 	action ClientIntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(
+			s.ctx,
+			acpIdentity.NoIdentity, // No identity for client introspection requests.
+			action.Request,
+		)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true

@@ -60,7 +60,8 @@ func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := store.ExecRequest(req.Context(), request.Query)
+	identity := getIdentityFromAuthHeader(req)
+	result := store.ExecRequest(req.Context(), identity, request.Query)
 	if result.Pub != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
 		return

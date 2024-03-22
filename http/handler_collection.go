@@ -47,6 +47,8 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	identity := getIdentityFromAuthHeader(req)
+
 	switch {
 	case client.IsJSONArray(data):
 		docList, err := client.NewDocsFromJSON(data, col.Schema())
@@ -55,7 +57,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(req.Context(), docList); err != nil {
+		if err := col.CreateMany(req.Context(), identity, docList); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -66,7 +68,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(req.Context(), doc); err != nil {
+		if err := col.Create(req.Context(), identity, doc); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -83,9 +85,11 @@ func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
+	identity := getIdentityFromAuthHeader(req)
+
 	switch {
 	case request.Filter != nil:
-		result, err := col.DeleteWith(req.Context(), request.Filter)
+		result, err := col.DeleteWith(req.Context(), identity, request.Filter)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -97,7 +101,7 @@ func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		result, err := col.DeleteWith(req.Context(), docID)
+		result, err := col.DeleteWith(req.Context(), identity, docID)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -113,7 +117,7 @@ func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request
 			}
 			docIDs = append(docIDs, docID)
 		}
-		result, err := col.DeleteWith(req.Context(), docIDs)
+		result, err := col.DeleteWith(req.Context(), identity, docIDs)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -133,9 +137,11 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
+	identity := getIdentityFromAuthHeader(req)
+
 	switch {
 	case request.Filter != nil:
-		result, err := col.UpdateWith(req.Context(), request.Filter, request.Updater)
+		result, err := col.UpdateWith(req.Context(), identity, request.Filter, request.Updater)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -147,7 +153,7 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		result, err := col.UpdateWith(req.Context(), docID, request.Updater)
+		result, err := col.UpdateWith(req.Context(), identity, docID, request.Updater)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -163,7 +169,7 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 			}
 			docIDs = append(docIDs, docID)
 		}
-		result, err := col.UpdateWith(req.Context(), docIDs, request.Updater)
+		result, err := col.UpdateWith(req.Context(), identity, docIDs, request.Updater)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -182,11 +188,20 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	doc, err := col.Get(req.Context(), docID, true)
+
+	identity := getIdentityFromAuthHeader(req)
+
+	doc, err := col.Get(req.Context(), identity, docID, true)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
+	if doc == nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		return
+	}
+
 	patch, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -196,7 +211,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = col.Update(req.Context(), doc)
+	err = col.Update(req.Context(), identity, doc)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -212,7 +227,10 @@ func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	_, err = col.Delete(req.Context(), docID)
+
+	identity := getIdentityFromAuthHeader(req)
+
+	_, err = col.Delete(req.Context(), identity, docID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -229,11 +247,20 @@ func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	doc, err := col.Get(req.Context(), docID, showDeleted)
+
+	identity := getIdentityFromAuthHeader(req)
+
+	doc, err := col.Get(req.Context(), identity, docID, showDeleted)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
+	if doc == nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		return
+	}
+
 	docMap, err := doc.ToMap()
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})

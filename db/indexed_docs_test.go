@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -47,7 +48,7 @@ type productDoc struct {
 }
 
 func (f *indexTestFixture) saveDocToCollection(doc *client.Document, col client.Collection) {
-	err := col.Create(f.ctx, doc)
+	err := col.Create(f.ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 	f.txn, err = f.db.NewTxn(f.ctx, false)
@@ -311,7 +312,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
 	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	err := f.users.WithTxn(mockTxn).Create(f.ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
@@ -329,7 +330,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	doc, err := client.NewDocFromJSON(data, f.users.Schema())
 	require.NoError(f.t, err)
 
-	err = f.users.Create(f.ctx, doc)
+	err = f.users.Create(f.ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(f.t, err)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Build()
@@ -349,7 +350,7 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	err := f.users.WithTxn(mockTxn).Create(f.ctx, acpIdentity.NoIdentity, doc)
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
@@ -367,7 +368,7 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(nil, testErr)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	err := f.users.WithTxn(mockTxn).Create(f.ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -400,9 +401,9 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	userDoc := f.newUserDoc("John", 21, users)
 	prodDoc := f.newProdDoc(1, 3, "games", products)
 
-	err = users.Create(f.ctx, userDoc)
+	err = users.Create(f.ctx, acpIdentity.NoIdentity, userDoc)
 	require.NoError(f.t, err)
-	err = products.Create(f.ctx, prodDoc)
+	err = products.Create(f.ctx, acpIdentity.NoIdentity, prodDoc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -579,8 +580,30 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Unset()
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -712,14 +735,14 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			Name:     "update",
 			NewValue: "Islam",
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, doc)
+				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 		{
 			Name:     "save",
 			NewValue: "Andy",
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, doc)
+				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 	}
@@ -773,7 +796,7 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		return fetcherMocks.NewStubbedFetcher(t)
 	}
-	err = usersCol.WithTxn(mockedTxn).Update(f.ctx, doc)
+	err = usersCol.WithTxn(mockedTxn).Update(f.ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -788,8 +811,30 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Unset()
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -847,7 +892,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 
 		err := doc.Set(usersNameFieldName, "Islam")
 		require.NoError(t, err, tc.Name)
-		err = f.users.Update(f.ctx, doc)
+		err = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 		require.Error(t, err, tc.Name)
 
 		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
@@ -875,7 +920,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 
 	err = doc.Set(usersAgeFieldName, 23)
 	require.NoError(t, err)
-	err = f.users.Update(f.ctx, doc)
+	err = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, ErrCorruptedIndex)
 }
 
@@ -887,10 +932,33 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	f.users.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		f.EXPECT().Init(
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Unset()
+		f.EXPECT().Init(
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).
 			RunAndReturn(func(
 				ctx context.Context,
+				identity immutable.Option[string],
 				txn datastore.Txn,
 				acp immutable.Option[acp.ACPModule],
 				col client.Collection,
@@ -912,7 +980,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	err := doc.Set(usersNameFieldName, "Islam")
 	require.NoError(t, err)
-	_ = f.users.Update(f.ctx, doc)
+	_ = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 }
 
 func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
@@ -970,7 +1038,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Datastore().Unset()
 		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
 
-		err = f.users.WithTxn(mockedTxn).Update(f.ctx, doc)
+		err = f.users.WithTxn(mockedTxn).Update(f.ctx, acpIdentity.NoIdentity, doc)
 		require.ErrorIs(t, err, testErr)
 	}
 }
@@ -995,7 +1063,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)
 
-	err = f.users.Update(f.ctx, doc)
+	err = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -1119,14 +1187,14 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			Name:     "update",
 			NewValue: "Islam",
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, doc)
+				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 		{
 			Name:     "save",
 			NewValue: "Andy",
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, doc)
+				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 	}
@@ -1261,7 +1329,7 @@ func TestComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
 		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
 			Doc(doc).Unique().Build()
 
-		require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
+		require.NoError(t, f.users.Update(f.ctx, acpIdentity.NoIdentity, doc), tc.Name)
 		f.commitTxn()
 
 		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
@@ -1309,7 +1377,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: "Islam",
 			Field:    usersNameFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, doc)
+				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 		{
@@ -1317,7 +1385,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: "Andy",
 			Field:    usersNameFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, doc)
+				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 		{
@@ -1325,7 +1393,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: 33,
 			Field:    usersAgeFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, doc)
+				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 		{
@@ -1333,7 +1401,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: 36,
 			Field:    usersAgeFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, doc)
+				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
 			},
 		},
 	}

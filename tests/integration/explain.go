@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -78,6 +79,9 @@ type ExplainRequest struct {
 	// NodeID is the node ID (index) of the node in which to explain.
 	NodeID immutable.Option[int]
 
+	// The identity of this request.
+	Identity string
+
 	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
 	Request string
 
@@ -127,7 +131,11 @@ func executeExplainRequest(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(
+			s.ctx,
+			acpIdentity.NewIdentity(action.Identity),
+			action.Request,
+		)
 		assertExplainRequestResults(s, &result.GQL, action)
 	}
 }

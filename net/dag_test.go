@@ -22,6 +22,7 @@ import (
 	mh "github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/merkle/clock"
@@ -172,7 +173,7 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	txn1, _ := db1.NewTxn(ctx, false)

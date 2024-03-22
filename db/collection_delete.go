@@ -13,6 +13,8 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -31,15 +33,16 @@ import (
 // Eg: DeleteWithFilter or DeleteWithDocID
 func (c *collection) DeleteWith(
 	ctx context.Context,
+	identity immutable.Option[string],
 	target any,
 ) (*client.DeleteResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, t)
+		return c.DeleteWithFilter(ctx, identity, t)
 	case client.DocID:
-		return c.DeleteWithDocID(ctx, t)
+		return c.DeleteWithDocID(ctx, identity, t)
 	case []client.DocID:
-		return c.DeleteWithDocIDs(ctx, t)
+		return c.DeleteWithDocIDs(ctx, identity, t)
 	default:
 		return nil, client.ErrInvalidDeleteTarget
 	}
@@ -48,6 +51,7 @@ func (c *collection) DeleteWith(
 // DeleteWithDocID deletes using a DocID to target a single document for delete.
 func (c *collection) DeleteWithDocID(
 	ctx context.Context,
+	identity immutable.Option[string],
 	docID client.DocID,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
@@ -58,7 +62,7 @@ func (c *collection) DeleteWithDocID(
 	defer c.discardImplicitTxn(ctx, txn)
 
 	dsKey := c.getPrimaryKeyFromDocID(docID)
-	res, err := c.deleteWithKey(ctx, txn, dsKey)
+	res, err := c.deleteWithKey(ctx, identity, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +73,7 @@ func (c *collection) DeleteWithDocID(
 // DeleteWithDocIDs is the same as DeleteWithDocID but accepts multiple DocIDs as a slice.
 func (c *collection) DeleteWithDocIDs(
 	ctx context.Context,
+	identity immutable.Option[string],
 	docIDs []client.DocID,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
@@ -78,7 +83,7 @@ func (c *collection) DeleteWithDocIDs(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithIDs(ctx, txn, docIDs, client.Deleted)
+	res, err := c.deleteWithIDs(ctx, identity, txn, docIDs, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +94,7 @@ func (c *collection) DeleteWithDocIDs(
 // DeleteWithFilter deletes using a filter to target documents for delete.
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
+	identity immutable.Option[string],
 	filter any,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
@@ -98,7 +104,7 @@ func (c *collection) DeleteWithFilter(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithFilter(ctx, txn, filter, client.Deleted)
+	res, err := c.deleteWithFilter(ctx, identity, txn, filter, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +114,13 @@ func (c *collection) DeleteWithFilter(
 
 func (c *collection) deleteWithKey(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (*client.DeleteResult, error) {
 	// Check the key we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
-	err := c.applyDelete(ctx, txn, key)
+	err := c.applyDelete(ctx, identity, txn, key)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +136,7 @@ func (c *collection) deleteWithKey(
 
 func (c *collection) deleteWithIDs(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	docIDs []client.DocID,
 	_ client.DocumentStatus,
@@ -141,7 +149,7 @@ func (c *collection) deleteWithIDs(
 		primaryKey := c.getPrimaryKeyFromDocID(docID)
 
 		// Apply the function that will perform the full deletion of this document.
-		err := c.applyDelete(ctx, txn, primaryKey)
+		err := c.applyDelete(ctx, identity, txn, primaryKey)
 		if err != nil {
 			return nil, err
 		}
@@ -158,12 +166,13 @@ func (c *collection) deleteWithIDs(
 
 func (c *collection) deleteWithFilter(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	filter any,
 	_ client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	// Make a selection plan that will scan through only the documents with matching filter.
-	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, identity, txn, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +220,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
-		err = c.applyDelete(ctx, txn, primaryKey)
+		err = c.applyDelete(ctx, identity, txn, primaryKey)
 		if err != nil {
 			return nil, err
 		}
@@ -227,10 +236,12 @@ func (c *collection) deleteWithFilter(
 
 func (c *collection) applyDelete(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 ) error {
-	found, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	// Must also have read permission to delete, inorder to check if document exists.
+	found, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -244,9 +255,11 @@ func (c *collection) applyDelete(
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkDocPermissionedAccess(
 		ctx,
+		identity,
 		acp.WritePermission,
 		primaryKey.DocID,
 	)
+
 	if err != nil {
 		return err
 	}

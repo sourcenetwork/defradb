@@ -13,31 +13,43 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionUpdateCommand() *cobra.Command {
+	const identityFlagLongRequired string = "identity"
+	const identityFlagShortRequired string = "i"
+
+	var identityValue string
 	var argDocIDs []string
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update [--filter <filter> --docID <docID> --updater <updater>] <document>",
+		Use:   "update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document>",
 		Short: "Update documents by docID or filter.",
 		Long: `Update documents by docID or filter.
 		
-Example: update from string
+Example: update from string:
   defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
-Example: update by filter
+Example: update by filter:
   defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: update by docIDs
+Example: update by docIDs:
   defradb client collection update --name User \
+  --docID bae-123,bae-456 --updater '{ "verified": true }'
+
+Example: update private docIDs, with identity:
+  defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
   --docID bae-123,bae-456 --updater '{ "verified": true }'
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
+			identity := acpIdentity.NewIdentity(identityValue)
+
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
@@ -49,7 +61,7 @@ Example: update by docIDs
 				if err != nil {
 					return err
 				}
-				res, err := col.UpdateWithDocID(cmd.Context(), docID, updater)
+				res, err := col.UpdateWithDocID(cmd.Context(), identity, docID, updater)
 				if err != nil {
 					return err
 				}
@@ -63,13 +75,13 @@ Example: update by docIDs
 					}
 					docIDs[i] = docID
 				}
-				res, err := col.UpdateWithDocIDs(cmd.Context(), docIDs, updater)
+				res, err := col.UpdateWithDocIDs(cmd.Context(), identity, docIDs, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
 			case filter != "" && updater != "":
-				res, err := col.UpdateWithFilter(cmd.Context(), filter, updater)
+				res, err := col.UpdateWithFilter(cmd.Context(), identity, filter, updater)
 				if err != nil {
 					return err
 				}
@@ -79,14 +91,14 @@ Example: update by docIDs
 				if err != nil {
 					return err
 				}
-				doc, err := col.Get(cmd.Context(), docID, true)
+				doc, err := col.Get(cmd.Context(), identity, docID, true)
 				if err != nil {
 					return err
 				}
 				if err := doc.SetWithJSON([]byte(args[0])); err != nil {
 					return err
 				}
-				return col.Update(cmd.Context(), doc)
+				return col.Update(cmd.Context(), identity, doc)
 			default:
 				return ErrNoDocIDOrFilter
 			}
@@ -95,5 +107,12 @@ Example: update by docIDs
 	cmd.Flags().StringSliceVar(&argDocIDs, "docID", nil, "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
+	cmd.Flags().StringVarP(
+		&identityValue,
+		identityFlagLongRequired,
+		identityFlagShortRequired,
+		"",
+		"Identity of the actor",
+	)
 	return cmd
 }

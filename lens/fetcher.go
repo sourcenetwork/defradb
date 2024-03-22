@@ -38,6 +38,7 @@ type lensedFetcher struct {
 	txn datastore.Txn
 
 	col client.Collection
+
 	// Cache the fieldDescriptions mapped by name to allow for cheaper access within the fetcher loop
 	fieldDescriptionsByName map[string]client.FieldDefinition
 
@@ -60,6 +61,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 
 func (f *lensedFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
@@ -111,6 +113,7 @@ historyLoop:
 	}
 	return f.source.Init(
 		ctx,
+		identity,
 		txn,
 		acp,
 		col,

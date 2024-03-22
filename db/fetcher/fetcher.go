@@ -59,6 +59,7 @@ func (s *ExecInfo) Reset() {
 type Fetcher interface {
 	Init(
 		ctx context.Context,
+		identity immutable.Option[string],
 		txn datastore.Txn,
 		acp immutable.Option[acp.ACPModule],
 		col client.Collection,
@@ -85,7 +86,9 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	acp         immutable.Option[acp.ACPModule]
+	identity immutable.Option[string]
+	acp      immutable.Option[acp.ACPModule]
+
 	col         client.Collection
 	reverse     bool
 	deletedDocs bool
@@ -142,6 +145,7 @@ type DocumentFetcher struct {
 // Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
@@ -153,7 +157,7 @@ func (df *DocumentFetcher) Init(
 ) error {
 	df.txn = txn
 
-	err := df.init(acp, col, fields, filter, docmapper, reverse)
+	err := df.init(identity, acp, col, fields, filter, docmapper, reverse)
 	if err != nil {
 		return err
 	}
@@ -163,13 +167,14 @@ func (df *DocumentFetcher) Init(
 			df.deletedDocFetcher = new(DocumentFetcher)
 			df.deletedDocFetcher.txn = txn
 		}
-		return df.deletedDocFetcher.init(acp, col, fields, filter, docmapper, reverse)
+		return df.deletedDocFetcher.init(identity, acp, col, fields, filter, docmapper, reverse)
 	}
 
 	return nil
 }
 
 func (df *DocumentFetcher) init(
+	identity immutable.Option[string],
 	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDefinition,
@@ -177,6 +182,7 @@ func (df *DocumentFetcher) init(
 	docMapper *core.DocumentMapping,
 	reverse bool,
 ) error {
+	df.identity = identity
 	df.acp = acp
 	df.col = col
 	df.reverse = reverse
