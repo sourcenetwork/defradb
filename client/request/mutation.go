@@ -10,8 +10,6 @@
 
 package request
 
-import "github.com/sourcenetwork/immutable"
-
 type MutationType int
 
 const (
@@ -25,17 +23,24 @@ const (
 // all the possible arguments.
 type ObjectMutation struct {
 	Field
+	ChildSelect
+
+	Filterable
+	DocIDsFilter
+
+	// Type is the type of mutatation that this object represents.
+	//
+	// For example [CreateObjects].
 	Type MutationType
 
-	// Collection is the target collection name
-	// if this mutation is on an object.
+	// Collection is the target collection name.
 	Collection string
 
-	IDs    immutable.Option[[]string]
-	Filter immutable.Option[Filter]
-	Input  map[string]any
-
-	Fields []Selection
+	// Input is the json representation of the fieldName-value pairs of document properties
+	// to mutate.
+	//
+	// This is ignored for [DeleteObjects] mutations.
+	Input map[string]any
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
@@ -46,8 +51,8 @@ func (m ObjectMutation) ToSelect() *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		Fields: m.Fields,
-		DocIDs: m.IDs,
-		Filter: m.Filter,
+		ChildSelect:  m.ChildSelect,
+		DocIDsFilter: m.DocIDsFilter,
+		Filterable:   m.Filterable,
 	}
 }

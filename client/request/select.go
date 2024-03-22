@@ -12,16 +12,6 @@ package request
 
 import (
 	"encoding/json"
-
-	"github.com/sourcenetwork/immutable"
-)
-
-// SelectionType is the type of selection.
-type SelectionType int
-
-const (
-	ObjectSelection SelectionType = iota
-	CommitSelection
 )
 
 // Select is a complex Field with strong typing.
@@ -29,22 +19,29 @@ const (
 // Includes fields, and request arguments like filters, limits, etc.
 type Select struct {
 	Field
+	ChildSelect
 
-	DocIDs immutable.Option[[]string]
-	CID    immutable.Option[string]
+	Limitable
+	Offsetable
+	Orderable
+	Filterable
+	DocIDsFilter
+	CIDFilter
+	Groupable
 
-	// Root is the top level type of parsed request
-	Root SelectionType
-
-	Limit   immutable.Option[uint64]
-	Offset  immutable.Option[uint64]
-	OrderBy immutable.Option[OrderBy]
-	GroupBy immutable.Option[GroupBy]
-	Filter  immutable.Option[Filter]
-
-	Fields []Selection
-
+	// ShowDeleted will return deleted documents along with non-deleted ones
+	// if set to true.
 	ShowDeleted bool
+}
+
+// ChildSelect represents a type with selectable child properties.
+//
+// At least one child must be selected.
+type ChildSelect struct {
+	// Fields contains the set of child properties to return.
+	//
+	// At least one child property must be selected.
+	Fields []Selection
 }
 
 // Validate validates the Select.
@@ -111,25 +108,20 @@ func (s *Select) validateGroupBy() []error {
 }
 
 // selectJson is a private object used for handling json deserialization
-// of `Select` objects.
+// of [Select] objects.
+//
+// It contains everything minus the [ChildSelect], which uses a custom UnmarshalJSON
+// and is skipped over when embedding due to the way the std lib json pkg works.
 type selectJson struct {
 	Field
-	DocIDs      immutable.Option[[]string]
-	CID         immutable.Option[string]
-	Root        SelectionType
-	Limit       immutable.Option[uint64]
-	Offset      immutable.Option[uint64]
-	OrderBy     immutable.Option[OrderBy]
-	GroupBy     immutable.Option[GroupBy]
-	Filter      immutable.Option[Filter]
+	Limitable
+	Offsetable
+	Orderable
+	Filterable
+	DocIDsFilter
+	CIDFilter
+	Groupable
 	ShowDeleted bool
-
-	// Properties above this line match the `Select` object and
-	// are deserialized using the normal/default logic.
-	// Properties below this line require custom logic in `UnmarshalJSON`
-	// in order to be deserialized correctly.
-
-	Fields []map[string]json.RawMessage
 }
 
 func (s *Select) UnmarshalJSON(bytes []byte) error {
@@ -142,13 +134,37 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 	s.Field = selectMap.Field
 	s.DocIDs = selectMap.DocIDs
 	s.CID = selectMap.CID
-	s.Root = selectMap.Root
-	s.Limit = selectMap.Limit
-	s.Offset = selectMap.Offset
-	s.OrderBy = selectMap.OrderBy
-	s.GroupBy = selectMap.GroupBy
-	s.Filter = selectMap.Filter
+	s.Limitable = selectMap.Limitable
+	s.Offsetable = selectMap.Offsetable
+	s.Orderable = selectMap.Orderable
+	s.Groupable = selectMap.Groupable
+	s.Filterable = selectMap.Filterable
 	s.ShowDeleted = selectMap.ShowDeleted
+
+	var childSelect ChildSelect
+	err = json.Unmarshal(bytes, &childSelect)
+	if err != nil {
+		return err
+	}
+
+	s.ChildSelect = childSelect
+
+	return nil
+}
+
+// childSelectJson is a private object used for handling json deserialization
+// of [ChildSelect] objects.
+type childSelectJson struct {
+	Fields []map[string]json.RawMessage
+}
+
+func (s *ChildSelect) UnmarshalJSON(bytes []byte) error {
+	var selectMap childSelectJson
+	err := json.Unmarshal(bytes, &selectMap)
+	if err != nil {
+		return err
+	}
+
 	s.Fields = make([]Selection, len(selectMap.Fields))
 
 	for i, field := range selectMap.Fields {
@@ -163,8 +179,8 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 		// They must be non-nillable as nil values may have their keys omitted from
 		// the json. This also relies on the fields being unique.  We may wish to change
 		// this later to custom-serialize with a `_type` property.
-		if _, ok := field["Root"]; ok {
-			// This must be a Select, as only the `Select` type has a `Root` field
+		if _, ok := field["Fields"]; ok {
+			// This must be a Select, as only the `Select` type has a `Fields` field
 			var fieldSelect Select
 			err := json.Unmarshal(fieldJson, &fieldSelect)
 			if err != nil {

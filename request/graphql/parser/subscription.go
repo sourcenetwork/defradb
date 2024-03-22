@@ -79,6 +79,6 @@ func parseSubscription(schema gql.Schema, field *ast.Field) (*request.ObjectSubs
 		return nil, err
 	}
 
-	sub.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
+	sub.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
 	return sub, err
 }
