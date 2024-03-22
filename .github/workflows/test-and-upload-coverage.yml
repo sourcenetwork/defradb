@@ -46,11 +46,13 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: false
-          - os: windows-latest
-            client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            detect-changes: false
+## TODO: https://github.com/sourcenetwork/defradb/issues/2080
+## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
+##        - os: windows-latest
+##          client-type: go
+##          database-type: badger-memory
+##          mutation-type: collection-save
+##          detect-changes: false
 
     runs-on: ${{ matrix.os }}
 
