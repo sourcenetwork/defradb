@@ -40,7 +40,7 @@ type Select struct {
 type ChildSelect struct {
 	// Fields contains the set of child properties to return.
 	//
-	// At least one child propertt must be selected.
+	// At least one child property must be selected.
 	Fields []Selection
 }
 
