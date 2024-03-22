@@ -19,10 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// The document is only registered with ACP if all (1) (2) and (3) are true.
-// In all other cases, nothing is registered with ACP.
-
-// RegisterDocCreationOnCollection handles the registration of the document with acp module.
+// RegisterDocOnCollectionWithACP handles the registration of the document with acp module.
 // The registering is done at document creation on the collection.
 //
 // According to our access logic we have these components to worry about:
@@ -33,7 +30,7 @@ import (
 // The document is only registered if all (1) (2) and (3) are true.
 //
 // Otherwise, nothing is registered on the acp module.
-func RegisterDocCreationOnCollection(
+func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
 	identity immutable.Option[string],
 	acpModule immutable.Option[acp.ACPModule],

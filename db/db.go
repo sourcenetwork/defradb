@@ -207,10 +207,6 @@ func (db *db) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
-func (db *db) ACPModule() immutable.Option[acp.ACPModule] {
-	return db.acp
-}
-
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {

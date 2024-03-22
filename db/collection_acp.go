@@ -19,30 +19,30 @@ import (
 	"github.com/sourcenetwork/defradb/db/permission"
 )
 
-func (c *collection) registerDocCreation(
+func (c *collection) registerDocWithACP(
 	ctx context.Context,
 	identity immutable.Option[string],
 	docID string,
 ) error {
-	return permission.RegisterDocCreationOnCollection(
+	return permission.RegisterDocOnCollectionWithACP(
 		ctx,
 		identity,
-		c.db.ACPModule(),
+		c.db.acp,
 		c,
 		docID,
 	)
 }
 
-func (c *collection) checkDocPermissionedAccess(
+func (c *collection) checkAccessOfDocWithACP(
 	ctx context.Context,
 	identity immutable.Option[string],
 	dpiPermission acp.DPIPermission,
 	docID string,
 ) (bool, error) {
-	return permission.CheckDocPermissionedAccessOnCollection(
+	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		identity,
-		c.db.ACPModule(),
+		c.db.acp,
 		c,
 		dpiPermission,
 		docID,

@@ -59,7 +59,7 @@ type ACPModule interface {
 		resourceName string,
 	) error
 
-	// RegisterDocCreation registers the document (object) to have access control.
+	// RegisterDocObject registers the document (object) to have access control.
 	// No error is returned upon successful registering of a document.
 	//
 	// Note(s):
