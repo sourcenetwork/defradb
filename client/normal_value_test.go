@@ -73,24 +73,55 @@ const (
 
 func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 	typeAssertMap := map[nType]func(NormalValue) (any, bool){
-		BoolType:            func(v NormalValue) (any, bool) { return v.Bool() },
-		IntType:             func(v NormalValue) (any, bool) { return v.Int() },
-		FloatType:           func(v NormalValue) (any, bool) { return v.Float() },
-		StringType:          func(v NormalValue) (any, bool) { return v.String() },
-		BytesType:           func(v NormalValue) (any, bool) { return v.Bytes() },
-		TimeType:            func(v NormalValue) (any, bool) { return v.Time() },
-		BoolArray:           func(v NormalValue) (any, bool) { return v.BoolArray() },
-		IntArray:            func(v NormalValue) (any, bool) { return v.IntArray() },
-		FloatArray:          func(v NormalValue) (any, bool) { return v.FloatArray() },
-		StringArray:         func(v NormalValue) (any, bool) { return v.StringArray() },
-		BytesArray:          func(v NormalValue) (any, bool) { return v.BytesArray() },
-		TimeArray:           func(v NormalValue) (any, bool) { return v.TimeArray() },
-		NillableBoolArray:   func(v NormalValue) (any, bool) { return v.NillableBoolArray() },
-		NillableIntArray:    func(v NormalValue) (any, bool) { return v.NillableIntArray() },
-		NillableFloatArray:  func(v NormalValue) (any, bool) { return v.NillableFloatArray() },
-		NillableStringArray: func(v NormalValue) (any, bool) { return v.NillableStringArray() },
-		NillableBytesArray:  func(v NormalValue) (any, bool) { return v.NillableBytesArray() },
-		NillableTimeArray:   func(v NormalValue) (any, bool) { return v.NillableTimeArray() },
+		BoolType:     func(v NormalValue) (any, bool) { return v.Bool() },
+		IntType:      func(v NormalValue) (any, bool) { return v.Int() },
+		FloatType:    func(v NormalValue) (any, bool) { return v.Float() },
+		StringType:   func(v NormalValue) (any, bool) { return v.String() },
+		BytesType:    func(v NormalValue) (any, bool) { return v.Bytes() },
+		TimeType:     func(v NormalValue) (any, bool) { return v.Time() },
+		DocumentType: func(v NormalValue) (any, bool) { return v.Document() },
+
+		NillableBoolType:     func(v NormalValue) (any, bool) { return v.NillableBool() },
+		NillableIntType:      func(v NormalValue) (any, bool) { return v.NillableInt() },
+		NillableFloatType:    func(v NormalValue) (any, bool) { return v.NillableFloat() },
+		NillableStringType:   func(v NormalValue) (any, bool) { return v.NillableString() },
+		NillableBytesType:    func(v NormalValue) (any, bool) { return v.NillableBytes() },
+		NillableTimeType:     func(v NormalValue) (any, bool) { return v.NillableTime() },
+		NillableDocumentType: func(v NormalValue) (any, bool) { return v.NillableDocument() },
+
+		BoolArray:     func(v NormalValue) (any, bool) { return v.BoolArray() },
+		IntArray:      func(v NormalValue) (any, bool) { return v.IntArray() },
+		FloatArray:    func(v NormalValue) (any, bool) { return v.FloatArray() },
+		StringArray:   func(v NormalValue) (any, bool) { return v.StringArray() },
+		BytesArray:    func(v NormalValue) (any, bool) { return v.BytesArray() },
+		TimeArray:     func(v NormalValue) (any, bool) { return v.TimeArray() },
+		DocumentArray: func(v NormalValue) (any, bool) { return v.DocumentArray() },
+
+		BoolNillableArray:     func(v NormalValue) (any, bool) { return v.BoolNillableArray() },
+		IntNillableArray:      func(v NormalValue) (any, bool) { return v.IntNillableArray() },
+		FloatNillableArray:    func(v NormalValue) (any, bool) { return v.FloatNillableArray() },
+		StringNillableArray:   func(v NormalValue) (any, bool) { return v.StringNillableArray() },
+		BytesNillableArray:    func(v NormalValue) (any, bool) { return v.BytesNillableArray() },
+		TimeNillableArray:     func(v NormalValue) (any, bool) { return v.TimeNillableArray() },
+		DocumentNillableArray: func(v NormalValue) (any, bool) { return v.DocumentNillableArray() },
+
+		NillableBoolArray:     func(v NormalValue) (any, bool) { return v.NillableBoolArray() },
+		NillableIntArray:      func(v NormalValue) (any, bool) { return v.NillableIntArray() },
+		NillableFloatArray:    func(v NormalValue) (any, bool) { return v.NillableFloatArray() },
+		NillableStringArray:   func(v NormalValue) (any, bool) { return v.NillableStringArray() },
+		NillableBytesArray:    func(v NormalValue) (any, bool) { return v.NillableBytesArray() },
+		NillableTimeArray:     func(v NormalValue) (any, bool) { return v.NillableTimeArray() },
+		NillableDocumentArray: func(v NormalValue) (any, bool) { return v.NillableDocumentArray() },
+
+		NillableBoolNillableArray:   func(v NormalValue) (any, bool) { return v.NillableBoolNillableArray() },
+		NillableIntNillableArray:    func(v NormalValue) (any, bool) { return v.NillableIntNillableArray() },
+		NillableFloatNillableArray:  func(v NormalValue) (any, bool) { return v.NillableFloatNillableArray() },
+		NillableStringNillableArray: func(v NormalValue) (any, bool) { return v.NillableStringNillableArray() },
+		NillableBytesNillableArray:  func(v NormalValue) (any, bool) { return v.NillableBytesNillableArray() },
+		NillableTimeNillableArray:   func(v NormalValue) (any, bool) { return v.NillableTimeNillableArray() },
+		NillableDocumentNillableArray: func(v NormalValue) (any, bool) {
+			return v.NillableDocumentNillableArray()
+		},
 	}
 
 	newMap := map[nType]func(any) NormalValue{
@@ -135,6 +166,9 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		},
 		NillableTimeArray: func(v any) NormalValue {
 			return NewNormalNillableTimeArray(v.([]immutable.Option[time.Time]))
+		},
+		NillableDocumentArray: func(v any) NormalValue {
+			return NewNormalNillableDocumentArray(v.([]immutable.Option[*Document]))
 		},
 
 		BoolNillableArray: func(v any) NormalValue {
