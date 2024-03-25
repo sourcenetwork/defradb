@@ -18,9 +18,9 @@ import (
 
 // NewNormalValue creates a new NormalValue from the given value.
 // It will normalize all known types that can be converted to normal ones.
-// For example, is the given type is `[]int32`, it will be converted to `[]int64`.
-// If the given value is of type `[]any` is will to through every element and try to convert it
-// minimal common type and normalizes it.
+// For example, if the given type is `[]int32`, it will be converted to `[]int64`.
+// If the given value is of type `[]any` it will go through every element and try to convert it
+// the most common type and normalizes it.
 // For examples, the following conversions will be made:
 //   - `[]any{int32(1), int64(2)}` -> `[]int64{1, 2}`.
 //   - `[]any{int32(1), int64(2), float32(1.5)}` -> `[]float64{1.0, 2.0, 1.5}`.

@@ -10,7 +10,7 @@
 
 package client
 
-// ToArrayOfNormalValues converts a NormalValue into a slice of NormalValue is the given value
+// ToArrayOfNormalValues converts a NormalValue into a slice of NormalValue if the given value
 // is an array. If the given value is not an array, an error is returned.
 func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 	if !val.IsArray() {
