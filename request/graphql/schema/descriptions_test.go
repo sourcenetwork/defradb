@@ -157,7 +157,7 @@ func TestSingleSimpleType(t *testing.T) {
 			type Author {
 				name: String
 				age: Int
-				published: Book
+				published: Book @primary
 			}
 			`,
 			targetDescs: []client.CollectionDefinition{
@@ -330,7 +330,7 @@ func TestSingleSimpleType(t *testing.T) {
 			type Author {
 				name: String
 				age: Int
-				published: Book @relation(name:"book_authors")
+				published: Book @relation(name:"book_authors") @primary
 			}
 			`,
 			targetDescs: []client.CollectionDefinition{

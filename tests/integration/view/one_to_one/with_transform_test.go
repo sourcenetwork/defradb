@@ -32,7 +32,7 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 					}
 					type Book {
 						name: String
-						author: Author
+						author: Author @primary
 					}
 				`,
 			},

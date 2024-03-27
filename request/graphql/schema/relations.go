@@ -124,13 +124,7 @@ func (r *Relation) finalize() error {
 		if aBit.isSet(relation_Type_Primary) {
 			return ErrMultipleRelationPrimaries
 		} else if !xBit.isSet(relation_Type_Primary) {
-			// neither type has primary set, auto add to
-			// lexicographically first one by schema type name
-			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
-				r.types[1] = r.types[1] | relation_Type_Primary
-			} else {
-				r.types[0] = r.types[0] | relation_Type_Primary
-			}
+			return client.NewErrPrimarySideNotDefined(r.name)
 		}
 	}
 
