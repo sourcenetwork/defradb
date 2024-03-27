@@ -34,6 +34,7 @@ const (
 	errCanNotNormalizeValue                string = "can not normalize value"
 	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
+	errPrimarySideNotDefined               string = "primary side of relation not defined"
 )
 
 // Errors returnable from this package.
@@ -57,6 +58,7 @@ var (
 	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
 	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
 	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
+	ErrPrimarySideNotDefined               = errors.New(errPrimarySideNotDefined)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -177,4 +179,11 @@ func NewErrCRDTKindMismatch(cType, kind string) error {
 
 func NewErrInvalidJSONPaylaod(payload string) error {
 	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
+}
+
+func NewErrPrimarySideNotDefined(relationName string) error {
+	return errors.New(
+		errPrimarySideNotDefined,
+		errors.NewKV("RelationName", relationName),
+	)
 }
