@@ -108,6 +108,8 @@ func collectionFromAstDefinition(
 		},
 	}
 
+	policyDescription := immutable.None[client.PolicyDescription]()
+
 	indexDescriptions := []client.IndexDescription{}
 	for _, field := range def.Fields {
 		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
@@ -147,12 +149,20 @@ func collectionFromAstDefinition(
 			}
 			indexDescriptions = append(indexDescriptions, index)
 		}
+		if directive.Name.Value == types.PolicySchemaDirectiveLabel {
+			policy, err := policyFromAST(directive)
+			if err != nil {
+				return client.CollectionDefinition{}, err
+			}
+			policyDescription = immutable.Some(policy)
+		}
 	}
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
 			Name:    immutable.Some(def.Name.Value),
 			Indexes: indexDescriptions,
+			Policy:  policyDescription,
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
@@ -381,6 +391,31 @@ func fieldsFromAST(field *ast.FieldDefinition,
 
 	fieldDescriptions = append(fieldDescriptions, fieldDescription)
 	return fieldDescriptions, nil
+}
+
+// policyFromAST returns the policy description after parsing but the validation
+// is not done yet on the values that are returned. This is because we need acp module to do that.
+func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
+	policyDesc := client.PolicyDescription{}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.PolicySchemaDirectivePropID:
+			policyIDProp, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return client.PolicyDescription{}, ErrPolicyInvalidIDProp
+			}
+			policyDesc.ID = policyIDProp.Value
+		case types.PolicySchemaDirectivePropResource:
+			policyResourceProp, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return client.PolicyDescription{}, ErrPolicyInvalidResourceProp
+			}
+			policyDesc.ResourceName = policyResourceProp.Value
+		default:
+			return client.PolicyDescription{}, ErrPolicyWithUnknownArg
+		}
+	}
+	return policyDesc, nil
 }
 
 func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CType, error) {

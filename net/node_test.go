@@ -31,13 +31,11 @@ import (
 
 func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	var database client.DB
-	var options []db.Option
 	ctx := context.Background()
-	options = append(options, db.WithUpdateEvents())
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
-	database, err = db.NewDB(ctx, rootstore, options...)
+	database, err = db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	require.NoError(t, err)
 	return database
 }

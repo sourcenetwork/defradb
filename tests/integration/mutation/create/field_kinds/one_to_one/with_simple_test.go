@@ -82,7 +82,7 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 					"name": "Painted House",
 					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
-				ExpectedError: "no document for the given ID exists",
+				ExpectedError: "document not found or not authorized to access",
 			},
 		},
 	}

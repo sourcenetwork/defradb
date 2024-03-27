@@ -311,7 +311,9 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
 		return
 	}
-	result := store.ExecRequest(req.Context(), request.Query)
+
+	identity := getIdentityFromAuthHeader(req)
+	result := store.ExecRequest(req.Context(), identity, request.Query)
 
 	if result.Pub == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})
@@ -620,7 +622,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
-	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)

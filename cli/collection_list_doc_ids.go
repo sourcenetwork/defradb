@@ -13,25 +13,37 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeCollectionListDocIDsCommand() *cobra.Command {
+	const identityFlagLongRequired string = "identity"
+	const identityFlagShortRequired string = "i"
+
+	var identityValue string
+
 	var cmd = &cobra.Command{
-		Use:   "docIDs",
+		Use:   "docIDs [-i --identity]",
 		Short: "List all document IDs (docIDs).",
 		Long: `List all document IDs (docIDs).
 		
-Example:
+Example: list all docID(s):
   defradb client collection docIDs --name User
+
+Example: list all docID(s), with an identity:
+  defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User 
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
+			identity := acpIdentity.NewIdentity(identityValue)
+
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}
 
-			docCh, err := col.GetAllDocIDs(cmd.Context())
+			docCh, err := col.GetAllDocIDs(cmd.Context(), identity)
 			if err != nil {
 				return err
 			}
@@ -49,5 +61,12 @@ Example:
 			return nil
 		},
 	}
+	cmd.Flags().StringVarP(
+		&identityValue,
+		identityFlagLongRequired,
+		identityFlagShortRequired,
+		"",
+		"Identity of the actor",
+	)
 	return cmd
 }

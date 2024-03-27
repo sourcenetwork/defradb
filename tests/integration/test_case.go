@@ -205,6 +205,9 @@ type CreateDoc struct {
 	// If a value is not provided the document will be created in all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request.
+	Identity string
+
 	// The collection in which this document should be created.
 	CollectionID int
 
@@ -225,6 +228,9 @@ type DeleteDoc struct {
 	//
 	// If a value is not provided the document will be created in all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request.
+	Identity string
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -250,6 +256,9 @@ type UpdateDoc struct {
 	//
 	// If a value is not provided the update will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request.
+	Identity string
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -396,6 +405,9 @@ type Request struct {
 	// If a value is not provided the request will be executed against all nodes,
 	// in which case the expected results must all match across all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request.
+	Identity string
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]

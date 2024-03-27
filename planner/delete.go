@@ -53,7 +53,11 @@ func (n *deleteNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = n.collection.DeleteWithDocID(n.p.ctx, docID)
+	_, err = n.collection.DeleteWithDocID(
+		n.p.ctx,
+		n.p.identity,
+		docID,
+	)
 	if err != nil {
 		return false, err
 	}

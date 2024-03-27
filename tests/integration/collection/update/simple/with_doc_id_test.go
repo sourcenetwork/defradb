@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
@@ -41,9 +42,12 @@ func TestUpdateWithDocID(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithDocID(ctx, doc.ID(), `{
-							name: "Eric"
-						}`)
+						_, err := c.UpdateWithDocID(
+							ctx,
+							acpIdentity.NoIdentity,
+							doc.ID(),
+							`{name: "Eric"}`,
+						)
 						return err
 					},
 				},
@@ -58,7 +62,7 @@ func TestUpdateWithDocID(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithDocID(ctx, doc.ID(), `"name: Eric"`)
+						_, err := c.UpdateWithDocID(ctx, acpIdentity.NoIdentity, doc.ID(), `"name: Eric"`)
 						return err
 					},
 				},
@@ -73,18 +77,23 @@ func TestUpdateWithDocID(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithDocID(ctx, doc.ID(), `[
-							{
-								"name": "Eric"
-							}, {
-								"name": "Sam"
-							}
-						]`)
+						_, err := c.UpdateWithDocID(
+							ctx,
+							acpIdentity.NoIdentity,
+							doc.ID(),
+							`[
+								{
+									"name": "Eric"
+								}, {
+									"name": "Sam"
+								}
+							]`,
+						)
 						if err != nil {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.ID(), false)
+						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -109,14 +118,17 @@ func TestUpdateWithDocID(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithDocID(ctx, doc.ID(), `{
-							"name": "Eric"
-						}`)
+						_, err := c.UpdateWithDocID(
+							ctx,
+							acpIdentity.NoIdentity,
+							doc.ID(),
+							`{"name": "Eric"}`,
+						)
 						if err != nil {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.ID(), false)
+						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
 						if err != nil {
 							return err
 						}

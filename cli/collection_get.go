@@ -13,21 +13,32 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionGetCommand() *cobra.Command {
+	const identityFlagLongRequired string = "identity"
+	const identityFlagShortRequired string = "i"
+
+	var identityValue string
 	var showDeleted bool
 	var cmd = &cobra.Command{
-		Use:   "get <docID> [--show-deleted]",
+		Use:   "get [-i --identity] [--show-deleted] <docID> ",
 		Short: "View document fields.",
 		Long: `View document fields.
 
 Example:
   defradb client collection get --name User bae-123
+
+Example to get a private document we must use an identity:
+  defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User bae-123
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
+			identity := acpIdentity.NewIdentity(identityValue)
+
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
@@ -37,7 +48,7 @@ Example:
 			if err != nil {
 				return err
 			}
-			doc, err := col.Get(cmd.Context(), docID, showDeleted)
+			doc, err := col.Get(cmd.Context(), identity, docID, showDeleted)
 			if err != nil {
 				return err
 			}
@@ -49,5 +60,12 @@ Example:
 		},
 	}
 	cmd.Flags().BoolVar(&showDeleted, "show-deleted", false, "Show deleted documents")
+	cmd.Flags().StringVarP(
+		&identityValue,
+		identityFlagLongRequired,
+		identityFlagShortRequired,
+		"",
+		"Identity of the actor",
+	)
 	return cmd
 }

@@ -19,6 +19,7 @@ import (
 const (
 	errFailedToLoadKeys       string = "failed to load given keys"
 	errMethodIsNotImplemented string = "the method is not implemented"
+	errFailedToGetContext     string = "failed to get context"
 )
 
 // Errors returnable from this package.
@@ -52,6 +53,13 @@ func (e *errorResponse) UnmarshalJSON(data []byte) error {
 	}
 	e.Error = parseError(out["error"])
 	return nil
+}
+
+func NewErrFailedToGetContext(contextType string) error {
+	return errors.New(
+		errFailedToGetContext,
+		errors.NewKV("ContextType", contextType),
+	)
 }
 
 func NewErrFailedToLoadKeys(inner error, publicKeyPath, privateKeyPath string) error {

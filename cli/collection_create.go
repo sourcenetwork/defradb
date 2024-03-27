@@ -16,34 +16,41 @@ import (
 
 	"github.com/spf13/cobra"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionCreateCommand() *cobra.Command {
+	const identityFlagLongRequired string = "identity"
+	const identityFlagShortRequired string = "i"
+
+	var identityValue string
 	var file string
+
 	var cmd = &cobra.Command{
-		Use:   "create <document>",
+		Use:   "create [-i --identity] <document>",
 		Short: "Create a new document.",
 		Long: `Create a new document.
 
-Example: create from string
+Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
 
-Example: create multiple from string
+Example: create from string, with identity:
+  defradb client collection create -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User '{ "name": "Bob" }'
+
+Example: create multiple from string:
   defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
 
-Example: create from file
+Example: create from file:
   defradb client collection create --name User -f document.json
 
-Example: create from stdin
+Example: create from stdin:
   cat document.json | defradb client collection create --name User -
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := tryGetContextCollection(cmd)
-			if !ok {
-				return cmd.Usage()
-			}
+			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
+			identity := acpIdentity.NewIdentity(identityValue)
 
 			var docData []byte
 			switch {
@@ -65,21 +72,33 @@ Example: create from stdin
 				return ErrNoDocOrFile
 			}
 
+			col, ok := tryGetContextCollection(cmd)
+			if !ok {
+				return cmd.Usage()
+			}
+
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Schema())
 				if err != nil {
 					return err
 				}
-				return col.CreateMany(cmd.Context(), docs)
+				return col.CreateMany(cmd.Context(), identity, docs)
 			}
 
 			doc, err := client.NewDocFromJSON(docData, col.Schema())
 			if err != nil {
 				return err
 			}
-			return col.Create(cmd.Context(), doc)
+			return col.Create(cmd.Context(), identity, doc)
 		},
 	}
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	cmd.Flags().StringVarP(
+		&identityValue,
+		identityFlagLongRequired,
+		identityFlagShortRequired,
+		"",
+		"Identity of the actor",
+	)
 	return cmd
 }

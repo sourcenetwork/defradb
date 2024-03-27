@@ -19,6 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -121,7 +122,7 @@ func saveBatchToCollections(
 	for colName, colDocs := range colDocsMap {
 		for _, col := range collections {
 			if col.Description().Name.Value() == colName {
-				err := col.CreateMany(context.Background(), colDocs)
+				err := col.CreateMany(ctx, acpIdentity.NoIdentity, colDocs)
 				if err != nil {
 					return err
 				}

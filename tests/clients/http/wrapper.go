@@ -17,6 +17,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -97,6 +98,14 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
+func (w *Wrapper) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	return w.client.AddPolicy(ctx, creator, policy)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
@@ -160,8 +169,12 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return w.client.GetAllIndexes(ctx)
 }
 
-func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.RequestResult {
-	return w.client.ExecRequest(ctx, query)
+func (w *Wrapper) ExecRequest(
+	ctx context.Context,
+	identity immutable.Option[string],
+	query string,
+) *client.RequestResult {
+	return w.client.ExecRequest(ctx, identity, query)
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {

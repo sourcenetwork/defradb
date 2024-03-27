@@ -12,6 +12,9 @@ A query request can be sent as a single argument. Example command:
 Do a query request from a file by using the '-f' flag. Example command:
   defradb client query -f request.graphql
 
+Do a query request from a file and with an identity. Example command:
+  defradb client query -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j -f request.graphql
+
 Or it can be sent via stdin by using the '-' special syntax. Example command:
   cat request.graphql | defradb client query -
 
@@ -21,25 +24,27 @@ with the database more conveniently.
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.
 
 ```
-defradb client query [query request] [flags]
+defradb client query [-i --identity] [request] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File containing the query request
-  -h, --help          help for query
+  -f, --file string       File containing the query request
+  -h, --help              help for query
+  -i, --identity string   Identity of the actor
 ```
 
 ### Options inherited from parent commands
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
-      --logformat string              Log format to use. Options are csv, json (default "csv")
-      --loglevel string               Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor                    Disable colored log output
-      --logoutput string              Log output path (default "stderr")
-      --logtrace                      Include stacktrace in error and fatal logs
+      --log-format string             Log format to use. Options are text or json (default "text")
+      --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                    Include source location in logs
+      --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --no-p2p                        Disable the peer-to-peer network synchronization system
       --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])

@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeDumpCommand() *cobra.Command {
@@ -21,7 +19,7 @@ func MakeDumpCommand() *cobra.Command {
 		Use:   "dump",
 		Short: "Dump the contents of DefraDB node-side",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
-			db := cmd.Context().Value(dbContextKey).(client.DB)
+			db := mustGetContextDB(cmd)
 			return db.PrintDump(cmd.Context())
 		},
 	}
