@@ -283,12 +283,13 @@ type intMatcher struct {
 }
 
 func (m *intMatcher) Match(value client.NormalValue) (bool, error) {
-	intVal, ok := value.Int()
-	if ok {
+	if intVal, ok := value.Int(); ok {
 		return m.evalFunc(intVal, m.value), nil
 	}
-	intOptVal, ok := value.NillableInt()
-	if ok {
+	if intOptVal, ok := value.NillableInt(); ok {
+		if !intOptVal.HasValue() {
+			return false, nil
+		}
 		return m.evalFunc(intOptVal.Value(), m.value), nil
 	}
 	return false, NewErrUnexpectedTypeValue[int64](value)
@@ -300,12 +301,13 @@ type floatMatcher struct {
 }
 
 func (m *floatMatcher) Match(value client.NormalValue) (bool, error) {
-	floatVal, ok := value.Float()
-	if ok {
+	if floatVal, ok := value.Float(); ok {
 		return m.evalFunc(floatVal, m.value), nil
 	}
-	floatOptVal, ok := value.NillableFloat()
-	if ok {
+	if floatOptVal, ok := value.NillableFloat(); ok {
+		if !floatOptVal.HasValue() {
+			return false, nil
+		}
 		return m.evalFunc(floatOptVal.Value(), m.value), nil
 	}
 	return false, NewErrUnexpectedTypeValue[float64](value)
@@ -317,12 +319,13 @@ type stringMatcher struct {
 }
 
 func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
-	strVal, ok := value.String()
-	if ok {
+	if strVal, ok := value.String(); ok {
 		return m.evalFunc(strVal, m.value), nil
 	}
-	strOptVal, ok := value.NillableString()
-	if ok {
+	if strOptVal, ok := value.NillableString(); ok {
+		if !strOptVal.HasValue() {
+			return false, nil
+		}
 		return m.evalFunc(strOptVal.Value(), m.value), nil
 	}
 	return false, NewErrUnexpectedTypeValue[string](value)
@@ -394,6 +397,9 @@ func (m *indexLikeMatcher) Match(value client.NormalValue) (bool, error) {
 		strOptVal, ok := value.NillableString()
 		if !ok {
 			return false, NewErrUnexpectedTypeValue[string](value)
+		}
+		if !strOptVal.HasValue() {
+			return false, nil
 		}
 		strVal = strOptVal.Value()
 	}
