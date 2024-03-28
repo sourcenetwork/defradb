@@ -338,7 +338,7 @@ func TestAutoGenerateFromSchema_RelationOneToOne(t *testing.T) {
 		}
 		
 		type Device {
-			owner: User
+			owner: User @primary
 			model: String
 		}`
 
@@ -792,7 +792,7 @@ func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
 				
 				type Device {
 					model: String
-					owner: User
+					owner: User @primary
 				}`,
 			options: []Option{WithTypeDemand("User", 10), WithTypeDemand("Device", 30)},
 		},
@@ -801,12 +801,12 @@ func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
 				type User { 
 					name: String 
 					device: Device
-					orders: Order
+					orders: Order @primary
 				}
 				
 				type Device {
 					model: String
-					owner: User
+					owner: User @primary
 				}
 				
 				type Order {

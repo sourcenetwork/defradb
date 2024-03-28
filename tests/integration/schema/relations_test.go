@@ -23,7 +23,7 @@ func TestSchemaRelationOneToOne(t *testing.T) {
 				Schema: `
 					type Dog {
 						name: String
-						user: User
+						user: User @primary
 					}
 					type User {
 						dog: Dog

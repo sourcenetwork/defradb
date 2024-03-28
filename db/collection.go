@@ -484,7 +484,7 @@ func validateUpdateSchemaFields(
 			}
 
 			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
-				return false, NewErrPrimarySideNotDefined(proposedField.RelationName)
+				return false, client.NewErrPrimarySideNotDefined(proposedField.RelationName)
 			}
 
 			if proposedField.IsPrimaryRelation && relatedField.IsPrimaryRelation {

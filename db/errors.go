@@ -31,7 +31,6 @@ const (
 	errRelationalFieldInvalidRelationType       string = "invalid RelationType"
 	errRelationalFieldMissingIDField            string = "missing id field for relation object field"
 	errRelationalFieldMissingRelationName       string = "missing relation name"
-	errPrimarySideNotDefined                    string = "primary side of relation not defined"
 	errPrimarySideOnMany                        string = "cannot set the many side of a relation as primary"
 	errBothSidesPrimary                         string = "both sides of a relation cannot be primary"
 	errRelatedFieldKindMismatch                 string = "invalid Kind of the related field"
@@ -270,13 +269,6 @@ func NewErrRelationalFieldMissingRelationName(name string) error {
 	return errors.New(
 		errRelationalFieldMissingRelationName,
 		errors.NewKV("Field", name),
-	)
-}
-
-func NewErrPrimarySideNotDefined(relationName string) error {
-	return errors.New(
-		errPrimarySideNotDefined,
-		errors.NewKV("RelationName", relationName),
 	)
 }
 

@@ -38,14 +38,14 @@ var SchemaForExplainTests = testUtils.SchemaUpdate{
 			verified: Boolean
 			books: [Book]
 			articles: [Article]
-			contact: AuthorContact
+			contact: AuthorContact @primary
 		}
 
 		type AuthorContact {
 			cell: String
 			email: String
 			author: Author
-			address: ContactAddress
+			address: ContactAddress @primary
 		}
 
 		type ContactAddress {
