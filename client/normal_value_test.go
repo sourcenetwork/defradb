@@ -11,6 +11,7 @@
 package client
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -70,6 +71,37 @@ const (
 	NillableTimeNillableArray     nType = "NillableTimeNillableArray"
 	NillableDocumentNillableArray nType = "NillableDocumentNillableArray"
 )
+
+// extractValue takes an input of type `any` and checks if it is an `Option[T]`.
+// If it is and contains a value, it returns the contained value.
+// Otherwise, it returns the input itself.
+func extractValue(input any) any {
+	inputVal := reflect.ValueOf(input)
+
+	// Check if the type is Option[T] by seeing if it has the HasValue and Value methods.
+	hasValueMethod := inputVal.MethodByName("HasValue")
+	valueMethod := inputVal.MethodByName("Value")
+
+	if hasValueMethod.IsValid() && valueMethod.IsValid() {
+		// Call HasValue to check if there's a value.
+		hasValueResult := hasValueMethod.Call(nil)
+		if len(hasValueResult) == 1 {
+			if hasValueResult[0].Bool() {
+				// Call Value to get the actual value if HasValue is true.
+				valueResult := valueMethod.Call(nil)
+				if len(valueResult) == 1 {
+					return valueResult[0].Interface()
+				}
+			} else {
+				// Return nil if HasValue is false.
+				return nil
+			}
+		}
+	}
+
+	// Return the input itself if it's not an Option[T] with a value.
+	return input
+}
 
 func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 	typeAssertMap := map[nType]func(NormalValue) (any, bool){
@@ -588,6 +620,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 					assert.Equal(t, tt.input, val, tStr+"() returned unexpected value")
 					newVal := newMap[nType](val)
 					assert.Equal(t, actual, newVal, "New"+tStr+"() returned unexpected NormalValue")
+					assert.Equal(t, extractValue(tt.input), actual.Unwrap(),
+						"Unwrap() returned unexpected value for "+tStr)
 				} else {
 					assert.False(t, ok, string(nType)+"() should return false for "+tStr)
 				}
