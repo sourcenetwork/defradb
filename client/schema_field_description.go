@@ -21,7 +21,7 @@ type FieldKind interface {
 	// String returns the string representation of this FieldKind.
 	String() string
 
-	// Underlying returns the unterlying Kind as a string.
+	// Underlying returns the underlying Kind as a string.
 	//
 	// If this is an array, it will return the element kind, else it will return the same as
 	// [String()].
@@ -69,13 +69,13 @@ type SchemaFieldDescription struct {
 // ScalarKind represents singular scalar field kinds, such as `Int`.
 type ScalarKind uint8
 
-// ScalarArrayKind represnts arrays of simple scalar field kinds, such as `[Int]`.
+// ScalarArrayKind represents arrays of simple scalar field kinds, such as `[Int]`.
 type ScalarArrayKind uint8
 
-// ObjectKind represents singular objects (foriegn and embedded), such as `User`.
+// ObjectKind represents singular objects (foreign and embedded), such as `User`.
 type ObjectKind string
 
-// ObjectKind represents arrays of objects (foriegn and embedded), such as `[User]`.
+// ObjectKind represents arrays of objects (foreign and embedded), such as `[User]`.
 type ObjectArrayKind string
 
 var _ FieldKind = ScalarKind(0)

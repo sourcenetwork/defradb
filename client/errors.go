@@ -31,6 +31,9 @@ const (
 	errFailedToUnmarshalCollection         string = "failed to unmarshal collection json"
 	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
 	errInvalidJSONPayload                  string = "invalid JSON payload"
+	errCanNotNormalizeValue                string = "can not normalize value"
+	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
+	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
 )
 
 // Errors returnable from this package.
@@ -51,6 +54,9 @@ var (
 	ErrMalformedDocID                      = errors.New("malformed document ID, missing either version or cid")
 	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
 	ErrInvalidJSONPayload                  = errors.New(errInvalidJSONPayload)
+	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
+	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
+	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -73,6 +79,23 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
 		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
 	)
+}
+
+// NewCanNotNormalizeValue returns an error indicating that the given value can not be normalized.
+func NewCanNotNormalizeValue(val any) error {
+	return errors.New(errCanNotNormalizeValue, errors.NewKV("Value", val))
+}
+
+// NewCanNotTurnNormalValueIntoArray returns an error indicating that the given value can not be
+// turned into an array.
+func NewCanNotTurnNormalValueIntoArray(val any) error {
+	return errors.New(errCanNotTurnNormalValueIntoArray, errors.NewKV("Value", val))
+}
+
+// NewCanNotMakeNormalNilFromFieldKind returns an error indicating that a normal nil value can not be
+// created from the given field kind.
+func NewCanNotMakeNormalNilFromFieldKind(kind FieldKind) error {
+	return errors.New(errCanNotMakeNormalNilFromFieldKind, errors.NewKV("Kind", kind))
 }
 
 // NewErrUnhandledType returns an error indicating that the given value is of

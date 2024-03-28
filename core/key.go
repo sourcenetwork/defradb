@@ -79,7 +79,7 @@ var _ Key = (*DataStoreKey)(nil)
 // value of a field in an index.
 type IndexedField struct {
 	// Value is the value of the field in the index
-	Value any
+	Value client.NormalValue
 	// Descending is true if the field is sorted in descending order
 	Descending bool
 }

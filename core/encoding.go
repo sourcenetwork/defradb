@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/encoding"
 )
 
@@ -245,16 +244,18 @@ func DecodeIndexDataStoreKey(
 
 		i := len(key.Fields)
 		descending := false
+		var kind client.FieldKind = client.FieldKind_DocID
 		// If the key has more values encoded then fields on the index description, the last
 		// value must be the docID and we treat it as a string.
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
+			kind = fields[i].Kind
 		} else if i > len(indexDesc.Fields) {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
 
-		var val any
-		data, val, err = encoding.DecodeFieldValue(data, descending)
+		var val client.NormalValue
+		data, val, err = encoding.DecodeFieldValue(data, descending, kind)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}
@@ -262,34 +263,7 @@ func DecodeIndexDataStoreKey(
 		key.Fields = append(key.Fields, IndexedField{Value: val, Descending: descending})
 	}
 
-	err = normalizeIndexDataStoreKeyValues(&key, fields)
-	return key, err
-}
-
-// normalizeIndexDataStoreKeyValues converts all field values  to standardized
-// Defra Go type according to fields description.
-func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDefinition) error {
-	for i := range key.Fields {
-		if key.Fields[i].Value == nil {
-			continue
-		}
-		var err error
-		var val any
-		if i == len(key.Fields)-1 && len(key.Fields)-len(fields) == 1 {
-			bytes, ok := key.Fields[i].Value.([]byte)
-			if !ok {
-				return client.NewErrUnexpectedType[[]byte](request.DocIDArgName, key.Fields[i].Value)
-			}
-			val = string(bytes)
-		} else {
-			val, err = NormalizeFieldValue(fields[i], key.Fields[i].Value)
-		}
-		if err != nil {
-			return err
-		}
-		key.Fields[i].Value = val
-	}
-	return nil
+	return key, nil
 }
 
 // EncodeIndexDataStoreKey encodes a IndexDataStoreKey to bytes to be stored as a key

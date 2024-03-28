@@ -108,7 +108,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrder_ShouldFetchInRevertedOrder(t *te
 			testUtils.Request{
 				Request: `
 					query {
-						User(filter: {iq: {_gt: 1}}) {
+						User(filter: {iq: {_lt: 1}}) {
 							name
 							iq
 						}
