@@ -29,6 +29,7 @@ import (
 	grpcpeer "google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/proto"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
@@ -353,13 +354,17 @@ func (s *server) syncIndexedDocs(
 		return err
 	}
 
-	oldDoc, err := preTxnCol.Get(ctx, docID, false)
+	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
+	// Resolve while handling acp <> secondary indexes.
+	oldDoc, err := preTxnCol.Get(ctx, acpIdentity.NoIdentity, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFound)
 	if !isNewDoc && err != nil {
 		return err
 	}
 
-	doc, err := col.Get(ctx, docID, false)
+	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
+	// Resolve while handling acp <> secondary indexes.
+	doc, err := col.Get(ctx, acpIdentity.NoIdentity, docID, false)
 	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFound)
 	if !isDeletedDoc && err != nil {
 		return err

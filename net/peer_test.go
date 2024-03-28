@@ -25,6 +25,7 @@ import (
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -169,7 +170,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	h, err := libp2p.New()
@@ -475,7 +476,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	keysCh, err := col.GetAllDocIDs(ctx)
@@ -792,7 +793,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	docCid, err := createCID(doc)
@@ -845,7 +846,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
@@ -875,7 +876,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	docCid, err := createCID(doc)
@@ -928,7 +929,7 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	docCid, err := createCID(doc)
@@ -972,7 +973,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	docCid, err := createCID(doc)

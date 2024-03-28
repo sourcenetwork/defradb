@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -90,7 +91,8 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.WithTxn(txn).Create(ctx, doc)
+			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
+			err = col.WithTxn(txn).Create(ctx, acpIdentity.NoIdentity, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -101,7 +103,8 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
-				err = col.WithTxn(txn).Update(ctx, doc)
+				// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
+				err = col.WithTxn(txn).Update(ctx, acpIdentity.NoIdentity, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -205,7 +208,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 					return err
 				}
 			}
-			doc, err := colTxn.Get(ctx, docResultWithID.ID, false)
+			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
+			doc, err := colTxn.Get(ctx, acpIdentity.NoIdentity, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}
@@ -237,7 +241,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							if err != nil {
 								return err
 							}
-							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
+							// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430
+							foreignDoc, err := foreignCol.Get(ctx, acpIdentity.NoIdentity, foreignDocID, false)
 							if err != nil {
 								err := doc.Set(field.Name+request.RelatedObjectID, nil)
 								if err != nil {

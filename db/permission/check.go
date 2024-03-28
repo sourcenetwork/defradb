@@ -34,6 +34,7 @@ import (
 // Otherwise, check with acp module to verify signature has the appropriate access.
 func CheckDocPermissionedAccessOnCollection(
 	ctx context.Context,
+	identityOptional immutable.Option[string],
 	acpModuleOptional immutable.Option[acp.ACPModule],
 	collection client.Collection,
 	permission acp.DPIPermission,
@@ -72,14 +73,10 @@ func CheckDocPermissionedAccessOnCollection(
 		return true, nil
 	}
 
-	// TODO-ACP: Implement signatures
-	// hasSignature := false
-	hasSignature := true
-
 	// At this point if the request is not signatured, then it has no access, because:
 	// the collection has a policy on it, the acp module is enabled/available,
 	// and the document is not public (is regestered with the acp module).
-	if !hasSignature {
+	if !identityOptional.HasValue() {
 		return false, nil
 	}
 
@@ -87,7 +84,7 @@ func CheckDocPermissionedAccessOnCollection(
 	hasAccess, err := acpModule.CheckDocAccess(
 		ctx,
 		permission,
-		"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
+		identityOptional.Value(),
 		policyID,
 		resourceName,
 		docID,

@@ -60,7 +60,11 @@ func (c *Collection) Definition() client.CollectionDefinition {
 	return c.def
 }
 
-func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Create(
+	ctx context.Context,
+	identity immutable.Option[string],
+	doc *client.Document,
+) error {
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -71,10 +75,14 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(body))
 	if err != nil {
 		return err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
@@ -83,7 +91,11 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	return nil
 }
 
-func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
+func (c *Collection) CreateMany(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docs []*client.Document,
+) error {
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -97,25 +109,35 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 		}
 		docMapList = append(docMapList, docMap)
 	}
+
 	body, err := json.Marshal(docMapList)
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
 	}
+
 	for _, doc := range docs {
 		doc.Clean()
 	}
 	return nil
 }
 
-func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Update(
+	ctx context.Context,
+	identity immutable.Option[string],
+	doc *client.Document,
+) error {
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -130,6 +152,9 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
@@ -138,18 +163,26 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	return nil
 }
 
-func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
-	_, err := c.Get(ctx, doc.ID(), true)
+func (c *Collection) Save(
+	ctx context.Context,
+	identity immutable.Option[string],
+	doc *client.Document,
+) error {
+	_, err := c.Get(ctx, identity, doc.ID(), true)
 	if err == nil {
-		return c.Update(ctx, doc)
+		return c.Update(ctx, identity, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFound) {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, identity, doc)
 	}
 	return err
 }
 
-func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *Collection) Delete(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+) (bool, error) {
 	if !c.Description().Name.HasValue() {
 		return false, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -160,6 +193,9 @@ func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	if err != nil {
 		return false, err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return false, err
@@ -167,22 +203,31 @@ func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	return true, nil
 }
 
-func (c *Collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
-	_, err := c.Get(ctx, docID, false)
+func (c *Collection) Exists(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+) (bool, error) {
+	_, err := c.Get(ctx, identity, docID, false)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (c *Collection) UpdateWith(ctx context.Context, target any, updater string) (*client.UpdateResult, error) {
+func (c *Collection) UpdateWith(
+	ctx context.Context,
+	identity immutable.Option[string],
+	target any,
+	updater string,
+) (*client.UpdateResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, t, updater)
+		return c.UpdateWithFilter(ctx, identity, t, updater)
 	case client.DocID:
-		return c.UpdateWithDocID(ctx, t, updater)
+		return c.UpdateWithDocID(ctx, identity, t, updater)
 	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, t, updater)
+		return c.UpdateWithDocIDs(ctx, identity, t, updater)
 	default:
 		return nil, client.ErrInvalidUpdateTarget
 	}
@@ -190,6 +235,7 @@ func (c *Collection) UpdateWith(ctx context.Context, target any, updater string)
 
 func (c *Collection) updateWith(
 	ctx context.Context,
+	identity immutable.Option[string],
 	request CollectionUpdateRequest,
 ) (*client.UpdateResult, error) {
 	if !c.Description().Name.HasValue() {
@@ -206,6 +252,9 @@ func (c *Collection) updateWith(
 	if err != nil {
 		return nil, err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	var result client.UpdateResult
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
@@ -215,28 +264,39 @@ func (c *Collection) updateWith(
 
 func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
+	identity immutable.Option[string],
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	return c.updateWith(ctx, CollectionUpdateRequest{
-		Filter:  filter,
-		Updater: updater,
-	})
+	return c.updateWith(
+		ctx,
+		identity,
+		CollectionUpdateRequest{
+			Filter:  filter,
+			Updater: updater,
+		},
+	)
 }
 
 func (c *Collection) UpdateWithDocID(
 	ctx context.Context,
+	identity immutable.Option[string],
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	return c.updateWith(ctx, CollectionUpdateRequest{
-		DocID:   docID.String(),
-		Updater: updater,
-	})
+	return c.updateWith(
+		ctx,
+		identity,
+		CollectionUpdateRequest{
+			DocID:   docID.String(),
+			Updater: updater,
+		},
+	)
 }
 
 func (c *Collection) UpdateWithDocIDs(
 	ctx context.Context,
+	identity immutable.Option[string],
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -244,20 +304,28 @@ func (c *Collection) UpdateWithDocIDs(
 	for _, docID := range docIDs {
 		strDocIDs = append(strDocIDs, docID.String())
 	}
-	return c.updateWith(ctx, CollectionUpdateRequest{
-		DocIDs:  strDocIDs,
-		Updater: updater,
-	})
+	return c.updateWith(
+		ctx,
+		identity,
+		CollectionUpdateRequest{
+			DocIDs:  strDocIDs,
+			Updater: updater,
+		},
+	)
 }
 
-func (c *Collection) DeleteWith(ctx context.Context, target any) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWith(
+	ctx context.Context,
+	identity immutable.Option[string],
+	target any,
+) (*client.DeleteResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, t)
+		return c.DeleteWithFilter(ctx, identity, t)
 	case client.DocID:
-		return c.DeleteWithDocID(ctx, t)
+		return c.DeleteWithDocID(ctx, identity, t)
 	case []client.DocID:
-		return c.DeleteWithDocIDs(ctx, t)
+		return c.DeleteWithDocIDs(ctx, identity, t)
 	default:
 		return nil, client.ErrInvalidDeleteTarget
 	}
@@ -265,6 +333,7 @@ func (c *Collection) DeleteWith(ctx context.Context, target any) (*client.Delete
 
 func (c *Collection) deleteWith(
 	ctx context.Context,
+	identity immutable.Option[string],
 	request CollectionDeleteRequest,
 ) (*client.DeleteResult, error) {
 	if !c.Description().Name.HasValue() {
@@ -277,10 +346,14 @@ func (c *Collection) deleteWith(
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	var result client.DeleteResult
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
@@ -288,29 +361,58 @@ func (c *Collection) deleteWith(
 	return &result, nil
 }
 
-func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
-	return c.deleteWith(ctx, CollectionDeleteRequest{
-		Filter: filter,
-	})
+func (c *Collection) DeleteWithFilter(
+	ctx context.Context,
+	identity immutable.Option[string],
+	filter any,
+) (*client.DeleteResult, error) {
+	return c.deleteWith(
+		ctx,
+		identity,
+		CollectionDeleteRequest{
+			Filter: filter,
+		},
+	)
 }
 
-func (c *Collection) DeleteWithDocID(ctx context.Context, docID client.DocID) (*client.DeleteResult, error) {
-	return c.deleteWith(ctx, CollectionDeleteRequest{
-		DocID: docID.String(),
-	})
+func (c *Collection) DeleteWithDocID(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+) (*client.DeleteResult, error) {
+	return c.deleteWith(
+		ctx,
+		identity,
+		CollectionDeleteRequest{
+			DocID: docID.String(),
+		},
+	)
 }
 
-func (c *Collection) DeleteWithDocIDs(ctx context.Context, docIDs []client.DocID) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docIDs []client.DocID,
+) (*client.DeleteResult, error) {
 	var strDocIDs []string
 	for _, docID := range docIDs {
 		strDocIDs = append(strDocIDs, docID.String())
 	}
-	return c.deleteWith(ctx, CollectionDeleteRequest{
-		DocIDs: strDocIDs,
-	})
+	return c.deleteWith(
+		ctx,
+		identity,
+		CollectionDeleteRequest{
+			DocIDs: strDocIDs,
+		},
+	)
 }
 
-func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+func (c *Collection) Get(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+	showDeleted bool,
+) (*client.Document, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -327,6 +429,9 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err != nil {
 		return nil, err
 	}
+
+	addIdentityToAuthHeader(req, identity)
+
 	data, err := c.http.request(req)
 	if err != nil {
 		return nil, err

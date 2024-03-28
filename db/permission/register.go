@@ -35,17 +35,18 @@ import (
 // Otherwise, nothing is registered on the acp module.
 func RegisterDocCreationOnCollection(
 	ctx context.Context,
+	identity immutable.Option[string],
 	acpModule immutable.Option[acp.ACPModule],
 	collection client.Collection,
 	docID string,
 ) error {
 	// If acp module is enabled / exists.
-	if acpModule.HasValue() {
+	if acpModule.HasValue() && identity.HasValue() {
 		// And collection has policy.
 		if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy {
 			return acpModule.Value().RegisterDocObject(
 				ctx,
-				"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
+				identity.Value(),
 				policyID,
 				resourceName,
 				docID,

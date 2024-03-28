@@ -13,6 +13,8 @@ package planner
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
@@ -82,17 +84,24 @@ type PlanContext struct {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn datastore.Txn
-	db  client.Store
+	txn      datastore.Txn
+	identity immutable.Option[string]
+	db       client.Store
 
 	ctx context.Context
 }
 
-func New(ctx context.Context, db client.Store, txn datastore.Txn) *Planner {
+func New(
+	ctx context.Context,
+	identity immutable.Option[string],
+	db client.Store,
+	txn datastore.Txn,
+) *Planner {
 	return &Planner{
-		txn: txn,
-		db:  db,
-		ctx: ctx,
+		txn:      txn,
+		identity: identity,
+		db:       db,
+		ctx:      ctx,
 	}
 }
 

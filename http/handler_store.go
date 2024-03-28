@@ -311,7 +311,9 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
 		return
 	}
-	result := store.ExecRequest(req.Context(), request.Query)
+
+	identity := getIdentityFromAuthHeader(req)
+	result := store.ExecRequest(req.Context(), identity, request.Query)
 
 	if result.Pub == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})

@@ -343,7 +343,11 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	return indexes, nil
 }
 
-func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestResult {
+func (c *Client) ExecRequest(
+	ctx context.Context,
+	identity immutable.Option[string],
+	query string,
+) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
@@ -358,6 +362,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	c.http.setDefaultHeaders(req)
+	addIdentityToAuthHeader(req, identity)
 
 	res, err := c.http.client.Do(req)
 	if err != nil {

@@ -227,8 +227,12 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
-	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(context.Context, string) *RequestResult
+	// ExecRequest executes the given GQL request against the [Store], with the given identity.
+	ExecRequest(
+		ctx context.Context,
+		identity immutable.Option[string],
+		request string,
+	) *RequestResult
 
 	// ACPModule returns the underlying acp module (optional). Incase the access control
 	// is turned off, then the returned acp module will have no value (will be empty).

@@ -17,6 +17,7 @@ import (
 	"sync"
 	"testing"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
@@ -72,7 +73,12 @@ func runCollectionBenchGetSync(b *testing.B,
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
-				collections[k].Get(ctx, listOfDocIDs[j][k], false) //nolint:errcheck
+				collections[k].Get( //nolint:errcheck
+					ctx,
+					acpIdentity.NoIdentity,
+					listOfDocIDs[j][k],
+					false,
+				)
 			}
 		}
 	}
@@ -98,7 +104,12 @@ func runCollectionBenchGetAsync(b *testing.B,
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				wg.Add(1)
 				go func(ctx context.Context, col client.Collection, docID client.DocID) {
-					col.Get(ctx, docID, false) //nolint:errcheck
+					col.Get( //nolint:errcheck
+						ctx,
+						acpIdentity.NoIdentity,
+						docID,
+						false,
+					)
 					wg.Done()
 				}(ctx, collections[k], listOfDocIDs[j][k])
 			}
@@ -173,7 +184,7 @@ func runCollectionBenchCreateMany(
 			docs[j], _ = client.NewDocFromJSON([]byte(d[0]), collections[0].Schema())
 		}
 
-		collections[0].CreateMany(ctx, docs) //nolint:errcheck
+		collections[0].CreateMany(ctx, acpIdentity.NoIdentity, docs) //nolint:errcheck
 	}
 	b.StopTimer()
 
@@ -194,7 +205,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 			docs, _ := fixture.GenerateDocs()
 			for k := 0; k < numTypes; k++ {
 				doc, _ := client.NewDocFromJSON([]byte(docs[k]), collections[k].Schema())
-				collections[k].Create(ctx, doc) //nolint:errcheck
+				collections[k].Create(ctx, acpIdentity.NoIdentity, doc) //nolint:errcheck
 			}
 		}
 	}
@@ -233,7 +244,7 @@ func runCollectionBenchCreateAsync(b *testing.B,
 					// create the documents
 					for j := 0; j < numTypes; j++ {
 						doc, _ := client.NewDocFromJSON([]byte(docs[j]), collections[j].Schema())
-						collections[j].Create(ctx, doc) //nolint:errcheck
+						collections[j].Create(ctx, acpIdentity.NoIdentity, doc) //nolint:errcheck
 					}
 
 					wg.Done()

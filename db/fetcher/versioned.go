@@ -104,6 +104,7 @@ type VersionedFetcher struct {
 // Init initializes the VersionedFetcher.
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
@@ -139,6 +140,7 @@ func (vf *VersionedFetcher) Init(
 	vf.DocumentFetcher = new(DocumentFetcher)
 	return vf.DocumentFetcher.Init(
 		ctx,
+		identity,
 		vf.store,
 		acp,
 		col,

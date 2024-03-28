@@ -15,6 +15,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp"
 )
 
 func MakeACPPolicyAddCommand() *cobra.Command {
@@ -24,7 +26,7 @@ func MakeACPPolicyAddCommand() *cobra.Command {
 	const fileFlagLong string = "file"
 	const fileFlagShort string = "f"
 
-	var identitySignature string
+	var identityValue string
 	var policyFile string
 
 	var cmd = &cobra.Command{
@@ -75,8 +77,8 @@ Example: add from stdin:
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if identitySignature == "" {
-				return NewErrRequiredFlagEmpty(identityFlagLongRequired, identityFlagShortRequired)
+			if identityValue == "" {
+				return acp.ErrPolicyCreatorMustNotBeEmpty
 			}
 
 			// TODO-ACP: Ensure here (before going through acp system) if the required identity argument
@@ -112,7 +114,7 @@ Example: add from stdin:
 			store := mustGetContextStore(cmd)
 			policyResult, err := store.AddPolicy(
 				cmd.Context(),
-				identitySignature,
+				identityValue,
 				policy,
 			)
 
@@ -125,11 +127,11 @@ Example: add from stdin:
 	}
 	cmd.Flags().StringVarP(&policyFile, fileFlagLong, fileFlagShort, "", "File to load a policy from")
 	cmd.Flags().StringVarP(
-		&identitySignature,
+		&identityValue,
 		identityFlagLongRequired,
 		identityFlagShortRequired,
 		"",
-		"[Required] Signature identity of the creator",
+		"[Required] Identity of the creator",
 	)
 	_ = cmd.MarkFlagRequired(identityFlagLongRequired)
 
