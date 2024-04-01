@@ -29,12 +29,15 @@ const (
 )
 
 var (
-	ErrPeerConnectionWaitTimout = errors.New("waiting for peer connection timed out")
-	ErrPubSubWaitTimeout        = errors.New("waiting for pubsub timed out")
-	ErrPushLogWaitTimeout       = errors.New("waiting for pushlog timed out")
-	ErrNilDB                    = errors.New("database object can't be nil")
-	ErrNilUpdateChannel         = errors.New("tried to subscribe to update channel, but update channel is nil")
-	ErrSelfTargetForReplicator  = errors.New("can't target ourselves as a replicator")
+	ErrP2PColHasPolicy              = errors.New("p2p collection specified has a policy on it")
+	ErrReplicatorColHasPolicy       = errors.New("replicator collection specified has a policy on it")
+	ErrReplicatorSomeColsHavePolicy = errors.New("replicator can not use all collections, as some have policy")
+	ErrPeerConnectionWaitTimout     = errors.New("waiting for peer connection timed out")
+	ErrPubSubWaitTimeout            = errors.New("waiting for pubsub timed out")
+	ErrPushLogWaitTimeout           = errors.New("waiting for pushlog timed out")
+	ErrNilDB                        = errors.New("database object can't be nil")
+	ErrNilUpdateChannel             = errors.New("tried to subscribe to update channel, but update channel is nil")
+	ErrSelfTargetForReplicator      = errors.New("can't target ourselves as a replicator")
 )
 
 func NewErrPushLog(inner error, kv ...errors.KV) error {

@@ -49,15 +49,30 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
+
+			if col.Description().Policy.HasValue() {
+				return ErrReplicatorColHasPolicy
+			}
+
 			collections = append(collections, col)
 		}
 
 	default:
-		// default to all collections
-		collections, err = p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
+		// default to all collections (unless a collection contains a policy).
+		// TODO-ACP: default to all collections after resolving https://github.com/sourcenetwork/defradb/issues/2366
+		allCollections, err := p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
+
+		for _, col := range allCollections {
+			// Can not default to all collections if any collection has a policy.
+			// TODO-ACP: remove this check/loop after https://github.com/sourcenetwork/defradb/issues/2366
+			if col.Description().Policy.HasValue() {
+				return ErrReplicatorSomeColsHavePolicy
+			}
+		}
+		collections = allCollections
 	}
 	rep.Schemas = nil
 

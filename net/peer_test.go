@@ -12,6 +12,7 @@ package net
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -116,7 +117,7 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, db.WithUpdateEvents(), db.WithACPModuleInMemory())
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -388,6 +389,105 @@ func TestSetReplicator_NoError(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
+}
+
+// This test documents that we don't allow setting replicator with a collection that has a policy
+// until the following is implemented:
+// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	db, n := newTestNode(ctx, t)
+	defer n.Close()
+
+	policy := `
+        description: a policy
+        actor:
+          name: actor
+        resources:
+          user:
+            permissions:
+              read:
+                expr: owner
+              write:
+                expr: owner
+            relations:
+              owner:
+                types:
+                  - actor
+    `
+	policyResult, err := db.AddPolicy(ctx, "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", policy)
+	policyID := policyResult.PolicyID
+	require.NoError(t, err)
+	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+
+	schema := fmt.Sprintf(`
+		type User @policy(id: "%s", resource: "user") { 
+			name: String
+			age: Int
+		}
+	`, policyID,
+	)
+	_, err = db.AddSchema(ctx, schema)
+	require.NoError(t, err)
+
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	require.NoError(t, err)
+
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"User"},
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrReplicatorColHasPolicy)
+}
+
+// This test documents that we don't allow setting replicator using default option when any collection has a policy
+// until the following is implemented:
+// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefault_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	db, n := newTestNode(ctx, t)
+	defer n.Close()
+
+	policy := `
+        description: a policy
+        actor:
+          name: actor
+        resources:
+          user:
+            permissions:
+              read:
+                expr: owner
+              write:
+                expr: owner
+            relations:
+              owner:
+                types:
+                  - actor
+    `
+	policyResult, err := db.AddPolicy(ctx, "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", policy)
+	policyID := policyResult.PolicyID
+	require.NoError(t, err)
+	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+
+	schema := fmt.Sprintf(`
+		type User @policy(id: "%s", resource: "user") { 
+			name: String
+			age: Int
+		}
+	`, policyID,
+	)
+	_, err = db.AddSchema(ctx, schema)
+	require.NoError(t, err)
+
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	require.NoError(t, err)
+
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: *info,
+		// Note: The missing explicit input of schemas here
+	})
+	require.ErrorIs(t, err, ErrReplicatorSomeColsHavePolicy)
 }
 
 func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
@@ -697,6 +797,53 @@ func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 
 	err := n.Peer.AddP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
+}
+
+// This test documents that we don't allow adding p2p collections that have a policy
+// until the following is implemented:
+// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
+	ctx := context.Background()
+	db, n := newTestNode(ctx, t)
+	defer n.Close()
+
+	policy := `
+        description: a policy
+        actor:
+          name: actor
+        resources:
+          user:
+            permissions:
+              read:
+                expr: owner
+              write:
+                expr: owner
+            relations:
+              owner:
+                types:
+                  - actor
+    `
+	policyResult, err := db.AddPolicy(ctx, "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", policy)
+	policyID := policyResult.PolicyID
+	require.NoError(t, err)
+	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+
+	schema := fmt.Sprintf(`
+		type User @policy(id: "%s", resource: "user") { 
+			name: String
+			age: Int
+		}
+	`, policyID,
+	)
+	_, err = db.AddSchema(ctx, schema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaRoot()})
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrP2PColHasPolicy)
 }
 
 func TestAddP2PCollections_NoError(t *testing.T) {

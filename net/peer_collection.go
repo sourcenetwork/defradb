@@ -48,6 +48,14 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 		storeCollections = append(storeCollections, storeCol...)
 	}
 
+	// Ensure none of the collections have a policy on them, until following is implemented:
+	// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+	for _, col := range storeCollections {
+		if col.Description().Policy.HasValue() {
+			return ErrP2PColHasPolicy
+		}
+	}
+
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
