@@ -204,6 +204,7 @@ type Collection interface {
 	// `IndexDescription.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
+	// WARNING: This method can not create index for a collection that has a policy.
 	CreateIndex(context.Context, IndexDescription) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
