@@ -660,6 +660,7 @@ var patchCollectionValidators = []func(
 	validateSourcesNotRedefined,
 	validateIndexesNotModified,
 	validateFieldsNotModified,
+	validatePolicyNotModified,
 	validateIDNotZero,
 	validateIDUnique,
 	validateIDExists,
@@ -795,6 +796,25 @@ func validateFieldsNotModified(
 		// DeepEqual is temporary, as this validation is temporary
 		if !reflect.DeepEqual(oldCol.Fields, newCol.Fields) {
 			return NewErrCollectionFieldsCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validatePolicyNotModified(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		// DeepEqual is temporary, as this validation is temporary
+		if !reflect.DeepEqual(oldCol.Policy, newCol.Policy) {
+			return NewErrCollectionPolicyCannotBeMutated(newCol.ID)
 		}
 	}
 
