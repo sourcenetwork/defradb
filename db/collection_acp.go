@@ -19,15 +19,31 @@ import (
 	"github.com/sourcenetwork/defradb/db/permission"
 )
 
+// registerDocWithACP handles the registration of the document with acp module.
+// The registering is done at document creation on the collection.
+//
+// According to our access logic we have these components to worry about:
+// (1) the request is permissioned (has an identity signature),
+// (2) the collection is permissioned (has a policy),
+// (3) acp module exists (acp is enabled).
+//
+// The document is only registered if all (1) (2) and (3) are true.
+//
+// Otherwise, nothing is registered on the acp module.
 func (c *collection) registerDocWithACP(
 	ctx context.Context,
 	identity immutable.Option[string],
 	docID string,
 ) error {
+	// If no acp module, then no document is registered.
+	if !c.db.acp.HasValue() {
+		return nil
+	}
+
 	return permission.RegisterDocOnCollectionWithACP(
 		ctx,
 		identity,
-		c.db.acp,
+		c.db.acp.Value(),
 		c,
 		docID,
 	)

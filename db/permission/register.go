@@ -20,35 +20,30 @@ import (
 )
 
 // RegisterDocOnCollectionWithACP handles the registration of the document with acp module.
-// The registering is done at document creation on the collection.
 //
-// According to our access logic we have these components to worry about:
+// Since acp will always exist when this is called we have these components to worry about:
 // (1) the request is permissioned (has an identity signature),
 // (2) the collection is permissioned (has a policy),
-// (3) acp module exists (acp is enabled).
 //
-// The document is only registered if all (1) (2) and (3) are true.
+// The document is only registered if all (1) (2) are true.
 //
 // Otherwise, nothing is registered on the acp module.
 func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
 	identity immutable.Option[string],
-	acpModule immutable.Option[acp.ACPModule],
+	acpModule acp.ACPModule,
 	collection client.Collection,
 	docID string,
 ) error {
-	// If acp module is enabled / exists.
-	if acpModule.HasValue() && identity.HasValue() {
-		// And collection has policy.
-		if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy {
-			return acpModule.Value().RegisterDocObject(
-				ctx,
-				identity.Value(),
-				policyID,
-				resourceName,
-				docID,
-			)
-		}
+	// An identity exists and the collection has a policy.
+	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && identity.HasValue() {
+		return acpModule.RegisterDocObject(
+			ctx,
+			identity.Value(),
+			policyID,
+			resourceName,
+			docID,
+		)
 	}
 
 	return nil
