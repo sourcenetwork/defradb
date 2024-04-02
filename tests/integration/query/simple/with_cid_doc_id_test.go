@@ -395,3 +395,97 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
+func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with first cid and docID with pcounter int type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeibinkgqwegghg7kqwk66etboc5jv42i4akasxrih35wrvykdwcima",
+						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": int64(10),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
+func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with first cid and docID with pcounter and float type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10.2
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20.6
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeifsok5oy42zs2p7habfjr3ee3j7mxeag5nfdo7u4d2bfvm6hdhnpq",
+						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": 10.2,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

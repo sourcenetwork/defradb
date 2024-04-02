@@ -164,6 +164,10 @@ var (
 				Value:       client.PN_COUNTER,
 				Description: "Positive-Negative Counter",
 			},
+			client.P_COUNTER.String(): &gql.EnumValueConfig{
+				Value:       client.P_COUNTER,
+				Description: "Positive Counter",
+			},
 		},
 	})
 
