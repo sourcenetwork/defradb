@@ -304,50 +304,54 @@ func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
 	f.RelationName = descMap.RelationName
 	f.Typ = descMap.Typ
 	f.IsPrimaryRelation = descMap.IsPrimaryRelation
-
-	if len(descMap.Kind) == 0 {
-		f.Kind = FieldKind_None
-		return nil
+	f.Kind, err = parseFieldKind(descMap.Kind)
+	if err != nil {
+		return err
 	}
 
-	if descMap.Kind[0] != '"' {
+	return nil
+}
+
+func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
+	if len(bytes) == 0 {
+		return FieldKind_None, nil
+	}
+
+	if bytes[0] != '"' {
 		// If the Kind is not represented by a string, assume try to parse it to an int, as
 		// that is the only other type we support.
 		var intKind uint8
-		err := json.Unmarshal(descMap.Kind, &intKind)
+		err := json.Unmarshal(bytes, &intKind)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		switch intKind {
 		case uint8(FieldKind_BOOL_ARRAY), uint8(FieldKind_INT_ARRAY), uint8(FieldKind_FLOAT_ARRAY),
 			uint8(FieldKind_STRING_ARRAY), uint8(FieldKind_NILLABLE_BOOL_ARRAY), uint8(FieldKind_NILLABLE_INT_ARRAY),
 			uint8(FieldKind_NILLABLE_FLOAT_ARRAY), uint8(FieldKind_NILLABLE_STRING_ARRAY):
-			f.Kind = ScalarArrayKind(intKind)
+			return ScalarArrayKind(intKind), nil
 		default:
-			f.Kind = ScalarKind(intKind)
-		}
-	} else {
-		var strKind string
-		err := json.Unmarshal(descMap.Kind, &strKind)
-		if err != nil {
-			return err
-		}
-
-		kind, ok := FieldKindStringToEnumMapping[strKind]
-		if ok {
-			f.Kind = kind
-		} else {
-			// If we don't find the string representation of this type in the
-			// scalar mapping, assume it is an object - if it is not, validation
-			// will catch this later.  If it is unknown we have no way of telling
-			// as to whether the user thought it was a scalar or an object anyway.
-			if strKind[0] == '[' {
-				f.Kind = ObjectArrayKind(strings.Trim(strKind, "[]"))
-			} else {
-				f.Kind = ObjectKind(strKind)
-			}
+			return ScalarKind(intKind), nil
 		}
 	}
 
-	return nil
+	var strKind string
+	err := json.Unmarshal(bytes, &strKind)
+	if err != nil {
+		return nil, err
+	}
+
+	kind, ok := FieldKindStringToEnumMapping[strKind]
+	if ok {
+		return kind, nil
+	}
+
+	// If we don't find the string representation of this type in the
+	// scalar mapping, assume it is an object - if it is not, validation
+	// will catch this later.  If it is unknown we have no way of telling
+	// as to whether the user thought it was a scalar or an object anyway.
+	if strKind[0] == '[' {
+		return ObjectArrayKind(strings.Trim(strKind, "[]")), nil
+	}
+	return ObjectKind(strKind), nil
 }
