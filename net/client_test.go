@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -113,12 +114,12 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Save(ctx, doc)
+	err = col.Save(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	col, err = n2.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
-	err = col.Save(ctx, doc)
+	err = col.Save(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)

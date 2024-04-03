@@ -31,6 +31,10 @@ const (
 	errFailedToUnmarshalCollection         string = "failed to unmarshal collection json"
 	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
 	errInvalidJSONPayload                  string = "invalid JSON payload"
+	errCanNotNormalizeValue                string = "can not normalize value"
+	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
+	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
+	errPrimarySideNotDefined               string = "primary side of relation not defined"
 )
 
 // Errors returnable from this package.
@@ -44,13 +48,18 @@ var (
 	ErrOperationNotPermittedOnNamelessCols = errors.New(errOperationNotPermittedOnNamelessCols)
 	ErrFieldNotObject                      = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch                   = errors.New("value does not match indicated type")
-	ErrDocumentNotFound                    = errors.New("no document for the given ID exists")
+	ErrDocumentNotFoundOrNotAuthorized     = errors.New("document not found or not authorized to access")
+	ErrPolicyAddFailureNoACP               = errors.New("failure adding policy because ACP was not available")
 	ErrInvalidUpdateTarget                 = errors.New("the target document to update is of invalid type")
 	ErrInvalidUpdater                      = errors.New("the updater of a document is of invalid type")
 	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")
 	ErrMalformedDocID                      = errors.New("malformed document ID, missing either version or cid")
 	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
 	ErrInvalidJSONPayload                  = errors.New(errInvalidJSONPayload)
+	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
+	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
+	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
+	ErrPrimarySideNotDefined               = errors.New(errPrimarySideNotDefined)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -73,6 +82,23 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
 		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
 	)
+}
+
+// NewCanNotNormalizeValue returns an error indicating that the given value can not be normalized.
+func NewCanNotNormalizeValue(val any) error {
+	return errors.New(errCanNotNormalizeValue, errors.NewKV("Value", val))
+}
+
+// NewCanNotTurnNormalValueIntoArray returns an error indicating that the given value can not be
+// turned into an array.
+func NewCanNotTurnNormalValueIntoArray(val any) error {
+	return errors.New(errCanNotTurnNormalValueIntoArray, errors.NewKV("Value", val))
+}
+
+// NewCanNotMakeNormalNilFromFieldKind returns an error indicating that a normal nil value can not be
+// created from the given field kind.
+func NewCanNotMakeNormalNilFromFieldKind(kind FieldKind) error {
+	return errors.New(errCanNotMakeNormalNilFromFieldKind, errors.NewKV("Kind", kind))
 }
 
 // NewErrUnhandledType returns an error indicating that the given value is of
@@ -154,4 +180,11 @@ func NewErrCRDTKindMismatch(cType, kind string) error {
 
 func NewErrInvalidJSONPaylaod(payload string) error {
 	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
+}
+
+func NewErrPrimarySideNotDefined(relationName string) error {
+	return errors.New(
+		errPrimarySideNotDefined,
+		errors.NewKV("RelationName", relationName),
+	)
 }

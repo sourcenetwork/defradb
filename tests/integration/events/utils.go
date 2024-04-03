@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -152,7 +153,7 @@ func setupDatabase(
 			doc, err := client.NewDocFromJSON([]byte(docStr), col.Schema())
 			require.NoError(t, err)
 
-			err = col.Save(ctx, doc)
+			err = col.Save(ctx, acpIdentity.NoIdentity, doc)
 			require.NoError(t, err)
 		}
 	}

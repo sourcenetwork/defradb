@@ -112,5 +112,6 @@ func newState(
 		collectionNames:          collectionNames,
 		documents:                [][]*client.Document{},
 		indexes:                  [][][]client.IndexDescription{},
+		isBench:                  false,
 	}
 }

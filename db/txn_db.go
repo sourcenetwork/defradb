@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/lens-vm/lens/host-go/config/model"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -36,7 +37,11 @@ type explicitTxnDB struct {
 }
 
 // ExecRequest executes a request against the database.
-func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *implicitTxnDB) ExecRequest(
+	ctx context.Context,
+	identity immutable.Option[string],
+	request string,
+) *client.RequestResult {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		res := &client.RequestResult{}
@@ -45,7 +50,7 @@ func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *clien
 	}
 	defer txn.Discard(ctx)
 
-	res := db.execRequest(ctx, request, txn)
+	res := db.execRequest(ctx, identity, request, txn)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -61,9 +66,10 @@ func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *clien
 // ExecRequest executes a transaction request against the database.
 func (db *explicitTxnDB) ExecRequest(
 	ctx context.Context,
+	identity immutable.Option[string],
 	request string,
 ) *client.RequestResult {
-	return db.execRequest(ctx, request, db.txn)
+	return db.execRequest(ctx, identity, request, db.txn)
 }
 
 // GetCollectionByName returns an existing collection within the database.

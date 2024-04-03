@@ -27,6 +27,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -161,6 +162,7 @@ func (db *db) createCollection(
 	}
 
 	col := db.newCollection(desc, schema)
+
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
@@ -168,6 +170,37 @@ func (db *db) createCollection(
 	}
 
 	return db.getCollectionByID(ctx, txn, desc.ID)
+}
+
+// validateCollectionDefinitionPolicyDesc validates that the policy definition is valid, beyond syntax.
+//
+// Ensures that the information within the policy definition makes sense,
+// this function might also make relevant remote calls using the acp system.
+func (db *db) validateCollectionDefinitionPolicyDesc(
+	ctx context.Context,
+	policyDesc immutable.Option[client.PolicyDescription],
+) error {
+	if !policyDesc.HasValue() {
+		// No policy validation needed, whether acp exists or not doesn't matter.
+		return nil
+	}
+
+	// If there is a policy specified, but the database does not have
+	// acp enabled/available return an error, database must have an acp available
+	// to enable access control (inorder to adhere to the policy specified).
+	if !db.acp.HasValue() {
+		return ErrCanNotHavePolicyWithoutACP
+	}
+
+	// If we have the policy specified on the collection, and acp is available/enabled,
+	// then using the acp system we need to ensure the policy id specified
+	// actually exists as a policy, and the resource name exists on that policy
+	// and that the resource is a valid DPI.
+	return db.acp.Value().ValidateResourceExistsOnValidDPI(
+		ctx,
+		policyDesc.Value().ID,
+		policyDesc.Value().ResourceName,
+	)
 }
 
 // updateSchema updates the persisted schema description matching the name of the given
@@ -484,7 +517,7 @@ func validateUpdateSchemaFields(
 			}
 
 			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
-				return false, NewErrPrimarySideNotDefined(proposedField.RelationName)
+				return false, client.NewErrPrimarySideNotDefined(proposedField.RelationName)
 			}
 
 			if proposedField.IsPrimaryRelation && relatedField.IsPrimaryRelation {
@@ -627,6 +660,7 @@ var patchCollectionValidators = []func(
 	validateSourcesNotRedefined,
 	validateIndexesNotModified,
 	validateFieldsNotModified,
+	validatePolicyNotModified,
 	validateIDNotZero,
 	validateIDUnique,
 	validateIDExists,
@@ -762,6 +796,25 @@ func validateFieldsNotModified(
 		// DeepEqual is temporary, as this validation is temporary
 		if !reflect.DeepEqual(oldCol.Fields, newCol.Fields) {
 			return NewErrCollectionFieldsCannotBeMutated(newCol.ID)
+		}
+	}
+
+	return nil
+}
+
+func validatePolicyNotModified(
+	oldColsByID map[uint32]client.CollectionDescription,
+	newColsByID map[uint32]client.CollectionDescription,
+) error {
+	for _, newCol := range newColsByID {
+		oldCol, ok := oldColsByID[newCol.ID]
+		if !ok {
+			continue
+		}
+
+		// DeepEqual is temporary, as this validation is temporary
+		if !reflect.DeepEqual(oldCol.Policy, newCol.Policy) {
+			return NewErrCollectionPolicyCannotBeMutated(newCol.ID)
 		}
 	}
 
@@ -1025,6 +1078,7 @@ func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint3
 	}
 
 	collection := db.newCollection(col, schema)
+
 	err = collection.loadIndexes(ctx, txn)
 	if err != nil {
 		return nil, err
@@ -1182,17 +1236,21 @@ func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([
 //
 // @todo: We probably need a lock on the collection for this kind of op since
 // it hits every key and will cause Tx conflicts for concurrent Txs
-func (c *collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (c *collection) GetAllDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+) (<-chan client.DocIDResult, error) {
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.getAllDocIDsChan(ctx, txn)
+	return c.getAllDocIDsChan(ctx, identity, txn)
 }
 
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 ) (<-chan client.DocIDResult, error) {
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
@@ -1235,12 +1293,29 @@ func (c *collection) getAllDocIDsChan(
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
 				resCh <- client.DocIDResult{
-					Err: res.Error,
+					Err: err,
 				}
 				return
 			}
-			resCh <- client.DocIDResult{
-				ID: docID,
+
+			canRead, err := c.checkAccessOfDocWithACP(
+				ctx,
+				identity,
+				acp.ReadPermission,
+				docID.String(),
+			)
+
+			if err != nil {
+				resCh <- client.DocIDResult{
+					Err: err,
+				}
+				return
+			}
+
+			if canRead {
+				resCh <- client.DocIDResult{
+					ID: docID,
+				}
 			}
 		}
 	}()
@@ -1290,23 +1365,32 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 
 // Create a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
-func (c *collection) Create(ctx context.Context, doc *client.Document) error {
+func (c *collection) Create(
+	ctx context.Context,
+	identity immutable.Option[string],
+	doc *client.Document,
+) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	err = c.create(ctx, txn, doc)
+	err = c.create(ctx, identity, txn, doc)
 	if err != nil {
 		return err
 	}
+
 	return c.commitImplicitTxn(ctx, txn)
 }
 
 // CreateMany creates a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) CreateMany(ctx context.Context, docs []*client.Document) error {
+func (c *collection) CreateMany(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docs []*client.Document,
+) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -1314,7 +1398,7 @@ func (c *collection) CreateMany(ctx context.Context, docs []*client.Document) er
 	defer c.discardImplicitTxn(ctx, txn)
 
 	for _, doc := range docs {
-		err = c.create(ctx, txn, doc)
+		err = c.create(ctx, identity, txn, doc)
 		if err != nil {
 			return err
 		}
@@ -1338,14 +1422,19 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	return docID, primaryKey, nil
 }
 
-func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
+func (c *collection) create(
+	ctx context.Context,
+	identity immutable.Option[string],
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err
 	}
 
 	// check if doc already exists
-	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -1366,18 +1455,27 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	// write data to DB via MerkleClock/CRDT
-	_, err = c.save(ctx, txn, doc, true)
+	_, err = c.save(ctx, identity, txn, doc, true)
 	if err != nil {
 		return err
 	}
 
-	return c.indexNewDoc(ctx, txn, doc)
+	err = c.indexNewDoc(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	return c.registerDocWithACP(ctx, identity, doc.ID().String())
 }
 
 // Update an existing document with the new values.
 // Any field that needs to be removed or cleared should call doc.Clear(field) before.
 // Any field that is nil/empty that hasn't called Clear will be ignored.
-func (c *collection) Update(ctx context.Context, doc *client.Document) error {
+func (c *collection) Update(
+	ctx context.Context,
+	identity immutable.Option[string],
+	doc *client.Document,
+) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -1385,18 +1483,18 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
-	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return client.ErrDocumentNotFound
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
 		return NewErrDocumentDeleted(primaryKey.DocID)
 	}
 
-	err = c.update(ctx, txn, doc)
+	err = c.update(ctx, identity, txn, doc)
 	if err != nil {
 		return err
 	}
@@ -1409,8 +1507,27 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
-func (c *collection) update(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	_, err := c.save(ctx, txn, doc, false)
+func (c *collection) update(
+	ctx context.Context,
+	identity immutable.Option[string],
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	// Stop the update if the correct permissions aren't there.
+	canUpdate, err := c.checkAccessOfDocWithACP(
+		ctx,
+		identity,
+		acp.WritePermission,
+		doc.ID().String(),
+	)
+	if err != nil {
+		return err
+	}
+	if !canUpdate {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+
+	_, err = c.save(ctx, identity, txn, doc, false)
 	if err != nil {
 		return err
 	}
@@ -1419,7 +1536,11 @@ func (c *collection) update(ctx context.Context, txn datastore.Txn, doc *client.
 
 // Save a document into the db.
 // Either by creating a new document or by updating an existing one
-func (c *collection) Save(ctx context.Context, doc *client.Document) error {
+func (c *collection) Save(
+	ctx context.Context,
+	identity immutable.Option[string],
+	doc *client.Document,
+) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -1428,7 +1549,7 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 
 	// Check if document already exists with primary DS key.
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
-	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -1438,9 +1559,9 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	}
 
 	if exists {
-		err = c.update(ctx, txn, doc)
+		err = c.update(ctx, identity, txn, doc)
 	} else {
-		err = c.create(ctx, txn, doc)
+		err = c.create(ctx, identity, txn, doc)
 	}
 	if err != nil {
 		return err
@@ -1449,8 +1570,12 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
+// save saves the document state. save MUST not be called outside the `c.create`
+// and `c.update` methods as we wrap the acp logic within those methods. Calling
+// save elsewhere could cause the omission of acp checks.
 func (c *collection) save(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	doc *client.Document,
 	isCreate bool,
@@ -1503,7 +1628,15 @@ func (c *collection) save(
 			if isSecondaryRelationID {
 				primaryId := val.Value().(string)
 
-				err = c.patchPrimaryDoc(ctx, txn, c.Name().Value(), relationFieldDescription, primaryKey.DocID, primaryId)
+				err = c.patchPrimaryDoc(
+					ctx,
+					identity,
+					txn,
+					c.Name().Value(),
+					relationFieldDescription,
+					primaryKey.DocID,
+					primaryId,
+				)
 				if err != nil {
 					return cid.Undef, err
 				}
@@ -1513,7 +1646,14 @@ func (c *collection) save(
 				continue
 			}
 
-			err = c.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, doc.ID().String(), fieldDescription, val.Value())
+			err = c.validateOneToOneLinkDoesntAlreadyExist(
+				ctx,
+				identity,
+				txn,
+				doc.ID().String(),
+				fieldDescription,
+				val.Value(),
+			)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -1579,6 +1719,7 @@ func (c *collection) save(
 
 func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	docID string,
 	fieldDescription client.FieldDefinition,
@@ -1625,7 +1766,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		fieldDescription.Name,
 		value,
 	)
-	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, identity, txn, filter)
 	if err != nil {
 		return err
 	}
@@ -1677,7 +1818,11 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 // otherwise will return false, along with an error, if it cannot.
 // If the document doesn't exist, then it will return false, and a ErrDocumentNotFound error.
 // This operation will all state relating to the given DocID. This includes data, block, and head storage.
-func (c *collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *collection) Delete(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+) (bool, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -1685,18 +1830,8 @@ func (c *collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
-	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
-	if err != nil {
-		return false, err
-	}
-	if !exists || isDeleted {
-		return false, client.ErrDocumentNotFound
-	}
-	if isDeleted {
-		return false, NewErrDocumentDeleted(primaryKey.DocID)
-	}
 
-	err = c.applyDelete(ctx, txn, primaryKey)
+	err = c.applyDelete(ctx, identity, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
@@ -1704,7 +1839,11 @@ func (c *collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 }
 
 // Exists checks if a given document exists with supplied DocID.
-func (c *collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *collection) Exists(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+) (bool, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -1712,7 +1851,7 @@ func (c *collection) Exists(ctx context.Context, docID client.DocID) (bool, erro
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
-	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
@@ -1722,9 +1861,22 @@ func (c *collection) Exists(ctx context.Context, docID client.DocID) (bool, erro
 // check if a document exists with the given primary key
 func (c *collection) exists(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
+	canRead, err := c.checkAccessOfDocWithACP(
+		ctx,
+		identity,
+		acp.ReadPermission,
+		primaryKey.DocID,
+	)
+	if err != nil {
+		return false, false, err
+	} else if !canRead {
+		return false, false, nil
+	}
+
 	val, err := txn.Datastore().Get(ctx, primaryKey.ToDS())
 	if err != nil && errors.Is(err, ds.ErrNotFound) {
 		return false, false, nil
@@ -1738,6 +1890,10 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
+// saveCompositeToMerkleCRDT saves the composite to the merkle CRDT.
+// saveCompositeToMerkleCRDT MUST not be called outside the `c.save`
+// and `c.applyDelete` methods as we wrap the acp logic around those methods.
+// Calling it elsewhere could cause the omission of acp checks.
 func (c *collection) saveCompositeToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,

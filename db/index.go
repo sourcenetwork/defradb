@@ -116,18 +116,22 @@ type collectionBaseIndex struct {
 	fieldsDescs        []client.SchemaFieldDescription
 }
 
-func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]*client.FieldValue, error) {
-	result := make([]*client.FieldValue, 0, len(index.fieldsDescs))
+func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]client.NormalValue, error) {
+	result := make([]client.NormalValue, 0, len(index.fieldsDescs))
 	for iter := range index.fieldsDescs {
 		fieldVal, err := doc.TryGetValue(index.fieldsDescs[iter].Name)
 		if err != nil {
 			return nil, err
 		}
 		if fieldVal == nil || fieldVal.Value() == nil {
-			result = append(result, client.NewFieldValue(client.NONE_CRDT, nil))
+			normalNil, err := client.NewNormalNil(index.fieldsDescs[iter].Kind)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, normalNil)
 			continue
 		}
-		result = append(result, fieldVal)
+		result = append(result, fieldVal.NormalValue())
 	}
 	return result, nil
 }
@@ -142,7 +146,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 
 	fields := make([]core.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
-		fields[i].Value = fieldValues[i].Value()
+		fields[i].Value = fieldValues[i]
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
 	return core.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields), nil
@@ -211,7 +215,7 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+	key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	return key, nil
 }
 
@@ -268,7 +272,7 @@ func (index *collectionSimpleIndex) deleteDocIndex(
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *core.IndexDataStoreKey) bool {
 	for i := range key.Fields {
-		if key.Fields[i].Value == nil {
+		if key.Fields[i].Value.IsNil() {
 			return true
 		}
 	}
@@ -334,7 +338,7 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+		key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 		return key, []byte{}, nil
 	} else {
 		return key, []byte(doc.ID().String()), nil

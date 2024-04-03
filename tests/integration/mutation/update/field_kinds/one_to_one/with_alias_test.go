@@ -184,7 +184,7 @@ func TestMutationUpdateOneToOne_InvalidAliasRelationNameToLinkFromSecondarySide_
 					}`,
 					invalidAuthorID,
 				),
-				ExpectedError: "no document for the given ID exists",
+				ExpectedError: "document not found or not authorized to access",
 			},
 		},
 	}

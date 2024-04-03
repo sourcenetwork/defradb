@@ -1,0 +1,30 @@
+{
+  "description": "A Valid Defra Policy Interface (DPI)",
+  "actor": {
+    "name": "actor"
+  },
+  "resources": {
+    "users": {
+      "permissions": {
+        "read": {
+          "expr": "owner + reader"
+        },
+        "write": {
+          "expr": "owner"
+        }
+      },
+      "relations": {
+        "owner": {
+          "types": [
+            "actor"
+          ]
+        },
+        "reader": {
+          "types": [
+            "actor"
+          ]
+        }
+      }
+    }
+  }
+}

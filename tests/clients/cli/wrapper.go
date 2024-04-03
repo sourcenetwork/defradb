@@ -23,6 +23,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/cli"
@@ -169,6 +170,28 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
+}
+
+func (w *Wrapper) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	args := []string{"client", "acp", "policy", "add"}
+	args = append(args, "--identity", creator)
+	args = append(args, policy)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	var addPolicyResult client.AddPolicyResult
+	if err := json.Unmarshal(data, &addPolicyResult); err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	return addPolicyResult, err
 }
 
 func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
@@ -369,9 +392,17 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return indexes, nil
 }
 
-func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.RequestResult {
+func (w *Wrapper) ExecRequest(
+	ctx context.Context,
+	identity immutable.Option[string],
+	query string,
+) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
+
+	if identity.HasValue() {
+		args = append(args, "--identity", identity.Value())
+	}
 
 	result := &client.RequestResult{}
 

@@ -8,17 +8,21 @@ View document fields.
 
 Example:
   defradb client collection get --name User bae-123
+
+Example to get a private document we must use an identity:
+  defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User bae-123
 		
 
 ```
-defradb client collection get <docID> [--show-deleted] [flags]
+defradb client collection get [-i --identity] [--show-deleted] <docID>  [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help           help for get
-      --show-deleted   Show deleted documents
+  -h, --help              help for get
+  -i, --identity string   Identity of the actor
+      --show-deleted      Show deleted documents
 ```
 
 ### Options inherited from parent commands
@@ -26,11 +30,12 @@ defradb client collection get <docID> [--show-deleted] [flags]
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
-      --logformat string              Log format to use. Options are csv, json (default "csv")
-      --loglevel string               Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor                    Disable colored log output
-      --logoutput string              Log output path (default "stderr")
-      --logtrace                      Include stacktrace in error and fatal logs
+      --log-format string             Log format to use. Options are text or json (default "text")
+      --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                    Include source location in logs
+      --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --name string                   Collection name
       --no-p2p                        Disable the peer-to-peer network synchronization system

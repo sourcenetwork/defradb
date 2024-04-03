@@ -17,11 +17,11 @@ import (
 
 type FieldValue struct {
 	t       CType
-	value   any
+	value   NormalValue
 	isDirty bool
 }
 
-func NewFieldValue(t CType, val any) *FieldValue {
+func NewFieldValue(t CType, val NormalValue) *FieldValue {
 	return &FieldValue{
 		t:       t,
 		value:   val,
@@ -30,6 +30,10 @@ func NewFieldValue(t CType, val any) *FieldValue {
 }
 
 func (val FieldValue) Value() any {
+	return val.value.Unwrap()
+}
+
+func (val FieldValue) NormalValue() NormalValue {
 	return val.value
 }
 
@@ -38,7 +42,7 @@ func (val FieldValue) Type() CType {
 }
 
 func (val FieldValue) IsDocument() bool {
-	_, ok := val.value.(*Document)
+	_, ok := val.value.Document()
 	return ok
 }
 
@@ -62,17 +66,16 @@ func (val FieldValue) Bytes() ([]byte, error) {
 	}
 
 	var value any
-	switch tempVal := val.value.(type) {
-	case []immutable.Option[string]:
-		value = convertImmutable(tempVal)
-	case []immutable.Option[int64]:
-		value = convertImmutable(tempVal)
-	case []immutable.Option[float64]:
-		value = convertImmutable(tempVal)
-	case []immutable.Option[bool]:
-		value = convertImmutable(tempVal)
-	default:
-		value = val.value
+	if v, ok := val.value.NillableStringArray(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableIntArray(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableFloatArray(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableBoolArray(); ok {
+		value = convertImmutable(v)
+	} else {
+		value = val.value.Unwrap()
 	}
 
 	return em.Marshal(value)

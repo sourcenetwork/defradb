@@ -80,7 +80,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 		}
 		type Device {
 			model: String
-			owner: User
+			owner: User @primary
 		}`
 
 	docs, err := CreateFromSDL(schema, DocsList{

@@ -18,6 +18,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -48,15 +49,30 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
+
+			if col.Description().Policy.HasValue() {
+				return ErrReplicatorColHasPolicy
+			}
+
 			collections = append(collections, col)
 		}
 
 	default:
-		// default to all collections
-		collections, err = p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
+		// default to all collections (unless a collection contains a policy).
+		// TODO-ACP: default to all collections after resolving https://github.com/sourcenetwork/defradb/issues/2366
+		allCollections, err := p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
+
+		for _, col := range allCollections {
+			// Can not default to all collections if any collection has a policy.
+			// TODO-ACP: remove this check/loop after https://github.com/sourcenetwork/defradb/issues/2366
+			if col.Description().Policy.HasValue() {
+				return ErrReplicatorSomeColsHavePolicy
+			}
+		}
+		collections = allCollections
 	}
 	rep.Schemas = nil
 
@@ -92,7 +108,8 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	// push all collection documents to the replicator peer
 	for _, col := range added {
-		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx)
+		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return NewErrReplicatorDocID(err, col.Name().Value(), rep.Info.ID)
 		}

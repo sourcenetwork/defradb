@@ -6,23 +6,27 @@ Delete documents by docID or filter.
 
 Delete documents by docID or filter and lists the number of documents deleted.
 		
-Example: delete by docID(s)
-  defradb client collection delete --name User --docID bae-123,bae-456
+Example: delete by docID(s):
+  defradb client collection delete  --name User --docID bae-123,bae-456
 
-Example: delete by filter
+Example: delete by docID(s) with identity:
+  defradb client collection delete -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User --docID bae-123,bae-456
+
+Example: delete by filter:
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		
 
 ```
-defradb client collection delete [--filter <filter> --docID <docID>] [flags]
+defradb client collection delete [-i --identity] [--filter <filter> --docID <docID>] [flags]
 ```
 
 ### Options
 
 ```
-      --docID strings   Document ID
-      --filter string   Document filter
-  -h, --help            help for delete
+      --docID strings     Document ID
+      --filter string     Document filter
+  -h, --help              help for delete
+  -i, --identity string   Identity of the actor
 ```
 
 ### Options inherited from parent commands
@@ -30,11 +34,12 @@ defradb client collection delete [--filter <filter> --docID <docID>] [flags]
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
-      --logformat string              Log format to use. Options are csv, json (default "csv")
-      --loglevel string               Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor                    Disable colored log output
-      --logoutput string              Log output path (default "stderr")
-      --logtrace                      Include stacktrace in error and fatal logs
+      --log-format string             Log format to use. Options are text or json (default "text")
+      --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                    Include source location in logs
+      --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --name string                   Collection name
       --no-p2p                        Disable the peer-to-peer network synchronization system

@@ -558,6 +558,14 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T
 						"name":	"Alice"
 					}`,
 			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age": 0
+					}`,
+			},
 			testUtils.Request{
 				Request: `
 					query {
@@ -567,6 +575,109 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T
 					}`,
 				Results: []map[string]any{
 					{"name": "Alice"},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age": 0
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Kate",
+						"age": 33
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {age: {_eq: 0}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{"name": "Bob"},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Kate",
+						"age":	0
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	23
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {age: {_ne: null}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{"name": "Kate"},
+					{"name": "Bob"},
 				},
 			},
 		},

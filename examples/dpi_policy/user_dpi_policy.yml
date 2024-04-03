@@ -1,0 +1,29 @@
+# The below policy contains an example with valid DPI compliant resource that can be linked to a collection
+# object during the schema add command to have access control enabled for documents of that collection.
+#
+# This policy is specified to the Users object example in: `examples/schema/permissioned/users.graphql`
+#
+# The same policy example in json format is in: `examples/dpi_policy/user_dpi_policy.json`
+#
+# Learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
+
+description: A Valid DefraDB Policy Interface (DPI)
+
+actor:
+  name: actor
+
+resources:
+  users:
+    permissions:
+      read:
+        expr: owner + reader
+      write:
+        expr: owner
+
+    relations:
+      owner:
+        types:
+          - actor
+      reader:
+        types:
+          - actor

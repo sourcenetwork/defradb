@@ -167,7 +167,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 					} 
 
 					type Address {
-						user: User
+						user: User @primary
 						city: String @index
 					}`,
 			},
@@ -348,7 +348,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 					} 
 
 					type Address {
-						user: User
+						user: User @primary
 						city: String @index
 					}`,
 			},

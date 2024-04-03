@@ -60,6 +60,47 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with _in filter on float",
+		Request: `query {
+					Users(filter: {HeightM: {_in: [21, 21.2]}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"HeightM": 21.0
+				}`,
+				`{
+					"Name": "Bob",
+					"HeightM": 21.1
+				}`,
+				`{
+					"Name": "Carlo",
+					"HeightM": 21.2
+				}`,
+				`{
+					"Name": "Alice",
+					"HeightM": 21.3
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+			},
+			{
+				"Name": "Carlo",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with special filter (or)",
