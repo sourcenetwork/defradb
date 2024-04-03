@@ -1,0 +1,18 @@
+# The below sdl contains an example `Users` object with an example source hub policy id and resource name.
+# 
+# The policy id must exist in sourcehub (for remote acp) or local acp first, and the resource name
+# must exist on the corresponding policy to the policy id.
+#
+# The resource name does not need to be similar to the collection name.
+#
+# The linked policy id and resource correspond to the policy at: `examples/dpi_policy/user_dpi_policy.yml`
+# 
+# The policy must be a valid DPI, learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
+
+type Users @policy(
+    id: "24ab8cba6d6f0bcfe4d2712c7d95c09dd1b8076ea5a8896476413fd6c891c18c",
+    resource: "users"
+) {
+    name: String
+    age: Int
+}

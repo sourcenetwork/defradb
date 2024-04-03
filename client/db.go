@@ -85,6 +85,18 @@ type DB interface {
 	//
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
+
+	// AddPolicy adds policy to acp, if acp is available.
+	//
+	// If policy was successfully added to acp then a policyID is returned,
+	// otherwise if acp was not available then returns the following error:
+	// [client.ErrPolicyAddFailureNoACP]
+	//
+	// Detects the format of the policy automatically by assuming YAML format if JSON
+	// validation fails.
+	//
+	// Note: A policy can not be added without the creatorID (identity).
+	AddPolicy(ctx context.Context, creatorID string, policy string) (AddPolicyResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.
@@ -226,8 +238,12 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
-	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(context.Context, string) *RequestResult
+	// ExecRequest executes the given GQL request against the [Store], with the given identity.
+	ExecRequest(
+		ctx context.Context,
+		identity immutable.Option[string],
+		request string,
+	) *RequestResult
 }
 
 // GQLResult represents the immediate results of a GQL request.

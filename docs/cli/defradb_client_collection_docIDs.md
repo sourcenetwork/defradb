@@ -6,18 +6,22 @@ List all document IDs (docIDs).
 
 List all document IDs (docIDs).
 		
-Example:
+Example: list all docID(s):
   defradb client collection docIDs --name User
+
+Example: list all docID(s), with an identity:
+  defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User 
 		
 
 ```
-defradb client collection docIDs [flags]
+defradb client collection docIDs [-i --identity] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for docIDs
+  -h, --help              help for docIDs
+  -i, --identity string   Identity of the actor
 ```
 
 ### Options inherited from parent commands
@@ -25,11 +29,12 @@ defradb client collection docIDs [flags]
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
-      --logformat string              Log format to use. Options are csv, json (default "csv")
-      --loglevel string               Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor                    Disable colored log output
-      --logoutput string              Log output path (default "stderr")
-      --logtrace                      Include stacktrace in error and fatal logs
+      --log-format string             Log format to use. Options are text or json (default "text")
+      --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                    Include source location in logs
+      --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --name string                   Collection name
       --no-p2p                        Disable the peer-to-peer network synchronization system

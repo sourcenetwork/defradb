@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
@@ -29,9 +30,12 @@ func TestUpdateWithInvalidFilterType(t *testing.T) {
 				func(c client.Collection) error {
 					ctx := context.Background()
 					// test with an invalid filter type
-					_, err := c.UpdateWithFilter(ctx, t, `{
-						"name": "Eric"
-					}`)
+					_, err := c.UpdateWithFilter(
+						ctx,
+						acpIdentity.NoIdentity,
+						t,
+						`{"name": "Eric"}`,
+					)
 					return err
 				},
 			},
@@ -51,9 +55,12 @@ func TestUpdateWithEmptyFilter(t *testing.T) {
 				func(c client.Collection) error {
 					ctx := context.Background()
 					// test with an empty filter
-					_, err := c.UpdateWithFilter(ctx, "", `{
-						"name": "Eric"
-					}`)
+					_, err := c.UpdateWithFilter(
+						ctx,
+						acpIdentity.NoIdentity,
+						"",
+						`{"name": "Eric"}`,
+					)
 					return err
 				},
 			},
@@ -87,9 +94,12 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `{
-							name: "Eric"
-						}`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							acpIdentity.NoIdentity,
+							filter,
+							`{name: "Eric"}`,
+						)
 						return err
 					},
 				},
@@ -104,7 +114,12 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `"name: Eric"`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							acpIdentity.NoIdentity,
+							filter,
+							`"name: Eric"`,
+						)
 						return err
 					},
 				},
@@ -119,18 +134,23 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `[
-							{
-								"name": "Eric"
-							}, {
-								"name": "Sam"
-							}
-						]`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							acpIdentity.NoIdentity,
+							filter,
+							`[
+								{
+									"name": "Eric"
+								}, {
+									"name": "Sam"
+								}
+							]`,
+						)
 						if err != nil {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.ID(), false)
+						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -155,14 +175,17 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `{
-							"name": "Eric"
-						}`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							acpIdentity.NoIdentity,
+							filter,
+							`{"name": "Eric"}`,
+						)
 						if err != nil {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.ID(), false)
+						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
 						if err != nil {
 							return err
 						}

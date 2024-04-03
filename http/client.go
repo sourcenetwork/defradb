@@ -22,8 +22,9 @@ import (
 
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -341,7 +342,11 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	return indexes, nil
 }
 
-func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestResult {
+func (c *Client) ExecRequest(
+	ctx context.Context,
+	identity immutable.Option[string],
+	query string,
+) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
@@ -356,6 +361,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	c.http.setDefaultHeaders(req)
+	addIdentityToAuthHeaderIfExists(req, identity)
 
 	res, err := c.http.client.Do(req)
 	if err != nil {

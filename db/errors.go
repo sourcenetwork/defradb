@@ -88,14 +88,17 @@ const (
 	errCollectionSourceIDMutated                string = "collection source ID cannot be mutated"
 	errCollectionIndexesCannotBeMutated         string = "collection indexes cannot be mutated"
 	errCollectionFieldsCannotBeMutated          string = "collection fields cannot be mutated"
+	errCollectionPolicyCannotBeMutated          string = "collection policy cannot be mutated"
 	errCollectionRootIDCannotBeMutated          string = "collection root ID cannot be mutated"
 	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
 	errCollectionIDCannotBeZero                 string = "collection ID cannot be zero"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
+	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
 )
 
 var (
 	ErrFailedToGetCollection                    = errors.New(errFailedToGetCollection)
+	ErrCanNotCreateIndexOnCollectionWithPolicy  = errors.New("can not create index on a collection with a policy")
 	ErrSubscriptionsNotAllowed                  = errors.New("server does not accept subscriptions")
 	ErrInvalidFilter                            = errors.New("invalid filter")
 	ErrCollectionAlreadyExists                  = errors.New(errCollectionAlreadyExists)
@@ -121,6 +124,7 @@ var (
 	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeZero                 = errors.New(errCollectionIDCannotBeZero)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
+	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -593,6 +597,13 @@ func NewErrCollectionIndexesCannotBeMutated(colID uint32) error {
 func NewErrCollectionFieldsCannotBeMutated(colID uint32) error {
 	return errors.New(
 		errCollectionFieldsCannotBeMutated,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionPolicyCannotBeMutated(colID uint32) error {
+	return errors.New(
+		errCollectionPolicyCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }

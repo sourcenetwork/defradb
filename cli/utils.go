@@ -50,6 +50,13 @@ var (
 	colContextKey = contextKey("col")
 )
 
+// mustGetContextDB returns the db for the current command context.
+//
+// If a db is not set in the current context this function panics.
+func mustGetContextDB(cmd *cobra.Command) client.DB {
+	return cmd.Context().Value(dbContextKey).(client.DB)
+}
+
 // mustGetContextStore returns the store for the current command context.
 //
 // If a store is not set in the current context this function panics.

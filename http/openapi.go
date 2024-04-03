@@ -40,6 +40,7 @@ var openApiSchemas = map[string]any{
 	"ccip_response":         &CCIPResponse{},
 	"patch_schema_request":  &patchSchemaRequest{},
 	"add_view_request":      &addViewRequest{},
+	"add_policy_request":    &AddPolicyRequest{},
 	"migrate_request":       &migrateRequest{},
 	"set_migration_request": &setMigrationRequest{},
 }
@@ -133,6 +134,10 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			&openapi3.Tag{
 				Name:        "p2p",
 				Description: "Peer-to-peer network operations",
+			},
+			&openapi3.Tag{
+				Name:        "acp",
+				Description: "Access control policy operations",
 			},
 			&openapi3.Tag{
 				Name:        "transaction",

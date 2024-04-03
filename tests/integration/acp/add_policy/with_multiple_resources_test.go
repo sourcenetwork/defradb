@@ -1,0 +1,173 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package test_acp_add_policy
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Test acp, add policy, multiple resources, valid ID",
+
+		Actions: []any{
+			testUtils.AddPolicy{
+				Creator: actor1Signature,
+
+				Policy: `
+                    description: a policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          write:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+                          reader:
+                            types:
+                              - actor
+                      books:
+                        permissions:
+                          write:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+                          reader:
+                            types:
+                              - actor
+                `,
+
+				ExpectedPolicyID: "cf082c11fa812dddaa5093f0ccae66c2b5294efe0a2b50ffdcbc0185adf6adf1",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Test acp, add policy, multiple resources using other's relation, return error",
+
+		Actions: []any{
+			testUtils.AddPolicy{
+				Creator: actor1Signature,
+
+				Policy: `
+                    description: a policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          write:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+                          reader:
+                            types:
+                              - actor
+                      books:
+                        permissions:
+                          write:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+                `,
+
+				ExpectedError: "resource books missing relation reader",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Test acp, add policy, multiple resources second missing required owner, return error",
+
+		Actions: []any{
+			testUtils.AddPolicy{
+				Creator: actor1Signature,
+
+				Policy: `
+                    description: a policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          write:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+                          reader:
+                            types:
+                              - actor
+                      books:
+                        permissions:
+                          write:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          reader:
+                            types:
+                              - actor
+                `,
+
+				ExpectedError: "resource books: resource missing owner relation: invalid policy",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

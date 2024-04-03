@@ -13,6 +13,9 @@ package fetcher
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -54,7 +57,9 @@ func NewIndexFetcher(
 
 func (f *IndexFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -93,7 +98,18 @@ outer:
 	f.indexIter = iter
 
 	if f.docFetcher != nil && len(f.docFields) > 0 {
-		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
+		err = f.docFetcher.Init(
+			ctx,
+			identity,
+			f.txn,
+			acp,
+			f.col,
+			f.docFields,
+			f.docFilter,
+			f.mapping,
+			false,
+			false,
+		)
 	}
 
 	return err

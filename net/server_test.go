@@ -18,9 +18,11 @@ import (
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 	grpcpeer "google.golang.org/grpc/peer"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/errors"
@@ -98,7 +100,11 @@ type mockCollection struct {
 func (mCol *mockCollection) SchemaRoot() string {
 	return "mockColID"
 }
-func (mCol *mockCollection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (mCol *mockCollection) GetAllDocIDs(
+	ctx context.Context,
+	identity immutable.Option[string],
+
+) (<-chan client.DocIDResult, error) {
 	return nil, mockError
 }
 
@@ -134,7 +140,7 @@ func TestNewServerWithAddTopicError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
@@ -180,7 +186,7 @@ func TestNewServerWithEmitterError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.NoError(t, err)
 
 	n.Peer.host = &mockHost{n.Peer.host}

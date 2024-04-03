@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -99,8 +100,11 @@ func (db *db) fetchCollectionIndexDescriptions(
 	colID uint32,
 ) ([]client.IndexDescription, error) {
 	prefix := core.NewCollectionIndexKey(immutable.Some(colID), "")
-	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
-		prefix.ToString(), txn.Systemstore())
+	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
+		ctx,
+		prefix.ToString(),
+		txn.Systemstore(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -179,8 +183,11 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
+	// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365 - ACP <> Indexing, possibly also check
+	// and handle the case of when oldDoc == nil (will be nil if inaccessible document).
 	oldDoc, err := c.get(
 		ctx,
+		acpIdentity.NoIdentity,
 		txn,
 		c.getPrimaryKeyFromDocID(doc.ID()),
 		c.Definition().CollectIndexedFields(),
@@ -253,6 +260,12 @@ func (c *collection) createIndex(
 	txn datastore.Txn,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
+	// Don't allow creating index on a permissioned collection, until following is implemented.
+	// TODO-ACP: ACP <> INDEX https://github.com/sourcenetwork/defradb/issues/2365
+	if c.Description().Policy.HasValue() {
+		return nil, ErrCanNotCreateIndexOnCollectionWithPolicy
+	}
+
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return nil, schema.NewErrIndexWithInvalidName("!")
 	}
@@ -315,7 +328,18 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	df := c.newFetcher()
-	err := df.Init(ctx, txn, c, fields, nil, nil, false, false)
+	err := df.Init(
+		ctx,
+		acpIdentity.NoIdentity, // TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365 - ACP <> Indexing
+		txn,
+		c.db.acp,
+		c,
+		fields,
+		nil,
+		nil,
+		false,
+		false,
+	)
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}

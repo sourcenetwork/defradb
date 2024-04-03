@@ -13,6 +13,8 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -20,7 +22,12 @@ import (
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
-func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+func (c *collection) Get(
+	ctx context.Context,
+	identity immutable.Option[string],
+	docID client.DocID,
+	showDeleted bool,
+) (*client.Document, error) {
 	// create txn
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
@@ -29,23 +36,29 @@ func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	defer c.discardImplicitTxn(ctx, txn)
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	found, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	found, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil {
 		return nil, err
 	}
 	if !found || (isDeleted && !showDeleted) {
-		return nil, client.ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	doc, err := c.get(ctx, txn, primaryKey, nil, showDeleted)
+	doc, err := c.get(ctx, identity, txn, primaryKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
+
+	if doc == nil {
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
+	}
+
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
 func (c *collection) get(
 	ctx context.Context,
+	identity immutable.Option[string],
 	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 	fields []client.FieldDefinition,
@@ -54,7 +67,7 @@ func (c *collection) get(
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
-	err := df.Init(ctx, txn, c, fields, nil, nil, false, showDeleted)
+	err := df.Init(ctx, identity, txn, c.db.acp, c, fields, nil, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

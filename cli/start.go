@@ -50,6 +50,10 @@ func MakeStartCommand() *cobra.Command {
 			dbOpts := []db.Option{
 				db.WithUpdateEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
+				// we can allow starting of db without acp. Currently that can only be done programmatically.
+				// https://github.com/sourcenetwork/defradb/issues/2271
+				db.WithACPInMemory(),
 			}
 
 			netOpts := []net.NodeOpt{
@@ -84,12 +88,17 @@ func MakeStartCommand() *cobra.Command {
 				// Running with memory store mode will always generate a random key.
 				// Adding support for an ephemeral mode and moving the key to the
 				// config would solve both of these issues.
-				rootdir := mustGetContextRootDir(cmd)
-				key, err := loadOrGeneratePrivateKey(filepath.Join(rootdir, "data", "key"))
+				rootDir := mustGetContextRootDir(cmd)
+				key, err := loadOrGeneratePrivateKey(filepath.Join(rootDir, "data", "key"))
 				if err != nil {
 					return err
 				}
 				netOpts = append(netOpts, net.WithPrivateKey(key))
+
+				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
+				// we can allow starting of db without acp. Currently that can only be done programmatically.
+				// https://github.com/sourcenetwork/defradb/issues/2271
+				dbOpts = append(dbOpts, db.WithACP(rootDir))
 			}
 
 			opts := []node.NodeOpt{
