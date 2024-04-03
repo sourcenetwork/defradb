@@ -74,6 +74,7 @@ require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
+	github.com/btcsuite/btcd v0.22.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/bytecodealliance/wasmtime-go/v15 v15.0.0 // indirect
@@ -248,8 +249,7 @@ require (
 	github.com/prometheus/common v0.47.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
-	github.com/quic-go/quic-go v0.40.1 // indirect
+	github.com/quic-go/quic-go v0.42.0 // indirect
 	github.com/quic-go/webtransport-go v0.6.0 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
