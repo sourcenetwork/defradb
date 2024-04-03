@@ -115,7 +115,11 @@ func (c Counter[T]) Value(ctx context.Context) ([]byte, error) {
 	return buf, nil
 }
 
-// Set generates a new delta with the supplied value
+// Set generates a new delta with the supplied value.
+//
+// WARNING: Incrementing an integer and causing it to overflow the int64 max value
+// will cause the value to roll over to the int64 min value. Incremeting a float and
+// causing it to overflow the float64 max value will act like a no-op.
 func (c Counter[T]) Increment(ctx context.Context, value T) (*CounterDelta[T], error) {
 	// To ensure that the dag block is unique, we add a random number to the delta.
 	// This is done only on update (if the doc doesn't already exist) to ensure that the

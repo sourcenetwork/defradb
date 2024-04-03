@@ -30,7 +30,7 @@ func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 4, "Typ": 5} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Int", "Typ": 5} }
 					]
 				`,
 			},
@@ -62,7 +62,7 @@ func TestSchemaUpdates_AddFieldCRDTPCounterWithMismatchKind_Error(t *testing.T) 
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ": 5} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Boolean", "Typ": 5} }
 					]
 				`,
 				ExpectedError: "CRDT type pcounter can't be assigned to field kind Boolean",

@@ -161,12 +161,20 @@ var (
 				Description: "Last Write Wins register",
 			},
 			client.PN_COUNTER.String(): &gql.EnumValueConfig{
-				Value:       client.PN_COUNTER,
-				Description: "Positive-Negative Counter",
+				Value: client.PN_COUNTER,
+				Description: `Positive-Negative Counter.
+
+WARNING: Incrementing an integer and causing it to overflow the int64 max value
+will cause the value to roll over to the int64 min value. Incremeting a float and
+causing it to overflow the float64 max value will act like a no-op.`,
 			},
 			client.P_COUNTER.String(): &gql.EnumValueConfig{
-				Value:       client.P_COUNTER,
-				Description: "Positive Counter",
+				Value: client.P_COUNTER,
+				Description: `Positive Counter.
+
+WARNING: Incrementing an integer and causing it to overflow the int64 max value
+will cause the value to roll over to the int64 min value. Incremeting a float and
+causing it to overflow the float64 max value will act like a no-op.`,
 			},
 		},
 	})

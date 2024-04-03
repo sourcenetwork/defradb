@@ -47,15 +47,15 @@ func NewMerkleCounter[T crdt.Incrementable](
 }
 
 // Save the value of the  Counter to the DAG.
-func (mC *MerkleCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
+func (mc *MerkleCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
-		return nil, 0, NewErrUnexpectedValueType(mC.reg.CType(), &client.FieldValue{}, data)
+		return nil, 0, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
 	}
-	delta, err := mC.reg.Increment(ctx, value.Value().(T))
+	delta, err := mc.reg.Increment(ctx, value.Value().(T))
 	if err != nil {
 		return nil, 0, err
 	}
-	nd, err := mC.clock.AddDAGNode(ctx, delta)
+	nd, err := mc.clock.AddDAGNode(ctx, delta)
 	return nd, delta.GetPriority(), err
 }

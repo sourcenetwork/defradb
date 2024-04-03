@@ -75,8 +75,9 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 	test := testUtils.TestCase{
 		Description: "Positive increments of a PN Counter with Int type causing overflow behaviour",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return an error
-			// when integer type overflows
+			// GQL mutation will return a type error in this case
+			// because we are testing the internal overflow behaviour with
+			// a int64 but the GQL Int type is an int32.
 			testUtils.CollectionNamedMutationType,
 			testUtils.CollectionSaveMutationType,
 		}),
