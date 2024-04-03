@@ -175,25 +175,25 @@ func (db *db) createCollection(
 // validateCollectionDefinitionPolicyDesc validates that the policy definition is valid, beyond syntax.
 //
 // Ensures that the information within the policy definition makes sense,
-// this function might also make relevant remote calls, like call the acp module.
+// this function might also make relevant remote calls using the acp system.
 func (db *db) validateCollectionDefinitionPolicyDesc(
 	ctx context.Context,
 	policyDesc immutable.Option[client.PolicyDescription],
 ) error {
 	if !policyDesc.HasValue() {
-		// No policy validation needed, whether acp module exists or not doesn't matter.
+		// No policy validation needed, whether acp exists or not doesn't matter.
 		return nil
 	}
 
 	// If there is a policy specified, but the database does not have
-	// an acp module return an error, database must have an acp module
+	// acp enabled/available return an error, database must have an acp available
 	// to enable access control (inorder to adhere to the policy specified).
 	if !db.acp.HasValue() {
-		return ErrCanNotHavePolicyWithoutACPModule
+		return ErrCanNotHavePolicyWithoutACP
 	}
 
-	// If we have the policy specified on the collection, and acp module exists,
-	// then using the acp module we need to ensure the policy id specified
+	// If we have the policy specified on the collection, and acp is available/enabled,
+	// then using the acp system we need to ensure the policy id specified
 	// actually exists as a policy, and the resource name exists on that policy
 	// and that the resource is a valid DPI.
 	return db.acp.Value().ValidateResourceExistsOnValidDPI(

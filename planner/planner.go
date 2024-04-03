@@ -87,7 +87,7 @@ type PlanContext struct {
 type Planner struct {
 	txn      datastore.Txn
 	identity immutable.Option[string]
-	acp      immutable.Option[acp.ACPModule]
+	acp      immutable.Option[acp.ACP]
 	db       client.Store
 
 	ctx context.Context
@@ -96,7 +96,7 @@ type Planner struct {
 func New(
 	ctx context.Context,
 	identity immutable.Option[string],
-	acp immutable.Option[acp.ACPModule],
+	acp immutable.Option[acp.ACP],
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {

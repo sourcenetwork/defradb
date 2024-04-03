@@ -21,7 +21,7 @@ import (
 // and it has policyID and resource defined on the collection, then before we accept that schema
 // the validation occurs.
 // Inotherwords, we do not allow a non-DPI compliant policy to be specified on a collection schema, if
-// it is the schema would be rejected. However we register the policy with acp module even if
+// it is the schema would be rejected. However we register the policy with acp even if
 // the policy is not DPI compliant.
 
 func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {

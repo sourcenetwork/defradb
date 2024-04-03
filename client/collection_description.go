@@ -71,9 +71,9 @@ type CollectionDescription struct {
 	// It is possible for a collection to not have a policy, a collection
 	// without a policy has no access control.
 	//
-	// Note: The policy information must be validated using the acp module
-	// right after parsing is done, to avoid storing an invalid policyID
-	// or policy resource that may not even exist on acp module.
+	// Note: The policy information must be validated using acp right after
+	// parsing is done, to avoid storing an invalid policyID or policy resource
+	// that may not even exist on acp.
 	Policy immutable.Option[PolicyDescription]
 }
 

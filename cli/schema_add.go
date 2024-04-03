@@ -26,7 +26,7 @@ func MakeSchemaAddCommand() *cobra.Command {
 		Long: `Add new schema.
 
 Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
-  - ACP module is available (i.e. ACP is not disabled).
+  - ACP is available (i.e. ACP is not disabled).
   - The specified resource adheres to the Document Access Control DPI Rules.
   - Learn more about [ACP & DPI Rules](/acp/README.md)
 

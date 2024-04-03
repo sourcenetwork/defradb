@@ -394,7 +394,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 }
 
 // policyFromAST returns the policy description after parsing but the validation
-// is not done yet on the values that are returned. This is because we need acp module to do that.
+// is not done yet on the values that are returned. This is because we need acp to do that.
 func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 	policyDesc := client.PolicyDescription{}
 	for _, arg := range directive.Arguments {

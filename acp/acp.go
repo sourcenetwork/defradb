@@ -21,25 +21,25 @@ import (
 var (
 	log = corelog.NewLogger("acp")
 
-	// NoACPModule is an empty ACPModule, this is used to disable access control.
-	NoACPModule = immutable.None[ACPModule]()
+	// NoACP is an empty ACP, this is used to disable access control.
+	NoACP = immutable.None[ACP]()
 )
 
-// ACPModule is the interface to all types of access control modules that might exist.
-type ACPModule interface {
-	// Init initializes the acp module, with an absolute path. The provided path indicates where the
+// ACP is the interface to all types of access control that might exist.
+type ACP interface {
+	// Init initializes the acp, with an absolute path. The provided path indicates where the
 	// persistent data will be stored for acp.
 	//
 	// If the path is empty then acp will run in memory.
 	Init(ctx context.Context, path string)
 
-	// Start starts the acp module, using the initialized path. Will recover acp module state
+	// Start starts the acp, using the initialized path. Will recover acp state
 	// from a previous run if under the same path.
 	//
 	// If the path is empty then acp will run in memory.
 	Start(ctx context.Context) error
 
-	// Close closes the resources in use by the acp module.
+	// Close closes the resources in use by acp.
 	Close() error
 
 	// AddPolicy attempts to add the given policy. Detects the format of the policy automatically

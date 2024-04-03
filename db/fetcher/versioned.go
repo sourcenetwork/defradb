@@ -94,7 +94,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	acp immutable.Option[acp.ACPModule]
+	acp immutable.Option[acp.ACP]
 
 	col client.Collection
 	// @todo index  *client.IndexDescription
@@ -106,7 +106,7 @@ func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[string],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACPModule],
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,

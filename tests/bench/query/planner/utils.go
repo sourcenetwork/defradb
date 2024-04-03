@@ -83,7 +83,7 @@ func runMakePlanBench(
 		planner := planner.New(
 			ctx,
 			acpIdentity.NoIdentity,
-			acp.NoACPModule,
+			acp.NoACP,
 			db.WithTxn(txn),
 			txn,
 		)

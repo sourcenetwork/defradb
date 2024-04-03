@@ -24,13 +24,13 @@ import (
 )
 
 var (
-	_ ACPModule = (*ACPLocal)(nil)
+	_ ACP = (*ACPLocal)(nil)
 )
 
-// ACPLocal represents a local acp module implementation that makes no remote calls.
+// ACPLocal represents a local acp implementation that makes no remote calls.
 type ACPLocal struct {
 	pathToStore immutable.Option[string]
-	localModule *embedded.LocalACP
+	localACP    *embedded.LocalACP
 }
 
 func (l *ACPLocal) Init(ctx context.Context, path string) {
@@ -42,11 +42,11 @@ func (l *ACPLocal) Init(ctx context.Context, path string) {
 }
 
 func (l *ACPLocal) Start(ctx context.Context) error {
-	var localACPModule embedded.LocalACP
+	var localACP embedded.LocalACP
 	var err error
 
 	if !l.pathToStore.HasValue() { // Use a non-persistent, i.e. in memory store.
-		localACPModule, err = embedded.NewLocalACP(
+		localACP, err = embedded.NewLocalACP(
 			embedded.WithInMemStore(),
 		)
 
@@ -55,7 +55,7 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 		}
 	} else { // Use peristent storage.
 		acpStorePath := l.pathToStore.Value() + "/" + embedded.DefaultDataDir
-		localACPModule, err = embedded.NewLocalACP(
+		localACP, err = embedded.NewLocalACP(
 			embedded.WithPersistentStorage(acpStorePath),
 		)
 		if err != nil {
@@ -63,12 +63,12 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 		}
 	}
 
-	l.localModule = &localACPModule
+	l.localACP = &localACP
 	return nil
 }
 
 func (l *ACPLocal) Close() error {
-	return l.localModule.Close()
+	return l.localACP.Close()
 }
 
 func (l *ACPLocal) AddPolicy(
@@ -98,8 +98,8 @@ func (l *ACPLocal) AddPolicy(
 		CreationTime: protoTypes.TimestampNow(),
 	}
 
-	createPolicyResponse, err := l.localModule.GetMsgService().CreatePolicy(
-		l.localModule.GetCtx(),
+	createPolicyResponse, err := l.localACP.GetMsgService().CreatePolicy(
+		l.localACP.GetCtx(),
 		&createPolicy,
 	)
 
@@ -131,16 +131,16 @@ func (l *ACPLocal) ValidateResourceExistsOnValidDPI(
 	}
 
 	queryPolicyRequest := types.QueryPolicyRequest{Id: policyID}
-	queryPolicyResponse, err := l.localModule.GetQueryService().Policy(
-		l.localModule.GetCtx(),
+	queryPolicyResponse, err := l.localACP.GetQueryService().Policy(
+		l.localACP.GetCtx(),
 		&queryPolicyRequest,
 	)
 
 	if err != nil {
 		if errors.Is(err, types.ErrPolicyNotFound) {
-			return newErrPolicyDoesNotExistOnACPModule(err, policyID)
+			return newErrPolicyDoesNotExistWithACP(err, policyID)
 		} else {
-			return newErrPolicyValidationFailedOnACPModule(err, policyID)
+			return newErrPolicyValidationFailedWithACP(err, policyID)
 		}
 	}
 
@@ -194,8 +194,8 @@ func (l *ACPLocal) RegisterDocObject(
 		CreationTime: protoTypes.TimestampNow(),
 	}
 
-	registerDocResponse, err := l.localModule.GetMsgService().RegisterObject(
-		l.localModule.GetCtx(),
+	registerDocResponse, err := l.localACP.GetMsgService().RegisterObject(
+		l.localACP.GetCtx(),
 		&registerDoc,
 	)
 
@@ -210,7 +210,7 @@ func (l *ACPLocal) RegisterDocObject(
 	case types.RegistrationResult_Registered:
 		log.InfoContext(
 			ctx,
-			"Document registered with local acp module",
+			"Document registered with local acp",
 			corelog.Any("PolicyID", policyID),
 			corelog.Any("Creator", actorID),
 			corelog.Any("Resource", resourceName),
@@ -221,7 +221,7 @@ func (l *ACPLocal) RegisterDocObject(
 	case types.RegistrationResult_Unarchived:
 		log.InfoContext(
 			ctx,
-			"Document re-registered (unarchived object) with local acp module",
+			"Document re-registered (unarchived object) with local acp",
 			corelog.Any("PolicyID", policyID),
 			corelog.Any("Creator", actorID),
 			corelog.Any("Resource", resourceName),
@@ -244,8 +244,8 @@ func (l *ACPLocal) IsDocRegistered(
 		Object:   types.NewObject(resourceName, docID),
 	}
 
-	queryObjectOwnerResponse, err := l.localModule.GetQueryService().ObjectOwner(
-		l.localModule.GetCtx(),
+	queryObjectOwnerResponse, err := l.localACP.GetQueryService().ObjectOwner(
+		l.localACP.GetCtx(),
 		&queryObjectOwner,
 	)
 	if err != nil {
@@ -278,8 +278,8 @@ func (l *ACPLocal) CheckDocAccess(
 		},
 	}
 
-	checkDocResponse, err := l.localModule.GetQueryService().VerifyAccessRequest(
-		l.localModule.GetCtx(),
+	checkDocResponse, err := l.localACP.GetQueryService().VerifyAccessRequest(
+		l.localACP.GetCtx(),
 		&checkDoc,
 	)
 	if err != nil {

@@ -15,19 +15,19 @@ import (
 )
 
 const (
-	errInitializationOfACPFailed             = "initialization of acp module failed"
-	errStartingACPInEmptyPath                = "starting acp module in an empty path"
-	errFailedToAddPolicyWithACP              = "failed to add policy with acp module"
-	errFailedToRegisterDocWithACP            = "failed to register document with acp module"
-	errFailedToCheckIfDocIsRegisteredWithACP = "failed to check if doc is registered with acp module"
-	errFailedToVerifyDocAccessWithACP        = "failed to verify doc access with acp module"
+	errInitializationOfACPFailed             = "initialization of acp failed"
+	errStartingACPInEmptyPath                = "starting acp in an empty path"
+	errFailedToAddPolicyWithACP              = "failed to add policy with acp"
+	errFailedToRegisterDocWithACP            = "failed to register document with acp"
+	errFailedToCheckIfDocIsRegisteredWithACP = "failed to check if doc is registered with acp"
+	errFailedToVerifyDocAccessWithACP        = "failed to verify doc access with acp"
 
-	errObjectDidNotRegister = "no-op while registering object (already exists or error) with acp module"
+	errObjectDidNotRegister = "no-op while registering object (already exists or error) with acp"
 	errNoPolicyArgs         = "missing policy arguments, must have both id and resource"
 
-	errPolicyIDMustNotBeEmpty            = "policyID must not be empty"
-	errPolicyDoesNotExistOnACPModule     = "policyID specified does not exist on acp module"
-	errPolicyValidationFailedOnACPModule = "policyID validation through acp module failed"
+	errPolicyIDMustNotBeEmpty        = "policyID must not be empty"
+	errPolicyDoesNotExistWithACP     = "policyID specified does not exist with acp"
+	errPolicyValidationFailedWithACP = "policyID validation through acp failed"
 
 	errResourceNameMustNotBeEmpty          = "resource name must not be empty"
 	errResourceDoesNotExistOnTargetPolicy  = "resource does not exist on the specified policy"
@@ -43,7 +43,7 @@ var (
 	ErrFailedToRegisterDocWithACP            = errors.New(errFailedToRegisterDocWithACP)
 	ErrFailedToCheckIfDocIsRegisteredWithACP = errors.New(errFailedToCheckIfDocIsRegisteredWithACP)
 	ErrFailedToVerifyDocAccessWithACP        = errors.New(errFailedToVerifyDocAccessWithACP)
-	ErrPolicyDoesNotExistOnACPModule         = errors.New(errPolicyDoesNotExistOnACPModule)
+	ErrPolicyDoesNotExistWithACP             = errors.New(errPolicyDoesNotExistWithACP)
 
 	ErrResourceDoesNotExistOnTargetPolicy = errors.New(errResourceDoesNotExistOnTargetPolicy)
 
@@ -57,33 +57,33 @@ var (
 
 func NewErrInitializationOfACPFailed(
 	inner error,
-	moduleType string,
+	Type string,
 	path string,
 ) error {
 	return errors.Wrap(
 		errInitializationOfACPFailed,
 		inner,
-		errors.NewKV("ModuleType", moduleType),
+		errors.NewKV("Type", Type),
 		errors.NewKV("Path", path),
 	)
 }
 
 func NewErrFailedToAddPolicyWithACP(
 	inner error,
-	moduleType string,
+	Type string,
 	creatorID string,
 ) error {
 	return errors.Wrap(
 		errFailedToAddPolicyWithACP,
 		inner,
-		errors.NewKV("ModuleType", moduleType),
+		errors.NewKV("Type", Type),
 		errors.NewKV("CreatorID", creatorID),
 	)
 }
 
 func NewErrFailedToRegisterDocWithACP(
 	inner error,
-	moduleType string,
+	Type string,
 	policyID string,
 	creatorID string,
 	resourceName string,
@@ -92,7 +92,7 @@ func NewErrFailedToRegisterDocWithACP(
 	return errors.Wrap(
 		errFailedToRegisterDocWithACP,
 		inner,
-		errors.NewKV("ModuleType", moduleType),
+		errors.NewKV("Type", Type),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("CreatorID", creatorID),
 		errors.NewKV("ResourceName", resourceName),
@@ -102,7 +102,7 @@ func NewErrFailedToRegisterDocWithACP(
 
 func NewErrFailedToCheckIfDocIsRegisteredWithACP(
 	inner error,
-	moduleType string,
+	Type string,
 	policyID string,
 	resourceName string,
 	docID string,
@@ -110,7 +110,7 @@ func NewErrFailedToCheckIfDocIsRegisteredWithACP(
 	return errors.Wrap(
 		errFailedToCheckIfDocIsRegisteredWithACP,
 		inner,
-		errors.NewKV("ModuleType", moduleType),
+		errors.NewKV("Type", Type),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
@@ -119,7 +119,7 @@ func NewErrFailedToCheckIfDocIsRegisteredWithACP(
 
 func NewErrFailedToVerifyDocAccessWithACP(
 	inner error,
-	moduleType string,
+	Type string,
 	policyID string,
 	actorID string,
 	resourceName string,
@@ -128,7 +128,7 @@ func NewErrFailedToVerifyDocAccessWithACP(
 	return errors.Wrap(
 		errFailedToVerifyDocAccessWithACP,
 		inner,
-		errors.NewKV("ModuleType", moduleType),
+		errors.NewKV("Type", Type),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ActorID", actorID),
 		errors.NewKV("ResourceName", resourceName),
@@ -136,23 +136,23 @@ func NewErrFailedToVerifyDocAccessWithACP(
 	)
 }
 
-func newErrPolicyDoesNotExistOnACPModule(
+func newErrPolicyDoesNotExistWithACP(
 	inner error,
 	policyID string,
 ) error {
 	return errors.Wrap(
-		errPolicyDoesNotExistOnACPModule,
+		errPolicyDoesNotExistWithACP,
 		inner,
 		errors.NewKV("PolicyID", policyID),
 	)
 }
 
-func newErrPolicyValidationFailedOnACPModule(
+func newErrPolicyValidationFailedWithACP(
 	inner error,
 	policyID string,
 ) error {
 	return errors.Wrap(
-		errPolicyValidationFailedOnACPModule,
+		errPolicyValidationFailedWithACP,
 		inner,
 		errors.NewKV("PolicyID", policyID),
 	)

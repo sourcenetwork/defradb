@@ -62,7 +62,7 @@ type Fetcher interface {
 		ctx context.Context,
 		identity immutable.Option[string],
 		txn datastore.Txn,
-		acp immutable.Option[acp.ACPModule],
+		acp immutable.Option[acp.ACP],
 		col client.Collection,
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,
@@ -88,7 +88,7 @@ var (
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
 	identity              immutable.Option[string]
-	acp                   immutable.Option[acp.ACPModule]
+	acp                   immutable.Option[acp.ACP]
 	passedPermissionCheck bool // have valid permission to access
 
 	col         client.Collection
@@ -148,7 +148,7 @@ func (df *DocumentFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[string],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACPModule],
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -176,7 +176,7 @@ func (df *DocumentFetcher) Init(
 
 func (df *DocumentFetcher) init(
 	identity immutable.Option[string],
-	acp immutable.Option[acp.ACPModule],
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -624,7 +624,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 		// Check if we have read access, for document on this collection, with the given identity.
 		if !df.passedPermissionCheck {
 			if !df.acp.HasValue() {
-				// If no acp module, then we have unrestricted access.
+				// If no acp is available, then we have unrestricted access.
 				df.passedPermissionCheck = true
 			} else {
 				hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(

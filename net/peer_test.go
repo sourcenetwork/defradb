@@ -117,7 +117,7 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents(), db.WithACPModuleInMemory())
+	db, err := db.NewDB(ctx, store, db.WithUpdateEvents(), db.WithACPInMemory())
 	require.NoError(t, err)
 
 	n, err := NewNode(

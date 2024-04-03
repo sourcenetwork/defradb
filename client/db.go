@@ -86,11 +86,11 @@ type DB interface {
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// AddPolicy adds policy to acp module, if the acp module exists.
+	// AddPolicy adds policy to acp, if acp is available.
 	//
-	// If policy was successfully added to the acp module then a policyID is returned,
-	// otherwise if acp module was not found then returns the following error:
-	// [client.ErrPolicyAddFailureACPModuleNotFound]
+	// If policy was successfully added to acp then a policyID is returned,
+	// otherwise if acp was not available then returns the following error:
+	// [client.ErrPolicyAddFailureNoACP]
 	//
 	// Detects the format of the policy automatically by assuming YAML format if JSON
 	// validation fails.

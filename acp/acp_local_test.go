@@ -58,13 +58,13 @@ func Test_LocalACP_InMemory_StartAndClose_NoError(t *testing.T) {
 }
 
 func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
-	acpModulePath := t.TempDir()
-	require.NotEqual(t, "", acpModulePath)
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
 	var localACP ACPLocal
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
 	require.Nil(t, err)
 
@@ -119,13 +119,13 @@ func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
 }
 
 func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
-	acpModulePath := t.TempDir()
-	require.NotEqual(t, "", acpModulePath)
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
 	var localACP ACPLocal
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -144,9 +144,9 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 
-	// The above policy should remain persisted on restarting ACP module.
+	// The above policy should remain persisted on restarting ACP.
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart = localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -204,20 +204,20 @@ func Test_LocalACP_InMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *test
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, ErrPolicyDoesNotExistOnACPModule)
+	require.ErrorIs(t, errValidateResourceExists, ErrPolicyDoesNotExistWithACP)
 
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 }
 
 func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *testing.T) {
-	acpModulePath := t.TempDir()
-	require.NotEqual(t, "", acpModulePath)
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
 	var localACP ACPLocal
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -244,7 +244,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart = localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -270,7 +270,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, ErrPolicyDoesNotExistOnACPModule)
+	require.ErrorIs(t, errValidateResourceExists, ErrPolicyDoesNotExistWithACP)
 
 	errClose = localACP.Close()
 	require.Nil(t, errClose)
@@ -354,13 +354,13 @@ func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOt
 }
 
 func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOtherwise(t *testing.T) {
-	acpModulePath := t.TempDir()
-	require.NotEqual(t, "", acpModulePath)
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
 	var localACP ACPLocal
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -433,7 +433,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart = localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -536,13 +536,13 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 }
 
 func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherwise(t *testing.T) {
-	acpModulePath := t.TempDir()
-	require.NotEqual(t, "", acpModulePath)
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
 	var localACP ACPLocal
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
 	require.Nil(t, errStart)
 
@@ -621,7 +621,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 
-	localACP.Init(ctx, acpModulePath)
+	localACP.Init(ctx, acpPath)
 	errStart = localACP.Start(ctx)
 	require.Nil(t, errStart)
 

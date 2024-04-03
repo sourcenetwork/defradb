@@ -76,7 +76,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 	if err != nil {
 		return nil, err
 	}
-	dbopts = append(dbopts, db.WithACPModuleInMemory())
+	dbopts = append(dbopts, db.WithACPInMemory())
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 }
 
 func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	dbopts = append(dbopts, db.WithACPModuleInMemory())
+	dbopts = append(dbopts, db.WithACPInMemory())
 	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 		return nil, "", err
 	}
 
-	dbopts = append(dbopts, db.WithACPModule(dbPath))
+	dbopts = append(dbopts, db.WithACP(dbPath))
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return nil, "", err

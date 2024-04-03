@@ -93,7 +93,7 @@ const (
 	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
 	errCollectionIDCannotBeZero                 string = "collection ID cannot be zero"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
-	errCanNotHavePolicyWithoutACPModule         string = "can not specify policy on collection, without an acp module"
+	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
 )
 
 var (
@@ -124,7 +124,7 @@ var (
 	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeZero                 = errors.New(errCollectionIDCannotBeZero)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
-	ErrCanNotHavePolicyWithoutACPModule         = errors.New(errCanNotHavePolicyWithoutACPModule)
+	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

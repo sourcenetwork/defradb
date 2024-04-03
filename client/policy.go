@@ -11,12 +11,12 @@
 package client
 
 // PolicyDescription describes a policy which is made up of a valid policyID that is
-// registered with acp module and has a valid DPI compliant resource name that also
+// registered with acp and has a valid DPI compliant resource name that also
 // exists on that policy, the description is already validated.
 type PolicyDescription struct {
 	// ID is the local policyID when using local acp, and global policyID when
 	// using remote acp with sourcehub. This identifier is externally managed
-	// by the acp module.
+	// by the acp system.
 	ID string
 
 	// ResourceName is the name of the corresponding resource within the policy.
@@ -25,7 +25,7 @@ type PolicyDescription struct {
 
 // AddPolicyResult wraps the result of successfully adding/registering a Policy.
 type AddPolicyResult struct {
-	// PolicyID is the unique identifier returned by the acp module,
+	// PolicyID is the unique identifier returned by the acp system,
 	// upon successful creation of a policy.
 	PolicyID string
 }

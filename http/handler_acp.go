@@ -70,7 +70,7 @@ func (h *acpHandler) bindRoutes(router *Router) {
 
 	acpAddPolicy := openapi3.NewOperation()
 	acpAddPolicy.OperationID = "add policy"
-	acpAddPolicy.Description = "Add a policy using acp module"
+	acpAddPolicy.Description = "Add a policy using acp system"
 	acpAddPolicy.Tags = []string{"acp_policy"}
 	acpAddPolicy.Responses = openapi3.NewResponses()
 	acpAddPolicy.Responses.Set("200", successResponse)

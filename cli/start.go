@@ -53,7 +53,7 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				db.WithACPModuleInMemory(),
+				db.WithACPInMemory(),
 			}
 
 			netOpts := []net.NodeOpt{
@@ -98,7 +98,7 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				dbOpts = append(dbOpts, db.WithACPModule(rootDir))
+				dbOpts = append(dbOpts, db.WithACP(rootDir))
 			}
 
 			opts := []node.NodeOpt{

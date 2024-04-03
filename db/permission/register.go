@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// RegisterDocOnCollectionWithACP handles the registration of the document with acp module.
+// RegisterDocOnCollectionWithACP handles the registration of the document with acp.
 //
 // Since acp will always exist when this is called we have these components to worry about:
 // (1) the request is permissioned (has an identity signature),
@@ -27,17 +27,17 @@ import (
 //
 // The document is only registered if all (1) (2) are true.
 //
-// Otherwise, nothing is registered on the acp module.
+// Otherwise, nothing is registered with acp.
 func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
 	identity immutable.Option[string],
-	acpModule acp.ACPModule,
+	acpSystem acp.ACP,
 	collection client.Collection,
 	docID string,
 ) error {
 	// An identity exists and the collection has a policy.
 	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && identity.HasValue() {
-		return acpModule.RegisterDocObject(
+		return acpSystem.RegisterDocObject(
 			ctx,
 			identity.Value(),
 			policyID,

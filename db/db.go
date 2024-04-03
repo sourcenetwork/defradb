@@ -74,24 +74,24 @@ type db struct {
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
-	// ACP module
-	acp immutable.Option[acp.ACPModule]
+	// Contains ACP if it exists
+	acp immutable.Option[acp.ACP]
 }
 
 // Functional option type.
 type Option func(*db)
 
-// WithACPModule enables access control. If path does not have a value then acp module runs in-memory.
-func WithACPModule(path string) Option {
+// WithACP enables access control. If path is empty then acp runs in-memory.
+func WithACP(path string) Option {
 	return func(db *db) {
-		var acpModule acp.ACPLocal
-		acpModule.Init(context.Background(), path)
-		db.acp = immutable.Some[acp.ACPModule](&acpModule)
+		var acpLocal acp.ACPLocal
+		acpLocal.Init(context.Background(), path)
+		db.acp = immutable.Some[acp.ACP](&acpLocal)
 	}
 }
 
-// WithACPModuleInMemory enables access control in-memory.
-func WithACPModuleInMemory() Option { return WithACPModule("") }
+// WithACPInMemory enables access control in-memory.
+func WithACPInMemory() Option { return WithACP("") }
 
 // WithUpdateEvents enables the update events channel.
 func WithUpdateEvents() Option {
@@ -142,7 +142,7 @@ func newDB(
 	db := &db{
 		rootstore:  rootstore,
 		multistore: multistore,
-		acp:        acp.NoACPModule,
+		acp:        acp.NoACP,
 		parser:     parser,
 		options:    options,
 	}
@@ -213,7 +213,7 @@ func (db *db) AddPolicy(
 	policy string,
 ) (client.AddPolicyResult, error) {
 	if !db.acp.HasValue() {
-		return client.AddPolicyResult{}, client.ErrPolicyAddFailureACPModuleNotFound
+		return client.AddPolicyResult{}, client.ErrPolicyAddFailureNoACP
 	}
 
 	policyID, err := db.acp.Value().AddPolicy(
@@ -241,7 +241,7 @@ func (db *db) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	// Start acp module if enabled, this will recover previous state if there is any.
+	// Start acp if enabled, this will recover previous state if there is any.
 	if db.acp.HasValue() {
 		// db is responsible to call db.acp.Close() to free acp resources while closing.
 		if err = db.acp.Value().Start(ctx); err != nil {
@@ -321,7 +321,7 @@ func (db *db) Close() {
 
 	if db.acp.HasValue() {
 		if err := db.acp.Value().Close(); err != nil {
-			log.ErrorE("Failure closing acp module", err)
+			log.ErrorE("Failure closing acp", err)
 		}
 	}
 

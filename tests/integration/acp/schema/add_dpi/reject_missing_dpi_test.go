@@ -39,7 +39,7 @@ func TestACP_AddDPISchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 					nonExistingPolicyID,
 				),
 
-				ExpectedError: "policyID specified does not exist on acp module",
+				ExpectedError: "policyID specified does not exist with acp",
 			},
 
 			testUtils.IntrospectionRequest{
@@ -120,7 +120,7 @@ func TestACP_AddDPISchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaR
 					incorrectPolicyID,
 				),
 
-				ExpectedError: "policyID specified does not exist on acp module",
+				ExpectedError: "policyID specified does not exist with acp",
 			},
 
 			testUtils.IntrospectionRequest{

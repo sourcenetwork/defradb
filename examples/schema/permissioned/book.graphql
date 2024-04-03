@@ -1,6 +1,6 @@
 # The below sdl contains an example `Book` object with an example source hub policy id and resource name.
 # 
-# The policy id must exist in sourcehub (for remote acp) or local acp module first, the resource name
+# The policy id must exist in sourcehub (for remote acp) or local acp first, and the resource name
 # must exist on the corresponding policy to the policy id.
 #
 # Note: The resource name does not need to be similar to the collection name.

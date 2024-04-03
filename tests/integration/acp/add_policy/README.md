@@ -3,7 +3,7 @@
 ### These are NOT DefraDB Policy Interface (DPI) Tests
 There are certain requirements for a DPI. A resource must be a valid DPI to link to a collection.
 However it's important to note that DefraDB does allow adding policies that might not have DPI
-compliant resources. But as long as sourcehub (acp module) deems them to be valid they are allowed
+compliant resources. But as long as sourcehub (acp system) deems them to be valid they are allowed
 to be added. There are various reasons for this, mostly because DefraDB is a tool that can be used
 to upload policies to sourcehub that might not be only for use with collections / schema. Nonetheless
 we still need a way to validate that the resource specified on the schema that is being added is DPI

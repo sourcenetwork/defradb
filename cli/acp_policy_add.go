@@ -36,8 +36,8 @@ func MakeACPPolicyAddCommand() *cobra.Command {
 
 Notes:
   - Can not add a policy without specifying an identity.
-  - ACP module must be available (i.e. ACP can not be disabled).
-  - A non-DPI policy will be accepted (will be registered with acp module).
+  - ACP must be available (i.e. ACP can not be disabled).
+  - A non-DPI policy will be accepted (will be registered with acp system).
   - But only a valid DPI policyID & resource can be specified on a schema.
   - DPI validation happens when attempting to add a schema with '@policy'.
   - Learn more about [ACP & DPI Rules](/acp/README.md)

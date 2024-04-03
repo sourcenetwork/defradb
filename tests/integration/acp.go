@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// AddPolicy will attempt to add the given policy using defraDB's ACP module.
+// AddPolicy will attempt to add the given policy using DefraDB's ACP system.
 type AddPolicy struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
@@ -28,7 +28,7 @@ type AddPolicy struct {
 	// The policy creator, i.e. actor creating the policy.
 	Creator string
 
-	// The expected policyID generated based on the Policy loaded in to acp module.
+	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
 
 	// Any error expected from the action. Optional.
@@ -38,7 +38,7 @@ type AddPolicy struct {
 	ExpectedError string
 }
 
-// addPolicyACP will attempt to add the given policy using defraDB's ACP module.
+// addPolicyACP will attempt to add the given policy using DefraDB's ACP system.
 func addPolicyACP(
 	s *state,
 	action AddPolicy,
