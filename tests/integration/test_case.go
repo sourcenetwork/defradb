@@ -593,3 +593,35 @@ type BackupImport struct {
 	// contains this string.
 	ExpectedError string
 }
+
+// IsNetworkAction returns true if the given action involves the network subsystem.
+func IsNetworkAction(act any) bool {
+	switch act.(type) {
+	case ConfigureNode:
+		return true
+
+	case ConnectPeers:
+		return true
+
+	case ConfigureReplicator:
+		return true
+
+	case DeleteReplicator:
+		return true
+
+	case SubscribeToCollection:
+		return true
+
+	case UnsubscribeToCollection:
+		return true
+
+	case GetAllP2PCollections:
+		return true
+
+	case WaitForSync:
+		return true
+
+	default:
+		return false
+	}
+}
