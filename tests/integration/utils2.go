@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -40,7 +41,10 @@ import (
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
 
-const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
+const (
+	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
+	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
+)
 
 // The MutationType that tests will run using.
 //
@@ -72,6 +76,8 @@ const (
 var (
 	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
+	// skipNetworkTests will skip any tests that involve network actions
+	skipNetworkTests = false
 )
 
 const (
@@ -94,6 +100,9 @@ func init() {
 		// faster. We assume this is desirable when not explicitly testing any particular
 		// mutation type.
 		mutationType = CollectionSaveMutationType
+	}
+	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
+		skipNetworkTests, _ = strconv.ParseBool(value)
 	}
 }
 
@@ -131,6 +140,7 @@ func ExecuteTestCase(
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
+	skipIfNetworkTest(t, testCase.Actions)
 
 	var clients []ClientType
 	if httpClient {
@@ -182,6 +192,7 @@ func executeTestCase(
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", mutationType),
 		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("skipNetworkTests", skipNetworkTests),
 		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
 		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
 		corelog.String("changeDetector.SourceBranch", changeDetector.SourceBranch),
@@ -1998,6 +2009,21 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 		if !isTypeSupported {
 			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
 		}
+	}
+}
+
+// skipIfNetworkTest skips the current test if the given actions
+// contain network actions and skipNetworkTests is true.
+func skipIfNetworkTest(t *testing.T, actions []any) {
+	hasNetworkAction := false
+	for _, act := range actions {
+		switch act.(type) {
+		case ConfigureNode:
+			hasNetworkAction = true
+		}
+	}
+	if skipNetworkTests && hasNetworkAction {
+		t.Skip("test involves network actions")
 	}
 }
 
