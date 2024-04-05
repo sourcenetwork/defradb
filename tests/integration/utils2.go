@@ -2017,7 +2017,10 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 func skipIfNetworkTest(t *testing.T, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
-		hasNetworkAction = hasNetworkAction || IsNetworkAction(act)
+		switch act.(type) {
+		case ConfigureNode:
+			hasNetworkAction = true
+		}
 	}
 	if skipNetworkTests && hasNetworkAction {
 		t.Skip("test involves network actions")
