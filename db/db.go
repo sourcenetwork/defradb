@@ -44,11 +44,6 @@ var (
 	_ client.Collection = (*collection)(nil)
 )
 
-const (
-	defaultMaxTxnRetries  = 5
-	updateEventBufferSize = 100
-)
-
 // DB is the main interface for interacting with the
 // DefraDB storage system.
 type db struct {
@@ -59,63 +54,22 @@ type db struct {
 
 	events events.Events
 
-	parser       core.Parser
+	parser core.Parser
+
+	lensOptions  []lens.Option
 	lensRegistry client.LensRegistry
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
-	// The maximum number of cached migrations instances to preserve per schema version.
-	lensPoolSize immutable.Option[int]
-
 	// The options used to init the database
-	options any
+	options []Option
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
 	// Contains ACP if it exists
 	acp immutable.Option[acp.ACP]
-}
-
-// Functional option type.
-type Option func(*db)
-
-// WithACP enables access control. If path is empty then acp runs in-memory.
-func WithACP(path string) Option {
-	return func(db *db) {
-		var acpLocal acp.ACPLocal
-		acpLocal.Init(context.Background(), path)
-		db.acp = immutable.Some[acp.ACP](&acpLocal)
-	}
-}
-
-// WithACPInMemory enables access control in-memory.
-func WithACPInMemory() Option { return WithACP("") }
-
-// WithUpdateEvents enables the update events channel.
-func WithUpdateEvents() Option {
-	return func(db *db) {
-		db.events = events.Events{
-			Updates: immutable.Some(events.New[events.Update](0, updateEventBufferSize)),
-		}
-	}
-}
-
-// WithMaxRetries sets the maximum number of retries per transaction.
-func WithMaxRetries(num int) Option {
-	return func(db *db) {
-		db.maxTxnRetries = immutable.Some(num)
-	}
-}
-
-// WithLensPoolSize sets the maximum number of cached migrations instances to preserve per schema version.
-//
-// Will default to `5` if not set.
-func WithLensPoolSize(num int) Option {
-	return func(db *db) {
-		db.lensPoolSize = immutable.Some(num)
-	}
 }
 
 // NewDB creates a new instance of the DB using the given options.
@@ -149,15 +103,12 @@ func newDB(
 
 	// apply options
 	for _, opt := range options {
-		if opt == nil {
-			continue
-		}
 		opt(db)
 	}
 
-	// lensPoolSize may be set by `options`, and because they are funcs on db
+	// lens options may be set by `WithLensOptions`, and because they are funcs on db
 	// we have to mutate `db` here to set the registry.
-	db.lensRegistry = lens.NewRegistry(db.lensPoolSize, db)
+	db.lensRegistry = lens.NewRegistry(db, db.lensOptions...)
 
 	err = db.initialize(ctx)
 	if err != nil {

@@ -23,6 +23,7 @@ import (
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/lens"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
@@ -133,7 +134,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 func setupDatabase(s *state) (impl client.DB, path string, err error) {
 	dbopts := []db.Option{
 		db.WithUpdateEvents(),
-		db.WithLensPoolSize(lensPoolSize),
+		db.WithLensOptions(lens.WithPoolSize(lensPoolSize)),
 	}
 
 	switch s.dbt {

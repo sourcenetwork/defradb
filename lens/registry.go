@@ -18,7 +18,6 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
-	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -84,24 +83,23 @@ const DefaultPoolSize int = 5
 // NewRegistry instantiates a new registery.
 //
 // It will be of size 5 (per schema version) if a size is not provided.
-func NewRegistry(lensPoolSize immutable.Option[int], db TxnSource) client.LensRegistry {
-	var size int
-	if lensPoolSize.HasValue() {
-		size = lensPoolSize.Value()
-	} else {
-		size = DefaultPoolSize
+func NewRegistry(db TxnSource, opts ...Option) client.LensRegistry {
+	registry := &lensRegistry{
+		poolSize:                    DefaultPoolSize,
+		runtime:                     wasmtime.New(),
+		modulesByPath:               map[string]module.Module{},
+		lensPoolsByCollectionID:     map[uint32]*lensPool{},
+		reversedPoolsByCollectionID: map[uint32]*lensPool{},
+		txnCtxs:                     map[uint64]*txnContext{},
+	}
+
+	for _, opt := range opts {
+		opt(registry)
 	}
 
 	return &implicitTxnLensRegistry{
-		db: db,
-		registry: &lensRegistry{
-			poolSize:                    size,
-			runtime:                     wasmtime.New(),
-			modulesByPath:               map[string]module.Module{},
-			lensPoolsByCollectionID:     map[uint32]*lensPool{},
-			reversedPoolsByCollectionID: map[uint32]*lensPool{},
-			txnCtxs:                     map[uint64]*txnContext{},
-		},
+		db:       db,
+		registry: registry,
 	}
 }
 
