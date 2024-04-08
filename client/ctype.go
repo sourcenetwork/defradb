@@ -23,12 +23,13 @@ const (
 	OBJECT
 	COMPOSITE
 	PN_COUNTER
+	P_COUNTER
 )
 
 // IsSupportedFieldCType returns true if the type is supported as a document field type.
 func (t CType) IsSupportedFieldCType() bool {
 	switch t {
-	case NONE_CRDT, LWW_REGISTER, PN_COUNTER:
+	case NONE_CRDT, LWW_REGISTER, PN_COUNTER, P_COUNTER:
 		return true
 	default:
 		return false
@@ -38,7 +39,7 @@ func (t CType) IsSupportedFieldCType() bool {
 // IsCompatibleWith returns true if the CRDT is compatible with the field kind
 func (t CType) IsCompatibleWith(kind FieldKind) bool {
 	switch t {
-	case PN_COUNTER:
+	case PN_COUNTER, P_COUNTER:
 		if kind == FieldKind_NILLABLE_INT || kind == FieldKind_NILLABLE_FLOAT {
 			return true
 		}
@@ -61,6 +62,8 @@ func (t CType) String() string {
 		return "composite"
 	case PN_COUNTER:
 		return "pncounter"
+	case P_COUNTER:
+		return "pcounter"
 	default:
 		return "unknown"
 	}

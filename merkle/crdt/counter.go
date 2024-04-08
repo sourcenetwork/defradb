@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -21,40 +21,41 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
-// MerklePNCounter is a MerkleCRDT implementation of the PNCounter using MerkleClocks.
-type MerklePNCounter[T crdt.Incrementable] struct {
+// MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.
+type MerkleCounter[T crdt.Incrementable] struct {
 	*baseMerkleCRDT
 
-	reg crdt.PNCounter[T]
+	reg crdt.Counter[T]
 }
 
-// NewMerklePNCounter creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a PNCounter CRDT.
-func NewMerklePNCounter[T crdt.Incrementable](
+// NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
+// backed by a Counter CRDT.
+func NewMerkleCounter[T crdt.Incrementable](
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
-) *MerklePNCounter[T] {
-	register := crdt.NewPNCounter[T](store.Datastore(), schemaVersionKey, key, fieldName)
+	allowDecrement bool,
+) *MerkleCounter[T] {
+	register := crdt.NewCounter[T](store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement)
 	clk := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), register)
 	base := &baseMerkleCRDT{clock: clk, crdt: register}
-	return &MerklePNCounter[T]{
+	return &MerkleCounter[T]{
 		baseMerkleCRDT: base,
 		reg:            register,
 	}
 }
 
-// Save the value of the PN Counter to the DAG.
-func (mPNC *MerklePNCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
+// Save the value of the  Counter to the DAG.
+func (mc *MerkleCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
-		return nil, 0, NewErrUnexpectedValueType(client.PN_COUNTER, &client.FieldValue{}, data)
+		return nil, 0, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
 	}
-	delta, err := mPNC.reg.Increment(ctx, value.Value().(T))
+	delta, err := mc.reg.Increment(ctx, value.Value().(T))
 	if err != nil {
 		return nil, 0, err
 	}
-	nd, err := mPNC.clock.AddDAGNode(ctx, delta)
+	nd, err := mc.clock.AddDAGNode(ctx, delta)
 	return nd, delta.GetPriority(), err
 }

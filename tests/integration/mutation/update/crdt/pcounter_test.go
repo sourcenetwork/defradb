@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -20,15 +20,60 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
+func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a PN Counter with Int type",
+		Description: "Positive increments of a P Counter with Int type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 0
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": -10
+				}`,
+				ExpectedError: "value cannot be negative",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": int64(0),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a P Counter with Int type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: "pcounter")
 					}
 				`,
 			},
@@ -70,10 +115,10 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents what happens when an overflow occurs in a PN Counter with Int type.
-func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
+// This test documents what happens when an overflow occurs in a P Counter with Int type.
+func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a PN Counter with Int type causing overflow behaviour",
+		Description: "Positive increments of a P Counter with Int type causing overflow behaviour",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a type error in this case
 			// because we are testing the internal overflow behaviour with
@@ -86,7 +131,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: "pcounter")
 					}
 				`,
 			},
@@ -122,15 +167,15 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
+func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a PN Counter with Float type. Note the lack of precision",
+		Description: "Positive increments of a P Counter with Float type. Note the lack of precision",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: "pcounter")
 					}
 				`,
 			},
@@ -173,17 +218,17 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents what happens when an overflow occurs in a PN Counter with Float type.
+// This test documents what happens when an overflow occurs in a P Counter with Float type.
 // In this case it is the same as a no-op.
-func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
+func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a PN Counter with Float type and overflow causing a no-op",
+		Description: "Positive increments of a P Counter with Float type and overflow causing a no-op",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: "pcounter")
 					}
 				`,
 			},

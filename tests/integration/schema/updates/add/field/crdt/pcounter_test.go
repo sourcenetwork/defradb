@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
+func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt PN Counter (4)",
+		Description: "Test schema update, add field with crdt P Counter (5)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -30,7 +30,7 @@ func TestSchemaUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Int", "Typ": 4} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Int", "Typ": 5} }
 					]
 				`,
 			},
@@ -48,9 +48,9 @@ func TestSchemaUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdates_AddFieldCRDTPNCounterWithMismatchKind_Error(t *testing.T) {
+func TestSchemaUpdates_AddFieldCRDTPCounterWithMismatchKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt PN Counter (4)",
+		Description: "Test schema update, add field with crdt P Counter (5)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -62,10 +62,10 @@ func TestSchemaUpdates_AddFieldCRDTPNCounterWithMismatchKind_Error(t *testing.T)
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Boolean", "Typ": 4} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Boolean", "Typ": 5} }
 					]
 				`,
-				ExpectedError: "CRDT type pncounter can't be assigned to field kind Boolean",
+				ExpectedError: "CRDT type pcounter can't be assigned to field kind Boolean",
 			},
 		},
 	}
