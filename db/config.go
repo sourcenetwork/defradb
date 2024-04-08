@@ -13,11 +13,11 @@ package db
 import (
 	"context"
 
+	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/lens"
 )
 
 const (
@@ -56,9 +56,18 @@ func WithMaxRetries(num int) Option {
 	}
 }
 
-// WithLensOptions sets the lens registry options for the db.
-func WithLensOptions(opts ...lens.Option) Option {
+// WithLensPoolSize sets the maximum number of cached migrations instances to preserve per schema version.
+//
+// Will default to `5` if not set.
+func WithLensPoolSize(size int) Option {
 	return func(db *db) {
-		db.lensOptions = opts
+		db.lensPoolSize = immutable.Some(size)
+	}
+}
+
+// WithLensRuntime returns an option that sets the lens registry runtime.
+func WithLensRuntime(runtime module.Runtime) Option {
+	return func(db *db) {
+		db.lensRuntime = immutable.Some(runtime)
 	}
 }

@@ -13,9 +13,8 @@ package db
 import (
 	"testing"
 
+	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/sourcenetwork/defradb/lens"
 )
 
 func TestWithACP(t *testing.T) {
@@ -43,9 +42,14 @@ func TestWithMaxRetries(t *testing.T) {
 	assert.Equal(t, 10, d.maxTxnRetries.Value())
 }
 
-func TestWithLensOptions(t *testing.T) {
-	lensOpts := []lens.Option{lens.WithPoolSize(20)}
+func TestWithLensPoolSize(t *testing.T) {
 	d := &db{}
-	WithLensOptions(lensOpts...)(d)
-	assert.Equal(t, d.lensOptions, lensOpts)
+	WithLensPoolSize(10)(d)
+	assert.Equal(t, 10, d.lensPoolSize.Value())
+}
+
+func TestWithLensRuntime(t *testing.T) {
+	d := &db{}
+	WithLensRuntime(wasmtime.New())(d)
+	assert.NotNil(t, d.lensRuntime.Value())
 }

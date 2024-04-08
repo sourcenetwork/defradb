@@ -22,6 +22,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -56,7 +57,10 @@ type db struct {
 
 	parser core.Parser
 
-	lensOptions  []lens.Option
+	// The maximum number of cached migrations instances to preserve per schema version.
+	lensPoolSize immutable.Option[int]
+	lensRuntime  immutable.Option[module.Runtime]
+
 	lensRegistry client.LensRegistry
 
 	// The maximum number of retries per transaction.
@@ -106,9 +110,9 @@ func newDB(
 		opt(db)
 	}
 
-	// lens options may be set by `WithLensOptions`, and because they are funcs on db
+	// lens options may be set by `WithLens` funcs, and because they are funcs on db
 	// we have to mutate `db` here to set the registry.
-	db.lensRegistry = lens.NewRegistry(db, db.lensOptions...)
+	db.lensRegistry = lens.NewRegistry(db, db.lensPoolSize, db.lensRuntime)
 
 	err = db.initialize(ctx)
 	if err != nil {
