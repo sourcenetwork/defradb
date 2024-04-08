@@ -66,12 +66,12 @@ func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
 func InstanceWithStore(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
-	ctype client.CType,
+	cType client.CType,
 	kind client.FieldKind,
 	key core.DataStoreKey,
 	fieldName string,
 ) (MerkleCRDT, error) {
-	switch ctype {
+	switch cType {
 	case client.LWW_REGISTER:
 		return NewMerkleLWWRegister(
 			store,
@@ -79,21 +79,23 @@ func InstanceWithStore(
 			key,
 			fieldName,
 		), nil
-	case client.PN_COUNTER:
+	case client.PN_COUNTER, client.P_COUNTER:
 		switch kind {
 		case client.FieldKind_NILLABLE_INT:
-			return NewMerklePNCounter[int64](
+			return NewMerkleCounter[int64](
 				store,
 				schemaVersionKey,
 				key,
 				fieldName,
+				cType == client.PN_COUNTER,
 			), nil
 		case client.FieldKind_NILLABLE_FLOAT:
-			return NewMerklePNCounter[float64](
+			return NewMerkleCounter[float64](
 				store,
 				schemaVersionKey,
 				key,
 				fieldName,
+				cType == client.PN_COUNTER,
 			), nil
 		}
 	case client.COMPOSITE:
@@ -104,5 +106,5 @@ func InstanceWithStore(
 			fieldName,
 		), nil
 	}
-	return nil, client.NewErrUnknownCRDT(ctype)
+	return nil, client.NewErrUnknownCRDT(cType)
 }

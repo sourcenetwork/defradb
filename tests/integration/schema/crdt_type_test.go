@@ -130,3 +130,98 @@ func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
+	schemaVersionID := "bafkreidjvjnvtwwdkcdqwcmwxqzu3bxrbxs3rkn6h6h7kkxmibpli3mp7y"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						points: Int @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersionID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersionID,
+						Root:      schemaVersionID,
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "points",
+								Kind: client.FieldKind_NILLABLE_INT,
+								Typ:  client.P_COUNTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
+	schemaVersionID := "bafkreiasm64v2oimv6uk3hlfap6awptumwkm4fxuoc3ck3ehfe2tmry66i"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						points: Float @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersionID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersionID,
+						Root:      schemaVersionID,
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "points",
+								Kind: client.FieldKind_NILLABLE_FLOAT,
+								Typ:  client.P_COUNTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaCreate_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						points: String @crdt(type: "pcounter")
+					}
+				`,
+				ExpectedError: "CRDT type pcounter can't be assigned to field kind String",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

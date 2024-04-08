@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -33,18 +33,18 @@ import (
 
 var (
 	// ensure types implements core interfaces
-	_ core.ReplicatedData = (*PNCounter[float64])(nil)
-	_ core.ReplicatedData = (*PNCounter[int64])(nil)
-	_ core.Delta          = (*PNCounterDelta[float64])(nil)
-	_ core.Delta          = (*PNCounterDelta[int64])(nil)
+	_ core.ReplicatedData = (*Counter[float64])(nil)
+	_ core.ReplicatedData = (*Counter[int64])(nil)
+	_ core.Delta          = (*CounterDelta[float64])(nil)
+	_ core.Delta          = (*CounterDelta[int64])(nil)
 )
 
 type Incrementable interface {
 	constraints.Integer | constraints.Float
 }
 
-// PNCounterDelta is a single delta operation for an PNCounter
-type PNCounterDelta[T Incrementable] struct {
+// CounterDelta is a single delta operation for a Counter
+type CounterDelta[T Incrementable] struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
@@ -59,17 +59,17 @@ type PNCounterDelta[T Incrementable] struct {
 }
 
 // GetPriority gets the current priority for this delta.
-func (delta *PNCounterDelta[T]) GetPriority() uint64 {
+func (delta *CounterDelta[T]) GetPriority() uint64 {
 	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *PNCounterDelta[T]) SetPriority(prio uint64) {
+func (delta *CounterDelta[T]) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
 // Marshal encodes the delta using CBOR.
-func (delta *PNCounterDelta[T]) Marshal() ([]byte, error) {
+func (delta *CounterDelta[T]) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
@@ -81,44 +81,50 @@ func (delta *PNCounterDelta[T]) Marshal() ([]byte, error) {
 }
 
 // Unmarshal decodes the delta from CBOR.
-func (delta *PNCounterDelta[T]) Unmarshal(b []byte) error {
+func (delta *CounterDelta[T]) Unmarshal(b []byte) error {
 	h := &codec.CborHandle{}
 	dec := codec.NewDecoderBytes(b, h)
 	return dec.Decode(delta)
 }
 
-// PNCounter, is a simple CRDT type that allows increment/decrement
+// Counter, is a simple CRDT type that allows increment/decrement
 // of an Int and Float data types that ensures convergence.
-type PNCounter[T Incrementable] struct {
+type Counter[T Incrementable] struct {
 	baseCRDT
+	AllowDecrement bool
 }
 
-// NewPNCounter returns a new instance of the PNCounter with the given ID.
-func NewPNCounter[T Incrementable](
+// NewCounter returns a new instance of the Counter with the given ID.
+func NewCounter[T Incrementable](
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
-) PNCounter[T] {
-	return PNCounter[T]{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
+	allowDecrement bool,
+) Counter[T] {
+	return Counter[T]{newBaseCRDT(store, key, schemaVersionKey, fieldName), allowDecrement}
 }
 
-// Value gets the current register value
-func (reg PNCounter[T]) Value(ctx context.Context) ([]byte, error) {
-	valueK := reg.key.WithValueFlag()
-	buf, err := reg.store.Get(ctx, valueK.ToDS())
+// Value gets the current counter value
+func (c Counter[T]) Value(ctx context.Context) ([]byte, error) {
+	valueK := c.key.WithValueFlag()
+	buf, err := c.store.Get(ctx, valueK.ToDS())
 	if err != nil {
 		return nil, err
 	}
 	return buf, nil
 }
 
-// Set generates a new delta with the supplied value
-func (reg PNCounter[T]) Increment(ctx context.Context, value T) (*PNCounterDelta[T], error) {
+// Set generates a new delta with the supplied value.
+//
+// WARNING: Incrementing an integer and causing it to overflow the int64 max value
+// will cause the value to roll over to the int64 min value. Incremeting a float and
+// causing it to overflow the float64 max value will act like a no-op.
+func (c Counter[T]) Increment(ctx context.Context, value T) (*CounterDelta[T], error) {
 	// To ensure that the dag block is unique, we add a random number to the delta.
 	// This is done only on update (if the doc doesn't already exist) to ensure that the
 	// initial dag block of a document can be reproducible.
-	exists, err := reg.store.Has(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
+	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -131,29 +137,32 @@ func (reg PNCounter[T]) Increment(ctx context.Context, value T) (*PNCounterDelta
 		nonce = r.Int64()
 	}
 
-	return &PNCounterDelta[T]{
-		DocID:           []byte(reg.key.DocID),
-		FieldName:       reg.fieldName,
+	return &CounterDelta[T]{
+		DocID:           []byte(c.key.DocID),
+		FieldName:       c.fieldName,
 		Data:            value,
-		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
+		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 		Nonce:           nonce,
 	}, nil
 }
 
 // Merge implements ReplicatedData interface.
-// It merges two PNCounterRegisty by adding the values together.
-func (reg PNCounter[T]) Merge(ctx context.Context, delta core.Delta) error {
-	d, ok := delta.(*PNCounterDelta[T])
+// It merges two CounterRegisty by adding the values together.
+func (c Counter[T]) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*CounterDelta[T])
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return reg.incrementValue(ctx, d.Data, d.GetPriority())
+	return c.incrementValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg PNCounter[T]) incrementValue(ctx context.Context, value T, priority uint64) error {
-	key := reg.key.WithValueFlag()
-	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
+func (c Counter[T]) incrementValue(ctx context.Context, value T, priority uint64) error {
+	if !c.AllowDecrement && value < 0 {
+		return NewErrNegativeValue(value)
+	}
+	key := c.key.WithValueFlag()
+	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -161,7 +170,7 @@ func (reg PNCounter[T]) incrementValue(ctx context.Context, value T, priority ui
 		key = key.WithDeletedFlag()
 	}
 
-	curValue, err := reg.getCurrentValue(ctx, key)
+	curValue, err := c.getCurrentValue(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -172,16 +181,16 @@ func (reg PNCounter[T]) incrementValue(ctx context.Context, value T, priority ui
 		return err
 	}
 
-	err = reg.store.Put(ctx, key.ToDS(), b)
+	err = c.store.Put(ctx, key.ToDS(), b)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}
 
-	return reg.setPriority(ctx, reg.key, priority)
+	return c.setPriority(ctx, c.key, priority)
 }
 
-func (reg PNCounter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) (T, error) {
-	curValue, err := reg.store.Get(ctx, key.ToDS())
+func (c Counter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) (T, error) {
+	curValue, err := c.store.Get(ctx, key.ToDS())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
 			return 0, nil
@@ -192,20 +201,27 @@ func (reg PNCounter[T]) getCurrentValue(ctx context.Context, key core.DataStoreK
 	return getNumericFromBytes[T](curValue)
 }
 
-// DeltaDecode is a typed helper to extract a PNCounterDelta from a ipld.Node
-func (reg PNCounter[T]) DeltaDecode(node ipld.Node) (core.Delta, error) {
+// DeltaDecode is a typed helper to extract a CounterDelta from a ipld.Node
+func (c Counter[T]) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
 
-	delta := &PNCounterDelta[T]{}
+	delta := &CounterDelta[T]{}
 	err := delta.Unmarshal(pbNode.Data())
 	if err != nil {
 		return nil, err
 	}
 
 	return delta, nil
+}
+
+func (c Counter[T]) CType() client.CType {
+	if c.AllowDecrement {
+		return client.PN_COUNTER
+	}
+	return client.P_COUNTER
 }
 
 func getNumericFromBytes[T Incrementable](b []byte) (T, error) {
