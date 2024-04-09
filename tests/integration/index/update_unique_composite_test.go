@@ -45,7 +45,6 @@ func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_Should
 					{
 						"email": "another@gmail.com"
 					}`,
-				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
 	}

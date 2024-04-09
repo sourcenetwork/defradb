@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -303,7 +304,7 @@ func (index *collectionUniqueIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, val, err := index.prepareIndexRecordToStore(ctx, txn, doc)
+	key, val, err := index.prepareIndexRecordToStore(ctx, txn, doc, nil)
 	if err != nil {
 		return err
 	}
@@ -349,6 +350,7 @@ func (index *collectionUniqueIndex) prepareIndexRecordToStore(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
+	oldDoc *client.Document,
 ) (core.IndexDataStoreKey, []byte, error) {
 	key, val, err := index.getDocumentsIndexRecord(doc)
 	if err != nil {
@@ -361,6 +363,15 @@ func (index *collectionUniqueIndex) prepareIndexRecordToStore(
 			return core.IndexDataStoreKey{}, nil, err
 		}
 		if exists {
+			if oldDoc != nil {
+				oldKey, oldVal, err := index.getDocumentsIndexRecord(oldDoc)
+				if err != nil {
+					return core.IndexDataStoreKey{}, nil, err
+				}
+				if oldKey.ToString() == key.ToString() && bytes.Equal(oldVal, val) {
+					return core.IndexDataStoreKey{}, nil, nil
+				}
+			}
 			return core.IndexDataStoreKey{}, nil, index.newUniqueIndexError(doc)
 		}
 	}
@@ -381,9 +392,14 @@ func (index *collectionUniqueIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc)
+	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc, oldDoc)
 	if err != nil {
 		return err
+	}
+	if newKey.ToString() == "" {
+		// This will happen when the updated doc results in the same key-value pair.
+		// The outcome is a no-op.
+		return nil
 	}
 	err = index.deleteDocIndex(ctx, txn, oldDoc)
 	if err != nil {

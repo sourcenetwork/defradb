@@ -43,7 +43,6 @@ func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testi
 					{
 						"age":	37
 					}`,
-				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
 	}
