@@ -33,7 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/errors"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -252,10 +252,10 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 		defer txn.Discard(ctx)
 
-		session := db.NewSession(ctx).WithTxn(txn)
+		sess := session.New(ctx).WithTxn(txn)
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		col, err := s.getActiveCollection(session, s.db, string(req.Body.SchemaRoot))
+		col, err := s.getActiveCollection(sess, s.db, string(req.Body.SchemaRoot))
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +287,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		wg.Wait()
 		bp.mergeBlocks(ctx)
 
-		err = s.syncIndexedDocs(ctx, col.WithTxn(txn), docID)
+		err = s.syncIndexedDocs(sess, col, docID)
 		if err != nil {
 			return nil, err
 		}

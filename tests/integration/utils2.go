@@ -32,7 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -1082,8 +1082,8 @@ func getCollections(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, "")
-		session := db.NewSession(s.ctx).WithTxn(txn)
-		results, err := node.GetCollections(session, action.FilterOptions)
+		sess := session.New(s.ctx).WithTxn(txn)
+		results, err := node.GetCollections(sess, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1254,9 +1254,9 @@ func createDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	identity := acpIdentity.NewIdentity(action.Identity)
-	session := db.NewSession(s.ctx).WithTxn(txn)
+	sess := session.New(s.ctx).WithTxn(txn)
 	result := node.ExecRequest(
-		session,
+		sess,
 		identity,
 		request,
 	)
@@ -1430,9 +1430,9 @@ func updateDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	session := db.NewSession(s.ctx).WithTxn(txn)
+	sess := session.New(s.ctx).WithTxn(txn)
 	result := node.ExecRequest(
-		session,
+		sess,
 		acpIdentity.NewIdentity(action.Identity),
 		request,
 	)
@@ -1651,9 +1651,9 @@ func executeRequest(
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		session := db.NewSession(s.ctx).WithTxn(txn)
+		sess := session.New(s.ctx).WithTxn(txn)
 		result := node.ExecRequest(
-			session,
+			sess,
 			acpIdentity.NewIdentity(action.Identity),
 			action.Request,
 		)

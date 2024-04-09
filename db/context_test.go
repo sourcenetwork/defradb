@@ -14,31 +14,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSessionWithTxn(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := newMemoryDB(ctx)
-	require.NoError(t, err)
-
-	txn, err := db.NewTxn(ctx, true)
-	require.NoError(t, err)
-
-	session := NewSession(ctx).WithTxn(txn)
-
-	// get txn from session
-	out, err := getContextTxn(session, db, true)
-	require.NoError(t, err)
-
-	// txn should be explicit
-	_, ok := out.(*explicitTxn)
-	assert.True(t, ok)
-}
-
-func TestGetContextTxn(t *testing.T) {
+func TestGetContextImplicitTxn(t *testing.T) {
 	ctx := context.Background()
 
 	db, err := newMemoryDB(ctx)
@@ -47,7 +28,27 @@ func TestGetContextTxn(t *testing.T) {
 	txn, err := getContextTxn(ctx, db, true)
 	require.NoError(t, err)
 
-	// txn should not be explicit
+	// txn should be implicit
 	_, ok := txn.(*explicitTxn)
 	assert.False(t, ok)
+}
+
+func TestGetContextExplicitTxn(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+
+	// create a session with a transaction
+	sess := session.New(ctx).WithTxn(txn)
+
+	out, err := getContextTxn(sess, db, true)
+	require.NoError(t, err)
+
+	// txn should be explicit
+	_, ok := out.(*explicitTxn)
+	assert.True(t, ok)
 }

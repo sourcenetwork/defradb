@@ -21,7 +21,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/db/session"
 )
 
 func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
@@ -40,14 +40,14 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	if err := rep.Info.ID.Validate(); err != nil {
 		return err
 	}
-	session := db.NewSession(ctx).WithTxn(txn)
+	sess := session.New(ctx).WithTxn(txn)
 
 	var collections []client.Collection
 	switch {
 	case len(rep.Schemas) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range rep.Schemas {
-			col, err := p.db.GetCollectionByName(session, name)
+			col, err := p.db.GetCollectionByName(sess, name)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -62,7 +62,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	default:
 		// default to all collections (unless a collection contains a policy).
 		// TODO-ACP: default to all collections after resolving https://github.com/sourcenetwork/defradb/issues/2366
-		allCollections, err := p.db.GetCollections(session, client.CollectionFetchOptions{})
+		allCollections, err := p.db.GetCollections(sess, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -111,7 +111,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	// push all collection documents to the replicator peer
 	for _, col := range added {
 		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
-		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx, acpIdentity.NoIdentity)
+		keysCh, err := col.GetAllDocIDs(sess, acpIdentity.NoIdentity)
 		if err != nil {
 			return NewErrReplicatorDocID(err, col.Name().Value(), rep.Info.ID)
 		}
@@ -137,15 +137,14 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 	if err := rep.Info.ID.Validate(); err != nil {
 		return err
 	}
-
-	session := db.NewSession(ctx).WithTxn(txn)
+	sess := session.New(ctx).WithTxn(txn)
 
 	var collections []client.Collection
 	switch {
 	case len(rep.Schemas) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range rep.Schemas {
-			col, err := p.db.GetCollectionByName(session, name)
+			col, err := p.db.GetCollectionByName(sess, name)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -160,7 +159,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 
 	default:
 		// default to all collections
-		collections, err = p.db.GetCollections(session, client.CollectionFetchOptions{})
+		collections, err = p.db.GetCollections(sess, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}

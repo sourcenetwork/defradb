@@ -19,7 +19,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -80,10 +80,10 @@ func runMakePlanBench(
 	}
 	b.ResetTimer()
 
-	session := db.NewSession(ctx).WithTxn(txn)
+	sess := session.New(ctx).WithTxn(txn)
 	for i := 0; i < b.N; i++ {
 		planner := planner.New(
-			session,
+			sess,
 			acpIdentity.NoIdentity,
 			acp.NoACP,
 			d,

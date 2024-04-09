@@ -13,31 +13,9 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/session"
 )
-
-type contextKey string
-
-const (
-	txnContextKey = contextKey("txn")
-)
-
-// Session wraps a context to make it easier to pass request scoped
-// parameters such as transactions.
-type Session struct {
-	context.Context
-}
-
-// NewSession returns a session that wraps the given context.
-func NewSession(ctx context.Context) *Session {
-	return &Session{ctx}
-}
-
-// WithTxn returns a new session with the transaction value set.
-func (s *Session) WithTxn(txn datastore.Txn) *Session {
-	return &Session{context.WithValue(s, txnContextKey, txn)}
-}
 
 // explicitTxn is a transaction that is managed outside of the session.
 type explicitTxn struct {
@@ -52,10 +30,15 @@ func (t *explicitTxn) Discard(ctx context.Context) {
 	// do nothing
 }
 
+// transactionDB is a db that can create transactions.
+type transactionDB interface {
+	NewTxn(context.Context, bool) (datastore.Txn, error)
+}
+
 // getContextTxn returns the explicit transaction from
 // the context or creates a new implicit one.
-func getContextTxn(ctx context.Context, db client.DB, readOnly bool) (datastore.Txn, error) {
-	txn, ok := ctx.Value(txnContextKey).(datastore.Txn)
+func getContextTxn(ctx context.Context, db transactionDB, readOnly bool) (datastore.Txn, error) {
+	txn, ok := ctx.Value(session.TxnContextKey).(datastore.Txn)
 	if ok {
 		return &explicitTxn{txn}, nil
 	}

@@ -57,16 +57,16 @@ func (c *collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	txn, err := getContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 	res, err := c.updateWithFilter(ctx, identity, txn, filter, updater)
 	if err != nil {
 		return nil, err
 	}
-	return res, c.commitImplicitTxn(ctx, txn)
+	return res, txn.Commit(ctx)
 }
 
 // UpdateWithDocID updates using a DocID to target a single document for update.
@@ -78,17 +78,17 @@ func (c *collection) UpdateWithDocID(
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	txn, err := getContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 	res, err := c.updateWithDocID(ctx, identity, txn, docID, updater)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(ctx, txn)
+	return res, txn.Commit(ctx)
 }
 
 // UpdateWithDocIDs is the same as UpdateWithDocID but accepts multiple DocIDs as a slice.
@@ -100,17 +100,17 @@ func (c *collection) UpdateWithDocIDs(
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	txn, err := getContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 	res, err := c.updateWithIDs(ctx, identity, txn, docIDs, updater)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(ctx, txn)
+	return res, txn.Commit(ctx)
 }
 
 func (c *collection) updateWithDocID(
@@ -333,7 +333,6 @@ func (c *collection) patchPrimaryDoc(
 	if err != nil {
 		return err
 	}
-	primaryCol = primaryCol.WithTxn(txn)
 	primarySchema := primaryCol.Schema()
 
 	primaryField, ok := primaryCol.Description().GetFieldByRelation(

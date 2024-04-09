@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -100,12 +101,14 @@ func New(
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {
+	// all db calls will use this transaction
+	sess := session.New(ctx).WithTxn(txn)
 	return &Planner{
 		txn:      txn,
 		identity: identity,
 		acp:      acp,
 		db:       db,
-		ctx:      ctx,
+		ctx:      sess,
 	}
 }
 

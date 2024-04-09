@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
+	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -322,7 +323,8 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
 	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, acpIdentity.NoIdentity, doc)
+	sess := session.New(f.ctx).WithTxn(mockTxn)
+	err := f.users.Create(sess, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
@@ -360,7 +362,8 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, acpIdentity.NoIdentity, doc)
+	sess := session.New(f.ctx).WithTxn(mockTxn)
+	err := f.users.Create(sess, acpIdentity.NoIdentity, doc)
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
@@ -378,7 +381,8 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(nil, testErr)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, acpIdentity.NoIdentity, doc)
+	sess := session.New(f.ctx).WithTxn(mockTxn)
+	err := f.users.Create(sess, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -806,7 +810,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		return fetcherMocks.NewStubbedFetcher(t)
 	}
-	err = usersCol.WithTxn(mockedTxn).Update(f.ctx, acpIdentity.NoIdentity, doc)
+	sess := session.New(f.ctx).WithTxn(mockedTxn)
+	err = usersCol.Update(sess, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -1048,7 +1053,8 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Datastore().Unset()
 		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
 
-		err = f.users.WithTxn(mockedTxn).Update(f.ctx, acpIdentity.NoIdentity, doc)
+		sess := session.New(f.ctx).WithTxn(mockedTxn)
+		err = f.users.Update(sess, acpIdentity.NoIdentity, doc)
 		require.ErrorIs(t, err, testErr)
 	}
 }

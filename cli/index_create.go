@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeIndexCreateCommand() *cobra.Command {
@@ -51,9 +50,6 @@ Example: create a named index for 'Users' collection on 'name' field:
 			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
 			}
 			desc, err = col.CreateIndex(cmd.Context(), desc)
 			if err != nil {

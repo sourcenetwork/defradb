@@ -14,7 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/db/session"
 )
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
@@ -44,9 +44,9 @@ func configureMigration(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		session := db.NewSession(s.ctx).WithTxn(txn)
+		sess := session.New(s.ctx).WithTxn(txn)
 
-		err := node.SetMigration(session, action.LensConfig)
+		err := node.SetMigration(sess, action.LensConfig)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

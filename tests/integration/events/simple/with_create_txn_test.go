@@ -19,7 +19,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/db/session"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 
@@ -44,9 +44,9 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 				txn, err := d.NewTxn(ctx, false)
 				assert.Nil(t, err)
 
-				session := db.NewSession(ctx).WithTxn(txn)
+				sess := session.New(ctx).WithTxn(txn)
 				r := d.ExecRequest(
-					session,
+					sess,
 					acpIdentity.NoIdentity,
 					`mutation {
 						create_Users(input: {name: "Shahzad"}) {
