@@ -89,7 +89,7 @@ func newDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
 	options ...Option,
-) (*implicitTxnDB, error) {
+) (*store, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
 
 	parser, err := graphql.NewParser()
@@ -119,7 +119,7 @@ func newDB(
 		return nil, err
 	}
 
-	return &implicitTxnDB{db}, nil
+	return &store{db}, nil
 }
 
 // NewTxn creates a new transaction.
@@ -132,15 +132,6 @@ func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) 
 func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
-}
-
-// WithTxn returns a new [client.Store] that respects the given transaction.
-func (db *db) WithTxn(txn datastore.Txn) client.Store {
-	return &explicitTxnDB{
-		db:           db,
-		txn:          txn,
-		lensRegistry: db.lensRegistry.WithTxn(txn),
-	}
 }
 
 // Root returns the root datastore.

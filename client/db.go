@@ -42,9 +42,6 @@ type DB interface {
 	// can safely operate on it concurrently.
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 
-	// WithTxn returns a new [client.Store] that respects the given transaction.
-	WithTxn(datastore.Txn) Store
-
 	// Root returns the underlying root store, within which all data managed by DefraDB is held.
 	Root() datastore.RootStore
 

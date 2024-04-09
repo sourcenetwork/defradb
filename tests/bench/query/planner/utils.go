@@ -19,6 +19,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -57,11 +58,11 @@ func runMakePlanBench(
 	fixture fixtures.Generator,
 	query string,
 ) error {
-	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
+	d, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer d.Close()
 
 	parser, err := buildParser(ctx, fixture)
 	if err != nil {
@@ -73,18 +74,19 @@ func runMakePlanBench(
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := d.NewTxn(ctx, false)
 	if err != nil {
 		return errors.Wrap("failed to create txn", err)
 	}
-
 	b.ResetTimer()
+
+	session := db.NewSession(ctx).WithTxn(txn)
 	for i := 0; i < b.N; i++ {
 		planner := planner.New(
-			ctx,
+			session,
 			acpIdentity.NoIdentity,
 			acp.NoACP,
-			db.WithTxn(txn),
+			d,
 			txn,
 		)
 		plan, err := planner.MakePlan(q)

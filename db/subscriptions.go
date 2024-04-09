@@ -80,7 +80,7 @@ func (db *db) handleEvent(
 		ctx,
 		identity,
 		db.acp,
-		db.WithTxn(txn),
+		&store{db},
 		txn,
 	)
 

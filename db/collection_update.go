@@ -439,7 +439,7 @@ func (c *collection) makeSelectionPlan(
 		ctx,
 		identity,
 		c.db.acp,
-		c.db.WithTxn(txn),
+		&store{c.db},
 		txn,
 	)
 

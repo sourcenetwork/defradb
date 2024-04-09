@@ -59,7 +59,7 @@ func (db *db) execRequest(
 		ctx,
 		identity,
 		db.acp,
-		db.WithTxn(txn),
+		&store{db},
 		txn,
 	)
 

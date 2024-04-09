@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -250,11 +251,11 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, err
 		}
 		defer txn.Discard(ctx)
-		store := s.db.WithTxn(txn)
 
+		session := db.NewSession(ctx).WithTxn(txn)
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		col, err := s.getActiveCollection(ctx, store, string(req.Body.SchemaRoot))
+		col, err := s.getActiveCollection(session, s.db, string(req.Body.SchemaRoot))
 		if err != nil {
 			return nil, err
 		}
@@ -271,9 +272,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 		}
 
-		var session sync.WaitGroup
+		var wg sync.WaitGroup
 		bp := newBlockProcessor(s.peer, txn, col, dsKey, getter)
-		err = bp.processRemoteBlock(ctx, &session, nd, true)
+		err = bp.processRemoteBlock(ctx, &wg, nd, true)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,
@@ -283,7 +284,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 				corelog.Any("CID", cid),
 			)
 		}
-		session.Wait()
+		wg.Wait()
 		bp.mergeBlocks(ctx)
 
 		err = s.syncIndexedDocs(ctx, col.WithTxn(txn), docID)
