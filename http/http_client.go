@@ -18,7 +18,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db"
 )
 
@@ -46,7 +45,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	txn, ok := req.Context().Value(db.TxnContextKey{}).(datastore.Txn)
+	txn, ok := db.TryGetContextTxn(req.Context())
 	if ok {
 		req.Header.Set(TX_HEADER_NAME, fmt.Sprintf("%d", txn.ID()))
 	}

@@ -784,7 +784,7 @@ func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
 		Return(queryResults, nil)
 
-	ctx := setContextTxn(f.ctx, mockedTxn)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
 	_, err := f.users.GetIndexes(ctx)
 	assert.NoError(t, err)
 }
@@ -841,7 +841,7 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Systemstore().Unset()
 		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-		ctx := setContextTxn(f.ctx, mockedTxn)
+		ctx := SetContextTxn(f.ctx, mockedTxn)
 		_, err := f.users.GetIndexes(ctx)
 		require.ErrorIs(t, err, testCase.ExpectedError)
 	}
@@ -904,7 +904,7 @@ func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *te
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, indexDescData), nil)
 
-	ctx := setContextTxn(f.ctx, mockedTxn)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
 	_, err = collection.GetIndexes(ctx)
 	require.ErrorIs(t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 }
@@ -1096,7 +1096,7 @@ func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(t), nil)
 
-	ctx := setContextTxn(f.ctx, mockedTxn)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
 	err := f.users.DropIndex(ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)
 }
@@ -1104,7 +1104,7 @@ func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
-	ctx := setContextTxn(f.ctx, f.txn)
+	ctx := SetContextTxn(f.ctx, f.txn)
 	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
 	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())
@@ -1148,7 +1148,7 @@ func TestDropIndex_IfSystemStoreFails_ReturnError(t *testing.T) {
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-	ctx := setContextTxn(f.ctx, mockedTxn)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
 	err := f.users.DropIndex(ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)
 }

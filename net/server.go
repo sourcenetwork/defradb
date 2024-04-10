@@ -253,12 +253,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 		defer txn.Discard(ctx)
 
-		// use a session for all operations
-		sess := db.NewSession(ctx).WithTxn(txn)
+		// use a transaction for all operations
+		ctx = db.SetContextTxn(ctx, txn)
 
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		col, err := s.getActiveCollection(sess, s.db, string(req.Body.SchemaRoot))
+		col, err := s.getActiveCollection(ctx, s.db, string(req.Body.SchemaRoot))
 		if err != nil {
 			return nil, err
 		}
@@ -355,11 +355,12 @@ func (s *server) syncIndexedDocs(
 	docID client.DocID,
 	txn datastore.Txn,
 ) error {
-	sess := db.NewSession(ctx).WithTxn(txn)
+	// remove transaction from old context
+	oldCtx := db.SetContextTxn(ctx, nil)
 
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
-	oldDoc, err := col.Get(ctx, acpIdentity.NoIdentity, docID, false)
+	oldDoc, err := col.Get(oldCtx, acpIdentity.NoIdentity, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isNewDoc && err != nil {
 		return err
@@ -367,18 +368,18 @@ func (s *server) syncIndexedDocs(
 
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
-	doc, err := col.Get(sess, acpIdentity.NoIdentity, docID, false)
+	doc, err := col.Get(ctx, acpIdentity.NoIdentity, docID, false)
 	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isDeletedDoc && err != nil {
 		return err
 	}
 
 	if isDeletedDoc {
-		return col.DeleteDocIndex(ctx, oldDoc)
+		return col.DeleteDocIndex(oldCtx, oldDoc)
 	} else if isNewDoc {
-		return col.CreateDocIndex(sess, doc)
+		return col.CreateDocIndex(ctx, doc)
 	} else {
-		return col.UpdateDocIndex(sess, oldDoc, doc)
+		return col.UpdateDocIndex(ctx, oldDoc, doc)
 	}
 }
 

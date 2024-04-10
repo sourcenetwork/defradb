@@ -44,9 +44,9 @@ func configureMigration(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		sess := db.NewSession(s.ctx).WithTxn(txn)
+		ctx := db.SetContextTxn(s.ctx, txn)
 
-		err := node.SetMigration(sess, action.LensConfig)
+		err := node.SetMigration(ctx, action.LensConfig)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

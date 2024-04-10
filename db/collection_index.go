@@ -41,7 +41,7 @@ func (db *db) createCollectionIndex(
 	if err != nil {
 		return client.IndexDescription{}, NewErrCanNotReadCollection(collectionName, err)
 	}
-	ctx = setContextTxn(ctx, txn)
+	ctx = SetContextTxn(ctx, txn)
 	return col.CreateIndex(ctx, desc)
 }
 
@@ -54,7 +54,7 @@ func (db *db) dropCollectionIndex(
 	if err != nil {
 		return NewErrCanNotReadCollection(collectionName, err)
 	}
-	ctx = setContextTxn(ctx, txn)
+	ctx = SetContextTxn(ctx, txn)
 	return col.DropIndex(ctx, indexName)
 }
 

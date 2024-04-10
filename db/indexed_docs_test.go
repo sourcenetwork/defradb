@@ -322,7 +322,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
 	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	ctx := setContextTxn(f.ctx, mockTxn)
+	ctx := SetContextTxn(f.ctx, mockTxn)
 	err := f.users.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
@@ -361,7 +361,7 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
-	ctx := setContextTxn(f.ctx, mockTxn)
+	ctx := SetContextTxn(f.ctx, mockTxn)
 	err := f.users.Create(ctx, acpIdentity.NoIdentity, doc)
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
@@ -380,7 +380,7 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(nil, testErr)
 
-	ctx := setContextTxn(f.ctx, mockTxn)
+	ctx := SetContextTxn(f.ctx, mockTxn)
 	err := f.users.Create(ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }
@@ -809,7 +809,7 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		return fetcherMocks.NewStubbedFetcher(t)
 	}
-	ctx := setContextTxn(f.ctx, mockedTxn)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
 	err = usersCol.Update(ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }
@@ -1052,7 +1052,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Datastore().Unset()
 		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
 
-		ctx := setContextTxn(f.ctx, mockedTxn)
+		ctx := SetContextTxn(f.ctx, mockedTxn)
 		err = f.users.Update(ctx, acpIdentity.NoIdentity, doc)
 		require.ErrorIs(t, err, testErr)
 	}

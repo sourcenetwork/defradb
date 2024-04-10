@@ -89,13 +89,11 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(rw, req)
 			return
 		}
-
-		// store transaction in session
-		sess := db.NewSession(req.Context())
+		ctx := req.Context()
 		if val, ok := tx.(datastore.Txn); ok {
-			sess = sess.WithTxn(val)
+			ctx = db.SetContextTxn(ctx, val)
 		}
-		next.ServeHTTP(rw, req.WithContext(sess))
+		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
 

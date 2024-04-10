@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db"
 )
 
@@ -54,7 +53,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	tx, ok := ctx.Value(db.TxnContextKey{}).(datastore.Txn)
+	tx, ok := db.TryGetContextTxn(ctx)
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}

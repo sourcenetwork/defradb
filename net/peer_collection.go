@@ -34,9 +34,9 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		sess := db.NewSession(ctx).WithTxn(txn)
+		ctx = db.SetContextTxn(ctx, txn)
 		storeCol, err := p.db.GetCollections(
-			sess,
+			ctx,
 			client.CollectionFetchOptions{
 				SchemaRoot: immutable.Some(col),
 			},
@@ -114,9 +114,9 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		sess := db.NewSession(ctx).WithTxn(txn)
+		ctx = db.SetContextTxn(ctx, txn)
 		storeCol, err := p.db.GetCollections(
-			sess,
+			ctx,
 			client.CollectionFetchOptions{
 				SchemaRoot: immutable.Some(col),
 			},

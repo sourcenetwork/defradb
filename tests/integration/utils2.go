@@ -1082,8 +1082,8 @@ func getCollections(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, "")
-		sess := db.NewSession(s.ctx).WithTxn(txn)
-		results, err := node.GetCollections(sess, action.FilterOptions)
+		ctx := db.SetContextTxn(s.ctx, txn)
+		results, err := node.GetCollections(ctx, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1254,9 +1254,9 @@ func createDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	identity := acpIdentity.NewIdentity(action.Identity)
-	sess := db.NewSession(s.ctx).WithTxn(txn)
+	ctx := db.SetContextTxn(s.ctx, txn)
 	result := node.ExecRequest(
-		sess,
+		ctx,
 		identity,
 		request,
 	)
@@ -1430,9 +1430,9 @@ func updateDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	sess := db.NewSession(s.ctx).WithTxn(txn)
+	ctx := db.SetContextTxn(s.ctx, txn)
 	result := node.ExecRequest(
-		sess,
+		ctx,
 		acpIdentity.NewIdentity(action.Identity),
 		request,
 	)
@@ -1651,9 +1651,9 @@ func executeRequest(
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		sess := db.NewSession(s.ctx).WithTxn(txn)
+		ctx := db.SetContextTxn(s.ctx, txn)
 		result := node.ExecRequest(
-			sess,
+			ctx,
 			acpIdentity.NewIdentity(action.Identity),
 			action.Request,
 		)

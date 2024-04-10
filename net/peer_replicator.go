@@ -41,15 +41,15 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		return err
 	}
 
-	// use a session for all operations
-	sess := db.NewSession(ctx).WithTxn(txn)
+	// set transaction for all operations
+	ctx = db.SetContextTxn(ctx, txn)
 
 	var collections []client.Collection
 	switch {
 	case len(rep.Schemas) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range rep.Schemas {
-			col, err := p.db.GetCollectionByName(sess, name)
+			col, err := p.db.GetCollectionByName(ctx, name)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -64,7 +64,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	default:
 		// default to all collections (unless a collection contains a policy).
 		// TODO-ACP: default to all collections after resolving https://github.com/sourcenetwork/defradb/issues/2366
-		allCollections, err := p.db.GetCollections(sess, client.CollectionFetchOptions{})
+		allCollections, err := p.db.GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -113,7 +113,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	// push all collection documents to the replicator peer
 	for _, col := range added {
 		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
-		keysCh, err := col.GetAllDocIDs(sess, acpIdentity.NoIdentity)
+		keysCh, err := col.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return NewErrReplicatorDocID(err, col.Name().Value(), rep.Info.ID)
 		}
@@ -140,15 +140,15 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 		return err
 	}
 
-	// use a session for all operations
-	sess := db.NewSession(ctx).WithTxn(txn)
+	// set transaction for all operations
+	ctx = db.SetContextTxn(ctx, txn)
 
 	var collections []client.Collection
 	switch {
 	case len(rep.Schemas) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range rep.Schemas {
-			col, err := p.db.GetCollectionByName(sess, name)
+			col, err := p.db.GetCollectionByName(ctx, name)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -163,7 +163,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 
 	default:
 		// default to all collections
-		collections, err = p.db.GetCollections(sess, client.CollectionFetchOptions{})
+		collections, err = p.db.GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}

@@ -44,9 +44,9 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 				txn, err := d.NewTxn(ctx, false)
 				assert.Nil(t, err)
 
-				sess := db.NewSession(ctx).WithTxn(txn)
+				ctx = db.SetContextTxn(ctx, txn)
 				r := d.ExecRequest(
-					sess,
+					ctx,
 					acpIdentity.NoIdentity,
 					`mutation {
 						create_Users(input: {name: "Shahzad"}) {
