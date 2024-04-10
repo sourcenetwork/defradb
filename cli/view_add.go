@@ -34,7 +34,7 @@ Example: add from an argument string:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 4),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			db := mustGetContextDB(cmd)
 
 			query := args[0]
 			sdl := args[1]
@@ -69,7 +69,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				transform = immutable.Some(lensCfg)
 			}
 
-			defs, err := store.AddView(cmd.Context(), query, sdl, transform)
+			defs, err := db.AddView(cmd.Context(), query, sdl, transform)
 			if err != nil {
 				return err
 			}

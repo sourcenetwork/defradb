@@ -28,10 +28,7 @@ Execute queries, add schema types, obtain node info, etc.`,
 			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
-			if err := setContextTransaction(cmd, txID); err != nil {
-				return err
-			}
-			return setContextStore(cmd)
+			return setContextTransaction(cmd, txID)
 		},
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")

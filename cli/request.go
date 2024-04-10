@@ -78,8 +78,8 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return errors.New("request cannot be empty")
 			}
 
-			store := mustGetContextStore(cmd)
-			result := store.ExecRequest(cmd.Context(), identity, request)
+			db := mustGetContextDB(cmd)
+			result := db.ExecRequest(cmd.Context(), identity, request)
 
 			var errors []string
 			for _, err := range result.GQL.Errors {

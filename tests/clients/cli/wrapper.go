@@ -406,7 +406,7 @@ func (w *Wrapper) ExecRequest(
 
 	result := &client.RequestResult{}
 
-	stdOut, stdErr, err := w.cmd.executeStream(args)
+	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
@@ -513,13 +513,6 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 		return nil, err
 	}
 	return &Transaction{tx, w.cmd}, nil
-}
-
-func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
-	return &Wrapper{
-		node: w.node,
-		cmd:  w.cmd.withTxn(tx),
-	}
 }
 
 func (w *Wrapper) Root() datastore.RootStore {

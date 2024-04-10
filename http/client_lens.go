@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var _ client.LensRegistry = (*LensRegistry)(nil)
@@ -29,11 +28,6 @@ var _ client.LensRegistry = (*LensRegistry)(nil)
 // LensRegistry implements the client.LensRegistry interface over HTTP.
 type LensRegistry struct {
 	http *httpClient
-}
-
-func (c *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
-	http := c.http.withTxn(tx.ID())
-	return &LensRegistry{http}
 }
 
 type setMigrationRequest struct {

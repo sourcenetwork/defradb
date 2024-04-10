@@ -17,12 +17,14 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 type httpClient struct {
 	client  *http.Client
 	baseURL *url.URL
-	txValue string
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
@@ -40,20 +42,13 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	return &client, nil
 }
 
-func (c *httpClient) withTxn(value uint64) *httpClient {
-	return &httpClient{
-		client:  c.client,
-		baseURL: c.baseURL,
-		txValue: fmt.Sprintf("%d", value),
-	}
-}
-
 func (c *httpClient) setDefaultHeaders(req *http.Request) {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	if c.txValue != "" {
-		req.Header.Set(TX_HEADER_NAME, c.txValue)
+	txn, ok := req.Context().Value(db.TxnContextKey{}).(datastore.Txn)
+	if ok {
+		req.Header.Set(TX_HEADER_NAME, fmt.Sprintf("%d", txn.ID()))
 	}
 }
 

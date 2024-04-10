@@ -32,7 +32,7 @@ Example: set from an argument string:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			db := mustGetContextDB(cmd)
 
 			decoder := json.NewDecoder(strings.NewReader(args[1]))
 			decoder.DisallowUnknownFields()
@@ -47,7 +47,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return err
 			}
 
-			return store.LensRegistry().SetMigration(cmd.Context(), uint32(collectionID), lensCfg)
+			return db.LensRegistry().SetMigration(cmd.Context(), uint32(collectionID), lensCfg)
 		},
 	}
 	return cmd

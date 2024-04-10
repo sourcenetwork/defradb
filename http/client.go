@@ -86,11 +86,6 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 	return &Transaction{txRes.ID, c.http}, nil
 }
 
-func (c *Client) WithTxn(tx datastore.Txn) client.Store {
-	client := c.http.withTxn(tx.ID())
-	return &Client{client}
-}
-
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.http.baseURL.JoinPath("backup", "import")
 

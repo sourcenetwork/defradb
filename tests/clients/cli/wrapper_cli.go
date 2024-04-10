@@ -18,11 +18,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 type cliWrapper struct {
 	address string
-	txValue string
 }
 
 func newCliWrapper(address string) *cliWrapper {
@@ -31,15 +31,8 @@ func newCliWrapper(address string) *cliWrapper {
 	}
 }
 
-func (w *cliWrapper) withTxn(tx datastore.Txn) *cliWrapper {
-	return &cliWrapper{
-		address: w.address,
-		txValue: fmt.Sprintf("%d", tx.ID()),
-	}
-}
-
-func (w *cliWrapper) execute(_ context.Context, args []string) ([]byte, error) {
-	stdOut, stdErr, err := w.executeStream(args)
+func (w *cliWrapper) execute(ctx context.Context, args []string) ([]byte, error) {
+	stdOut, stdErr, err := w.executeStream(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +50,13 @@ func (w *cliWrapper) execute(_ context.Context, args []string) ([]byte, error) {
 	return stdOutData, nil
 }
 
-func (w *cliWrapper) executeStream(args []string) (io.ReadCloser, io.ReadCloser, error) {
+func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCloser, error) {
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	if w.txValue != "" {
-		args = append(args, "--tx", w.txValue)
+	tx, ok := ctx.Value(db.TxnContextKey{}).(datastore.Txn)
+	if ok {
+		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
 	args = append(args, "--url", w.address)
 

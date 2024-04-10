@@ -42,7 +42,7 @@ Example: add from stdin:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			db := mustGetContextDB(cmd)
 
 			var lensCfgJson string
 			switch {
@@ -81,7 +81,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				Lens:                       lensCfg,
 			}
 
-			return store.SetMigration(cmd.Context(), migrationCfg)
+			return db.SetMigration(cmd.Context(), migrationCfg)
 		},
 	}
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

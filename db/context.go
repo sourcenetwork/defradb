@@ -16,7 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-type txnContextKey struct{}
+// TxnContextKey is the key type for transaction context values.
+type TxnContextKey struct{}
 
 // explicitTxn is a transaction that is managed outside of a db operation.
 type explicitTxn struct {
@@ -41,7 +42,7 @@ type transactionDB interface {
 // If a transactions exists on the context it will be made explicit,
 // otherwise a new implicit transaction will be created.
 func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, error) {
-	txn, ok := ctx.Value(txnContextKey{}).(datastore.Txn)
+	txn, ok := ctx.Value(TxnContextKey{}).(datastore.Txn)
 	if ok {
 		return setContextTxn(ctx, &explicitTxn{txn}), nil
 	}
@@ -55,10 +56,10 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 // mustGetContextTxn returns the transaction from the context if it exists,
 // otherwise it panics.
 func mustGetContextTxn(ctx context.Context) datastore.Txn {
-	return ctx.Value(txnContextKey{}).(datastore.Txn)
+	return ctx.Value(TxnContextKey{}).(datastore.Txn)
 }
 
 // setContextTxn returns a new context with the txn value set.
 func setContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
-	return context.WithValue(ctx, txnContextKey{}, txn)
+	return context.WithValue(ctx, TxnContextKey{}, txn)
 }

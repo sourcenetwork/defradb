@@ -19,6 +19,6 @@ import (
 
 func TestSessionWithTxn(t *testing.T) {
 	sess := NewSession(context.Background()).WithTxn(&explicitTxn{})
-	_, ok := sess.Value(txnContextKey{}).(*explicitTxn)
+	_, ok := sess.Value(TxnContextKey{}).(*explicitTxn)
 	assert.True(t, ok)
 }
