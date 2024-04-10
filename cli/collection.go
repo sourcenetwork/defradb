@@ -37,6 +37,9 @@ func MakeCollectionCommand() *cobra.Command {
 			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
+			if err := setContextDB(cmd); err != nil {
+				return err
+			}
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}

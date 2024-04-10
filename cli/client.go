@@ -28,6 +28,9 @@ Execute queries, add schema types, obtain node info, etc.`,
 			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
+			if err := setContextDB(cmd); err != nil {
+				return err
+			}
 			return setContextTransaction(cmd, txID)
 		},
 	}

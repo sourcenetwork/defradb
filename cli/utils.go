@@ -76,6 +76,18 @@ func tryGetContextCollection(cmd *cobra.Command) (client.Collection, bool) {
 	return col, ok
 }
 
+// setContextDB sets the db for the current command context.
+func setContextDB(cmd *cobra.Command) error {
+	cfg := mustGetContextConfig(cmd)
+	db, err := http.NewClient(cfg.GetString("api.address"))
+	if err != nil {
+		return err
+	}
+	ctx := context.WithValue(cmd.Context(), dbContextKey, db)
+	cmd.SetContext(ctx)
+	return nil
+}
+
 // setContextConfig sets teh config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
