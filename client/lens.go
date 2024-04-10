@@ -15,8 +15,6 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // LensConfig represents the configuration of a Lens migration in Defra.
@@ -43,12 +41,6 @@ type LensConfig struct {
 // LensRegistry exposes several useful thread-safe migration related functions which may
 // be used to manage migrations.
 type LensRegistry interface {
-	// WithTxn returns a new LensRegistry scoped to the given transaction.
-	//
-	// WARNING: Currently this does not provide snapshot isolation, if other transactions are committed
-	// after this has been created, the results of those commits will be visible within this scope.
-	WithTxn(datastore.Txn) LensRegistry
-
 	// SetMigration caches the migration for the given collection ID. It does not persist the migration in long
 	// term storage, for that one should call [Store.SetMigration(ctx, cfg)].
 	//

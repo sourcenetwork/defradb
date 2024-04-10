@@ -101,7 +101,6 @@ func New(
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {
-	// all db calls will use this transaction
 	sess := session.New(ctx).WithTxn(txn)
 	return &Planner{
 		txn:      txn,

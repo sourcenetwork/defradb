@@ -32,6 +32,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/errors"
@@ -287,7 +288,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		wg.Wait()
 		bp.mergeBlocks(ctx)
 
-		err = s.syncIndexedDocs(sess, col, docID)
+		err = s.syncIndexedDocs(ctx, col, docID, txn)
 		if err != nil {
 			return nil, err
 		}
@@ -350,15 +351,13 @@ func (s *server) syncIndexedDocs(
 	ctx context.Context,
 	col client.Collection,
 	docID client.DocID,
+	txn datastore.Txn,
 ) error {
-	preTxnCol, err := s.db.GetCollectionByName(ctx, col.Name().Value())
-	if err != nil {
-		return err
-	}
+	sess := session.New(ctx).WithTxn(txn)
 
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
-	oldDoc, err := preTxnCol.Get(ctx, acpIdentity.NoIdentity, docID, false)
+	oldDoc, err := col.Get(ctx, acpIdentity.NoIdentity, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isNewDoc && err != nil {
 		return err
@@ -366,18 +365,18 @@ func (s *server) syncIndexedDocs(
 
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
-	doc, err := col.Get(ctx, acpIdentity.NoIdentity, docID, false)
+	doc, err := col.Get(sess, acpIdentity.NoIdentity, docID, false)
 	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isDeletedDoc && err != nil {
 		return err
 	}
 
 	if isDeletedDoc {
-		return preTxnCol.DeleteDocIndex(ctx, oldDoc)
+		return col.DeleteDocIndex(ctx, oldDoc)
 	} else if isNewDoc {
-		return col.CreateDocIndex(ctx, doc)
+		return col.CreateDocIndex(sess, doc)
 	} else {
-		return col.UpdateDocIndex(ctx, oldDoc, doc)
+		return col.UpdateDocIndex(sess, oldDoc, doc)
 	}
 }
 

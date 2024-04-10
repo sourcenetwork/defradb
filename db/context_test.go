@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/db/session"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
