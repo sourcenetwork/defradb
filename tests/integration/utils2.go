@@ -32,7 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/db/session"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -1082,7 +1082,7 @@ func getCollections(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, "")
-		sess := session.New(s.ctx).WithTxn(txn)
+		sess := db.NewSession(s.ctx).WithTxn(txn)
 		results, err := node.GetCollections(sess, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -1254,7 +1254,7 @@ func createDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	identity := acpIdentity.NewIdentity(action.Identity)
-	sess := session.New(s.ctx).WithTxn(txn)
+	sess := db.NewSession(s.ctx).WithTxn(txn)
 	result := node.ExecRequest(
 		sess,
 		identity,
@@ -1430,7 +1430,7 @@ func updateDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	sess := session.New(s.ctx).WithTxn(txn)
+	sess := db.NewSession(s.ctx).WithTxn(txn)
 	result := node.ExecRequest(
 		sess,
 		acpIdentity.NewIdentity(action.Identity),
@@ -1651,7 +1651,7 @@ func executeRequest(
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		sess := session.New(s.ctx).WithTxn(txn)
+		sess := db.NewSession(s.ctx).WithTxn(txn)
 		result := node.ExecRequest(
 			sess,
 			acpIdentity.NewIdentity(action.Identity),

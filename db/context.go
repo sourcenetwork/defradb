@@ -14,10 +14,11 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/session"
 )
 
-// explicitTxn is a transaction that is managed outside of the session.
+type txnContextKey struct{}
+
+// explicitTxn is a transaction that is managed outside of a db operation.
 type explicitTxn struct {
 	datastore.Txn
 }
@@ -35,12 +36,29 @@ type transactionDB interface {
 	NewTxn(context.Context, bool) (datastore.Txn, error)
 }
 
-// getContextTxn returns the explicit transaction from
-// the context or creates a new implicit one.
-func getContextTxn(ctx context.Context, db transactionDB, readOnly bool) (datastore.Txn, error) {
-	txn, ok := ctx.Value(session.TxnContextKey).(datastore.Txn)
+// ensureContextTxn ensures that the returned context has a transaction.
+//
+// If a transactions exists on the context it will be made explicit,
+// otherwise a new implicit transaction will be created.
+func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, error) {
+	txn, ok := ctx.Value(txnContextKey{}).(datastore.Txn)
 	if ok {
-		return &explicitTxn{txn}, nil
+		return setContextTxn(ctx, &explicitTxn{txn}), nil
 	}
-	return db.NewTxn(ctx, readOnly)
+	txn, err := db.NewTxn(ctx, readOnly)
+	if err != nil {
+		return nil, err
+	}
+	return setContextTxn(ctx, txn), nil
+}
+
+// mustGetContextTxn returns the transaction from the context if it exists,
+// otherwise it panics.
+func mustGetContextTxn(ctx context.Context) datastore.Txn {
+	return ctx.Value(txnContextKey{}).(datastore.Txn)
+}
+
+// setContextTxn returns a new context with the txn value set.
+func setContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
+	return context.WithValue(ctx, txnContextKey{}, txn)
 }

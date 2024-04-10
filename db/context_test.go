@@ -14,27 +14,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/db/session"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetContextImplicitTxn(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := newMemoryDB(ctx)
-	require.NoError(t, err)
-
-	txn, err := getContextTxn(ctx, db, true)
-	require.NoError(t, err)
-
-	// txn should be implicit
-	_, ok := txn.(*explicitTxn)
-	assert.False(t, ok)
-}
-
-func TestGetContextExplicitTxn(t *testing.T) {
+func TestEnsureContextTxnExplicit(t *testing.T) {
 	ctx := context.Background()
 
 	db, err := newMemoryDB(ctx)
@@ -43,13 +27,25 @@ func TestGetContextExplicitTxn(t *testing.T) {
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 
-	// create a session with a transaction
-	sess := session.New(ctx).WithTxn(txn)
+	// set an explicit transaction
+	ctx = setContextTxn(ctx, txn)
 
-	out, err := getContextTxn(sess, db, true)
+	ctx, err = ensureContextTxn(ctx, db, true)
 	require.NoError(t, err)
 
-	// txn should be explicit
-	_, ok := out.(*explicitTxn)
+	_, ok := mustGetContextTxn(ctx).(*explicitTxn)
 	assert.True(t, ok)
+}
+
+func TestEnsureContextTxnImplicit(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+
+	ctx, err = ensureContextTxn(ctx, db, true)
+	require.NoError(t, err)
+
+	_, ok := mustGetContextTxn(ctx).(*explicitTxn)
+	assert.False(t, ok)
 }

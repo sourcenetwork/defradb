@@ -23,7 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/session"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 const TX_HEADER_NAME = "x-defradb-tx"
@@ -91,7 +91,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 
 		// store transaction in session
-		sess := session.New(req.Context())
+		sess := db.NewSession(req.Context())
 		if val, ok := tx.(datastore.Txn); ok {
 			sess = sess.WithTxn(val)
 		}

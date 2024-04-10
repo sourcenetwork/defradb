@@ -29,7 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
-	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
@@ -785,8 +784,8 @@ func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
 		Return(queryResults, nil)
 
-	sess := session.New(f.ctx).WithTxn(mockedTxn)
-	_, err := f.users.GetIndexes(sess)
+	ctx := setContextTxn(f.ctx, mockedTxn)
+	_, err := f.users.GetIndexes(ctx)
 	assert.NoError(t, err)
 }
 
@@ -842,8 +841,8 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Systemstore().Unset()
 		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-		sess := session.New(f.ctx).WithTxn(mockedTxn)
-		_, err := f.users.GetIndexes(sess)
+		ctx := setContextTxn(f.ctx, mockedTxn)
+		_, err := f.users.GetIndexes(ctx)
 		require.ErrorIs(t, err, testCase.ExpectedError)
 	}
 }
@@ -905,8 +904,8 @@ func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *te
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, indexDescData), nil)
 
-	sess := session.New(f.ctx).WithTxn(mockedTxn)
-	_, err = collection.GetIndexes(sess)
+	ctx := setContextTxn(f.ctx, mockedTxn)
+	_, err = collection.GetIndexes(ctx)
 	require.ErrorIs(t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 }
 
@@ -1097,18 +1096,18 @@ func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(t), nil)
 
-	sess := session.New(f.ctx).WithTxn(mockedTxn)
-	err := f.users.DropIndex(sess, testUsersColIndexName)
+	ctx := setContextTxn(f.ctx, mockedTxn)
+	err := f.users.DropIndex(ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)
 }
 
 func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
-	sess := session.New(f.ctx).WithTxn(f.txn)
-	_, err := f.users.CreateIndex(sess, getUsersIndexDescOnName())
+	ctx := setContextTxn(f.ctx, f.txn)
+	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
-	indOnAge, err := f.users.CreateIndex(sess, getUsersIndexDescOnAge())
+	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 	f.commitTxn()
 
@@ -1149,8 +1148,8 @@ func TestDropIndex_IfSystemStoreFails_ReturnError(t *testing.T) {
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-	sess := session.New(f.ctx).WithTxn(mockedTxn)
-	err := f.users.DropIndex(sess, testUsersColIndexName)
+	ctx := setContextTxn(f.ctx, mockedTxn)
+	err := f.users.DropIndex(ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)
 }
 

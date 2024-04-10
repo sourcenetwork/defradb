@@ -34,7 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/db/session"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -253,7 +253,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 		defer txn.Discard(ctx)
 
-		sess := session.New(ctx).WithTxn(txn)
+		// use a session for all operations
+		sess := db.NewSession(ctx).WithTxn(txn)
+
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
 		col, err := s.getActiveCollection(sess, s.db, string(req.Body.SchemaRoot))
@@ -353,7 +355,7 @@ func (s *server) syncIndexedDocs(
 	docID client.DocID,
 	txn datastore.Txn,
 ) error {
-	sess := session.New(ctx).WithTxn(txn)
+	sess := db.NewSession(ctx).WithTxn(txn)
 
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.

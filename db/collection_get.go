@@ -29,10 +29,12 @@ func (c *collection) Get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create txn
-	txn, err := getContextTxn(ctx, c.db, true)
+	ctx, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 

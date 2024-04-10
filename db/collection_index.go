@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/db/session"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
@@ -42,8 +41,8 @@ func (db *db) createCollectionIndex(
 	if err != nil {
 		return client.IndexDescription{}, NewErrCanNotReadCollection(collectionName, err)
 	}
-	sess := session.New(ctx).WithTxn(txn)
-	return col.CreateIndex(sess, desc)
+	ctx = setContextTxn(ctx, txn)
+	return col.CreateIndex(ctx, desc)
 }
 
 func (db *db) dropCollectionIndex(
@@ -55,8 +54,8 @@ func (db *db) dropCollectionIndex(
 	if err != nil {
 		return NewErrCanNotReadCollection(collectionName, err)
 	}
-	sess := session.New(ctx).WithTxn(txn)
-	return col.DropIndex(sess, indexName)
+	ctx = setContextTxn(ctx, txn)
+	return col.DropIndex(ctx, indexName)
 }
 
 // getAllIndexDescriptions returns all the index descriptions in the database.
@@ -113,10 +112,12 @@ func (db *db) fetchCollectionIndexDescriptions(
 }
 
 func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
-	txn, err := getContextTxn(ctx, c.db, false)
+	ctx, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.indexNewDoc(ctx, txn, doc)
@@ -128,10 +129,12 @@ func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) e
 }
 
 func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	txn, err := getContextTxn(ctx, c.db, false)
+	ctx, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.deleteIndexedDoc(ctx, txn, oldDoc)
@@ -147,10 +150,12 @@ func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 }
 
 func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
-	txn, err := getContextTxn(ctx, c.db, false)
+	ctx, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.deleteIndexedDoc(ctx, txn, doc)
@@ -243,10 +248,12 @@ func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	txn, err := getContextTxn(ctx, c.db, false)
+	ctx, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	index, err := c.createIndex(ctx, txn, desc)
@@ -399,10 +406,12 @@ func (c *collection) indexExistingDocs(
 //
 // All index artifacts for existing documents related the index will be removed.
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	txn, err := getContextTxn(ctx, c.db, false)
+	ctx, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.dropIndex(ctx, txn, indexName)
@@ -487,10 +496,12 @@ func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
 
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	txn, err := getContextTxn(ctx, c.db, false)
+	ctx, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
+
+	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.loadIndexes(ctx, txn)

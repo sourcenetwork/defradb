@@ -21,7 +21,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/session"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
@@ -40,7 +40,9 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	if err := rep.Info.ID.Validate(); err != nil {
 		return err
 	}
-	sess := session.New(ctx).WithTxn(txn)
+
+	// use a session for all operations
+	sess := db.NewSession(ctx).WithTxn(txn)
 
 	var collections []client.Collection
 	switch {
@@ -137,7 +139,9 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 	if err := rep.Info.ID.Validate(); err != nil {
 		return err
 	}
-	sess := session.New(ctx).WithTxn(txn)
+
+	// use a session for all operations
+	sess := db.NewSession(ctx).WithTxn(txn)
 
 	var collections []client.Collection
 	switch {

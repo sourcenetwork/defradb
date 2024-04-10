@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/session"
 )
 
 func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
@@ -92,9 +91,8 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				return NewErrDocFromMap(err)
 			}
 
-			sess := session.New(ctx).WithTxn(txn)
 			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-			err = col.Create(sess, acpIdentity.NoIdentity, doc)
+			err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -106,7 +104,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 					return NewErrDocUpdate(err)
 				}
 				// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-				err = col.Update(sess, acpIdentity.NoIdentity, doc)
+				err = col.Update(ctx, acpIdentity.NoIdentity, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -193,9 +191,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if err != nil {
 			return err
 		}
-		sess := session.New(ctx).WithTxn(txn)
 		// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-		docIDsCh, err := col.GetAllDocIDs(sess, acpIdentity.NoIdentity)
+		docIDsCh, err := col.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return err
 		}
@@ -212,7 +209,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				}
 			}
 			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-			doc, err := col.Get(sess, acpIdentity.NoIdentity, docResultWithID.ID, false)
+			doc, err := col.Get(ctx, acpIdentity.NoIdentity, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}

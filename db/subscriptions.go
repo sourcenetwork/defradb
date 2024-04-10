@@ -62,8 +62,8 @@ func (db *db) handleSubscription(
 			continue
 		}
 
+		ctx := setContextTxn(ctx, txn)
 		db.handleEvent(ctx, identity, txn, pub, evt, r)
-
 		txn.Discard(ctx)
 	}
 }
