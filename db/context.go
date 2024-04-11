@@ -44,7 +44,7 @@ type transactionDB interface {
 func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	txn, ok := TryGetContextTxn(ctx)
 	if ok {
-		return SetContextTxn(ctx, &explicitTxn{txn}), txn, nil
+		return SetContextTxn(ctx, &explicitTxn{txn}), &explicitTxn{txn}, nil
 	}
 	txn, err := db.NewTxn(ctx, readOnly)
 	if err != nil {
