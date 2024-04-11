@@ -331,8 +331,8 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 }
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
-	indexesMap, err := db.GetAllIndexes(req.Context())
+	store := req.Context().Value(dbContextKey).(client.Store)
+	indexesMap, err := store.GetAllIndexes(req.Context())
 
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
