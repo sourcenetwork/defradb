@@ -57,11 +57,10 @@ func (c *collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	res, err := c.updateWithFilter(ctx, identity, txn, filter, updater)
@@ -80,12 +79,10 @@ func (c *collection) UpdateWithDocID(
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	res, err := c.updateWithDocID(ctx, identity, txn, docID, updater)
@@ -105,12 +102,10 @@ func (c *collection) UpdateWithDocIDs(
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	res, err := c.updateWithIDs(ctx, identity, txn, docIDs, updater)

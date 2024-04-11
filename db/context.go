@@ -41,22 +41,16 @@ type transactionDB interface {
 //
 // If a transactions exists on the context it will be made explicit,
 // otherwise a new implicit transaction will be created.
-func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, error) {
+func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	txn, ok := TryGetContextTxn(ctx)
 	if ok {
-		return SetContextTxn(ctx, &explicitTxn{txn}), nil
+		return SetContextTxn(ctx, &explicitTxn{txn}), txn, nil
 	}
 	txn, err := db.NewTxn(ctx, readOnly)
 	if err != nil {
-		return nil, err
+		return nil, txn, err
 	}
-	return SetContextTxn(ctx, txn), nil
-}
-
-// mustGetContextTxn returns the transaction from the context if it exists,
-// otherwise it panics.
-func mustGetContextTxn(ctx context.Context) datastore.Txn {
-	return ctx.Value(txnContextKey{}).(datastore.Txn)
+	return SetContextTxn(ctx, txn), txn, nil
 }
 
 // TryGetContextTxn returns a transaction and a bool indicating if the

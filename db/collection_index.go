@@ -112,12 +112,10 @@ func (db *db) fetchCollectionIndexDescriptions(
 }
 
 func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.indexNewDoc(ctx, txn, doc)
@@ -129,12 +127,10 @@ func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) e
 }
 
 func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.deleteIndexedDoc(ctx, txn, oldDoc)
@@ -150,12 +146,10 @@ func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 }
 
 func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.deleteIndexedDoc(ctx, txn, doc)
@@ -248,12 +242,10 @@ func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	index, err := c.createIndex(ctx, txn, desc)
@@ -406,12 +398,10 @@ func (c *collection) indexExistingDocs(
 //
 // All index artifacts for existing documents related the index will be removed.
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.dropIndex(ctx, txn, indexName)
@@ -496,12 +486,10 @@ func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
 
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.loadIndexes(ctx, txn)

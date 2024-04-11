@@ -32,14 +32,12 @@ func (s *store) ExecRequest(
 	identity immutable.Option[string],
 	request string,
 ) *client.RequestResult {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		res := &client.RequestResult{}
 		res.GQL.Errors = []error{err}
 		return res
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	res := s.db.execRequest(ctx, identity, request, txn)
@@ -57,12 +55,10 @@ func (s *store) ExecRequest(
 
 // GetCollectionByName returns an existing collection within the database.
 func (s *store) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
-	ctx, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, s, true)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	return s.db.getCollectionByName(ctx, txn, name)
@@ -73,12 +69,10 @@ func (s *store) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	ctx, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, s, true)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	return s.db.getCollections(ctx, txn, options)
@@ -89,12 +83,10 @@ func (s *store) GetCollections(
 //
 // Will return an error if it is not found.
 func (s *store) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, s, true)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	return s.db.getSchemaByVersionID(ctx, txn, versionID)
@@ -106,12 +98,10 @@ func (s *store) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	ctx, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, s, true)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	return s.db.getSchemas(ctx, txn, options)
@@ -121,12 +111,10 @@ func (s *store) GetSchemas(
 func (s *store) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	ctx, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, s, true)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	return s.db.getAllIndexDescriptions(ctx, txn)
@@ -138,12 +126,10 @@ func (s *store) GetAllIndexes(
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
 func (s *store) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	cols, err := s.db.addSchema(ctx, txn, schemaString)
@@ -174,12 +160,10 @@ func (s *store) PatchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = s.db.patchSchema(ctx, txn, patchString, migration, setAsDefaultVersion)
@@ -194,12 +178,10 @@ func (s *store) PatchCollection(
 	ctx context.Context,
 	patchString string,
 ) error {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = s.db.patchCollection(ctx, txn, patchString)
@@ -211,12 +193,10 @@ func (s *store) PatchCollection(
 }
 
 func (s *store) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = s.db.setActiveSchemaVersion(ctx, txn, schemaVersionID)
@@ -228,12 +208,10 @@ func (s *store) SetActiveSchemaVersion(ctx context.Context, schemaVersionID stri
 }
 
 func (s *store) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = s.db.setMigration(ctx, txn, cfg)
@@ -250,12 +228,10 @@ func (s *store) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	defs, err := s.db.addView(ctx, txn, query, sdl, transform)
@@ -274,12 +250,10 @@ func (s *store) AddView(
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
 func (s *store) BasicImport(ctx context.Context, filepath string) error {
-	ctx, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, s, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = s.db.basicImport(ctx, txn, filepath)
@@ -292,12 +266,10 @@ func (s *store) BasicImport(ctx context.Context, filepath string) error {
 
 // BasicExport exports the current data or subset of data to file in json format.
 func (s *store) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	ctx, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, s, true)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = s.db.basicExport(ctx, txn, config)

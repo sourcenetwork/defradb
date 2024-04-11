@@ -30,10 +30,13 @@ func TestEnsureContextTxnExplicit(t *testing.T) {
 	// set an explicit transaction
 	ctx = SetContextTxn(ctx, txn)
 
-	ctx, err = ensureContextTxn(ctx, db, true)
+	ctx, txn, err = ensureContextTxn(ctx, db, true)
 	require.NoError(t, err)
 
-	_, ok := mustGetContextTxn(ctx).(*explicitTxn)
+	_, ok := txn.(*explicitTxn)
+	assert.True(t, ok)
+
+	_, ok = ctx.Value(txnContextKey{}).(*explicitTxn)
 	assert.True(t, ok)
 }
 
@@ -43,9 +46,12 @@ func TestEnsureContextTxnImplicit(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
 
-	ctx, err = ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	require.NoError(t, err)
 
-	_, ok := mustGetContextTxn(ctx).(*explicitTxn)
+	_, ok := txn.(*explicitTxn)
+	assert.False(t, ok)
+
+	_, ok = ctx.Value(txnContextKey{}).(*explicitTxn)
 	assert.False(t, ok)
 }

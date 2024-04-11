@@ -1230,11 +1230,10 @@ func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 	identity immutable.Option[string],
 ) (<-chan client.DocIDResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, true)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-	txn := mustGetContextTxn(ctx)
 	return c.getAllDocIDsChan(ctx, identity, txn)
 }
 
@@ -1348,12 +1347,10 @@ func (c *collection) Create(
 	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	err = c.create(ctx, identity, txn, doc)
@@ -1371,12 +1368,10 @@ func (c *collection) CreateMany(
 	identity immutable.Option[string],
 	docs []*client.Document,
 ) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	for _, doc := range docs {
@@ -1458,12 +1453,10 @@ func (c *collection) Update(
 	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
@@ -1525,12 +1518,10 @@ func (c *collection) Save(
 	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	// Check if document already exists with primary DS key.
@@ -1809,12 +1800,10 @@ func (c *collection) Delete(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (bool, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
@@ -1832,12 +1821,10 @@ func (c *collection) Exists(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (bool, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)

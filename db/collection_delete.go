@@ -54,12 +54,10 @@ func (c *collection) DeleteWithDocID(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (*client.DeleteResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	dsKey := c.getPrimaryKeyFromDocID(docID)
@@ -77,12 +75,10 @@ func (c *collection) DeleteWithDocIDs(
 	identity immutable.Option[string],
 	docIDs []client.DocID,
 ) (*client.DeleteResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	res, err := c.deleteWithIDs(ctx, identity, txn, docIDs, client.Deleted)
@@ -99,12 +95,10 @@ func (c *collection) DeleteWithFilter(
 	identity immutable.Option[string],
 	filter any,
 ) (*client.DeleteResult, error) {
-	ctx, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 	defer txn.Discard(ctx)
 
 	res, err := c.deleteWithFilter(ctx, identity, txn, filter, client.Deleted)
