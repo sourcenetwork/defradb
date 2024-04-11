@@ -11,7 +11,6 @@
 package db
 
 import (
-	"bytes"
 	"context"
 	"time"
 
@@ -363,15 +362,6 @@ func (index *collectionUniqueIndex) prepareIndexRecordToStore(
 			return core.IndexDataStoreKey{}, nil, err
 		}
 		if exists {
-			if oldDoc != nil {
-				oldKey, oldVal, err := index.getDocumentsIndexRecord(oldDoc)
-				if err != nil {
-					return core.IndexDataStoreKey{}, nil, err
-				}
-				if oldKey.ToString() == key.ToString() && bytes.Equal(oldVal, val) {
-					return core.IndexDataStoreKey{}, nil, nil
-				}
-			}
 			return core.IndexDataStoreKey{}, nil, index.newUniqueIndexError(doc)
 		}
 	}
@@ -395,11 +385,6 @@ func (index *collectionUniqueIndex) Update(
 	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc, oldDoc)
 	if err != nil {
 		return err
-	}
-	if newKey.ToString() == "" {
-		// This will happen when the updated doc results in the same key-value pair.
-		// The outcome is a no-op.
-		return nil
 	}
 	err = index.deleteDocIndex(ctx, txn, oldDoc)
 	if err != nil {

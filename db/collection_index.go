@@ -196,9 +196,13 @@ func (c *collection) updateIndexedDoc(
 	}
 	txn := mustGetContextTxn(ctx)
 	for _, index := range c.indexes {
-		err = index.Update(ctx, txn, oldDoc, doc)
-		if err != nil {
-			return err
+		// We only need to update the index if one of the indexed fields
+		// on the document has been changed.
+		if isUpdatingIndexedFields(index, doc) {
+			err = index.Update(ctx, txn, oldDoc, doc)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -589,4 +593,19 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 		sb.WriteString(strconv.Itoa(inc))
 	}
 	return sb.String()
+}
+
+func isUpdatingIndexedFields(index CollectionIndex, doc *client.Document) bool {
+	for _, docField := range doc.Fields() {
+		// It is safe to discard the error here for simplicity.
+		val, _ := doc.GetValueWithField(docField)
+		if val.IsDirty() {
+			for _, indexedFields := range index.Description().Fields {
+				if indexedFields.Name == docField.Name() {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
