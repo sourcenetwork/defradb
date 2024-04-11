@@ -32,7 +32,6 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
@@ -290,7 +289,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		wg.Wait()
 		bp.mergeBlocks(ctx)
 
-		err = s.syncIndexedDocs(ctx, col, docID, txn)
+		err = s.syncIndexedDocs(ctx, col, docID)
 		if err != nil {
 			return nil, err
 		}
@@ -353,7 +352,6 @@ func (s *server) syncIndexedDocs(
 	ctx context.Context,
 	col client.Collection,
 	docID client.DocID,
-	txn datastore.Txn,
 ) error {
 	// remove transaction from old context
 	oldCtx := db.SetContextTxn(ctx, nil)

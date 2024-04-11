@@ -41,7 +41,7 @@ Example: add from stdin:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
+			store := mustGetContextStore(cmd)
 
 			var schema string
 			switch {
@@ -63,7 +63,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return fmt.Errorf("schema cannot be empty")
 			}
 
-			cols, err := db.AddSchema(cmd.Context(), schema)
+			cols, err := store.AddSchema(cmd.Context(), schema)
 			if err != nil {
 				return err
 			}
