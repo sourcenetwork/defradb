@@ -89,7 +89,7 @@ func newDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
 	options ...Option,
-) (*store, error) {
+) (*db, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
 
 	parser, err := graphql.NewParser()
@@ -119,7 +119,7 @@ func newDB(
 		return nil, err
 	}
 
-	return &store{db}, nil
+	return db, nil
 }
 
 // NewTxn creates a new transaction.

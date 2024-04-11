@@ -53,7 +53,7 @@ const (
 
 type indexTestFixture struct {
 	ctx   context.Context
-	db    *store
+	db    *db
 	txn   datastore.Txn
 	users client.Collection
 	t     *testing.T

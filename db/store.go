@@ -20,19 +20,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-var _ client.Store = (*store)(nil)
-
-type store struct {
-	*db
-}
-
 // ExecRequest executes a request against the database.
-func (s *store) ExecRequest(
+func (db *db) ExecRequest(
 	ctx context.Context,
 	identity immutable.Option[string],
 	request string,
 ) *client.RequestResult {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}
 		res.GQL.Errors = []error{err}
@@ -40,7 +34,7 @@ func (s *store) ExecRequest(
 	}
 	defer txn.Discard(ctx)
 
-	res := s.db.execRequest(ctx, identity, request, txn)
+	res := db.execRequest(ctx, identity, request, txn)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -54,70 +48,70 @@ func (s *store) ExecRequest(
 }
 
 // GetCollectionByName returns an existing collection within the database.
-func (s *store) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, true)
+func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return s.db.getCollectionByName(ctx, txn, name)
+	return db.getCollectionByName(ctx, txn, name)
 }
 
 // GetCollections gets all the currently defined collections.
-func (s *store) GetCollections(
+func (db *db) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return s.db.getCollections(ctx, txn, options)
+	return db.getCollections(ctx, txn, options)
 }
 
 // GetSchemaByVersionID returns the schema description for the schema version of the
 // ID provided.
 //
 // Will return an error if it is not found.
-func (s *store) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, true)
+func (db *db) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
 	defer txn.Discard(ctx)
 
-	return s.db.getSchemaByVersionID(ctx, txn, versionID)
+	return db.getSchemaByVersionID(ctx, txn, versionID)
 }
 
 // GetSchemas returns all schema versions that currently exist within
 // this [Store].
-func (s *store) GetSchemas(
+func (db *db) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return s.db.getSchemas(ctx, txn, options)
+	return db.getSchemas(ctx, txn, options)
 }
 
 // GetAllIndexes gets all the indexes in the database.
-func (s *store) GetAllIndexes(
+func (db *db) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, true)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return s.db.getAllIndexDescriptions(ctx, txn)
+	return db.getAllIndexDescriptions(ctx, txn)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -125,14 +119,14 @@ func (s *store) GetAllIndexes(
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (s *store) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+func (db *db) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	cols, err := s.db.addSchema(ctx, txn, schemaString)
+	cols, err := db.addSchema(ctx, txn, schemaString)
 	if err != nil {
 		return nil, err
 	}
@@ -154,19 +148,19 @@ func (s *store) AddSchema(ctx context.Context, schemaString string) ([]client.Co
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (s *store) PatchSchema(
+func (db *db) PatchSchema(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = s.db.patchSchema(ctx, txn, patchString, migration, setAsDefaultVersion)
+	err = db.patchSchema(ctx, txn, patchString, migration, setAsDefaultVersion)
 	if err != nil {
 		return err
 	}
@@ -174,17 +168,17 @@ func (s *store) PatchSchema(
 	return txn.Commit(ctx)
 }
 
-func (s *store) PatchCollection(
+func (db *db) PatchCollection(
 	ctx context.Context,
 	patchString string,
 ) error {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = s.db.patchCollection(ctx, txn, patchString)
+	err = db.patchCollection(ctx, txn, patchString)
 	if err != nil {
 		return err
 	}
@@ -192,14 +186,14 @@ func (s *store) PatchCollection(
 	return txn.Commit(ctx)
 }
 
-func (s *store) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+func (db *db) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = s.db.setActiveSchemaVersion(ctx, txn, schemaVersionID)
+	err = db.setActiveSchemaVersion(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -207,14 +201,14 @@ func (s *store) SetActiveSchemaVersion(ctx context.Context, schemaVersionID stri
 	return txn.Commit(ctx)
 }
 
-func (s *store) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+func (db *db) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = s.db.setMigration(ctx, txn, cfg)
+	err = db.setMigration(ctx, txn, cfg)
 	if err != nil {
 		return err
 	}
@@ -222,19 +216,19 @@ func (s *store) SetMigration(ctx context.Context, cfg client.LensConfig) error {
 	return txn.Commit(ctx)
 }
 
-func (s *store) AddView(
+func (db *db) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	defs, err := s.db.addView(ctx, txn, query, sdl, transform)
+	defs, err := db.addView(ctx, txn, query, sdl, transform)
 	if err != nil {
 		return nil, err
 	}
@@ -249,14 +243,14 @@ func (s *store) AddView(
 
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
-func (s *store) BasicImport(ctx context.Context, filepath string) error {
-	ctx, txn, err := ensureContextTxn(ctx, s, false)
+func (db *db) BasicImport(ctx context.Context, filepath string) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = s.db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, txn, filepath)
 	if err != nil {
 		return err
 	}
@@ -265,21 +259,17 @@ func (s *store) BasicImport(ctx context.Context, filepath string) error {
 }
 
 // BasicExport exports the current data or subset of data to file in json format.
-func (s *store) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	ctx, txn, err := ensureContextTxn(ctx, s, true)
+func (db *db) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = s.db.basicExport(ctx, txn, config)
+	err = db.basicExport(ctx, txn, config)
 	if err != nil {
 		return err
 	}
 
 	return txn.Commit(ctx)
-}
-
-func (s *store) LensRegistry() client.LensRegistry {
-	return s.db.lensRegistry
 }

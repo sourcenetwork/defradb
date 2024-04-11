@@ -441,7 +441,7 @@ func (c *collection) makeSelectionPlan(
 		ctx,
 		identity,
 		c.db.acp,
-		&store{c.db},
+		c.db,
 		txn,
 	)
 
