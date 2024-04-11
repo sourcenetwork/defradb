@@ -40,7 +40,7 @@ Example: view a single schema by version id
   defradb client schema describe --version bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
+			store := mustGetContextStore(cmd)
 
 			options := client.SchemaFetchOptions{}
 			if versionID != "" {
@@ -53,7 +53,7 @@ Example: view a single schema by version id
 				options.Name = immutable.Some(name)
 			}
 
-			schemas, err := db.GetSchemas(cmd.Context(), options)
+			schemas, err := store.GetSchemas(cmd.Context(), options)
 			if err != nil {
 				return err
 			}

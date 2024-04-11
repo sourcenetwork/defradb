@@ -39,7 +39,7 @@ Example: patch from stdin:
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
+			store := mustGetContextStore(cmd)
 
 			var patch string
 			switch {
@@ -61,7 +61,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				return fmt.Errorf("patch cannot be empty")
 			}
 
-			return db.PatchCollection(cmd.Context(), patch)
+			return store.PatchCollection(cmd.Context(), patch)
 		},
 	}
 	cmd.Flags().StringVarP(&patchFile, "patch-file", "p", "", "File to load a patch from")

@@ -44,7 +44,7 @@ Example: patch from stdin:
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
+			store := mustGetContextStore(cmd)
 
 			var patch string
 			switch {
@@ -90,7 +90,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				migration = immutable.Some(lensCfg)
 			}
 
-			return db.PatchSchema(cmd.Context(), patch, migration, setActive)
+			return store.PatchSchema(cmd.Context(), patch, migration, setActive)
 		},
 	}
 	cmd.Flags().BoolVar(&setActive, "set-active", false,

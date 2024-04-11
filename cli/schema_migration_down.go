@@ -39,7 +39,7 @@ Example: migrate from stdin
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
+			store := mustGetContextStore(cmd)
 
 			var srcData []byte
 			switch {
@@ -65,7 +65,7 @@ Example: migrate from stdin
 			if err := json.Unmarshal(srcData, &src); err != nil {
 				return err
 			}
-			out, err := db.LensRegistry().MigrateDown(cmd.Context(), enumerable.New(src), collectionID)
+			out, err := store.LensRegistry().MigrateDown(cmd.Context(), enumerable.New(src), collectionID)
 			if err != nil {
 				return err
 			}

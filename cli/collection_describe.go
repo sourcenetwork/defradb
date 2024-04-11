@@ -40,7 +40,7 @@ Example: view collection by version id. This will also return inactive collectio
   defradb client collection describe --version bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
+			store := mustGetContextStore(cmd)
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
@@ -56,7 +56,7 @@ Example: view collection by version id. This will also return inactive collectio
 				options.IncludeInactive = immutable.Some(getInactive)
 			}
 
-			cols, err := db.GetCollections(
+			cols, err := store.GetCollections(
 				cmd.Context(),
 				options,
 			)

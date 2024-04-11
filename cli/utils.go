@@ -48,6 +48,13 @@ func mustGetContextDB(cmd *cobra.Command) client.DB {
 	return cmd.Context().Value(dbContextKey).(client.DB)
 }
 
+// mustGetContextStore returns the store for the current command context.
+//
+// If a store is not set in the current context this function panics.
+func mustGetContextStore(cmd *cobra.Command) client.Store {
+	return cmd.Context().Value(dbContextKey).(client.Store)
+}
+
 // mustGetContextP2P returns the p2p implementation for the current command context.
 //
 // If a p2p implementation is not set in the current context this function panics.
