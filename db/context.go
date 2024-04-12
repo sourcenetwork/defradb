@@ -61,6 +61,8 @@ func TryGetContextTxn(ctx context.Context) (datastore.Txn, bool) {
 }
 
 // SetContextTxn returns a new context with the txn value set.
+//
+// This will overwrite any previously set transaction value.
 func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 	return context.WithValue(ctx, txnContextKey{}, txn)
 }
