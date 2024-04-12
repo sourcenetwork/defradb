@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
@@ -25,7 +24,6 @@ func (db *db) execRequest(
 	ctx context.Context,
 	identity immutable.Option[string],
 	request string,
-	txn datastore.Txn,
 ) *client.RequestResult {
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
@@ -55,6 +53,7 @@ func (db *db) execRequest(
 		return res
 	}
 
+	txn := mustGetContextTxn(ctx)
 	planner := planner.New(
 		ctx,
 		identity,

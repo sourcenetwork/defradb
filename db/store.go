@@ -34,7 +34,7 @@ func (db *db) ExecRequest(
 	}
 	defer txn.Discard(ctx)
 
-	res := db.execRequest(ctx, identity, request, txn)
+	res := db.execRequest(ctx, identity, request)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -55,7 +55,7 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 	defer txn.Discard(ctx)
 
-	return db.getCollectionByName(ctx, txn, name)
+	return db.getCollectionByName(ctx, name)
 }
 
 // GetCollections gets all the currently defined collections.
@@ -69,7 +69,7 @@ func (db *db) GetCollections(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getCollections(ctx, txn, options)
+	return db.getCollections(ctx, options)
 }
 
 // GetSchemaByVersionID returns the schema description for the schema version of the
@@ -83,7 +83,7 @@ func (db *db) GetSchemaByVersionID(ctx context.Context, versionID string) (clien
 	}
 	defer txn.Discard(ctx)
 
-	return db.getSchemaByVersionID(ctx, txn, versionID)
+	return db.getSchemaByVersionID(ctx, versionID)
 }
 
 // GetSchemas returns all schema versions that currently exist within
@@ -98,7 +98,7 @@ func (db *db) GetSchemas(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getSchemas(ctx, txn, options)
+	return db.getSchemas(ctx, options)
 }
 
 // GetAllIndexes gets all the indexes in the database.
@@ -111,7 +111,7 @@ func (db *db) GetAllIndexes(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllIndexDescriptions(ctx, txn)
+	return db.getAllIndexDescriptions(ctx)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -126,7 +126,7 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	}
 	defer txn.Discard(ctx)
 
-	cols, err := db.addSchema(ctx, txn, schemaString)
+	cols, err := db.addSchema(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (db *db) PatchSchema(
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchSchema(ctx, txn, patchString, migration, setAsDefaultVersion)
+	err = db.patchSchema(ctx, patchString, migration, setAsDefaultVersion)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (db *db) PatchCollection(
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchCollection(ctx, txn, patchString)
+	err = db.patchCollection(ctx, patchString)
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (db *db) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string
 	}
 	defer txn.Discard(ctx)
 
-	err = db.setActiveSchemaVersion(ctx, txn, schemaVersionID)
+	err = db.setActiveSchemaVersion(ctx, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (db *db) SetMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 	defer txn.Discard(ctx)
 
-	err = db.setMigration(ctx, txn, cfg)
+	err = db.setMigration(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func (db *db) AddView(
 	}
 	defer txn.Discard(ctx)
 
-	defs, err := db.addView(ctx, txn, query, sdl, transform)
+	defs, err := db.addView(ctx, query, sdl, transform)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func (db *db) BasicImport(ctx context.Context, filepath string) error {
 	}
 	defer txn.Discard(ctx)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	if err != nil {
 		return err
 	}
@@ -266,7 +266,7 @@ func (db *db) BasicExport(ctx context.Context, config *client.BackupConfig) erro
 	}
 	defer txn.Discard(ctx)
 
-	err = db.basicExport(ctx, txn, config)
+	err = db.basicExport(ctx, config)
 	if err != nil {
 		return err
 	}

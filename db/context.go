@@ -53,6 +53,11 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	return SetContextTxn(ctx, txn), txn, nil
 }
 
+// mustGetContextTxn returns the transaction from the context or panics.
+func mustGetContextTxn(ctx context.Context) datastore.Txn {
+	return ctx.Value(txnContextKey{}).(datastore.Txn)
+}
+
 // TryGetContextTxn returns a transaction and a bool indicating if the
 // txn was retrieved from the given context.
 func TryGetContextTxn(ctx context.Context) (datastore.Txn, bool) {

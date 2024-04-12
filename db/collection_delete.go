@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
@@ -61,7 +60,7 @@ func (c *collection) DeleteWithDocID(
 	defer txn.Discard(ctx)
 
 	dsKey := c.getPrimaryKeyFromDocID(docID)
-	res, err := c.deleteWithKey(ctx, identity, txn, dsKey)
+	res, err := c.deleteWithKey(ctx, identity, dsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +80,7 @@ func (c *collection) DeleteWithDocIDs(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.deleteWithIDs(ctx, identity, txn, docIDs, client.Deleted)
+	res, err := c.deleteWithIDs(ctx, identity, docIDs, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func (c *collection) DeleteWithFilter(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.deleteWithFilter(ctx, identity, txn, filter, client.Deleted)
+	res, err := c.deleteWithFilter(ctx, identity, filter, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +111,11 @@ func (c *collection) DeleteWithFilter(
 func (c *collection) deleteWithKey(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (*client.DeleteResult, error) {
 	// Check the key we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
-	err := c.applyDelete(ctx, identity, txn, key)
+	err := c.applyDelete(ctx, identity, key)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +132,6 @@ func (c *collection) deleteWithKey(
 func (c *collection) deleteWithIDs(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	docIDs []client.DocID,
 	_ client.DocumentStatus,
 ) (*client.DeleteResult, error) {
@@ -146,7 +143,7 @@ func (c *collection) deleteWithIDs(
 		primaryKey := c.getPrimaryKeyFromDocID(docID)
 
 		// Apply the function that will perform the full deletion of this document.
-		err := c.applyDelete(ctx, identity, txn, primaryKey)
+		err := c.applyDelete(ctx, identity, primaryKey)
 		if err != nil {
 			return nil, err
 		}
@@ -164,12 +161,11 @@ func (c *collection) deleteWithIDs(
 func (c *collection) deleteWithFilter(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	filter any,
 	_ client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	// Make a selection plan that will scan through only the documents with matching filter.
-	selectionPlan, err := c.makeSelectionPlan(ctx, identity, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, identity, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +213,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
-		err = c.applyDelete(ctx, identity, txn, primaryKey)
+		err = c.applyDelete(ctx, identity, primaryKey)
 		if err != nil {
 			return nil, err
 		}
@@ -234,11 +230,10 @@ func (c *collection) deleteWithFilter(
 func (c *collection) applyDelete(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 ) error {
 	// Must also have read permission to delete, inorder to check if document exists.
-	found, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
+	found, isDeleted, err := c.exists(ctx, identity, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -264,8 +259,8 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
+	txn := mustGetContextTxn(ctx)
 	dsKey := primaryKey.ToDataStoreKey()
-
 	headset := clock.NewHeadSet(
 		txn.Headstore(),
 		dsKey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
@@ -285,7 +280,6 @@ func (c *collection) applyDelete(
 
 	headNode, priority, err := c.saveCompositeToMerkleCRDT(
 		ctx,
-		txn,
 		dsKey,
 		dagLinks,
 		client.Deleted,

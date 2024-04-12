@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 )
@@ -63,7 +62,7 @@ func (c *collection) UpdateWithFilter(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.updateWithFilter(ctx, identity, txn, filter, updater)
+	res, err := c.updateWithFilter(ctx, identity, filter, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,7 @@ func (c *collection) UpdateWithDocID(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.updateWithDocID(ctx, identity, txn, docID, updater)
+	res, err := c.updateWithDocID(ctx, identity, docID, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +107,7 @@ func (c *collection) UpdateWithDocIDs(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.updateWithIDs(ctx, identity, txn, docIDs, updater)
+	res, err := c.updateWithIDs(ctx, identity, docIDs, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +118,6 @@ func (c *collection) UpdateWithDocIDs(
 func (c *collection) updateWithDocID(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -149,7 +147,7 @@ func (c *collection) updateWithDocID(
 		return nil, err
 	}
 
-	err = c.update(ctx, identity, txn, doc)
+	err = c.update(ctx, identity, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +162,6 @@ func (c *collection) updateWithDocID(
 func (c *collection) updateWithIDs(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -198,7 +195,7 @@ func (c *collection) updateWithIDs(
 			return nil, err
 		}
 
-		err = c.update(ctx, identity, txn, doc)
+		err = c.update(ctx, identity, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +209,6 @@ func (c *collection) updateWithIDs(
 func (c *collection) updateWithFilter(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -233,7 +229,7 @@ func (c *collection) updateWithFilter(
 	}
 
 	// Make a selection plan that will scan through only the documents with matching filter.
-	selectionPlan, err := c.makeSelectionPlan(ctx, identity, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, identity, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +283,7 @@ func (c *collection) updateWithFilter(
 			}
 		}
 
-		err = c.update(ctx, identity, txn, doc)
+		err = c.update(ctx, identity, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -321,7 +317,6 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (clien
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	secondaryCollectionName string,
 	relationFieldDescription client.FieldDefinition,
 	docID string,
@@ -332,7 +327,7 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Kind.Underlying())
+	primaryCol, err := c.db.getCollectionByName(ctx, relationFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}
@@ -373,7 +368,6 @@ func (c *collection) patchPrimaryDoc(
 	err = pc.validateOneToOneLinkDoesntAlreadyExist(
 		ctx,
 		identity,
-		txn,
 		primaryDocID.String(),
 		primaryIDField,
 		docID,
@@ -411,7 +405,6 @@ func (c *collection) patchPrimaryDoc(
 func (c *collection) makeSelectionPlan(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	filter any,
 ) (planner.RequestPlan, error) {
 	var f immutable.Option[request.Filter]
@@ -437,6 +430,7 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
+	txn := mustGetContextTxn(ctx)
 	planner := planner.New(
 		ctx,
 		identity,

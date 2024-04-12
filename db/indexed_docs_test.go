@@ -131,7 +131,8 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		return key
 	}
 
-	cols, err := b.f.db.getCollections(b.f.ctx, b.f.txn, client.CollectionFetchOptions{})
+	ctx := SetContextTxn(b.f.ctx, b.f.txn)
+	cols, err := b.f.db.getCollections(ctx, client.CollectionFetchOptions{})
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {
@@ -793,7 +794,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	require.NoError(t, err)
 
 	// retrieve the collection without index cached
-	usersCol, err := f.db.getCollectionByName(f.ctx, f.txn, usersColName)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	usersCol, err := f.db.getCollectionByName(ctx, usersColName)
 	require.NoError(t, err)
 
 	testErr := errors.New("test error")
@@ -809,7 +811,7 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		return fetcherMocks.NewStubbedFetcher(t)
 	}
-	ctx := SetContextTxn(f.ctx, mockedTxn)
+	ctx = SetContextTxn(f.ctx, mockedTxn)
 	err = usersCol.Update(ctx, acpIdentity.NoIdentity, doc)
 	require.ErrorIs(t, err, testErr)
 }

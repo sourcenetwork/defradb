@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
@@ -36,7 +35,7 @@ func (c *collection) Get(
 	defer txn.Discard(ctx)
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	found, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
+	found, isDeleted, err := c.exists(ctx, identity, primaryKey)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +43,7 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	doc, err := c.get(ctx, identity, txn, primaryKey, nil, showDeleted)
+	doc, err := c.get(ctx, identity, primaryKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +58,11 @@ func (c *collection) Get(
 func (c *collection) get(
 	ctx context.Context,
 	identity immutable.Option[string],
-	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 	fields []client.FieldDefinition,
 	showDeleted bool,
 ) (*client.Document, error) {
+	txn := mustGetContextTxn(ctx)
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index

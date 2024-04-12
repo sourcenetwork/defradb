@@ -181,7 +181,7 @@ func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
-	txn, err := db.NewTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (db *db) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and migrations and finish initialization
 	if exists {
-		err = db.loadSchema(ctx, txn)
+		err = db.loadSchema(ctx)
 		if err != nil {
 			return err
 		}
@@ -220,7 +220,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, txn, core.CollectionIDSequenceKey{})
+	_, err = db.getSequence(ctx, core.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}

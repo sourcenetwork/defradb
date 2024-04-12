@@ -20,10 +20,9 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
+func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		return NewErrOpenFile(err, filepath)
@@ -50,7 +49,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			return err
 		}
 		colName := t.(string)
-		col, err := db.getCollectionByName(ctx, txn, colName)
+		col, err := db.getCollectionByName(ctx, colName)
 		if err != nil {
 			return NewErrFailedToGetCollection(colName, err)
 		}
@@ -119,19 +118,19 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 	return nil
 }
 
-func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client.BackupConfig) (err error) {
+func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
 	// old key -> new Key
 	keyChangeCache := map[string]string{}
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, txn, client.CollectionFetchOptions{})
+		cols, err = db.getCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}
 	} else {
 		for _, colName := range config.Collections {
-			col, err := db.getCollectionByName(ctx, txn, colName)
+			col, err := db.getCollectionByName(ctx, colName)
 			if err != nil {
 				return NewErrFailedToGetCollection(colName, err)
 			}
@@ -233,7 +232,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignCol, err := db.getCollectionByName(ctx, txn, field.Kind.Underlying())
+							foreignCol, err := db.getCollectionByName(ctx, field.Kind.Underlying())
 							if err != nil {
 								return NewErrFailedToGetCollection(field.Kind.Underlying(), err)
 							}
