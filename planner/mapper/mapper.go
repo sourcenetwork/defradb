@@ -125,7 +125,7 @@ func toSelect(
 			store,
 			rootSelectType,
 			collectionName,
-			definition.Schema,
+			definition,
 			mapping,
 			fields,
 		)
@@ -1079,7 +1079,7 @@ func resolveSecondaryRelationIDs(
 	store client.Store,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.SchemaDescription,
+	schema client.CollectionDefinition,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
