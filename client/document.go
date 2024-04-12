@@ -187,7 +187,7 @@ func validateFieldSchema(val any, field SchemaFieldDescription) (NormalValue, er
 	}
 
 	if field.Kind.IsObjectArray() {
-		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+		return nil, NewErrFieldNotExist(field.Name)
 	}
 
 	if field.Kind.IsObject() {
