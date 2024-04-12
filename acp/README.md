@@ -212,7 +212,7 @@ Result:
     "Name": "Users",
     "ID": 1,
     "RootID": 1,
-    "SchemaVersionID": "bafkreibthhctfd3rykinfa6ivvkhegp7sbhk5yvujdkhase7ilj5dz5gqi",
+    "SchemaVersionID": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
     "Sources": [],
     "Fields": [
       {
