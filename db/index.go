@@ -303,7 +303,7 @@ func (index *collectionUniqueIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, val, err := index.prepareIndexRecordToStore(ctx, txn, doc, nil)
+	key, val, err := index.prepareIndexRecordToStore(ctx, txn, doc)
 	if err != nil {
 		return err
 	}
@@ -349,7 +349,6 @@ func (index *collectionUniqueIndex) prepareIndexRecordToStore(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
-	oldDoc *client.Document,
 ) (core.IndexDataStoreKey, []byte, error) {
 	key, val, err := index.getDocumentsIndexRecord(doc)
 	if err != nil {
@@ -382,7 +381,7 @@ func (index *collectionUniqueIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc, oldDoc)
+	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc)
 	if err != nil {
 		return err
 	}
