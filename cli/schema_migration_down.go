@@ -17,8 +17,6 @@ import (
 
 	"github.com/sourcenetwork/immutable/enumerable"
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeSchemaMigrationDownCommand() *cobra.Command {
@@ -67,12 +65,7 @@ Example: migrate from stdin
 			if err := json.Unmarshal(srcData, &src); err != nil {
 				return err
 			}
-			lens := store.LensRegistry()
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				lens = lens.WithTxn(tx)
-			}
-
-			out, err := lens.MigrateDown(cmd.Context(), enumerable.New(src), collectionID)
+			out, err := store.LensRegistry().MigrateDown(cmd.Context(), enumerable.New(src), collectionID)
 			if err != nil {
 				return err
 			}

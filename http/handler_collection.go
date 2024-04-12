@@ -331,7 +331,7 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 }
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	store := req.Context().Value(dbContextKey).(client.Store)
 	indexesMap, err := store.GetAllIndexes(req.Context())
 
 	if err != nil {

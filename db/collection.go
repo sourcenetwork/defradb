@@ -46,18 +46,8 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db *db
-
-	// txn represents any externally provided [datastore.Txn] for which any
-	// operation on this [collection] instance should be scoped to.
-	//
-	// If this has no value, operations requiring a transaction should use an
-	// implicit internally managed transaction, which only lives for duration
-	// of the operation in question.
-	txn immutable.Option[datastore.Txn]
-
-	def client.CollectionDefinition
-
+	db             *db
+	def            client.CollectionDefinition
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
 }
@@ -1240,11 +1230,10 @@ func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 	identity immutable.Option[string],
 ) (<-chan client.DocIDResult, error) {
-	txn, err := c.getTxn(ctx, true)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-
 	return c.getAllDocIDsChan(ctx, identity, txn)
 }
 
@@ -1271,7 +1260,7 @@ func (c *collection) getAllDocIDsChan(
 				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
 			close(resCh)
-			c.discardImplicitTxn(ctx, txn)
+			txn.Discard(ctx)
 		}()
 		for res := range q.Next() {
 			// check for Done on context first
@@ -1351,18 +1340,6 @@ func (c *collection) Definition() client.CollectionDefinition {
 	return c.def
 }
 
-// WithTxn returns a new instance of the collection, with a transaction
-// handle instead of a raw DB handle.
-func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
-	return &collection{
-		db:             c.db,
-		txn:            immutable.Some(txn),
-		def:            c.def,
-		indexes:        c.indexes,
-		fetcherFactory: c.fetcherFactory,
-	}
-}
-
 // Create a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
 func (c *collection) Create(
@@ -1370,18 +1347,18 @@ func (c *collection) Create(
 	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	err = c.create(ctx, identity, txn, doc)
 	if err != nil {
 		return err
 	}
 
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 // CreateMany creates a collection of documents at once.
@@ -1391,11 +1368,11 @@ func (c *collection) CreateMany(
 	identity immutable.Option[string],
 	docs []*client.Document,
 ) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	for _, doc := range docs {
 		err = c.create(ctx, identity, txn, doc)
@@ -1403,7 +1380,7 @@ func (c *collection) CreateMany(
 			return err
 		}
 	}
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
@@ -1476,11 +1453,11 @@ func (c *collection) Update(
 	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
 	exists, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
@@ -1499,7 +1476,7 @@ func (c *collection) Update(
 		return err
 	}
 
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given ID exists.
@@ -1541,11 +1518,11 @@ func (c *collection) Save(
 	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	// Check if document already exists with primary DS key.
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
@@ -1567,7 +1544,7 @@ func (c *collection) Save(
 		return err
 	}
 
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 // save saves the document state. save MUST not be called outside the `c.create`
@@ -1823,11 +1800,11 @@ func (c *collection) Delete(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (bool, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
@@ -1835,7 +1812,7 @@ func (c *collection) Delete(
 	if err != nil {
 		return false, err
 	}
-	return true, c.commitImplicitTxn(ctx, txn)
+	return true, txn.Commit(ctx)
 }
 
 // Exists checks if a given document exists with supplied DocID.
@@ -1844,18 +1821,18 @@ func (c *collection) Exists(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (bool, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 	exists, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
-	return exists && !isDeleted, c.commitImplicitTxn(ctx, txn)
+	return exists && !isDeleted, txn.Commit(ctx)
 }
 
 // check if a document exists with the given primary key
@@ -1914,35 +1891,6 @@ func (c *collection) saveCompositeToMerkleCRDT(
 	}
 
 	return merkleCRDT.Save(ctx, links)
-}
-
-// getTxn gets or creates a new transaction from the underlying db.
-// If the collection already has a txn, return the existing one.
-// Otherwise, create a new implicit transaction.
-func (c *collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
-	if c.txn.HasValue() {
-		return c.txn.Value(), nil
-	}
-	return c.db.NewTxn(ctx, readonly)
-}
-
-// discardImplicitTxn is a proxy function used by the collection to execute the Discard()
-// transaction function only if its an implicit transaction.
-//
-// Implicit transactions are transactions that are created *during* an operation execution as a side effect.
-//
-// Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
-func (c *collection) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
-	if !c.txn.HasValue() {
-		txn.Discard(ctx)
-	}
-}
-
-func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) error {
-	if !c.txn.HasValue() {
-		return txn.Commit(ctx)
-	}
-	return nil
 }
 
 func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) core.PrimaryDataStoreKey {

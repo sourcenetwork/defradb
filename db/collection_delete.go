@@ -54,12 +54,11 @@ func (c *collection) DeleteWithDocID(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (*client.DeleteResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	dsKey := c.getPrimaryKeyFromDocID(docID)
 	res, err := c.deleteWithKey(ctx, identity, txn, dsKey)
@@ -67,7 +66,7 @@ func (c *collection) DeleteWithDocID(
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(ctx, txn)
+	return res, txn.Commit(ctx)
 }
 
 // DeleteWithDocIDs is the same as DeleteWithDocID but accepts multiple DocIDs as a slice.
@@ -76,19 +75,18 @@ func (c *collection) DeleteWithDocIDs(
 	identity immutable.Option[string],
 	docIDs []client.DocID,
 ) (*client.DeleteResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	res, err := c.deleteWithIDs(ctx, identity, txn, docIDs, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(ctx, txn)
+	return res, txn.Commit(ctx)
 }
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -97,19 +95,18 @@ func (c *collection) DeleteWithFilter(
 	identity immutable.Option[string],
 	filter any,
 ) (*client.DeleteResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	res, err := c.deleteWithFilter(ctx, identity, txn, filter, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(ctx, txn)
+	return res, txn.Commit(ctx)
 }
 
 func (c *collection) deleteWithKey(

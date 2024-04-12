@@ -54,7 +54,6 @@ func NewApiRouter() (*Router, error) {
 	})
 
 	router.AddRouteGroup(func(r *Router) {
-		r.AddMiddleware(LensMiddleware)
 		lens_handler.bindRoutes(r)
 	})
 
@@ -82,7 +81,6 @@ func NewHandler(db client.DB) (*Handler, error) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
-			StoreMiddleware,
 		)
 		r.Handle("/*", router)
 	})

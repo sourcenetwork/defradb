@@ -31,7 +31,7 @@ Execute queries, add schema types, obtain node info, etc.`,
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			return setContextStore(cmd)
+			return setContextDB(cmd)
 		},
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")

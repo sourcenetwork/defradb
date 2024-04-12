@@ -19,6 +19,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 
@@ -42,7 +43,9 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 			func(ctx context.Context, d client.DB) {
 				txn, err := d.NewTxn(ctx, false)
 				assert.Nil(t, err)
-				r := d.WithTxn(txn).ExecRequest(
+
+				ctx = db.SetContextTxn(ctx, txn)
+				r := d.ExecRequest(
 					ctx,
 					acpIdentity.NoIdentity,
 					`mutation {

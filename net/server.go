@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -250,11 +251,13 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, err
 		}
 		defer txn.Discard(ctx)
-		store := s.db.WithTxn(txn)
+
+		// use a transaction for all operations
+		ctx = db.SetContextTxn(ctx, txn)
 
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		col, err := s.getActiveCollection(ctx, store, string(req.Body.SchemaRoot))
+		col, err := s.getActiveCollection(ctx, s.db, string(req.Body.SchemaRoot))
 		if err != nil {
 			return nil, err
 		}
@@ -271,9 +274,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 		}
 
-		var session sync.WaitGroup
+		var wg sync.WaitGroup
 		bp := newBlockProcessor(s.peer, txn, col, dsKey, getter)
-		err = bp.processRemoteBlock(ctx, &session, nd, true)
+		err = bp.processRemoteBlock(ctx, &wg, nd, true)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,
@@ -283,10 +286,10 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 				corelog.Any("CID", cid),
 			)
 		}
-		session.Wait()
+		wg.Wait()
 		bp.mergeBlocks(ctx)
 
-		err = s.syncIndexedDocs(ctx, col.WithTxn(txn), docID)
+		err = s.syncIndexedDocs(ctx, col, docID)
 		if err != nil {
 			return nil, err
 		}
@@ -350,14 +353,12 @@ func (s *server) syncIndexedDocs(
 	col client.Collection,
 	docID client.DocID,
 ) error {
-	preTxnCol, err := s.db.GetCollectionByName(ctx, col.Name().Value())
-	if err != nil {
-		return err
-	}
+	// remove transaction from old context
+	oldCtx := db.SetContextTxn(ctx, nil)
 
 	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
 	// Resolve while handling acp <> secondary indexes.
-	oldDoc, err := preTxnCol.Get(ctx, acpIdentity.NoIdentity, docID, false)
+	oldDoc, err := col.Get(oldCtx, acpIdentity.NoIdentity, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isNewDoc && err != nil {
 		return err
@@ -372,7 +373,7 @@ func (s *server) syncIndexedDocs(
 	}
 
 	if isDeletedDoc {
-		return preTxnCol.DeleteDocIndex(ctx, oldDoc)
+		return col.DeleteDocIndex(oldCtx, oldDoc)
 	} else if isNewDoc {
 		return col.CreateDocIndex(ctx, doc)
 	} else {

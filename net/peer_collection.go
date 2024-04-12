@@ -19,6 +19,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 const marker = byte(0xff)
@@ -33,8 +34,9 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollections(
-			p.ctx,
+		ctx = db.SetContextTxn(ctx, txn)
+		storeCol, err := p.db.GetCollections(
+			ctx,
 			client.CollectionFetchOptions{
 				SchemaRoot: immutable.Some(col),
 			},
@@ -112,8 +114,9 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollections(
-			p.ctx,
+		ctx = db.SetContextTxn(ctx, txn)
+		storeCol, err := p.db.GetCollections(
+			ctx,
 			client.CollectionFetchOptions{
 				SchemaRoot: immutable.Some(col),
 			},

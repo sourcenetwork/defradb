@@ -19,7 +19,7 @@ import (
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
-func newMemoryDB(ctx context.Context) (*implicitTxnDB, error) {
+func newMemoryDB(ctx context.Context) (*db, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {

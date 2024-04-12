@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -1080,8 +1081,9 @@ func getCollections(
 	action GetCollections,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node, action.TransactionID, "")
-		results, err := db.GetCollections(s.ctx, action.FilterOptions)
+		txn := getTransaction(s, node, action.TransactionID, "")
+		ctx := db.SetContextTxn(s.ctx, txn)
+		results, err := node.GetCollections(ctx, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1249,11 +1251,12 @@ func createDocViaGQL(
 		input,
 	)
 
-	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	identity := acpIdentity.NewIdentity(action.Identity)
-	result := db.ExecRequest(
-		s.ctx,
+	ctx := db.SetContextTxn(s.ctx, txn)
+	result := node.ExecRequest(
+		ctx,
 		identity,
 		request,
 	)
@@ -1426,10 +1429,10 @@ func updateDocViaGQL(
 		input,
 	)
 
-	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
-
-	result := db.ExecRequest(
-		s.ctx,
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+	ctx := db.SetContextTxn(s.ctx, txn)
+	result := node.ExecRequest(
+		ctx,
 		acpIdentity.NewIdentity(action.Identity),
 		request,
 	)
@@ -1591,14 +1594,14 @@ func withRetry(
 	return nil
 }
 
-func getStore(
+func getTransaction(
 	s *state,
 	db client.DB,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
-) client.Store {
+) datastore.Txn {
 	if !transactionSpecifier.HasValue() {
-		return db
+		return nil
 	}
 
 	transactionID := transactionSpecifier.Value()
@@ -1619,7 +1622,7 @@ func getStore(
 		s.txns[transactionID] = txn
 	}
 
-	return db.WithTxn(s.txns[transactionID])
+	return s.txns[transactionID]
 }
 
 // commitTransaction commits the given transaction.
@@ -1647,9 +1650,10 @@ func executeRequest(
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node, action.TransactionID, action.ExpectedError)
-		result := db.ExecRequest(
-			s.ctx,
+		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
+		ctx := db.SetContextTxn(s.ctx, txn)
+		result := node.ExecRequest(
+			ctx,
 			acpIdentity.NewIdentity(action.Identity),
 			action.Request,
 		)

@@ -140,7 +140,7 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 		p:          p,
 		filter:     parsed.Filter,
 		docIDs:     parsed.DocIDs.Value(),
-		collection: col.WithTxn(p.txn),
+		collection: col,
 		source:     slctNode,
 		docMapper:  docMapper{parsed.DocumentMapping},
 	}, nil

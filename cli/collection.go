@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeCollectionCommand() *cobra.Command {
@@ -41,7 +40,7 @@ func MakeCollectionCommand() *cobra.Command {
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			if err := setContextStore(cmd); err != nil {
+			if err := setContextDB(cmd); err != nil {
 				return err
 			}
 			store := mustGetContextStore(cmd)
@@ -70,10 +69,6 @@ func MakeCollectionCommand() *cobra.Command {
 				return nil
 			}
 			col := cols[0]
-
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
-			}
 
 			ctx := context.WithValue(cmd.Context(), colContextKey, col)
 			cmd.SetContext(ctx)

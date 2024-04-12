@@ -25,7 +25,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -443,13 +442,6 @@ func (c *Collection) Get(
 	}
 	doc.Clean()
 	return doc, nil
-}
-
-func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
-	return &Collection{
-		http: c.http.withTxn(tx.ID()),
-		def:  c.def,
-	}
 }
 
 func (c *Collection) GetAllDocIDs(

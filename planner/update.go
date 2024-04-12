@@ -169,7 +169,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	update.collection = col.WithTxn(p.txn)
+	update.collection = col
 
 	// create the results Select node
 	resultsNode, err := p.Select(&parsed.Select)

@@ -92,7 +92,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			}
 
 			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-			err = col.WithTxn(txn).Create(ctx, acpIdentity.NoIdentity, doc)
+			err = col.Create(ctx, acpIdentity.NoIdentity, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -104,7 +104,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 					return NewErrDocUpdate(err)
 				}
 				// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-				err = col.WithTxn(txn).Update(ctx, acpIdentity.NoIdentity, doc)
+				err = col.Update(ctx, acpIdentity.NoIdentity, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -191,9 +191,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if err != nil {
 			return err
 		}
-		colTxn := col.WithTxn(txn)
 		// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-		docIDsCh, err := colTxn.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
+		docIDsCh, err := col.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
 		if err != nil {
 			return err
 		}
@@ -210,7 +209,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				}
 			}
 			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-			doc, err := colTxn.Get(ctx, acpIdentity.NoIdentity, docResultWithID.ID, false)
+			doc, err := col.Get(ctx, acpIdentity.NoIdentity, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}

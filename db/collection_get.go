@@ -29,11 +29,11 @@ func (c *collection) Get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create txn
-	txn, err := c.getTxn(ctx, true)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
 	found, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
@@ -53,7 +53,7 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	return doc, c.commitImplicitTxn(ctx, txn)
+	return doc, txn.Commit(ctx)
 }
 
 func (c *collection) get(

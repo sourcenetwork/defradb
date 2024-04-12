@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 const TX_HEADER_NAME = "x-defradb-tx"
@@ -34,20 +35,6 @@ var (
 	txsContextKey = contextKey("txs")
 	// dbContextKey is the context key for the client.DB
 	dbContextKey = contextKey("db")
-	// txContextKey is the context key for the datastore.Txn
-	//
-	// This will only be set if a transaction id is specified.
-	txContextKey = contextKey("tx")
-	// storeContextKey is the context key for the client.Store
-	//
-	// If a transaction exists, all operations will be executed
-	// in the current transaction context.
-	storeContextKey = contextKey("store")
-	// lensContextKey is the context key for the client.LensRegistry
-	//
-	// If a transaction exists, all operations will be executed
-	// in the current transaction context.
-	lensContextKey = contextKey("lens")
 	// colContextKey is the context key for the client.Collection
 	//
 	// If a transaction exists, all operations will be executed
@@ -102,42 +89,10 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(rw, req)
 			return
 		}
-
-		ctx := context.WithValue(req.Context(), txContextKey, tx)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
-}
-
-// StoreMiddleware sets the db context for the current request.
-func StoreMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		db := req.Context().Value(dbContextKey).(client.DB)
-
-		var store client.Store
-		if tx, ok := req.Context().Value(txContextKey).(datastore.Txn); ok {
-			store = db.WithTxn(tx)
-		} else {
-			store = db
+		ctx := req.Context()
+		if val, ok := tx.(datastore.Txn); ok {
+			ctx = db.SetContextTxn(ctx, val)
 		}
-
-		ctx := context.WithValue(req.Context(), storeContextKey, store)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
-}
-
-// LensMiddleware sets the lens context for the current request.
-func LensMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		store := req.Context().Value(storeContextKey).(client.Store)
-
-		var lens client.LensRegistry
-		if tx, ok := req.Context().Value(txContextKey).(datastore.Txn); ok {
-			lens = store.LensRegistry().WithTxn(tx)
-		} else {
-			lens = store.LensRegistry()
-		}
-
-		ctx := context.WithValue(req.Context(), lensContextKey, lens)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
@@ -145,16 +100,12 @@ func LensMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		store := req.Context().Value(storeContextKey).(client.Store)
+		db := req.Context().Value(dbContextKey).(client.DB)
 
-		col, err := store.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
+		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
 		if err != nil {
 			rw.WriteHeader(http.StatusNotFound)
 			return
-		}
-
-		if tx, ok := req.Context().Value(txContextKey).(datastore.Txn); ok {
-			col = col.WithTxn(tx)
 		}
 
 		ctx := context.WithValue(req.Context(), colContextKey, col)

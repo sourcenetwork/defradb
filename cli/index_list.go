@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeIndexListCommand() *cobra.Command {
@@ -37,9 +35,6 @@ Example: show all index for 'Users' collection:
 				col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 				if err != nil {
 					return err
-				}
-				if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-					col = col.WithTxn(tx)
 				}
 				indexes, err := col.GetIndexes(cmd.Context())
 				if err != nil {

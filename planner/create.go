@@ -78,7 +78,7 @@ func (n *createNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	if err := n.collection.WithTxn(n.p.txn).Create(
+	if err := n.collection.Create(
 		n.p.ctx,
 		n.p.identity,
 		n.doc,

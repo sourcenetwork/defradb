@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeSchemaMigrationReloadCommand() *cobra.Command {
@@ -23,12 +21,7 @@ func MakeSchemaMigrationReloadCommand() *cobra.Command {
 		Long:  `Reload the schema migrations within DefraDB`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
-
-			lens := store.LensRegistry()
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				lens = lens.WithTxn(tx)
-			}
-			return lens.ReloadLenses(cmd.Context())
+			return store.LensRegistry().ReloadLenses(cmd.Context())
 		},
 	}
 	return cmd

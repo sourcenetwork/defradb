@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 )
@@ -448,13 +447,6 @@ func (c *Collection) Get(
 	return doc, nil
 }
 
-func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
-	return &Collection{
-		cmd: c.cmd.withTxn(tx),
-		def: c.def,
-	}
-}
-
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 	identity immutable.Option[string],
@@ -466,7 +458,7 @@ func (c *Collection) GetAllDocIDs(
 	args := []string{"client", "collection", "docIDs"}
 	args = append(args, "--name", c.Description().Name.Value())
 
-	stdOut, _, err := c.cmd.executeStream(args)
+	stdOut, _, err := c.cmd.executeStream(ctx, args)
 	if err != nil {
 		return nil, err
 	}

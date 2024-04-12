@@ -41,7 +41,7 @@ func (db *db) createCollectionIndex(
 	if err != nil {
 		return client.IndexDescription{}, NewErrCanNotReadCollection(collectionName, err)
 	}
-	col = col.WithTxn(txn)
+	ctx = SetContextTxn(ctx, txn)
 	return col.CreateIndex(ctx, desc)
 }
 
@@ -54,7 +54,7 @@ func (db *db) dropCollectionIndex(
 	if err != nil {
 		return NewErrCanNotReadCollection(collectionName, err)
 	}
-	col = col.WithTxn(txn)
+	ctx = SetContextTxn(ctx, txn)
 	return col.DropIndex(ctx, indexName)
 }
 
@@ -112,26 +112,26 @@ func (db *db) fetchCollectionIndexDescriptions(
 }
 
 func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	err = c.indexNewDoc(ctx, txn, doc)
 	if err != nil {
 		return err
 	}
 
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	err = c.deleteIndexedDoc(ctx, txn, oldDoc)
 	if err != nil {
@@ -142,22 +142,22 @@ func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 		return err
 	}
 
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	err = c.deleteIndexedDoc(ctx, txn, doc)
 	if err != nil {
 		return err
 	}
 
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
@@ -242,17 +242,17 @@ func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	index, err := c.createIndex(ctx, txn, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	return index.Description(), c.commitImplicitTxn(ctx, txn)
+	return index.Description(), txn.Commit(ctx)
 }
 
 func (c *collection) createIndex(
@@ -398,17 +398,17 @@ func (c *collection) indexExistingDocs(
 //
 // All index artifacts for existing documents related the index will be removed.
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	err = c.dropIndex(ctx, txn, indexName)
 	if err != nil {
 		return err
 	}
-	return c.commitImplicitTxn(ctx, txn)
+	return txn.Commit(ctx)
 }
 
 func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName string) error {
@@ -486,11 +486,11 @@ func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
 
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 
 	err = c.loadIndexes(ctx, txn)
 	if err != nil {

@@ -14,8 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // Collection represents a defradb collection.
@@ -191,10 +189,6 @@ type Collection interface {
 		docID DocID,
 		showDeleted bool,
 	) (*Document, error)
-
-	// WithTxn returns a new instance of the collection, with a transaction
-	// handle instead of a raw DB handle.
-	WithTxn(datastore.Txn) Collection
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
 	GetAllDocIDs(ctx context.Context, identity immutable.Option[string]) (<-chan DocIDResult, error)

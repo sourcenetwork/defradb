@@ -20,17 +20,12 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var _ client.LensRegistry = (*LensRegistry)(nil)
 
 type LensRegistry struct {
 	cmd *cliWrapper
-}
-
-func (w *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
-	return &LensRegistry{w.cmd.withTxn(tx)}
 }
 
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {

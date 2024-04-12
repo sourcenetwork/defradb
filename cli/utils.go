@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
 )
 
@@ -32,17 +32,8 @@ var (
 	cfgContextKey = contextKey("cfg")
 	// rootDirContextKey is the context key for the root directory.
 	rootDirContextKey = contextKey("rootDir")
-	// txContextKey is the context key for the datastore.Txn
-	//
-	// This will only be set if a transaction id is specified.
-	txContextKey = contextKey("tx")
 	// dbContextKey is the context key for the client.DB
 	dbContextKey = contextKey("db")
-	// storeContextKey is the context key for the client.Store
-	//
-	// If a transaction exists, all operations will be executed
-	// in the current transaction context.
-	storeContextKey = contextKey("store")
 	// colContextKey is the context key for the client.Collection
 	//
 	// If a transaction exists, all operations will be executed
@@ -61,7 +52,7 @@ func mustGetContextDB(cmd *cobra.Command) client.DB {
 //
 // If a store is not set in the current context this function panics.
 func mustGetContextStore(cmd *cobra.Command) client.Store {
-	return cmd.Context().Value(storeContextKey).(client.Store)
+	return cmd.Context().Value(dbContextKey).(client.Store)
 }
 
 // mustGetContextP2P returns the p2p implementation for the current command context.
@@ -92,6 +83,18 @@ func tryGetContextCollection(cmd *cobra.Command) (client.Collection, bool) {
 	return col, ok
 }
 
+// setContextDB sets the db for the current command context.
+func setContextDB(cmd *cobra.Command) error {
+	cfg := mustGetContextConfig(cmd)
+	db, err := http.NewClient(cfg.GetString("api.address"))
+	if err != nil {
+		return err
+	}
+	ctx := context.WithValue(cmd.Context(), dbContextKey, db)
+	cmd.SetContext(ctx)
+	return nil
+}
+
 // setContextConfig sets teh config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
@@ -115,24 +118,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.WithValue(cmd.Context(), txContextKey, tx)
-	cmd.SetContext(ctx)
-	return nil
-}
-
-// setContextStore sets the store for the current command context.
-func setContextStore(cmd *cobra.Command) error {
-	cfg := mustGetContextConfig(cmd)
-	db, err := http.NewClient(cfg.GetString("api.address"))
-	if err != nil {
-		return err
-	}
-	ctx := context.WithValue(cmd.Context(), dbContextKey, db)
-	if tx, ok := ctx.Value(txContextKey).(datastore.Txn); ok {
-		ctx = context.WithValue(ctx, storeContextKey, db.WithTxn(tx))
-	} else {
-		ctx = context.WithValue(ctx, storeContextKey, db)
-	}
+	ctx := db.SetContextTxn(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }

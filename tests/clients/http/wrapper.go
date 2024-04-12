@@ -201,10 +201,6 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	return &TxWrapper{server, client}, nil
 }
 
-func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
-	return w.client.WithTxn(tx)
-}
-
 func (w *Wrapper) Root() datastore.RootStore {
 	return w.node.Root()
 }
