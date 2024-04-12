@@ -198,7 +198,7 @@ func (c *collection) updateIndexedDoc(
 	for _, index := range c.indexes {
 		// We only need to update the index if one of the indexed fields
 		// on the document has been changed.
-		if isUpdatingIndexedFields(index, doc) {
+		if isUpdatingIndexedFields(index, oldDoc, doc) {
 			err = index.Update(ctx, txn, oldDoc, doc)
 			if err != nil {
 				return err
@@ -595,16 +595,23 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	return sb.String()
 }
 
-func isUpdatingIndexedFields(index CollectionIndex, doc *client.Document) bool {
-	for _, docField := range doc.Fields() {
-		// It is safe to discard the error here for simplicity.
-		val, _ := doc.GetValueWithField(docField)
-		if val.IsDirty() {
-			for _, indexedFields := range index.Description().Fields {
-				if indexedFields.Name == docField.Name() {
-					return true
-				}
-			}
+func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
+	for _, indexedFields := range index.Description().Fields {
+		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
+		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+
+		// GetValue will return an error when the field doesn't exist.
+		// This will happen for oldDoc only if the field hasn't been set
+		// when first creating the document. For newDoc, this will happen
+		// only if the field hasn't been set when first creating the document
+		// AND the field hasn't been set on the update.
+		switch {
+		case getOldValErr != nil && getNewValErr != nil:
+			continue
+		case getOldValErr != nil && getNewValErr == nil:
+			return true
+		case oldVal.Value() != newVal.Value():
+			return true
 		}
 	}
 	return false
