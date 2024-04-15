@@ -13,9 +13,8 @@ package permission
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -34,7 +33,7 @@ import (
 // - Document is public (unregistered), whether signatured request or not doesn't matter.
 func CheckAccessOfDocOnCollectionWithACP(
 	ctx context.Context,
-	identityOptional immutable.Option[string],
+	identityOptional acpIdentity.Identity,
 	acpSystem acp.ACP,
 	collection client.Collection,
 	permission acp.DPIPermission,

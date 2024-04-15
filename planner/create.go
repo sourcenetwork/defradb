@@ -80,7 +80,6 @@ func (n *createNode) Next() (bool, error) {
 
 	if err := n.collection.Create(
 		n.p.ctx,
-		n.p.identity,
 		n.doc,
 	); err != nil {
 		return false, err

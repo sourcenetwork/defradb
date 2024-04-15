@@ -13,8 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/db/permission"
 )
@@ -32,14 +30,13 @@ import (
 // Otherwise, nothing is registered with the acp system.
 func (c *collection) registerDocWithACP(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID string,
 ) error {
 	// If acp is not available, then no document is registered.
 	if !c.db.acp.HasValue() {
 		return nil
 	}
-
+	identity := mustGetContextIdentity(ctx)
 	return permission.RegisterDocOnCollectionWithACP(
 		ctx,
 		identity,
@@ -51,7 +48,6 @@ func (c *collection) registerDocWithACP(
 
 func (c *collection) checkAccessOfDocWithACP(
 	ctx context.Context,
-	identity immutable.Option[string],
 	dpiPermission acp.DPIPermission,
 	docID string,
 ) (bool, error) {
@@ -59,7 +55,7 @@ func (c *collection) checkAccessOfDocWithACP(
 	if !c.db.acp.HasValue() {
 		return true, nil
 	}
-
+	identity := mustGetContextIdentity(ctx)
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		identity,

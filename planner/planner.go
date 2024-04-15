@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
@@ -86,7 +87,7 @@ type PlanContext struct {
 // produce a request plan, which is run by the execution context.
 type Planner struct {
 	txn      datastore.Txn
-	identity immutable.Option[string]
+	identity identity.Identity
 	acp      immutable.Option[acp.ACP]
 	db       client.Store
 
@@ -95,7 +96,7 @@ type Planner struct {
 
 func New(
 	ctx context.Context,
-	identity immutable.Option[string],
+	identity identity.Identity,
 	acp immutable.Option[acp.ACP],
 	db client.Store,
 	txn datastore.Txn,

@@ -36,3 +36,13 @@ func NewIdentity(identity string) Identity {
 	}
 	return Identity(immutable.Some[string](identity))
 }
+
+// HasValue returns true if the identity is not empty.
+func (i Identity) HasValue() bool {
+	return immutable.Option[string](i).HasValue()
+}
+
+// Value returns the identity value.
+func (i Identity) Value() string {
+	return immutable.Option[string](i).Value()
+}

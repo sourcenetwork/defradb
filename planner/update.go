@@ -72,7 +72,7 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			_, err = n.collection.UpdateWithDocID(n.p.ctx, n.p.identity, docID, string(patch))
+			_, err = n.collection.UpdateWithDocID(n.p.ctx, docID, string(patch))
 			if err != nil {
 				return false, err
 			}

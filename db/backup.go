@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"os"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -91,7 +90,7 @@ func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
 			}
 
 			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-			err = col.Create(ctx, acpIdentity.NoIdentity, doc)
+			err = col.Create(ctx, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -103,7 +102,7 @@ func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
 					return NewErrDocUpdate(err)
 				}
 				// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-				err = col.Update(ctx, acpIdentity.NoIdentity, doc)
+				err = col.Update(ctx, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -191,7 +190,7 @@ func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			return err
 		}
 		// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-		docIDsCh, err := col.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
+		docIDsCh, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return err
 		}
@@ -208,7 +207,7 @@ func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				}
 			}
 			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-			doc, err := col.Get(ctx, acpIdentity.NoIdentity, docResultWithID.ID, false)
+			doc, err := col.Get(ctx, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}
@@ -241,7 +240,7 @@ func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								return err
 							}
 							// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430
-							foreignDoc, err := foreignCol.Get(ctx, acpIdentity.NoIdentity, foreignDocID, false)
+							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
 								err := doc.Set(field.Name+request.RelatedObjectID, nil)
 								if err != nil {

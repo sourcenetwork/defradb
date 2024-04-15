@@ -186,7 +186,6 @@ func (c *collection) updateIndexedDoc(
 	// and handle the case of when oldDoc == nil (will be nil if inaccessible document).
 	oldDoc, err := c.get(
 		ctx,
-		acpIdentity.NoIdentity,
 		c.getPrimaryKeyFromDocID(doc.ID()),
 		c.Definition().CollectIndexedFields(),
 		false,

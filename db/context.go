@@ -13,7 +13,7 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -53,7 +53,7 @@ func ensureContextValues(ctx context.Context, db transactionDB, readOnly bool) (
 	// default identity
 	_, ok := TryGetContextIdentity(ctx)
 	if !ok {
-		ctx = SetContextIdentity(ctx, identity.NoIdentity)
+		ctx = SetContextIdentity(ctx, acpIdentity.NoIdentity)
 	}
 	// explicit transaction
 	txn, ok := TryGetContextTxn(ctx)
@@ -80,8 +80,8 @@ func mustGetContextTxn(ctx context.Context) datastore.Txn {
 //
 // This should only be called from private functions within the db package
 // where we ensure an identity always exists.
-func mustGetContextIdentity(ctx context.Context) identity.Identity {
-	return ctx.Value(identityContextKey{}).(identity.Identity)
+func mustGetContextIdentity(ctx context.Context) acpIdentity.Identity {
+	return ctx.Value(identityContextKey{}).(acpIdentity.Identity)
 }
 
 // TryGetContextTxn returns a transaction and a bool indicating if the
@@ -100,14 +100,14 @@ func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 
 // TryGetContextTxn returns an identity and a bool indicating if the
 // identity was retrieved from the given context.
-func TryGetContextIdentity(ctx context.Context) (identity.Identity, bool) {
-	id, ok := ctx.Value(identityContextKey{}).(identity.Identity)
+func TryGetContextIdentity(ctx context.Context) (acpIdentity.Identity, bool) {
+	id, ok := ctx.Value(identityContextKey{}).(acpIdentity.Identity)
 	return id, ok
 }
 
 // SetContextTxn returns a new context with the identity value set.
 //
 // This will overwrite any previously set identity value.
-func SetContextIdentity(ctx context.Context, id identity.Identity) context.Context {
+func SetContextIdentity(ctx context.Context, id acpIdentity.Identity) context.Context {
 	return context.WithValue(ctx, identityContextKey{}, id)
 }
