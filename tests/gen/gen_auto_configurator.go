@@ -65,7 +65,7 @@ func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
 // addRelationUsage adds a relation usage tracker for a foreign field.
 func (c *typeUsageCounters) addRelationUsage(
 	secondaryType string,
-	field client.SchemaFieldDescription,
+	field client.FieldDefinition,
 	minPerDoc, maxPerDoc, numDocs int,
 ) {
 	primaryType := field.Kind.Underlying()
@@ -81,7 +81,7 @@ func (c *typeUsageCounters) addRelationUsage(
 }
 
 // getNextTypeIndForField returns the next index to be used for a foreign field.
-func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.SchemaFieldDescription) int {
+func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.FieldDefinition) int {
 	current := c.m[field.Kind.Underlying()][secondaryType][field.Name]
 	return current.useNextDocIDIndex()
 }
@@ -272,7 +272,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 	primaryGraph map[string][]string,
 ) (typeDemand, error) {
 	primaryTypeDef := g.types[primaryType]
-	for _, field := range primaryTypeDef.Schema.Fields {
+	for _, field := range primaryTypeDef.GetFields() {
 		if field.Kind.IsObject() && field.Kind.Underlying() == secondaryType {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
@@ -338,7 +338,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 	primaryGraph map[string][]string,
 ) error {
 	typeDef := g.types[typeName]
-	for _, field := range typeDef.Schema.Fields {
+	for _, field := range typeDef.GetFields() {
 		if field.Kind.IsObject() && !field.IsPrimaryRelation {
 			primaryDocDemand := g.docsDemand[typeName]
 			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
@@ -401,7 +401,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 
 func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType string, minPerDoc, maxPerDoc int) {
 	secondaryTypeDef := g.types[secondaryType]
-	for _, secondaryTypeField := range secondaryTypeDef.Schema.Fields {
+	for _, secondaryTypeField := range secondaryTypeDef.GetFields() {
 		if secondaryTypeField.Kind.Underlying() == primaryType {
 			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, minPerDoc,
 				maxPerDoc, g.docsDemand[primaryType].getAverage())
@@ -422,7 +422,7 @@ func getRelationGraph(types map[string]client.CollectionDefinition) map[string][
 	}
 
 	for typeName, typeDef := range types {
-		for _, field := range typeDef.Schema.Fields {
+		for _, field := range typeDef.GetFields() {
 			if field.Kind.IsObject() {
 				if field.IsPrimaryRelation {
 					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.Kind.Underlying())

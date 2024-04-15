@@ -58,11 +58,12 @@ func validateConfig(types map[string]client.CollectionDefinition, configsMap con
 			return newNotDefinedTypeErr(typeName)
 		}
 		for fieldName, fieldConfig := range typeConfigs {
-			fieldDef, hasField := typeDef.Schema.GetFieldByName(fieldName)
+			fieldDef, hasField := typeDef.GetFieldByName(fieldName)
 			if !hasField {
 				return NewErrInvalidConfiguration("field " + fieldName +
 					" is not defined in the schema for type " + typeName)
 			}
+
 			err := checkAndValidateMinMax(&fieldDef, &fieldConfig)
 			if err != nil {
 				return err
@@ -82,7 +83,7 @@ func validateConfig(types map[string]client.CollectionDefinition, configsMap con
 	return nil
 }
 
-func checkAndValidateMinMax(field *client.SchemaFieldDescription, conf *genConfig) error {
+func checkAndValidateMinMax(field *client.FieldDefinition, conf *genConfig) error {
 	_, hasMin := conf.props["min"]
 	if hasMin {
 		var err error
@@ -100,7 +101,7 @@ func checkAndValidateMinMax(field *client.SchemaFieldDescription, conf *genConfi
 	return nil
 }
 
-func checkAndValidateLen(field *client.SchemaFieldDescription, conf *genConfig) error {
+func checkAndValidateLen(field *client.FieldDefinition, conf *genConfig) error {
 	lenConf, hasLen := conf.props["len"]
 	if hasLen {
 		if field.Kind != client.FieldKind_NILLABLE_STRING {
@@ -117,7 +118,7 @@ func checkAndValidateLen(field *client.SchemaFieldDescription, conf *genConfig) 
 	return nil
 }
 
-func checkAndValidateRatio(field *client.SchemaFieldDescription, conf *genConfig) error {
+func checkAndValidateRatio(field *client.FieldDefinition, conf *genConfig) error {
 	ratioConf, hasRatio := conf.props["ratio"]
 	if hasRatio {
 		if field.Kind != client.FieldKind_NILLABLE_BOOL {

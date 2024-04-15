@@ -66,28 +66,28 @@ type Document struct {
 	// marks if document has unsaved changes
 	isDirty bool
 
-	schemaDescription SchemaDescription
+	collectionDefinition CollectionDefinition
 }
 
-func newEmptyDoc(sd SchemaDescription) *Document {
+func newEmptyDoc(collectionDefinition CollectionDefinition) *Document {
 	return &Document{
-		fields:            make(map[string]Field),
-		values:            make(map[Field]*FieldValue),
-		schemaDescription: sd,
+		fields:               make(map[string]Field),
+		values:               make(map[Field]*FieldValue),
+		collectionDefinition: collectionDefinition,
 	}
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, sd SchemaDescription) *Document {
-	doc := newEmptyDoc(sd)
+func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) *Document {
+	doc := newEmptyDoc(collectionDefinition)
 	doc.id = docID
 	return doc
 }
 
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any, sd SchemaDescription) (*Document, error) {
+func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinition) (*Document, error) {
 	var err error
-	doc := newEmptyDoc(sd)
+	doc := newEmptyDoc(collectionDefinition)
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -126,8 +126,8 @@ func IsJSONArray(obj []byte) bool {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
-	doc := newEmptyDoc(sd)
+func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Document, error) {
+	doc := newEmptyDoc(collectionDefinition)
 	err := doc.SetWithJSON(obj)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
-func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
+func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*Document, error) {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		doc := newEmptyDoc(sd)
+		doc := newEmptyDoc(collectionDefinition)
 		err = doc.setWithFastJSONObject(o)
 		if err != nil {
 			return nil, err
@@ -176,7 +176,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field SchemaFieldDescription) (NormalValue, error) {
+func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 	if field.Kind.IsNillable() {
 		if val == nil {
 			return NewNormalNil(field.Kind)
@@ -588,15 +588,15 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.schemaDescription.GetFieldByName(field)
+	fd, exists := doc.collectionDefinition.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsRelation() && !fd.Kind.IsObjectArray() {
+	if fd.Kind.IsObject() && !fd.Kind.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
-		fd, exists = doc.schemaDescription.GetFieldByName(field)
+		fd, exists = doc.collectionDefinition.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}

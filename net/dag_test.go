@@ -63,7 +63,7 @@ func TestSendJobWorker_WithNewJob_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
@@ -107,7 +107,7 @@ func TestSendJobWorker_WithCloseJob_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
@@ -168,7 +168,7 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	col, err := db1.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 

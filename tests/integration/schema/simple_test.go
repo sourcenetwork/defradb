@@ -180,7 +180,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 						name: NotAType
 					}
 				`,
-				ExpectedError: "relation must be defined on both schemas. Field: name, Type: NotAType",
+				ExpectedError: "no type found for given name. Field: name, Kind: NotAType",
 			},
 		},
 	}

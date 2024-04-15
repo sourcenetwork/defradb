@@ -36,6 +36,20 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "verified",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
@@ -85,6 +99,20 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "verified",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
@@ -116,6 +144,20 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "publisher",
+							},
+							{
+								Name: "rating",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
@@ -165,6 +207,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name:         "author",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Author")),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name:         "author_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "rating",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
@@ -175,17 +238,6 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  client.NONE_CRDT,
 							},
 							{
-								Name:         "author",
-								RelationName: "author_book",
-								Kind:         client.ObjectKind("Author"),
-								Typ:          client.NONE_CRDT,
-							},
-							{
-								Name: "author_id",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
@@ -202,6 +254,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name:         "published",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Book")),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name:         "published_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("author_book"),
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
@@ -222,95 +295,13 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  client.LWW_REGISTER,
 							},
 							{
-								Name:              "published",
-								RelationName:      "author_book",
-								Kind:              client.ObjectKind("Book"),
-								Typ:               client.NONE_CRDT,
-								IsPrimaryRelation: true,
+								Name: "published",
+								Kind: client.ObjectKind("Book"),
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "published_id",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			description: "Multiple simple types",
-			sdl: `
-			type User {
-				name: String
-				age: Int
-				verified: Boolean
-			}
-
-			type Author {
-				name: String
-				publisher: String
-				rating: Float
-			}
-			`,
-			targetDescs: []client.CollectionDefinition{
-				{
-					Description: client.CollectionDescription{
-						Name:    immutable.Some("User"),
-						Indexes: []client.IndexDescription{},
-					},
-					Schema: client.SchemaDescription{
-						Name: "User",
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name: "age",
-								Kind: client.FieldKind_NILLABLE_INT,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "name",
-								Kind: client.FieldKind_NILLABLE_STRING,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "verified",
-								Kind: client.FieldKind_NILLABLE_BOOL,
-								Typ:  client.LWW_REGISTER,
-							},
-						},
-					},
-				},
-				{
-					Description: client.CollectionDescription{
-						Name:    immutable.Some("Author"),
-						Indexes: []client.IndexDescription{},
-					},
-					Schema: client.SchemaDescription{
-						Name: "Author",
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name: "name",
-								Kind: client.FieldKind_NILLABLE_STRING,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "publisher",
-								Kind: client.FieldKind_NILLABLE_STRING,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "rating",
-								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -338,6 +329,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name:         "author",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Author")),
+								RelationName: immutable.Some("book_authors"),
+							},
+							{
+								Name:         "author_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("book_authors"),
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "rating",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
@@ -346,17 +358,6 @@ func TestSingleSimpleType(t *testing.T) {
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
 								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name:         "author",
-								RelationName: "book_authors",
-								Kind:         client.ObjectKind("Author"),
-								Typ:          client.NONE_CRDT,
-							},
-							{
-								Name: "author_id",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
@@ -375,6 +376,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name:         "published",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Book")),
+								RelationName: immutable.Some("book_authors"),
+							},
+							{
+								Name:         "published_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("book_authors"),
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
@@ -395,11 +417,9 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  client.LWW_REGISTER,
 							},
 							{
-								Name:              "published",
-								RelationName:      "book_authors",
-								Kind:              client.ObjectKind("Book"),
-								Typ:               client.NONE_CRDT,
-								IsPrimaryRelation: true,
+								Name: "published",
+								Kind: client.ObjectKind("Book"),
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "published_id",
@@ -431,6 +451,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name:         "author",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Author")),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name:         "author_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "rating",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
@@ -441,11 +482,9 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  client.NONE_CRDT,
 							},
 							{
-								Name:              "author",
-								RelationName:      "author_book",
-								Kind:              client.ObjectKind("Author"),
-								Typ:               client.NONE_CRDT,
-								IsPrimaryRelation: true,
+								Name: "author",
+								Kind: client.ObjectKind("Author"),
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "author_id",
@@ -469,6 +508,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name:         "published",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Book")),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name:         "published_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("author_book"),
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
@@ -486,17 +546,6 @@ func TestSingleSimpleType(t *testing.T) {
 							{
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name:         "published",
-								RelationName: "author_book",
-								Kind:         client.ObjectKind("Book"),
-								Typ:          client.NONE_CRDT,
-							},
-							{
-								Name: "published_id",
-								Kind: client.FieldKind_DocID,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -524,6 +573,27 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name:         "author",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("Author")),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name:         "author_id",
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("author_book"),
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name: "rating",
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
@@ -532,18 +602,6 @@ func TestSingleSimpleType(t *testing.T) {
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
 								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name:              "author",
-								RelationName:      "author_book",
-								Kind:              client.ObjectKind("Author"),
-								Typ:               client.NONE_CRDT,
-								IsPrimaryRelation: true,
-							},
-							{
-								Name: "author_id",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
@@ -555,6 +613,16 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
+							{
+								Name: "author",
+								Kind: client.ObjectKind("Author"),
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "author_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
+							},
 						},
 					},
 				},
@@ -562,6 +630,22 @@ func TestSingleSimpleType(t *testing.T) {
 					Description: client.CollectionDescription{
 						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+							{
+								Name:         "published",
+								Kind:         immutable.Some[client.FieldKind](client.ObjectArrayKind("Book")),
+								RelationName: immutable.Some("author_book"),
+							},
+						},
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
@@ -580,12 +664,6 @@ func TestSingleSimpleType(t *testing.T) {
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name:         "published",
-								RelationName: "author_book",
-								Kind:         client.ObjectArrayKind("Book"),
-								Typ:          client.NONE_CRDT,
 							},
 						},
 					},
@@ -608,6 +686,7 @@ func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 
 	for i, d := range descs {
 		assert.Equal(t, testcase.targetDescs[i].Description, d.Description, testcase.description)
+		assert.Equal(t, testcase.targetDescs[i].Schema, d.Schema, testcase.description)
 	}
 }
 

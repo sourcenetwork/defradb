@@ -85,6 +85,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 func (db *db) createCollection(
 	ctx context.Context,
 	def client.CollectionDefinition,
+	newDefinitions []client.CollectionDefinition,
 ) (client.Collection, error) {
 	schema := def.Schema
 	desc := def.Description
@@ -98,6 +99,36 @@ func (db *db) createCollection(
 		if exists {
 			return nil, ErrCollectionAlreadyExists
 		}
+	}
+
+	existingDefinitions, err := db.getAllActiveDefinitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	schemaByName := map[string]client.SchemaDescription{}
+	for _, existingDefinition := range existingDefinitions {
+		schemaByName[existingDefinition.Schema.Name] = existingDefinition.Schema
+	}
+	for _, newDefinition := range newDefinitions {
+		schemaByName[newDefinition.Schema.Name] = newDefinition.Schema
+	}
+
+	_, err = validateUpdateSchemaFields(schemaByName, client.SchemaDescription{}, schema)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionsByName := map[string]client.CollectionDefinition{}
+	for _, existingDefinition := range existingDefinitions {
+		definitionsByName[existingDefinition.GetName()] = existingDefinition
+	}
+	for _, newDefinition := range newDefinitions {
+		definitionsByName[newDefinition.GetName()] = newDefinition
+	}
+	err = db.validateNewCollection(def, definitionsByName)
+	if err != nil {
+		return nil, err
 	}
 
 	colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
@@ -122,9 +153,9 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.SchemaVersionID = schema.VersionID
-	for _, globalField := range schema.Fields {
+	for _, localField := range desc.Fields {
 		var fieldID uint64
-		if globalField.Name == request.DocIDFieldName {
+		if localField.Name == request.DocIDFieldName {
 			// There is no hard technical requirement for this, we just think it looks nicer
 			// if the doc id is at the zero index.  It makes it look a little nicer in commit
 			// queries too.
@@ -136,13 +167,12 @@ func (db *db) createCollection(
 			}
 		}
 
-		desc.Fields = append(
-			desc.Fields,
-			client.CollectionFieldDescription{
-				Name: globalField.Name,
-				ID:   client.FieldID(fieldID),
-			},
-		)
+		for i := range desc.Fields {
+			if desc.Fields[i].Name == localField.Name {
+				desc.Fields[i].ID = client.FieldID(fieldID)
+				break
+			}
+		}
 	}
 
 	desc, err = description.SaveCollection(ctx, txn, desc)
@@ -226,9 +256,8 @@ func (db *db) updateSchema(
 			idFieldName := field.Name + "_id"
 			if _, ok := schema.GetFieldByName(idFieldName); !ok {
 				schema.Fields = append(schema.Fields, client.SchemaFieldDescription{
-					Name:         idFieldName,
-					Kind:         client.FieldKind_DocID,
-					RelationName: field.RelationName,
+					Name: idFieldName,
+					Kind: client.FieldKind_DocID,
 				})
 			}
 		}
@@ -459,20 +488,10 @@ func validateUpdateSchemaFields(
 		hasChanged = hasChanged || !fieldAlreadyExists
 
 		if !fieldAlreadyExists && proposedField.Kind.IsObject() {
-			relatedDesc, relatedDescFound := descriptionsByName[proposedField.Kind.Underlying()]
+			_, relatedDescFound := descriptionsByName[proposedField.Kind.Underlying()]
 
 			if !relatedDescFound {
 				return false, NewErrFieldKindNotFound(proposedField.Name, proposedField.Kind.Underlying())
-			}
-
-			if proposedField.RelationName == "" {
-				return false, NewErrRelationalFieldMissingRelationName(proposedField.Name)
-			}
-
-			if proposedField.IsPrimaryRelation {
-				if proposedField.Kind.IsObjectArray() {
-					return false, NewErrPrimarySideOnMany(proposedField.Name)
-				}
 			}
 
 			if proposedField.Kind.IsObject() && !proposedField.Kind.IsArray() {
@@ -482,36 +501,12 @@ func validateUpdateSchemaFields(
 					if idField.Kind != client.FieldKind_DocID {
 						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocID, idField.Kind)
 					}
-
-					if idField.RelationName == "" {
-						return false, NewErrRelationalFieldMissingRelationName(idField.Name)
-					}
 				}
 			}
+		}
 
-			var relatedFieldFound bool
-			var relatedField client.SchemaFieldDescription
-			for _, field := range relatedDesc.Fields {
-				if field.RelationName == proposedField.RelationName &&
-					field.Kind != client.FieldKind_DocID &&
-					!(relatedDesc.Name == proposedDesc.Name && field.Name == proposedField.Name) {
-					relatedFieldFound = true
-					relatedField = field
-					break
-				}
-			}
-
-			if !relatedFieldFound {
-				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Kind.Underlying())
-			}
-
-			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
-				return false, client.NewErrPrimarySideNotDefined(proposedField.RelationName)
-			}
-
-			if proposedField.IsPrimaryRelation && relatedField.IsPrimaryRelation {
-				return false, NewErrBothSidesPrimary(proposedField.RelationName)
-			}
+		if proposedField.Kind.IsObjectArray() {
+			return false, NewErrSecondaryFieldOnSchema(proposedField.Name)
 		}
 
 		if _, isDuplicate := newFieldNames[proposedField.Name]; isDuplicate {
@@ -665,6 +660,153 @@ func (db *db) validateCollectionChanges(
 		err := validators(oldColsByID, newColsByID)
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+var newCollectionValidators = []func(
+	client.CollectionDefinition,
+	map[string]client.CollectionDefinition,
+) error{
+	validateSecondaryFieldsPairUp,
+	validateRelationPointsToValidKind,
+	validateSingleSidePrimary,
+}
+
+func (db *db) validateNewCollection(
+	def client.CollectionDefinition,
+	defsByName map[string]client.CollectionDefinition,
+) error {
+	for _, validators := range newCollectionValidators {
+		err := validators(def, defsByName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateRelationPointsToValidKind(
+	def client.CollectionDefinition,
+	defsByName map[string]client.CollectionDefinition,
+) error {
+	for _, field := range def.Description.Fields {
+		if !field.Kind.HasValue() {
+			continue
+		}
+
+		if !field.Kind.Value().IsObject() {
+			continue
+		}
+
+		underlying := field.Kind.Value().Underlying()
+		_, ok := defsByName[underlying]
+		if !ok {
+			return NewErrFieldKindNotFound(field.Name, underlying)
+		}
+	}
+
+	return nil
+}
+
+func validateSecondaryFieldsPairUp(
+	def client.CollectionDefinition,
+	defsByName map[string]client.CollectionDefinition,
+) error {
+	for _, field := range def.Description.Fields {
+		if !field.Kind.HasValue() {
+			continue
+		}
+
+		if !field.Kind.Value().IsObject() {
+			continue
+		}
+
+		if !field.RelationName.HasValue() {
+			continue
+		}
+
+		_, hasSchemaField := def.Schema.GetFieldByName(field.Name)
+		if hasSchemaField {
+			continue
+		}
+
+		underlying := field.Kind.Value().Underlying()
+		otherDef, ok := defsByName[underlying]
+		if !ok {
+			continue
+		}
+
+		if len(otherDef.Description.Fields) == 0 {
+			// Views/embedded objects do not require both sides of the relation to be defined.
+			continue
+		}
+
+		otherField, ok := otherDef.Description.GetFieldByRelation(
+			field.RelationName.Value(),
+			def.GetName(),
+			field.Name,
+		)
+		if !ok {
+			return NewErrRelationMissingField(underlying, field.RelationName.Value())
+		}
+
+		_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
+		if !ok {
+			// This secondary is paired with another secondary, which is invalid
+			return NewErrRelationMissingField(underlying, field.RelationName.Value())
+		}
+	}
+
+	return nil
+}
+
+func validateSingleSidePrimary(
+	def client.CollectionDefinition,
+	defsByName map[string]client.CollectionDefinition,
+) error {
+	for _, field := range def.Description.Fields {
+		if !field.Kind.HasValue() {
+			continue
+		}
+
+		if !field.Kind.Value().IsObject() {
+			continue
+		}
+
+		if !field.RelationName.HasValue() {
+			continue
+		}
+
+		_, hasSchemaField := def.Schema.GetFieldByName(field.Name)
+		if !hasSchemaField {
+			// This is a secondary field and thus passes this rule
+			continue
+		}
+
+		underlying := field.Kind.Value().Underlying()
+		otherDef, ok := defsByName[underlying]
+		if !ok {
+			continue
+		}
+
+		otherField, ok := otherDef.Description.GetFieldByRelation(
+			field.RelationName.Value(),
+			def.GetName(),
+			field.Name,
+		)
+		if !ok {
+			// This must be a one-sided relation, in which case it passes this rule
+			continue
+		}
+
+		_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
+		if ok {
+			// This primary is paired with another primary, which is invalid
+			return ErrMultipleRelationPrimaries
 		}
 	}
 
@@ -1705,14 +1847,14 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	if err != nil {
 		return err
 	}
-	otherSchema := otherCol.Schema()
 	otherObjFieldDescription, _ := otherCol.Description().GetFieldByRelation(
 		fieldDescription.RelationName,
 		c.Name().Value(),
 		objFieldDescription.Name,
-		&otherSchema,
 	)
-	if !(otherObjFieldDescription.Kind.IsObject() && !otherObjFieldDescription.Kind.IsArray()) {
+	if !(otherObjFieldDescription.Kind.HasValue() &&
+		otherObjFieldDescription.Kind.Value().IsObject() &&
+		!otherObjFieldDescription.Kind.Value().IsArray()) {
 		// If the other field is not an object field then this is not a one to one relation and we can continue
 		return nil
 	}

@@ -28,7 +28,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "John"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID1 := doc1.ID().String()
@@ -39,7 +39,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "Shahzad"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID2 := doc2.ID().String()

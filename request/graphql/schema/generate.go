@@ -414,7 +414,7 @@ func (g *Generator) buildTypes(
 		// will be reassigned before the thunk is run
 		// TODO remove when Go 1.22
 		collection := c
-		fieldDescriptions := collection.Schema.Fields
+		fieldDescriptions := collection.GetFields()
 		isEmbeddedObject := !collection.Description.Name.HasValue()
 		isQuerySource := len(collection.Description.QuerySources()) > 0
 		isViewObject := isEmbeddedObject || isQuerySource

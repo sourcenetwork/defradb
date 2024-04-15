@@ -22,7 +22,6 @@ const (
 	errParsingFailed                       string = "failed to parse argument"
 	errUninitializeProperty                string = "invalid state, required property is uninitialized"
 	errMaxTxnRetries                       string = "reached maximum transaction reties"
-	errRelationOneSided                    string = "relation must be defined on both schemas"
 	errCollectionNotFound                  string = "collection not found"
 	errUnknownCRDT                         string = "unknown crdt"
 	errCRDTKindMismatch                    string = "CRDT type %s can't be assigned to field kind %s"
@@ -33,7 +32,6 @@ const (
 	errCanNotNormalizeValue                string = "can not normalize value"
 	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
-	errPrimarySideNotDefined               string = "primary side of relation not defined"
 )
 
 // Errors returnable from this package.
@@ -58,7 +56,6 @@ var (
 	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
 	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
 	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
-	ErrPrimarySideNotDefined               = errors.New(errPrimarySideNotDefined)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -131,14 +128,6 @@ func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
 
-func NewErrRelationOneSided(fieldName string, typeName string) error {
-	return errors.New(
-		errRelationOneSided,
-		errors.NewKV("Field", fieldName),
-		errors.NewKV("Type", typeName),
-	)
-}
-
 func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
 	return errors.New(
 		errCollectionNotFound,
@@ -174,11 +163,4 @@ func NewErrCRDTKindMismatch(cType, kind string) error {
 
 func NewErrInvalidJSONPaylaod(payload string) error {
 	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
-}
-
-func NewErrPrimarySideNotDefined(relationName string) error {
-	return errors.New(
-		errPrimarySideNotDefined,
-		errors.NewKV("RelationName", relationName),
-	)
 }

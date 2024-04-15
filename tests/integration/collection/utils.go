@@ -86,7 +86,7 @@ func setupDatabase(
 		}
 
 		for _, docStr := range docs {
-			doc, err := client.NewDocFromJSON([]byte(docStr), col.Schema())
+			doc, err := client.NewDocFromJSON([]byte(docStr), col.Definition())
 			if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 				return
 			}

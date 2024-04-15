@@ -80,7 +80,7 @@ func (db *db) addView(
 				Schema: schema,
 			}
 		} else {
-			col, err := db.createCollection(ctx, definition)
+			col, err := db.createCollection(ctx, definition, newDefinitions)
 			if err != nil {
 				return nil, err
 			}

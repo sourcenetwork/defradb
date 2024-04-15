@@ -53,17 +53,10 @@ type SchemaFieldDescription struct {
 	// Must contain a valid value. It is currently immutable.
 	Kind FieldKind
 
-	// RelationName the name of the relationship that this field represents if this field is
-	// a relation field.  Otherwise this will be empty.
-	RelationName string
-
 	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
 	//
 	// It is currently immutable.
 	Typ CType
-
-	// If true, this is the primary half of a relation, otherwise is false.
-	IsPrimaryRelation bool
 }
 
 // ScalarKind represents singular scalar field kinds, such as `Int`.
@@ -278,16 +271,14 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 
 // IsRelation returns true if this field is a relation.
 func (f SchemaFieldDescription) IsRelation() bool {
-	return f.RelationName != ""
+	return f.Kind.IsObject()
 }
 
 // schemaFieldDescription is a private type used to facilitate the unmarshalling
 // of json to a [SchemaFieldDescription].
 type schemaFieldDescription struct {
-	Name              string
-	RelationName      string
-	Typ               CType
-	IsPrimaryRelation bool
+	Name string
+	Typ  CType
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
@@ -301,9 +292,7 @@ func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	f.Name = descMap.Name
-	f.RelationName = descMap.RelationName
 	f.Typ = descMap.Typ
-	f.IsPrimaryRelation = descMap.IsPrimaryRelation
 	f.Kind, err = parseFieldKind(descMap.Kind)
 	if err != nil {
 		return err

@@ -395,7 +395,7 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc := client.NewDocWithID(docID, c.Schema())
+	doc := client.NewDocWithID(docID, c.Definition())
 	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
