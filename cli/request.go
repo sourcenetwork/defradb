@@ -16,7 +16,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -26,10 +25,6 @@ const (
 )
 
 func MakeRequestCommand() *cobra.Command {
-	const identityFlagLongRequired string = "identity"
-	const identityFlagShortRequired string = "i"
-
-	var identityValue string
 	var filePath string
 	var cmd = &cobra.Command{
 		Use:   "query [-i --identity] [request]",
@@ -53,9 +48,6 @@ with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
-			identity := acpIdentity.NewIdentity(identityValue)
-
 			var request string
 			switch {
 			case filePath != "":
@@ -79,7 +71,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			}
 
 			store := mustGetContextStore(cmd)
-			result := store.ExecRequest(cmd.Context(), identity, request)
+			result := store.ExecRequest(cmd.Context(), request)
 
 			var errors []string
 			for _, err := range result.GQL.Errors {
@@ -98,12 +90,5 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "File containing the query request")
-	cmd.Flags().StringVarP(
-		&identityValue,
-		identityFlagLongRequired,
-		identityFlagShortRequired,
-		"",
-		"Identity of the actor",
-	)
 	return cmd
 }
