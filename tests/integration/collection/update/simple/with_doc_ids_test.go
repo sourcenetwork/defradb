@@ -16,7 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
@@ -57,7 +56,6 @@ func TestUpdateWithDocIDs(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocIDs(
 							ctx,
-							acpIdentity.NoIdentity,
 							[]client.DocID{doc1.ID(), doc2.ID()},
 							`{name: "Eric"}`,
 						)
@@ -80,7 +78,6 @@ func TestUpdateWithDocIDs(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocIDs(
 							ctx,
-							acpIdentity.NoIdentity,
 							[]client.DocID{doc1.ID(), doc2.ID()},
 							`"name: Eric"`,
 						)
@@ -103,7 +100,6 @@ func TestUpdateWithDocIDs(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocIDs(
 							ctx,
-							acpIdentity.NoIdentity,
 							[]client.DocID{doc1.ID(), doc2.ID()},
 							`[
 								{
@@ -117,7 +113,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc1.ID(), false)
+						d, err := c.Get(ctx, doc1.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -129,7 +125,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 
 						assert.Equal(t, "John", name)
 
-						d2, err := c.Get(ctx, acpIdentity.NoIdentity, doc2.ID(), false)
+						d2, err := c.Get(ctx, doc2.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -159,7 +155,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocIDs(
 							ctx,
-							acpIdentity.NoIdentity,
+
 							[]client.DocID{doc1.ID(), doc2.ID()},
 							`{"age": 40}`,
 						)
@@ -167,7 +163,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc1.ID(), false)
+						d, err := c.Get(ctx, doc1.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -179,7 +175,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 
 						assert.Equal(t, int64(40), name)
 
-						d2, err := c.Get(ctx, acpIdentity.NoIdentity, doc2.ID(), false)
+						d2, err := c.Get(ctx, doc2.ID(), false)
 						if err != nil {
 							return err
 						}

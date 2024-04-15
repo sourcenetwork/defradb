@@ -394,15 +394,10 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
-	identity immutable.Option[string],
 	query string,
 ) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	result := &client.RequestResult{}
 

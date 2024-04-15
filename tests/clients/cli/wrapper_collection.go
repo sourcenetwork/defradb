@@ -57,7 +57,6 @@ func (c *Collection) Definition() client.CollectionDefinition {
 
 func (c *Collection) Create(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
 	if !c.Description().Name.HasValue() {
@@ -66,10 +65,6 @@ func (c *Collection) Create(
 
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	document, err := doc.String()
 	if err != nil {
@@ -87,7 +82,7 @@ func (c *Collection) Create(
 
 func (c *Collection) CreateMany(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docs []*client.Document,
 ) error {
 	if !c.Description().Name.HasValue() {
@@ -96,10 +91,6 @@ func (c *Collection) CreateMany(
 
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	docMapList := make([]map[string]any, len(docs))
 	for i, doc := range docs {
@@ -127,7 +118,7 @@ func (c *Collection) CreateMany(
 
 func (c *Collection) Update(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	doc *client.Document,
 ) error {
 	if !c.Description().Name.HasValue() {
@@ -136,10 +127,6 @@ func (c *Collection) Update(
 
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	args = append(args, "--docID", doc.ID().String())
 
@@ -159,25 +146,24 @@ func (c *Collection) Update(
 
 func (c *Collection) Save(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
-	_, err := c.Get(ctx, identity, doc.ID(), true)
+	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
-		return c.Update(ctx, identity, doc)
+		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, identity, doc)
+		return c.Create(ctx, doc)
 	}
 	return err
 }
 
 func (c *Collection) Delete(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docID client.DocID,
 ) (bool, error) {
-	res, err := c.DeleteWithDocID(ctx, identity, docID)
+	res, err := c.DeleteWithDocID(ctx, docID)
 	if err != nil {
 		return false, err
 	}
@@ -186,10 +172,10 @@ func (c *Collection) Delete(
 
 func (c *Collection) Exists(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docID client.DocID,
 ) (bool, error) {
-	_, err := c.Get(ctx, identity, docID, false)
+	_, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return false, err
 	}
@@ -198,17 +184,17 @@ func (c *Collection) Exists(
 
 func (c *Collection) UpdateWith(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	target any,
 	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, identity, t, updater)
+		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocID:
-		return c.UpdateWithDocID(ctx, identity, t, updater)
+		return c.UpdateWithDocID(ctx, t, updater)
 	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, identity, t, updater)
+		return c.UpdateWithDocIDs(ctx, t, updater)
 	default:
 		return nil, client.ErrInvalidUpdateTarget
 	}
@@ -231,7 +217,7 @@ func (c *Collection) updateWith(
 
 func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -241,10 +227,6 @@ func (c *Collection) UpdateWithFilter(
 
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	args = append(args, "--updater", updater)
 
@@ -259,7 +241,7 @@ func (c *Collection) UpdateWithFilter(
 
 func (c *Collection) UpdateWithDocID(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -270,10 +252,6 @@ func (c *Collection) UpdateWithDocID(
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Description().Name.Value())
 
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
-
 	args = append(args, "--docID", docID.String())
 	args = append(args, "--updater", updater)
 
@@ -282,7 +260,7 @@ func (c *Collection) UpdateWithDocID(
 
 func (c *Collection) UpdateWithDocIDs(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -292,10 +270,6 @@ func (c *Collection) UpdateWithDocIDs(
 
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	args = append(args, "--updater", updater)
 
@@ -310,16 +284,16 @@ func (c *Collection) UpdateWithDocIDs(
 
 func (c *Collection) DeleteWith(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	target any,
 ) (*client.DeleteResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, identity, t)
+		return c.DeleteWithFilter(ctx, t)
 	case client.DocID:
-		return c.DeleteWithDocID(ctx, identity, t)
+		return c.DeleteWithDocID(ctx, t)
 	case []client.DocID:
-		return c.DeleteWithDocIDs(ctx, identity, t)
+		return c.DeleteWithDocIDs(ctx, t)
 	default:
 		return nil, client.ErrInvalidDeleteTarget
 	}
@@ -342,7 +316,7 @@ func (c *Collection) deleteWith(
 
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	filter any,
 ) (*client.DeleteResult, error) {
 	if !c.Description().Name.HasValue() {
@@ -351,10 +325,6 @@ func (c *Collection) DeleteWithFilter(
 
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -367,7 +337,7 @@ func (c *Collection) DeleteWithFilter(
 
 func (c *Collection) DeleteWithDocID(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docID client.DocID,
 ) (*client.DeleteResult, error) {
 	if !c.Description().Name.HasValue() {
@@ -377,10 +347,6 @@ func (c *Collection) DeleteWithDocID(
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Description().Name.Value())
 
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
-
 	args = append(args, "--docID", docID.String())
 
 	return c.deleteWith(ctx, args)
@@ -388,7 +354,7 @@ func (c *Collection) DeleteWithDocID(
 
 func (c *Collection) DeleteWithDocIDs(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 	docIDs []client.DocID,
 ) (*client.DeleteResult, error) {
 	if !c.Description().Name.HasValue() {
@@ -397,10 +363,6 @@ func (c *Collection) DeleteWithDocIDs(
 
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	strDocIDs := make([]string, len(docIDs))
 	for i, v := range docIDs {
@@ -413,7 +375,6 @@ func (c *Collection) DeleteWithDocIDs(
 
 func (c *Collection) Get(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
@@ -423,10 +384,6 @@ func (c *Collection) Get(
 
 	args := []string{"client", "collection", "get"}
 	args = append(args, "--name", c.Description().Name.Value())
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	args = append(args, docID.String())
 
@@ -449,7 +406,7 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
-	identity immutable.Option[string],
+
 ) (<-chan client.DocIDResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
