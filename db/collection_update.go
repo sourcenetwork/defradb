@@ -56,7 +56,7 @@ func (c *collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (c *collection) UpdateWithDocID(
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (c *collection) UpdateWithDocIDs(
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}

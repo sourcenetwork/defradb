@@ -110,7 +110,7 @@ func (db *db) fetchCollectionIndexDescriptions(
 }
 
 func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) e
 }
 
 func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 }
 
 func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -395,7 +395,7 @@ func (c *collection) indexExistingDocs(
 //
 // All index artifacts for existing documents related the index will be removed.
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -486,7 +486,7 @@ func (c *collection) loadIndexes(ctx context.Context) error {
 
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}

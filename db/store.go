@@ -26,7 +26,7 @@ func (db *db) ExecRequest(
 	identity immutable.Option[string],
 	request string,
 ) *client.RequestResult {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}
 		res.GQL.Errors = []error{err}
@@ -49,7 +49,7 @@ func (db *db) ExecRequest(
 
 // GetCollectionByName returns an existing collection within the database.
 func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextValues(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (db *db) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextValues(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (db *db) GetCollections(
 //
 // Will return an error if it is not found.
 func (db *db) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextValues(ctx, db, true)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -92,7 +92,7 @@ func (db *db) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextValues(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (db *db) GetSchemas(
 func (db *db) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextValues(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (db *db) GetAllIndexes(
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
 func (db *db) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (db *db) PatchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func (db *db) PatchCollection(
 	ctx context.Context,
 	patchString string,
 ) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (db *db) PatchCollection(
 }
 
 func (db *db) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (db *db) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string
 }
 
 func (db *db) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (db *db) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (db *db) AddView(
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
 func (db *db) BasicImport(ctx context.Context, filepath string) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextValues(ctx, db, false)
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func (db *db) BasicImport(ctx context.Context, filepath string) error {
 
 // BasicExport exports the current data or subset of data to file in json format.
 func (db *db) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	ctx, txn, err := ensureContextValues(ctx, db, true)
 	if err != nil {
 		return err
 	}

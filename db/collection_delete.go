@@ -53,7 +53,7 @@ func (c *collection) DeleteWithDocID(
 	identity immutable.Option[string],
 	docID client.DocID,
 ) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *collection) DeleteWithDocIDs(
 	identity immutable.Option[string],
 	docIDs []client.DocID,
 ) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (c *collection) DeleteWithFilter(
 	identity immutable.Option[string],
 	filter any,
 ) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextValues(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}

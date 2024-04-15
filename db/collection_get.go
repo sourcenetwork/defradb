@@ -28,7 +28,7 @@ func (c *collection) Get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create txn
-	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
+	ctx, txn, err := ensureContextValues(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
