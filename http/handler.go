@@ -81,6 +81,7 @@ func NewHandler(db client.DB) (*Handler, error) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
+			IdentityMiddleware,
 		)
 		r.Handle("/*", router)
 	})

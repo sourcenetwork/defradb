@@ -15,15 +15,13 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
 )
 
 type acpHandler struct{}
 
 func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
-	d, ok := req.Context().Value(dbContextKey).(client.DB)
+	db, ok := req.Context().Value(dbContextKey).(client.DB)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
 		return
@@ -35,15 +33,9 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	identity, ok := db.TryGetContextIdentity(req.Context())
-	if !ok || !identity.HasValue() {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{acp.ErrPolicyCreatorMustNotBeEmpty})
-		return
-	}
-
-	addPolicyResult, err := d.AddPolicy(
+	addPolicyResult, err := db.AddPolicy(
 		req.Context(),
-		identity.Value(),
+		addPolicyRequest.CreateID,
 		addPolicyRequest.Policy,
 	)
 	if err != nil {
