@@ -48,8 +48,6 @@ func (c *Client) AddPolicy(
 		bytes.NewBuffer(addPolicyBody),
 	)
 
-	addIdentityToAuthHeader(req, creator)
-
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}

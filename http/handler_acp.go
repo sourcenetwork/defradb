@@ -17,12 +17,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 type acpHandler struct{}
 
 func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
-	db, ok := req.Context().Value(dbContextKey).(client.DB)
+	d, ok := req.Context().Value(dbContextKey).(client.DB)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
 		return
@@ -34,13 +35,13 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	identity := getIdentityFromAuthHeader(req)
-	if !identity.HasValue() {
+	identity, ok := db.TryGetContextIdentity(req.Context())
+	if !ok || !identity.HasValue() {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{acp.ErrPolicyCreatorMustNotBeEmpty})
 		return
 	}
 
-	addPolicyResult, err := db.AddPolicy(
+	addPolicyResult, err := d.AddPolicy(
 		req.Context(),
 		identity.Value(),
 		addPolicyRequest.Policy,
