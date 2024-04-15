@@ -64,10 +64,12 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+
+	ctx = SetContextTxn(ctx, txn)
 	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -126,10 +128,12 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+
+	ctx = SetContextTxn(ctx, txn)
 	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Pretty: true})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath, Pretty: true})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -188,10 +192,12 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+
+	ctx = SetContextTxn(ctx, txn)
 	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -262,10 +268,12 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+
+	ctx = SetContextTxn(ctx, txn)
 	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -324,6 +332,8 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+
+	ctx = SetContextTxn(ctx, txn)
 	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
@@ -335,7 +345,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -370,6 +380,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -380,15 +391,16 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.NoError(t, err)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
 
 	txn, err = db.NewTxn(ctx, true)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
-	col1, err := db.getCollectionByName(ctx, txn, "Address")
+	col1, err := db.getCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
 	key1, err := client.NewDocIDFromString("bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f")
@@ -396,7 +408,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	_, err = col1.Get(ctx, acpIdentity.NoIdentity, key1, false)
 	require.NoError(t, err)
 
-	col2, err := db.getCollectionByName(ctx, txn, "User")
+	col2, err := db.getCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
 	key2, err := client.NewDocIDFromString("bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df")
@@ -429,6 +441,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -439,7 +452,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.ErrorIs(t, err, ErrExpectedJSONObject)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -464,6 +477,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -474,7 +488,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.ErrorIs(t, err, ErrExpectedJSONArray)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -499,6 +513,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -510,7 +525,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 
 	wrongFilepath := t.TempDir() + "/some/test.json"
-	err = db.basicImport(ctx, txn, wrongFilepath)
+	err = db.basicImport(ctx, wrongFilepath)
 	require.ErrorIs(t, err, os.ErrNotExist)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -535,6 +550,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -545,7 +561,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.ErrorIs(t, err, ErrFailedToGetCollection)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
