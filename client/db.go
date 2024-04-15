@@ -235,12 +235,8 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
-	// ExecRequest executes the given GQL request against the [Store], with the given identity.
-	ExecRequest(
-		ctx context.Context,
-		identity immutable.Option[string],
-		request string,
-	) *RequestResult
+	// ExecRequest executes the given GQL request against the [Store].
+	ExecRequest(ctx context.Context, request string) *RequestResult
 }
 
 // GQLResult represents the immediate results of a GQL request.
