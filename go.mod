@@ -12,7 +12,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
-	github.com/gofrs/uuid/v5 v5.0.0
+	github.com/gofrs/uuid/v5 v5.1.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.18.0
 	github.com/ipfs/go-block-format v0.2.0
