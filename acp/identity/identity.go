@@ -18,18 +18,21 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+// Identity is the unique identifier for an actor.
+type Identity immutable.Option[string]
+
 var (
 	// NoIdentity is an empty identity.
-	NoIdentity = immutable.None[string]()
+	NoIdentity = Identity(immutable.None[string]())
 )
 
 // NewIdentity makes a new identity if the input is not empty otherwise, returns an empty Option.
-func NewIdentity(identity string) immutable.Option[string] {
+func NewIdentity(identity string) Identity {
 	// TODO-ACP: There will be more validation once sourcehub gets some utilities.
 	// Then a validation function would do the validation, will likely do outside this function.
 	// https://github.com/sourcenetwork/defradb/issues/2358
 	if identity == "" {
 		return NoIdentity
 	}
-	return immutable.Some[string](identity)
+	return Identity(immutable.Some[string](identity))
 }
