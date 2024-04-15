@@ -1886,7 +1886,7 @@ func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) core.DataStore
 }
 
 func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
-	fieldId, hasField := c.tryGetSchemaFieldID(fieldName)
+	fieldId, hasField := c.tryGetFieldID(fieldName)
 	if !hasField {
 		return core.DataStoreKey{}, false
 	}
@@ -1898,9 +1898,9 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 	}, true
 }
 
-// tryGetSchemaFieldID returns the FieldID of the given fieldName.
+// tryGetFieldID returns the FieldID of the given fieldName.
 // Will return false if the field is not found.
-func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
+func (c *collection) tryGetFieldID(fieldName string) (uint32, bool) {
 	for _, field := range c.Definition().GetFields() {
 		if field.Name == fieldName {
 			if field.Kind.IsObject() || field.Kind.IsObjectArray() {
