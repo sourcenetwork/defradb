@@ -41,6 +41,9 @@ type transactionDB interface {
 //
 // If a transactions exists on the context it will be made explicit,
 // otherwise a new implicit transaction will be created.
+//
+// The returned context will contain the transaction
+// along with the copied values from the input context.
 func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	txn, ok := TryGetContextTxn(ctx)
 	if ok {
@@ -54,6 +57,9 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 }
 
 // mustGetContextTxn returns the transaction from the context or panics.
+//
+// This should only be called from private functions within the db package
+// where we ensure an implicit or explicit transaction always exists.
 func mustGetContextTxn(ctx context.Context) datastore.Txn {
 	return ctx.Value(txnContextKey{}).(datastore.Txn)
 }
