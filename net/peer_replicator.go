@@ -40,7 +40,8 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		return err
 	}
 
-	// set transaction for all operations
+	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+	// ctx = db.SetContextIdentity(ctx, identity)
 	ctx = db.SetContextTxn(ctx, txn)
 
 	var collections []client.Collection
@@ -111,7 +112,6 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	// push all collection documents to the replicator peer
 	for _, col := range added {
-		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
 		keysCh, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return NewErrReplicatorDocID(err, col.Name().Value(), rep.Info.ID)
