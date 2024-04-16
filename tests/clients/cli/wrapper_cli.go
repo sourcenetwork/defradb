@@ -57,8 +57,8 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
-	identity, ok := db.TryGetContextIdentity(ctx)
-	if ok && identity.HasValue() {
+	identity := db.GetContextIdentity(ctx)
+	if identity.HasValue() {
 		args = append(args, "--identity", identity.Value())
 	}
 	args = append(args, "--url", w.address)

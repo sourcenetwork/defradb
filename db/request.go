@@ -48,7 +48,7 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 	}
 
 	txn := mustGetContextTxn(ctx)
-	identity := mustGetContextIdentity(ctx)
+	identity := GetContextIdentity(ctx)
 	planner := planner.New(
 		ctx,
 		identity,

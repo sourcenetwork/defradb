@@ -1228,7 +1228,7 @@ func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	ctx, _, err := ensureContextValues(ctx, c.db, true)
+	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
@@ -1342,7 +1342,7 @@ func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -1362,7 +1362,7 @@ func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -1445,7 +1445,7 @@ func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -1506,7 +1506,7 @@ func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
@@ -1780,7 +1780,7 @@ func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
@@ -1800,7 +1800,7 @@ func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}

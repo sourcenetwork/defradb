@@ -14,7 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -33,7 +33,7 @@ import (
 // - Document is public (unregistered), whether signatured request or not doesn't matter.
 func CheckAccessOfDocOnCollectionWithACP(
 	ctx context.Context,
-	identityOptional acpIdentity.Identity,
+	identityOptional identity.Identity,
 	acpSystem acp.ACP,
 	collection client.Collection,
 	permission acp.DPIPermission,

@@ -49,7 +49,7 @@ func (c *collection) DeleteWithDocID(
 	ctx context.Context,
 	docID client.DocID,
 ) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *collection) DeleteWithDocIDs(
 	ctx context.Context,
 	docIDs []client.DocID,
 ) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextValues(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}

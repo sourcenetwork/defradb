@@ -23,8 +23,8 @@ import (
 type AddPolicyRequest struct {
 	// Policy body in JSON or YAML format.
 	Policy string `json:"policy"`
-	// CreateID is the acp identity of the policy creator.
-	CreateID string `json:"creator_id"`
+	// CreatorID is the acp identity of the policy creator.
+	CreatorID string `json:"creator_id"`
 }
 
 func (c *Client) AddPolicy(
@@ -35,8 +35,8 @@ func (c *Client) AddPolicy(
 	methodURL := c.http.baseURL.JoinPath("acp", "policy")
 
 	addPolicyRequest := AddPolicyRequest{
-		Policy:   policy,
-		CreateID: creator,
+		Policy:    policy,
+		CreatorID: creator,
 	}
 
 	addPolicyBody, err := json.Marshal(addPolicyRequest)

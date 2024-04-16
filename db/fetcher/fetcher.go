@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -61,7 +61,7 @@ func (s *ExecInfo) Reset() {
 type Fetcher interface {
 	Init(
 		ctx context.Context,
-		identity acpIdentity.Identity,
+		identity identity.Identity,
 		txn datastore.Txn,
 		acp immutable.Option[acp.ACP],
 		col client.Collection,
@@ -88,7 +88,7 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	identity              acpIdentity.Identity
+	identity              identity.Identity
 	acp                   immutable.Option[acp.ACP]
 	passedPermissionCheck bool // have valid permission to access
 
@@ -147,7 +147,7 @@ type DocumentFetcher struct {
 // Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
-	identity acpIdentity.Identity,
+	identity identity.Identity,
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
@@ -176,7 +176,7 @@ func (df *DocumentFetcher) Init(
 }
 
 func (df *DocumentFetcher) init(
-	identity acpIdentity.Identity,
+	identity identity.Identity,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,

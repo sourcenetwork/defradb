@@ -25,7 +25,7 @@ func (c *collection) Get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create txn
-	ctx, txn, err := ensureContextValues(ctx, c.db, true)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (c *collection) get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	txn := mustGetContextTxn(ctx)
-	identity := mustGetContextIdentity(ctx)
+	identity := GetContextIdentity(ctx)
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index

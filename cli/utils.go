@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
@@ -125,12 +125,12 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 }
 
 // setContextIdentity sets the identity for the current command context.
-func setContextIdentity(cmd *cobra.Command, identity string) error {
+func setContextIdentity(cmd *cobra.Command, id string) error {
 	// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
-	if identity == "" {
+	if id == "" {
 		return nil
 	}
-	ctx := db.SetContextIdentity(cmd.Context(), acpIdentity.NewIdentity(identity))
+	ctx := db.SetContextIdentity(cmd.Context(), identity.NewIdentity(id))
 	cmd.SetContext(ctx)
 	return nil
 }

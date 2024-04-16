@@ -13,7 +13,7 @@ package db
 import (
 	"context"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -41,7 +41,7 @@ type transactionDB interface {
 	NewTxn(context.Context, bool) (datastore.Txn, error)
 }
 
-// ensureContextValues ensures that the returned context has a transaction
+// ensureContextTxn ensures that the returned context has a transaction
 // and an identity.
 //
 // If a transactions exists on the context it will be made explicit,
@@ -49,12 +49,7 @@ type transactionDB interface {
 //
 // The returned context will contain the transaction and identity
 // along with the copied values from the input context.
-func ensureContextValues(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
-	// default identity
-	_, ok := TryGetContextIdentity(ctx)
-	if !ok {
-		ctx = SetContextIdentity(ctx, acpIdentity.NoIdentity)
-	}
+func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	// explicit transaction
 	txn, ok := TryGetContextTxn(ctx)
 	if ok {
@@ -76,14 +71,6 @@ func mustGetContextTxn(ctx context.Context) datastore.Txn {
 	return ctx.Value(txnContextKey{}).(datastore.Txn)
 }
 
-// mustGetContextIdentity returns the identity from the context or panics.
-//
-// This should only be called from private functions within the db package
-// where we ensure an identity always exists.
-func mustGetContextIdentity(ctx context.Context) acpIdentity.Identity {
-	return ctx.Value(identityContextKey{}).(acpIdentity.Identity)
-}
-
 // TryGetContextTxn returns a transaction and a bool indicating if the
 // txn was retrieved from the given context.
 func TryGetContextTxn(ctx context.Context) (datastore.Txn, bool) {
@@ -100,14 +87,21 @@ func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 
 // TryGetContextTxn returns an identity and a bool indicating if the
 // identity was retrieved from the given context.
-func TryGetContextIdentity(ctx context.Context) (acpIdentity.Identity, bool) {
-	id, ok := ctx.Value(identityContextKey{}).(acpIdentity.Identity)
-	return id, ok
+
+// GetContextIdentity returns the identity from the given context.
+//
+// If an identity does not exist `NoIdentity` is returned.
+func GetContextIdentity(ctx context.Context) identity.Identity {
+	id, ok := ctx.Value(identityContextKey{}).(identity.Identity)
+	if ok {
+		return id
+	}
+	return identity.NoIdentity
 }
 
 // SetContextTxn returns a new context with the identity value set.
 //
 // This will overwrite any previously set identity value.
-func SetContextIdentity(ctx context.Context, id acpIdentity.Identity) context.Context {
+func SetContextIdentity(ctx context.Context, id identity.Identity) context.Context {
 	return context.WithValue(ctx, identityContextKey{}, id)
 }

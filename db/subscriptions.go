@@ -71,7 +71,7 @@ func (db *db) handleEvent(
 	r *request.ObjectSubscription,
 ) {
 	txn := mustGetContextTxn(ctx)
-	identity := mustGetContextIdentity(ctx)
+	identity := GetContextIdentity(ctx)
 	p := planner.New(
 		ctx,
 		identity,

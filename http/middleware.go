@@ -21,7 +21,7 @@ import (
 	"github.com/go-chi/cors"
 	"golang.org/x/exp/slices"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db"
@@ -132,14 +132,14 @@ func IdentityMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		identity := strings.TrimPrefix(authHeader, authSchemaPrefix)
+		id := strings.TrimPrefix(authHeader, authSchemaPrefix)
 		// If expected schema prefix was not found, or empty, then assume no identity.
-		if identity == authHeader || identity == "" {
+		if id == authHeader || id == "" {
 			next.ServeHTTP(rw, req)
 			return
 		}
 
-		ctx := db.SetContextIdentity(req.Context(), acpIdentity.NewIdentity(identity))
+		ctx := db.SetContextIdentity(req.Context(), identity.NewIdentity(id))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

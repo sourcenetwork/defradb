@@ -35,7 +35,7 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 
 	addPolicyResult, err := db.AddPolicy(
 		req.Context(),
-		addPolicyRequest.CreateID,
+		addPolicyRequest.CreatorID,
 		addPolicyRequest.Policy,
 	)
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -29,7 +29,7 @@ import (
 // Otherwise, nothing is registered with acp.
 func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
-	identity acpIdentity.Identity,
+	identity identity.Identity,
 	acpSystem acp.ACP,
 	collection client.Collection,
 	docID string,

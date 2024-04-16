@@ -36,7 +36,7 @@ func (c *collection) registerDocWithACP(
 	if !c.db.acp.HasValue() {
 		return nil
 	}
-	identity := mustGetContextIdentity(ctx)
+	identity := GetContextIdentity(ctx)
 	return permission.RegisterDocOnCollectionWithACP(
 		ctx,
 		identity,
@@ -55,7 +55,7 @@ func (c *collection) checkAccessOfDocWithACP(
 	if !c.db.acp.HasValue() {
 		return true, nil
 	}
-	identity := mustGetContextIdentity(ctx)
+	identity := GetContextIdentity(ctx)
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		identity,
