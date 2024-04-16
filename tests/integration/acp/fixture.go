@@ -10,5 +10,13 @@
 
 package test_acp
 
-var Actor1Signature = "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"
-var Actor2Signature = "cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll"
+import (
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+)
+
+var (
+	Actor1Signature = "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"
+	Actor2Signature = "cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll"
+	Actor1Identity  = acpIdentity.NewIdentity(Actor1Signature)
+	Actor2Identity  = acpIdentity.NewIdentity(Actor2Signature)
+)

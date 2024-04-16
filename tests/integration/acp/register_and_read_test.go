@@ -169,7 +169,7 @@ func TestACP_CreateWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Request: `
 					query {
@@ -250,7 +250,7 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Doc: `
 					{
@@ -261,7 +261,7 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Request: `
 					query {
@@ -342,7 +342,7 @@ func TestACP_CreateWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Doc: `
 					{
@@ -426,7 +426,7 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Doc: `
  					{
@@ -437,7 +437,7 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
 			},
 
 			testUtils.Request{
-				Identity: Actor2Signature,
+				Identity: Actor2Identity,
 
 				Request: `
  					query {
