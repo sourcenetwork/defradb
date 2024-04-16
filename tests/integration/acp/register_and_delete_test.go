@@ -28,7 +28,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Signature,
+				Creator: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -121,7 +121,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Signature,
+				Creator: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -180,7 +180,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				DocID: 0,
 			},
@@ -206,7 +206,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
 	test := testUtils.TestCase{
 
@@ -304,7 +304,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
 	test := testUtils.TestCase{
 
@@ -408,9 +408,9 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
-	WrongIdentity := Actor2Signature
+	WrongIdentity := Actor2Identity
 
 	test := testUtils.TestCase{
 

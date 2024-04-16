@@ -53,7 +53,7 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: validDPIUsedByBoth,
 
@@ -62,7 +62,7 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 
 			testUtils.AddPolicy{
 
-				Creator: actor2Signature,
+				Creator: actor2Identity,
 
 				Policy: validDPIUsedByBoth,
 

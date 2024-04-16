@@ -25,7 +25,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -53,7 +53,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -79,7 +79,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: " ",
 

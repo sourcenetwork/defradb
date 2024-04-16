@@ -23,7 +23,7 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -63,7 +63,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -103,7 +103,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpac
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy

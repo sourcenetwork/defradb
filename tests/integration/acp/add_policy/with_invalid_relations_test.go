@@ -23,7 +23,7 @@ func TestACP_AddPolicy_NoRelations_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -57,7 +57,7 @@ func TestACP_AddPolicy_NoRelationsLabel_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy

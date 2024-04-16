@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprO
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -113,7 +113,7 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExp
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -198,7 +198,7 @@ func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnWritePermissionExprOnDP
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy

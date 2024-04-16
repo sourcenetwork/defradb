@@ -23,7 +23,7 @@ func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -60,7 +60,7 @@ func TestACP_AddPolicy_DuplicateOwnerRelation_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy

@@ -14,5 +14,5 @@ import (
 	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
-var actor1Signature = acpUtils.Actor1Signature
-var actor2Signature = acpUtils.Actor2Signature
+var actor1Identity = acpUtils.Actor1Identity
+var actor2Identity = acpUtils.Actor2Identity

@@ -79,7 +79,7 @@ func TestACP_AddDPISchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaR
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)

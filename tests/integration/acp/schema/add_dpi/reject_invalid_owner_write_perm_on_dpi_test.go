@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionOnDPI_SchemaRejecte
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -112,7 +112,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRe
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                      description: a policy
@@ -195,7 +195,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_Sc
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                      description: a policy
@@ -279,7 +279,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionNoSpaceExprO
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                      description: a policy
@@ -363,7 +363,7 @@ func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnWritePermissionExprOnDPI_Sche
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                      description: a policy

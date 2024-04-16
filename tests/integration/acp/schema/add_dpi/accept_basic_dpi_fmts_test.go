@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: a basic policy that satisfies minimum DPI requirements
@@ -122,7 +122,7 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
 					{

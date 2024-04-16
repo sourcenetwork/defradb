@@ -23,7 +23,7 @@ func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: "",
 

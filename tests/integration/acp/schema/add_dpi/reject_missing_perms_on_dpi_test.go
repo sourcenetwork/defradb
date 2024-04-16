@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_MissingRequiredReadPermissionOnDPI_SchemaRejected(t *t
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Creator: actor1Identity,
 
 				Policy: `
                     description: A policy
