@@ -381,6 +381,11 @@ func (index *collectionUniqueIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
+	// We only need to update the index if one of the indexed fields
+	// on the document has been changed.
+	if !isUpdatingIndexedFields(index, oldDoc, newDoc) {
+		return nil
+	}
 	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc)
 	if err != nil {
 		return err
@@ -402,4 +407,26 @@ func (index *collectionUniqueIndex) deleteDocIndex(
 		return err
 	}
 	return index.deleteIndexKey(ctx, txn, key)
+}
+
+func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
+	for _, indexedFields := range index.Description().Fields {
+		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
+		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+
+		// GetValue will return an error when the field doesn't exist.
+		// This will happen for oldDoc only if the field hasn't been set
+		// when first creating the document. For newDoc, this will happen
+		// only if the field hasn't been set when first creating the document
+		// AND the field hasn't been set on the update.
+		switch {
+		case getOldValErr != nil && getNewValErr != nil:
+			continue
+		case getOldValErr != nil && getNewValErr == nil:
+			return true
+		case oldVal.Value() != newVal.Value():
+			return true
+		}
+	}
+	return false
 }

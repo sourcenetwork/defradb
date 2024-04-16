@@ -196,13 +196,9 @@ func (c *collection) updateIndexedDoc(
 	}
 	txn := mustGetContextTxn(ctx)
 	for _, index := range c.indexes {
-		// We only need to update the index if one of the indexed fields
-		// on the document has been changed.
-		if isUpdatingIndexedFields(index, oldDoc, doc) {
-			err = index.Update(ctx, txn, oldDoc, doc)
-			if err != nil {
-				return err
-			}
+		err = index.Update(ctx, txn, oldDoc, doc)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -593,26 +589,4 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 		sb.WriteString(strconv.Itoa(inc))
 	}
 	return sb.String()
-}
-
-func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
-	for _, indexedFields := range index.Description().Fields {
-		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
-		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
-
-		// GetValue will return an error when the field doesn't exist.
-		// This will happen for oldDoc only if the field hasn't been set
-		// when first creating the document. For newDoc, this will happen
-		// only if the field hasn't been set when first creating the document
-		// AND the field hasn't been set on the update.
-		switch {
-		case getOldValErr != nil && getNewValErr != nil:
-			continue
-		case getOldValErr != nil && getNewValErr == nil:
-			return true
-		case oldVal.Value() != newVal.Value():
-			return true
-		}
-	}
-	return false
 }
