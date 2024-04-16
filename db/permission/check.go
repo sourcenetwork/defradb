@@ -68,7 +68,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 	// At this point if the request is not signatured, then it has no access, because:
 	// the collection has a policy on it, and the acp is enabled/available,
 	// and the document is not public (is regestered with acp).
-	if id == identity.NoIdentity {
+	if id == identity.None {
 		return false, nil
 	}
 

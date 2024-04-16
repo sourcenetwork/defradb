@@ -96,7 +96,7 @@ func GetContextIdentity(ctx context.Context) identity.Identity {
 	if ok {
 		return id
 	}
-	return identity.NoIdentity
+	return identity.None
 }
 
 // SetContextTxn returns a new context with the identity value set.
