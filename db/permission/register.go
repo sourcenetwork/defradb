@@ -29,16 +29,16 @@ import (
 // Otherwise, nothing is registered with acp.
 func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
-	identity identity.Identity,
+	id identity.Identity,
 	acpSystem acp.ACP,
 	collection client.Collection,
 	docID string,
 ) error {
 	// An identity exists and the collection has a policy.
-	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && identity.HasValue() {
+	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && id != identity.NoIdentity {
 		return acpSystem.RegisterDocObject(
 			ctx,
-			identity.Value(),
+			id.String(),
 			policyID,
 			resourceName,
 			docID,

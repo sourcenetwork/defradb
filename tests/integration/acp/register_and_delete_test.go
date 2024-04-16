@@ -180,7 +180,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Identity,
+				Identity: Actor1Signature,
 
 				DocID: 0,
 			},
@@ -206,8 +206,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-	OwnerSignature := Actor1Signature
+	OwnerIdentity := Actor1Signature
 
 	test := testUtils.TestCase{
 
@@ -216,7 +215,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerSignature,
+				Creator: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -305,7 +304,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
+	OwnerIdentity := Actor1Signature
 	OwnerSignature := Actor1Signature
 
 	test := testUtils.TestCase{
@@ -410,10 +409,9 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-	OwnerSignature := Actor1Signature
+	OwnerIdentity := Actor1Signature
 
-	WrongIdentity := Actor2Identity
+	WrongIdentity := Actor2Signature
 
 	test := testUtils.TestCase{
 
@@ -422,7 +420,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerSignature,
+				Creator: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

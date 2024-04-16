@@ -33,7 +33,7 @@ import (
 // - Document is public (unregistered), whether signatured request or not doesn't matter.
 func CheckAccessOfDocOnCollectionWithACP(
 	ctx context.Context,
-	identityOptional identity.Identity,
+	id identity.Identity,
 	acpSystem acp.ACP,
 	collection client.Collection,
 	permission acp.DPIPermission,
@@ -68,7 +68,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 	// At this point if the request is not signatured, then it has no access, because:
 	// the collection has a policy on it, and the acp is enabled/available,
 	// and the document is not public (is regestered with acp).
-	if !identityOptional.HasValue() {
+	if id == identity.NoIdentity {
 		return false, nil
 	}
 
@@ -76,7 +76,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 	hasAccess, err := acpSystem.CheckDocAccess(
 		ctx,
 		permission,
-		identityOptional.Value(),
+		id.String(),
 		policyID,
 		resourceName,
 		docID,

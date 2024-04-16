@@ -130,7 +130,7 @@ func setContextIdentity(cmd *cobra.Command, id string) error {
 	if id == "" {
 		return nil
 	}
-	ctx := db.SetContextIdentity(cmd.Context(), identity.NewIdentity(id))
+	ctx := db.SetContextIdentity(cmd.Context(), identity.New(id))
 	cmd.SetContext(ctx)
 	return nil
 }

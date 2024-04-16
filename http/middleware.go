@@ -139,7 +139,7 @@ func IdentityMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := db.SetContextIdentity(req.Context(), identity.NewIdentity(id))
+		ctx := db.SetContextIdentity(req.Context(), identity.New(id))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
