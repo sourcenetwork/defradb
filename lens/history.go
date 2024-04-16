@@ -174,7 +174,7 @@ func getCollectionHistory(
 			srcSchemaVersion := schemaVersionsByColID[source.SourceCollectionID]
 			src := history[srcSchemaVersion]
 			historyItem.previous = append(
-				historyItem.next,
+				historyItem.previous,
 				src,
 			)
 
