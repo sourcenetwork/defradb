@@ -540,7 +540,6 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		// will be reassigned before the thunk is run
 		// TODO remove when Go 1.22
 		collection := c
-		fieldDescriptions := collection.Schema.Fields
 		mutationInputName := collection.Description.Name.Value() + "MutationInputArg"
 
 		// check if mutation input type exists
@@ -558,7 +557,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		mutationObjConf.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 			fields := make(gql.InputObjectConfigFieldMap)
 
-			for _, field := range fieldDescriptions {
+			for _, field := range collection.GetFields() {
 				if strings.HasPrefix(field.Name, "_") {
 					// ignore system defined args as the
 					// user cannot override their values
