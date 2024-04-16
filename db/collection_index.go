@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -324,10 +323,12 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
+
 	df := c.newFetcher()
 	err := df.Init(
 		ctx,
-		identity.NoIdentity, // TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365 - ACP <> Indexing
+		identity,
 		txn,
 		c.db.acp,
 		c,
