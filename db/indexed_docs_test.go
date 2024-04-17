@@ -974,7 +974,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 		).
 			RunAndReturn(func(
 				ctx context.Context,
-				identity identity.Identity,
+				id immutable.Option[identity.Identity],
 				txn datastore.Txn,
 				acp immutable.Option[acp.ACP],
 				col client.Collection,

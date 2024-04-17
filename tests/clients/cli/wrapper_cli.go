@@ -16,7 +16,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/db"
 )
@@ -59,8 +58,8 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
 	id := db.GetContextIdentity(ctx)
-	if id != identity.None {
-		args = append(args, "--identity", id.String())
+	if id.HasValue() {
+		args = append(args, "--identity", id.Value().String())
 	}
 	args = append(args, "--url", w.address)
 

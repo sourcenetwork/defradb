@@ -13,6 +13,8 @@ package permission
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -29,16 +31,16 @@ import (
 // Otherwise, nothing is registered with acp.
 func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
-	id identity.Identity,
+	id immutable.Option[identity.Identity],
 	acpSystem acp.ACP,
 	collection client.Collection,
 	docID string,
 ) error {
 	// An identity exists and the collection has a policy.
-	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && id != identity.None {
+	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && id.HasValue() {
 		return acpSystem.RegisterDocObject(
 			ctx,
-			id.String(),
+			id.Value().String(),
 			policyID,
 			resourceName,
 			docID,

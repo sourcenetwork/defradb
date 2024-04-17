@@ -86,27 +86,27 @@ type PlanContext struct {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn      datastore.Txn
-	identity identity.Identity
-	acp      immutable.Option[acp.ACP]
-	db       client.Store
+	txn datastore.Txn
+	id  immutable.Option[identity.Identity]
+	acp immutable.Option[acp.ACP]
+	db  client.Store
 
 	ctx context.Context
 }
 
 func New(
 	ctx context.Context,
-	identity identity.Identity,
+	id immutable.Option[identity.Identity],
 	acp immutable.Option[acp.ACP],
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {
 	return &Planner{
-		txn:      txn,
-		identity: identity,
-		acp:      acp,
-		db:       db,
-		ctx:      ctx,
+		txn: txn,
+		id:  id,
+		acp: acp,
+		db:  db,
+		ctx: ctx,
 	}
 }
 

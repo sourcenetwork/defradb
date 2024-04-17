@@ -58,7 +58,7 @@ func NewIndexFetcher(
 
 func (f *IndexFetcher) Init(
 	ctx context.Context,
-	identity identity.Identity,
+	id immutable.Option[identity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
@@ -101,7 +101,7 @@ outer:
 	if f.docFetcher != nil && len(f.docFields) > 0 {
 		err = f.docFetcher.Init(
 			ctx,
-			identity,
+			id,
 			f.txn,
 			acp,
 			f.col,

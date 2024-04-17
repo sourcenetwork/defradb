@@ -62,7 +62,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 
 func (f *lensedFetcher) Init(
 	ctx context.Context,
-	identity identity.Identity,
+	id immutable.Option[identity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
@@ -114,7 +114,7 @@ historyLoop:
 	}
 	return f.source.Init(
 		ctx,
-		identity,
+		id,
 		txn,
 		acp,
 		col,
