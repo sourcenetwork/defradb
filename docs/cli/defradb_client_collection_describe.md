@@ -37,6 +37,7 @@ defradb client collection describe [flags]
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
+  -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")

@@ -10,8 +10,9 @@ Execute queries, add schema types, obtain node info, etc.
 ### Options
 
 ```
-  -h, --help      help for client
-      --tx uint   Transaction ID
+  -h, --help              help for client
+  -i, --identity string   ACP Identity
+      --tx uint           Transaction ID
 ```
 
 ### Options inherited from parent commands

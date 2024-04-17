@@ -29,11 +29,10 @@ defradb client collection update [-i --identity] [--filter <filter> --docID <doc
 ### Options
 
 ```
-      --docID strings     Document ID
-      --filter string     Document filter
-  -h, --help              help for update
-  -i, --identity string   Identity of the actor
-      --updater string    Document updater
+      --docID strings    Document ID
+      --filter string    Document filter
+  -h, --help             help for update
+      --updater string   Document updater
 ```
 
 ### Options inherited from parent commands
@@ -41,6 +40,7 @@ defradb client collection update [-i --identity] [--filter <filter> --docID <doc
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
+  -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
