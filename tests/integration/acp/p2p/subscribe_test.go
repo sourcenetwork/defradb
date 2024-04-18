@@ -32,7 +32,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_Error(t *testing
 
 			testUtils.AddPolicy{
 
-				Creator: acpUtils.Actor1Identity,
+				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

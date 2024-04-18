@@ -23,7 +23,7 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -62,7 +62,7 @@ func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy

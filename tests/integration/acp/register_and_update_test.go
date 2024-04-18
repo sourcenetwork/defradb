@@ -30,7 +30,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Identity,
+				Identity: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -135,7 +135,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Identity,
+				Identity: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -241,7 +241,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -357,7 +357,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -475,7 +475,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -594,7 +594,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -711,7 +711,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

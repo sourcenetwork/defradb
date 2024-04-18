@@ -23,7 +23,7 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a basic policy that satisfies minimum DPI requirements
@@ -61,7 +61,7 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
 					{

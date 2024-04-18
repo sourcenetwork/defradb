@@ -22,7 +22,7 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
 		Description: "Test acp, where a relation is managing another relation, valid policy id",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy with admin relation managing reader relation

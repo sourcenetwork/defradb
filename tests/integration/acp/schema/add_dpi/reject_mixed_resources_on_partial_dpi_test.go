@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_PartialValidDPIButUseInValidDPIResource_RejectSchema(t
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Partially Valid Defra Policy Interface (DPI)

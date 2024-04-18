@@ -23,7 +23,7 @@ func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy

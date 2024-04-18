@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionOnDPI_SchemaRejected
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -112,7 +112,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionLabelOnDPI_SchemaRej
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -195,7 +195,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDPI_Sch
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -279,7 +279,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOn
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -363,7 +363,7 @@ func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDPI_Schem
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy

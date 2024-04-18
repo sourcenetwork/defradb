@@ -11,44 +11,24 @@
 package http
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// AddPolicyResult wraps the result of successfully adding/registering a Policy.
-type AddPolicyRequest struct {
-	// Policy body in JSON or YAML format.
-	Policy string `json:"policy"`
-	// CreatorID is the acp identity of the policy creator.
-	CreatorID string `json:"creator_id"`
-}
-
 func (c *Client) AddPolicy(
 	ctx context.Context,
-	creator string,
 	policy string,
 ) (client.AddPolicyResult, error) {
 	methodURL := c.http.baseURL.JoinPath("acp", "policy")
-
-	addPolicyRequest := AddPolicyRequest{
-		Policy:    policy,
-		CreatorID: creator,
-	}
-
-	addPolicyBody, err := json.Marshal(addPolicyRequest)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
 
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		methodURL.String(),
-		bytes.NewBuffer(addPolicyBody),
+		strings.NewReader(policy),
 	)
 
 	if err != nil {

@@ -23,7 +23,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: "invalid",
+				Identity: "invalid",
 
 				Policy: `
                     description: a basic policy that satisfies minimum DPI requirements
@@ -62,7 +62,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: "invalid",
+				Identity: "invalid",
 
 				Policy: "",
 

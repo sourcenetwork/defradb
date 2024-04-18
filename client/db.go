@@ -93,7 +93,7 @@ type DB interface {
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, creatorID string, policy string) (AddPolicyResult, error)
+	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.

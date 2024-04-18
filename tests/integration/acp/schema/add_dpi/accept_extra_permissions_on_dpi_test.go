@@ -29,7 +29,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)
@@ -128,7 +128,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)
@@ -227,7 +227,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)

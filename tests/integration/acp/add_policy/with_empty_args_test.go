@@ -23,7 +23,7 @@ func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: "",
 
@@ -42,7 +42,7 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: "",
+				Identity: "",
 
 				Policy: `
                     description: a basic policy that satisfies minimum DPI requirements
@@ -80,7 +80,7 @@ func TestACP_AddPolicy_EmptyCreatorAndPolicyArgs_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: "",
+				Identity: "",
 
 				Policy: "",
 

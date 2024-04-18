@@ -29,7 +29,7 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)
@@ -138,7 +138,7 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)

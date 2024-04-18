@@ -13,6 +13,9 @@ package tests
 import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 // AddPolicy will attempt to add the given policy using DefraDB's ACP system.
@@ -25,8 +28,8 @@ type AddPolicy struct {
 	// The raw policy string.
 	Policy string
 
-	// The policy creator, i.e. actor creating the policy.
-	Creator string
+	// The policy creator identity, i.e. actor creating the policy.
+	Identity string
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -49,11 +52,8 @@ func addPolicyACP(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		policyResult, err := node.AddPolicy(
-			s.ctx,
-			action.Creator,
-			action.Policy,
-		)
+		ctx := db.SetContextIdentity(s.ctx, identity.New(action.Identity))
+		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		if err == nil {
 			require.Equal(s.t, action.ExpectedError, "")

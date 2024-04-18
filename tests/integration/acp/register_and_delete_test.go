@@ -28,7 +28,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Identity,
+				Identity: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -121,7 +121,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Identity,
+				Identity: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -215,7 +215,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -313,7 +313,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -419,7 +419,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

@@ -100,10 +100,9 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 
 func (w *Wrapper) AddPolicy(
 	ctx context.Context,
-	creator string,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	return w.client.AddPolicy(ctx, creator, policy)
+	return w.client.AddPolicy(ctx, policy)
 }
 
 func (w *Wrapper) PatchSchema(

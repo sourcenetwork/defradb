@@ -30,7 +30,7 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Identity,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)
