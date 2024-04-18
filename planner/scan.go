@@ -64,7 +64,7 @@ func (n *scanNode) Init() error {
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
-		n.p.id,
+		n.p.identity,
 		n.p.txn,
 		n.p.acp,
 		n.col,

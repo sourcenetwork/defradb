@@ -26,7 +26,7 @@ import (
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -415,7 +415,7 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, identity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
@@ -466,7 +466,7 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, identity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
@@ -825,7 +825,7 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, identity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)

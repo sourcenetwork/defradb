@@ -14,7 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/db"
 )
 
@@ -52,7 +52,7 @@ func addPolicyACP(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		ctx := db.SetContextIdentity(s.ctx, identity.New(action.Identity))
+		ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		if err == nil {

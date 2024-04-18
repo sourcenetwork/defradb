@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -93,20 +93,20 @@ func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 // GetContextIdentity returns the identity from the given context.
 //
 // If an identity does not exist `NoIdentity` is returned.
-func GetContextIdentity(ctx context.Context) immutable.Option[identity.Identity] {
-	id, ok := ctx.Value(identityContextKey{}).(identity.Identity)
+func GetContextIdentity(ctx context.Context) immutable.Option[acpIdentity.Identity] {
+	identity, ok := ctx.Value(identityContextKey{}).(acpIdentity.Identity)
 	if ok {
-		return immutable.Some(id)
+		return immutable.Some(identity)
 	}
-	return identity.None
+	return acpIdentity.None
 }
 
 // SetContextTxn returns a new context with the identity value set.
 //
 // This will overwrite any previously set identity value.
-func SetContextIdentity(ctx context.Context, id immutable.Option[identity.Identity]) context.Context {
-	if id.HasValue() {
-		return context.WithValue(ctx, identityContextKey{}, id.Value())
+func SetContextIdentity(ctx context.Context, identity immutable.Option[acpIdentity.Identity]) context.Context {
+	if identity.HasValue() {
+		return context.WithValue(ctx, identityContextKey{}, identity.Value())
 	}
 	return context.WithValue(ctx, identityContextKey{}, nil)
 }

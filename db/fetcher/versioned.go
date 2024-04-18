@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -105,7 +105,7 @@ type VersionedFetcher struct {
 // Init initializes the VersionedFetcher.
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
-	id immutable.Option[identity.Identity],
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
@@ -141,7 +141,7 @@ func (vf *VersionedFetcher) Init(
 	vf.DocumentFetcher = new(DocumentFetcher)
 	return vf.DocumentFetcher.Init(
 		ctx,
-		id,
+		identity,
 		vf.store,
 		acp,
 		col,

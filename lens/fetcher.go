@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -62,7 +62,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 
 func (f *lensedFetcher) Init(
 	ctx context.Context,
-	id immutable.Option[identity.Identity],
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
@@ -114,7 +114,7 @@ historyLoop:
 	}
 	return f.source.Init(
 		ctx,
-		id,
+		identity,
 		txn,
 		acp,
 		col,

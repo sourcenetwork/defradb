@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
@@ -848,7 +848,7 @@ func refreshDocuments(
 				continue
 			}
 
-			ctx := db.SetContextIdentity(s.ctx, identity.New(action.Identity))
+			ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
 			doc, err = collection.Get(ctx, doc.ID(), false)
@@ -1203,7 +1203,7 @@ func createDocViaColSave(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, identity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
 
 	return doc, collections[action.CollectionID].Save(ctx, doc)
 }
@@ -1223,7 +1223,7 @@ func createDocViaColCreate(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, identity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
 
 	return doc, collections[action.CollectionID].Create(ctx, doc)
 }
@@ -1252,7 +1252,7 @@ func createDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, identity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
 
 	result := node.ExecRequest(
 		ctx,
@@ -1284,7 +1284,7 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, identity.New(action.Identity))
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1342,7 +1342,7 @@ func updateDocViaColSave(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, identity.New(action.Identity))
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1369,7 +1369,7 @@ func updateDocViaColUpdate(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, identity.New(action.Identity))
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1412,7 +1412,7 @@ func updateDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, identity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1632,7 +1632,7 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		ctx = db.SetContextIdentity(ctx, identity.New(action.Identity))
+		ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
 
 		result := node.ExecRequest(ctx, action.Request)
 

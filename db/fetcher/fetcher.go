@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -61,7 +61,7 @@ func (s *ExecInfo) Reset() {
 type Fetcher interface {
 	Init(
 		ctx context.Context,
-		id immutable.Option[identity.Identity],
+		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
 		acp immutable.Option[acp.ACP],
 		col client.Collection,
@@ -88,7 +88,7 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	id                    immutable.Option[identity.Identity]
+	identity              immutable.Option[acpIdentity.Identity]
 	acp                   immutable.Option[acp.ACP]
 	passedPermissionCheck bool // have valid permission to access
 
@@ -147,7 +147,7 @@ type DocumentFetcher struct {
 // Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
-	id immutable.Option[identity.Identity],
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
@@ -159,7 +159,7 @@ func (df *DocumentFetcher) Init(
 ) error {
 	df.txn = txn
 
-	err := df.init(id, acp, col, fields, filter, docmapper, reverse)
+	err := df.init(identity, acp, col, fields, filter, docmapper, reverse)
 	if err != nil {
 		return err
 	}
@@ -169,14 +169,14 @@ func (df *DocumentFetcher) Init(
 			df.deletedDocFetcher = new(DocumentFetcher)
 			df.deletedDocFetcher.txn = txn
 		}
-		return df.deletedDocFetcher.init(id, acp, col, fields, filter, docmapper, reverse)
+		return df.deletedDocFetcher.init(identity, acp, col, fields, filter, docmapper, reverse)
 	}
 
 	return nil
 }
 
 func (df *DocumentFetcher) init(
-	id immutable.Option[identity.Identity],
+	identity immutable.Option[acpIdentity.Identity],
 	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
@@ -184,7 +184,7 @@ func (df *DocumentFetcher) init(
 	docMapper *core.DocumentMapping,
 	reverse bool,
 ) error {
-	df.id = id
+	df.identity = identity
 	df.acp = acp
 	df.col = col
 	df.reverse = reverse
@@ -630,7 +630,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			} else {
 				hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
 					ctx,
-					df.id,
+					df.identity,
 					df.acp.Value(),
 					df.col,
 					acp.ReadPermission,
