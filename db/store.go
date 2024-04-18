@@ -21,11 +21,7 @@ import (
 )
 
 // ExecRequest executes a request against the database.
-func (db *db) ExecRequest(
-	ctx context.Context,
-	identity immutable.Option[string],
-	request string,
-) *client.RequestResult {
+func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestResult {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}
@@ -34,7 +30,7 @@ func (db *db) ExecRequest(
 	}
 	defer txn.Discard(ctx)
 
-	res := db.execRequest(ctx, identity, request)
+	res := db.execRequest(ctx, request)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}

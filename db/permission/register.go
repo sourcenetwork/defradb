@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -30,7 +31,7 @@ import (
 // Otherwise, nothing is registered with acp.
 func RegisterDocOnCollectionWithACP(
 	ctx context.Context,
-	identity immutable.Option[string],
+	identity immutable.Option[acpIdentity.Identity],
 	acpSystem acp.ACP,
 	collection client.Collection,
 	docID string,
@@ -39,7 +40,7 @@ func RegisterDocOnCollectionWithACP(
 	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && identity.HasValue() {
 		return acpSystem.RegisterDocObject(
 			ctx,
-			identity.Value(),
+			identity.Value().String(),
 			policyID,
 			resourceName,
 			docID,

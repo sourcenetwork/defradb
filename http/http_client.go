@@ -47,7 +47,11 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) {
 
 	txn, ok := db.TryGetContextTxn(req.Context())
 	if ok {
-		req.Header.Set(TX_HEADER_NAME, fmt.Sprintf("%d", txn.ID()))
+		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
+	}
+	id := db.GetContextIdentity(req.Context())
+	if id.HasValue() {
+		req.Header.Add(authHeaderName, authSchemaPrefix+id.Value().String())
 	}
 }
 

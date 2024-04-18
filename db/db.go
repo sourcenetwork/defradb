@@ -155,16 +155,15 @@ func (db *db) LensRegistry() client.LensRegistry {
 
 func (db *db) AddPolicy(
 	ctx context.Context,
-	creator string,
 	policy string,
 ) (client.AddPolicyResult, error) {
 	if !db.acp.HasValue() {
 		return client.AddPolicyResult{}, client.ErrPolicyAddFailureNoACP
 	}
-
+	identity := GetContextIdentity(ctx)
 	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
-		creator,
+		identity.Value().String(),
 		policy,
 	)
 

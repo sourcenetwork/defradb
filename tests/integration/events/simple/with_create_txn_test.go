@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
@@ -29,7 +28,6 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 			func(ctx context.Context, d client.DB) {
 				r := d.ExecRequest(
 					ctx,
-					acpIdentity.NoIdentity,
 					`mutation {
 						create_Users(input: {name: "John"}) {
 							_docID
@@ -47,7 +45,6 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 				ctx = db.SetContextTxn(ctx, txn)
 				r := d.ExecRequest(
 					ctx,
-					acpIdentity.NoIdentity,
 					`mutation {
 						create_Users(input: {name: "Shahzad"}) {
 							_docID

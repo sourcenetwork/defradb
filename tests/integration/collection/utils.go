@@ -17,7 +17,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -91,7 +90,7 @@ func setupDatabase(
 			if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 				return
 			}
-			err = col.Save(ctx, acpIdentity.NoIdentity, doc)
+			err = col.Save(ctx, doc)
 			if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 				return
 			}

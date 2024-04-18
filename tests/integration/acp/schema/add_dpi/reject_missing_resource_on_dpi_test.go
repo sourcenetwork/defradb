@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_SpecifiedResourceDoesNotExistOnDPI_SchemaRejected(t *t
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)

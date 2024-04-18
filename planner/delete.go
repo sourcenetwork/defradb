@@ -55,7 +55,6 @@ func (n *deleteNode) Next() (bool, error) {
 	}
 	_, err = n.collection.DeleteWithDocID(
 		n.p.ctx,
-		n.p.identity,
 		docID,
 	)
 	if err != nil {

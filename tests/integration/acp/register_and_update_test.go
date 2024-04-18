@@ -30,7 +30,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -135,7 +135,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: Actor1Signature,
+				Identity: Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -194,7 +194,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Signature,
+				Identity: Actor1Identity,
 
 				DocID: 0,
 
@@ -232,7 +232,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
 	test := testUtils.TestCase{
 
@@ -241,7 +241,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -342,7 +342,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
 	test := testUtils.TestCase{
 
@@ -357,7 +357,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -458,9 +458,9 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
-	WrongIdentity := Actor2Signature
+	WrongIdentity := Actor2Identity
 
 	test := testUtils.TestCase{
 
@@ -475,7 +475,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -580,7 +580,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
 	test := testUtils.TestCase{
 
@@ -594,7 +594,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -695,9 +695,9 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *testing.T) {
 	// OwnerIdentity should be the same identity that is used to do the registering/creation,
 	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Signature
+	OwnerIdentity := Actor1Identity
 
-	WrongIdentity := Actor2Signature
+	WrongIdentity := Actor2Identity
 
 	test := testUtils.TestCase{
 
@@ -711,7 +711,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Creator: OwnerIdentity,
+				Identity: OwnerIdentity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

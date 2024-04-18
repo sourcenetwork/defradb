@@ -57,6 +57,10 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
+	id := db.GetContextIdentity(ctx)
+	if id.HasValue() {
+		args = append(args, "--identity", id.Value().String())
+	}
 	args = append(args, "--url", w.address)
 
 	cmd := cli.NewDefraCommand()

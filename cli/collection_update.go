@@ -13,15 +13,10 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionUpdateCommand() *cobra.Command {
-	const identityFlagLongRequired string = "identity"
-	const identityFlagShortRequired string = "i"
-
-	var identityValue string
 	var argDocIDs []string
 	var filter string
 	var updater string
@@ -47,9 +42,6 @@ Example: update private docIDs, with identity:
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
-			identity := acpIdentity.NewIdentity(identityValue)
-
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
@@ -61,7 +53,7 @@ Example: update private docIDs, with identity:
 				if err != nil {
 					return err
 				}
-				res, err := col.UpdateWithDocID(cmd.Context(), identity, docID, updater)
+				res, err := col.UpdateWithDocID(cmd.Context(), docID, updater)
 				if err != nil {
 					return err
 				}
@@ -75,13 +67,13 @@ Example: update private docIDs, with identity:
 					}
 					docIDs[i] = docID
 				}
-				res, err := col.UpdateWithDocIDs(cmd.Context(), identity, docIDs, updater)
+				res, err := col.UpdateWithDocIDs(cmd.Context(), docIDs, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
 			case filter != "" && updater != "":
-				res, err := col.UpdateWithFilter(cmd.Context(), identity, filter, updater)
+				res, err := col.UpdateWithFilter(cmd.Context(), filter, updater)
 				if err != nil {
 					return err
 				}
@@ -91,14 +83,14 @@ Example: update private docIDs, with identity:
 				if err != nil {
 					return err
 				}
-				doc, err := col.Get(cmd.Context(), identity, docID, true)
+				doc, err := col.Get(cmd.Context(), docID, true)
 				if err != nil {
 					return err
 				}
 				if err := doc.SetWithJSON([]byte(args[0])); err != nil {
 					return err
 				}
-				return col.Update(cmd.Context(), identity, doc)
+				return col.Update(cmd.Context(), doc)
 			default:
 				return ErrNoDocIDOrFilter
 			}
@@ -107,12 +99,5 @@ Example: update private docIDs, with identity:
 	cmd.Flags().StringSliceVar(&argDocIDs, "docID", nil, "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
-	cmd.Flags().StringVarP(
-		&identityValue,
-		identityFlagLongRequired,
-		identityFlagShortRequired,
-		"",
-		"Identity of the actor",
-	)
 	return cmd
 }

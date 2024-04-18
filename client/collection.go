@@ -44,12 +44,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, identity immutable.Option[string], doc *Document) error
+	Create(ctx context.Context, doc *Document) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, identity immutable.Option[string], docs []*Document) error
+	CreateMany(ctx context.Context, docs []*Document) error
 
 	// Update an existing document with the new values.
 	//
@@ -57,13 +57,13 @@ type Collection interface {
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(ctx context.Context, identity immutable.Option[string], docs *Document) error
+	Update(ctx context.Context, docs *Document) error
 
 	// Save the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, identity immutable.Option[string], doc *Document) error
+	Save(ctx context.Context, doc *Document) error
 
 	// Delete will attempt to delete a document by DocID.
 	//
@@ -71,12 +71,12 @@ type Collection interface {
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
 	// This operation will hard-delete all state relating to the given DocID.
 	// This includes data, block, and head storage.
-	Delete(ctx context.Context, identity immutable.Option[string], docID DocID) (bool, error)
+	Delete(ctx context.Context, docID DocID) (bool, error)
 
 	// Exists checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(ctx context.Context, identity immutable.Option[string], docID DocID) (bool, error)
+	Exists(ctx context.Context, docID DocID) (bool, error)
 
 	// UpdateWith updates a target document using the given updater type.
 	//
@@ -89,7 +89,6 @@ type Collection interface {
 	// Returns an ErrInvalidUpdater error if the updater type is not supported.
 	UpdateWith(
 		ctx context.Context,
-		identity immutable.Option[string],
 		target any,
 		updater string,
 	) (*UpdateResult, error)
@@ -100,7 +99,6 @@ type Collection interface {
 	// else an ErrInvalidUpdater will be returned.
 	UpdateWithFilter(
 		ctx context.Context,
-		identity immutable.Option[string],
 		filter any,
 		updater string,
 	) (*UpdateResult, error)
@@ -113,7 +111,6 @@ type Collection interface {
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
 	UpdateWithDocID(
 		ctx context.Context,
-		identity immutable.Option[string],
 		docID DocID,
 		updater string,
 	) (*UpdateResult, error)
@@ -126,7 +123,6 @@ type Collection interface {
 	// Returns an ErrDocumentNotFound if a document is not found for any given DocID.
 	UpdateWithDocIDs(
 		ctx context.Context,
-		identity immutable.Option[string],
 		docIDs []DocID,
 		updater string,
 	) (*UpdateResult, error)
@@ -142,7 +138,6 @@ type Collection interface {
 	// Returns an ErrInvalidDeleteTarget if the target type is not supported.
 	DeleteWith(
 		ctx context.Context,
-		identity immutable.Option[string],
 		target any,
 	) (*DeleteResult, error)
 
@@ -152,7 +147,6 @@ type Collection interface {
 	// with a status of `Deleted`.
 	DeleteWithFilter(
 		ctx context.Context,
-		identity immutable.Option[string],
 		filter any,
 	) (*DeleteResult, error)
 
@@ -164,7 +158,6 @@ type Collection interface {
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
 	DeleteWithDocID(
 		ctx context.Context,
-		identity immutable.Option[string],
 		docID DocID,
 	) (*DeleteResult, error)
 
@@ -176,7 +169,6 @@ type Collection interface {
 	// Returns an ErrDocumentNotFound if a document is not found for any given DocID.
 	DeleteWithDocIDs(
 		ctx context.Context,
-		identity immutable.Option[string],
 		docIDs []DocID,
 	) (*DeleteResult, error)
 
@@ -185,13 +177,12 @@ type Collection interface {
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
 	Get(
 		ctx context.Context,
-		identity immutable.Option[string],
 		docID DocID,
 		showDeleted bool,
 	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(ctx context.Context, identity immutable.Option[string]) (<-chan DocIDResult, error)
+	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
 
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.

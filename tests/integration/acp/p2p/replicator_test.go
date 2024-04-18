@@ -32,7 +32,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_Error(t *testing.T)
 
 			testUtils.AddPolicy{
 
-				Creator: acpUtils.Actor1Signature,
+				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

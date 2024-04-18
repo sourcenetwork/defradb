@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
@@ -207,7 +206,7 @@ func setupDatabase(t *testing.T) client.DB {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "bob"}`), col.Schema())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
+	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
 	return cdb

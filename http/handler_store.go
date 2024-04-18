@@ -312,8 +312,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	identity := getIdentityFromAuthHeader(req)
-	result := store.ExecRequest(req.Context(), identity, request.Query)
+	result := store.ExecRequest(req.Context(), request.Query)
 
 	if result.Pub == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})

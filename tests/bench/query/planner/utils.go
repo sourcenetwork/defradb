@@ -82,7 +82,7 @@ func runMakePlanBench(
 	for i := 0; i < b.N; i++ {
 		planner := planner.New(
 			ctx,
-			acpIdentity.NoIdentity,
+			acpIdentity.None,
 			acp.NoACP,
 			d,
 			txn,

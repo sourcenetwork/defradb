@@ -1227,18 +1227,16 @@ func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
-	identity immutable.Option[string],
 ) (<-chan client.DocIDResult, error) {
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-	return c.getAllDocIDsChan(ctx, identity)
+	return c.getAllDocIDsChan(ctx)
 }
 
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
-	identity immutable.Option[string],
 ) (<-chan client.DocIDResult, error) {
 	txn := mustGetContextTxn(ctx)
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
@@ -1288,7 +1286,6 @@ func (c *collection) getAllDocIDsChan(
 
 			canRead, err := c.checkAccessOfDocWithACP(
 				ctx,
-				identity,
 				acp.ReadPermission,
 				docID.String(),
 			)
@@ -1343,7 +1340,6 @@ func (c *collection) Definition() client.CollectionDefinition {
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
 func (c *collection) Create(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -1352,7 +1348,7 @@ func (c *collection) Create(
 	}
 	defer txn.Discard(ctx)
 
-	err = c.create(ctx, identity, doc)
+	err = c.create(ctx, doc)
 	if err != nil {
 		return err
 	}
@@ -1364,7 +1360,6 @@ func (c *collection) Create(
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
 func (c *collection) CreateMany(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docs []*client.Document,
 ) error {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -1374,7 +1369,7 @@ func (c *collection) CreateMany(
 	defer txn.Discard(ctx)
 
 	for _, doc := range docs {
-		err = c.create(ctx, identity, doc)
+		err = c.create(ctx, doc)
 		if err != nil {
 			return err
 		}
@@ -1400,7 +1395,6 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 
 func (c *collection) create(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
@@ -1409,7 +1403,7 @@ func (c *collection) create(
 	}
 
 	// check if doc already exists
-	exists, isDeleted, err := c.exists(ctx, identity, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -1431,7 +1425,7 @@ func (c *collection) create(
 	}
 
 	// write data to DB via MerkleClock/CRDT
-	_, err = c.save(ctx, identity, doc, true)
+	_, err = c.save(ctx, doc, true)
 	if err != nil {
 		return err
 	}
@@ -1441,7 +1435,7 @@ func (c *collection) create(
 		return err
 	}
 
-	return c.registerDocWithACP(ctx, identity, doc.ID().String())
+	return c.registerDocWithACP(ctx, doc.ID().String())
 }
 
 // Update an existing document with the new values.
@@ -1449,7 +1443,6 @@ func (c *collection) create(
 // Any field that is nil/empty that hasn't called Clear will be ignored.
 func (c *collection) Update(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -1459,7 +1452,7 @@ func (c *collection) Update(
 	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
-	exists, isDeleted, err := c.exists(ctx, identity, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -1470,7 +1463,7 @@ func (c *collection) Update(
 		return NewErrDocumentDeleted(primaryKey.DocID)
 	}
 
-	err = c.update(ctx, identity, doc)
+	err = c.update(ctx, doc)
 	if err != nil {
 		return err
 	}
@@ -1485,13 +1478,11 @@ func (c *collection) Update(
 // add to the bloat.
 func (c *collection) update(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
 	// Stop the update if the correct permissions aren't there.
 	canUpdate, err := c.checkAccessOfDocWithACP(
 		ctx,
-		identity,
 		acp.WritePermission,
 		doc.ID().String(),
 	)
@@ -1502,7 +1493,7 @@ func (c *collection) update(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	_, err = c.save(ctx, identity, doc, false)
+	_, err = c.save(ctx, doc, false)
 	if err != nil {
 		return err
 	}
@@ -1513,7 +1504,6 @@ func (c *collection) update(
 // Either by creating a new document or by updating an existing one
 func (c *collection) Save(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 ) error {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -1524,7 +1514,7 @@ func (c *collection) Save(
 
 	// Check if document already exists with primary DS key.
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
-	exists, isDeleted, err := c.exists(ctx, identity, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -1534,9 +1524,9 @@ func (c *collection) Save(
 	}
 
 	if exists {
-		err = c.update(ctx, identity, doc)
+		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, identity, doc)
+		err = c.create(ctx, doc)
 	}
 	if err != nil {
 		return err
@@ -1550,7 +1540,6 @@ func (c *collection) Save(
 // save elsewhere could cause the omission of acp checks.
 func (c *collection) save(
 	ctx context.Context,
-	identity immutable.Option[string],
 	doc *client.Document,
 	isCreate bool,
 ) (cid.Cid, error) {
@@ -1606,7 +1595,6 @@ func (c *collection) save(
 
 				err = c.patchPrimaryDoc(
 					ctx,
-					identity,
 					c.Name().Value(),
 					relationFieldDescription,
 					primaryKey.DocID,
@@ -1623,7 +1611,6 @@ func (c *collection) save(
 
 			err = c.validateOneToOneLinkDoesntAlreadyExist(
 				ctx,
-				identity,
 				doc.ID().String(),
 				fieldDescription,
 				val.Value(),
@@ -1692,7 +1679,6 @@ func (c *collection) save(
 
 func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID string,
 	fieldDescription client.FieldDefinition,
 	value any,
@@ -1738,7 +1724,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		fieldDescription.Name,
 		value,
 	)
-	selectionPlan, err := c.makeSelectionPlan(ctx, identity, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -1792,7 +1778,6 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 // This operation will all state relating to the given DocID. This includes data, block, and head storage.
 func (c *collection) Delete(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID client.DocID,
 ) (bool, error) {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -1803,7 +1788,7 @@ func (c *collection) Delete(
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	err = c.applyDelete(ctx, identity, primaryKey)
+	err = c.applyDelete(ctx, primaryKey)
 	if err != nil {
 		return false, err
 	}
@@ -1813,7 +1798,6 @@ func (c *collection) Delete(
 // Exists checks if a given document exists with supplied DocID.
 func (c *collection) Exists(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID client.DocID,
 ) (bool, error) {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -1823,7 +1807,7 @@ func (c *collection) Exists(
 	defer txn.Discard(ctx)
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
-	exists, isDeleted, err := c.exists(ctx, identity, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
@@ -1833,12 +1817,10 @@ func (c *collection) Exists(
 // check if a document exists with the given primary key
 func (c *collection) exists(
 	ctx context.Context,
-	identity immutable.Option[string],
 	primaryKey core.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
 	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
-		identity,
 		acp.ReadPermission,
 		primaryKey.DocID,
 	)

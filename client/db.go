@@ -93,7 +93,7 @@ type DB interface {
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, creatorID string, policy string) (AddPolicyResult, error)
+	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.
@@ -235,12 +235,8 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
-	// ExecRequest executes the given GQL request against the [Store], with the given identity.
-	ExecRequest(
-		ctx context.Context,
-		identity immutable.Option[string],
-		request string,
-	) *RequestResult
+	// ExecRequest executes the given GQL request against the [Store].
+	ExecRequest(ctx context.Context, request string) *RequestResult
 }
 
 // GQLResult represents the immediate results of a GQL request.

@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/badger/v4"
 	"github.com/sourcenetwork/corelog"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
@@ -171,7 +170,7 @@ func BackfillBenchmarkDB(
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
-							if err := cols[j].Create(ctx, acpIdentity.NoIdentity, doc); err != nil &&
+							if err := cols[j].Create(ctx, doc); err != nil &&
 								err.Error() == badger.ErrConflict.Error() {
 								log.InfoContext(
 									ctx,

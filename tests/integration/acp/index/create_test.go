@@ -27,7 +27,7 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_ReturnError(t
 
 			testUtils.AddPolicy{
 
-				Creator: acpUtils.Actor1Signature,
+				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource
@@ -109,7 +109,7 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_ReturnError(t *test
 
 			testUtils.AddPolicy{
 
-				Creator: acpUtils.Actor1Signature,
+				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
                     description: a test policy which marks a collection in a database as a resource

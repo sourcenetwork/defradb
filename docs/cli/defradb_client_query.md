@@ -30,15 +30,15 @@ defradb client query [-i --identity] [request] [flags]
 ### Options
 
 ```
-  -f, --file string       File containing the query request
-  -h, --help              help for query
-  -i, --identity string   Identity of the actor
+  -f, --file string   File containing the query request
+  -h, --help          help for query
 ```
 
 ### Options inherited from parent commands
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
+  -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")

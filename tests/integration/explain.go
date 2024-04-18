@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -133,7 +132,6 @@ func executeExplainRequest(
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.ExecRequest(
 			s.ctx,
-			acpIdentity.NewIdentity(action.Identity),
 			action.Request,
 		)
 		assertExplainRequestResults(s, &result.GQL, action)

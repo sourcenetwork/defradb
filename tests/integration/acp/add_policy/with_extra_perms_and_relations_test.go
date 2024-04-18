@@ -23,7 +23,7 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy

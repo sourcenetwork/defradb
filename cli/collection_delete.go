@@ -13,15 +13,10 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionDeleteCommand() *cobra.Command {
-	const identityFlagLongRequired string = "identity"
-	const identityFlagShortRequired string = "i"
-
-	var identityValue string
 	var argDocIDs []string
 	var filter string
 	var cmd = &cobra.Command{
@@ -39,9 +34,6 @@ Example: delete by filter:
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
-			identity := acpIdentity.NewIdentity(identityValue)
-
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
@@ -53,7 +45,7 @@ Example: delete by filter:
 				if err != nil {
 					return err
 				}
-				res, err := col.DeleteWithDocID(cmd.Context(), identity, docID)
+				res, err := col.DeleteWithDocID(cmd.Context(), docID)
 				if err != nil {
 					return err
 				}
@@ -67,13 +59,13 @@ Example: delete by filter:
 					}
 					docIDs[i] = docID
 				}
-				res, err := col.DeleteWithDocIDs(cmd.Context(), identity, docIDs)
+				res, err := col.DeleteWithDocIDs(cmd.Context(), docIDs)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
 			case filter != "":
-				res, err := col.DeleteWithFilter(cmd.Context(), identity, filter)
+				res, err := col.DeleteWithFilter(cmd.Context(), filter)
 				if err != nil {
 					return err
 				}
@@ -85,12 +77,5 @@ Example: delete by filter:
 	}
 	cmd.Flags().StringSliceVar(&argDocIDs, "docID", nil, "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
-	cmd.Flags().StringVarP(
-		&identityValue,
-		identityFlagLongRequired,
-		identityFlagShortRequired,
-		"",
-		"Identity of the actor",
-	)
 	return cmd
 }

@@ -20,9 +20,8 @@ defradb client collection get [-i --identity] [--show-deleted] <docID>  [flags]
 ### Options
 
 ```
-  -h, --help              help for get
-  -i, --identity string   Identity of the actor
-      --show-deleted      Show deleted documents
+  -h, --help           help for get
+      --show-deleted   Show deleted documents
 ```
 
 ### Options inherited from parent commands
@@ -30,6 +29,7 @@ defradb client collection get [-i --identity] [--show-deleted] <docID>  [flags]
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
+  -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
