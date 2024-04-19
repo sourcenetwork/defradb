@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"encoding/json"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -64,19 +62,14 @@ func (n *updateNode) Next() (bool, error) {
 			}
 
 			n.currentValue = n.results.Value()
-			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
-			if err != nil {
-				return false, err
+
+			docMap := map[string]any{
+				request.DocIDFieldName: n.currentValue.GetID(),
 			}
-			patch, err := json.Marshal(n.input)
-			if err != nil {
-				return false, err
+			for k, v := range n.input {
+				docMap[k] = v
 			}
-			doc, err := n.collection.Get(n.p.ctx, docID, false)
-			if err != nil {
-				return false, err
-			}
-			err = doc.SetWithJSON(patch)
+			doc, err := client.NewDocFromMap(docMap, n.collection.Schema())
 			if err != nil {
 				return false, err
 			}
