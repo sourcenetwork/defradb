@@ -1811,6 +1811,18 @@ func assertRequestResults(
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
+
+		require.Equal(
+			s.t,
+			len(expectedResult),
+			len(result),
+			fmt.Sprintf(
+				"%s \n(number of properties for item at index %v don't match)",
+				s.testCase.Description,
+				docIndex,
+			),
+		)
+
 		for field, actualValue := range result {
 			expectedValue := expectedResult[field]
 
