@@ -154,14 +154,7 @@ func (k ScalarArrayKind) Underlying() string {
 }
 
 func (k ScalarArrayKind) IsNillable() bool {
-	return k == FieldKind_BOOL_ARRAY ||
-		k == FieldKind_INT_ARRAY ||
-		k == FieldKind_FLOAT_ARRAY ||
-		k == FieldKind_STRING_ARRAY ||
-		k == FieldKind_NILLABLE_BOOL_ARRAY ||
-		k == FieldKind_NILLABLE_INT_ARRAY ||
-		k == FieldKind_NILLABLE_FLOAT_ARRAY ||
-		k == FieldKind_NILLABLE_STRING_ARRAY
+	return true
 }
 
 func (k ScalarArrayKind) IsObject() bool {
