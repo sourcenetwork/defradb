@@ -712,7 +712,7 @@ func finalizeRelations(
 						// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
 						// does not point to an embedded object.
 						//
-						// It is inserted immediately after the object field for make things nicer for the user.
+						// It is inserted immediately after the object field to make things nicer for the user.
 						definition.Schema.Fields[schemaFieldIndex+1] = client.SchemaFieldDescription{
 							Name: idFieldName,
 							Kind: client.FieldKind_DocID,
