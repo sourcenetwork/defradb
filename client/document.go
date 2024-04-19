@@ -630,9 +630,6 @@ func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 
 func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	for k, v := range value {
-		if v == nil {
-			continue
-		}
 		err := doc.Set(k, v)
 		if err != nil {
 			return err
