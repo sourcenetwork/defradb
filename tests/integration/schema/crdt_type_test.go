@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreihg7aweuwitzdtturuipps2rxw774o5iu36ovxqawdncxa4yibpsq"
+	schemaVersionID := "bafkreigsnu67poxm3663e7vl5cncl6pxdzndcc7jf66cnnvxzw5uko5iuu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -59,7 +59,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreig7olui76coe4nmm6s7f6lza7d7i35rurktxhcbmrs4po7plcrnvu"
+	schemaVersionID := "bafkreieflo3tkhsywsqcyzoj6nqgxc6ovv5m5lc7bfbum6yqls5rxlwkye"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -132,7 +132,7 @@ func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreidjvjnvtwwdkcdqwcmwxqzu3bxrbxs3rkn6h6h7kkxmibpli3mp7y"
+	schemaVersionID := "bafkreigbmy67fjsys3li5rbs64k3vezvdtbfryc67pxiju4nis7lrbanea"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -171,7 +171,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreiasm64v2oimv6uk3hlfap6awptumwkm4fxuoc3ck3ehfe2tmry66i"
+	schemaVersionID := "bafkreifcyba45ov5zqi6dbhlu72rmf4wp3crjynjvvpq6iuauns2ofbvzi"
 
 	test := testUtils.TestCase{
 		Actions: []any{

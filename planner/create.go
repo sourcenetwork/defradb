@@ -57,7 +57,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	doc, err := client.NewDocFromMap(n.input, n.collection.Schema())
+	doc, err := client.NewDocFromMap(n.input, n.collection.Definition())
 	if err != nil {
 		n.err = err
 		return err

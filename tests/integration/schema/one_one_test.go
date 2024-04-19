@@ -30,7 +30,7 @@ func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
 						owner: User
 					}
 				`,
-				ExpectedError: "primary side of relation not defined. RelationName: dog_user",
+				ExpectedError: "relation missing field. Object: Dog, RelationName: dog_user",
 			},
 		},
 	}

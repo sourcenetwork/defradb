@@ -20,9 +20,9 @@ import (
 )
 
 func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a"
-	schemaVersion2ID := "bafkreigdplzukezgpmjs45lw6kwzhtwge4xjzfgm6iodcd32d7kdageply"
-	schemaVersion3ID := "bafkreiawvcmcwounww6dbzb2vlvvstqf7venmktd4tsgxkw4o4undmtipe"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
+	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema",
@@ -169,10 +169,10 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 }
 
 func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a"
-	schemaVersion2ID := "bafkreigdplzukezgpmjs45lw6kwzhtwge4xjzfgm6iodcd32d7kdageply"
-	schemaVersion3ID := "bafkreiawvcmcwounww6dbzb2vlvvstqf7venmktd4tsgxkw4o4undmtipe"
-	schemaVersion4ID := "bafkreidqp7ha7mfhwqpahevcpsn5etmi3soawyq76oytdxlyozvs6cgyui"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
+	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
+	schemaVersion4ID := "bafkreid4ulxeclzgpzhznge7zdin6docxvklugvr6gt4jxfyanz5i2r2hu"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with patch on branching schema",
@@ -307,9 +307,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *testing.T) {
-	schemaVersion1ID := "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a"
-	schemaVersion2ID := "bafkreigdplzukezgpmjs45lw6kwzhtwge4xjzfgm6iodcd32d7kdageply"
-	schemaVersion3ID := "bafkreiawvcmcwounww6dbzb2vlvvstqf7venmktd4tsgxkw4o4undmtipe"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
+	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches",
@@ -403,10 +403,10 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPatch(t *testing.T) {
-	schemaVersion1ID := "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a"
-	schemaVersion2ID := "bafkreigdplzukezgpmjs45lw6kwzhtwge4xjzfgm6iodcd32d7kdageply"
-	schemaVersion3ID := "bafkreiawvcmcwounww6dbzb2vlvvstqf7venmktd4tsgxkw4o4undmtipe"
-	schemaVersion4ID := "bafkreih5trmbzpjdgterha2amx2n6opgwlpvdyxfeyfi2uq7ncbodpl2cu"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
+	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
+	schemaVersion4ID := "bafkreidjuyxhakc5yx7fucunoxijnfjvgqohf4sjoryzf27mqxidh37kne"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches then patch",
@@ -545,7 +545,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T) {
-	schemaVersion1ID := "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
 
 	test := testUtils.TestCase{
 		Description: `Test schema update, with branching schema toggling between branches and gets the 

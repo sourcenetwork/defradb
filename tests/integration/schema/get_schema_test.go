@@ -71,9 +71,9 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsAllSchema(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreiaopue5oiqzbszdk265wl6lqkqc44glt2tgjncbwek447slainu7m"
-	usersSchemaVersion2ID := "bafkreibuxh4vi3xsob5vx22bn3i5osbkxtimdl2nrs74cqxuf2w3ys2f3y"
-	booksSchemaVersion1ID := "bafkreicwmtpmea4gis6lkt46l5evd2xhais36qd5egb2b7mjrqnojbtzja"
+	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+	usersSchemaVersion2ID := "bafkreibbsqjeladin2keszmja5kektzgi4eowb6m3oimxssiqge7mmvhva"
+	booksSchemaVersion1ID := "bafkreibiu34zrehpq346pwp5z24qkderm7ibhnpcqalhkivhnf5e2afqoy"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -145,8 +145,8 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreiaopue5oiqzbszdk265wl6lqkqc44glt2tgjncbwek447slainu7m"
-	usersSchemaVersion2ID := "bafkreibuxh4vi3xsob5vx22bn3i5osbkxtimdl2nrs74cqxuf2w3ys2f3y"
+	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+	usersSchemaVersion2ID := "bafkreibbsqjeladin2keszmja5kektzgi4eowb6m3oimxssiqge7mmvhva"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -208,8 +208,8 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreiaopue5oiqzbszdk265wl6lqkqc44glt2tgjncbwek447slainu7m"
-	usersSchemaVersion2ID := "bafkreibuxh4vi3xsob5vx22bn3i5osbkxtimdl2nrs74cqxuf2w3ys2f3y"
+	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+	usersSchemaVersion2ID := "bafkreibbsqjeladin2keszmja5kektzgi4eowb6m3oimxssiqge7mmvhva"
 
 	test := testUtils.TestCase{
 		Actions: []any{

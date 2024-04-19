@@ -21,7 +21,7 @@ import (
 )
 
 func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreiht46o4lakri2py2zw57ed3pdeib6ud6ojlsomgjlrgwh53wl3q4a"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema migrations",

@@ -60,7 +60,7 @@ func (f *indexTestFixture) newUserDoc(name string, age int, col client.Collectio
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, col.Schema())
+	doc, err := client.NewDocFromJSON(data, col.Definition())
 	require.NoError(f.t, err)
 	return doc
 }
@@ -70,7 +70,7 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string, col cli
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, col.Schema())
+	doc, err := client.NewDocFromJSON(data, col.Definition())
 	require.NoError(f.t, err)
 	return doc
 }
@@ -339,7 +339,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	}{Age: 21, Weight: 154.1})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, f.users.Schema())
+	doc, err := client.NewDocFromJSON(data, f.users.Definition())
 	require.NoError(f.t, err)
 
 	err = f.users.Create(f.ctx, doc)
@@ -549,7 +549,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1070,7 +1070,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1156,7 +1156,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1270,7 +1270,7 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1334,7 +1334,7 @@ func TestUniqueComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T
 			require.NoError(f.t, err)
 			f.commitTxn()
 
-			doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Schema())
+			doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Definition())
 			require.NoError(f.t, err)
 
 			f.saveDocToCollection(doc, f.users)

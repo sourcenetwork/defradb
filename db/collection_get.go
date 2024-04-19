@@ -94,7 +94,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Schema())
+	doc, err := fetcher.Decode(encodedDoc, c.Definition())
 	if err != nil {
 		return nil, err
 	}
