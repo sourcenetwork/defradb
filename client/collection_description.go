@@ -60,7 +60,11 @@ type CollectionDescription struct {
 	// - [CollectionSource]
 	Sources []any
 
-	// Fields contains the fields within this Collection.
+	// Fields contains the fields local to the node within this Collection.
+	//
+	// Most fields defined here will also be present on the [SchemaDescription]. A notable
+	// exception to this are the fields of the (optional) secondary side of a relation
+	// which are local only, and will not be present on the [SchemaDescription].
 	Fields []CollectionFieldDescription
 
 	// Indexes contains the secondary indexes that this Collection has.
