@@ -117,6 +117,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 						Users {
 							name
 							phone
+							verified
 						}
 					}
 				`,

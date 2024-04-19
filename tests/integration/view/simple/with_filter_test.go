@@ -118,6 +118,7 @@ func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 					query {
 						UserView(filter: {age: {_eq: 31}}) {
 							name
+							age
 						}
 					}
 				`,
