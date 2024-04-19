@@ -255,6 +255,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 						cid: "bafybeia3qbhebdwssoe5udinpbdj4pntb5wjr77ql7ptzq32howbaxz2cu",
 						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 					) {
+						name
 						rating
 						author {
 							name
@@ -327,6 +328,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 						cid: "bafybeibqkdnc63xh5k4frs3x3k7z7p6sw4usjrhxd4iusbjj2uhxfjfjcq",
 						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 					) {
+						name
 						rating
 						author {
 							name
