@@ -337,7 +337,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithJSONSchemaRef(updateResultSchema)
 
 	collectionUpdateWith := openapi3.NewOperation()
-	collectionUpdateWith.OperationID = "collection_update_with"
+	collectionUpdateWith.OperationID = "collection_update_with_filter"
 	collectionUpdateWith.Description = "Update document(s) in a collection"
 	collectionUpdateWith.Tags = []string{"collection"}
 	collectionUpdateWith.AddParameter(collectionNamePathParam)
@@ -356,7 +356,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithJSONSchemaRef(deleteResultSchema)
 
 	collectionDeleteWith := openapi3.NewOperation()
-	collectionDeleteWith.OperationID = "collections_delete_with"
+	collectionDeleteWith.OperationID = "collection_delete_with_filter"
 	collectionDeleteWith.Description = "Delete document(s) from a collection"
 	collectionDeleteWith.Tags = []string{"collection"}
 	collectionDeleteWith.AddParameter(collectionNamePathParam)
