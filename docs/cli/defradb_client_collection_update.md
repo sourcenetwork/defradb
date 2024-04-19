@@ -13,13 +13,13 @@ Example: update by filter:
   defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: update by docIDs:
+Example: update by docID:
   defradb client collection update --name User \
-  --docID bae-123,bae-456 --updater '{ "verified": true }'
+  --docID bae-123 --updater '{ "verified": true }'
 
-Example: update private docIDs, with identity:
+Example: update private docID, with identity:
   defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
-  --docID bae-123,bae-456 --updater '{ "verified": true }'
+  --docID bae-123 --updater '{ "verified": true }'
 		
 
 ```
@@ -29,7 +29,7 @@ defradb client collection update [-i --identity] [--filter <filter> --docID <doc
 ### Options
 
 ```
-      --docID strings    Document ID
+      --docID string     Document ID
       --filter string    Document filter
   -h, --help             help for update
       --updater string   Document updater

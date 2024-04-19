@@ -17,7 +17,7 @@ import (
 )
 
 func MakeCollectionUpdateCommand() *cobra.Command {
-	var argDocIDs []string
+	var argDocID string
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
@@ -32,13 +32,13 @@ Example: update by filter:
   defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: update by docIDs:
+Example: update by docID:
   defradb client collection update --name User \
-  --docID bae-123,bae-456 --updater '{ "verified": true }'
+  --docID bae-123 --updater '{ "verified": true }'
 
-Example: update private docIDs, with identity:
+Example: update private docID, with identity:
   defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
-  --docID bae-123,bae-456 --updater '{ "verified": true }'
+  --docID bae-123 --updater '{ "verified": true }'
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -48,38 +48,14 @@ Example: update private docIDs, with identity:
 			}
 
 			switch {
-			case len(argDocIDs) == 1 && updater != "":
-				docID, err := client.NewDocIDFromString(argDocIDs[0])
-				if err != nil {
-					return err
-				}
-				res, err := col.UpdateWithDocID(cmd.Context(), docID, updater)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, res)
-			case len(argDocIDs) > 1 && updater != "":
-				docIDs := make([]client.DocID, len(argDocIDs))
-				for i, v := range argDocIDs {
-					docID, err := client.NewDocIDFromString(v)
-					if err != nil {
-						return err
-					}
-					docIDs[i] = docID
-				}
-				res, err := col.UpdateWithDocIDs(cmd.Context(), docIDs, updater)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, res)
 			case filter != "" && updater != "":
 				res, err := col.UpdateWithFilter(cmd.Context(), filter, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
-			case len(argDocIDs) == 1 && len(args) == 1:
-				docID, err := client.NewDocIDFromString(argDocIDs[0])
+			case len(argDocID) == 1 && len(args) == 1:
+				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err
 				}
@@ -96,7 +72,7 @@ Example: update private docIDs, with identity:
 			}
 		},
 	}
-	cmd.Flags().StringSliceVar(&argDocIDs, "docID", nil, "Document ID")
+	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
 	return cmd

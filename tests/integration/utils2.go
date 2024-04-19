@@ -1293,7 +1293,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithDocID(ctx, doc.ID())
+				_, err := collections[action.CollectionID].Delete(ctx, doc.ID())
 				return err
 			},
 		)

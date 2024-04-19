@@ -26,16 +26,12 @@ import (
 type collectionHandler struct{}
 
 type CollectionDeleteRequest struct {
-	DocID  string   `json:"docID"`
-	DocIDs []string `json:"docIDs"`
-	Filter any      `json:"filter"`
+	Filter any `json:"filter"`
 }
 
 type CollectionUpdateRequest struct {
-	DocID   string   `json:"docID"`
-	DocIDs  []string `json:"docIDs"`
-	Filter  any      `json:"filter"`
-	Updater string   `json:"updater"`
+	Filter  any    `json:"filter"`
+	Updater string `json:"updater"`
 }
 
 func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
@@ -74,7 +70,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request) {
+func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var request CollectionDeleteRequest
@@ -83,48 +79,15 @@ func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	switch {
-	case request.Filter != nil:
-		result, err := col.DeleteWith(req.Context(), request.Filter)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, result)
-	case request.DocID != "":
-		docID, err := client.NewDocIDFromString(request.DocID)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		result, err := col.DeleteWith(req.Context(), docID)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, result)
-	case request.DocIDs != nil:
-		var docIDs []client.DocID
-		for _, docIDStr := range request.DocIDs {
-			docID, err := client.NewDocIDFromString(docIDStr)
-			if err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
-			}
-			docIDs = append(docIDs, docID)
-		}
-		result, err := col.DeleteWith(req.Context(), docIDs)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, result)
-	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
+	result, err := col.DeleteWithFilter(req.Context(), request.Filter)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
 	}
+	responseJSON(rw, http.StatusOK, result)
 }
 
-func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request) {
+func (s *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var request CollectionUpdateRequest
@@ -133,45 +96,12 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	switch {
-	case request.Filter != nil:
-		result, err := col.UpdateWith(req.Context(), request.Filter, request.Updater)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, result)
-	case request.DocID != "":
-		docID, err := client.NewDocIDFromString(request.DocID)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		result, err := col.UpdateWith(req.Context(), docID, request.Updater)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, result)
-	case request.DocIDs != nil:
-		var docIDs []client.DocID
-		for _, docIDStr := range request.DocIDs {
-			docID, err := client.NewDocIDFromString(docIDStr)
-			if err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
-			}
-			docIDs = append(docIDs, docID)
-		}
-		result, err := col.UpdateWith(req.Context(), docIDs, request.Updater)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, result)
-	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
+	result, err := col.UpdateWithFilter(req.Context(), request.Filter, request.Updater)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
 	}
+	responseJSON(rw, http.StatusOK, result)
 }
 
 func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
@@ -531,8 +461,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
-	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWith)
-	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWith)
+	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
+	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
 	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, getIndexes, h.GetIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, dropIndex, h.DropIndex)

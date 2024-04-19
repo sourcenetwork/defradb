@@ -72,7 +72,15 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			_, err = n.collection.UpdateWithDocID(n.p.ctx, docID, string(patch))
+			doc, err := n.collection.Get(n.p.ctx, docID, false)
+			if err != nil {
+				return false, err
+			}
+			err = doc.SetWithJSON(patch)
+			if err != nil {
+				return false, err
+			}
+			err = n.collection.Update(n.p.ctx, doc)
 			if err != nil {
 				return false, err
 			}

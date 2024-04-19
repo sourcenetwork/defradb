@@ -24,7 +24,6 @@ import (
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -200,32 +199,21 @@ func (c *Collection) Exists(
 	return true, nil
 }
 
-func (c *Collection) UpdateWith(
+func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
-	target any,
+	filter any,
 	updater string,
-) (*client.UpdateResult, error) {
-	switch t := target.(type) {
-	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, t, updater)
-	case client.DocID:
-		return c.UpdateWithDocID(ctx, t, updater)
-	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, t, updater)
-	default:
-		return nil, client.ErrInvalidUpdateTarget
-	}
-}
-
-func (c *Collection) updateWith(
-	ctx context.Context,
-	request CollectionUpdateRequest,
 ) (*client.UpdateResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
 
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+
+	request := CollectionUpdateRequest{
+		Filter:  filter,
+		Updater: updater,
+	}
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -243,77 +231,19 @@ func (c *Collection) updateWith(
 	return &result, nil
 }
 
-func (c *Collection) UpdateWithFilter(
+func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	updater string,
-) (*client.UpdateResult, error) {
-	return c.updateWith(
-		ctx,
-		CollectionUpdateRequest{
-			Filter:  filter,
-			Updater: updater,
-		},
-	)
-}
-
-func (c *Collection) UpdateWithDocID(
-	ctx context.Context,
-	docID client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	return c.updateWith(
-		ctx,
-		CollectionUpdateRequest{
-			DocID:   docID.String(),
-			Updater: updater,
-		},
-	)
-}
-
-func (c *Collection) UpdateWithDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	var strDocIDs []string
-	for _, docID := range docIDs {
-		strDocIDs = append(strDocIDs, docID.String())
-	}
-	return c.updateWith(
-		ctx,
-		CollectionUpdateRequest{
-			DocIDs:  strDocIDs,
-			Updater: updater,
-		},
-	)
-}
-
-func (c *Collection) DeleteWith(
-	ctx context.Context,
-	target any,
-) (*client.DeleteResult, error) {
-	switch t := target.(type) {
-	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, t)
-	case client.DocID:
-		return c.DeleteWithDocID(ctx, t)
-	case []client.DocID:
-		return c.DeleteWithDocIDs(ctx, t)
-	default:
-		return nil, client.ErrInvalidDeleteTarget
-	}
-}
-
-func (c *Collection) deleteWith(
-	ctx context.Context,
-	request CollectionDeleteRequest,
 ) (*client.DeleteResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
 
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+
+	request := CollectionDeleteRequest{
+		Filter: filter,
+	}
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -330,46 +260,6 @@ func (c *Collection) deleteWith(
 		return nil, err
 	}
 	return &result, nil
-}
-
-func (c *Collection) DeleteWithFilter(
-	ctx context.Context,
-	filter any,
-) (*client.DeleteResult, error) {
-	return c.deleteWith(
-		ctx,
-		CollectionDeleteRequest{
-			Filter: filter,
-		},
-	)
-}
-
-func (c *Collection) DeleteWithDocID(
-	ctx context.Context,
-	docID client.DocID,
-) (*client.DeleteResult, error) {
-	return c.deleteWith(
-		ctx,
-		CollectionDeleteRequest{
-			DocID: docID.String(),
-		},
-	)
-}
-
-func (c *Collection) DeleteWithDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-) (*client.DeleteResult, error) {
-	var strDocIDs []string
-	for _, docID := range docIDs {
-		strDocIDs = append(strDocIDs, docID.String())
-	}
-	return c.deleteWith(
-		ctx,
-		CollectionDeleteRequest{
-			DocIDs: strDocIDs,
-		},
-	)
 }
 
 func (c *Collection) Get(
