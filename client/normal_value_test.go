@@ -1622,3 +1622,28 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 		})
 	}
 }
+
+// This test documents a bug where array values
+// were not returning the correct value for IsNillable
+// and were also not convertible to a normal nil kind.
+func TestArrayValue_IsNillable(t *testing.T) {
+	fieldKinds := []FieldKind{
+		FieldKind_BOOL_ARRAY,
+		FieldKind_INT_ARRAY,
+		FieldKind_FLOAT_ARRAY,
+		FieldKind_STRING_ARRAY,
+		FieldKind_NILLABLE_BOOL_ARRAY,
+		FieldKind_NILLABLE_INT_ARRAY,
+		FieldKind_NILLABLE_FLOAT_ARRAY,
+		FieldKind_NILLABLE_STRING_ARRAY,
+	}
+
+	for _, kind := range fieldKinds {
+		assert.True(t, kind.IsNillable())
+
+		v, err := NewNormalNil(kind)
+		require.NoError(t, err)
+
+		assert.True(t, v.IsNil())
+	}
+}
