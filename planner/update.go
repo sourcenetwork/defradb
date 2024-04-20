@@ -63,15 +63,18 @@ func (n *updateNode) Next() (bool, error) {
 
 			n.currentValue = n.results.Value()
 
-			docMap := map[string]any{
-				request.DocIDFieldName: n.currentValue.GetID(),
-			}
-			for k, v := range n.input {
-				docMap[k] = v
-			}
-			doc, err := client.NewDocFromMap(docMap, n.collection.Definition())
+			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 			if err != nil {
 				return false, err
+			}
+			doc, err := n.collection.Get(n.p.ctx, docID, false)
+			if err != nil {
+				return false, err
+			}
+			for k, v := range n.input {
+				if err := doc.Set(k, v); err != nil {
+					return false, err
+				}
 			}
 			err = n.collection.Update(n.p.ctx, doc)
 			if err != nil {
