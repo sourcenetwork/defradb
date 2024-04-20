@@ -841,7 +841,7 @@ func refreshDocuments(
 
 			// We need to add the existing documents in the order in which the test case lists them
 			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Schema())
+			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1195,7 +1195,7 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
 	if err != nil {
 		return nil, err
 	}
@@ -1215,7 +1215,7 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
 	if err != nil {
 		return nil, err
 	}
@@ -1811,6 +1811,18 @@ func assertRequestResults(
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
+
+		require.Equal(
+			s.t,
+			len(expectedResult),
+			len(result),
+			fmt.Sprintf(
+				"%s \n(number of properties for item at index %v don't match)",
+				s.testCase.Description,
+				docIndex,
+			),
+		)
+
 		for field, actualValue := range result {
 			expectedValue := expectedResult[field]
 

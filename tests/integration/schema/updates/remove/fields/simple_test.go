@@ -140,32 +140,3 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestSchemaUpdatesRemoveFieldRelationNameErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, remove field RelationName",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Author {
-						name: String
-						book: [Book]
-					}
-					type Book {
-						name: String
-						author: Author
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Author/Fields/1/RelationName" }
-					]
-				`,
-				ExpectedError: "mutating an existing field is not supported. ProposedName: book",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}

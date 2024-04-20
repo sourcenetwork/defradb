@@ -140,7 +140,7 @@ func seedDocument(
 		return client.DocID{}, err
 	}
 
-	doc, err := client.NewDocFromJSON([]byte(document), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(document), col.Definition())
 	if err != nil {
 		return client.DocID{}, err
 	}

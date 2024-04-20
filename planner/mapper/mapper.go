@@ -125,7 +125,7 @@ func toSelect(
 			store,
 			rootSelectType,
 			collectionName,
-			definition.Schema,
+			definition,
 			mapping,
 			fields,
 		)
@@ -774,7 +774,7 @@ func getCollectionName(
 		}
 
 		hostFieldDesc, parentHasField := parentCollection.Definition().GetFieldByName(selectRequest.Name)
-		if parentHasField && hostFieldDesc.RelationName != "" {
+		if parentHasField && hostFieldDesc.Kind.IsObject() {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
 			return hostFieldDesc.Kind.Underlying(), nil
@@ -1079,7 +1079,7 @@ func resolveSecondaryRelationIDs(
 	store client.Store,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.SchemaDescription,
+	schema client.CollectionDefinition,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {

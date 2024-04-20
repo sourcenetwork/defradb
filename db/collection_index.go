@@ -358,7 +358,7 @@ func (c *collection) iterateAllDocs(
 			break
 		}
 
-		doc, err := fetcher.Decode(encodedDoc, c.Schema())
+		doc, err := fetcher.Decode(encodedDoc, c.Definition())
 		if err != nil {
 			return errors.Join(err, df.Close())
 		}

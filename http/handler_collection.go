@@ -49,7 +49,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 
 	switch {
 	case client.IsJSONArray(data):
-		docList, err := client.NewDocsFromJSON(data, col.Schema())
+		docList, err := client.NewDocsFromJSON(data, col.Definition())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -61,7 +61,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 		rw.WriteHeader(http.StatusOK)
 	default:
-		doc, err := client.NewDocFromJSON(data, col.Schema())
+		doc, err := client.NewDocFromJSON(data, col.Definition())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return

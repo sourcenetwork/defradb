@@ -262,7 +262,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap, c.Schema())
+		doc, err := client.NewDocFromMap(docAsMap, c.Definition())
 		if err != nil {
 			return nil, err
 		}
@@ -323,13 +323,11 @@ func (c *collection) patchPrimaryDoc(
 	if err != nil {
 		return err
 	}
-	primarySchema := primaryCol.Schema()
 
 	primaryField, ok := primaryCol.Description().GetFieldByRelation(
 		relationFieldDescription.RelationName,
 		secondaryCollectionName,
 		relationFieldDescription.Name,
-		&primarySchema,
 	)
 	if !ok {
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
@@ -355,7 +353,7 @@ func (c *collection) patchPrimaryDoc(
 		return nil
 	}
 
-	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
+	pc := c.db.newCollection(primaryCol.Description(), primaryCol.Schema())
 	err = pc.validateOneToOneLinkDoesntAlreadyExist(
 		ctx,
 		primaryDocID.String(),

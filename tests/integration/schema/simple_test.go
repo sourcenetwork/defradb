@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
-	schemaVersionID := "bafkreiaopue5oiqzbszdk265wl6lqkqc44glt2tgjncbwek447slainu7m"
+	schemaVersionID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -180,7 +180,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 						name: NotAType
 					}
 				`,
-				ExpectedError: "relation must be defined on both schemas. Field: name, Type: NotAType",
+				ExpectedError: "no type found for given name. Field: name, Kind: NotAType",
 			},
 		},
 	}

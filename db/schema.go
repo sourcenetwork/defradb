@@ -51,7 +51,7 @@ func (db *db) addSchema(
 			return nil, err
 		}
 
-		col, err := db.createCollection(ctx, definition)
+		col, err := db.createCollection(ctx, definition, newDefinitions)
 		if err != nil {
 			return nil, err
 		}
