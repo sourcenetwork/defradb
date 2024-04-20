@@ -28,7 +28,7 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 				"name": "John"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID1 := doc1.ID().String()

@@ -41,7 +41,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 		"name": "John",
 		"age": 30
 	}`
-	doc1, err := client.NewDocFromJSON([]byte(jsonString1), colDefMap["Author"].Schema)
+	doc1, err := client.NewDocFromJSON([]byte(jsonString1), colDefMap["Author"])
 	require.NoError(t, err)
 
 	jsonString2 := fmt.Sprintf(`{
@@ -49,7 +49,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 		"rating": 9.9,
 		"author_id": "%s"
 	}`, doc1.ID())
-	doc2, err := client.NewDocFromJSON([]byte(jsonString2), colDefMap["Book"].Schema)
+	doc2, err := client.NewDocFromJSON([]byte(jsonString2), colDefMap["Book"])
 	require.NoError(t, err)
 
 	jsonString3 := fmt.Sprintf(`{

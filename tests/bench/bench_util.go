@@ -159,7 +159,7 @@ func BackfillBenchmarkDB(
 					// create the documents
 					docIDs := make([]client.DocID, numTypes)
 					for j := 0; j < numTypes; j++ {
-						doc, err := client.NewDocFromJSON([]byte(docs[j]), cols[j].Schema())
+						doc, err := client.NewDocFromJSON([]byte(docs[j]), cols[j].Definition())
 						if err != nil {
 							errCh <- errors.Wrap("failed to create document from fixture", err)
 							return

@@ -69,7 +69,7 @@ func (n *updateNode) Next() (bool, error) {
 			for k, v := range n.input {
 				docMap[k] = v
 			}
-			doc, err := client.NewDocFromMap(docMap, n.collection.Schema())
+			doc, err := client.NewDocFromMap(docMap, n.collection.Definition())
 			if err != nil {
 				return false, err
 			}

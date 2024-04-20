@@ -69,14 +69,14 @@ Example: create from stdin:
 			}
 
 			if client.IsJSONArray(docData) {
-				docs, err := client.NewDocsFromJSON(docData, col.Schema())
+				docs, err := client.NewDocsFromJSON(docData, col.Definition())
 				if err != nil {
 					return err
 				}
 				return col.CreateMany(cmd.Context(), docs)
 			}
 
-			doc, err := client.NewDocFromJSON(docData, col.Schema())
+			doc, err := client.NewDocFromJSON(docData, col.Definition())
 			if err != nil {
 				return err
 			}

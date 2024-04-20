@@ -28,7 +28,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "John"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID1 := doc1.ID().String()
@@ -39,7 +39,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "Shahzad"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID2 := doc2.ID().String()
@@ -66,14 +66,14 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
 				DocID: immutable.Some(docID1),
-				Cid:   immutable.Some("bafybeidlsifvletowavkcihp2d4k62ayuznumttxsseqynatufwnahiste"),
+				Cid:   immutable.Some("bafybeif757a4mdwimqwl24ujjnao6xlajiajz2hwuleopnptusuttri6zu"),
 			},
 			{
 				DocID: immutable.Some(docID2),
 			},
 			{
 				DocID: immutable.Some(docID1),
-				Cid:   immutable.Some("bafybeidpwcpixokptqamh7qvngbrm335mvrzs3skrlwdmkq6nmqesoj4sm"),
+				Cid:   immutable.Some("bafybeifhmjw6ay5rvwznqh37ogcw5hrmqtxrnredoh6psn7lhgtdc253km"),
 			},
 		},
 	}
