@@ -40,7 +40,7 @@ Example: delete by filter:
 			}
 
 			switch {
-			case len(argDocID) > 0:
+			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err

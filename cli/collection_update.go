@@ -48,13 +48,13 @@ Example: update private docID, with identity:
 			}
 
 			switch {
-			case len(filter) > 0 && len(updater) > 0:
+			case filter != "" && updater != "":
 				res, err := col.UpdateWithFilter(cmd.Context(), filter, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
-			case len(argDocID) > 0 && len(args) == 1:
+			case argDocID != "" && len(args) == 1:
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err
