@@ -14,7 +14,7 @@ Examples include indexes, field IDs, and [lens transforms](https://docs.source.n
 
 ## Global definitions
 
-Global definitions are consistent across all nodes in the decentralized network of nodes in the database. This is enforced by the use of things like CIDs for schema versions.  If a global definition was to differ across nodes, the different variations will be treated as a completely different definitions.
+Global definitions are consistent across all nodes in the decentralized network. This is enforced by the use of things like CIDs for schema versions.  If a global definition was to differ across nodes, the different variations will be treated as a completely different definitions.
 
 Global data definitions are always defined on the [schema](#schemas).
 
