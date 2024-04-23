@@ -78,21 +78,6 @@ type Collection interface {
 	// Will return true if a matching document exists, otherwise will return false.
 	Exists(ctx context.Context, docID DocID) (bool, error)
 
-	// UpdateWith updates a target document using the given updater type.
-	//
-	// Target can be a Filter statement, a single DocID, a single document,
-	// an array of DocIDs, or an array of documents.
-	// It is recommended to use the respective typed versions of Update
-	// (e.g. UpdateWithFilter or UpdateWithDocID) over this function if you can.
-	//
-	// Returns an ErrInvalidUpdateTarget error if the target type is not supported.
-	// Returns an ErrInvalidUpdater error if the updater type is not supported.
-	UpdateWith(
-		ctx context.Context,
-		target any,
-		updater string,
-	) (*UpdateResult, error)
-
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
@@ -103,44 +88,6 @@ type Collection interface {
 		updater string,
 	) (*UpdateResult, error)
 
-	// UpdateWithDocID updates using a DocID to target a single document for update.
-	//
-	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
-	// else an ErrInvalidUpdater will be returned.
-	//
-	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	UpdateWithDocID(
-		ctx context.Context,
-		docID DocID,
-		updater string,
-	) (*UpdateResult, error)
-
-	// UpdateWithDocIDs updates documents matching the given DocIDs.
-	//
-	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
-	// else an ErrInvalidUpdater will be returned.
-	//
-	// Returns an ErrDocumentNotFound if a document is not found for any given DocID.
-	UpdateWithDocIDs(
-		ctx context.Context,
-		docIDs []DocID,
-		updater string,
-	) (*UpdateResult, error)
-
-	// DeleteWith deletes a target document.
-	//
-	// Target can be a Filter statement, a single DocID, a single document, an array of DocIDs,
-	// or an array of documents. It is recommended to use the respective typed versions of Delete
-	// (e.g. DeleteWithFilter or DeleteWithDocID) over this function if you can.
-	// This operation will soft-delete documents related to the given DocID and update the composite block
-	// with a status of `Deleted`.
-	//
-	// Returns an ErrInvalidDeleteTarget if the target type is not supported.
-	DeleteWith(
-		ctx context.Context,
-		target any,
-	) (*DeleteResult, error)
-
 	// DeleteWithFilter deletes documents matching the given filter.
 	//
 	// This operation will soft-delete documents related to the given filter and update the composite block
@@ -148,28 +95,6 @@ type Collection interface {
 	DeleteWithFilter(
 		ctx context.Context,
 		filter any,
-	) (*DeleteResult, error)
-
-	// DeleteWithDocID deletes using a DocID to target a single document for delete.
-	//
-	// This operation will soft-delete documents related to the given DocID and update the composite block
-	// with a status of `Deleted`.
-	//
-	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	DeleteWithDocID(
-		ctx context.Context,
-		docID DocID,
-	) (*DeleteResult, error)
-
-	// DeleteWithDocIDs deletes documents matching the given DocIDs.
-	//
-	// This operation will soft-delete documents related to the given DocIDs and update the composite block
-	// with a status of `Deleted`.
-	//
-	// Returns an ErrDocumentNotFound if a document is not found for any given DocID.
-	DeleteWithDocIDs(
-		ctx context.Context,
-		docIDs []DocID,
 	) (*DeleteResult, error)
 
 	// Get returns the document with the given DocID.

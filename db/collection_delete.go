@@ -15,73 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
-
-// DeleteWith deletes a target document.
-//
-// Target can be a Filter statement, a single DocID, a single document,
-// an array of DocIDs, or an array of documents.
-//
-// If you want more type safety, use the respective typed versions of Delete.
-// Eg: DeleteWithFilter or DeleteWithDocID
-func (c *collection) DeleteWith(
-	ctx context.Context,
-	target any,
-) (*client.DeleteResult, error) {
-	switch t := target.(type) {
-	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, t)
-	case client.DocID:
-		return c.DeleteWithDocID(ctx, t)
-	case []client.DocID:
-		return c.DeleteWithDocIDs(ctx, t)
-	default:
-		return nil, client.ErrInvalidDeleteTarget
-	}
-}
-
-// DeleteWithDocID deletes using a DocID to target a single document for delete.
-func (c *collection) DeleteWithDocID(
-	ctx context.Context,
-	docID client.DocID,
-) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	dsKey := c.getPrimaryKeyFromDocID(docID)
-	res, err := c.deleteWithKey(ctx, dsKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, txn.Commit(ctx)
-}
-
-// DeleteWithDocIDs is the same as DeleteWithDocID but accepts multiple DocIDs as a slice.
-func (c *collection) DeleteWithDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-) (*client.DeleteResult, error) {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	res, err := c.deleteWithIDs(ctx, docIDs, client.Deleted)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, txn.Commit(ctx)
-}
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
 func (c *collection) DeleteWithFilter(
@@ -100,54 +37,6 @@ func (c *collection) DeleteWithFilter(
 	}
 
 	return res, txn.Commit(ctx)
-}
-
-func (c *collection) deleteWithKey(
-	ctx context.Context,
-	key core.PrimaryDataStoreKey,
-) (*client.DeleteResult, error) {
-	// Check the key we have been given to delete with actually has a corresponding
-	//  document (i.e. document actually exists in the collection).
-	err := c.applyDelete(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
-	// Upon successfull deletion, record a summary.
-	results := &client.DeleteResult{
-		Count:  1,
-		DocIDs: []string{key.DocID},
-	}
-
-	return results, nil
-}
-
-func (c *collection) deleteWithIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-	_ client.DocumentStatus,
-) (*client.DeleteResult, error) {
-	results := &client.DeleteResult{
-		DocIDs: make([]string, 0),
-	}
-
-	for _, docID := range docIDs {
-		primaryKey := c.getPrimaryKeyFromDocID(docID)
-
-		// Apply the function that will perform the full deletion of this document.
-		err := c.applyDelete(ctx, primaryKey)
-		if err != nil {
-			return nil, err
-		}
-
-		// Add this deleted docID to our list.
-		results.DocIDs = append(results.DocIDs, docID.String())
-	}
-
-	// Upon successfull deletion, record a summary of how many we deleted.
-	results.Count = int64(len(results.DocIDs))
-
-	return results, nil
 }
 
 func (c *collection) deleteWithFilter(

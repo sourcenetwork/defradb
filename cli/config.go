@@ -46,6 +46,7 @@ var configFlags = map[string]string{
 	"log.stacktrace":                    "log-stacktrace",
 	"log.source":                        "log-source",
 	"log.overrides":                     "log-overrides",
+	"log.nocolor":                       "log-no-color",
 	"api.address":                       "url",
 	"datastore.maxtxnretries":           "max-txn-retries",
 	"datastore.store":                   "store",

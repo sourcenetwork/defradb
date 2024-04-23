@@ -6,11 +6,11 @@ Delete documents by docID or filter.
 
 Delete documents by docID or filter and lists the number of documents deleted.
 		
-Example: delete by docID(s):
-  defradb client collection delete  --name User --docID bae-123,bae-456
+Example: delete by docID:
+  defradb client collection delete  --name User --docID bae-123
 
-Example: delete by docID(s) with identity:
-  defradb client collection delete -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User --docID bae-123,bae-456
+Example: delete by docID with identity:
+  defradb client collection delete -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User --docID bae-123
 
 Example: delete by filter:
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
@@ -23,7 +23,7 @@ defradb client collection delete [-i --identity] [--filter <filter> --docID <doc
 ### Options
 
 ```
-      --docID strings   Document ID
+      --docID string    Document ID
       --filter string   Document filter
   -h, --help            help for delete
 ```
