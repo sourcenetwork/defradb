@@ -22,7 +22,6 @@ import (
 	mh "github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/merkle/clock"
@@ -64,7 +63,7 @@ func TestSendJobWorker_WithNewJob_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
@@ -108,7 +107,7 @@ func TestSendJobWorker_WithCloseJob_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
@@ -169,11 +168,11 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	col, err := db1.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
-	err = col.Create(ctx, acpIdentity.NoIdentity, doc)
+	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
 	txn1, _ := db1.NewTxn(ctx, false)

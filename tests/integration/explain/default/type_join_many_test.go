@@ -13,6 +13,8 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -53,7 +55,7 @@ func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"joinType":    "typeJoinMany",
-							"rootName":    "author",
+							"rootName":    immutable.Some("author"),
 							"subTypeName": "articles",
 						},
 					},

@@ -13,6 +13,8 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -66,7 +68,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"joinType":    "typeJoinMany",
-							"rootName":    "author",
+							"rootName":    immutable.Some("author"),
 							"subTypeName": "books",
 						},
 					},
@@ -175,7 +177,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"joinType":    "typeJoinMany",
-							"rootName":    "author",
+							"rootName":    immutable.Some("author"),
 							"subTypeName": "books",
 						},
 					},
@@ -217,7 +219,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"joinType":    "typeJoinMany",
-							"rootName":    "author",
+							"rootName":    immutable.Some("author"),
 							"subTypeName": "articles",
 						},
 					},

@@ -30,9 +30,6 @@ const (
 	errCannotSetVersionID                       string = "setting the VersionID is not supported"
 	errRelationalFieldInvalidRelationType       string = "invalid RelationType"
 	errRelationalFieldMissingIDField            string = "missing id field for relation object field"
-	errRelationalFieldMissingRelationName       string = "missing relation name"
-	errPrimarySideOnMany                        string = "cannot set the many side of a relation as primary"
-	errBothSidesPrimary                         string = "both sides of a relation cannot be primary"
 	errRelatedFieldKindMismatch                 string = "invalid Kind of the related field"
 	errRelatedFieldRelationTypeMismatch         string = "invalid RelationType of the related field"
 	errRelationalFieldIDInvalidType             string = "relational id field of invalid kind"
@@ -94,6 +91,8 @@ const (
 	errCollectionIDCannotBeZero                 string = "collection ID cannot be zero"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
 	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
+	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
+	errRelationMissingField                     string = "relation missing field"
 )
 
 var (
@@ -125,6 +124,9 @@ var (
 	ErrCollectionIDCannotBeZero                 = errors.New(errCollectionIDCannotBeZero)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
 	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
+	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
+	ErrRelationMissingField                     = errors.New(errRelationMissingField)
+	ErrMultipleRelationPrimaries                = errors.New("relation can only have a single field set as primary")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -266,27 +268,6 @@ func NewErrRelationalFieldMissingIDField(name string, expectedName string) error
 		errRelationalFieldMissingIDField,
 		errors.NewKV("Field", name),
 		errors.NewKV("ExpectedIDFieldName", expectedName),
-	)
-}
-
-func NewErrRelationalFieldMissingRelationName(name string) error {
-	return errors.New(
-		errRelationalFieldMissingRelationName,
-		errors.NewKV("Field", name),
-	)
-}
-
-func NewErrPrimarySideOnMany(name string) error {
-	return errors.New(
-		errPrimarySideOnMany,
-		errors.NewKV("Field", name),
-	)
-}
-
-func NewErrBothSidesPrimary(relationName string) error {
-	return errors.New(
-		errBothSidesPrimary,
-		errors.NewKV("RelationName", relationName),
 	)
 }
 
@@ -626,5 +607,20 @@ func NewErrCollectionsCannotBeDeleted(colID uint32) error {
 	return errors.New(
 		errCollectionsCannotBeDeleted,
 		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrSecondaryFieldOnSchema(name string) error {
+	return errors.New(
+		errSecondaryFieldOnSchema,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrRelationMissingField(objectName, relationName string) error {
+	return errors.New(
+		errRelationMissingField,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("RelationName", relationName),
 	)
 }

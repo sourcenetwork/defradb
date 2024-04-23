@@ -100,10 +100,9 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 
 func (w *Wrapper) AddPolicy(
 	ctx context.Context,
-	creator string,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	return w.client.AddPolicy(ctx, creator, policy)
+	return w.client.AddPolicy(ctx, policy)
 }
 
 func (w *Wrapper) PatchSchema(
@@ -171,10 +170,9 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
-	identity immutable.Option[string],
 	query string,
 ) *client.RequestResult {
-	return w.client.ExecRequest(ctx, identity, query)
+	return w.client.ExecRequest(ctx, query)
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {

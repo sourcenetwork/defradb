@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 )
@@ -32,17 +31,16 @@ import (
 // Eg: UpdateWithFilter or UpdateWithDocID
 func (c *collection) UpdateWith(
 	ctx context.Context,
-	identity immutable.Option[string],
 	target any,
 	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, identity, t, updater)
+		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocID:
-		return c.UpdateWithDocID(ctx, identity, t, updater)
+		return c.UpdateWithDocID(ctx, t, updater)
 	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, identity, t, updater)
+		return c.UpdateWithDocIDs(ctx, t, updater)
 	default:
 		return nil, client.ErrInvalidUpdateTarget
 	}
@@ -53,7 +51,6 @@ func (c *collection) UpdateWith(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithFilter(
 	ctx context.Context,
-	identity immutable.Option[string],
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -63,7 +60,7 @@ func (c *collection) UpdateWithFilter(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.updateWithFilter(ctx, identity, txn, filter, updater)
+	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +72,6 @@ func (c *collection) UpdateWithFilter(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithDocID(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -85,7 +81,7 @@ func (c *collection) UpdateWithDocID(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.updateWithDocID(ctx, identity, txn, docID, updater)
+	res, err := c.updateWithDocID(ctx, docID, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +94,6 @@ func (c *collection) UpdateWithDocID(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithDocIDs(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -108,7 +103,7 @@ func (c *collection) UpdateWithDocIDs(
 	}
 	defer txn.Discard(ctx)
 
-	res, err := c.updateWithIDs(ctx, identity, txn, docIDs, updater)
+	res, err := c.updateWithIDs(ctx, docIDs, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -118,8 +113,6 @@ func (c *collection) UpdateWithDocIDs(
 
 func (c *collection) updateWithDocID(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -135,7 +128,7 @@ func (c *collection) updateWithDocID(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	doc, err := c.Get(ctx, identity, docID, false)
+	doc, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +142,7 @@ func (c *collection) updateWithDocID(
 		return nil, err
 	}
 
-	err = c.update(ctx, identity, txn, doc)
+	err = c.update(ctx, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +156,6 @@ func (c *collection) updateWithDocID(
 
 func (c *collection) updateWithIDs(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -184,7 +175,7 @@ func (c *collection) updateWithIDs(
 		DocIDs: make([]string, len(docIDs)),
 	}
 	for i, docIDs := range docIDs {
-		doc, err := c.Get(ctx, identity, docIDs, false)
+		doc, err := c.Get(ctx, docIDs, false)
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +189,7 @@ func (c *collection) updateWithIDs(
 			return nil, err
 		}
 
-		err = c.update(ctx, identity, txn, doc)
+		err = c.update(ctx, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -211,8 +202,6 @@ func (c *collection) updateWithIDs(
 
 func (c *collection) updateWithFilter(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -233,7 +222,7 @@ func (c *collection) updateWithFilter(
 	}
 
 	// Make a selection plan that will scan through only the documents with matching filter.
-	selectionPlan, err := c.makeSelectionPlan(ctx, identity, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +262,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap, c.Schema())
+		doc, err := client.NewDocFromMap(docAsMap, c.Definition())
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +276,7 @@ func (c *collection) updateWithFilter(
 			}
 		}
 
-		err = c.update(ctx, identity, txn, doc)
+		err = c.update(ctx, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -320,8 +309,6 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (clien
 // patched.
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	secondaryCollectionName string,
 	relationFieldDescription client.FieldDefinition,
 	docID string,
@@ -332,17 +319,15 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Kind.Underlying())
+	primaryCol, err := c.db.getCollectionByName(ctx, relationFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}
-	primarySchema := primaryCol.Schema()
 
 	primaryField, ok := primaryCol.Description().GetFieldByRelation(
 		relationFieldDescription.RelationName,
 		secondaryCollectionName,
 		relationFieldDescription.Name,
-		&primarySchema,
 	)
 	if !ok {
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
@@ -355,7 +340,6 @@ func (c *collection) patchPrimaryDoc(
 
 	doc, err := primaryCol.Get(
 		ctx,
-		identity,
 		primaryDocID,
 		false,
 	)
@@ -369,11 +353,9 @@ func (c *collection) patchPrimaryDoc(
 		return nil
 	}
 
-	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
+	pc := c.db.newCollection(primaryCol.Description(), primaryCol.Schema())
 	err = pc.validateOneToOneLinkDoesntAlreadyExist(
 		ctx,
-		identity,
-		txn,
 		primaryDocID.String(),
 		primaryIDField,
 		docID,
@@ -396,7 +378,7 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	err = primaryCol.Update(ctx, identity, doc)
+	err = primaryCol.Update(ctx, doc)
 	if err != nil {
 		return err
 	}
@@ -410,8 +392,6 @@ func (c *collection) patchPrimaryDoc(
 // Additionally it only requests for the root scalar fields of the object
 func (c *collection) makeSelectionPlan(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	filter any,
 ) (planner.RequestPlan, error) {
 	var f immutable.Option[request.Filter]
@@ -437,6 +417,8 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
 	planner := planner.New(
 		ctx,
 		identity,

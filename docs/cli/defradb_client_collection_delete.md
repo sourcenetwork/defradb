@@ -23,10 +23,9 @@ defradb client collection delete [-i --identity] [--filter <filter> --docID <doc
 ### Options
 
 ```
-      --docID strings     Document ID
-      --filter string     Document filter
-  -h, --help              help for delete
-  -i, --identity string   Identity of the actor
+      --docID strings   Document ID
+      --filter string   Document filter
+  -h, --help            help for delete
 ```
 
 ### Options inherited from parent commands
@@ -34,6 +33,7 @@ defradb client collection delete [-i --identity] [--filter <filter> --docID <doc
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
+  -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")

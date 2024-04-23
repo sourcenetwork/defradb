@@ -141,7 +141,7 @@ func TestP2FullPReplicator(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
-	}`), colDefMap[userCollection].Schema)
+	}`), colDefMap[userCollection])
 	require.NoError(t, err)
 
 	test := P2PTestCase{

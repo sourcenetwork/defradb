@@ -135,45 +135,7 @@ func TestSchemaRelationErrorsGivenOneSidedManyRelationField(t *testing.T) {
 						dogs: [Dog]
 					}
 				`,
-				ExpectedError: "relation must be defined on both schemas. Field: dogs, Type: Dog",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaRelationErrorsGivenOneSidedRelationField(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Dog {
-						name: String
-					}
-					type User {
-						dog: Dog
-					}
-				`,
-				ExpectedError: "relation must be defined on both schemas. Field: dog, Type: Dog",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaRelation_GivenSelfReferemceRelationField_ReturnError(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Dog {
-						name: String
-						bestMate: Dog
-					}
-				`,
-				ExpectedError: "relation must be defined on both schemas. Field: bestMate, Type: Dog",
+				ExpectedError: "relation missing field. Object: Dog, RelationName: dog_user",
 			},
 		},
 	}

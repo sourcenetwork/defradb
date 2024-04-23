@@ -284,6 +284,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 					{
 						"Name": "John",
 						// The email should be returned but it is not
+						"Email": nil,
 					},
 				},
 			},

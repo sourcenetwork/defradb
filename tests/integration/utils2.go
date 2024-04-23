@@ -841,21 +841,17 @@ func refreshDocuments(
 
 			// We need to add the existing documents in the order in which the test case lists them
 			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Schema())
+			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
 			}
 
+			ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(
-				s.ctx,
-				acpIdentity.NewIdentity(action.Identity),
-				doc.ID(),
-				false,
-			)
+			doc, err = collection.Get(ctx, doc.ID(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1199,16 +1195,17 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
 	if err != nil {
 		return nil, err
 	}
 
-	return doc, collections[action.CollectionID].Save(
-		s.ctx,
-		acpIdentity.NewIdentity(action.Identity),
-		doc,
-	)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+
+	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	return doc, collections[action.CollectionID].Save(ctx, doc)
 }
 
 func createDocViaColCreate(
@@ -1218,16 +1215,17 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
 	if err != nil {
 		return nil, err
 	}
 
-	return doc, collections[action.CollectionID].Create(
-		s.ctx,
-		acpIdentity.NewIdentity(action.Identity),
-		doc,
-	)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+
+	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	return doc, collections[action.CollectionID].Create(ctx, doc)
 }
 
 func createDocViaGQL(
@@ -1253,11 +1251,11 @@ func createDocViaGQL(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	identity := acpIdentity.NewIdentity(action.Identity)
 	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
 	result := node.ExecRequest(
 		ctx,
-		identity,
 		request,
 	)
 	if len(result.GQL.Errors) > 0 {
@@ -1273,7 +1271,7 @@ func createDocViaGQL(
 	docID, err := client.NewDocIDFromString(docIDString)
 	require.NoError(s.t, err)
 
-	doc, err := collection.Get(s.ctx, identity, docID, false)
+	doc, err := collection.Get(ctx, docID, false)
 	require.NoError(s.t, err)
 
 	return doc, nil
@@ -1286,6 +1284,7 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1294,11 +1293,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithDocID(
-					s.ctx,
-					acpIdentity.NewIdentity(action.Identity),
-					doc.ID(),
-				)
+				_, err := collections[action.CollectionID].DeleteWithDocID(ctx, doc.ID())
 				return err
 			},
 		)
@@ -1347,14 +1342,9 @@ func updateDocViaColSave(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
-	identity := acpIdentity.NewIdentity(action.Identity)
-	doc, err := collections[action.CollectionID].Get(
-		s.ctx,
-		identity,
-		cachedDoc.ID(),
-		true,
-	)
+	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
@@ -1367,8 +1357,7 @@ func updateDocViaColSave(
 	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Save(
-		s.ctx,
-		identity,
+		ctx,
 		doc,
 	)
 }
@@ -1380,14 +1369,9 @@ func updateDocViaColUpdate(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
-	identity := acpIdentity.NewIdentity(action.Identity)
-	doc, err := collections[action.CollectionID].Get(
-		s.ctx,
-		identity,
-		cachedDoc.ID(),
-		true,
-	)
+	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
@@ -1399,11 +1383,7 @@ func updateDocViaColUpdate(
 
 	s.documents[action.CollectionID][action.DocID] = doc
 
-	return collections[action.CollectionID].Update(
-		s.ctx,
-		identity,
-		doc,
-	)
+	return collections[action.CollectionID].Update(ctx, doc)
 }
 
 func updateDocViaGQL(
@@ -1430,12 +1410,11 @@ func updateDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+
 	ctx := db.SetContextTxn(s.ctx, txn)
-	result := node.ExecRequest(
-		ctx,
-		acpIdentity.NewIdentity(action.Identity),
-		request,
-	)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -1651,12 +1630,11 @@ func executeRequest(
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
+
 		ctx := db.SetContextTxn(s.ctx, txn)
-		result := node.ExecRequest(
-			ctx,
-			acpIdentity.NewIdentity(action.Identity),
-			action.Request,
-		)
+		ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+		result := node.ExecRequest(ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
@@ -1688,11 +1666,7 @@ func executeSubscriptionRequest(
 	subscriptionAssert := make(chan func())
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(
-			s.ctx,
-			acpIdentity.NoIdentity, // No Identity for subscription request.
-			action.Request,
-		)
+		result := node.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
@@ -1837,6 +1811,18 @@ func assertRequestResults(
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
+
+		require.Equal(
+			s.t,
+			len(expectedResult),
+			len(result),
+			fmt.Sprintf(
+				"%s \n(number of properties for item at index %v don't match)",
+				s.testCase.Description,
+				docIndex,
+			),
+		)
+
 		for field, actualValue := range result {
 			expectedValue := expectedResult[field]
 
@@ -1874,11 +1860,7 @@ func assertIntrospectionResults(
 	action IntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(
-			s.ctx,
-			acpIdentity.NoIdentity, // No Identity for introspection requests.
-			action.Request,
-		)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -1909,11 +1891,7 @@ func assertClientIntrospectionResults(
 	action ClientIntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(
-			s.ctx,
-			acpIdentity.NoIdentity, // No identity for client introspection requests.
-			action.Request,
-		)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true

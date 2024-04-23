@@ -13,20 +13,12 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
 // execRequest executes a request against the database.
-func (db *db) execRequest(
-	ctx context.Context,
-	identity immutable.Option[string],
-	request string,
-	txn datastore.Txn,
-) *client.RequestResult {
+func (db *db) execRequest(ctx context.Context, request string) *client.RequestResult {
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
 	if err != nil {
@@ -51,10 +43,12 @@ func (db *db) execRequest(
 
 	if pub != nil {
 		res.Pub = pub
-		go db.handleSubscription(ctx, identity, pub, subRequest)
+		go db.handleSubscription(ctx, pub, subRequest)
 		return res
 	}
 
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
 	planner := planner.New(
 		ctx,
 		identity,

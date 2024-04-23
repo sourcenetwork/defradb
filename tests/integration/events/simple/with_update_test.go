@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
@@ -29,7 +28,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "John"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID1 := doc1.ID().String()
@@ -40,7 +39,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "Shahzad"
 			}`,
 		),
-		colDefMap["Users"].Schema,
+		colDefMap["Users"],
 	)
 	assert.Nil(t, err)
 	docID2 := doc2.ID().String()
@@ -49,17 +48,17 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		CollectionCalls: map[string][]func(client.Collection){
 			"Users": []func(c client.Collection){
 				func(c client.Collection) {
-					err = c.Save(context.Background(), acpIdentity.NoIdentity, doc1)
+					err = c.Save(context.Background(), doc1)
 					assert.Nil(t, err)
 				},
 				func(c client.Collection) {
-					err = c.Save(context.Background(), acpIdentity.NoIdentity, doc2)
+					err = c.Save(context.Background(), doc2)
 					assert.Nil(t, err)
 				},
 				func(c client.Collection) {
 					// Update John
 					doc1.Set("name", "Johnnnnn")
-					err = c.Save(context.Background(), acpIdentity.NoIdentity, doc1)
+					err = c.Save(context.Background(), doc1)
 					assert.Nil(t, err)
 				},
 			},
@@ -67,14 +66,14 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
 				DocID: immutable.Some(docID1),
-				Cid:   immutable.Some("bafybeidlsifvletowavkcihp2d4k62ayuznumttxsseqynatufwnahiste"),
+				Cid:   immutable.Some("bafybeif757a4mdwimqwl24ujjnao6xlajiajz2hwuleopnptusuttri6zu"),
 			},
 			{
 				DocID: immutable.Some(docID2),
 			},
 			{
 				DocID: immutable.Some(docID1),
-				Cid:   immutable.Some("bafybeidpwcpixokptqamh7qvngbrm335mvrzs3skrlwdmkq6nmqesoj4sm"),
+				Cid:   immutable.Some("bafybeifhmjw6ay5rvwznqh37ogcw5hrmqtxrnredoh6psn7lhgtdc253km"),
 			},
 		},
 	}

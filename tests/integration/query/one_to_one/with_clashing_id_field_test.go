@@ -94,22 +94,7 @@ func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 						published: Book
 					}
 				`,
-			},
-			testUtils.CreateDoc{
-				// bae-d82dbe47-9df1-5e33-bd87-f92e9c378161
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House",
-					"author_id": 123456
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-d82dbe47-9df1-5e33-bd87-f92e9c378161"
-				}`,
-				ExpectedError: "target document is already linked to another document.",
+				ExpectedError: "relational id field of invalid kind. Field: author_id, Expected: ID, Actual: Int",
 			},
 		},
 	}

@@ -13,11 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
 )
@@ -51,7 +48,6 @@ func (db *db) checkForClientSubscriptions(r *request.Request) (
 
 func (db *db) handleSubscription(
 	ctx context.Context,
-	identity immutable.Option[string],
 	pub *events.Publisher[events.Update],
 	r *request.ObjectSubscription,
 ) {
@@ -63,19 +59,19 @@ func (db *db) handleSubscription(
 		}
 
 		ctx := SetContextTxn(ctx, txn)
-		db.handleEvent(ctx, identity, txn, pub, evt, r)
+		db.handleEvent(ctx, pub, evt, r)
 		txn.Discard(ctx)
 	}
 }
 
 func (db *db) handleEvent(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	pub *events.Publisher[events.Update],
 	evt events.Update,
 	r *request.ObjectSubscription,
 ) {
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
 	p := planner.New(
 		ctx,
 		identity,

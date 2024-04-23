@@ -19,9 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/immutable"
-
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
@@ -77,7 +74,6 @@ type P2PTestCase struct {
 
 func setupDefraNode(
 	t *testing.T,
-	identity immutable.Option[string],
 	opts []net.NodeOpt,
 	peers []string,
 	seeds []string,
@@ -97,7 +93,7 @@ func setupDefraNode(
 	// seed the database with a set of documents
 	docIDs := []client.DocID{}
 	for _, document := range seeds {
-		docID, err := seedDocument(ctx, identity, db, document)
+		docID, err := seedDocument(ctx, db, document)
 		require.NoError(t, err)
 		docIDs = append(docIDs, docID)
 	}
@@ -136,7 +132,6 @@ func seedSchema(ctx context.Context, db client.DB) error {
 
 func seedDocument(
 	ctx context.Context,
-	identity immutable.Option[string],
 	db client.DB,
 	document string,
 ) (client.DocID, error) {
@@ -145,12 +140,12 @@ func seedDocument(
 		return client.DocID{}, err
 	}
 
-	doc, err := client.NewDocFromJSON([]byte(document), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(document), col.Definition())
 	if err != nil {
 		return client.DocID{}, err
 	}
 
-	err = col.Save(ctx, identity, doc)
+	err = col.Save(ctx, doc)
 	if err != nil {
 		return client.DocID{}, err
 	}
@@ -160,7 +155,6 @@ func seedDocument(
 
 func saveDocument(
 	ctx context.Context,
-	identity immutable.Option[string],
 	db client.DB,
 	document *client.Document,
 ) error {
@@ -169,12 +163,11 @@ func saveDocument(
 		return err
 	}
 
-	return col.Save(ctx, identity, document)
+	return col.Save(ctx, document)
 }
 
 func updateDocument(
 	ctx context.Context,
-	identity immutable.Option[string],
 	db client.DB,
 	docID client.DocID,
 	update string,
@@ -184,7 +177,7 @@ func updateDocument(
 		return err
 	}
 
-	doc, err := getDocument(ctx, identity, db, docID)
+	doc, err := getDocument(ctx, db, docID)
 	if err != nil {
 		return err
 	}
@@ -193,12 +186,11 @@ func updateDocument(
 		return err
 	}
 
-	return col.Save(ctx, identity, doc)
+	return col.Save(ctx, doc)
 }
 
 func getDocument(
 	ctx context.Context,
-	identity immutable.Option[string],
 	db client.DB,
 	docID client.DocID,
 ) (*client.Document, error) {
@@ -207,7 +199,7 @@ func getDocument(
 		return nil, err
 	}
 
-	doc, err := col.Get(ctx, identity, docID, false)
+	doc, err := col.Get(ctx, docID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +230,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		}
 		n, d, err := setupDefraNode(
 			t,
-			acpIdentity.NewIdentity(test.Identity),
 			cfg,
 			peerAddresses,
 			test.SeedDocuments,
@@ -270,8 +261,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		}
 	}
 
-	identity := acpIdentity.NewIdentity(test.Identity)
-
 	// update and sync peers
 	for n, updateMap := range test.Updates {
 		if n >= len(nodes) {
@@ -284,7 +273,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				log.InfoContext(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
 				err := updateDocument(
 					ctx,
-					identity,
 					nodes[n].DB,
 					docIDs[d],
 					update,
@@ -318,7 +306,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				for field, result := range results {
 					doc, err := getDocument(
 						ctx,
-						identity,
 						nodes[n2].DB,
 						docIDs[d],
 					)
@@ -355,7 +342,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			for _, doc := range test.DocumentsToReplicate {
 				err := saveDocument(
 					ctx,
-					identity,
 					nodes[n].DB,
 					doc,
 				)
@@ -374,7 +360,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 						doc, err := getDocument(
 							ctx,
-							identity,
 							nodes[rep].DB,
 							d,
 						)

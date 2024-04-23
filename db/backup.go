@@ -17,13 +17,11 @@ import (
 	"fmt"
 	"os"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
+func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		return NewErrOpenFile(err, filepath)
@@ -50,7 +48,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			return err
 		}
 		colName := t.(string)
-		col, err := db.getCollectionByName(ctx, txn, colName)
+		col, err := db.getCollectionByName(ctx, colName)
 		if err != nil {
 			return NewErrFailedToGetCollection(colName, err)
 		}
@@ -86,13 +84,12 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap, col.Schema())
+			doc, err := client.NewDocFromMap(docMap, col.Definition())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
 
-			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-			err = col.Create(ctx, acpIdentity.NoIdentity, doc)
+			err = col.Create(ctx, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -103,8 +100,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
-				// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to backup
-				err = col.Update(ctx, acpIdentity.NoIdentity, doc)
+				err = col.Update(ctx, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -119,19 +115,19 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 	return nil
 }
 
-func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client.BackupConfig) (err error) {
+func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
 	// old key -> new Key
 	keyChangeCache := map[string]string{}
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, txn, client.CollectionFetchOptions{})
+		cols, err = db.getCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}
 	} else {
 		for _, colName := range config.Collections {
-			col, err := db.getCollectionByName(ctx, txn, colName)
+			col, err := db.getCollectionByName(ctx, colName)
 			if err != nil {
 				return NewErrFailedToGetCollection(colName, err)
 			}
@@ -191,8 +187,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if err != nil {
 			return err
 		}
-		// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-		docIDsCh, err := col.GetAllDocIDs(ctx, acpIdentity.NoIdentity)
+		docIDsCh, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return err
 		}
@@ -208,8 +203,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 					return err
 				}
 			}
-			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430 - Add identity ability to export
-			doc, err := col.Get(ctx, acpIdentity.NoIdentity, docResultWithID.ID, false)
+			doc, err := col.Get(ctx, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}
@@ -233,7 +227,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignCol, err := db.getCollectionByName(ctx, txn, field.Kind.Underlying())
+							foreignCol, err := db.getCollectionByName(ctx, field.Kind.Underlying())
 							if err != nil {
 								return NewErrFailedToGetCollection(field.Kind.Underlying(), err)
 							}
@@ -241,8 +235,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							if err != nil {
 								return err
 							}
-							// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2430
-							foreignDoc, err := foreignCol.Get(ctx, acpIdentity.NoIdentity, foreignDocID, false)
+							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
 								err := doc.Set(field.Name+request.RelatedObjectID, nil)
 								if err != nil {
@@ -264,7 +257,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Schema())
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Definition())
 								if err != nil {
 									return err
 								}
@@ -295,7 +288,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM, col.Schema())
+			newDoc, err := client.NewDocFromMap(docM, col.Definition())
 			if err != nil {
 				return err
 			}

@@ -16,7 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
@@ -32,7 +31,6 @@ func TestUpdateWithInvalidFilterType(t *testing.T) {
 					// test with an invalid filter type
 					_, err := c.UpdateWithFilter(
 						ctx,
-						acpIdentity.NoIdentity,
 						t,
 						`{"name": "Eric"}`,
 					)
@@ -57,7 +55,6 @@ func TestUpdateWithEmptyFilter(t *testing.T) {
 					// test with an empty filter
 					_, err := c.UpdateWithFilter(
 						ctx,
-						acpIdentity.NoIdentity,
 						"",
 						`{"name": "Eric"}`,
 					)
@@ -77,7 +74,7 @@ func TestUpdateWithFilter(t *testing.T) {
 		"age": 21
 	}`
 
-	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"].Schema)
+	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"])
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -96,7 +93,6 @@ func TestUpdateWithFilter(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithFilter(
 							ctx,
-							acpIdentity.NoIdentity,
 							filter,
 							`{name: "Eric"}`,
 						)
@@ -116,7 +112,6 @@ func TestUpdateWithFilter(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithFilter(
 							ctx,
-							acpIdentity.NoIdentity,
 							filter,
 							`"name: Eric"`,
 						)
@@ -136,7 +131,6 @@ func TestUpdateWithFilter(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithFilter(
 							ctx,
-							acpIdentity.NoIdentity,
 							filter,
 							`[
 								{
@@ -150,7 +144,7 @@ func TestUpdateWithFilter(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -177,7 +171,6 @@ func TestUpdateWithFilter(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithFilter(
 							ctx,
-							acpIdentity.NoIdentity,
 							filter,
 							`{"name": "Eric"}`,
 						)
@@ -185,7 +178,7 @@ func TestUpdateWithFilter(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}

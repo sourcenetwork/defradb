@@ -16,7 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
@@ -27,7 +26,7 @@ func TestUpdateWithDocID(t *testing.T) {
 		"age": 21
 	}`
 
-	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"].Schema)
+	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"])
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -44,7 +43,6 @@ func TestUpdateWithDocID(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocID(
 							ctx,
-							acpIdentity.NoIdentity,
 							doc.ID(),
 							`{name: "Eric"}`,
 						)
@@ -62,7 +60,7 @@ func TestUpdateWithDocID(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithDocID(ctx, acpIdentity.NoIdentity, doc.ID(), `"name: Eric"`)
+						_, err := c.UpdateWithDocID(ctx, doc.ID(), `"name: Eric"`)
 						return err
 					},
 				},
@@ -79,7 +77,7 @@ func TestUpdateWithDocID(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocID(
 							ctx,
-							acpIdentity.NoIdentity,
+
 							doc.ID(),
 							`[
 								{
@@ -93,7 +91,7 @@ func TestUpdateWithDocID(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -120,7 +118,7 @@ func TestUpdateWithDocID(t *testing.T) {
 						ctx := context.Background()
 						_, err := c.UpdateWithDocID(
 							ctx,
-							acpIdentity.NoIdentity,
+
 							doc.ID(),
 							`{"name": "Eric"}`,
 						)
@@ -128,7 +126,7 @@ func TestUpdateWithDocID(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, acpIdentity.NoIdentity, doc.ID(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}

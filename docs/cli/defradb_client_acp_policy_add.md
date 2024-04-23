@@ -56,15 +56,15 @@ defradb client acp policy add [-i --identity] [policy] [flags]
 ### Options
 
 ```
-  -f, --file string       File to load a policy from
-  -h, --help              help for add
-  -i, --identity string   [Required] Identity of the creator
+  -f, --file string   File to load a policy from
+  -h, --help          help for add
 ```
 
 ### Options inherited from parent commands
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
+  -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")

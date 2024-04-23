@@ -30,7 +30,7 @@ func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -70,7 +70,7 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -110,7 +110,7 @@ func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy

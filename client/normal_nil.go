@@ -34,14 +34,22 @@ func NewNormalNil(kind FieldKind) (NormalValue, error) {
 		return NewNormalNillableString(immutable.None[string]()), nil
 	case FieldKind_NILLABLE_BLOB:
 		return NewNormalNillableBytes(immutable.None[[]byte]()), nil
-	case FieldKind_NILLABLE_BOOL_ARRAY:
+	case FieldKind_BOOL_ARRAY:
 		return NewNormalBoolNillableArray(immutable.None[[]bool]()), nil
-	case FieldKind_NILLABLE_INT_ARRAY:
+	case FieldKind_INT_ARRAY:
 		return NewNormalIntNillableArray(immutable.None[[]int64]()), nil
-	case FieldKind_NILLABLE_FLOAT_ARRAY:
+	case FieldKind_FLOAT_ARRAY:
 		return NewNormalFloatNillableArray(immutable.None[[]float64]()), nil
-	case FieldKind_NILLABLE_STRING_ARRAY:
+	case FieldKind_STRING_ARRAY:
 		return NewNormalStringNillableArray(immutable.None[[]string]()), nil
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return NewNormalNillableBoolNillableArray(immutable.None[[]immutable.Option[bool]]()), nil
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return NewNormalNillableIntNillableArray(immutable.None[[]immutable.Option[int]]()), nil
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return NewNormalNillableFloatNillableArray(immutable.None[[]immutable.Option[float64]]()), nil
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return NewNormalNillableStringNillableArray(immutable.None[[]immutable.Option[string]]()), nil
 	default:
 		return nil, NewCanNotMakeNormalNilFromFieldKind(kind)
 	}

@@ -23,7 +23,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -50,7 +50,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
 			},
 
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: another policy
@@ -95,7 +95,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     {
@@ -129,7 +129,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
 			},
 
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: another policy
@@ -194,7 +194,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: policyUsedByBoth,
 
@@ -202,7 +202,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 			},
 
 			testUtils.AddPolicy{
-				Creator: actor2Signature,
+				Identity: actor2Identity,
 
 				Policy: policyUsedByBoth,
 
@@ -221,7 +221,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -248,7 +248,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 			},
 
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -286,7 +286,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_Error(t *testin
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -312,7 +312,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_Error(t *testin
 			},
 
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                    {

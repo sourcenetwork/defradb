@@ -18,12 +18,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-func (db *db) setMigration(ctx context.Context, txn datastore.Txn, cfg client.LensConfig) error {
+func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
+	txn := mustGetContextTxn(ctx)
+
 	dstCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, cfg.DestinationSchemaVersionID)
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func (db *db) setMigration(ctx context.Context, txn datastore.Txn, cfg client.Le
 		return err
 	}
 
-	colSeq, err := db.getSequence(ctx, txn, core.CollectionIDSequenceKey{})
+	colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}
@@ -42,7 +43,7 @@ func (db *db) setMigration(ctx context.Context, txn datastore.Txn, cfg client.Le
 	if len(sourceCols) == 0 {
 		// If no collections are found with the given [SourceSchemaVersionID], this migration must be from
 		// a collection/schema version that does not yet exist locally.  We must now create it.
-		colID, err := colSeq.next(ctx, txn)
+		colID, err := colSeq.next(ctx)
 		if err != nil {
 			return err
 		}
@@ -86,7 +87,7 @@ func (db *db) setMigration(ctx context.Context, txn datastore.Txn, cfg client.Le
 		if !isDstCollectionFound {
 			// If the destination collection was not found, we must create it.  This can happen when setting a migration
 			// to a schema version that does not yet exist locally.
-			colID, err := colSeq.next(ctx, txn)
+			colID, err := colSeq.next(ctx)
 			if err != nil {
 				return err
 			}

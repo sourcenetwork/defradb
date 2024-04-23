@@ -106,13 +106,13 @@ func (encdoc *encodedDocument) Reset() {
 }
 
 // Decode returns a properly decoded document object
-func Decode(encdoc EncodedDocument, sd client.SchemaDescription) (*client.Document, error) {
+func Decode(encdoc EncodedDocument, collectionDefinition client.CollectionDefinition) (*client.Document, error) {
 	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
 	}
 
-	doc := client.NewDocWithID(docID, sd)
+	doc := client.NewDocWithID(docID, collectionDefinition)
 	properties, err := encdoc.Properties(false)
 	if err != nil {
 		return nil, err

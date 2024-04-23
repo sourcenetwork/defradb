@@ -174,11 +174,9 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 
 func (w *Wrapper) AddPolicy(
 	ctx context.Context,
-	creator string,
 	policy string,
 ) (client.AddPolicyResult, error) {
 	args := []string{"client", "acp", "policy", "add"}
-	args = append(args, "--identity", creator)
 	args = append(args, policy)
 
 	data, err := w.cmd.execute(ctx, args)
@@ -394,15 +392,10 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
-	identity immutable.Option[string],
 	query string,
 ) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
-
-	if identity.HasValue() {
-		args = append(args, "--identity", identity.Value())
-	}
 
 	result := &client.RequestResult{}
 

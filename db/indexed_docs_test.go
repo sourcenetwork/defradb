@@ -48,7 +48,7 @@ type productDoc struct {
 }
 
 func (f *indexTestFixture) saveDocToCollection(doc *client.Document, col client.Collection) {
-	err := col.Create(f.ctx, acpIdentity.NoIdentity, doc)
+	err := col.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 	f.txn, err = f.db.NewTxn(f.ctx, false)
@@ -60,7 +60,7 @@ func (f *indexTestFixture) newUserDoc(name string, age int, col client.Collectio
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, col.Schema())
+	doc, err := client.NewDocFromJSON(data, col.Definition())
 	require.NoError(f.t, err)
 	return doc
 }
@@ -70,7 +70,7 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string, col cli
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, col.Schema())
+	doc, err := client.NewDocFromJSON(data, col.Definition())
 	require.NoError(f.t, err)
 	return doc
 }
@@ -131,7 +131,8 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		return key
 	}
 
-	cols, err := b.f.db.getCollections(b.f.ctx, b.f.txn, client.CollectionFetchOptions{})
+	ctx := SetContextTxn(b.f.ctx, b.f.txn)
+	cols, err := b.f.db.getCollections(ctx, client.CollectionFetchOptions{})
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {
@@ -323,7 +324,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	ctx := SetContextTxn(f.ctx, mockTxn)
-	err := f.users.Create(ctx, acpIdentity.NoIdentity, doc)
+	err := f.users.Create(ctx, doc)
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
@@ -338,10 +339,10 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	}{Age: 21, Weight: 154.1})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, f.users.Schema())
+	doc, err := client.NewDocFromJSON(data, f.users.Definition())
 	require.NoError(f.t, err)
 
-	err = f.users.Create(f.ctx, acpIdentity.NoIdentity, doc)
+	err = f.users.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Build()
@@ -362,7 +363,7 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
 	ctx := SetContextTxn(f.ctx, mockTxn)
-	err := f.users.Create(ctx, acpIdentity.NoIdentity, doc)
+	err := f.users.Create(ctx, doc)
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
@@ -381,7 +382,7 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 		Return(nil, testErr)
 
 	ctx := SetContextTxn(f.ctx, mockTxn)
-	err := f.users.Create(ctx, acpIdentity.NoIdentity, doc)
+	err := f.users.Create(ctx, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -414,9 +415,9 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	userDoc := f.newUserDoc("John", 21, users)
 	prodDoc := f.newProdDoc(1, 3, "games", products)
 
-	err = users.Create(f.ctx, acpIdentity.NoIdentity, userDoc)
+	err = users.Create(f.ctx, userDoc)
 	require.NoError(f.t, err)
-	err = products.Create(f.ctx, acpIdentity.NoIdentity, prodDoc)
+	err = products.Create(f.ctx, prodDoc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -548,7 +549,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -748,14 +749,14 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			Name:     "update",
 			NewValue: "Islam",
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Update(f.ctx, doc)
 			},
 		},
 		{
 			Name:     "save",
 			NewValue: "Andy",
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Save(f.ctx, doc)
 			},
 		},
 	}
@@ -793,7 +794,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	require.NoError(t, err)
 
 	// retrieve the collection without index cached
-	usersCol, err := f.db.getCollectionByName(f.ctx, f.txn, usersColName)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	usersCol, err := f.db.getCollectionByName(ctx, usersColName)
 	require.NoError(t, err)
 
 	testErr := errors.New("test error")
@@ -809,8 +811,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		return fetcherMocks.NewStubbedFetcher(t)
 	}
-	ctx := SetContextTxn(f.ctx, mockedTxn)
-	err = usersCol.Update(ctx, acpIdentity.NoIdentity, doc)
+	ctx = SetContextTxn(f.ctx, mockedTxn)
+	err = usersCol.Update(ctx, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -906,7 +908,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 
 		err := doc.Set(usersNameFieldName, "Islam")
 		require.NoError(t, err, tc.Name)
-		err = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+		err = f.users.Update(f.ctx, doc)
 		require.Error(t, err, tc.Name)
 
 		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
@@ -934,7 +936,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 
 	err = doc.Set(usersAgeFieldName, 23)
 	require.NoError(t, err)
-	err = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+	err = f.users.Update(f.ctx, doc)
 	require.ErrorIs(t, err, ErrCorruptedIndex)
 }
 
@@ -972,7 +974,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 		).
 			RunAndReturn(func(
 				ctx context.Context,
-				identity immutable.Option[string],
+				identity immutable.Option[acpIdentity.Identity],
 				txn datastore.Txn,
 				acp immutable.Option[acp.ACP],
 				col client.Collection,
@@ -994,7 +996,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	err := doc.Set(usersNameFieldName, "Islam")
 	require.NoError(t, err)
-	_ = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+	_ = f.users.Update(f.ctx, doc)
 }
 
 func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
@@ -1053,7 +1055,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
 
 		ctx := SetContextTxn(f.ctx, mockedTxn)
-		err = f.users.Update(ctx, acpIdentity.NoIdentity, doc)
+		err = f.users.Update(ctx, doc)
 		require.ErrorIs(t, err, testErr)
 	}
 }
@@ -1068,7 +1070,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1078,7 +1080,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)
 
-	err = f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+	err = f.users.Update(f.ctx, doc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -1154,7 +1156,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1202,14 +1204,14 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			Name:     "update",
 			NewValue: "Islam",
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Update(f.ctx, doc)
 			},
 		},
 		{
 			Name:     "save",
 			NewValue: "Andy",
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Save(f.ctx, doc)
 			},
 		},
 	}
@@ -1268,7 +1270,7 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1332,7 +1334,7 @@ func TestUniqueComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T
 			require.NoError(f.t, err)
 			f.commitTxn()
 
-			doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Schema())
+			doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Definition())
 			require.NoError(f.t, err)
 
 			f.saveDocToCollection(doc, f.users)
@@ -1345,7 +1347,7 @@ func TestUniqueComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T
 			newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
 				Doc(doc).Unique().Build()
 
-			require.NoError(t, f.users.Update(f.ctx, acpIdentity.NoIdentity, doc), tc.Name)
+			require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
 			f.commitTxn()
 
 			_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
@@ -1394,7 +1396,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: "Islam",
 			Field:    usersNameFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Update(f.ctx, doc)
 			},
 		},
 		{
@@ -1402,7 +1404,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: "Andy",
 			Field:    usersNameFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Save(f.ctx, doc)
 			},
 		},
 		{
@@ -1410,7 +1412,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: 33,
 			Field:    usersAgeFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Update(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Update(f.ctx, doc)
 			},
 		},
 		{
@@ -1418,7 +1420,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 			NewValue: 36,
 			Field:    usersAgeFieldName,
 			Exec: func(doc *client.Document) error {
-				return f.users.Save(f.ctx, acpIdentity.NoIdentity, doc)
+				return f.users.Save(f.ctx, doc)
 			},
 		},
 	}

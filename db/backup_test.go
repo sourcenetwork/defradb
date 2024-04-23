@@ -41,33 +41,36 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Schema())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Schema())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc1)
+	err = col1.Create(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc2)
+	err = col1.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Schema())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, acpIdentity.NoIdentity, doc3)
+	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
+
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -103,33 +106,36 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Schema())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Schema())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc1)
+	err = col1.Create(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc2)
+	err = col1.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Schema())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, acpIdentity.NoIdentity, doc3)
+	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
+
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Pretty: true})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath, Pretty: true})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -165,33 +171,36 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Schema())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Schema())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc1)
+	err = col1.Create(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc2)
+	err = col1.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Schema())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, acpIdentity.NoIdentity, doc3)
+	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
+
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -228,44 +237,47 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Schema())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 31}`), col1.Schema())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 31}`), col1.Definition())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc1)
+	err = col1.Create(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc2)
+	err = col1.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Book")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`), col2.Schema())
+	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`), col2.Definition())
 	require.NoError(t, err)
 
-	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`), col2.Schema())
+	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`), col2.Definition())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, acpIdentity.NoIdentity, doc3)
+	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
-	err = col2.Create(ctx, acpIdentity.NoIdentity, doc4)
+	err = col2.Create(ctx, doc4)
 	require.NoError(t, err)
 
 	err = doc1.Set("age", 31)
 	require.NoError(t, err)
 
-	err = col1.Update(ctx, acpIdentity.NoIdentity, doc1)
+	err = col1.Update(ctx, doc1)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
+
 	filepath := t.TempDir() + "/test.json"
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -301,30 +313,33 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Schema())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Schema())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc1)
+	err = col1.Create(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, acpIdentity.NoIdentity, doc2)
+	err = col1.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Schema())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, acpIdentity.NoIdentity, doc3)
+	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
+
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -335,7 +350,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
+	err = db.basicExport(ctx, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
 	require.NoError(t, err)
 
 	b, err := os.ReadFile(filepath)
@@ -371,6 +386,9 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
+
 	filepath := t.TempDir() + "/test.json"
 
 	err = os.WriteFile(
@@ -380,7 +398,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.NoError(t, err)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -388,25 +406,28 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	txn, err = db.NewTxn(ctx, true)
 	require.NoError(t, err)
 
-	col1, err := db.getCollectionByName(ctx, txn, "Address")
+	ctx = SetContextIdentity(ctx, acpIdentity.None)
+	ctx = SetContextTxn(ctx, txn)
+
+	col1, err := db.getCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
 	key1, err := client.NewDocIDFromString("bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f")
 	require.NoError(t, err)
-	_, err = col1.Get(ctx, acpIdentity.NoIdentity, key1, false)
+	_, err = col1.Get(ctx, key1, false)
 	require.NoError(t, err)
 
-	col2, err := db.getCollectionByName(ctx, txn, "User")
+	col2, err := db.getCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
 	key2, err := client.NewDocIDFromString("bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df")
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, acpIdentity.NoIdentity, key2, false)
+	_, err = col2.Get(ctx, key2, false)
 	require.NoError(t, err)
 
 	key3, err := client.NewDocIDFromString("bae-e933420a-988a-56f8-8952-6c245aebd519")
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, acpIdentity.NoIdentity, key3, false)
+	_, err = col2.Get(ctx, key3, false)
 	require.NoError(t, err)
 }
 
@@ -429,6 +450,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -439,7 +461,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.ErrorIs(t, err, ErrExpectedJSONObject)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -464,6 +486,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -474,7 +497,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.ErrorIs(t, err, ErrExpectedJSONArray)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -499,6 +522,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -510,7 +534,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 
 	wrongFilepath := t.TempDir() + "/some/test.json"
-	err = db.basicImport(ctx, txn, wrongFilepath)
+	err = db.basicImport(ctx, wrongFilepath)
 	require.ErrorIs(t, err, os.ErrNotExist)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
@@ -535,6 +559,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
+	ctx = SetContextTxn(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -545,7 +570,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, filepath)
 	require.ErrorIs(t, err, ErrFailedToGetCollection)
 	err = txn.Commit(ctx)
 	require.NoError(t, err)

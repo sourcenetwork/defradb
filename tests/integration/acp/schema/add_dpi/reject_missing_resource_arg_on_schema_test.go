@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testi
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)
@@ -104,7 +104,7 @@ func TestACP_AddDPISchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *
 
 			testUtils.AddPolicy{
 
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: A Valid Defra Policy Interface (DPI)

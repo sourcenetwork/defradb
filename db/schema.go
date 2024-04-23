@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/description"
 )
 
@@ -37,7 +36,6 @@ const (
 // and creates the necessary collections, request types, etc.
 func (db *db) addSchema(
 	ctx context.Context,
-	txn datastore.Txn,
 	schemaString string,
 ) ([]client.CollectionDescription, error) {
 	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
@@ -53,14 +51,14 @@ func (db *db) addSchema(
 			return nil, err
 		}
 
-		col, err := db.createCollection(ctx, txn, definition)
+		col, err := db.createCollection(ctx, definition, newDefinitions)
 		if err != nil {
 			return nil, err
 		}
 		returnDescriptions[i] = col.Description()
 	}
 
-	err = db.loadSchema(ctx, txn)
+	err = db.loadSchema(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +66,10 @@ func (db *db) addSchema(
 	return returnDescriptions, nil
 }
 
-func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
-	definitions, err := db.getAllActiveDefinitions(ctx, txn)
+func (db *db) loadSchema(ctx context.Context) error {
+	txn := mustGetContextTxn(ctx)
+
+	definitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {
 		return err
 	}
@@ -90,11 +90,12 @@ func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
 // will be applied.
 func (db *db) patchSchema(
 	ctx context.Context,
-	txn datastore.Txn,
 	patchString string,
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
+	txn := mustGetContextTxn(ctx)
+
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
@@ -137,7 +138,6 @@ func (db *db) patchSchema(
 	for _, schema := range newSchemaByName {
 		err := db.updateSchema(
 			ctx,
-			txn,
 			existingSchemaByName,
 			newSchemaByName,
 			schema,
@@ -149,7 +149,7 @@ func (db *db) patchSchema(
 		}
 	}
 
-	return db.loadSchema(ctx, txn)
+	return db.loadSchema(ctx)
 }
 
 // substituteSchemaPatch handles any substitution of values that may be required before
@@ -246,10 +246,9 @@ func substituteSchemaPatch(
 
 func (db *db) getSchemaByVersionID(
 	ctx context.Context,
-	txn datastore.Txn,
 	versionID string,
 ) (client.SchemaDescription, error) {
-	schemas, err := db.getSchemas(ctx, txn, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
+	schemas, err := db.getSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -260,9 +259,10 @@ func (db *db) getSchemaByVersionID(
 
 func (db *db) getSchemas(
 	ctx context.Context,
-	txn datastore.Txn,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
+	txn := mustGetContextTxn(ctx)
+
 	schemas := []client.SchemaDescription{}
 
 	switch {

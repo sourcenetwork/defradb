@@ -23,7 +23,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy
@@ -64,7 +64,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Creator: actor1Signature,
+				Identity: actor1Identity,
 
 				Policy: `
                     description: a policy

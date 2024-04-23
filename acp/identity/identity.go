@@ -14,22 +14,28 @@ Package identity provides defradb identity.
 
 package identity
 
-import (
-	"github.com/sourcenetwork/immutable"
-)
+import "github.com/sourcenetwork/immutable"
+
+// Identity is the unique identifier for an actor.
+type Identity string
 
 var (
-	// NoIdentity is an empty identity.
-	NoIdentity = immutable.None[string]()
+	// None is an empty identity.
+	None = immutable.None[Identity]()
 )
 
-// NewIdentity makes a new identity if the input is not empty otherwise, returns an empty Option.
-func NewIdentity(identity string) immutable.Option[string] {
+// New makes a new identity if the input is not empty otherwise, returns None.
+func New(identity string) immutable.Option[Identity] {
 	// TODO-ACP: There will be more validation once sourcehub gets some utilities.
 	// Then a validation function would do the validation, will likely do outside this function.
 	// https://github.com/sourcenetwork/defradb/issues/2358
 	if identity == "" {
-		return NoIdentity
+		return None
 	}
-	return immutable.Some[string](identity)
+	return immutable.Some(Identity(identity))
+}
+
+// String returns the string representation of the identity.
+func (i Identity) String() string {
+	return string(i)
 }

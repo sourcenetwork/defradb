@@ -40,7 +40,6 @@ var openApiSchemas = map[string]any{
 	"ccip_response":         &CCIPResponse{},
 	"patch_schema_request":  &patchSchemaRequest{},
 	"add_view_request":      &addViewRequest{},
-	"add_policy_request":    &AddPolicyRequest{},
 	"migrate_request":       &migrateRequest{},
 	"set_migration_request": &setMigrationRequest{},
 }

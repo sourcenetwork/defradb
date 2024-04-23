@@ -18,18 +18,27 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/events"
 )
 
-var sd = client.SchemaDescription{
-	Name: "test",
-	Fields: []client.SchemaFieldDescription{
-		{
-			Name: "test",
-			Kind: client.FieldKind_NILLABLE_STRING,
-			Typ:  client.LWW_REGISTER,
+var def = client.CollectionDefinition{
+	Description: client.CollectionDescription{
+		Fields: []client.CollectionFieldDescription{
+			{
+				ID:   1,
+				Name: "test",
+			},
+		},
+	},
+	Schema: client.SchemaDescription{
+		Name: "test",
+		Fields: []client.SchemaFieldDescription{
+			{
+				Name: "test",
+				Kind: client.FieldKind_NILLABLE_STRING,
+				Typ:  client.LWW_REGISTER,
+			},
 		},
 	},
 }
@@ -39,7 +48,7 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), sd)
+	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), def)
 	require.NoError(t, err)
 	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
@@ -68,7 +77,7 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), sd)
+	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), def)
 	require.NoError(t, err)
 	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
@@ -111,15 +120,15 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	col, err := n1.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`), col.Definition())
 	require.NoError(t, err)
 
-	err = col.Save(ctx, acpIdentity.NoIdentity, doc)
+	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
 	col, err = n2.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
-	err = col.Save(ctx, acpIdentity.NoIdentity, doc)
+	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)

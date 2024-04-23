@@ -13,18 +13,14 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
 func (c *collection) Get(
 	ctx context.Context,
-	identity immutable.Option[string],
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
@@ -36,7 +32,7 @@ func (c *collection) Get(
 	defer txn.Discard(ctx)
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	found, isDeleted, err := c.exists(ctx, identity, txn, primaryKey)
+	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +40,7 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	doc, err := c.get(ctx, identity, txn, primaryKey, nil, showDeleted)
+	doc, err := c.get(ctx, primaryKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +54,12 @@ func (c *collection) Get(
 
 func (c *collection) get(
 	ctx context.Context,
-	identity immutable.Option[string],
-	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 	fields []client.FieldDefinition,
 	showDeleted bool,
 ) (*client.Document, error) {
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
@@ -98,7 +94,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Schema())
+	doc, err := fetcher.Decode(encodedDoc, c.Definition())
 	if err != nil {
 		return nil, err
 	}
