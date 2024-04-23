@@ -88,3 +88,7 @@ Include source location in logs. Defaults to `false`.
 ## `log.overrides`
 
 Logger config overrides. Format `<name>,<key>=<val>,...;<name>,...`.
+
+## `log.nocolor`
+
+Disable colored log output. Defaults to `false`.
