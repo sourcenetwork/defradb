@@ -58,4 +58,5 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, false, cfg.GetBool("log.stacktrace"))
 	assert.Equal(t, false, cfg.GetBool("log.source"))
 	assert.Equal(t, "", cfg.GetString("log.overrides"))
+	assert.Equal(t, false, cfg.GetBool("log.nocolor"))
 }
