@@ -52,9 +52,25 @@ ifeq ($(UNAME_S),MINGW32_NT-6.2)
     LIB_EXT := .dll
 endif
 
-RUST_DIR := ./../defradb_rust
+RUST_REPO_URL := git@github.com:sourcenetwork/defradb-rs.git
+RUST_REPO_BRANCH := main
+RUST_DIR := ./build/defradb-rs
 
-# Rule to compile the Rust library
+# Initialize the Rust library by checking out the repository and compiling the library.
+.PHONY: init
+init_rust: checkout_rust compile_rust
+
+# Checkout the Rust repository if it doesn't exist, otherwise pull the latest changes.
+.PHONY: checkout_rust
+checkout_rust: $(BIN_DIR)
+	@if [ -d "$(RUST_DIR)" ]; then \
+		cd $(RUST_DIR) && git pull; \
+	else \
+		git clone --branch $(RUST_REPO_BRANCH) $(RUST_REPO_URL) $(RUST_DIR); \
+	fi
+
+# Compile the Rust library and copy it to the libs directory.
+.PHONY: compile_rust
 compile_rust: $(BIN_DIR)
 	cargo build --release --manifest-path=$(RUST_DIR)/Cargo.toml
 	cp $(RUST_DIR)/target/release/libabi$(LIB_EXT) $(BIN_DIR)/libabi$(LIB_EXT)
