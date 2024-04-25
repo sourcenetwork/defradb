@@ -32,6 +32,33 @@ else ifeq ($(OS_GENERAL),Windows)
 	OS_PACKAGE_MANAGER := choco
 endif
 
+# Detect the operating system
+UNAME_S := $(shell uname -s)
+
+# Directory where binaries will be placed
+BIN_DIR := ./libs
+
+# Set the library file name based on the operating system
+ifeq ($(UNAME_S),Linux)
+    LIB_EXT := .so
+endif
+ifeq ($(UNAME_S),Darwin)
+    LIB_EXT := .dylib
+endif
+ifeq ($(UNAME_S),CYGWIN_NT-10.0)
+    LIB_EXT := .dll
+endif
+ifeq ($(UNAME_S),MINGW32_NT-6.2)
+    LIB_EXT := .dll
+endif
+
+RUST_DIR := ./../defradb_rust
+
+# Rule to compile the Rust library
+compile_rust: $(BIN_DIR)
+	cargo build --release --manifest-path=$(RUST_DIR)/Cargo.toml
+	cp $(RUST_DIR)/target/release/libabi$(LIB_EXT) $(BIN_DIR)/libabi$(LIB_EXT)
+
 # Provide info from git to the version package using linker flags.
 ifeq (, $(shell which git))
 $(error "No git in $(PATH), version information won't be included")
@@ -205,7 +232,7 @@ tidy:
 	go mod tidy -go=1.21.3
 
 .PHONY: clean
-clean:
+clean: clean\:rust
 	go clean cmd/defradb/main.go
 	rm -f build/defradb
 
@@ -217,6 +244,11 @@ clean\:test:
 clean\:coverage:
 	rm -rf $(COVERAGE_DIRECTORY) 
 	rm -f $(COVERAGE_FILE)
+
+.PHONY: clean\:rust
+clean\:rust:
+	cargo clean --manifest-path=${RUST_DIR}/Cargo.toml
+	rm -f $(BIN_DIR)/*$(LIB_EXT)
 
 # Example: `make tls-certs path="~/.defradb/certs"`
 .PHONY: tls-certs

@@ -3,7 +3,7 @@ package connor
 /*
 #include <stdbool.h>
 #include <stdlib.h>
-#cgo LDFLAGS: -L/Users/islam/dev/sourcenetwork/defradb_rust/target/debug -labi
+#cgo LDFLAGS: -L./../libs -labi
 
 typedef struct {
     char* data;
