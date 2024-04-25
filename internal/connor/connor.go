@@ -11,6 +11,10 @@ func Match(conditions map[FilterKey]any, data any) (bool, error) {
 	return eq(conditions, data)
 }
 
+func MatchJSON(conditions, data string) (bool, error) {
+	return callMatchConditionsABI(conditions, data)
+}
+
 // matchWith can be used to specify the exact operator to use when performing
 // a match operation. This is primarily used when building custom operators or
 // if you wish to override the behavior of another operator.

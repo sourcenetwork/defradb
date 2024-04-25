@@ -1371,7 +1371,21 @@ func RunFilter(doc any, filter *Filter) (bool, error) {
 		return true, nil
 	}
 
-	return connor.Match(filter.Conditions, doc)
+	s := connorJSONSerializer{}
+	condJSON, err := s.serializeConditions(filter.Conditions)
+	if err != nil {
+		return false, err
+	}
+	var valJSON []byte
+	if d, ok := doc.(core.Doc); ok {
+		valJSON, err = s.serializeDoc(d)
+	} else {
+		valJSON, err = s.serializeDocField(doc)
+	}
+	if err != nil {
+		return false, err
+	}
+	return connor.MatchJSON(string(condJSON), string(valJSON))
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.

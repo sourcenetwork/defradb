@@ -177,7 +177,7 @@ func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{},
+		ExpectedError: "object",
 	}
 
 	executeTestCase(t, test)

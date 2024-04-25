@@ -127,11 +127,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

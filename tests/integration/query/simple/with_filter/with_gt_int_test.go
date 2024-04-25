@@ -124,11 +124,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
