@@ -15,9 +15,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/immutable"
 )
 
 type connorJSONSerializer struct{}
