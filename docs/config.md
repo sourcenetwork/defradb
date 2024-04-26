@@ -89,6 +89,10 @@ Include source location in logs. Defaults to `false`.
 
 Logger config overrides. Format `<name>,<key>=<val>,...;<name>,...`.
 
+## `log.nocolor`
+
+Disable colored log output. Defaults to `false`.
+
 ## `keyring.path`
 
 Path to store encrypted key files in. Defaults to `keys`.

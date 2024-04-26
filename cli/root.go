@@ -73,6 +73,12 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Logger config overrides. Format <name>,<key>=<val>,...;<name>,...",
 	)
 
+	cmd.PersistentFlags().Bool(
+		"log-no-color",
+		false,
+		"Disable colored log output",
+	)
+
 	cmd.PersistentFlags().String(
 		"url",
 		"127.0.0.1:9181",
