@@ -36,6 +36,7 @@ var configPaths = []string{
 	"datastore.badger.path",
 	"api.pubkeypath",
 	"api.privkeypath",
+	"keyring.path",
 }
 
 // configFlags is a mapping of config keys to cli flags to bind to.
@@ -70,6 +71,8 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigType("yaml")
 
 	cfg.SetDefault("datastore.badger.path", "data")
+	cfg.SetDefault("keyring.path", "keys")
+
 	cfg.SetDefault("net.pubSubEnabled", true)
 	cfg.SetDefault("net.relay", false)
 	cfg.SetDefault("log.caller", false)

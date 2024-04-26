@@ -16,7 +16,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -151,46 +150,6 @@ func setContextRootDir(cmd *cobra.Command) error {
 	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)
 	cmd.SetContext(ctx)
 	return nil
-}
-
-// loadOrGeneratePrivateKey loads the private key from the given path
-// or generates a new key and writes it to a file at the given path.
-func loadOrGeneratePrivateKey(path string) (crypto.PrivKey, error) {
-	key, err := loadPrivateKey(path)
-	if err == nil {
-		return key, nil
-	}
-	if os.IsNotExist(err) {
-		return generatePrivateKey(path)
-	}
-	return nil, err
-}
-
-// generatePrivateKey generates a new private key and writes it
-// to a file at the given path.
-func generatePrivateKey(path string) (crypto.PrivKey, error) {
-	key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
-	if err != nil {
-		return nil, err
-	}
-	data, err := crypto.MarshalPrivateKey(key)
-	if err != nil {
-		return nil, err
-	}
-	err = os.MkdirAll(filepath.Dir(path), 0755)
-	if err != nil {
-		return nil, err
-	}
-	return key, os.WriteFile(path, data, 0644)
-}
-
-// loadPrivateKey reads the private key from the file at the given path.
-func loadPrivateKey(path string) (crypto.PrivKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.UnmarshalPrivateKey(data)
 }
 
 func writeJSON(cmd *cobra.Command, out any) error {

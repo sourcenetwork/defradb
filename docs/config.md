@@ -88,3 +88,13 @@ Include source location in logs. Defaults to `false`.
 ## `log.overrides`
 
 Logger config overrides. Format `<name>,<key>=<val>,...;<name>,...`.
+
+## `keyring.path`
+
+Path to store encrypted key files in. Defaults to `keys`.
+
+When set to an empty string the default OS key management will be used.
+
+## `keyring.disabled`
+
+Disable the keyring and generate ephemeral keys instead. Defaults to `false`.
