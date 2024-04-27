@@ -15,10 +15,11 @@ import (
 	"errors"
 	"syscall"
 
-	"github.com/99designs/keyring"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
+
+	"github.com/sourcenetwork/defradb/keyring"
 )
 
 const (
@@ -26,37 +27,13 @@ const (
 	badgerEncryptionKeyName = "badger_encryption_key"
 )
 
-// openKeyring attempts to open the keyring file from the given directory.
-//
-// If the directory is an empty string the best option for the current OS will be used.
+// openKeyring opens the keyring for the current environment.
 func openKeyring(cmd *cobra.Command, dir string) (keyring.Keyring, error) {
-	var allowedBackends []keyring.BackendType
-	if dir != "" {
-		// only allow file backend if a directory is specified
-		allowedBackends = append(allowedBackends, keyring.FileBackend)
-	}
-
-	prompt := keyring.PromptFunc(func(s string) (string, error) {
+	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
 		cmd.Print(s)
-		pass, err := term.ReadPassword(int(syscall.Stdin))
-		return string(pass), err
+		return term.ReadPassword(int(syscall.Stdin))
 	})
-
-	return keyring.Open(keyring.Config{
-		AllowedBackends:         allowedBackends,
-		ServiceName:             "defradb",
-		KeychainName:            "defradb",
-		KeychainPasswordFunc:    prompt,
-		FilePasswordFunc:        prompt,
-		FileDir:                 dir,
-		KeyCtlScope:             "user",
-		KeyCtlPerm:              0, // TODO
-		KWalletAppID:            "defradb",
-		KWalletFolder:           "defradb",
-		LibSecretCollectionName: "defradb",
-		PassPrefix:              "defradb",
-		WinCredPrefix:           "defradb",
-	})
+	return keyring.Open(dir, prompt)
 }
 
 // generateAES256 generates a new random AES-256 bit encryption key.
@@ -72,19 +49,16 @@ func generateAES256() ([]byte, error) {
 func loadOrGenerateAES256(kr keyring.Keyring, name string) ([]byte, error) {
 	item, err := kr.Get(name)
 	if err == nil {
-		return item.Data, nil
+		return []byte(item), nil
 	}
-	if !errors.Is(err, keyring.ErrKeyNotFound) {
+	if !errors.Is(err, keyring.ErrNotFound) {
 		return nil, err
 	}
 	key, err := generateAES256()
 	if err != nil {
 		return nil, err
 	}
-	err = kr.Set(keyring.Item{
-		Key:  name,
-		Data: key,
-	})
+	err = kr.Set(name, key)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +77,9 @@ func generateEd25519() (crypto.PrivKey, error) {
 func loadOrGenerateEd25519(kr keyring.Keyring, name string) (crypto.PrivKey, error) {
 	item, err := kr.Get(name)
 	if err == nil {
-		return crypto.UnmarshalPrivateKey(item.Data)
+		return crypto.UnmarshalPrivateKey(item)
 	}
-	if !errors.Is(err, keyring.ErrKeyNotFound) {
+	if !errors.Is(err, keyring.ErrNotFound) {
 		return nil, err
 	}
 	key, err := generateEd25519()
@@ -116,10 +90,7 @@ func loadOrGenerateEd25519(kr keyring.Keyring, name string) (crypto.PrivKey, err
 	if err != nil {
 		return nil, err
 	}
-	err = kr.Set(keyring.Item{
-		Key:  name,
-		Data: data,
-	})
+	err = kr.Set(name, data)
 	if err != nil {
 		return nil, err
 	}

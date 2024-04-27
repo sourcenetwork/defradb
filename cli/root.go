@@ -139,5 +139,11 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Path to the private key for tls",
 	)
 
+	cmd.PersistentFlags().String(
+		"keyring-path",
+		"keys",
+		"Path to store encrypted keys",
+	)
+
 	return cmd
 }
