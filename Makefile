@@ -138,7 +138,7 @@ endif
 # 	- make build
 # 	- make build path="path/to/defradb-binary"
 .PHONY: build
-build:
+build: init_rust
 ifeq ($(path),)
 	@go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
 else
