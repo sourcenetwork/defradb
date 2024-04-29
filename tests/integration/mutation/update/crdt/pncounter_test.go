@@ -262,3 +262,48 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNothing(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a PN Counter with Float type and an insignificant value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %g
+				}`, math.MaxFloat64/10),
+			},
+			testUtils.UpdateDoc{
+				// `1` is insignificant to a large float64 and adding it to the large value
+				// should not result in a value change
+				Doc: `{
+					"points": 1
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": math.MaxFloat64 / 10,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
