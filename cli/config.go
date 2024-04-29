@@ -75,6 +75,7 @@ func defaultConfig() *viper.Viper {
 
 	cfg.SetDefault("datastore.badger.path", "data")
 	cfg.SetDefault("datastore.encryptionDisabled", false)
+	cfg.SetDefault("keyring.service", "defradb")
 	cfg.SetDefault("net.pubSubEnabled", true)
 	cfg.SetDefault("net.relay", false)
 	cfg.SetDefault("log.caller", false)

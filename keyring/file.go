@@ -27,8 +27,8 @@ var keyEncryptionAlgorithm = jwa.PBES2_HS512_A256KW
 type fileKeyring struct {
 	// dir is the keystore root directory
 	dir string
-	// key is the keystore encryption key
-	key []byte
+	// password is the user defined password used to generate encryption keys
+	password []byte
 }
 
 func openFileKeyring(dir string, password []byte) (*fileKeyring, error) {
@@ -36,13 +36,13 @@ func openFileKeyring(dir string, password []byte) (*fileKeyring, error) {
 		return nil, err
 	}
 	return &fileKeyring{
-		dir: dir,
-		key: password,
+		dir:      dir,
+		password: password,
 	}, nil
 }
 
 func (f *fileKeyring) Set(name string, key []byte) error {
-	cipher, err := jwe.Encrypt(key, jwe.WithKey(keyEncryptionAlgorithm, f.key))
+	cipher, err := jwe.Encrypt(key, jwe.WithKey(keyEncryptionAlgorithm, f.password))
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (f *fileKeyring) Get(name string) ([]byte, error) {
 	if os.IsNotExist(err) {
 		return nil, keyring.ErrNotFound
 	}
-	return jwe.Decrypt(cipher, jwe.WithKey(keyEncryptionAlgorithm, f.key))
+	return jwe.Decrypt(cipher, jwe.WithKey(keyEncryptionAlgorithm, f.password))
 }
 
 func (f *fileKeyring) Delete(user string) error {

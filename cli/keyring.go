@@ -28,12 +28,12 @@ const (
 )
 
 // openKeyring opens the keyring for the current environment.
-func openKeyring(cmd *cobra.Command, dir string) (keyring.Keyring, error) {
+func openKeyring(cmd *cobra.Command, dir string, service string) (keyring.Keyring, error) {
 	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
 		cmd.Print(s)
 		return term.ReadPassword(int(syscall.Stdin))
 	})
-	return keyring.Open(dir, prompt)
+	return keyring.Open(dir, service, prompt)
 }
 
 // generateAES256 generates a new random AES-256 bit encryption key.

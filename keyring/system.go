@@ -20,19 +20,24 @@ var _ Keyring = (*systemKeyring)(nil)
 
 // systemKeyring is a keyring that utilizies the
 // built in key management system of the OS.
-type systemKeyring struct{}
-
-func openSystemKeyring() *systemKeyring {
-	return &systemKeyring{}
+type systemKeyring struct {
+	// service is the service name to use when using the system keyring
+	service string
 }
 
-func (systemKeyring) Set(name string, key []byte) error {
+func openSystemKeyring(service string) *systemKeyring {
+	return &systemKeyring{
+		service: service,
+	}
+}
+
+func (s *systemKeyring) Set(name string, key []byte) error {
 	enc := base64.StdEncoding.EncodeToString(key)
-	return keyring.Set(service, name, enc)
+	return keyring.Set(s.service, name, enc)
 }
 
-func (systemKeyring) Get(name string) ([]byte, error) {
-	enc, err := keyring.Get(service, name)
+func (s *systemKeyring) Get(name string) ([]byte, error) {
+	enc, err := keyring.Get(s.service, name)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +49,6 @@ func (systemKeyring) Get(name string) ([]byte, error) {
 	return dst[:n], nil
 }
 
-func (systemKeyring) Delete(user string) error {
-	return keyring.Delete(service, user)
+func (s *systemKeyring) Delete(user string) error {
+	return keyring.Delete(s.service, user)
 }
