@@ -174,10 +174,9 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 }
 
 // This test documents what happens when an overflow occurs in a PN Counter with Float type.
-// In this case it is the same as a no-op.
-func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
+func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a PN Counter with Float type and overflow causing a no-op",
+		Description: "Positive increments of a PN Counter with Float type and overflow",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -195,9 +194,9 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.
 			},
 			testUtils.UpdateDoc{
 				DocID: 0,
-				Doc: `{
-					"points": 1000
-				}`,
+				Doc: fmt.Sprintf(`{
+					"points": %g
+				}`, math.MaxFloat64/10),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -209,7 +208,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.
 				Results: []map[string]any{
 					{
 						"name":   "John",
-						"points": math.MaxFloat64,
+						"points": math.Inf(1),
 					},
 				},
 			},
