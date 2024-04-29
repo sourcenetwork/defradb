@@ -48,7 +48,7 @@ jobs:
 
       - name: Attempt to start binary
         run: |
-          ./build/defradb start &
+          ./build/defradb start --no-keyring &
           sleep 5
 
       - name: Check if binary is still running
