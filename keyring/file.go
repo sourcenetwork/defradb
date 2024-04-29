@@ -23,8 +23,11 @@ import (
 
 var _ Keyring = (*fileKeyring)(nil)
 
+// fileKeyring is a keyring that stores keys in encrypted files.
 type fileKeyring struct {
+	// dir is the keystore root directory
 	dir string
+	// key is the keystore encryption key
 	key []byte
 }
 
@@ -52,11 +55,7 @@ func (f *fileKeyring) Get(name string) ([]byte, error) {
 	if os.IsNotExist(err) {
 		return nil, keyring.ErrNotFound
 	}
-	dec, err := jwe.Decrypt(cipher, jwe.WithKey(jwa.A256KW, f.key))
-	if err != nil {
-		return nil, err
-	}
-	return dec, nil
+	return jwe.Decrypt(cipher, jwe.WithKey(jwa.A256KW, f.key))
 }
 
 func (f *fileKeyring) Delete(user string) error {

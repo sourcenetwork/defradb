@@ -18,9 +18,11 @@ import (
 
 var _ Keyring = (*systemKeyring)(nil)
 
+// systemKeyring is a keyring that utilizies the
+// built in key management system of the OS.
 type systemKeyring struct{}
 
-func newSystemKeyring() *systemKeyring {
+func openSystemKeyring() *systemKeyring {
 	return &systemKeyring{}
 }
 

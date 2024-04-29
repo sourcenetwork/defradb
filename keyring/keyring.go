@@ -10,13 +10,6 @@
 
 package keyring
 
-import (
-	"github.com/zalando/go-keyring"
-)
-
-// ErrNotFound is returned when a keyring item is not found.
-var ErrNotFound = keyring.ErrNotFound
-
 // service is the keyring service name
 const service = "defradb"
 
@@ -38,7 +31,7 @@ type Keyring interface {
 // If the directory is an empty string the system keystore will be used instead.
 func Open(dir string, prompt PromptFunc) (Keyring, error) {
 	if dir == "" {
-		return newSystemKeyring(), nil
+		return openSystemKeyring(), nil
 	}
 	password, err := prompt("Enter keystore password:")
 	if err != nil {
