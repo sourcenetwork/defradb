@@ -217,3 +217,48 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test documents what happens when an overflow occurs in a PN Counter with Float type.
+func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a PN Counter with Float type and overflow",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %g
+				}`, -math.MaxFloat64),
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: fmt.Sprintf(`{
+					"points": %g
+				}`, -math.MaxFloat64/10),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": math.Inf(-1),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
