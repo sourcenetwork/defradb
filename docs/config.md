@@ -17,6 +17,10 @@ The number of retries to make in the event of a transaction conflict. Defaults t
 
 Currently this is only used within the P2P system and will not affect operations initiated by users.
 
+## `datastore.encryptionDisabled`
+
+Disable datastore encryption at rest. Defaults to `false`.
+
 ## `datastore.badger.path`
 
 The path to the database data file(s). Defaults to `data`.

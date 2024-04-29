@@ -102,11 +102,13 @@ func MakeStartCommand() *cobra.Command {
 				}
 				netOpts = append(netOpts, net.WithPrivateKey(peerKey))
 
-				encryptionKey, err := loadOrGenerateAES256(keyring, badgerEncryptionKeyName)
-				if err != nil {
-					return err
+				if !cfg.GetBool("datastore.encryptionDisabled") {
+					encryptionKey, err := loadOrGenerateAES256(keyring, badgerEncryptionKeyName)
+					if err != nil {
+						return err
+					}
+					storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
 				}
-				storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
 			}
 
 			opts := []node.NodeOpt{

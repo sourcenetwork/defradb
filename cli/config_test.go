@@ -39,6 +39,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.badger.path"))
 	assert.Equal(t, 1<<30, cfg.GetInt("datastore.badger.valuelogfilesize"))
 	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
+	assert.Equal(t, false, cfg.GetBool("datastore.encryptionDisabled"))
 
 	assert.Equal(t, "127.0.0.1:9181", cfg.GetString("api.address"))
 	assert.Equal(t, []string{}, cfg.GetStringSlice("api.allowed-origins"))
