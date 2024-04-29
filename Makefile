@@ -52,7 +52,8 @@ ifeq ($(UNAME_S),MINGW32_NT-6.2)
     LIB_EXT := .dll
 endif
 
-RUST_REPO_URL := git@github.com:sourcenetwork/defradb-rs.git
+#RUST_REPO_URL := git@github.com:sourcenetwork/defradb-rs.git
+RUST_REPO_URL := https://github.com/sourcenetwork/defradb-rs.git
 RUST_REPO_BRANCH := main
 RUST_DIR := ./build/defradb-rs
 
