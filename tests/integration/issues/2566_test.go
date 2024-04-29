@@ -41,10 +41,6 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 					"Age": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: fmt.Sprintf(`{
@@ -56,6 +52,21 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 				Doc: fmt.Sprintf(`{
 					"Age": %g
 				}`, -math.MaxFloat64),
+			},
+			testUtils.ConnectPeers{
+				// Configure the peer connection after the document has been created and updated independently
+				// on each node.  This allows us to be sure which update was applied on each node.
+				// If the connection was configured before the updates there would be a race condition resulting
+				// in a variable resultant state.
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.UpdateDoc{
+				// This is an arbitrary update on both nodes to force the sync of the document created
+				// before the peer connection was configured.
+				Doc: `{
+					"Name": "Fred"
+				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -115,10 +126,6 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 					"Age": %g
 				}`, -math.MaxFloat64/10),
 			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: fmt.Sprintf(`{
@@ -130,6 +137,21 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 				Doc: fmt.Sprintf(`{
 					"Age": %g
 				}`, -math.MaxFloat64),
+			},
+			testUtils.ConnectPeers{
+				// Configure the peer connection after the document has been created and updated independently
+				// on each node.  This allows us to be sure which update was applied on each node.
+				// If the connection was configured before the updates there would be a race condition resulting
+				// in a variable resultant state.
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.UpdateDoc{
+				// This is an arbitrary update on both nodes to force the sync of the document created
+				// before the peer connection was configured.
+				Doc: `{
+					"Name": "Fred"
+				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
