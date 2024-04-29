@@ -11,17 +11,17 @@
 package keyring
 
 import (
-	"crypto/sha1"
 	"os"
 	"path/filepath"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwe"
 	"github.com/zalando/go-keyring"
-	"golang.org/x/crypto/pbkdf2"
 )
 
 var _ Keyring = (*fileKeyring)(nil)
+
+var keyEncryptionAlgorithm = jwa.PBES2_HS512_A256KW
 
 // fileKeyring is a keyring that stores keys in encrypted files.
 type fileKeyring struct {
@@ -35,15 +35,14 @@ func openFileKeyring(dir string, password []byte) (*fileKeyring, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
-	key := pbkdf2.Key(password, []byte("defradb"), 4096, 32, sha1.New)
 	return &fileKeyring{
 		dir: dir,
-		key: key,
+		key: password,
 	}, nil
 }
 
 func (f *fileKeyring) Set(name string, key []byte) error {
-	cipher, err := jwe.Encrypt(key, jwe.WithKey(jwa.A256KW, f.key))
+	cipher, err := jwe.Encrypt(key, jwe.WithKey(keyEncryptionAlgorithm, f.key))
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func (f *fileKeyring) Get(name string) ([]byte, error) {
 	if os.IsNotExist(err) {
 		return nil, keyring.ErrNotFound
 	}
-	return jwe.Decrypt(cipher, jwe.WithKey(jwa.A256KW, f.key))
+	return jwe.Decrypt(cipher, jwe.WithKey(keyEncryptionAlgorithm, f.key))
 }
 
 func (f *fileKeyring) Delete(user string) error {
