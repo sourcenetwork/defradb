@@ -59,6 +59,7 @@ var configFlags = map[string]string{
 	"api.pubkeypath":                    "pubkeypath",
 	"api.privkeypath":                   "privkeypath",
 	"keyring.path":                      "keyring-path",
+	"keyring.disabled":                  "no-keyring",
 }
 
 // defaultConfig returns a new config with default values.
@@ -73,7 +74,6 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigType("yaml")
 
 	cfg.SetDefault("datastore.badger.path", "data")
-	cfg.SetDefault("keyring.path", "keys")
 	cfg.SetDefault("net.pubSubEnabled", true)
 	cfg.SetDefault("net.relay", false)
 	cfg.SetDefault("log.caller", false)

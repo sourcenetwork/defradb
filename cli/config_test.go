@@ -36,7 +36,6 @@ func TestLoadConfigNotExist(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 5, cfg.GetInt("datastore.maxtxnretries"))
-
 	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.badger.path"))
 	assert.Equal(t, 1<<30, cfg.GetInt("datastore.badger.valuelogfilesize"))
 	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
@@ -59,4 +58,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, false, cfg.GetBool("log.source"))
 	assert.Equal(t, "", cfg.GetString("log.overrides"))
 	assert.Equal(t, false, cfg.GetBool("log.nocolor"))
+
+	assert.Equal(t, filepath.Join(rootdir, "keys"), cfg.GetString("keyring.path"))
+	assert.Equal(t, false, cfg.GetBool("keyring.disabled"))
 }

@@ -145,5 +145,11 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Path to store encrypted keys",
 	)
 
+	cmd.PersistentFlags().Bool(
+		"no-keyring",
+		false,
+		"Disable the keyring and generate ephemeral keys",
+	)
+
 	return cmd
 }
