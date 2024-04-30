@@ -11,7 +11,6 @@ import (
 // value is strictly less than another.
 func lt(condition, data any) (bool, error) {
 	if condition == nil {
-		// Nothing is less than nil
 		return false, nil
 	}
 

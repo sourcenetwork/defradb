@@ -11,7 +11,7 @@ import (
 // value is strictly larger than another.
 func gt(condition, data any) (bool, error) {
 	if condition == nil {
-		return data != nil, nil
+		return false, nil
 	}
 
 	switch c := condition.(type) {
