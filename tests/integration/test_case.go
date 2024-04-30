@@ -38,6 +38,13 @@ type TestCase struct {
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between mutation types, or we need to temporarily document a bug.
 	SupportedMutationTypes immutable.Option[[]MutationType]
+
+	// If provided a value, SupportedClientTypes will limit the client types under test to those
+	// within this set.  If no active clients pass this filter the test will be skipped.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between client types, or we need to temporarily document a bug.
+	SupportedClientTypes immutable.Option[[]ClientType]
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
