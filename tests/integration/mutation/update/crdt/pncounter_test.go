@@ -177,6 +177,13 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Positive increments of a PN Counter with Float type and overflow",
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -222,6 +229,13 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Positive increments of a PN Counter with Float type and overflow",
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

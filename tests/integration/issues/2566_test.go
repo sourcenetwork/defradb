@@ -23,6 +23,13 @@ import (
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -108,6 +115,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
