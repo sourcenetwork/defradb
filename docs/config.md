@@ -107,6 +107,6 @@ When set to an empty string the default OS key management will be used.
 
 Disable the keyring and generate ephemeral keys instead. Defaults to `false`.
 
-## `keyring.service`
+## `keyring.namespace`
 
 The service name to use when using the system keyring. Defaults to `defradb`.

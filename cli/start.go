@@ -91,7 +91,7 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
-				keyring, err := openKeyring(cmd, cfg.GetString("keyring.path"), cfg.GetString("keyring.service"))
+				keyring, err := openKeyring(cmd, cfg.GetString("keyring.path"), cfg.GetString("keyring.namespace"))
 				if err != nil {
 					return err
 				}
