@@ -32,23 +32,17 @@ else ifeq ($(OS_GENERAL),Windows)
 	OS_PACKAGE_MANAGER := choco
 endif
 
-# Detect the operating system
-UNAME_S := $(shell uname -s)
-
 # Directory where binaries will be placed
 BIN_DIR := ./libs
 
 # Set the library file name based on the operating system
-ifeq ($(UNAME_S),Linux)
+ifeq ($(OS_GENERAL),Linux)
     LIB_EXT := .so
 endif
-ifeq ($(UNAME_S),Darwin)
+ifeq ($(OS_GENERAL),Darwin)
     LIB_EXT := .dylib
 endif
-ifeq ($(UNAME_S),CYGWIN_NT-10.0)
-    LIB_EXT := .dll
-endif
-ifeq ($(UNAME_S),MINGW32_NT-6.2)
+ifeq ($(OS_GENERAL),Windows)
     LIB_EXT := .dll
 endif
 
