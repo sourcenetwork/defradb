@@ -585,45 +585,6 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 	return encdoc, resultExecInfo, err
 }
 
-// shouldCheckExternalCondition checks if the external condition should be evaluated. To check
-// the external condition, we make the filter pass the check.
-//
-// This usually happens when we have an _and or _or operator in the filter and we are filtering
-// on some foreign object field value.
-func shouldCheckExternalCondition(passed bool, f *mapper.Filter) bool {
-	for k, v := range f.Conditions {
-		op := k.GetOperatorOrDefault("")
-		if op == "" {
-			// If we have a condition without an operator, it means that it's a property index
-			// and we can skip to the next condition.
-			continue
-		}
-		switch op {
-		case "_and":
-			// If we have an _and operator and we already failed the filter, we can return false
-			if !passed {
-				return false
-			}
-		case "_or":
-			// If we have an _or operator and we already passed the filter, we can return true
-			if passed {
-				return true
-			}
-		default:
-			// For now we only care about _and and _or.
-			return passed
-		}
-		filterSet, ok := f.ExternalConditions[op]
-		if !ok {
-			return false
-		}
-		if len(filterSet.([]any)) != len(v.([]any)) {
-			return true
-		}
-	}
-	return passed
-}
-
 func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
 	if df.kvEnd {
 		return nil, ExecInfo{}, nil
@@ -658,7 +619,6 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 				if err != nil {
 					return nil, ExecInfo{}, err
 				}
-				df.passedFilter = shouldCheckExternalCondition(df.passedFilter, df.filter)
 			}
 		}
 
