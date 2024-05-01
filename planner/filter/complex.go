@@ -31,9 +31,11 @@ func isComplex(conditions any, seekRelation bool) bool {
 	case map[connor.FilterKey]any:
 		for k, v := range typedCond {
 			if op, ok := k.(*mapper.Operator); ok {
-				if (op.Operation == request.FilterOpOr && len(v.([]any)) > 1) ||
-					(op.Operation == request.FilterOpAnd && len(v.([]any)) > 1) ||
-					op.Operation == request.FilterOpNot {
+				switch op.Operation {
+				case request.FilterOpOr, request.FilterOpAnd, request.FilterOpNot:
+					if v, ok := v.([]any); ok && len(v) == 1 {
+						continue
+					}
 					if isComplex(v, true) {
 						return true
 					}
