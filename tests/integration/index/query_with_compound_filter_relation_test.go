@@ -43,7 +43,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 						name
 					}
 				}`,
-				ExpectedError: "invalid filter operator is provided. Operator: _any",
+				Results: []map[string]any{},
 			},
 		},
 	}
@@ -78,7 +78,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 						name
 					}
 				}`,
-				ExpectedError: "invalid filter operator is provided. Operator: _any",
+				Results: []map[string]any{},
 			},
 		},
 	}
@@ -187,7 +187,14 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 						name
 					}
 				}`,
-				ExpectedError: "invalid filter operator is provided. Operator: _any",
+				Results: []map[string]any{
+					{
+						"name": "DefraDB",
+					},
+					{
+						"name": "LensVM",
+					},
+				},
 			},
 		},
 	}
@@ -262,7 +269,17 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 						name
 					}
 				}`,
-				ExpectedError: "invalid filter operator is provided. Operator: _any",
+				Results: []map[string]any{
+					{
+						"name": "Zanzi",
+					},
+					{
+						"name": "DefraDB",
+					},
+					{
+						"name": "LensVM",
+					},
+				},
 			},
 		},
 	}
@@ -331,7 +348,10 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "DefraDB",
+						"name": "Horizon",
+					},
+					{
+						"name": "Zanzi",
 					},
 				},
 			},
