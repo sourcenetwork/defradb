@@ -345,7 +345,7 @@ func prepareScanNodeFilterForTypeJoin(
 			parent.filter.Conditions = filter.Merge(
 				parent.filter.Conditions, scan.filter.Conditions)
 		}
-		filter.RemoveField(scan.filter, subType.Field)
+		scan.filter = nil
 	} else {
 		var parentFilter *mapper.Filter
 		scan.filter, parentFilter = filter.SplitByFields(scan.filter, subType.Field)

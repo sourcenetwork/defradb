@@ -492,3 +492,130 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation with _and filter that includes relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6
+				Doc: `{
+					"name": "Some Book",
+					"rating": 4.0
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-66ba0c48-4984-5b44-83dd-edb791a54b7d
+				Doc: `{
+					"name": "Some Other Book",
+					"rating": 3.0
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-5dac8488-0f75-5ddf-b08b-804b3d33a239
+				Doc: `{
+					"name": "Some Writer",
+					"age": 45,
+					"verified": false,
+					"published_id": "bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-8b0c345b-dda7-573c-b5f1-5fa1d70593e1
+				Doc: `{
+					"name": "Some Other Writer",
+					"age": 30,
+					"verified": true,
+					"published_id": "bae-66ba0c48-4984-5b44-83dd-edb791a54b7d"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(filter: {_or: [
+						{rating: {_gt: 4.0}},
+						{author: {age: {_eq: 30}}}
+					]}) {
+						name
+						rating
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "Some Other Book",
+						"rating": 3.0,
+					},
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(filter: {_and: [
+						{rating: {_ge: 4.0}},
+						{author: {age: {_eq: 45}}}
+					]}) {
+						name
+						rating
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "Some Book",
+						"rating": 4.0,
+					},
+				},
+			},
+			testUtils.Request{
+				// This is the same as {_not: {_and: [{rating: {_ge: 4.0}}, {author: {age: {_eq: 45}}}]}}
+				Request: `query {
+					Book(filter: {_not: {
+						rating: {_ge: 4.0},
+						author: {age: {_eq: 45}}
+					}}) {
+						name
+						rating
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "Some Other Book",
+						"rating": 3.0,
+					},
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

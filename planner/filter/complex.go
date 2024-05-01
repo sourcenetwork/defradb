@@ -17,7 +17,7 @@ import (
 
 // IsComplex returns true if the provided filter is complex.
 // A filter is considered complex if it contains a relation
-// object withing an _or or _not operator not necessarily being
+// object withing an _or, _and or _not operator not necessarily being
 // its direct  child.
 func IsComplex(filter *mapper.Filter) bool {
 	if filter == nil {
@@ -31,8 +31,11 @@ func isComplex(conditions any, seekRelation bool) bool {
 	case map[connor.FilterKey]any:
 		for k, v := range typedCond {
 			if op, ok := k.(*mapper.Operator); ok {
-				if (op.Operation == request.FilterOpOr && len(v.([]any)) > 1) ||
-					op.Operation == request.FilterOpNot {
+				switch op.Operation {
+				case request.FilterOpOr, request.FilterOpAnd, request.FilterOpNot:
+					if v, ok := v.([]any); ok && len(v) == 1 {
+						continue
+					}
 					if isComplex(v, true) {
 						return true
 					}
