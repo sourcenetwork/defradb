@@ -317,6 +317,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 			name
 			devices {
 				model
+				manufacturer
 			}
 		}
 	}`
@@ -332,12 +333,40 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 
 					type Device {
 						model: String @index
+						manufacturer: String
 						owner: User
 					}
 				`,
 			},
-			testUtils.CreatePredefinedDocs{
-				Docs: getUserDocs(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "Sony",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "The Proclaimers",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Running Man",
+					"manufacturer": "Braveworld Productions",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
 			},
 			testUtils.Request{
 				Request: req,
@@ -345,14 +374,22 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 					{
 						"name": "Chris",
 						"devices": map[string]any{
-							"model": "Walkman",
+							"model":        "Walkman",
+							"manufacturer": "Sony",
+						},
+					},
+					{
+						"name": "Chris",
+						"devices": map[string]any{
+							"model":        "Walkman",
+							"manufacturer": "The Proclaimers",
 						},
 					},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(2),
 			},
 		},
 	}
