@@ -34,7 +34,8 @@ jobs:
       - uses: webfactory/ssh-agent@v0.9.0
         with:
             #ssh-private-key: ${{ secrets.SSH_READ_ONLY_PUBLIC_KEY }}
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+            #ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+            ssh-private-key: ${{ secrets.SSH_SOURCE_DEV_PRIVATE_KEY }}
             log-public-key: false
 
       - name: Checkout code into the directory
