@@ -279,6 +279,7 @@ func (p *Planner) makeTypeJoinOne(
 			root:                source,
 			subType:             selectPlan,
 			subSelect:           subType,
+			subSelectFieldDef:   subTypeFieldDesc,
 			rootName:            immutable.Some(subTypeField.Name),
 			subTypeName:         subType.Name,
 			isSecondary:         !subTypeFieldDesc.IsPrimaryRelation,
@@ -409,6 +410,7 @@ func (p *Planner) makeTypeJoinMany(
 			root:                source,
 			subType:             selectPlan,
 			subSelect:           subType,
+			subSelectFieldDef:   subTypeFieldDesc,
 			rootName:            rootName,
 			isSecondary:         true,
 			subTypeName:         subType.Name,
@@ -480,7 +482,8 @@ type invertibleTypeJoin struct {
 	rootName    immutable.Option[string]
 	subTypeName string
 
-	subSelect *mapper.Select
+	subSelect         *mapper.Select
+	subSelectFieldDef client.FieldDefinition
 
 	isSecondary         bool
 	secondaryFieldIndex immutable.Option[int]
@@ -634,6 +637,10 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 ) error {
 	if !join.rootName.HasValue() {
 		// If the root field has no value it cannot be inverted
+		return nil
+	}
+	if join.subSelectFieldDef.Kind.IsArray() {
+		// invertibleTypeJoin does not support inverting one-many relations atm
 		return nil
 	}
 	subScan := getScanNode(join.subType)

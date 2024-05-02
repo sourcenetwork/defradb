@@ -53,14 +53,16 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
+					{"name": "Keenan"},
 					{"name": "Islam"},
 					{"name": "Shahzad"},
-					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
+				Request: makeExplainQuery(req1),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -69,8 +71,10 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+				Request: makeExplainQuery(req2),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 		},
 	}
@@ -115,14 +119,16 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
+					{"name": "Keenan"},
 					{"name": "Islam"},
 					{"name": "Shahzad"},
-					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
+				Request: makeExplainQuery(req1),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -131,8 +137,10 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+				Request: makeExplainQuery(req2),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 		},
 	}
@@ -334,6 +342,12 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 				}`,
 			},
 			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Addo"
+				}`,
+			},
+			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"model":	"Walkman",
@@ -372,16 +386,20 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 				Results: []map[string]any{
 					{
 						"name": "Chris",
-						"devices": map[string]any{
-							"model":        "Walkman",
-							"manufacturer": "Sony",
-						},
-					},
-					{
-						"name": "Chris",
-						"devices": map[string]any{
-							"model":        "Walkman",
-							"manufacturer": "The Proclaimers",
+						"devices": []map[string]any{
+							{
+								"model":        "Walkman",
+								"manufacturer": "Sony",
+							},
+							{
+								"model":        "Walkman",
+								"manufacturer": "The Proclaimers",
+							},
+							// The filter is on User, so all devices belonging to it will be returned
+							{
+								"model":        "Running Man",
+								"manufacturer": "Braveworld Productions",
+							},
 						},
 					},
 				},
@@ -456,23 +474,28 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 				Results: []map[string]any{
 					{
 						"name": "Chris",
-						"devices": map[string]any{
-							"model":        "Walkman",
-							"manufacturer": "Sony",
-						},
-					},
-					{
-						"name": "Chris",
-						"devices": map[string]any{
-							"model":        "Walkman",
-							"manufacturer": "The Proclaimers",
+						"devices": []map[string]any{
+							{
+								"model":        "Walkman",
+								"manufacturer": "Sony",
+							},
+							{
+								"model":        "Walkman",
+								"manufacturer": "The Proclaimers",
+							},
+							{
+								"model":        "Running Man",
+								"manufacturer": "Braveworld Productions",
+							},
 						},
 					},
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(2),
+				Request: makeExplainQuery(req),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(10).WithIndexFetches(0),
 			},
 		},
 	}
