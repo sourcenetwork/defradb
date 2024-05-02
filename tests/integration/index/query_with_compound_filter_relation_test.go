@@ -70,7 +70,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 				Request: `query {
 					Program(
 						filter: {
-							_and: [
+							_or: [
 								{ certificationBodyOrg: { name: { _eq: "Test" } } }
 							]
 						}
@@ -105,9 +105,9 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 				Request: `query {
 					Program(
 						filter: {
-							_and: [
-								{ certificationBodyOrg: { name: { _eq: "Test" } } }
-							]
+							_not: {
+								certificationBodyOrg: { name: { _eq: "Test" } }
+							}
 						}
 					) {
 						name
