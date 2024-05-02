@@ -80,7 +80,7 @@ func TestIsComplex(t *testing.T) {
 			inputFilter: r("_or",
 				m("published", m("rating", m("_gt", 4.0))),
 			),
-			isComplex: false,
+			isComplex: true,
 		},
 		{
 			name: "relation inside _or",

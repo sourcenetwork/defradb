@@ -473,7 +473,6 @@ func (dir *joinDirection) invert() {
 }
 
 type invertibleTypeJoin struct {
-	documentIterator
 	docMapper
 
 	root        planNode
@@ -486,6 +485,9 @@ type invertibleTypeJoin struct {
 	isSecondary         bool
 	secondaryFieldIndex immutable.Option[int]
 	secondaryFetchLimit uint
+
+	// docsToYield contains documents read and ready to be yielded by this node.
+	docsToYield []core.Doc
 
 	dir joinDirection
 }
@@ -556,6 +558,17 @@ func (join *invertibleTypeJoin) processSecondResult(secondDocs []core.Doc) (any,
 }
 
 func (join *invertibleTypeJoin) Next() (bool, error) {
+	if len(join.docsToYield) > 0 {
+		// If there is one or more documents in the queue, drop the first one -
+		// it will have been yielded by the last `Next()` call.
+		join.docsToYield = join.docsToYield[1:]
+		if len(join.docsToYield) > 0 {
+			// If there are still documents in the queue, return true yielding the next
+			// one in the queue.
+			return true, nil
+		}
+	}
+
 	hasFirstValue, err := join.dir.firstNode.Next()
 
 	if err != nil || !hasFirstValue {
@@ -577,7 +590,14 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 			return false, err
 		}
 		if join.dir.secondNode == join.root {
-			join.root.Value().Fields[join.subSelect.Index] = join.subType.Value()
+			if len(secondDocs) == 0 {
+				return false, nil
+			}
+			for i := range secondDocs {
+				secondDocs[i].Fields[join.subSelect.Index] = join.subType.Value()
+			}
+			join.docsToYield = append(join.docsToYield, secondDocs...)
+			return true, nil
 		} else {
 			secondResult, secondIDResult := join.processSecondResult(secondDocs)
 			join.dir.firstNode.Value().Fields[join.subSelect.Index] = secondResult
@@ -596,9 +616,16 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		}
 	}
 
-	join.currentValue = join.root.Value()
+	join.docsToYield = append(join.docsToYield, join.root.Value())
 
 	return true, nil
+}
+
+func (join *invertibleTypeJoin) Value() core.Doc {
+	if len(join.docsToYield) == 0 {
+		return core.Doc{}
+	}
+	return join.docsToYield[0]
 }
 
 func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
