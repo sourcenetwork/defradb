@@ -486,7 +486,7 @@ type invertibleTypeJoin struct {
 	secondaryFieldIndex immutable.Option[int]
 	secondaryFetchLimit uint
 
-	// docsToYield contains cocuments read and ready to be yielded by this node.
+	// docsToYield contains documents read and ready to be yielded by this node.
 	docsToYield []core.Doc
 
 	dir joinDirection
