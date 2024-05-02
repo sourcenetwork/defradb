@@ -30,6 +30,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+            log-public-key: false
 
       - name: Checkout code into the directory
         uses: actions/checkout@v3
