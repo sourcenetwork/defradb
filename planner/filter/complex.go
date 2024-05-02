@@ -33,9 +33,6 @@ func isComplex(conditions any, seekRelation bool) bool {
 			if op, ok := k.(*mapper.Operator); ok {
 				switch op.Operation {
 				case request.FilterOpOr, request.FilterOpAnd, request.FilterOpNot:
-					if v, ok := v.([]any); ok && len(v) == 0 {
-						continue
-					}
 					if isComplex(v, true) {
 						return true
 					}
