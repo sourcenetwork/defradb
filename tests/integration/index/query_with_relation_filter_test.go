@@ -310,6 +310,89 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 }
 
 func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String @index
+						manufacturer: String
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "Sony",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "The Proclaimers",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Running Man",
+					"manufacturer": "Braveworld Productions",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {
+						devices: {model: {_eq: "Walkman"}}
+					}) {
+						name
+						devices {
+							model
+							manufacturer
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Chris",
+						"devices": map[string]any{
+							"model":        "Walkman",
+							"manufacturer": "Sony",
+						},
+					},
+					{
+						"name": "Chris",
+						"devices": map[string]any{
+							"model":        "Walkman",
+							"manufacturer": "The Proclaimers",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExplain(t *testing.T) {
 	req := `query {
 		User(filter: {
 			devices: {model: {_eq: "Walkman"}}
