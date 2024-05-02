@@ -309,18 +309,8 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
-	req1 := `query {
-		User(filter: {
-			address: {city: {_eq: "Munich"}}
-		}) {
-			name
-			address {
-				city
-			}
-		}
-	}`
-	req2 := `query {
+func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req := `query {
 		User(filter: {
 			devices: {model: {_eq: "Walkman"}}
 		}) {
@@ -331,47 +321,26 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
+		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String 
-						age: Int
-						address: Address
-						devices: [Device] 
+						name: String
+						devices: [Device]
 					} 
 
 					type Device {
 						model: String @index
 						owner: User
-					} 
-
-					type Address {
-						user: User @primary
-						city: String @index
-					}`,
+					}
+				`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
-				Request: req1,
-				Results: []map[string]any{
-					{
-						"name": "Islam",
-						"address": map[string]any{
-							"city": "Munich",
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
-			},
-			testUtils.Request{
-				Request: req2,
+				Request: req,
 				Results: []map[string]any{
 					{
 						"name": "Chris",
@@ -382,7 +351,58 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {
+			address: {city: {_eq: "Munich"}}
+		}) {
+			name
+			address {
+				city
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-1 relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						address: Address
+					}
+
+					type Address {
+						user: User @primary
+						city: String @index
+					}
+				`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{
+						"name": "Islam",
+						"address": map[string]any{
+							"city": "Munich",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},
