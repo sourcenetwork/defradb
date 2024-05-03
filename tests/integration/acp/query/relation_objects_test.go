@@ -37,12 +37,12 @@ func TestACP_QueryRelationObjectsWithoutIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"name":    "PubEmp in PubCompany",
-						"company": map[string]any{"name": "Public Company"},
-					},
-					{
 						"name":    "PubEmp in PrivateCompany",
 						"company": nil,
+					},
+					{
+						"name":    "PubEmp in PubCompany",
+						"company": map[string]any{"name": "Public Company"},
 					},
 				},
 			},
@@ -94,10 +94,6 @@ func TestACP_QueryRelationObjectsWithIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"name":    "PubEmp in PubCompany",
-						"company": map[string]any{"name": "Public Company"},
-					},
-					{
 						"name":    "PrivateEmp in PubCompany",
 						"company": map[string]any{"name": "Public Company"},
 					},
@@ -108,6 +104,10 @@ func TestACP_QueryRelationObjectsWithIdentity(t *testing.T) {
 					{
 						"name":    "PubEmp in PrivateCompany",
 						"company": map[string]any{"name": "Private Company"},
+					},
+					{
+						"name":    "PubEmp in PubCompany",
+						"company": map[string]any{"name": "Public Company"},
 					},
 				},
 			},
@@ -126,17 +126,17 @@ func TestACP_QueryRelationObjectsWithIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
+						"name": "Public Company",
+						"employees": []map[string]any{
+							{"name": "PrivateEmp in PubCompany"},
+							{"name": "PubEmp in PubCompany"},
+						},
+					},
+					{
 						"name": "Private Company",
 						"employees": []map[string]any{
 							{"name": "PrivateEmp in PrivateCompany"},
 							{"name": "PubEmp in PrivateCompany"},
-						},
-					},
-					{
-						"name": "Public Company",
-						"employees": []map[string]any{
-							{"name": "PubEmp in PubCompany"},
-							{"name": "PrivateEmp in PubCompany"},
 						},
 					},
 				},
@@ -168,12 +168,12 @@ func TestACP_QueryRelationObjectsWithWrongIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"name":    "PubEmp in PubCompany",
-						"company": map[string]any{"name": "Public Company"},
-					},
-					{
 						"name":    "PubEmp in PrivateCompany",
 						"company": nil,
+					},
+					{
+						"name":    "PubEmp in PubCompany",
+						"company": map[string]any{"name": "Public Company"},
 					},
 				},
 			},

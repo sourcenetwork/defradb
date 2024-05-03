@@ -108,7 +108,7 @@ func getSetupEmployeeCompanyActions() []any {
 					{
 						"name": "PubEmp in PubCompany",
 						"salary": 10000,
-						"company": "bae-f4beaae4-ca13-5349-bccf-74a47bf1309e"
+						"company": "bae-1ab7ac86-3c68-5abb-b526-803858c9dccf"
 					}
 				`,
 		},
@@ -118,7 +118,7 @@ func getSetupEmployeeCompanyActions() []any {
 					{
 						"name": "PubEmp in PrivateCompany",
 						"salary": 20000,
-						"company": "bae-74d9f5d4-fad7-5b87-8e8b-4d1e8cfbf83c"
+						"company": "bae-4aef4bd6-e2ee-5075-85a5-4d64bbf80bca"
 					}
 				`,
 		},
@@ -129,7 +129,7 @@ func getSetupEmployeeCompanyActions() []any {
 					{
 						"name": "PrivateEmp in PubCompany",
 						"salary": 30000,
-						"company": "bae-f4beaae4-ca13-5349-bccf-74a47bf1309e"
+						"company": "bae-1ab7ac86-3c68-5abb-b526-803858c9dccf"
 					}
 				`,
 		},
@@ -140,7 +140,7 @@ func getSetupEmployeeCompanyActions() []any {
 					{
 						"name": "PrivateEmp in PrivateCompany",
 						"salary": 40000,
-						"company": "bae-74d9f5d4-fad7-5b87-8e8b-4d1e8cfbf83c"
+						"company": "bae-4aef4bd6-e2ee-5075-85a5-4d64bbf80bca"
 					}
 				`,
 		},
