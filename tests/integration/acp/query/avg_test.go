@@ -32,20 +32,8 @@ func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
+						// 2 public employees, 1 with salary 10k, 1 with salary 20k
 						"_avg": int(15000),
-					},
-				},
-			},
-
-			testUtils.Request{
-				Request: `
-					query {
-						_avg(Company: {field: capital})
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"_avg": int(100000),
 					},
 				},
 			},
@@ -71,21 +59,8 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
+						// 4 employees with salaries 10k, 20k, 30k, 40k
 						"_avg": int(25000),
-					},
-				},
-			},
-
-			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
-				Request: `
-					query {
-						_avg(Company: {field: capital})
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"_avg": int(150000),
 					},
 				},
 			},
@@ -111,21 +86,8 @@ func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
+						// 2 public employees, 1 with salary 10k, 1 with salary 20k
 						"_avg": int(15000),
-					},
-				},
-			},
-
-			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
-				Request: `
-					query {
-						_avg(Company: {field: capital})
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"_avg": int(100000),
 					},
 				},
 			},

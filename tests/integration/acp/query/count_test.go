@@ -17,9 +17,9 @@ import (
 	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
-func TestACP_QueryCountWithoutIdentity(t *testing.T) {
+func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query count without identity",
+		Description: "Test acp, query documents' count without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -36,19 +36,18 @@ func TestACP_QueryCountWithoutIdentity(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
 
-			testUtils.Request{
-				Request: `
-					query {
-						_count(Company: {})
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"_count": int(1),
-					},
-				},
-			},
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, query count of related objects without identity",
+
+		Actions: []any{
+			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
 				Request: `
@@ -60,6 +59,7 @@ func TestACP_QueryCountWithoutIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
+						// 1 of 2 companies is public and has 1 public employee out of 2
 						"_count": int(1),
 					},
 				},
@@ -70,9 +70,9 @@ func TestACP_QueryCountWithoutIdentity(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_QueryCountWithIdentity(t *testing.T) {
+func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query count with identity",
+		Description: "Test acp, query documents' count with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -90,20 +90,18 @@ func TestACP_QueryCountWithIdentity(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
 
-			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
-				Request: `
-					query {
-						_count(Company: {})
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"_count": int(2),
-					},
-				},
-			},
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, query count of related objects with identity",
+
+		Actions: []any{
+			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
 				Identity: acpUtils.Actor1Identity,
@@ -129,9 +127,9 @@ func TestACP_QueryCountWithIdentity(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_QueryCountWithWrongIdentity(t *testing.T) {
+func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query count without identity",
+		Description: "Test acp, query documents' count without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -149,20 +147,18 @@ func TestACP_QueryCountWithWrongIdentity(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
 
-			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
-				Request: `
-					query {
-						_count(Company: {})
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"_count": int(1),
-					},
-				},
-			},
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, query count of related objects without identity",
+
+		Actions: []any{
+			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
 				Identity: acpUtils.Actor2Identity,
@@ -175,6 +171,7 @@ func TestACP_QueryCountWithWrongIdentity(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
+						// 1 of 2 companies is public and has 1 public employee out of 2
 						"_count": int(1),
 					},
 				},

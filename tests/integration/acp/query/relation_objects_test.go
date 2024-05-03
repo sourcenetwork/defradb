@@ -17,9 +17,9 @@ import (
 	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
-func TestACP_QueryRelationObjectsWithoutIdentity(t *testing.T) {
+func TestACP_QueryManyToOneRelationObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query employees and companies without identity",
+		Description: "Test acp, query employees with their companies without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -46,6 +46,18 @@ func TestACP_QueryRelationObjectsWithoutIdentity(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_QueryOneToManyRelationObjectsWithoutIdentity(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, query companies with their employees without identity",
+
+		Actions: []any{
+			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
 				Request: `
@@ -73,9 +85,9 @@ func TestACP_QueryRelationObjectsWithoutIdentity(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_QueryRelationObjectsWithIdentity(t *testing.T) {
+func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query employees and companies with identity",
+		Description: "Test acp, query employees with their companies with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -111,6 +123,18 @@ func TestACP_QueryRelationObjectsWithIdentity(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, query companies with their employees with identity",
+
+		Actions: []any{
+			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
 				Identity: acpUtils.Actor1Identity,
@@ -147,9 +171,9 @@ func TestACP_QueryRelationObjectsWithIdentity(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_QueryRelationObjectsWithWrongIdentity(t *testing.T) {
+func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query employees and companies with wrong identity",
+		Description: "Test acp, query employees with their companies with wrong identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -177,6 +201,18 @@ func TestACP_QueryRelationObjectsWithWrongIdentity(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_QueryOneToManyRelationObjectsWithWrongIdentity(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, query companies with their employees with wrong identity",
+
+		Actions: []any{
+			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
 				Identity: acpUtils.Actor2Identity,
