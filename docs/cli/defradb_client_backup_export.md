@@ -34,6 +34,7 @@ defradb client backup export  [-c --collections | -p --pretty | -f --format] <ou
   -i, --identity string               ACP Identity
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-no-color                  Disable colored log output
       --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
       --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
       --log-source                    Include source location in logs
