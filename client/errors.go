@@ -22,15 +22,16 @@ const (
 	errParsingFailed                       string = "failed to parse argument"
 	errUninitializeProperty                string = "invalid state, required property is uninitialized"
 	errMaxTxnRetries                       string = "reached maximum transaction reties"
-	errRelationOneSided                    string = "relation must be defined on both schemas"
 	errCollectionNotFound                  string = "collection not found"
-	errFieldOrAliasToFieldNotExist         string = "The given field or alias to field does not exist"
 	errUnknownCRDT                         string = "unknown crdt"
 	errCRDTKindMismatch                    string = "CRDT type %s can't be assigned to field kind %s"
 	errInvalidCRDTType                     string = "CRDT type not supported"
 	errFailedToUnmarshalCollection         string = "failed to unmarshal collection json"
 	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
 	errInvalidJSONPayload                  string = "invalid JSON payload"
+	errCanNotNormalizeValue                string = "can not normalize value"
+	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
+	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
 )
 
 // Errors returnable from this package.
@@ -44,13 +45,17 @@ var (
 	ErrOperationNotPermittedOnNamelessCols = errors.New(errOperationNotPermittedOnNamelessCols)
 	ErrFieldNotObject                      = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch                   = errors.New("value does not match indicated type")
-	ErrDocumentNotFound                    = errors.New("no document for the given ID exists")
+	ErrDocumentNotFoundOrNotAuthorized     = errors.New("document not found or not authorized to access")
+	ErrPolicyAddFailureNoACP               = errors.New("failure adding policy because ACP was not available")
 	ErrInvalidUpdateTarget                 = errors.New("the target document to update is of invalid type")
 	ErrInvalidUpdater                      = errors.New("the updater of a document is of invalid type")
 	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")
 	ErrMalformedDocID                      = errors.New("malformed document ID, missing either version or cid")
 	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
 	ErrInvalidJSONPayload                  = errors.New(errInvalidJSONPayload)
+	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
+	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
+	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -73,6 +78,23 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
 		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
 	)
+}
+
+// NewCanNotNormalizeValue returns an error indicating that the given value can not be normalized.
+func NewCanNotNormalizeValue(val any) error {
+	return errors.New(errCanNotNormalizeValue, errors.NewKV("Value", val))
+}
+
+// NewCanNotTurnNormalValueIntoArray returns an error indicating that the given value can not be
+// turned into an array.
+func NewCanNotTurnNormalValueIntoArray(val any) error {
+	return errors.New(errCanNotTurnNormalValueIntoArray, errors.NewKV("Value", val))
+}
+
+// NewCanNotMakeNormalNilFromFieldKind returns an error indicating that a normal nil value can not be
+// created from the given field kind.
+func NewCanNotMakeNormalNilFromFieldKind(kind FieldKind) error {
+	return errors.New(errCanNotMakeNormalNilFromFieldKind, errors.NewKV("Kind", kind))
 }
 
 // NewErrUnhandledType returns an error indicating that the given value is of
@@ -106,14 +128,6 @@ func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
 
-func NewErrRelationOneSided(fieldName string, typeName string) error {
-	return errors.New(
-		errRelationOneSided,
-		errors.NewKV("Field", fieldName),
-		errors.NewKV("Type", typeName),
-	)
-}
-
 func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
 	return errors.New(
 		errCollectionNotFound,
@@ -133,11 +147,6 @@ func NewErrUnknownCRDT(cType CType) error {
 		errUnknownCRDT,
 		errors.NewKV("Type", cType),
 	)
-}
-
-// NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
-func NewErrFieldOrAliasToFieldNotExist(name string) error {
-	return errors.New(errFieldOrAliasToFieldNotExist, errors.NewKV("Name", name))
 }
 
 func NewErrInvalidCRDTType(name, crdtType string) error {

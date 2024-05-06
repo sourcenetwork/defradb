@@ -15,57 +15,63 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestEncodeDecodeFieldValue(t *testing.T) {
+	normalNil, err := client.NewNormalNil(client.FieldKind_NILLABLE_INT)
+	require.NoError(t, err)
+
 	tests := []struct {
 		name               string
-		inputVal           any
+		inputVal           client.NormalValue
 		expectedBytes      []byte
 		expectedBytesDesc  []byte
 		expectedDecodedVal any
 	}{
 		{
 			name:               "nil",
-			inputVal:           nil,
+			inputVal:           normalNil,
 			expectedBytes:      EncodeNullAscending(nil),
 			expectedBytesDesc:  EncodeNullDescending(nil),
-			expectedDecodedVal: nil,
+			expectedDecodedVal: normalNil,
 		},
 		{
 			name:               "bool true",
-			inputVal:           true,
+			inputVal:           client.NewNormalBool(true),
 			expectedBytes:      EncodeVarintAscending(nil, 1),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 1),
-			expectedDecodedVal: int64(1),
+			expectedDecodedVal: client.NewNormalInt(1),
 		},
 		{
 			name:               "bool false",
-			inputVal:           false,
+			inputVal:           client.NewNormalBool(false),
 			expectedBytes:      EncodeVarintAscending(nil, 0),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 0),
-			expectedDecodedVal: int64(0),
+			expectedDecodedVal: client.NewNormalInt(0),
 		},
 		{
 			name:               "int",
-			inputVal:           int64(55),
+			inputVal:           client.NewNormalInt(55),
 			expectedBytes:      EncodeVarintAscending(nil, 55),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 55),
-			expectedDecodedVal: int64(55),
+			expectedDecodedVal: client.NewNormalInt(55),
 		},
 		{
 			name:               "float",
-			inputVal:           0.2,
+			inputVal:           client.NewNormalFloat(0.2),
 			expectedBytes:      EncodeFloatAscending(nil, 0.2),
 			expectedBytesDesc:  EncodeFloatDescending(nil, 0.2),
-			expectedDecodedVal: 0.2,
+			expectedDecodedVal: client.NewNormalFloat(0.2),
 		},
 		{
 			name:               "string",
-			inputVal:           "str",
+			inputVal:           client.NewNormalString("str"),
 			expectedBytes:      EncodeBytesAscending(nil, []byte("str")),
 			expectedBytesDesc:  EncodeBytesDescending(nil, []byte("str")),
-			expectedDecodedVal: []byte("str"),
+			expectedDecodedVal: client.NewNormalString("str"),
 		},
 	}
 
@@ -85,7 +91,7 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 					t.Errorf("EncodeFieldValue() = %v, want %v", encoded, expectedBytes)
 				}
 
-				_, decodedFieldVal, err := DecodeFieldValue(encoded, descending)
+				_, decodedFieldVal, err := DecodeFieldValue(encoded, descending, client.FieldKind_NILLABLE_INT)
 				assert.NoError(t, err)
 				if !reflect.DeepEqual(decodedFieldVal, tt.expectedDecodedVal) {
 					t.Errorf("DecodeFieldValue() = %v, want %v", decodedFieldVal, tt.expectedDecodedVal)
@@ -134,7 +140,7 @@ func TestDecodeInvalidFieldValue(t *testing.T) {
 				if descending {
 					inputBytes = tt.inputBytesDesc
 				}
-				_, _, err := DecodeFieldValue(inputBytes, descending)
+				_, _, err := DecodeFieldValue(inputBytes, descending, client.FieldKind_NILLABLE_INT)
 				assert.ErrorIs(t, err, ErrCanNotDecodeFieldValue)
 			})
 		}

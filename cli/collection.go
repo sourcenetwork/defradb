@@ -17,11 +17,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeCollectionCommand() *cobra.Command {
 	var txID uint64
+	var identity string
 	var name string
 	var schemaRoot string
 	var versionID string
@@ -38,10 +38,13 @@ func MakeCollectionCommand() *cobra.Command {
 			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
+			if err := setContextIdentity(cmd, identity); err != nil {
+				return err
+			}
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			if err := setContextStore(cmd); err != nil {
+			if err := setContextDB(cmd); err != nil {
 				return err
 			}
 			store := mustGetContextStore(cmd)
@@ -71,16 +74,13 @@ func MakeCollectionCommand() *cobra.Command {
 			}
 			col := cols[0]
 
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
-			}
-
 			ctx := context.WithValue(cmd.Context(), colContextKey, col)
 			cmd.SetContext(ctx)
 			return nil
 		},
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
+	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "", "ACP Identity")
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
 	cmd.PersistentFlags().StringVar(&schemaRoot, "schema", "", "Collection schema Root")
 	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")

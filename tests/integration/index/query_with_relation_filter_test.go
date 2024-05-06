@@ -53,14 +53,16 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
+					{"name": "Keenan"},
 					{"name": "Islam"},
 					{"name": "Shahzad"},
-					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
+				Request: makeExplainQuery(req1),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -69,8 +71,10 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+				Request: makeExplainQuery(req2),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 		},
 	}
@@ -115,14 +119,16 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
+					{"name": "Keenan"},
 					{"name": "Islam"},
 					{"name": "Shahzad"},
-					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
+				Request: makeExplainQuery(req1),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -131,8 +137,10 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+				Request: makeExplainQuery(req2),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
 			},
 		},
 	}
@@ -167,7 +175,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 					} 
 
 					type Address {
-						user: User
+						user: User @primary
 						city: String @index
 					}`,
 			},
@@ -309,8 +317,194 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
-	req1 := `query {
+func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String @index
+						manufacturer: String
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Addo"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "Sony",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "The Proclaimers",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Running Man",
+					"manufacturer": "Braveworld Productions",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {
+						devices: {model: {_eq: "Walkman"}}
+					}) {
+						name
+						devices {
+							model
+							manufacturer
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Chris",
+						"devices": []map[string]any{
+							{
+								"model":        "Walkman",
+								"manufacturer": "Sony",
+							},
+							{
+								"model":        "Walkman",
+								"manufacturer": "The Proclaimers",
+							},
+							// The filter is on User, so all devices belonging to it will be returned
+							{
+								"model":        "Running Man",
+								"manufacturer": "Braveworld Productions",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExplain(t *testing.T) {
+	req := `query {
+		User(filter: {
+			devices: {model: {_eq: "Walkman"}}
+		}) {
+			name
+			devices {
+				model
+				manufacturer
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					} 
+
+					type Device {
+						model: String @index
+						manufacturer: String
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "Sony",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "The Proclaimers",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Running Man",
+					"manufacturer": "Braveworld Productions",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{
+						"name": "Chris",
+						"devices": []map[string]any{
+							{
+								"model":        "Walkman",
+								"manufacturer": "Sony",
+							},
+							{
+								"model":        "Walkman",
+								"manufacturer": "The Proclaimers",
+							},
+							{
+								"model":        "Running Man",
+								"manufacturer": "Braveworld Productions",
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// The invertable join does not support inverting one-many relations, so the index is
+				// not used.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(10).WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req := `query {
 		User(filter: {
 			address: {city: {_eq: "Munich"}}
 		}) {
@@ -320,43 +514,27 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 			}
 		}
 	}`
-	req2 := `query {
-		User(filter: {
-			devices: {model: {_eq: "Walkman"}}
-		}) {
-			name
-			devices {
-				model
-			}
-		}
-	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
+		Description: "Filter on indexed relation field in 1-1 relation",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String 
-						age: Int
+						name: String
 						address: Address
-						devices: [Device] 
-					} 
-
-					type Device {
-						model: String @index
-						owner: User
-					} 
+					}
 
 					type Address {
-						user: User
+						user: User @primary
 						city: String @index
-					}`,
+					}
+				`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
-				Request: req1,
+				Request: req,
 				Results: []map[string]any{
 					{
 						"name": "Islam",
@@ -367,22 +545,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
-			},
-			testUtils.Request{
-				Request: req2,
-				Results: []map[string]any{
-					{
-						"name": "Chris",
-						"devices": map[string]any{
-							"model": "Walkman",
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request:  makeExplainQuery(req2),
+				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},

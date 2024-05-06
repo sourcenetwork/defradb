@@ -104,7 +104,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafybeidshqlc7z2psrtfhmrarsxwxwwis6baxjrzs2x6mdmzsop6b7hnii"
+							cid: "bafybeia3qbhebdwssoe5udinpbdj4pntb5wjr77ql7ptzq32howbaxz2cu"
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
@@ -179,7 +179,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafybeidshqlc7z2psrtfhmrarsxwxwwis6baxjrzs2x6mdmzsop6b7hnii",
+							cid: "bafybeia3qbhebdwssoe5udinpbdj4pntb5wjr77ql7ptzq32howbaxz2cu",
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
@@ -252,9 +252,10 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafybeidshqlc7z2psrtfhmrarsxwxwwis6baxjrzs2x6mdmzsop6b7hnii",
+						cid: "bafybeia3qbhebdwssoe5udinpbdj4pntb5wjr77ql7ptzq32howbaxz2cu",
 						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 					) {
+						name
 						rating
 						author {
 							name
@@ -324,9 +325,10 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafybeiefqhex3axofwy2gwdynhs6rijwrpkdpwy5fnqnzbk3e7iwcgvrqa",
+						cid: "bafybeibqkdnc63xh5k4frs3x3k7z7p6sw4usjrhxd4iusbjj2uhxfjfjcq",
 						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 					) {
+						name
 						rating
 						author {
 							name

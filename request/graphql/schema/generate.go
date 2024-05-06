@@ -414,7 +414,7 @@ func (g *Generator) buildTypes(
 		// will be reassigned before the thunk is run
 		// TODO remove when Go 1.22
 		collection := c
-		fieldDescriptions := collection.Schema.Fields
+		fieldDescriptions := collection.GetFields()
 		isEmbeddedObject := !collection.Description.Name.HasValue()
 		isQuerySource := len(collection.Description.QuerySources()) > 0
 		isViewObject := isEmbeddedObject || isQuerySource
@@ -460,16 +460,16 @@ func (g *Generator) buildTypes(
 				}
 
 				var ttype gql.Type
-				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					var ok bool
-					ttype, ok = g.manager.schema.TypeMap()[field.Schema]
+					ttype, ok = g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema)
+						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
-				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-					t, ok := g.manager.schema.TypeMap()[field.Schema]
+				} else if field.Kind.IsObjectArray() {
+					t, ok := g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema)
+						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
 					ttype = gql.NewList(t)
 				} else {
@@ -540,7 +540,6 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		// will be reassigned before the thunk is run
 		// TODO remove when Go 1.22
 		collection := c
-		fieldDescriptions := collection.Schema.Fields
 		mutationInputName := collection.Description.Name.Value() + "MutationInputArg"
 
 		// check if mutation input type exists
@@ -558,7 +557,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		mutationObjConf.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 			fields := make(gql.InputObjectConfigFieldMap)
 
-			for _, field := range fieldDescriptions {
+			for _, field := range collection.GetFields() {
 				if strings.HasPrefix(field.Name, "_") {
 					// ignore system defined args as the
 					// user cannot override their values
@@ -566,9 +565,9 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 				}
 
 				var ttype gql.Type
-				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					ttype = gql.ID
-				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+				} else if field.Kind.IsObjectArray() {
 					ttype = gql.NewList(gql.ID)
 				} else {
 					var ok bool

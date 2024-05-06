@@ -36,7 +36,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 			commit.DocID = immutable.Some(raw.Value)
 		} else if prop == request.Cid {
 			raw := argument.Value.(*ast.StringValue)
-			commit.Cid = immutable.Some(raw.Value)
+			commit.CID = immutable.Some(raw.Value)
 		} else if prop == request.FieldIDName {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldID = immutable.Some(raw.Value)
@@ -112,7 +112,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		return nil, err
 	}
 
-	commit.Fields, err = parseSelectFields(schema, request.CommitSelection, fieldObject, field.SelectionSet)
+	commit.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
 
 	return commit, err
 }

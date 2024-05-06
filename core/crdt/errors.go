@@ -17,6 +17,7 @@ import (
 const (
 	errFailedToGetPriority string = "failed to get priority"
 	errFailedToStoreValue  string = "failed to store value"
+	errNegativeValue       string = "value cannot be negative"
 )
 
 // Errors returnable from this package.
@@ -26,6 +27,7 @@ const (
 var (
 	ErrFailedToGetPriority = errors.New(errFailedToGetPriority)
 	ErrFailedToStoreValue  = errors.New(errFailedToStoreValue)
+	ErrNegativeValue       = errors.New(errNegativeValue)
 	ErrEncodingPriority    = errors.New("error encoding priority")
 	ErrDecodingPriority    = errors.New("error decoding priority")
 	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
@@ -40,4 +42,8 @@ func NewErrFailedToGetPriority(inner error) error {
 // NewErrFailedToStoreValue returns an error indicating that the value could not be stored.
 func NewErrFailedToStoreValue(inner error) error {
 	return errors.Wrap(errFailedToStoreValue, inner)
+}
+
+func NewErrNegativeValue[T Incrementable](value T) error {
+	return errors.New(errNegativeValue, errors.NewKV("Value", value))
 }

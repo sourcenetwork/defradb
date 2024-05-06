@@ -45,8 +45,8 @@ func TestSchemaMigrationQuery(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -115,8 +115,8 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -178,8 +178,8 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -254,8 +254,8 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 				// Register a migration from schema version 1 to schema version 2 **only** -
 				// there should be no migration from version 2 to version 3.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -325,8 +325,8 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 				// Register a migration from schema version 2 to schema version 3 **only** -
 				// there should be no migration from version 1 to version 2.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
-					DestinationSchemaVersionID: "bafkreicyyn7ourjvr2o6bqa57z2bl5wz5u2ykdlmd5v7n53cw7l6xsdplm",
+					SourceSchemaVersionID:      "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreib65lld2tdyvlilbumlcccftqwvflpgutugghf5afrnlhdg7dgyv4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -394,8 +394,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -411,8 +411,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
-					DestinationSchemaVersionID: "bafkreicyyn7ourjvr2o6bqa57z2bl5wz5u2ykdlmd5v7n53cw7l6xsdplm",
+					SourceSchemaVersionID:      "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreib65lld2tdyvlilbumlcccftqwvflpgutugghf5afrnlhdg7dgyv4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -466,8 +466,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -483,8 +483,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
-					DestinationSchemaVersionID: "bafkreicyyn7ourjvr2o6bqa57z2bl5wz5u2ykdlmd5v7n53cw7l6xsdplm",
+					SourceSchemaVersionID:      "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreib65lld2tdyvlilbumlcccftqwvflpgutugghf5afrnlhdg7dgyv4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -553,8 +553,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 			testUtils.ConfigureMigration{
 				// Declare the migration from v2=>v3 before declaring the migration from v1=>v2
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
-					DestinationSchemaVersionID: "bafkreicyyn7ourjvr2o6bqa57z2bl5wz5u2ykdlmd5v7n53cw7l6xsdplm",
+					SourceSchemaVersionID:      "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreib65lld2tdyvlilbumlcccftqwvflpgutugghf5afrnlhdg7dgyv4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -570,8 +570,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -712,8 +712,8 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
-					DestinationSchemaVersionID: "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
+					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -773,8 +773,8 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiasjk4ypvsmdiebxadvhdnpvq4eun6wielebzlcnipyqr357bz7ou",
-					DestinationSchemaVersionID: "bafkreie7zotytkhmsp7ro5dqyf75fwrafos4xowgatalicbcb3lu5lfade",
+					SourceSchemaVersionID:      "bafkreicn6ltdovb6y7g3ecoptqkvx2y5y5yntrb5uydmg3jiakskqva2ta",
+					DestinationSchemaVersionID: "bafkreifv4vhz3dw7upc5u3omsqi6klz3h3e54ogfskp72gtut62fuxqrcu",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -836,8 +836,8 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiewca6o66mgkpbai2vtrupolvtf66wllbvouvtwo6fkc6alrybzfa",
-					DestinationSchemaVersionID: "bafkreibqzsrn3acwn7hkakm2ko5i4t5pdarmylvodi5tnpxunfcwmut2ua",
+					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+					DestinationSchemaVersionID: "bafkreiegvk3fkcjxoqqpp7npxqjdjwijiwthvynzmsvtzajpjevgu2krku",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -897,8 +897,8 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiewca6o66mgkpbai2vtrupolvtf66wllbvouvtwo6fkc6alrybzfa",
-					DestinationSchemaVersionID: "bafkreibqzsrn3acwn7hkakm2ko5i4t5pdarmylvodi5tnpxunfcwmut2ua",
+					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+					DestinationSchemaVersionID: "bafkreiegvk3fkcjxoqqpp7npxqjdjwijiwthvynzmsvtzajpjevgu2krku",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -971,8 +971,8 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiewca6o66mgkpbai2vtrupolvtf66wllbvouvtwo6fkc6alrybzfa",
-					DestinationSchemaVersionID: "bafkreicf3nvrorgv2v6czh2lkakibv4me2il5xxytqxfyof7jlmkkdkle4",
+					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+					DestinationSchemaVersionID: "bafkreidgnuvanzqur3pkp4mmrd77ojwvov2rlczraaks4435e6wsgxpwoq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -1033,8 +1033,8 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiewca6o66mgkpbai2vtrupolvtf66wllbvouvtwo6fkc6alrybzfa",
-					DestinationSchemaVersionID: "bafkreicf3nvrorgv2v6czh2lkakibv4me2il5xxytqxfyof7jlmkkdkle4",
+					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+					DestinationSchemaVersionID: "bafkreidgnuvanzqur3pkp4mmrd77ojwvov2rlczraaks4435e6wsgxpwoq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

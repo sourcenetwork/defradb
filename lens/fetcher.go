@@ -16,6 +16,10 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -35,6 +39,7 @@ type lensedFetcher struct {
 	txn datastore.Txn
 
 	col client.Collection
+
 	// Cache the fieldDescriptions mapped by name to allow for cheaper access within the fetcher loop
 	fieldDescriptionsByName map[string]client.FieldDefinition
 
@@ -57,7 +62,9 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 
 func (f *lensedFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -76,7 +83,7 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := getTargetedSchemaHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
+	history, err := getTargetedCollectionHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
 	if err != nil {
 		return err
 	}
@@ -105,7 +112,18 @@ historyLoop:
 	} else {
 		innerFetcherFields = fields
 	}
-	return f.source.Init(ctx, txn, col, innerFetcherFields, filter, docmapper, reverse, showDeleted)
+	return f.source.Init(
+		ctx,
+		identity,
+		txn,
+		acp,
+		col,
+		innerFetcherFields,
+		filter,
+		docmapper,
+		reverse,
+		showDeleted,
+	)
 }
 
 func (f *lensedFetcher) Start(ctx context.Context, spans core.Spans) error {

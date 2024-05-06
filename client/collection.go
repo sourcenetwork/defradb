@@ -14,8 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // Collection represents a defradb collection.
@@ -46,12 +44,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(context.Context, *Document) error
+	Create(ctx context.Context, doc *Document) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(context.Context, []*Document) error
+	CreateMany(ctx context.Context, docs []*Document) error
 
 	// Update an existing document with the new values.
 	//
@@ -59,100 +57,54 @@ type Collection interface {
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(context.Context, *Document) error
+	Update(ctx context.Context, docs *Document) error
 
 	// Save the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(context.Context, *Document) error
+	Save(ctx context.Context, doc *Document) error
 
 	// Delete will attempt to delete a document by DocID.
 	//
 	// Will return true if a deletion is successful, and return false along with an error
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
-	// This operation will hard-delete all state relating to the given DocID. This includes data, block, and head storage.
-	Delete(context.Context, DocID) (bool, error)
+	// This operation will hard-delete all state relating to the given DocID.
+	// This includes data, block, and head storage.
+	Delete(ctx context.Context, docID DocID) (bool, error)
 
 	// Exists checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(context.Context, DocID) (bool, error)
-
-	// UpdateWith updates a target document using the given updater type.
-	//
-	// Target can be a Filter statement, a single DocID, a single document,
-	// an array of DocIDs, or an array of documents.
-	// It is recommended to use the respective typed versions of Update
-	// (e.g. UpdateWithFilter or UpdateWithDocID) over this function if you can.
-	//
-	// Returns an ErrInvalidUpdateTarget error if the target type is not supported.
-	// Returns an ErrInvalidUpdater error if the updater type is not supported.
-	UpdateWith(ctx context.Context, target any, updater string) (*UpdateResult, error)
+	Exists(ctx context.Context, docID DocID) (bool, error)
 
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
-	UpdateWithFilter(ctx context.Context, filter any, updater string) (*UpdateResult, error)
-
-	// UpdateWithDocID updates using a DocID to target a single document for update.
-	//
-	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
-	// else an ErrInvalidUpdater will be returned.
-	//
-	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	UpdateWithDocID(ctx context.Context, docID DocID, updater string) (*UpdateResult, error)
-
-	// UpdateWithDocIDs updates documents matching the given DocIDs.
-	//
-	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
-	// else an ErrInvalidUpdater will be returned.
-	//
-	// Returns an ErrDocumentNotFound if a document is not found for any given DocID.
-	UpdateWithDocIDs(context.Context, []DocID, string) (*UpdateResult, error)
-
-	// DeleteWith deletes a target document.
-	//
-	// Target can be a Filter statement, a single DocID, a single document, an array of DocIDs,
-	// or an array of documents. It is recommended to use the respective typed versions of Delete
-	// (e.g. DeleteWithFilter or DeleteWithDocID) over this function if you can.
-	// This operation will soft-delete documents related to the given DocID and update the composite block
-	// with a status of `Deleted`.
-	//
-	// Returns an ErrInvalidDeleteTarget if the target type is not supported.
-	DeleteWith(ctx context.Context, target any) (*DeleteResult, error)
+	UpdateWithFilter(
+		ctx context.Context,
+		filter any,
+		updater string,
+	) (*UpdateResult, error)
 
 	// DeleteWithFilter deletes documents matching the given filter.
 	//
 	// This operation will soft-delete documents related to the given filter and update the composite block
 	// with a status of `Deleted`.
-	DeleteWithFilter(ctx context.Context, filter any) (*DeleteResult, error)
-
-	// DeleteWithDocID deletes using a DocID to target a single document for delete.
-	//
-	// This operation will soft-delete documents related to the given DocID and update the composite block
-	// with a status of `Deleted`.
-	//
-	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	DeleteWithDocID(context.Context, DocID) (*DeleteResult, error)
-
-	// DeleteWithDocIDs deletes documents matching the given DocIDs.
-	//
-	// This operation will soft-delete documents related to the given DocIDs and update the composite block
-	// with a status of `Deleted`.
-	//
-	// Returns an ErrDocumentNotFound if a document is not found for any given DocID.
-	DeleteWithDocIDs(context.Context, []DocID) (*DeleteResult, error)
+	DeleteWithFilter(
+		ctx context.Context,
+		filter any,
+	) (*DeleteResult, error)
 
 	// Get returns the document with the given DocID.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	Get(ctx context.Context, docID DocID, showDeleted bool) (*Document, error)
-
-	// WithTxn returns a new instance of the collection, with a transaction
-	// handle instead of a raw DB handle.
-	WithTxn(datastore.Txn) Collection
+	Get(
+		ctx context.Context,
+		docID DocID,
+		showDeleted bool,
+	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
 	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
@@ -162,6 +114,7 @@ type Collection interface {
 	// `IndexDescription.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
+	// WARNING: This method can not create index for a collection that has a policy.
 	CreateIndex(context.Context, IndexDescription) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.

@@ -64,3 +64,31 @@ https://docs.libp2p.io/concepts/addressing/
 Enable libp2p's Circuit relay transport protocol. Defaults to `false`.
 
 https://docs.libp2p.io/concepts/circuit-relay/
+
+## `log.level`
+
+Log level to use. Options are `info` or `error`. Defaults to `info`.
+
+## `log.output`
+
+Log output path. Options are `stderr` or `stdout`. Defaults to `stderr`.
+
+## `log.format`
+
+Log format to use. Options are `text` or `json`. Defaults to `text`.
+
+## `log.stacktrace`
+
+Include stacktrace in error and fatal logs. Defaults to `false`.
+
+## `log.source`
+
+Include source location in logs. Defaults to `false`.
+
+## `log.overrides`
+
+Logger config overrides. Format `<name>,<key>=<val>,...;<name>,...`.
+
+## `log.nocolor`
+
+Disable colored log output. Defaults to `false`.

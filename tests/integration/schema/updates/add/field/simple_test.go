@@ -20,8 +20,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
-	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
-	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
@@ -115,8 +115,8 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 }
 
 func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testing.T) {
-	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
-	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",

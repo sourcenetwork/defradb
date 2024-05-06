@@ -32,6 +32,59 @@ func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
 }
 
+// AddPolicy provides a mock function with given fields: ctx, policy
+func (_m *DB) AddPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ret := _m.Called(ctx, policy)
+
+	var r0 client.AddPolicyResult
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (client.AddPolicyResult, error)); ok {
+		return rf(ctx, policy)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) client.AddPolicyResult); ok {
+		r0 = rf(ctx, policy)
+	} else {
+		r0 = ret.Get(0).(client.AddPolicyResult)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, policy)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_AddPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPolicy'
+type DB_AddPolicy_Call struct {
+	*mock.Call
+}
+
+// AddPolicy is a helper method to define mock.On call
+//   - ctx context.Context
+//   - policy string
+func (_e *DB_Expecter) AddPolicy(ctx interface{}, policy interface{}) *DB_AddPolicy_Call {
+	return &DB_AddPolicy_Call{Call: _e.mock.On("AddPolicy", ctx, policy)}
+}
+
+func (_c *DB_AddPolicy_Call) Run(run func(ctx context.Context, policy string)) *DB_AddPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_AddPolicy_Call) Return(_a0 client.AddPolicyResult, _a1 error) *DB_AddPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_AddPolicy_Call) RunAndReturn(run func(context.Context, string) (client.AddPolicyResult, error)) *DB_AddPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddSchema provides a mock function with given fields: _a0, _a1
 func (_m *DB) AddSchema(_a0 context.Context, _a1 string) ([]client.CollectionDescription, error) {
 	ret := _m.Called(_a0, _a1)
@@ -346,13 +399,13 @@ func (_c *DB_Events_Call) RunAndReturn(run func() events.Events) *DB_Events_Call
 	return _c
 }
 
-// ExecRequest provides a mock function with given fields: _a0, _a1
-func (_m *DB) ExecRequest(_a0 context.Context, _a1 string) *client.RequestResult {
-	ret := _m.Called(_a0, _a1)
+// ExecRequest provides a mock function with given fields: ctx, request
+func (_m *DB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+	ret := _m.Called(ctx, request)
 
 	var r0 *client.RequestResult
 	if rf, ok := ret.Get(0).(func(context.Context, string) *client.RequestResult); ok {
-		r0 = rf(_a0, _a1)
+		r0 = rf(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.RequestResult)
@@ -368,13 +421,13 @@ type DB_ExecRequest_Call struct {
 }
 
 // ExecRequest is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 string
-func (_e *DB_Expecter) ExecRequest(_a0 interface{}, _a1 interface{}) *DB_ExecRequest_Call {
-	return &DB_ExecRequest_Call{Call: _e.mock.On("ExecRequest", _a0, _a1)}
+//   - ctx context.Context
+//   - request string
+func (_e *DB_Expecter) ExecRequest(ctx interface{}, request interface{}) *DB_ExecRequest_Call {
+	return &DB_ExecRequest_Call{Call: _e.mock.On("ExecRequest", ctx, request)}
 }
 
-func (_c *DB_ExecRequest_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_ExecRequest_Call {
+func (_c *DB_ExecRequest_Call) Run(run func(ctx context.Context, request string)) *DB_ExecRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
@@ -857,6 +910,49 @@ func (_c *DB_NewTxn_Call) RunAndReturn(run func(context.Context, bool) (datastor
 	return _c
 }
 
+// PatchCollection provides a mock function with given fields: _a0, _a1
+func (_m *DB) PatchCollection(_a0 context.Context, _a1 string) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_PatchCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PatchCollection'
+type DB_PatchCollection_Call struct {
+	*mock.Call
+}
+
+// PatchCollection is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) PatchCollection(_a0 interface{}, _a1 interface{}) *DB_PatchCollection_Call {
+	return &DB_PatchCollection_Call{Call: _e.mock.On("PatchCollection", _a0, _a1)}
+}
+
+func (_c *DB_PatchCollection_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_PatchCollection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_PatchCollection_Call) Return(_a0 error) *DB_PatchCollection_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_PatchCollection_Call) RunAndReturn(run func(context.Context, string) error) *DB_PatchCollection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchSchema provides a mock function with given fields: _a0, _a1, _a2, _a3
 func (_m *DB) PatchSchema(_a0 context.Context, _a1 string, _a2 immutable.Option[model.Lens], _a3 bool) error {
 	ret := _m.Called(_a0, _a1, _a2, _a3)
@@ -1112,50 +1208,6 @@ func (_c *DB_SetMigration_Call) Return(_a0 error) *DB_SetMigration_Call {
 }
 
 func (_c *DB_SetMigration_Call) RunAndReturn(run func(context.Context, client.LensConfig) error) *DB_SetMigration_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithTxn provides a mock function with given fields: _a0
-func (_m *DB) WithTxn(_a0 datastore.Txn) client.Store {
-	ret := _m.Called(_a0)
-
-	var r0 client.Store
-	if rf, ok := ret.Get(0).(func(datastore.Txn) client.Store); ok {
-		r0 = rf(_a0)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Store)
-		}
-	}
-
-	return r0
-}
-
-// DB_WithTxn_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithTxn'
-type DB_WithTxn_Call struct {
-	*mock.Call
-}
-
-// WithTxn is a helper method to define mock.On call
-//   - _a0 datastore.Txn
-func (_e *DB_Expecter) WithTxn(_a0 interface{}) *DB_WithTxn_Call {
-	return &DB_WithTxn_Call{Call: _e.mock.On("WithTxn", _a0)}
-}
-
-func (_c *DB_WithTxn_Call) Run(run func(_a0 datastore.Txn)) *DB_WithTxn_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(datastore.Txn))
-	})
-	return _c
-}
-
-func (_c *DB_WithTxn_Call) Return(_a0 client.Store) *DB_WithTxn_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_WithTxn_Call) RunAndReturn(run func(datastore.Txn) client.Store) *DB_WithTxn_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -14,12 +14,11 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
 // execRequest executes a request against the database.
-func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn) *client.RequestResult {
+func (db *db) execRequest(ctx context.Context, request string) *client.RequestResult {
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
 	if err != nil {
@@ -48,7 +47,15 @@ func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn
 		return res
 	}
 
-	planner := planner.New(ctx, db.WithTxn(txn), txn)
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
+	planner := planner.New(
+		ctx,
+		identity,
+		db.acp,
+		db,
+		txn,
+	)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {

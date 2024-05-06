@@ -19,6 +19,10 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -91,6 +95,8 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
+	acp immutable.Option[acp.ACP]
+
 	col client.Collection
 	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]merklecrdt.MerkleCRDT
@@ -99,7 +105,9 @@ type VersionedFetcher struct {
 // Init initializes the VersionedFetcher.
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -107,6 +115,7 @@ func (vf *VersionedFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
+	vf.acp = acp
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]merklecrdt.MerkleCRDT)
@@ -130,7 +139,18 @@ func (vf *VersionedFetcher) Init(
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(ctx, vf.store, col, fields, filter, docmapper, reverse, showDeleted)
+	return vf.DocumentFetcher.Init(
+		ctx,
+		identity,
+		vf.store,
+		acp,
+		col,
+		fields,
+		filter,
+		docmapper,
+		reverse,
+		showDeleted,
+	)
 }
 
 // Start serializes the correct state according to the Key and CID.

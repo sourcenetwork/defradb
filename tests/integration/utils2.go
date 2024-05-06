@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -22,15 +23,17 @@ import (
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/request/graphql"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -39,7 +42,10 @@ import (
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
 
-const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
+const (
+	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
+	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
+)
 
 // The MutationType that tests will run using.
 //
@@ -69,8 +75,10 @@ const (
 )
 
 var (
-	log          = logging.MustNewLogger("tests.integration")
+	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
+	// skipNetworkTests will skip any tests that involve network actions
+	skipNetworkTests = false
 )
 
 const (
@@ -93,6 +101,9 @@ func init() {
 		// faster. We assume this is desirable when not explicitly testing any particular
 		// mutation type.
 		mutationType = CollectionSaveMutationType
+	}
+	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
+		skipNetworkTests, _ = strconv.ParseBool(value)
 	}
 }
 
@@ -130,6 +141,7 @@ func ExecuteTestCase(
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
+	skipIfNetworkTest(t, testCase.Actions)
 
 	var clients []ClientType
 	if httpClient {
@@ -158,6 +170,8 @@ func ExecuteTestCase(
 	require.NotEmpty(t, databases)
 	require.NotEmpty(t, clients)
 
+	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
+
 	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
@@ -174,18 +188,19 @@ func executeTestCase(
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
-	log.Info(
+	log.InfoContext(
 		ctx,
 		testCase.Description,
-		logging.NewKV("database", dbt),
-		logging.NewKV("client", clientType),
-		logging.NewKV("mutationType", mutationType),
-		logging.NewKV("databaseDir", databaseDir),
-		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
-		logging.NewKV("changeDetector.SetupOnly", changeDetector.SetupOnly),
-		logging.NewKV("changeDetector.SourceBranch", changeDetector.SourceBranch),
-		logging.NewKV("changeDetector.TargetBranch", changeDetector.TargetBranch),
-		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
+		corelog.Any("database", dbt),
+		corelog.Any("client", clientType),
+		corelog.Any("mutationType", mutationType),
+		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("skipNetworkTests", skipNetworkTests),
+		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
+		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
+		corelog.String("changeDetector.SourceBranch", changeDetector.SourceBranch),
+		corelog.String("changeDetector.TargetBranch", changeDetector.TargetBranch),
+		corelog.String("changeDetector.Repository", changeDetector.Repository),
 	)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
@@ -260,6 +275,9 @@ func performAction(
 	case SchemaPatch:
 		patchSchema(s, action)
 
+	case PatchCollection:
+		patchCollection(s, action)
+
 	case GetSchema:
 		getSchema(s, action)
 
@@ -274,6 +292,9 @@ func performAction(
 
 	case ConfigureMigration:
 		configureMigration(s, action)
+
+	case AddPolicy:
+		addPolicyACP(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -777,7 +798,7 @@ func configureNode(
 	n, err = net.NewNode(s.ctx, db, nodeOpts...)
 	require.NoError(s.t, err)
 
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", n.PeerInfo()))
+	log.InfoContext(s.ctx, "Starting P2P node", corelog.Any("P2P address", n.PeerInfo()))
 	if err := n.Start(); err != nil {
 		n.Close()
 		require.NoError(s.t, err)
@@ -822,16 +843,17 @@ func refreshDocuments(
 
 			// We need to add the existing documents in the order in which the test case lists them
 			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Schema())
+			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
 			}
 
+			ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(s.ctx, doc.ID(), false)
+			doc, err = collection.Get(ctx, doc.ID(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1005,6 +1027,22 @@ func patchSchema(
 	refreshIndexes(s)
 }
 
+func patchCollection(
+	s *state,
+	action PatchCollection,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.PatchCollection(s.ctx, action.Patch)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
+
+	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
+}
+
 func getSchema(
 	s *state,
 	action GetSchema,
@@ -1041,8 +1079,9 @@ func getCollections(
 	action GetCollections,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node, action.TransactionID, "")
-		results, err := db.GetCollections(s.ctx, action.FilterOptions)
+		txn := getTransaction(s, node, action.TransactionID, "")
+		ctx := db.SetContextTxn(s.ctx, txn)
+		results, err := node.GetCollections(ctx, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1158,12 +1197,17 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
 	if err != nil {
 		return nil, err
 	}
 
-	return doc, collections[action.CollectionID].Save(s.ctx, doc)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+
+	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	return doc, collections[action.CollectionID].Save(ctx, doc)
 }
 
 func createDocViaColCreate(
@@ -1173,12 +1217,17 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
 	if err != nil {
 		return nil, err
 	}
 
-	return doc, collections[action.CollectionID].Create(s.ctx, doc)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+
+	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	return doc, collections[action.CollectionID].Create(ctx, doc)
 }
 
 func createDocViaGQL(
@@ -1202,9 +1251,15 @@ func createDocViaGQL(
 		input,
 	)
 
-	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	result := db.ExecRequest(s.ctx, request)
+	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	result := node.ExecRequest(
+		ctx,
+		request,
+	)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -1218,7 +1273,7 @@ func createDocViaGQL(
 	docID, err := client.NewDocIDFromString(docIDString)
 	require.NoError(s.t, err)
 
-	doc, err := collection.Get(s.ctx, docID, false)
+	doc, err := collection.Get(ctx, docID, false)
 	require.NoError(s.t, err)
 
 	return doc, nil
@@ -1231,6 +1286,7 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1239,7 +1295,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithDocID(s.ctx, doc.ID())
+				_, err := collections[action.CollectionID].Delete(ctx, doc.ID())
 				return err
 			},
 		)
@@ -1288,8 +1344,9 @@ func updateDocViaColSave(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
-	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
+	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
@@ -1301,7 +1358,10 @@ func updateDocViaColSave(
 
 	s.documents[action.CollectionID][action.DocID] = doc
 
-	return collections[action.CollectionID].Save(s.ctx, doc)
+	return collections[action.CollectionID].Save(
+		ctx,
+		doc,
+	)
 }
 
 func updateDocViaColUpdate(
@@ -1311,8 +1371,9 @@ func updateDocViaColUpdate(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
+	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
 
-	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
+	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
@@ -1324,7 +1385,7 @@ func updateDocViaColUpdate(
 
 	s.documents[action.CollectionID][action.DocID] = doc
 
-	return collections[action.CollectionID].Update(s.ctx, doc)
+	return collections[action.CollectionID].Update(ctx, doc)
 }
 
 func updateDocViaGQL(
@@ -1350,9 +1411,12 @@ func updateDocViaGQL(
 		input,
 	)
 
-	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	result := db.ExecRequest(s.ctx, request)
+	ctx := db.SetContextTxn(s.ctx, txn)
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -1511,14 +1575,14 @@ func withRetry(
 	return nil
 }
 
-func getStore(
+func getTransaction(
 	s *state,
 	db client.DB,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
-) client.Store {
+) datastore.Txn {
 	if !transactionSpecifier.HasValue() {
-		return db
+		return nil
 	}
 
 	transactionID := transactionSpecifier.Value()
@@ -1539,7 +1603,7 @@ func getStore(
 		s.txns[transactionID] = txn
 	}
 
-	return db.WithTxn(s.txns[transactionID])
+	return s.txns[transactionID]
 }
 
 // commitTransaction commits the given transaction.
@@ -1567,8 +1631,12 @@ func executeRequest(
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node, action.TransactionID, action.ExpectedError)
-		result := db.ExecRequest(s.ctx, action.Request)
+		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
+
+		ctx := db.SetContextTxn(s.ctx, txn)
+		ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+
+		result := node.ExecRequest(ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
@@ -1672,7 +1740,8 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
-			assert.ErrorIs(t, err, errors.New(expectedError))
+			// Must be require instead of assert, otherwise will show a fake "error not raised".
+			require.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true
@@ -1736,7 +1805,7 @@ func assertRequestResults(
 		return true
 	}
 
-	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
+	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
 
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(resultantData),
@@ -1744,6 +1813,18 @@ func assertRequestResults(
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
+
+		require.Equal(
+			s.t,
+			len(expectedResult),
+			len(result),
+			fmt.Sprintf(
+				"%s \n(number of properties for item at index %v don't match)",
+				s.testCase.Description,
+				docIndex,
+			),
+		)
+
 		for field, actualValue := range result {
 			expectedValue := expectedResult[field]
 
@@ -1912,6 +1993,51 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 		if !isTypeSupported {
 			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
 		}
+	}
+}
+
+// skipIfClientTypeUnsupported returns a new set of client types that match the given supported set.
+//
+// If supportedClientTypes is none no filtering will take place and the input client set will be returned.
+// If the resultant filtered set is empty the test will be skipped.
+func skipIfClientTypeUnsupported(
+	t *testing.T,
+	clients []ClientType,
+	supportedClientTypes immutable.Option[[]ClientType],
+) []ClientType {
+	if !supportedClientTypes.HasValue() {
+		return clients
+	}
+
+	filteredClients := []ClientType{}
+	for _, supportedMutationType := range supportedClientTypes.Value() {
+		for _, client := range clients {
+			if supportedMutationType == client {
+				filteredClients = append(filteredClients, client)
+				break
+			}
+		}
+	}
+
+	if len(filteredClients) == 0 {
+		t.Skipf("test does not support any given client type. Type: %v", supportedClientTypes)
+	}
+
+	return filteredClients
+}
+
+// skipIfNetworkTest skips the current test if the given actions
+// contain network actions and skipNetworkTests is true.
+func skipIfNetworkTest(t *testing.T, actions []any) {
+	hasNetworkAction := false
+	for _, act := range actions {
+		switch act.(type) {
+		case ConfigureNode:
+			hasNetworkAction = true
+		}
+	}
+	if skipNetworkTests && hasNetworkAction {
+		t.Skip("test involves network actions")
 	}
 }
 

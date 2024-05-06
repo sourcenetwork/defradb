@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"encoding/json"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -64,15 +62,21 @@ func (n *updateNode) Next() (bool, error) {
 			}
 
 			n.currentValue = n.results.Value()
+
 			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 			if err != nil {
 				return false, err
 			}
-			patch, err := json.Marshal(n.input)
+			doc, err := n.collection.Get(n.p.ctx, docID, false)
 			if err != nil {
 				return false, err
 			}
-			_, err = n.collection.UpdateWithDocID(n.p.ctx, docID, string(patch))
+			for k, v := range n.input {
+				if err := doc.Set(k, v); err != nil {
+					return false, err
+				}
+			}
+			err = n.collection.Update(n.p.ctx, doc)
 			if err != nil {
 				return false, err
 			}
@@ -169,7 +173,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	update.collection = col.WithTxn(p.txn)
+	update.collection = col
 
 	// create the results Select node
 	resultsNode, err := p.Select(&parsed.Select)

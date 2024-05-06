@@ -29,7 +29,7 @@ func execute(t *testing.T, test testUtils.TestCase) {
 								name: String
 								rating: Float
 								author: Author
-								publisher: Publisher
+								publisher: Publisher @primary
 							}
 
 							type Author {

@@ -492,7 +492,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 						"name":   "John",
 						"_version": []map[string]any{
 							{
-								"schemaVersionId": "bafkreiewca6o66mgkpbai2vtrupolvtf66wllbvouvtwo6fkc6alrybzfa",
+								"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							},
 						},
 					},
@@ -552,7 +552,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 						"_docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 						"_version": []map[string]any{
 							{
-								"schemaVersionId": "bafkreiewca6o66mgkpbai2vtrupolvtf66wllbvouvtwo6fkc6alrybzfa",
+								"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							},
 						},
 					},

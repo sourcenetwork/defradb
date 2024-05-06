@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 
@@ -40,7 +41,9 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 			func(ctx context.Context, d client.DB) {
 				txn, err := d.NewTxn(ctx, false)
 				assert.Nil(t, err)
-				r := d.WithTxn(txn).ExecRequest(
+
+				ctx = db.SetContextTxn(ctx, txn)
+				r := d.ExecRequest(
 					ctx,
 					`mutation {
 						create_Users(input: {name: "Shahzad"}) {

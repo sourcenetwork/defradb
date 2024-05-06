@@ -119,9 +119,9 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 }
 
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
-func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.SchemaFieldDescription) string {
+func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.FieldDefinition) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	return g.generatedDocs[field.Schema][ind].docID
+	return g.generatedDocs[field.Kind.Underlying()][ind].docID
 }
 
 func (g *randomDocGenerator) generateRandomDocs(order []string) error {
@@ -134,12 +134,12 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 		totalDemand := currentTypeDemand.getAverage()
 		for i := 0; i < totalDemand; i++ {
 			newDoc := make(map[string]any)
-			for _, field := range typeDef.Schema.Fields {
+			for _, field := range typeDef.GetFields() {
 				if field.Name == request.DocIDFieldName {
 					continue
 				}
 				if field.IsRelation() {
-					if field.IsPrimaryRelation {
+					if field.IsPrimaryRelation && field.Kind.IsObject() {
 						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
 							newDoc[field.Name] = g.getNextPrimaryDocID(typeName, &field)
 						} else {
@@ -151,7 +151,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
-			doc, err := client.NewDocFromMap(newDoc, typeDef.Schema)
+			doc, err := client.NewDocFromMap(newDoc, typeDef)
 			if err != nil {
 				return err
 			}
@@ -221,15 +221,12 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 		if def.Description.Name.Value() != def.Schema.Name {
 			return NewErrIncompleteColDefinition("description name and schema name do not match")
 		}
-		for _, field := range def.Schema.Fields {
+		for _, field := range def.GetFields() {
 			if field.Name == "" {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
 			if field.Kind.IsObject() {
-				if field.Schema == "" {
-					return NewErrIncompleteColDefinition("field schema is empty")
-				}
-				fieldRefs = append(fieldRefs, field.Schema)
+				fieldRefs = append(fieldRefs, field.Kind.Underlying())
 			}
 		}
 		colNames[def.Description.Name.Value()] = struct{}{}

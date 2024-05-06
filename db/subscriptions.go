@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
 )
@@ -55,24 +54,31 @@ func (db *db) handleSubscription(
 	for evt := range pub.Event() {
 		txn, err := db.NewTxn(ctx, false)
 		if err != nil {
-			log.Error(ctx, err.Error())
+			log.ErrorContext(ctx, err.Error())
 			continue
 		}
 
-		db.handleEvent(ctx, txn, pub, evt, r)
-
+		ctx := SetContextTxn(ctx, txn)
+		db.handleEvent(ctx, pub, evt, r)
 		txn.Discard(ctx)
 	}
 }
 
 func (db *db) handleEvent(
 	ctx context.Context,
-	txn datastore.Txn,
 	pub *events.Publisher[events.Update],
 	evt events.Update,
 	r *request.ObjectSubscription,
 ) {
-	p := planner.New(ctx, db.WithTxn(txn), txn)
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
+	p := planner.New(
+		ctx,
+		identity,
+		db.acp,
+		db,
+		txn,
+	)
 
 	s := r.ToSelect(evt.DocID, evt.Cid.String())
 

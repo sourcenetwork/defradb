@@ -10,6 +10,8 @@
 
 package request
 
+import "github.com/sourcenetwork/immutable"
+
 type (
 	OrderDirection string
 
@@ -29,3 +31,11 @@ type (
 		Conditions []OrderCondition
 	}
 )
+
+// Orderable is an embeddable struct that hosts a consistent set of properties
+// for ordering an aspect of a request.
+type Orderable struct {
+	// OrderBy is an optional set of field-orders which may be used to sort the results. An
+	// empty set will be ignored.
+	OrderBy immutable.Option[OrderBy]
+}

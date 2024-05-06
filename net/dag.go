@@ -19,8 +19,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-
-	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/corelog"
 )
 
 var (
@@ -100,13 +99,6 @@ func (p *Peer) sendJobWorker() {
 // initialization in New().
 func (p *Peer) dagWorker(jobs chan *dagJob) {
 	for job := range jobs {
-		log.Debug(
-			p.ctx,
-			"Starting new job from DAG queue",
-			logging.NewKV("Datastore Key", job.bp.dsKey),
-			logging.NewKV("CID", job.cid),
-		)
-
 		select {
 		case <-p.ctx.Done():
 			// drain jobs from queue when we are done
@@ -119,7 +111,11 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 			if j.bp.getter != nil && j.cid.Defined() {
 				cNode, err := j.bp.getter.Get(p.ctx, j.cid)
 				if err != nil {
-					log.ErrorE(p.ctx, "Failed to get node", err, logging.NewKV("CID", j.cid))
+					log.ErrorContextE(
+						p.ctx,
+						"Failed to get node",
+						err,
+						corelog.Any("CID", j.cid))
 					j.session.Done()
 					return
 				}
@@ -130,7 +126,11 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 					j.isComposite,
 				)
 				if err != nil {
-					log.ErrorE(p.ctx, "Failed to process remote block", err, logging.NewKV("CID", j.cid))
+					log.ErrorContextE(
+						p.ctx,
+						"Failed to process remote block",
+						err,
+						corelog.Any("CID", j.cid))
 				}
 			}
 			p.queuedChildren.Remove(j.cid)

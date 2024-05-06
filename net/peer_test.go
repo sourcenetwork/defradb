@@ -12,6 +12,7 @@ package net
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -115,7 +117,7 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, db.WithUpdateEvents(), db.WithACPInMemory())
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -166,7 +168,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -331,7 +333,7 @@ func TestRegisterNewDocument_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
@@ -355,7 +357,7 @@ func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
@@ -387,6 +389,107 @@ func TestSetReplicator_NoError(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
+}
+
+// This test documents that we don't allow setting replicator with a collection that has a policy
+// until the following is implemented:
+// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	d, n := newTestNode(ctx, t)
+	defer n.Close()
+
+	policy := `
+        description: a policy
+        actor:
+          name: actor
+        resources:
+          user:
+            permissions:
+              read:
+                expr: owner
+              write:
+                expr: owner
+            relations:
+              owner:
+                types:
+                  - actor
+    `
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+	policyResult, err := d.AddPolicy(ctx, policy)
+	policyID := policyResult.PolicyID
+	require.NoError(t, err)
+	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+
+	schema := fmt.Sprintf(`
+		type User @policy(id: "%s", resource: "user") { 
+			name: String
+			age: Int
+		}
+	`, policyID,
+	)
+	_, err = d.AddSchema(ctx, schema)
+	require.NoError(t, err)
+
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	require.NoError(t, err)
+
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"User"},
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrReplicatorColHasPolicy)
+}
+
+// This test documents that we don't allow setting replicator using default option when any collection has a policy
+// until the following is implemented:
+// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefault_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	d, n := newTestNode(ctx, t)
+	defer n.Close()
+
+	policy := `
+        description: a policy
+        actor:
+          name: actor
+        resources:
+          user:
+            permissions:
+              read:
+                expr: owner
+              write:
+                expr: owner
+            relations:
+              owner:
+                types:
+                  - actor
+    `
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+	policyResult, err := d.AddPolicy(ctx, policy)
+	policyID := policyResult.PolicyID
+	require.NoError(t, err)
+	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+
+	schema := fmt.Sprintf(`
+		type User @policy(id: "%s", resource: "user") { 
+			name: String
+			age: Int
+		}
+	`, policyID,
+	)
+	_, err = d.AddSchema(ctx, schema)
+	require.NoError(t, err)
+
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	require.NoError(t, err)
+
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: *info,
+		// Note: The missing explicit input of schemas here
+	})
+	require.ErrorIs(t, err, ErrReplicatorSomeColsHavePolicy)
 }
 
 func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
@@ -472,7 +575,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -698,6 +801,54 @@ func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 	require.Error(t, err, ds.ErrNotFound)
 }
 
+// This test documents that we don't allow adding p2p collections that have a policy
+// until the following is implemented:
+// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
+	ctx := context.Background()
+	d, n := newTestNode(ctx, t)
+	defer n.Close()
+
+	policy := `
+        description: a policy
+        actor:
+          name: actor
+        resources:
+          user:
+            permissions:
+              read:
+                expr: owner
+              write:
+                expr: owner
+            relations:
+              owner:
+                types:
+                  - actor
+    `
+	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+	policyResult, err := d.AddPolicy(ctx, policy)
+	policyID := policyResult.PolicyID
+	require.NoError(t, err)
+	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+
+	schema := fmt.Sprintf(`
+		type User @policy(id: "%s", resource: "user") { 
+			name: String
+			age: Int
+		}
+	`, policyID,
+	)
+	_, err = d.AddSchema(ctx, schema)
+	require.NoError(t, err)
+
+	col, err := d.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaRoot()})
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrP2PColHasPolicy)
+}
+
 func TestAddP2PCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
@@ -789,7 +940,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -842,7 +993,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -872,7 +1023,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -925,7 +1076,7 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -969,7 +1120,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)

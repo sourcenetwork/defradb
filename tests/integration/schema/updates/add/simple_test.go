@@ -33,7 +33,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 						{ "op": "add", "path": "/-", "value": {"Name": "books"} }
 					]
 				`,
-				ExpectedError: "unknown collection, adding collections via patch is not supported. Name: books",
+				ExpectedError: "adding collections via patch is not supported. Name: books",
 			},
 			testUtils.Request{
 				Request: `query {

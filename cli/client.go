@@ -16,6 +16,7 @@ import (
 
 func MakeClientCommand() *cobra.Command {
 	var txID uint64
+	var identity string
 	var cmd = &cobra.Command{
 		Use:   "client",
 		Short: "Interact with a DefraDB node",
@@ -28,12 +29,16 @@ Execute queries, add schema types, obtain node info, etc.`,
 			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
+			if err := setContextIdentity(cmd, identity); err != nil {
+				return err
+			}
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			return setContextStore(cmd)
+			return setContextDB(cmd)
 		},
 	}
+	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "", "ACP Identity")
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 	return cmd
 }

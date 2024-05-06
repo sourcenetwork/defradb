@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	badger "github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -23,10 +24,9 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	httpapi "github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
-var log = logging.MustNewLogger("cli")
+var log = corelog.NewLogger("cli")
 
 type defraInstance struct {
 	db     client.DB
@@ -39,9 +39,9 @@ func (di *defraInstance) close(ctx context.Context) {
 }
 
 func start(ctx context.Context) (*defraInstance, error) {
-	log.FeedbackInfo(ctx, "Starting DefraDB service...")
+	log.InfoContext(ctx, "Starting DefraDB service...")
 
-	log.FeedbackInfo(ctx, "Building new memory store")
+	log.InfoContext(ctx, "Building new memory store")
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 
@@ -51,7 +51,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
-		return nil, errors.Wrap("failed to create database", err)
+		return nil, errors.Wrap("failed to create a database", err)
 	}
 
 	handler, err := httpapi.NewHandler(db)

@@ -29,6 +29,10 @@ const (
 	CRDTDirectiveLabel    = "crdt"
 	CRDTDirectivePropType = "type"
 
+	PolicySchemaDirectiveLabel        = "policy"
+	PolicySchemaDirectivePropID       = "id"
+	PolicySchemaDirectivePropResource = "resource"
+
 	IndexDirectiveLabel          = "index"
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"
@@ -94,6 +98,22 @@ var (
 		},
 	})
 
+	PolicyDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+		Name:        PolicySchemaDirectiveLabel,
+		Description: "@policy is a directive that can be used to link a policy on a collection type.",
+		Args: gql.FieldConfigArgument{
+			PolicySchemaDirectivePropID: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+			PolicySchemaDirectivePropResource: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationObject,
+		},
+	})
+
 	IndexDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
 		Description: "@index is a directive that can be used to create an index on a type.",
@@ -141,8 +161,20 @@ var (
 				Description: "Last Write Wins register",
 			},
 			client.PN_COUNTER.String(): &gql.EnumValueConfig{
-				Value:       client.PN_COUNTER,
-				Description: "Positive-Negative Counter",
+				Value: client.PN_COUNTER,
+				Description: `Positive-Negative Counter.
+
+WARNING: Incrementing an integer and causing it to overflow the int64 max value
+will cause the value to roll over to the int64 min value. Incremeting a float and
+causing it to overflow the float64 max value will act like a no-op.`,
+			},
+			client.P_COUNTER.String(): &gql.EnumValueConfig{
+				Value: client.P_COUNTER,
+				Description: `Positive Counter.
+
+WARNING: Incrementing an integer and causing it to overflow the int64 max value
+will cause the value to roll over to the int64 min value. Incremeting a float and
+causing it to overflow the float64 max value will act like a no-op.`,
 			},
 		},
 	})

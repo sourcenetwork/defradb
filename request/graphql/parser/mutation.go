@@ -116,7 +116,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			mut.Filter = filter
 		} else if prop == request.DocIDArgName {
 			raw := argument.Value.(*ast.StringValue)
-			mut.IDs = immutable.Some([]string{raw.Value})
+			mut.DocIDs = immutable.Some([]string{raw.Value})
 		} else if prop == request.DocIDsArgName {
 			raw := argument.Value.(*ast.ListValue)
 			ids := make([]string, len(raw.Values))
@@ -127,7 +127,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 				}
 				ids[i] = id.Value
 			}
-			mut.IDs = immutable.Some(ids)
+			mut.DocIDs = immutable.Some(ids)
 		}
 	}
 
@@ -141,7 +141,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 		return nil, err
 	}
 
-	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
+	mut.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
 	return mut, err
 }
 

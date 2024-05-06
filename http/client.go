@@ -22,8 +22,9 @@ import (
 
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -85,11 +86,6 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 	return &Transaction{txRes.ID, c.http}, nil
 }
 
-func (c *Client) WithTxn(tx datastore.Txn) client.Store {
-	client := c.http.withTxn(tx.ID())
-	return &Client{client}
-}
-
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.http.baseURL.JoinPath("backup", "import")
 
@@ -149,6 +145,25 @@ func (c *Client) PatchSchema(
 	methodURL := c.http.baseURL.JoinPath("schema")
 
 	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion, migration})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) PatchCollection(
+	ctx context.Context,
+	patch string,
+) error {
+	methodURL := c.http.baseURL.JoinPath("collections")
+
+	body, err := json.Marshal(patch)
 	if err != nil {
 		return err
 	}
@@ -322,7 +337,10 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	return indexes, nil
 }
 
-func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestResult {
+func (c *Client) ExecRequest(
+	ctx context.Context,
+	query string,
+) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 

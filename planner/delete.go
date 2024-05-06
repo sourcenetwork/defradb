@@ -53,7 +53,10 @@ func (n *deleteNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = n.collection.DeleteWithDocID(n.p.ctx, docID)
+	_, err = n.collection.Delete(
+		n.p.ctx,
+		docID,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -136,7 +139,7 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 		p:          p,
 		filter:     parsed.Filter,
 		docIDs:     parsed.DocIDs.Value(),
-		collection: col.WithTxn(p.txn),
+		collection: col,
 		source:     slctNode,
 		docMapper:  docMapper{parsed.DocumentMapping},
 	}, nil

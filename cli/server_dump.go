@@ -24,7 +24,7 @@ func MakeServerDumpCmd() *cobra.Command {
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg := mustGetContextConfig(cmd)
-			log.FeedbackInfo(cmd.Context(), "Dumping DB state...")
+			log.InfoContext(cmd.Context(), "Dumping DB state...")
 
 			if cfg.GetString("datastore.store") != configStoreBadger {
 				return errors.New("server-side dump is only supported for the Badger datastore")

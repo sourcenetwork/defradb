@@ -18,22 +18,27 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db"
 )
 
 const marker = byte(0xff)
 
 func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
-	txn, err := p.db.NewTxn(p.ctx, false)
+	txn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(p.ctx)
+	defer txn.Discard(ctx)
+
+	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+	// ctx = db.SetContextIdentity(ctx, identity)
+	ctx = db.SetContextTxn(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollections(
-			p.ctx,
+		storeCol, err := p.db.GetCollections(
+			ctx,
 			client.CollectionFetchOptions{
 				SchemaRoot: immutable.Some(col),
 			},
@@ -45,6 +50,14 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 			return client.NewErrCollectionNotFoundForSchema(col)
 		}
 		storeCollections = append(storeCollections, storeCol...)
+	}
+
+	// Ensure none of the collections have a policy on them, until following is implemented:
+	// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
+	for _, col := range storeCollections {
+		if col.Description().Policy.HasValue() {
+			return ErrP2PColHasPolicy
+		}
 	}
 
 	// Ensure we can add all the collections to the store on the transaction
@@ -71,7 +84,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// from the pubsub topics to avoid receiving duplicate events.
 	removedTopics := []string{}
 	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocIDs(p.ctx)
+		keyChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return err
 		}
@@ -84,7 +97,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 		}
 	}
 
-	if err = txn.Commit(p.ctx); err != nil {
+	if err = txn.Commit(ctx); err != nil {
 		err = p.rollbackRemovePubSubTopics(removedTopics, err)
 		return p.rollbackAddPubSubTopics(addedTopics, err)
 	}
@@ -93,17 +106,21 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 }
 
 func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	txn, err := p.db.NewTxn(p.ctx, false)
+	txn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(p.ctx)
+	defer txn.Discard(ctx)
+
+	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
+	// ctx = db.SetContextIdentity(ctx, identity)
+	ctx = db.SetContextTxn(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollections(
-			p.ctx,
+		storeCol, err := p.db.GetCollections(
+			ctx,
 			client.CollectionFetchOptions{
 				SchemaRoot: immutable.Some(col),
 			},
@@ -141,7 +158,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// to the pubsub topics.
 	addedTopics := []string{}
 	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocIDs(p.ctx)
+		keyChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return err
 		}
@@ -154,7 +171,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 		}
 	}
 
-	if err = txn.Commit(p.ctx); err != nil {
+	if err = txn.Commit(ctx); err != nil {
 		err = p.rollbackAddPubSubTopics(addedTopics, err)
 		return p.rollbackRemovePubSubTopics(removedTopics, err)
 	}

@@ -78,8 +78,8 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 				}
 				type Book {
 					name: String
-					author: User @relation(name: "written_books")
-					favourite: User @relation(name: "favourite_books")
+					author: User @relation(name: "written_books") @primary
+					favourite: User @relation(name: "favourite_books") @primary
 				}
 				`,
 			},
@@ -122,8 +122,8 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				}
 				type Book {
 					name: String
-					author: User @relation(name: "written_books")
-					favourite: User @relation(name: "favourite_books")
+					author: User @relation(name: "written_books") @primary
+					favourite: User @relation(name: "favourite_books") @primary
 				}
 				`,
 			},

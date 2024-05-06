@@ -13,6 +13,10 @@ package fetcher
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -54,7 +58,9 @@ func NewIndexFetcher(
 
 func (f *IndexFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -93,7 +99,18 @@ outer:
 	f.indexIter = iter
 
 	if f.docFetcher != nil && len(f.docFields) > 0 {
-		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
+		err = f.docFetcher.Init(
+			ctx,
+			identity,
+			f.txn,
+			acp,
+			f.col,
+			f.docFields,
+			f.docFilter,
+			f.mapping,
+			false,
+			false,
+		)
 	}
 
 	return err
@@ -128,7 +145,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			property := &encProperty{Desc: indexedField}
 
 			field := res.key.Fields[i]
-			if field.Value == nil {
+			if field.Value.IsNil() {
 				hasNilField = true
 			}
 
@@ -147,11 +164,14 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		if f.indexDesc.Unique && !hasNilField {
 			f.doc.id = res.value
 		} else {
-			docID, ok := res.key.Fields[len(res.key.Fields)-1].Value.(string)
-			if !ok {
+			lastVal := res.key.Fields[len(res.key.Fields)-1].Value
+			if str, ok := lastVal.String(); ok {
+				f.doc.id = []byte(str)
+			} else if bytes, ok := lastVal.Bytes(); ok {
+				f.doc.id = bytes
+			} else {
 				return nil, ExecInfo{}, err
 			}
-			f.doc.id = []byte(docID)
 		}
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {

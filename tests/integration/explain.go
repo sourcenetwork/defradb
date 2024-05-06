@@ -15,12 +15,12 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
@@ -78,6 +78,9 @@ type ExplainRequest struct {
 	// NodeID is the node ID (index) of the node in which to explain.
 	NodeID immutable.Option[int]
 
+	// The identity of this request.
+	Identity string
+
 	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
 	Request string
 
@@ -127,7 +130,10 @@ func executeExplainRequest(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(
+			s.ctx,
+			action.Request,
+		)
 		assertExplainRequestResults(s, &result.GQL, action)
 	}
 }
@@ -151,7 +157,7 @@ func assertExplainRequestResults(
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
 	resultantData := actualResult.Data.([]map[string]any)
-	log.Info(s.ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
+	log.InfoContext(s.ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).

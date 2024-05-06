@@ -42,9 +42,6 @@ type DB interface {
 	// can safely operate on it concurrently.
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 
-	// WithTxn returns a new [client.Store] that respects the given transaction.
-	WithTxn(datastore.Txn) Store
-
 	// Root returns the underlying root store, within which all data managed by DefraDB is held.
 	Root() datastore.RootStore
 
@@ -85,6 +82,18 @@ type DB interface {
 	//
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
+
+	// AddPolicy adds policy to acp, if acp is available.
+	//
+	// If policy was successfully added to acp then a policyID is returned,
+	// otherwise if acp was not available then returns the following error:
+	// [client.ErrPolicyAddFailureNoACP]
+	//
+	// Detects the format of the policy automatically by assuming YAML format if JSON
+	// validation fails.
+	//
+	// Note: A policy can not be added without the creatorID (identity).
+	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.
@@ -119,6 +128,17 @@ type Store interface {
 	//
 	// A lens configuration may also be provided, it will be added to all collections using the schema.
 	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
+
+	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionDescriptions
+	// present in the database.
+	//
+	// It will also update the GQL types used by the query system. It will error and not apply any of the
+	// requested, valid updates should the net result of the patch result in an invalid state.  The
+	// individual operations defined in the patch do not need to result in a valid state, only the net result
+	// of the full patch.
+	//
+	// Currently only the collection name can be modified.
+	PatchCollection(context.Context, string) error
 
 	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
 	// those without it (if they share the same schema root).
@@ -216,7 +236,7 @@ type Store interface {
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(context.Context, string) *RequestResult
+	ExecRequest(ctx context.Context, request string) *RequestResult
 }
 
 // GQLResult represents the immediate results of a GQL request.

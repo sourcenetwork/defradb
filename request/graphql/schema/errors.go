@@ -27,7 +27,9 @@ const (
 	errIndexUnknownArgument          string = "index with unknown argument"
 	errIndexInvalidArgument          string = "index with invalid argument"
 	errIndexInvalidName              string = "index with invalid name"
-	errViewRelationMustBeOneSided    string = "relations in views must only be defined on one schema"
+	errPolicyUnknownArgument         string = "policy with unknown argument"
+	errPolicyInvalidIDProp           string = "policy directive with invalid id property"
+	errPolicyInvalidResourceProp     string = "policy directive with invalid resource property"
 )
 
 var (
@@ -47,11 +49,13 @@ var (
 	ErrMultipleRelationPrimaries     = errors.New("relation can only have a single field set as primary")
 	// NonNull is the literal name of the GQL type, so we have to disable the linter
 	//nolint:revive
-	ErrNonNullNotSupported        = errors.New("NonNull fields are not currently supported")
-	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
-	ErrIndexWithUnknownArg        = errors.New(errIndexUnknownArgument)
-	ErrIndexWithInvalidArg        = errors.New(errIndexInvalidArgument)
-	ErrViewRelationMustBeOneSided = errors.New(errViewRelationMustBeOneSided)
+	ErrNonNullNotSupported       = errors.New("NonNull fields are not currently supported")
+	ErrIndexMissingFields        = errors.New(errIndexMissingFields)
+	ErrIndexWithUnknownArg       = errors.New(errIndexUnknownArgument)
+	ErrIndexWithInvalidArg       = errors.New(errIndexInvalidArgument)
+	ErrPolicyWithUnknownArg      = errors.New(errPolicyUnknownArgument)
+	ErrPolicyInvalidIDProp       = errors.New(errPolicyInvalidIDProp)
+	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -130,13 +134,5 @@ func NewErrRelationNotFound(relationName string) error {
 	return errors.New(
 		errRelationNotFound,
 		errors.NewKV("RelationName", relationName),
-	)
-}
-
-func NewErrViewRelationMustBeOneSided(fieldName string, typeName string) error {
-	return errors.New(
-		errViewRelationMustBeOneSided,
-		errors.NewKV("Field", fieldName),
-		errors.NewKV("Type", typeName),
 	)
 }

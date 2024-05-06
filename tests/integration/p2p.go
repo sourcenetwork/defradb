@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +55,12 @@ type ConfigureReplicator struct {
 
 	// TargetNodeID is the node ID (index) of the node to which data should be replicated.
 	TargetNodeID int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // DeleteReplicator deletes a directional replicator relationship between two nodes.
@@ -149,7 +155,7 @@ func connectPeers(
 	targetNode := s.nodes[cfg.TargetNodeID]
 
 	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
-	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
@@ -307,8 +313,12 @@ func configureReplicator(
 	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
-	require.NoError(s.t, err)
-	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
+
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
+	if err == nil {
+		setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
+	}
 }
 
 func deleteReplicator(

@@ -53,7 +53,7 @@ const (
 
 type indexTestFixture struct {
 	ctx   context.Context
-	db    *implicitTxnDB
+	db    *db
 	txn   datastore.Txn
 	users client.Collection
 	t     *testing.T
@@ -219,7 +219,8 @@ func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescript
 }
 
 func (f *indexTestFixture) dropIndex(colName, indexName string) error {
-	return f.db.dropCollectionIndex(f.ctx, f.txn, colName, indexName)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	return f.db.dropCollectionIndex(ctx, colName, indexName)
 }
 
 func (f *indexTestFixture) countIndexPrefixes(indexName string) int {
@@ -255,7 +256,8 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	index, err := f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	index, err := f.db.createCollectionIndex(ctx, collectionName, desc)
 	if err == nil {
 		f.commitTxn()
 	}
@@ -263,11 +265,13 @@ func (f *indexTestFixture) createCollectionIndexFor(
 }
 
 func (f *indexTestFixture) getAllIndexes() (map[client.CollectionName][]client.IndexDescription, error) {
-	return f.db.getAllIndexDescriptions(f.ctx, f.txn)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	return f.db.getAllIndexDescriptions(ctx)
 }
 
 func (f *indexTestFixture) getCollectionIndexes(colID uint32) ([]client.IndexDescription, error) {
-	return f.db.fetchCollectionIndexDescriptions(f.ctx, f.txn, colID)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	return f.db.fetchCollectionIndexDescriptions(ctx, colID)
 }
 
 func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
@@ -784,7 +788,8 @@ func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
 		Return(queryResults, nil)
 
-	_, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
+	_, err := f.users.GetIndexes(ctx)
 	assert.NoError(t, err)
 }
 
@@ -840,7 +845,8 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Systemstore().Unset()
 		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-		_, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
+		ctx := SetContextTxn(f.ctx, mockedTxn)
+		_, err := f.users.GetIndexes(ctx)
 		require.ErrorIs(t, err, testCase.ExpectedError)
 	}
 }
@@ -902,7 +908,8 @@ func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *te
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, indexDescData), nil)
 
-	_, err = collection.WithTxn(mockedTxn).GetIndexes(f.ctx)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
+	_, err = collection.GetIndexes(ctx)
 	require.ErrorIs(t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 }
 
@@ -1093,17 +1100,18 @@ func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(t), nil)
 
-	err := f.users.WithTxn(mockedTxn).DropIndex(f.ctx, testUsersColIndexName)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
+	err := f.users.DropIndex(ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)
 }
 
 func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
-	col := f.users.WithTxn(f.txn)
-	_, err := col.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	ctx := SetContextTxn(f.ctx, f.txn)
+	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
-	indOnAge, err := col.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 	f.commitTxn()
 
@@ -1144,7 +1152,8 @@ func TestDropIndex_IfSystemStoreFails_ReturnError(t *testing.T) {
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-	err := f.users.WithTxn(mockedTxn).DropIndex(f.ctx, testUsersColIndexName)
+	ctx := SetContextTxn(f.ctx, mockedTxn)
+	err := f.users.DropIndex(ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -1167,7 +1176,8 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 
 	assert.Equal(t, 2, f.countIndexPrefixes(""))
 
-	err = f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	err = f.users.(*collection).dropAllIndexes(ctx)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 0, f.countIndexPrefixes(""))
@@ -1179,7 +1189,8 @@ func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 	f.db.Close()
 
-	err := f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	err := f.users.(*collection).dropAllIndexes(ctx)
 	assert.Error(t, err)
 }
 
@@ -1235,7 +1246,8 @@ func TestDropAllIndexes_IfSystemStorageFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Systemstore().Unset()
 		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-		err := f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
+		ctx := SetContextTxn(f.ctx, f.txn)
+		err := f.users.(*collection).dropAllIndexes(ctx)
 		assert.ErrorIs(t, err, testErr, testCase.Name)
 	}
 }
@@ -1256,7 +1268,8 @@ func TestDropAllIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-	_ = f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	_ = f.users.(*collection).dropAllIndexes(ctx)
 }
 
 func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {

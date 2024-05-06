@@ -93,7 +93,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafybeidzstxabh7qktq7pkmmxvpjbnwklxz3h5l6d425ldvjy65xvvuxu4",
+							cid: "bafybeif757a4mdwimqwl24ujjnao6xlajiajz2hwuleopnptusuttri6zu",
 							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 						) {
 						name
@@ -135,7 +135,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafybeidzstxabh7qktq7pkmmxvpjbnwklxz3h5l6d425ldvjy65xvvuxu4",
+							cid: "bafybeif757a4mdwimqwl24ujjnao6xlajiajz2hwuleopnptusuttri6zu",
 							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 						) {
 						name
@@ -177,7 +177,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafybeickytibhqnqtwhpjfi7ponnu5756ifo76oxb2ksxrz4iiqaywg3lu",
+							cid: "bafybeibwxvtvppws6sjfoajazevrdh27g4qwn5wguslpabyl3kzxd2a6fm",
 							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 						) {
 						name
@@ -224,7 +224,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafybeickytibhqnqtwhpjfi7ponnu5756ifo76oxb2ksxrz4iiqaywg3lu",
+							cid: "bafybeibwxvtvppws6sjfoajazevrdh27g4qwn5wguslpabyl3kzxd2a6fm",
 							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 						) {
 						name
@@ -266,7 +266,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafybeidzstxabh7qktq7pkmmxvpjbnwklxz3h5l6d425ldvjy65xvvuxu4",
+							cid: "bafybeif757a4mdwimqwl24ujjnao6xlajiajz2hwuleopnptusuttri6zu",
 							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 						) {
 						name
@@ -280,7 +280,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 						"name": "John",
 						"_version": []map[string]any{
 							{
-								"schemaVersionId": "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
+								"schemaVersionId": "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 							},
 						},
 					},
@@ -324,7 +324,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeiebqzqml6nn3laarr7yekakrsdnkn4nbgrl4xc5rshljp3in6au2m",
+						cid: "bafybeicruxxfhxhyvefbxid7gukdbnfzkyad45phu4mnwzzqde24p32xnu",
 						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
@@ -376,7 +376,101 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeifzuh74aq47vjngkwipjne4r2gi3v2clewgsruspqirihnps4vcmu",
+						cid: "bafybeibeo7pmvzpkkanwd72q4qu3m4yxex3coufq7uogvcnjwgqzrlpco4",
+						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": 10.2,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
+func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with first cid and docID with pcounter int type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeidtjhrssohan2f5nt7ml3nh4bovpaqhqjvijlpacfednyx77iw5y4",
+						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": int64(10),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
+func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with first cid and docID with pcounter and float type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10.2
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20.6
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeieimeijjl4hdvqkt5gkn62j54nlnaetm4te7w4z2mdljlyphfsyji",
 						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
 					) {
 						name

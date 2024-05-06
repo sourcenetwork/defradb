@@ -14,6 +14,12 @@ import "github.com/sourcenetwork/immutable"
 
 // Field implements Selection
 type Field struct {
-	Name  string
+	// Name contains the name of the field on it's host object.
+	//
+	// For example `email` on a `User` collection, or a `_count` aggregate.
+	Name string
+
+	// Alias is an optional override for Name, if provided results will be returned
+	// from the query using the Alias instead of the Name.
 	Alias immutable.Option[string]
 }

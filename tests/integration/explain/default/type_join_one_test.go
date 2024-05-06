@@ -13,6 +13,8 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -54,7 +56,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"direction":   "primary",
 							"joinType":    "typeJoinOne",
-							"rootName":    "author",
+							"rootName":    immutable.Some("author"),
 							"subTypeName": "contact",
 						},
 					},
@@ -163,7 +165,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"direction":   "primary",
 							"joinType":    "typeJoinOne",
-							"rootName":    "author",
+							"rootName":    immutable.Some("author"),
 							"subTypeName": "contact",
 						},
 					},
@@ -196,7 +198,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"direction":   "primary",
 							"joinType":    "typeJoinOne",
-							"rootName":    "contact",
+							"rootName":    immutable.Some("contact"),
 							"subTypeName": "address",
 						},
 					},

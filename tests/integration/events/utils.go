@@ -149,7 +149,7 @@ func setupDatabase(
 		require.NoError(t, err)
 
 		for _, docStr := range docs {
-			doc, err := client.NewDocFromJSON([]byte(docStr), col.Schema())
+			doc, err := client.NewDocFromJSON([]byte(docStr), col.Definition())
 			require.NoError(t, err)
 
 			err = col.Save(ctx, doc)

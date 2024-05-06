@@ -20,10 +20,10 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -35,12 +35,10 @@ const (
 
 var (
 	storage string = "memory"
-	log            = logging.MustNewLogger("tests.bench")
+	log            = corelog.NewLogger("tests.bench")
 )
 
 func init() {
-	logging.SetConfig(logging.Config{Level: logging.NewLogLevelOption(logging.Error)})
-
 	// assign if not empty
 	if s := os.Getenv(storageEnvName); s != "" {
 		storage = s
@@ -161,7 +159,7 @@ func BackfillBenchmarkDB(
 					// create the documents
 					docIDs := make([]client.DocID, numTypes)
 					for j := 0; j < numTypes; j++ {
-						doc, err := client.NewDocFromJSON([]byte(docs[j]), cols[j].Schema())
+						doc, err := client.NewDocFromJSON([]byte(docs[j]), cols[j].Definition())
 						if err != nil {
 							errCh <- errors.Wrap("failed to create document from fixture", err)
 							return
@@ -174,10 +172,10 @@ func BackfillBenchmarkDB(
 						for {
 							if err := cols[j].Create(ctx, doc); err != nil &&
 								err.Error() == badger.ErrConflict.Error() {
-								log.Info(
+								log.InfoContext(
 									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
-									logging.NewKV("DocID", doc.ID()),
+									corelog.Any("DocID", doc.ID()),
 								)
 								continue
 							} else if err != nil {

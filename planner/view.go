@@ -33,7 +33,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 	querySource := (col.Description().Sources[0].(*client.QuerySource))
 	hasTransform := querySource.Transform.HasValue()
 
-	m, err := mapper.ToSelect(p.ctx, p.db, &querySource.Query)
+	m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &querySource.Query)
 	if err != nil {
 		return nil, err
 	}

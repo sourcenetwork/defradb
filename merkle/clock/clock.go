@@ -19,13 +19,14 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/corelog"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
-	log = logging.MustNewLogger("merkleclock")
+	log = corelog.NewLogger("merkleclock")
 )
 
 // MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
@@ -121,7 +122,6 @@ func (mc *MerkleClock) ProcessNode(
 	nodeCid := node.Cid()
 	priority := delta.GetPriority()
 
-	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", nodeCid))
 	err := mc.crdt.Merge(ctx, delta)
 	if err != nil {
 		return NewErrMergingDelta(nodeCid, err)
@@ -130,16 +130,13 @@ func (mc *MerkleClock) ProcessNode(
 	links := node.Links()
 	// check if we have any HEAD links
 	hasHeads := false
-	log.Debug(ctx, "Stepping through node links")
 	for _, l := range links {
-		log.Debug(ctx, "Checking link", logging.NewKV("Name", l.Name), logging.NewKV("CID", l.Cid))
 		if l.Name == "_head" {
 			hasHeads = true
 			break
 		}
 	}
 	if !hasHeads { // reached the bottom, at a leaf
-		log.Debug(ctx, "No heads found")
 		err := mc.headset.Write(ctx, nodeCid, priority)
 		if err != nil {
 			return NewErrAddingHead(nodeCid, err)
@@ -148,14 +145,12 @@ func (mc *MerkleClock) ProcessNode(
 
 	for _, l := range links {
 		linkCid := l.Cid
-		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", linkCid))
 		isHead, err := mc.headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return NewErrCheckingHead(linkCid, err)
 		}
 
 		if isHead {
-			log.Debug(ctx, "Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
 			err = mc.headset.Replace(ctx, linkCid, nodeCid, priority)
@@ -173,14 +168,13 @@ func (mc *MerkleClock) ProcessNode(
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			log.Debug(ctx, "Adding head")
 			err := mc.headset.Write(ctx, nodeCid, priority)
 			if err != nil {
-				log.ErrorE(
+				log.ErrorContextE(
 					ctx,
 					"Failure adding head (when root is a new head)",
 					err,
-					logging.NewKV("Root", nodeCid),
+					corelog.Any("Root", nodeCid),
 				)
 				// OR should this also return like below comment??
 				// return nil, errors.Wrap("error adding head (when root is new head): %s ", root, err)

@@ -10,6 +10,22 @@
 
 package request
 
+import "github.com/sourcenetwork/immutable"
+
 type GroupBy struct {
 	Fields []string
+}
+
+// Groupable is an embeddable struct that hosts a consistent set of properties
+// for grouping an aspect of a request.
+type Groupable struct {
+	// GroupBy is an optional set of fields for which to group the contents of this
+	// request by.
+	//
+	// If this argument is provided, only fields used to group may be rendered in
+	// the immediate child selector.  Additional fields may be selected by using
+	// the '_group' selector within the immediate child selector. If an empty set
+	// is provided, the restrictions mentioned still apply, although all results
+	// will appear within the same group.
+	GroupBy immutable.Option[GroupBy]
 }

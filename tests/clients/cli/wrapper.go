@@ -23,6 +23,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/cli"
@@ -171,6 +172,26 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
+func (w *Wrapper) AddPolicy(
+	ctx context.Context,
+	policy string,
+) (client.AddPolicyResult, error) {
+	args := []string{"client", "acp", "policy", "add"}
+	args = append(args, policy)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	var addPolicyResult client.AddPolicyResult
+	if err := json.Unmarshal(data, &addPolicyResult); err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	return addPolicyResult, err
+}
+
 func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
@@ -206,6 +227,16 @@ func (w *Wrapper) PatchSchema(
 		args = append(args, string(lenses))
 	}
 
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) PatchCollection(
+	ctx context.Context,
+	patch string,
+) error {
+	args := []string{"client", "collection", "patch"}
+	args = append(args, patch)
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -359,13 +390,16 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return indexes, nil
 }
 
-func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.RequestResult {
+func (w *Wrapper) ExecRequest(
+	ctx context.Context,
+	query string,
+) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
 
 	result := &client.RequestResult{}
 
-	stdOut, stdErr, err := w.cmd.executeStream(args)
+	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
@@ -472,13 +506,6 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 		return nil, err
 	}
 	return &Transaction{tx, w.cmd}, nil
-}
-
-func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
-	return &Wrapper{
-		node: w.node,
-		cmd:  w.cmd.withTxn(tx),
-	}
 }
 
 func (w *Wrapper) Root() datastore.RootStore {

@@ -19,7 +19,7 @@ import (
 
 func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16)",
+		Description: "Test schema update, add field with kind foreign object",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -34,31 +34,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16} }
 					]
 				`,
-				ExpectedError: "a `Schema` [name] must be provided when adding a new relation field. Field: foo, Kind: 16",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_InvalidSchemaJson(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), invalid schema json",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16, "Schema": 123} }
-					]
-				`,
-				ExpectedError: "json: cannot unmarshal number into Go struct field SchemaFieldDescription.Fields.Schema of type string",
+				ExpectedError: "no type found for given name. Type: 16",
 			},
 		},
 	}
@@ -67,7 +43,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_InvalidSchemaJson(t *testing.T) 
 
 func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), unknown schema",
+		Description: "Test schema update, add field with kind foreign object, unknown schema",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -80,37 +56,11 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "Schema": "Unknown"
+							"Name": "foo", "Kind": "Unknown"
 						}}
 					]
 				`,
-				ExpectedError: "no schema found for given name. Field: foo, Schema: Unknown",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingRelationName(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), missing relation name",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "Schema": "Users"
-						}}
-					]
-				`,
-				ExpectedError: "missing relation name. Field: foo",
+				ExpectedError: "no type found for given name. Field: foo, Kind: Unknown",
 			},
 		},
 	}
@@ -119,7 +69,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingRelationName(t *testing.T
 
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field missing kind",
+		Description: "Test schema update, add field with kind foreign object, id field missing kind",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -132,7 +82,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16,"IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": "Users"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id"} }
 					]
@@ -146,7 +96,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field invalid kind",
+		Description: "Test schema update, add field with kind foreign object, id field invalid kind",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -159,7 +109,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": "Users"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 2} }
 					]
@@ -171,134 +121,11 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingRelationName(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field missing relation name",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1} }
-					]
-				`,
-				ExpectedError: "missing relation name. Field: foo_id",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_OnlyHalfRelationDefined(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), only half relation defined",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "relation must be defined on both schemas. Field: foo, Type: Users",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_NoPrimaryDefined(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), no primary defined",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "primary side of relation not defined. RelationName: foo",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_BothSidesPrimary(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), both sides primary",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "both sides of a relation cannot be primary. RelationName: foo",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), valid, functional",
+		Description: "Test schema update, add field with kind foreign object, valid, functional",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -311,16 +138,10 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": "Users"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1
 						}}
 					]
 				`,
@@ -364,9 +185,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 						foo {
 							name
 						}
-						foobar {
-							name
-						}
 					}
 				}`,
 				Results: []map[string]any{
@@ -375,536 +193,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 						"foo": map[string]any{
 							"name": "John",
 						},
-						"foobar": nil,
 					},
 					{
 						"name": "John",
 						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
 					},
 				},
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_SinglePrimaryObjectKindSubstitution(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with single object Kind substitution",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Keenan",
-						"foo": "%s"
-					}`,
-					key1,
-				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						foo {
-							name
-						}
-						foobar {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-						"foobar": nil,
-					},
-					{
-						"name": "John",
-						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
-					},
-				},
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_SingleSecondaryObjectKindSubstitution(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with single object Kind substitution",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Keenan",
-						"foo": "%s"
-					}`,
-					key1,
-				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						foo {
-							name
-						}
-						foobar {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-						"foobar": nil,
-					},
-					{
-						"name": "John",
-						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
-					},
-				},
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitution(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with object Kind substitution",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Keenan",
-						"foo": "%s"
-					}`,
-					key1,
-				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						foo {
-							name
-						}
-						foobar {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-						"foobar": nil,
-					},
-					{
-						"name": "John",
-						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
-					},
-				},
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitutionWithAutoSchemaValues(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with object Kind substitution",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Keenan",
-						"foo": "%s"
-					}`,
-					key1,
-				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						foo {
-							name
-						}
-						foobar {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-						"foobar": nil,
-					},
-					{
-						"name": "John",
-						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
-					},
-				},
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindAndSchemaMismatch(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with Kind and Schema mismatch",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Dog {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "Schema": "Dog", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "field Kind does not match field Schema. Kind: Users, Schema: Dog",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingPrimaryIDField(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with auto primary ID field creation",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
-						}}
-					]
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Keenan",
-						"foo": "%s"
-					}`,
-					key1,
-				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						foo {
-							name
-						}
-						foobar {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-						"foobar": nil,
-					},
-					{
-						"name": "John",
-						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingSecondaryIDField(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), with auto secondary ID field creation",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Keenan",
-						"foo": "%s"
-					}`,
-					key1,
-				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						foo {
-							name
-						}
-						foobar {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-						"foobar": nil,
-					},
-					{
-						"name": "John",
-						"foo":  nil,
-						"foobar": map[string]any{
-							"name": "Keenan",
-						},
-					},
-				},
-			},
-		},
-	}
-
 	testUtils.ExecuteTestCase(t, test)
 }

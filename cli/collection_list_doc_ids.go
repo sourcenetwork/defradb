@@ -18,12 +18,15 @@ import (
 
 func MakeCollectionListDocIDsCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "docIDs",
+		Use:   "docIDs [-i --identity]",
 		Short: "List all document IDs (docIDs).",
 		Long: `List all document IDs (docIDs).
 		
-Example:
+Example: list all docID(s):
   defradb client collection docIDs --name User
+
+Example: list all docID(s), with an identity:
+  defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User 
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)

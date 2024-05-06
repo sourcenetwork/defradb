@@ -135,6 +135,10 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 				Description: "Peer-to-peer network operations",
 			},
 			&openapi3.Tag{
+				Name:        "acp",
+				Description: "Access control policy operations",
+			},
+			&openapi3.Tag{
 				Name:        "transaction",
 				Description: "Database transaction operations",
 			},

@@ -338,7 +338,7 @@ func TestAutoGenerateFromSchema_RelationOneToOne(t *testing.T) {
 		}
 		
 		type Device {
-			owner: User
+			owner: User @primary
 			model: String
 		}`
 
@@ -792,7 +792,7 @@ func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
 				
 				type Device {
 					model: String
-					owner: User
+					owner: User @primary
 				}`,
 			options: []Option{WithTypeDemand("User", 10), WithTypeDemand("Device", 30)},
 		},
@@ -801,12 +801,12 @@ func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
 				type User { 
 					name: String 
 					device: Device
-					orders: Order
+					orders: Order @primary
 				}
 				
 				type Device {
 					model: String
-					owner: User
+					owner: User @primary
 				}
 				
 				type Order {
@@ -1203,6 +1203,15 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				Description: client.CollectionDescription{
 					Name: immutable.Some("User"),
 					ID:   0,
+					Fields: []client.CollectionFieldDescription{
+						{
+							Name: "name",
+						},
+						{
+							Name: "device",
+							Kind: immutable.Some[client.FieldKind](client.ObjectKind("Device")),
+						},
+					},
 				},
 				Schema: client.SchemaDescription{
 					Name: "User",
@@ -1211,11 +1220,6 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 							Name: "name",
 							Kind: client.FieldKind_NILLABLE_INT,
 						},
-						{
-							Name:   "device",
-							Kind:   client.FieldKind_FOREIGN_OBJECT,
-							Schema: "Device",
-						},
 					},
 				},
 			},
@@ -1223,6 +1227,15 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				Description: client.CollectionDescription{
 					Name: immutable.Some("Device"),
 					ID:   1,
+					Fields: []client.CollectionFieldDescription{
+						{
+							Name: "model",
+						},
+						{
+							Name: "owner",
+							Kind: immutable.Some[client.FieldKind](client.ObjectKind("User")),
+						},
+					},
 				},
 				Schema: client.SchemaDescription{
 					Name: "Device",
@@ -1232,10 +1245,8 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 							Kind: client.FieldKind_NILLABLE_STRING,
 						},
 						{
-							Name:              "owner",
-							Kind:              client.FieldKind_FOREIGN_OBJECT,
-							Schema:            "User",
-							IsPrimaryRelation: true,
+							Name: "owner",
+							Kind: client.ObjectKind("User"),
 						},
 					},
 				},
@@ -1269,6 +1280,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			name: "field name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
 				defs[0].Schema.Fields[0].Name = ""
+				defs[0].Description.Fields[0].Name = ""
 			},
 		},
 		{
@@ -1281,18 +1293,6 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			name: "ids are not enumerated",
 			changeDefs: func(defs []client.CollectionDefinition) {
 				defs[1].Description.ID = 0
-			},
-		},
-		{
-			name: "relation field is missing schema name",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[1].Schema.Fields[1].Schema = ""
-			},
-		},
-		{
-			name: "relation field references unknown schema",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[1].Schema.Fields[1].Schema = "Unknown"
 			},
 		},
 	}
@@ -1318,6 +1318,22 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			Description: client.CollectionDescription{
 				Name: immutable.Some("User"),
 				ID:   0,
+				Fields: []client.CollectionFieldDescription{
+					{
+						Name: "name",
+					},
+					{
+						Name: "age",
+					},
+					{
+						Name: "rating",
+					},
+					{
+						Name:         "devices",
+						Kind:         immutable.Some[client.FieldKind](client.ObjectArrayKind("Device")),
+						RelationName: immutable.Some("Device_owner"),
+					},
+				},
 			},
 			Schema: client.SchemaDescription{
 				Name: "User",
@@ -1334,12 +1350,6 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 						Name: "rating",
 						Kind: client.FieldKind_NILLABLE_FLOAT,
 					},
-					{
-						Name:         "devices",
-						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
-						Schema:       "Device",
-						RelationName: "Device_owner",
-					},
 				},
 			},
 		},
@@ -1347,6 +1357,20 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			Description: client.CollectionDescription{
 				Name: immutable.Some("Device"),
 				ID:   1,
+				Fields: []client.CollectionFieldDescription{
+					{
+						Name: "model",
+					},
+					{
+						Name:         "owner",
+						Kind:         immutable.Some[client.FieldKind](client.ObjectKind("User")),
+						RelationName: immutable.Some("Device_owner"),
+					},
+					{
+						Name:         "owner_id",
+						RelationName: immutable.Some("Device_owner"),
+					},
+				},
 			},
 			Schema: client.SchemaDescription{
 				Name: "Device",
@@ -1356,10 +1380,14 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 						Kind: client.FieldKind_NILLABLE_STRING,
 					},
 					{
-						Name:         "owner_id",
-						Kind:         client.FieldKind_DocID,
-						RelationName: "Device_owner",
-						Schema:       "User",
+						Name: "owner",
+						Kind: client.ObjectKind("User"),
+						Typ:  client.LWW_REGISTER,
+					},
+					{
+						Name: "owner_id",
+						Kind: client.FieldKind_DocID,
+						Typ:  client.LWW_REGISTER,
 					},
 				},
 			},

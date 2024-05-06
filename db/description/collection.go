@@ -13,8 +13,10 @@ package description
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sort"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -29,6 +31,11 @@ func SaveCollection(
 	txn datastore.Txn,
 	desc client.CollectionDescription,
 ) (client.CollectionDescription, error) {
+	existing, err := GetCollectionByID(ctx, txn, desc.ID)
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return client.CollectionDescription{}, err
+	}
+
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return client.CollectionDescription{}, err
@@ -38,6 +45,35 @@ func SaveCollection(
 	err = txn.Systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return client.CollectionDescription{}, err
+	}
+
+	if existing.Name.HasValue() && existing.Name != desc.Name {
+		nameKey := core.NewCollectionNameKey(existing.Name.Value())
+		idBuf, err := txn.Systemstore().Get(ctx, nameKey.ToDS())
+		nameIndexExsts := true
+		if err != nil {
+			if errors.Is(err, ds.ErrNotFound) {
+				nameIndexExsts = false
+			} else {
+				return client.CollectionDescription{}, err
+			}
+		}
+		if nameIndexExsts {
+			var keyID uint32
+			err = json.Unmarshal(idBuf, &keyID)
+			if err != nil {
+				return client.CollectionDescription{}, err
+			}
+
+			if keyID == desc.ID {
+				// The name index may have already been overwritten, pointing at another collection
+				// we should only remove the existing index if it still points at this collection
+				err := txn.Systemstore().Delete(ctx, nameKey.ToDS())
+				if err != nil {
+					return client.CollectionDescription{}, err
+				}
+			}
+		}
 	}
 
 	if desc.Name.HasValue() {
@@ -201,7 +237,7 @@ func GetCollections(
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
 	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: core.COLLECTION,
+		Prefix: core.COLLECTION_ID,
 	})
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)

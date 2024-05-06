@@ -17,8 +17,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
-	initialSchemaVersionId := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
-	updatedSchemaVersionId := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	initialSchemaVersionId := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	updatedSchemaVersionId := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with update after schema update, version join",
@@ -105,8 +105,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 }
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
-	initialSchemaVersionId := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
-	updatedSchemaVersionId := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
+	initialSchemaVersionId := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	updatedSchemaVersionId := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with update after schema update, commits query",

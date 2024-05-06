@@ -55,14 +55,16 @@ func parseQueryOperationDefinition(
 						Name:  parsed.Name,
 						Alias: parsed.Alias,
 					},
-					Fields: []request.Selection{
-						parsed,
+					ChildSelect: request.ChildSelect{
+						Fields: []request.Selection{
+							parsed,
+						},
 					},
 				}
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(schema, request.ObjectSelection, schema.QueryType(), node, i)
+				parsed, err := parseSelect(schema, schema.QueryType(), node, i)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -90,7 +92,6 @@ func parseQueryOperationDefinition(
 // filters, limits, orders, etc..
 func parseSelect(
 	schema gql.Schema,
-	rootType request.SelectionType,
 	parent *gql.Object,
 	field *ast.Field,
 	index int,
@@ -100,7 +101,6 @@ func parseSelect(
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
-		Root: rootType,
 	}
 
 	fieldDef := gql.GetFieldDef(schema, parent, slct.Name)
@@ -191,7 +191,7 @@ func parseSelect(
 		return nil, err
 	}
 
-	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
+	slct.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
 	if err != nil {
 		return nil, err
 	}
@@ -306,10 +306,18 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 			targets[i] = &request.AggregateTarget{
 				HostName:  hostName,
 				ChildName: immutable.Some(childName),
-				Filter:    filter,
-				Limit:     limit,
-				Offset:    offset,
-				OrderBy:   order,
+				Filterable: request.Filterable{
+					Filter: filter,
+				},
+				Limitable: request.Limitable{
+					Limit: limit,
+				},
+				Offsetable: request.Offsetable{
+					Offset: offset,
+				},
+				Orderable: request.Orderable{
+					OrderBy: order,
+				},
 			}
 		}
 	}

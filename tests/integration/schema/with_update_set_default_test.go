@@ -92,7 +92,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.SetActiveSchemaVersion{
-				SchemaVersionID: "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4",
+				SchemaVersionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -129,7 +129,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.SetActiveSchemaVersion{
-				SchemaVersionID: "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4",
+				SchemaVersionID: "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4",
 			},
 			testUtils.Request{
 				Request: `query {

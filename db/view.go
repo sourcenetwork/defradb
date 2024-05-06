@@ -20,17 +20,17 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/description"
 )
 
 func (db *db) addView(
 	ctx context.Context,
-	txn datastore.Txn,
 	inputQuery string,
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
+	txn := mustGetContextTxn(ctx)
+
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
@@ -80,7 +80,7 @@ func (db *db) addView(
 				Schema: schema,
 			}
 		} else {
-			col, err := db.createCollection(ctx, txn, definition)
+			col, err := db.createCollection(ctx, definition, newDefinitions)
 			if err != nil {
 				return nil, err
 			}
@@ -97,7 +97,7 @@ func (db *db) addView(
 		}
 	}
 
-	err = db.loadSchema(ctx, txn)
+	err = db.loadSchema(ctx)
 	if err != nil {
 		return nil, err
 	}

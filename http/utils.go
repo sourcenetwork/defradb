@@ -36,8 +36,8 @@ func responseJSON(rw http.ResponseWriter, status int, out any) {
 
 func parseError(msg any) error {
 	switch msg {
-	case client.ErrDocumentNotFound.Error():
-		return client.ErrDocumentNotFound
+	case client.ErrDocumentNotFoundOrNotAuthorized.Error():
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	case badger.ErrTxnConflict.Error():
 		return badger.ErrTxnConflict
 	default:

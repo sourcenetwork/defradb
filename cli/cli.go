@@ -16,10 +16,10 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/corelog"
 )
 
-var log = logging.MustNewLogger("cli")
+var log = corelog.NewLogger("cli")
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
 func NewDefraCommand() *cobra.Command {
@@ -62,6 +62,16 @@ func NewDefraCommand() *cobra.Command {
 		schema_migrate,
 	)
 
+	policy := MakeACPPolicyCommand()
+	policy.AddCommand(
+		MakeACPPolicyAddCommand(),
+	)
+
+	acp := MakeACPCommand()
+	acp.AddCommand(
+		policy,
+	)
+
 	view := MakeViewCommand()
 	view.AddCommand(
 		MakeViewAddCommand(),
@@ -95,6 +105,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeCollectionUpdateCommand(),
 		MakeCollectionCreateCommand(),
 		MakeCollectionDescribeCommand(),
+		MakeCollectionPatchCommand(),
 	)
 
 	client := MakeClientCommand()
@@ -102,6 +113,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeDumpCommand(),
 		MakeRequestCommand(),
 		schema,
+		acp,
 		view,
 		index,
 		p2p,

@@ -17,6 +17,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -97,6 +98,13 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
+func (w *Wrapper) AddPolicy(
+	ctx context.Context,
+	policy string,
+) (client.AddPolicyResult, error) {
+	return w.client.AddPolicy(ctx, policy)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
@@ -104,6 +112,13 @@ func (w *Wrapper) PatchSchema(
 	setAsDefaultVersion bool,
 ) error {
 	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
+}
+
+func (w *Wrapper) PatchCollection(
+	ctx context.Context,
+	patch string,
+) error {
+	return w.client.PatchCollection(ctx, patch)
 }
 
 func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
@@ -153,7 +168,10 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return w.client.GetAllIndexes(ctx)
 }
 
-func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.RequestResult {
+func (w *Wrapper) ExecRequest(
+	ctx context.Context,
+	query string,
+) *client.RequestResult {
 	return w.client.ExecRequest(ctx, query)
 }
 
@@ -179,10 +197,6 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 		return nil, err
 	}
 	return &TxWrapper{server, client}, nil
-}
-
-func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
-	return w.client.WithTxn(tx)
 }
 
 func (w *Wrapper) Root() datastore.RootStore {

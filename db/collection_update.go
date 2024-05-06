@@ -20,32 +20,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 )
-
-// UpdateWith updates a target document using the given updater type. Target
-// can be a Filter statement, a single DocID, a single document,
-// an array of DocIDs, or an array of documents.
-// If you want more type safety, use the respective typed versions of Update.
-// Eg: UpdateWithFilter or UpdateWithDocID
-func (c *collection) UpdateWith(
-	ctx context.Context,
-	target any,
-	updater string,
-) (*client.UpdateResult, error) {
-	switch t := target.(type) {
-	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, t, updater)
-	case client.DocID:
-		return c.UpdateWithDocID(ctx, t, updater)
-	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, t, updater)
-	default:
-		return nil, client.ErrInvalidUpdateTarget
-	}
-}
 
 // UpdateWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
@@ -55,154 +32,21 @@ func (c *collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(ctx, false)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithFilter(ctx, txn, filter, updater)
+	defer txn.Discard(ctx)
+
+	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
 		return nil, err
 	}
-	return res, c.commitImplicitTxn(ctx, txn)
-}
-
-// UpdateWithDocID updates using a DocID to target a single document for update.
-// An updater value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithDocID(
-	ctx context.Context,
-	docID client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithDocID(ctx, txn, docID, updater)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, c.commitImplicitTxn(ctx, txn)
-}
-
-// UpdateWithDocIDs is the same as UpdateWithDocID but accepts multiple DocIDs as a slice.
-// An updater value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithIDs(ctx, txn, docIDs, updater)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, c.commitImplicitTxn(ctx, txn)
-}
-
-func (c *collection) updateWithDocID(
-	ctx context.Context,
-	txn datastore.Txn,
-	docID client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	parsedUpdater, err := fastjson.Parse(updater)
-	if err != nil {
-		return nil, err
-	}
-
-	isPatch := false
-	if parsedUpdater.Type() == fastjson.TypeArray {
-		isPatch = true
-	} else if parsedUpdater.Type() != fastjson.TypeObject {
-		return nil, client.ErrInvalidUpdater
-	}
-
-	doc, err := c.Get(ctx, docID, false)
-	if err != nil {
-		return nil, err
-	}
-
-	if isPatch {
-		// todo
-	} else {
-		err = doc.SetWithJSON([]byte(updater))
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = c.save(ctx, txn, doc, false)
-	if err != nil {
-		return nil, err
-	}
-
-	results := &client.UpdateResult{
-		Count:  1,
-		DocIDs: []string{docID.String()},
-	}
-	return results, nil
-}
-
-func (c *collection) updateWithIDs(
-	ctx context.Context,
-	txn datastore.Txn,
-	docIDs []client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	parsedUpdater, err := fastjson.Parse(updater)
-	if err != nil {
-		return nil, err
-	}
-
-	isPatch := false
-	if parsedUpdater.Type() == fastjson.TypeArray {
-		isPatch = true
-	} else if parsedUpdater.Type() != fastjson.TypeObject {
-		return nil, client.ErrInvalidUpdater
-	}
-
-	results := &client.UpdateResult{
-		DocIDs: make([]string, len(docIDs)),
-	}
-	for i, docIDs := range docIDs {
-		doc, err := c.Get(ctx, docIDs, false)
-		if err != nil {
-			return nil, err
-		}
-
-		if isPatch {
-			// todo
-		} else {
-			err = doc.SetWithJSON([]byte(updater))
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = c.save(ctx, txn, doc, false)
-		if err != nil {
-			return nil, err
-		}
-
-		results.DocIDs[i] = docIDs.String()
-		results.Count++
-	}
-	return results, nil
+	return res, txn.Commit(ctx)
 }
 
 func (c *collection) updateWithFilter(
 	ctx context.Context,
-	txn datastore.Txn,
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
@@ -223,7 +67,7 @@ func (c *collection) updateWithFilter(
 	}
 
 	// Make a selection plan that will scan through only the documents with matching filter.
-	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
+	selectionPlan, err := c.makeSelectionPlan(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +84,7 @@ func (c *collection) updateWithFilter(
 	// If the plan isn't properly closed at any exit point log the error.
 	defer func() {
 		if err := selectionPlan.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close the selection plan, after filter update", err)
+			log.ErrorContextE(ctx, "Failed to close the selection plan, after filter update", err)
 		}
 	}()
 
@@ -263,7 +107,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap, c.Schema())
+		doc, err := client.NewDocFromMap(docAsMap, c.Definition())
 		if err != nil {
 			return nil, err
 		}
@@ -277,7 +121,7 @@ func (c *collection) updateWithFilter(
 			}
 		}
 
-		_, err = c.save(ctx, txn, doc, false)
+		err = c.update(ctx, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -310,7 +154,6 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (clien
 // patched.
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
-	txn datastore.Txn,
 	secondaryCollectionName string,
 	relationFieldDescription client.FieldDefinition,
 	docID string,
@@ -321,18 +164,15 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Schema)
+	primaryCol, err := c.db.getCollectionByName(ctx, relationFieldDescription.Kind.Underlying())
 	if err != nil {
 		return err
 	}
-	primaryCol = primaryCol.WithTxn(txn)
-	primarySchema := primaryCol.Schema()
 
 	primaryField, ok := primaryCol.Description().GetFieldByRelation(
 		relationFieldDescription.RelationName,
 		secondaryCollectionName,
 		relationFieldDescription.Name,
-		&primarySchema,
 	)
 	if !ok {
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
@@ -348,6 +188,7 @@ func (c *collection) patchPrimaryDoc(
 		primaryDocID,
 		false,
 	)
+
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -357,8 +198,13 @@ func (c *collection) patchPrimaryDoc(
 		return nil
 	}
 
-	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
-	err = pc.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, primaryDocID.String(), primaryIDField, docID)
+	pc := c.db.newCollection(primaryCol.Description(), primaryCol.Schema())
+	err = pc.validateOneToOneLinkDoesntAlreadyExist(
+		ctx,
+		primaryDocID.String(),
+		primaryIDField,
+		docID,
+	)
 	if err != nil {
 		return err
 	}
@@ -391,7 +237,6 @@ func (c *collection) patchPrimaryDoc(
 // Additionally it only requests for the root scalar fields of the object
 func (c *collection) makeSelectionPlan(
 	ctx context.Context,
-	txn datastore.Txn,
 	filter any,
 ) (planner.RequestPlan, error) {
 	var f immutable.Option[request.Filter]
@@ -417,7 +262,16 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
-	planner := planner.New(ctx, c.db.WithTxn(txn), txn)
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
+	planner := planner.New(
+		ctx,
+		identity,
+		c.db.acp,
+		c.db,
+		txn,
+	)
+
 	return planner.MakePlan(&request.Request{
 		Queries: []*request.OperationDefinition{
 			{
@@ -434,8 +288,12 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 		Field: request.Field{
 			Name: c.Name().Value(),
 		},
-		Filter: filter,
-		Fields: make([]request.Selection, 0),
+		Filterable: request.Filterable{
+			Filter: filter,
+		},
+		ChildSelect: request.ChildSelect{
+			Fields: make([]request.Selection, 0),
+		},
 	}
 
 	for _, fd := range c.Schema().Fields {

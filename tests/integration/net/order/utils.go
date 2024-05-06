@@ -15,20 +15,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 var (
-	log = logging.MustNewLogger("test.net")
+	log = corelog.NewLogger("test.net")
 )
 
 const (
@@ -47,6 +47,11 @@ const (
 
 type P2PTestCase struct {
 	Query string
+
+	// The identity for all requests.
+	// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2366 - Improve in ACP <> P2P implementation
+	Identity string
+
 	// Configuration parameters for each peer
 	NodeConfig [][]net.NodeOpt
 
@@ -75,7 +80,7 @@ func setupDefraNode(
 ) (*net.Node, []client.DocID, error) {
 	ctx := context.Background()
 
-	log.Info(ctx, "Building new memory store")
+	log.InfoContext(ctx, "Building new memory store")
 	db, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
@@ -102,16 +107,16 @@ func setupDefraNode(
 
 	// parse peers and bootstrap
 	if len(peers) != 0 {
-		log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", peers))
+		log.InfoContext(ctx, "Parsing bootstrap peers", corelog.Any("Peers", peers))
 		addrs, err := netutils.ParsePeers(peers)
 		if err != nil {
 			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", peers), err)
 		}
-		log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+		log.InfoContext(ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 		n.Bootstrap(addrs)
 	}
 
-	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P addresses", n.PeerInfo().Addrs))
+	log.InfoContext(ctx, "Starting P2P node", corelog.Any("P2P addresses", n.PeerInfo().Addrs))
 	if err := n.Start(); err != nil {
 		n.Close()
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
@@ -125,13 +130,17 @@ func seedSchema(ctx context.Context, db client.DB) error {
 	return err
 }
 
-func seedDocument(ctx context.Context, db client.DB, document string) (client.DocID, error) {
+func seedDocument(
+	ctx context.Context,
+	db client.DB,
+	document string,
+) (client.DocID, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return client.DocID{}, err
 	}
 
-	doc, err := client.NewDocFromJSON([]byte(document), col.Schema())
+	doc, err := client.NewDocFromJSON([]byte(document), col.Definition())
 	if err != nil {
 		return client.DocID{}, err
 	}
@@ -144,7 +153,11 @@ func seedDocument(ctx context.Context, db client.DB, document string) (client.Do
 	return doc.ID(), nil
 }
 
-func saveDocument(ctx context.Context, db client.DB, document *client.Document) error {
+func saveDocument(
+	ctx context.Context,
+	db client.DB,
+	document *client.Document,
+) error {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return err
@@ -153,7 +166,12 @@ func saveDocument(ctx context.Context, db client.DB, document *client.Document) 
 	return col.Save(ctx, document)
 }
 
-func updateDocument(ctx context.Context, db client.DB, docID client.DocID, update string) error {
+func updateDocument(
+	ctx context.Context,
+	db client.DB,
+	docID client.DocID,
+	update string,
+) error {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return err
@@ -171,7 +189,11 @@ func updateDocument(ctx context.Context, db client.DB, docID client.DocID, updat
 	return col.Save(ctx, doc)
 }
 
-func getDocument(ctx context.Context, db client.DB, docID client.DocID) (*client.Document, error) {
+func getDocument(
+	ctx context.Context,
+	db client.DB,
+	docID client.DocID,
+) (*client.Document, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return nil, err
@@ -191,12 +213,12 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	nodes := []*net.Node{}
 
 	for i, cfg := range test.NodeConfig {
-		log.Info(ctx, fmt.Sprintf("Setting up node %d", i))
+		log.InfoContext(ctx, fmt.Sprintf("Setting up node %d", i))
 		var peerAddresses []string
 		if peers, ok := test.NodePeers[i]; ok {
 			for _, p := range peers {
 				if p >= len(nodes) {
-					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
+					log.InfoContext(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
 					continue
 				}
 				peerInfo := nodes[p].PeerInfo()
@@ -206,7 +228,12 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				)
 			}
 		}
-		n, d, err := setupDefraNode(t, cfg, peerAddresses, test.SeedDocuments)
+		n, d, err := setupDefraNode(
+			t,
+			cfg,
+			peerAddresses,
+			test.SeedDocuments,
+		)
 		require.NoError(t, err)
 
 		if i == 0 {
@@ -226,10 +253,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				if i == j {
 					continue
 				}
-				log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
+				log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
 				err := n.WaitForPubSubEvent(p.PeerID())
 				require.NoError(t, err)
-				log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
+				log.InfoContext(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 			}
 		}
 	}
@@ -237,14 +264,19 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	// update and sync peers
 	for n, updateMap := range test.Updates {
 		if n >= len(nodes) {
-			log.Info(ctx, "cannot update a node that hasn't been started. Skipping to next node")
+			log.InfoContext(ctx, "cannot update a node that hasn't been started. Skipping to next node")
 			continue
 		}
 
 		for d, updates := range updateMap {
 			for _, update := range updates {
-				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
-				err := updateDocument(ctx, nodes[n].DB, docIDs[d], update)
+				log.InfoContext(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
+				err := updateDocument(
+					ctx,
+					nodes[n].DB,
+					docIDs[d],
+					update,
+				)
 				require.NoError(t, err)
 
 				// wait for peers to sync
@@ -252,10 +284,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					if n2 == n {
 						continue
 					}
-					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
+					log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
 					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerInfo().ID)
 					require.NoError(t, err)
-					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
+					log.InfoContext(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
 			}
 		}
@@ -266,13 +298,17 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				continue
 			}
 			if n2 >= len(nodes) {
-				log.Info(ctx, "cannot check results of a node that hasn't been started. Skipping to next node")
+				log.InfoContext(ctx, "cannot check results of a node that hasn't been started. Skipping to next node")
 				continue
 			}
 
 			for d, results := range resultsMap {
 				for field, result := range results {
-					doc, err := getDocument(ctx, nodes[n2].DB, docIDs[d])
+					doc, err := getDocument(
+						ctx,
+						nodes[n2].DB,
+						docIDs[d],
+					)
 					require.NoError(t, err)
 
 					val, err := doc.Get(field)
@@ -304,21 +340,29 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	if len(test.DocumentsToReplicate) > 0 {
 		for n, reps := range test.NodeReplicators {
 			for _, doc := range test.DocumentsToReplicate {
-				err := saveDocument(ctx, nodes[n].DB, doc)
+				err := saveDocument(
+					ctx,
+					nodes[n].DB,
+					doc,
+				)
 				require.NoError(t, err)
 			}
 			for _, rep := range reps {
-				log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
+				log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
 				err := nodes[rep].WaitForPushLogByPeerEvent(nodes[n].PeerID())
 				require.NoError(t, err)
-				log.Info(ctx, fmt.Sprintf("Node %d synced", rep))
+				log.InfoContext(ctx, fmt.Sprintf("Node %d synced", rep))
 
 				for docID, results := range test.ReplicatorResult[rep] {
 					for field, result := range results {
 						d, err := client.NewDocIDFromString(docID)
 						require.NoError(t, err)
 
-						doc, err := getDocument(ctx, nodes[rep].DB, d)
+						doc, err := getDocument(
+							ctx,
+							nodes[rep].DB,
+							d,
+						)
 						require.NoError(t, err)
 
 						val, err := doc.Get(field)

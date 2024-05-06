@@ -75,8 +75,9 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 	test := testUtils.TestCase{
 		Description: "Positive increments of a PN Counter with Int type causing overflow behaviour",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return an error
-			// when integer type overflows
+			// GQL mutation will return a type error in this case
+			// because we are testing the internal overflow behaviour with
+			// a int64 but the GQL Int type is an int32.
 			testUtils.CollectionNamedMutationType,
 			testUtils.CollectionSaveMutationType,
 		}),
@@ -173,10 +174,16 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 }
 
 // This test documents what happens when an overflow occurs in a PN Counter with Float type.
-// In this case it is the same as a no-op.
-func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
+func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a PN Counter with Float type and overflow causing a no-op",
+		Description: "Positive increments of a PN Counter with Float type and overflow",
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -194,8 +201,105 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.
 			},
 			testUtils.UpdateDoc{
 				DocID: 0,
+				Doc: fmt.Sprintf(`{
+					"points": %g
+				}`, math.MaxFloat64/10),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": math.Inf(1),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test documents what happens when an overflow occurs in a PN Counter with Float type.
+func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a PN Counter with Float type and overflow",
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %g
+				}`, -math.MaxFloat64),
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: fmt.Sprintf(`{
+					"points": %g
+				}`, -math.MaxFloat64/10),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": math.Inf(-1),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNothing(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a PN Counter with Float type and an insignificant value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %g
+				}`, math.MaxFloat64/10),
+			},
+			testUtils.UpdateDoc{
+				// `1` is insignificant to a large float64 and adding it to the large value
+				// should not result in a value change
 				Doc: `{
-					"points": 1000
+					"points": 1
 				}`,
 			},
 			testUtils.Request{
@@ -208,7 +312,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.
 				Results: []map[string]any{
 					{
 						"name":   "John",
-						"points": math.MaxFloat64,
+						"points": math.MaxFloat64 / 10,
 					},
 				},
 			},

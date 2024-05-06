@@ -66,28 +66,28 @@ type Document struct {
 	// marks if document has unsaved changes
 	isDirty bool
 
-	schemaDescription SchemaDescription
+	collectionDefinition CollectionDefinition
 }
 
-func newEmptyDoc(sd SchemaDescription) *Document {
+func newEmptyDoc(collectionDefinition CollectionDefinition) *Document {
 	return &Document{
-		fields:            make(map[string]Field),
-		values:            make(map[Field]*FieldValue),
-		schemaDescription: sd,
+		fields:               make(map[string]Field),
+		values:               make(map[Field]*FieldValue),
+		collectionDefinition: collectionDefinition,
 	}
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, sd SchemaDescription) *Document {
-	doc := newEmptyDoc(sd)
+func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) *Document {
+	doc := newEmptyDoc(collectionDefinition)
 	doc.id = docID
 	return doc
 }
 
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any, sd SchemaDescription) (*Document, error) {
+func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinition) (*Document, error) {
 	var err error
-	doc := newEmptyDoc(sd)
+	doc := newEmptyDoc(collectionDefinition)
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -126,8 +126,8 @@ func IsJSONArray(obj []byte) bool {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
-	doc := newEmptyDoc(sd)
+func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Document, error) {
+	doc := newEmptyDoc(collectionDefinition)
 	err := doc.SetWithJSON(obj)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
-func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
+func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*Document, error) {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		doc := newEmptyDoc(sd)
+		doc := newEmptyDoc(collectionDefinition)
 		err = doc.setWithFastJSONObject(o)
 		if err != nil {
 			return nil, err
@@ -172,80 +172,130 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	return docs, nil
 }
 
-// IsNillableKind returns true if the given FieldKind is nillable.
-func IsNillableKind(kind FieldKind) bool {
-	switch kind {
-	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON,
-		FieldKind_NILLABLE_BOOL, FieldKind_NILLABLE_FLOAT, FieldKind_NILLABLE_DATETIME,
-		FieldKind_NILLABLE_INT:
-		return true
-	default:
-		return false
-	}
-}
-
 // validateFieldSchema takes a given value as an interface,
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
-	if IsNillableKind(field.Kind) {
+func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
+	if field.Kind.IsNillable() {
 		if val == nil {
-			return nil, nil
+			return NewNormalNil(field.Kind)
 		}
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
-			return nil, nil
+			return NewNormalNil(field.Kind)
 		}
+	}
+
+	if field.Kind.IsObjectArray() {
+		return nil, NewErrFieldNotExist(field.Name)
+	}
+
+	if field.Kind.IsObject() {
+		v, err := getString(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalString(v), nil
 	}
 
 	switch field.Kind {
 	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
-		return getString(val)
+		v, err := getString(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalString(v), nil
 
 	case FieldKind_STRING_ARRAY:
-		return getArray(val, getString)
+		v, err := getArray(val, getString)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalStringArray(v), nil
 
 	case FieldKind_NILLABLE_STRING_ARRAY:
-		return getNillableArray(val, getString)
+		v, err := getNillableArray(val, getString)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableStringArray(v), nil
 
 	case FieldKind_NILLABLE_BOOL:
-		return getBool(val)
+		v, err := getBool(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalBool(v), nil
 
 	case FieldKind_BOOL_ARRAY:
-		return getArray(val, getBool)
+		v, err := getArray(val, getBool)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalBoolArray(v), nil
 
 	case FieldKind_NILLABLE_BOOL_ARRAY:
-		return getNillableArray(val, getBool)
+		v, err := getNillableArray(val, getBool)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableBoolArray(v), nil
 
 	case FieldKind_NILLABLE_FLOAT:
-		return getFloat64(val)
+		v, err := getFloat64(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalFloat(v), nil
 
 	case FieldKind_FLOAT_ARRAY:
-		return getArray(val, getFloat64)
+		v, err := getArray(val, getFloat64)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalFloatArray(v), nil
 
 	case FieldKind_NILLABLE_FLOAT_ARRAY:
-		return getNillableArray(val, getFloat64)
+		v, err := getNillableArray(val, getFloat64)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableFloatArray(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
-		return getDateTime(val)
+		v, err := getDateTime(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalTime(v), nil
 
 	case FieldKind_NILLABLE_INT:
-		return getInt64(val)
+		v, err := getInt64(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalInt(v), nil
 
 	case FieldKind_INT_ARRAY:
-		return getArray(val, getInt64)
+		v, err := getArray(val, getInt64)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalIntArray(v), nil
 
 	case FieldKind_NILLABLE_INT_ARRAY:
-		return getNillableArray(val, getInt64)
-
-	case FieldKind_FOREIGN_OBJECT:
-		return getString(val)
-
-	case FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+		v, err := getNillableArray(val, getInt64)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableIntArray(v), nil
 
 	case FieldKind_NILLABLE_JSON:
-		return getJSON(val)
+		v, err := getJSON(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalString(v), nil
 	}
 
 	return nil, NewErrUnhandledType("FieldKind", field.Kind)
@@ -538,15 +588,15 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.schemaDescription.GetFieldByName(field)
+	fd, exists := doc.collectionDefinition.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsRelation() && !fd.Kind.IsObjectArray() {
+	if fd.Kind.IsObject() && !fd.Kind.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
-		fd, exists = doc.schemaDescription.GetFieldByName(field)
+		fd, exists = doc.collectionDefinition.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}
@@ -573,16 +623,13 @@ func (doc *Document) set(t CType, field string, value *FieldValue) error {
 	return nil
 }
 
-func (doc *Document) setCBOR(t CType, field string, val any) error {
+func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 	value := NewFieldValue(t, val)
 	return doc.set(t, field, value)
 }
 
 func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	for k, v := range value {
-		if v == nil {
-			continue
-		}
 		err := doc.Set(k, v)
 		if err != nil {
 			return err

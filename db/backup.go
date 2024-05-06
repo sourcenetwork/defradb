@@ -19,10 +19,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
+func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		return NewErrOpenFile(err, filepath)
@@ -49,7 +48,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			return err
 		}
 		colName := t.(string)
-		col, err := db.getCollectionByName(ctx, txn, colName)
+		col, err := db.getCollectionByName(ctx, colName)
 		if err != nil {
 			return NewErrFailedToGetCollection(colName, err)
 		}
@@ -72,7 +71,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			// check if self referencing and remove from docMap for key creation
 			resetMap := map[string]any{}
 			for _, field := range col.Schema().Fields {
-				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
 						if docMap[request.NewDocIDFieldName] == val {
 							resetMap[field.Name+request.RelatedObjectID] = val
@@ -85,12 +84,12 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap, col.Schema())
+			doc, err := client.NewDocFromMap(docMap, col.Definition())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.WithTxn(txn).Create(ctx, doc)
+			err = col.Create(ctx, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -101,7 +100,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
-				err = col.WithTxn(txn).Update(ctx, doc)
+				err = col.Update(ctx, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -116,19 +115,19 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 	return nil
 }
 
-func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client.BackupConfig) (err error) {
+func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
 	// old key -> new Key
 	keyChangeCache := map[string]string{}
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, txn, client.CollectionFetchOptions{})
+		cols, err = db.getCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}
 	} else {
 		for _, colName := range config.Collections {
-			col, err := db.getCollectionByName(ctx, txn, colName)
+			col, err := db.getCollectionByName(ctx, colName)
 			if err != nil {
 				return NewErrFailedToGetCollection(colName, err)
 			}
@@ -188,8 +187,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if err != nil {
 			return err
 		}
-		colTxn := col.WithTxn(txn)
-		docIDsCh, err := colTxn.GetAllDocIDs(ctx)
+		docIDsCh, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return err
 		}
@@ -205,7 +203,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 					return err
 				}
 			}
-			doc, err := colTxn.Get(ctx, docResultWithID.ID, false)
+			doc, err := col.Get(ctx, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}
@@ -214,9 +212,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			refFieldName := ""
 			// replace any foreign key if it needs to be changed
 			for _, field := range col.Schema().Fields {
-				switch field.Kind {
-				case client.FieldKind_FOREIGN_OBJECT:
-					if _, ok := colNameCache[field.Schema]; !ok {
+				if field.Kind.IsObject() && !field.Kind.IsArray() {
+					if _, ok := colNameCache[field.Kind.Underlying()]; !ok {
 						continue
 					}
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
@@ -230,9 +227,9 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignCol, err := db.getCollectionByName(ctx, txn, field.Schema)
+							foreignCol, err := db.getCollectionByName(ctx, field.Kind.Underlying())
 							if err != nil {
-								return NewErrFailedToGetCollection(field.Schema, err)
+								return NewErrFailedToGetCollection(field.Kind.Underlying(), err)
 							}
 							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {
@@ -260,7 +257,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Schema())
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Definition())
 								if err != nil {
 									return err
 								}
@@ -291,7 +288,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM, col.Schema())
+			newDoc, err := client.NewDocFromMap(docM, col.Definition())
 			if err != nil {
 				return err
 			}

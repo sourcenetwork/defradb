@@ -24,8 +24,6 @@ import (
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -60,7 +58,10 @@ func (c *Collection) Definition() client.CollectionDefinition {
 	return c.def
 }
 
-func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Create(
+	ctx context.Context,
+	doc *client.Document,
+) error {
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -71,10 +72,12 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(body))
 	if err != nil {
 		return err
 	}
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
@@ -83,7 +86,10 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	return nil
 }
 
-func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
+func (c *Collection) CreateMany(
+	ctx context.Context,
+	docs []*client.Document,
+) error {
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -97,25 +103,32 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 		}
 		docMapList = append(docMapList, docMap)
 	}
+
 	body, err := json.Marshal(docMapList)
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
 	}
+
 	for _, doc := range docs {
 		doc.Clean()
 	}
 	return nil
 }
 
-func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Update(
+	ctx context.Context,
+	doc *client.Document,
+) error {
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -130,6 +143,7 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
@@ -138,18 +152,24 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	return nil
 }
 
-func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Save(
+	ctx context.Context,
+	doc *client.Document,
+) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
-	if errors.Is(err, client.ErrDocumentNotFound) {
+	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return c.Create(ctx, doc)
 	}
 	return err
 }
 
-func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *Collection) Delete(
+	ctx context.Context,
+	docID client.DocID,
+) (bool, error) {
 	if !c.Description().Name.HasValue() {
 		return false, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -160,6 +180,7 @@ func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	if err != nil {
 		return false, err
 	}
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return false, err
@@ -167,7 +188,10 @@ func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	return true, nil
 }
 
-func (c *Collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *Collection) Exists(
+	ctx context.Context,
+	docID client.DocID,
+) (bool, error) {
 	_, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return false, err
@@ -175,28 +199,21 @@ func (c *Collection) Exists(ctx context.Context, docID client.DocID) (bool, erro
 	return true, nil
 }
 
-func (c *Collection) UpdateWith(ctx context.Context, target any, updater string) (*client.UpdateResult, error) {
-	switch t := target.(type) {
-	case string, map[string]any, *request.Filter:
-		return c.UpdateWithFilter(ctx, t, updater)
-	case client.DocID:
-		return c.UpdateWithDocID(ctx, t, updater)
-	case []client.DocID:
-		return c.UpdateWithDocIDs(ctx, t, updater)
-	default:
-		return nil, client.ErrInvalidUpdateTarget
-	}
-}
-
-func (c *Collection) updateWith(
+func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
-	request CollectionUpdateRequest,
+	filter any,
+	updater string,
 ) (*client.UpdateResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
 
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+
+	request := CollectionUpdateRequest{
+		Filter:  filter,
+		Updater: updater,
+	}
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -206,6 +223,7 @@ func (c *Collection) updateWith(
 	if err != nil {
 		return nil, err
 	}
+
 	var result client.UpdateResult
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
@@ -213,59 +231,9 @@ func (c *Collection) updateWith(
 	return &result, nil
 }
 
-func (c *Collection) UpdateWithFilter(
+func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	updater string,
-) (*client.UpdateResult, error) {
-	return c.updateWith(ctx, CollectionUpdateRequest{
-		Filter:  filter,
-		Updater: updater,
-	})
-}
-
-func (c *Collection) UpdateWithDocID(
-	ctx context.Context,
-	docID client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	return c.updateWith(ctx, CollectionUpdateRequest{
-		DocID:   docID.String(),
-		Updater: updater,
-	})
-}
-
-func (c *Collection) UpdateWithDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-	updater string,
-) (*client.UpdateResult, error) {
-	var strDocIDs []string
-	for _, docID := range docIDs {
-		strDocIDs = append(strDocIDs, docID.String())
-	}
-	return c.updateWith(ctx, CollectionUpdateRequest{
-		DocIDs:  strDocIDs,
-		Updater: updater,
-	})
-}
-
-func (c *Collection) DeleteWith(ctx context.Context, target any) (*client.DeleteResult, error) {
-	switch t := target.(type) {
-	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, t)
-	case client.DocID:
-		return c.DeleteWithDocID(ctx, t)
-	case []client.DocID:
-		return c.DeleteWithDocIDs(ctx, t)
-	default:
-		return nil, client.ErrInvalidDeleteTarget
-	}
-}
-
-func (c *Collection) deleteWith(
-	ctx context.Context,
-	request CollectionDeleteRequest,
 ) (*client.DeleteResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
@@ -273,14 +241,20 @@ func (c *Collection) deleteWith(
 
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
 
+	request := CollectionDeleteRequest{
+		Filter: filter,
+	}
+
 	body, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
+
 	var result client.DeleteResult
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
@@ -288,29 +262,11 @@ func (c *Collection) deleteWith(
 	return &result, nil
 }
 
-func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
-	return c.deleteWith(ctx, CollectionDeleteRequest{
-		Filter: filter,
-	})
-}
-
-func (c *Collection) DeleteWithDocID(ctx context.Context, docID client.DocID) (*client.DeleteResult, error) {
-	return c.deleteWith(ctx, CollectionDeleteRequest{
-		DocID: docID.String(),
-	})
-}
-
-func (c *Collection) DeleteWithDocIDs(ctx context.Context, docIDs []client.DocID) (*client.DeleteResult, error) {
-	var strDocIDs []string
-	for _, docID := range docIDs {
-		strDocIDs = append(strDocIDs, docID.String())
-	}
-	return c.deleteWith(ctx, CollectionDeleteRequest{
-		DocIDs: strDocIDs,
-	})
-}
-
-func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+func (c *Collection) Get(
+	ctx context.Context,
+	docID client.DocID,
+	showDeleted bool,
+) (*client.Document, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -327,11 +283,12 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err != nil {
 		return nil, err
 	}
+
 	data, err := c.http.request(req)
 	if err != nil {
 		return nil, err
 	}
-	doc := client.NewDocWithID(docID, c.def.Schema)
+	doc := client.NewDocWithID(docID, c.def)
 	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
@@ -340,14 +297,9 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	return doc, nil
 }
 
-func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
-	return &Collection{
-		http: c.http.withTxn(tx.ID()),
-		def:  c.def,
-	}
-}
-
-func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
+func (c *Collection) GetAllDocIDs(
+	ctx context.Context,
+) (<-chan client.DocIDResult, error) {
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -358,6 +310,7 @@ func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResul
 	if err != nil {
 		return nil, err
 	}
+
 	c.http.setDefaultHeaders(req)
 
 	res, err := c.http.client.Do(req)

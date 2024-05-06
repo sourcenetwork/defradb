@@ -15,10 +15,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 const (
@@ -41,11 +40,13 @@ var configPaths = []string{
 
 // configFlags is a mapping of config keys to cli flags to bind to.
 var configFlags = map[string]string{
-	"log.level":                         "loglevel",
-	"log.output":                        "logoutput",
-	"log.format":                        "logformat",
-	"log.stacktrace":                    "logtrace",
-	"log.nocolor":                       "lognocolor",
+	"log.level":                         "log-level",
+	"log.output":                        "log-output",
+	"log.format":                        "log-format",
+	"log.stacktrace":                    "log-stacktrace",
+	"log.source":                        "log-source",
+	"log.overrides":                     "log-overrides",
+	"log.nocolor":                       "log-no-color",
 	"api.address":                       "url",
 	"datastore.maxtxnretries":           "max-txn-retries",
 	"datastore.store":                   "store",
@@ -125,14 +126,17 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 		}
 	}
 
-	logCfg := loggingConfig(cfg.Sub("log"))
-	logCfg.OverridesByLoggerName = make(map[string]logging.Config)
+	// set default logging config
+	corelog.SetConfig(corelog.Config{
+		Level:            cfg.GetString("log.level"),
+		Format:           cfg.GetString("log.format"),
+		Output:           cfg.GetString("log.output"),
+		EnableStackTrace: cfg.GetBool("log.stacktrace"),
+		EnableSource:     cfg.GetBool("log.source"),
+	})
 
-	// apply named logging overrides
-	for key := range cfg.GetStringMap("log.overrides") {
-		logCfg.OverridesByLoggerName[key] = loggingConfig(cfg.Sub("log.overrides." + key))
-	}
-	logging.SetConfig(logCfg)
+	// set logging config overrides
+	corelog.SetConfigOverrides(cfg.GetString("log.overrides"))
 
 	return cfg, nil
 }
@@ -146,40 +150,4 @@ func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
 		}
 	}
 	return nil
-}
-
-// loggingConfig returns a new logging config from the given config.
-func loggingConfig(cfg *viper.Viper) logging.Config {
-	var level int8
-	switch value := cfg.GetString("level"); value {
-	case configLogLevelDebug:
-		level = logging.Debug
-	case configLogLevelInfo:
-		level = logging.Info
-	case configLogLevelError:
-		level = logging.Error
-	case configLogLevelFatal:
-		level = logging.Fatal
-	default:
-		level = logging.Info
-	}
-
-	var format logging.EncoderFormat
-	switch value := cfg.GetString("format"); value {
-	case configLogFormatJSON:
-		format = logging.JSON
-	case configLogFormatCSV:
-		format = logging.CSV
-	default:
-		format = logging.CSV
-	}
-
-	return logging.Config{
-		Level:            logging.NewLogLevelOption(level),
-		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.GetBool("stacktrace")),
-		DisableColor:     logging.NewDisableColorOption(cfg.GetBool("nocolor")),
-		EncoderFormat:    logging.NewEncoderFormatOption(format),
-		OutputPaths:      []string{cfg.GetString("output")},
-		EnableCaller:     logging.NewEnableCallerOption(cfg.GetBool("caller")),
-	}
 }

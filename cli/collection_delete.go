@@ -17,17 +17,20 @@ import (
 )
 
 func MakeCollectionDeleteCommand() *cobra.Command {
-	var argDocIDs []string
+	var argDocID string
 	var filter string
 	var cmd = &cobra.Command{
-		Use:   "delete [--filter <filter> --docID <docID>]",
+		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
 		Short: "Delete documents by docID or filter.",
 		Long: `Delete documents by docID or filter and lists the number of documents deleted.
 		
-Example: delete by docID(s)
-  defradb client collection delete --name User --docID bae-123,bae-456
+Example: delete by docID:
+  defradb client collection delete  --name User --docID bae-123
 
-Example: delete by filter
+Example: delete by docID with identity:
+  defradb client collection delete -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User --docID bae-123
+
+Example: delete by filter:
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -37,30 +40,13 @@ Example: delete by filter
 			}
 
 			switch {
-			case len(argDocIDs) == 1:
-				docID, err := client.NewDocIDFromString(argDocIDs[0])
+			case argDocID != "":
+				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err
 				}
-				res, err := col.DeleteWithDocID(cmd.Context(), docID)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, res)
-			case len(argDocIDs) > 1:
-				docIDs := make([]client.DocID, len(argDocIDs))
-				for i, v := range argDocIDs {
-					docID, err := client.NewDocIDFromString(v)
-					if err != nil {
-						return err
-					}
-					docIDs[i] = docID
-				}
-				res, err := col.DeleteWithDocIDs(cmd.Context(), docIDs)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, res)
+				_, err = col.Delete(cmd.Context(), docID)
+				return err
 			case filter != "":
 				res, err := col.DeleteWithFilter(cmd.Context(), filter)
 				if err != nil {
@@ -72,7 +58,7 @@ Example: delete by filter
 			}
 		},
 	}
-	cmd.Flags().StringSliceVar(&argDocIDs, "docID", nil, "Document ID")
+	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	return cmd
 }

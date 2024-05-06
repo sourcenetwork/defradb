@@ -13,6 +13,10 @@ package planner
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
@@ -82,17 +86,27 @@ type PlanContext struct {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn datastore.Txn
-	db  client.Store
+	txn      datastore.Txn
+	identity immutable.Option[acpIdentity.Identity]
+	acp      immutable.Option[acp.ACP]
+	db       client.Store
 
 	ctx context.Context
 }
 
-func New(ctx context.Context, db client.Store, txn datastore.Txn) *Planner {
+func New(
+	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
+	acp immutable.Option[acp.ACP],
+	db client.Store,
+	txn datastore.Txn,
+) *Planner {
 	return &Planner{
-		txn: txn,
-		db:  db,
-		ctx: ctx,
+		txn:      txn,
+		identity: identity,
+		acp:      acp,
+		db:       db,
+		ctx:      ctx,
 	}
 }
 
@@ -114,7 +128,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newPlan(n.Selections[0])
 
 	case *request.Select:
-		m, err := mapper.ToSelect(p.ctx, p.db, n)
+		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, n)
 		if err != nil {
 			return nil, err
 		}
@@ -347,7 +361,7 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	desc := slct.collection.Description()
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
-		if len(indexes) > 0 {
+		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
 			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
 			relatedField := mapper.Field{Name: node.subTypeName, Index: subInd}
 			fieldFilter := filter.UnwrapRelation(filter.CopyField(

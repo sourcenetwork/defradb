@@ -46,8 +46,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiaqs2jvnjgddkkhxzhhfmrr6o4yohhqymbi55b7ltynxo4tmge4wu",
-					DestinationSchemaVersionID: "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha",
+					SourceSchemaVersionID:      "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce",
+					DestinationSchemaVersionID: "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -145,8 +145,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiaqs2jvnjgddkkhxzhhfmrr6o4yohhqymbi55b7ltynxo4tmge4wu",
-					DestinationSchemaVersionID: "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha",
+					SourceSchemaVersionID:      "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce",
+					DestinationSchemaVersionID: "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -163,8 +163,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha",
-					DestinationSchemaVersionID: "bafkreidtw4d7bv57wmwwwxkejburwuktc2kiakkmzgiacyy5vl7gj2ih5i",
+					SourceSchemaVersionID:      "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm",
+					DestinationSchemaVersionID: "bafkreidiohu3klvu4f2fdqcywtpqild4v7spsn7ivsjtg6sea6ome2oc4i",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -253,8 +253,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiaqs2jvnjgddkkhxzhhfmrr6o4yohhqymbi55b7ltynxo4tmge4wu",
-					DestinationSchemaVersionID: "bafkreigc5whyvnmgqvdr6yk366ct4dddgmwnwrnbgbmu4f3edm3sfwerha",
+					SourceSchemaVersionID:      "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce",
+					DestinationSchemaVersionID: "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -355,8 +355,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				// Register a migration from version 2 to version 3 on both nodes.
 				// There is no migration from version 1 to 2, thus node 1 has no knowledge of schema version 2.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiexwzcpjuz3eaghcanr3fnmyc6el5w6i5ovhop5zfrqctucwlraba",
-					DestinationSchemaVersionID: "bafkreicyyn7ourjvr2o6bqa57z2bl5wz5u2ykdlmd5v7n53cw7l6xsdplm",
+					SourceSchemaVersionID:      "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreib65lld2tdyvlilbumlcccftqwvflpgutugghf5afrnlhdg7dgyv4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

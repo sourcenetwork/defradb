@@ -84,24 +84,30 @@ const DefaultPoolSize int = 5
 // NewRegistry instantiates a new registery.
 //
 // It will be of size 5 (per schema version) if a size is not provided.
-func NewRegistry(lensPoolSize immutable.Option[int], db TxnSource) client.LensRegistry {
-	var size int
-	if lensPoolSize.HasValue() {
-		size = lensPoolSize.Value()
-	} else {
-		size = DefaultPoolSize
+func NewRegistry(
+	db TxnSource,
+	poolSize immutable.Option[int],
+	runtime immutable.Option[module.Runtime],
+) client.LensRegistry {
+	registry := &lensRegistry{
+		poolSize:                    DefaultPoolSize,
+		runtime:                     wasmtime.New(),
+		modulesByPath:               map[string]module.Module{},
+		lensPoolsByCollectionID:     map[uint32]*lensPool{},
+		reversedPoolsByCollectionID: map[uint32]*lensPool{},
+		txnCtxs:                     map[uint64]*txnContext{},
+	}
+
+	if poolSize.HasValue() {
+		registry.poolSize = poolSize.Value()
+	}
+	if runtime.HasValue() {
+		registry.runtime = runtime.Value()
 	}
 
 	return &implicitTxnLensRegistry{
-		db: db,
-		registry: &lensRegistry{
-			poolSize:                    size,
-			runtime:                     wasmtime.New(),
-			modulesByPath:               map[string]module.Module{},
-			lensPoolsByCollectionID:     map[uint32]*lensPool{},
-			reversedPoolsByCollectionID: map[uint32]*lensPool{},
-			txnCtxs:                     map[uint64]*txnContext{},
-		},
+		db:       db,
+		registry: registry,
 	}
 }
 

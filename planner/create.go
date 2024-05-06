@@ -57,7 +57,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	doc, err := client.NewDocFromMap(n.input, n.collection.Schema())
+	doc, err := client.NewDocFromMap(n.input, n.collection.Definition())
 	if err != nil {
 		n.err = err
 		return err
@@ -78,7 +78,10 @@ func (n *createNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	if err := n.collection.WithTxn(n.p.txn).Create(n.p.ctx, n.doc); err != nil {
+	if err := n.collection.Create(
+		n.p.ctx,
+		n.doc,
+	); err != nil {
 		return false, err
 	}
 

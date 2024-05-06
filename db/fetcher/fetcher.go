@@ -18,11 +18,16 @@ import (
 	"github.com/bits-and-blooms/bitset"
 	dsq "github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/permission"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
@@ -56,7 +61,9 @@ func (s *ExecInfo) Reset() {
 type Fetcher interface {
 	Init(
 		ctx context.Context,
+		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
+		acp immutable.Option[acp.ACP],
 		col client.Collection,
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,
@@ -81,6 +88,10 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
+	identity              immutable.Option[acpIdentity.Identity]
+	acp                   immutable.Option[acp.ACP]
+	passedPermissionCheck bool // have valid permission to access
+
 	col         client.Collection
 	reverse     bool
 	deletedDocs bool
@@ -136,7 +147,9 @@ type DocumentFetcher struct {
 // Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -146,7 +159,7 @@ func (df *DocumentFetcher) Init(
 ) error {
 	df.txn = txn
 
-	err := df.init(col, fields, filter, docmapper, reverse)
+	err := df.init(identity, acp, col, fields, filter, docmapper, reverse)
 	if err != nil {
 		return err
 	}
@@ -156,19 +169,23 @@ func (df *DocumentFetcher) Init(
 			df.deletedDocFetcher = new(DocumentFetcher)
 			df.deletedDocFetcher.txn = txn
 		}
-		return df.deletedDocFetcher.init(col, fields, filter, docmapper, reverse)
+		return df.deletedDocFetcher.init(identity, acp, col, fields, filter, docmapper, reverse)
 	}
 
 	return nil
 }
 
 func (df *DocumentFetcher) init(
+	identity immutable.Option[acpIdentity.Identity],
+	acp immutable.Option[acp.ACP],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
 	reverse bool,
 ) error {
+	df.identity = identity
+	df.acp = acp
 	df.col = col
 	df.reverse = reverse
 	df.initialized = true
@@ -476,6 +493,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 			}
 		}
 		df.doc.id = []byte(kv.Key.DocID)
+		df.passedPermissionCheck = false
 		df.passedFilter = false
 		df.ranFilter = false
 
@@ -544,24 +562,26 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 				(df.reverse && ddf.kv.Key.DocID > df.kv.Key.DocID) ||
 				(!df.reverse && ddf.kv.Key.DocID < df.kv.Key.DocID) {
 				encdoc, execInfo, err := ddf.FetchNext(ctx)
+
 				if err != nil {
 					return nil, ExecInfo{}, err
 				}
-				if encdoc != nil {
-					return encdoc, execInfo, err
-				}
 
 				resultExecInfo.Add(execInfo)
+				if encdoc != nil {
+					return encdoc, resultExecInfo, nil
+				}
 			}
 		}
 	}
 
 	encdoc, execInfo, err := df.fetchNext(ctx)
+
 	if err != nil {
 		return nil, ExecInfo{}, err
 	}
-	resultExecInfo.Add(execInfo)
 
+	resultExecInfo.Add(execInfo)
 	return encdoc, resultExecInfo, err
 }
 
@@ -573,9 +593,6 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 	if df.kv == nil {
 		return nil, ExecInfo{}, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
 	}
-	// save the DocID of the current kv pair so we can track when we cross the doc pair boundries
-	// keyparts := df.kv.Key.List()
-	// key := keyparts[len(keyparts)-2]
 
 	prevExecInfo := df.execInfo
 	defer func() { df.execInfo.Add(prevExecInfo) }()
@@ -584,8 +601,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 	// we'll know when were done when either
 	// A) Reach the end of the iterator
 	for {
-		err := df.processKV(df.kv)
-		if err != nil {
+		if err := df.processKV(df.kv); err != nil {
 			return nil, ExecInfo{}, err
 		}
 
@@ -606,16 +622,45 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			}
 		}
 
-		// if we don't pass the filter (ran and pass)
-		// theres no point in collecting other select fields
-		// so we seek to the next doc
-		spansDone, docDone, err := df.nextKey(ctx, !df.passedFilter && df.ranFilter)
+		// Check if we have read access, for document on this collection, with the given identity.
+		if !df.passedPermissionCheck {
+			if !df.acp.HasValue() {
+				// If no acp is available, then we have unrestricted access.
+				df.passedPermissionCheck = true
+			} else {
+				hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
+					ctx,
+					df.identity,
+					df.acp.Value(),
+					df.col,
+					acp.ReadPermission,
+					df.kv.Key.DocID,
+				)
+
+				if err != nil {
+					df.passedPermissionCheck = false
+					return nil, ExecInfo{}, err
+				}
+
+				df.passedPermissionCheck = hasPermission
+			}
+		}
+
+		// if we don't pass the filter (ran and pass) or if we don't have access to document then
+		// there is no point in collecting other select fields, so we seek to the next doc.
+		spansDone, docDone, err := df.nextKey(ctx, !df.passedPermissionCheck || !df.passedFilter && df.ranFilter)
+
 		if err != nil {
 			return nil, ExecInfo{}, err
 		}
 
-		if docDone {
-			df.execInfo.DocsFetched++
+		if !docDone {
+			continue
+		}
+
+		df.execInfo.DocsFetched++
+
+		if df.passedPermissionCheck {
 			if df.filter != nil {
 				// if we passed, return
 				if df.passedFilter {
@@ -636,21 +681,11 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			} else {
 				return df.doc, df.execInfo, nil
 			}
-
-			if !spansDone {
-				continue
-			}
-
-			return nil, df.execInfo, nil
 		}
 
-		// // crossed document kv boundary?
-		// // if so, return document
-		// newkeyparts := df.kv.Key.List()
-		// newKey := newkeyparts[len(newkeyparts)-2]
-		// if newKey != key {
-		// 	return df.doc, nil
-		// }
+		if spansDone {
+			return nil, df.execInfo, nil
+		}
 	}
 }
 

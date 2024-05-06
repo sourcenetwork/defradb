@@ -37,7 +37,7 @@ Example: patch from an argument string:
   defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'
 
 Example: patch from file:
-  defradb client schema patch -f patch.json
+  defradb client schema patch -p patch.json
 
 Example: patch from stdin:
   cat patch.json | defradb client schema patch -

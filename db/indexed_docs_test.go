@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -58,7 +60,7 @@ func (f *indexTestFixture) newUserDoc(name string, age int, col client.Collectio
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, col.Schema())
+	doc, err := client.NewDocFromJSON(data, col.Definition())
 	require.NoError(f.t, err)
 	return doc
 }
@@ -68,7 +70,7 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string, col cli
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, col.Schema())
+	doc, err := client.NewDocFromJSON(data, col.Definition())
 	require.NoError(f.t, err)
 	return doc
 }
@@ -129,7 +131,8 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		return key
 	}
 
-	cols, err := b.f.db.getCollections(b.f.ctx, b.f.txn, client.CollectionFetchOptions{})
+	ctx := SetContextTxn(b.f.ctx, b.f.txn)
+	cols, err := b.f.db.getCollections(ctx, client.CollectionFetchOptions{})
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {
@@ -166,15 +169,25 @@ indexLoop:
 		hasNilValue := false
 		for i, fieldName := range b.fieldsNames {
 			fieldValue, err := b.doc.GetValue(fieldName)
-			var val any
+			var val client.NormalValue
 			if err != nil {
 				if !errors.Is(err, client.ErrFieldNotExist) {
 					require.NoError(b.f.t, err)
 				}
-			} else if fieldValue != nil {
-				val = fieldValue.Value()
 			}
-			if val == nil {
+			if fieldValue != nil {
+				val = fieldValue.NormalValue()
+			} else {
+				kind := client.FieldKind_NILLABLE_STRING
+				if fieldName == usersAgeFieldName {
+					kind = client.FieldKind_NILLABLE_INT
+				} else if fieldName == usersWeightFieldName {
+					kind = client.FieldKind_NILLABLE_FLOAT
+				}
+				val, err = client.NewNormalNil(kind)
+				require.NoError(b.f.t, err)
+			}
+			if val.IsNil() {
 				hasNilValue = true
 			}
 			descending := false
@@ -185,7 +198,7 @@ indexLoop:
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.Fields = append(key.Fields, core.IndexedField{Value: b.doc.ID().String()})
+			key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(b.doc.ID().String())})
 		}
 	}
 
@@ -310,7 +323,8 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
 	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	ctx := SetContextTxn(f.ctx, mockTxn)
+	err := f.users.Create(ctx, doc)
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
@@ -325,7 +339,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	}{Age: 21, Weight: 154.1})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(data, f.users.Schema())
+	doc, err := client.NewDocFromJSON(data, f.users.Definition())
 	require.NoError(f.t, err)
 
 	err = f.users.Create(f.ctx, doc)
@@ -348,7 +362,8 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	ctx := SetContextTxn(f.ctx, mockTxn)
+	err := f.users.Create(ctx, doc)
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
@@ -366,7 +381,8 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(nil, testErr)
 
-	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	ctx := SetContextTxn(f.ctx, mockTxn)
+	err := f.users.Create(ctx, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -533,7 +549,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -578,8 +594,30 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Unset()
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -756,7 +794,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	require.NoError(t, err)
 
 	// retrieve the collection without index cached
-	usersCol, err := f.db.getCollectionByName(f.ctx, f.txn, usersColName)
+	ctx := SetContextTxn(f.ctx, f.txn)
+	usersCol, err := f.db.getCollectionByName(ctx, usersColName)
 	require.NoError(t, err)
 
 	testErr := errors.New("test error")
@@ -772,7 +811,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		return fetcherMocks.NewStubbedFetcher(t)
 	}
-	err = usersCol.WithTxn(mockedTxn).Update(f.ctx, doc)
+	ctx = SetContextTxn(f.ctx, mockedTxn)
+	err = usersCol.Update(ctx, doc)
 	require.ErrorIs(t, err, testErr)
 }
 
@@ -787,8 +827,30 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Unset()
+				f.EXPECT().Init(
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+					mock.Anything,
+				).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -886,11 +948,35 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	f.users.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		f.EXPECT().Init(
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Unset()
+		f.EXPECT().Init(
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).
 			RunAndReturn(func(
 				ctx context.Context,
+				identity immutable.Option[acpIdentity.Identity],
 				txn datastore.Txn,
+				acp immutable.Option[acp.ACP],
 				col client.Collection,
 				fields []client.FieldDefinition,
 				filter *mapper.Filter,
@@ -968,7 +1054,8 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Datastore().Unset()
 		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
 
-		err = f.users.WithTxn(mockedTxn).Update(f.ctx, doc)
+		ctx := SetContextTxn(f.ctx, mockedTxn)
+		err = f.users.Update(ctx, doc)
 		require.ErrorIs(t, err, testErr)
 	}
 }
@@ -983,7 +1070,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1069,7 +1156,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1183,7 +1270,7 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Definition())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1196,7 +1283,7 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	assert.Len(t, data, 0)
 }
 
-func TestComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
+func TestUniqueComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
 	testCases := []struct {
 		Name   string
 		Doc    string
@@ -1238,34 +1325,36 @@ func TestComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		f := newIndexTestFixture(t)
-		defer f.db.Close()
+		t.Run(tc.Name, func(t *testing.T) {
+			f := newIndexTestFixture(t)
+			defer f.db.Close()
 
-		indexDesc := makeUnique(addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
-		_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
-		require.NoError(f.t, err)
-		f.commitTxn()
+			indexDesc := makeUnique(addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
+			_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+			require.NoError(f.t, err)
+			f.commitTxn()
 
-		doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Schema())
-		require.NoError(f.t, err)
+			doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Definition())
+			require.NoError(f.t, err)
 
-		f.saveDocToCollection(doc, f.users)
+			f.saveDocToCollection(doc, f.users)
 
-		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
-			Doc(doc).Unique().Build()
+			oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+				Doc(doc).Unique().Build()
 
-		require.NoError(t, doc.SetWithJSON([]byte(tc.Update)))
+			require.NoError(t, doc.SetWithJSON([]byte(tc.Update)))
 
-		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
-			Doc(doc).Unique().Build()
+			newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+				Doc(doc).Unique().Build()
 
-		require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
-		f.commitTxn()
+			require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
+			f.commitTxn()
 
-		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
-		require.Error(t, err, oldKey.ToString(), oldKey.ToDS(), tc.Name)
-		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
-		require.NoError(t, err, newKey.ToString(), newKey.ToDS(), tc.Name)
+			_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+			require.Error(t, err, oldKey.ToString(), oldKey.ToDS(), tc.Name)
+			_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+			require.NoError(t, err, newKey.ToString(), newKey.ToDS(), tc.Name)
+		})
 	}
 }
 

@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/description"
 )
 
@@ -37,7 +36,6 @@ const (
 // and creates the necessary collections, request types, etc.
 func (db *db) addSchema(
 	ctx context.Context,
-	txn datastore.Txn,
 	schemaString string,
 ) ([]client.CollectionDescription, error) {
 	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
@@ -47,14 +45,20 @@ func (db *db) addSchema(
 
 	returnDescriptions := make([]client.CollectionDescription, len(newDefinitions))
 	for i, definition := range newDefinitions {
-		col, err := db.createCollection(ctx, txn, definition)
+		// Only accept the schema if policy description is valid, otherwise reject the schema.
+		err := db.validateCollectionDefinitionPolicyDesc(ctx, definition.Description.Policy)
+		if err != nil {
+			return nil, err
+		}
+
+		col, err := db.createCollection(ctx, definition, newDefinitions)
 		if err != nil {
 			return nil, err
 		}
 		returnDescriptions[i] = col.Description()
 	}
 
-	err = db.loadSchema(ctx, txn)
+	err = db.loadSchema(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +66,10 @@ func (db *db) addSchema(
 	return returnDescriptions, nil
 }
 
-func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
-	definitions, err := db.getAllActiveDefinitions(ctx, txn)
+func (db *db) loadSchema(ctx context.Context) error {
+	txn := mustGetContextTxn(ctx)
+
+	definitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {
 		return err
 	}
@@ -84,11 +90,12 @@ func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
 // will be applied.
 func (db *db) patchSchema(
 	ctx context.Context,
-	txn datastore.Txn,
 	patchString string,
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
+	txn := mustGetContextTxn(ctx)
+
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
@@ -131,7 +138,6 @@ func (db *db) patchSchema(
 	for _, schema := range newSchemaByName {
 		err := db.updateSchema(
 			ctx,
-			txn,
 			existingSchemaByName,
 			newSchemaByName,
 			schema,
@@ -143,7 +149,7 @@ func (db *db) patchSchema(
 		}
 	}
 
-	return db.loadSchema(ctx, txn)
+	return db.loadSchema(ctx)
 }
 
 // substituteSchemaPatch handles any substitution of values that may be required before
@@ -170,10 +176,10 @@ func substituteSchemaPatch(
 			return nil, err
 		}
 
-		path = strings.TrimPrefix(path, "/")
-		splitPath := strings.Split(path, "/")
-
 		if value, hasValue := patchOperation["value"]; hasValue {
+			path = strings.TrimPrefix(path, "/")
+			splitPath := strings.Split(path, "/")
+
 			var newPatchValue immutable.Option[any]
 			var field map[string]any
 			isField := isField(splitPath)
@@ -223,40 +229,6 @@ func substituteSchemaPatch(
 				}
 			}
 
-			if isField {
-				if kind, isString := field["Kind"].(string); isString {
-					substitute, schemaName, err := getSubstituteFieldKind(kind, schemaByName)
-					if err != nil {
-						return nil, err
-					}
-
-					field["Kind"] = substitute
-					if schemaName != "" {
-						if field["Schema"] != nil && field["Schema"] != schemaName {
-							return nil, NewErrFieldKindDoesNotMatchFieldSchema(kind, field["Schema"].(string))
-						}
-						field["Schema"] = schemaName
-					}
-
-					newPatchValue = immutable.Some[any](field)
-				}
-			} else if isFieldKind(splitPath) {
-				var kind any
-				err = json.Unmarshal(*value, &kind)
-				if err != nil {
-					return nil, err
-				}
-
-				if kind, isString := kind.(string); isString {
-					substitute, _, err := getSubstituteFieldKind(kind, schemaByName)
-					if err != nil {
-						return nil, err
-					}
-
-					newPatchValue = immutable.Some[any](substitute)
-				}
-			}
-
 			if newPatchValue.HasValue() {
 				substitute, err := json.Marshal(newPatchValue.Value())
 				if err != nil {
@@ -274,10 +246,9 @@ func substituteSchemaPatch(
 
 func (db *db) getSchemaByVersionID(
 	ctx context.Context,
-	txn datastore.Txn,
 	versionID string,
 ) (client.SchemaDescription, error) {
-	schemas, err := db.getSchemas(ctx, txn, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
+	schemas, err := db.getSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -288,9 +259,10 @@ func (db *db) getSchemaByVersionID(
 
 func (db *db) getSchemas(
 	ctx context.Context,
-	txn datastore.Txn,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
+	txn := mustGetContextTxn(ctx)
+
 	schemas := []client.SchemaDescription{}
 
 	switch {
@@ -331,36 +303,6 @@ func (db *db) getSchemas(
 	return result, nil
 }
 
-// getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
-// Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
-//
-// If the value represents a foreign relation the collection name will also be returned.
-func getSubstituteFieldKind(
-	kind string,
-	schemaByName map[string]client.SchemaDescription,
-) (client.FieldKind, string, error) {
-	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-	if substituteFound {
-		return substitute, "", nil
-	} else {
-		var collectionName string
-		var substitute client.FieldKind
-		if len(kind) > 0 && kind[0] == '[' && kind[len(kind)-1] == ']' {
-			collectionName = kind[1 : len(kind)-1]
-			substitute = client.FieldKind_FOREIGN_OBJECT_ARRAY
-		} else {
-			collectionName = kind
-			substitute = client.FieldKind_FOREIGN_OBJECT
-		}
-
-		if _, substituteFound := schemaByName[collectionName]; substituteFound {
-			return substitute, collectionName, nil
-		}
-
-		return 0, "", NewErrFieldKindNotFound(kind)
-	}
-}
-
 // isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
@@ -370,13 +312,6 @@ func isFieldOrInner(path []string) bool {
 // isField returns true if the given path points to a SchemaFieldDescription.
 func isField(path []string) bool {
 	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
-}
-
-// isField returns true if the given path points to a SchemaFieldDescription.Kind property.
-func isFieldKind(path []string) bool {
-	return len(path) == 4 &&
-		path[fieldIndexPathIndex+1] == "Kind" &&
-		path[fieldsPathIndex] == "Fields"
 }
 
 // containsLetter returns true if the string contains a single unicode character.

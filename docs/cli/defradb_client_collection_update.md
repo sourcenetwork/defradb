@@ -6,26 +6,30 @@ Update documents by docID or filter.
 
 Update documents by docID or filter.
 		
-Example: update from string
+Example: update from string:
   defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
-Example: update by filter
+Example: update by filter:
   defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: update by docIDs
+Example: update by docID:
   defradb client collection update --name User \
-  --docID bae-123,bae-456 --updater '{ "verified": true }'
+  --docID bae-123 --updater '{ "verified": true }'
+
+Example: update private docID, with identity:
+  defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
+  --docID bae-123 --updater '{ "verified": true }'
 		
 
 ```
-defradb client collection update [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
+defradb client collection update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
 ```
 
 ### Options
 
 ```
-      --docID strings    Document ID
+      --docID string     Document ID
       --filter string    Document filter
   -h, --help             help for update
       --updater string   Document updater
@@ -36,11 +40,14 @@ defradb client collection update [--filter <filter> --docID <docID> --updater <u
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
       --get-inactive                  Get inactive collections as well as active
-      --logformat string              Log format to use. Options are csv, json (default "csv")
-      --loglevel string               Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor                    Disable colored log output
-      --logoutput string              Log output path (default "stderr")
-      --logtrace                      Include stacktrace in error and fatal logs
+  -i, --identity string               ACP Identity
+      --log-format string             Log format to use. Options are text or json (default "text")
+      --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-no-color                  Disable colored log output
+      --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                    Include source location in logs
+      --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --name string                   Collection name
       --no-p2p                        Disable the peer-to-peer network synchronization system

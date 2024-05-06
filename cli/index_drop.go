@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func MakeIndexDropCommand() *cobra.Command {
@@ -33,9 +31,6 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
 			}
 			return col.DropIndex(cmd.Context(), nameArg)
 		},

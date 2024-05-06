@@ -15,46 +15,55 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
-func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+func (c *collection) Get(
+	ctx context.Context,
+	docID client.DocID,
+	showDeleted bool,
+) (*client.Document, error) {
 	// create txn
-	txn, err := c.getTxn(ctx, true)
+	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
+	defer txn.Discard(ctx)
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	found, isDeleted, err := c.exists(ctx, txn, primaryKey)
+	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return nil, err
 	}
 	if !found || (isDeleted && !showDeleted) {
-		return nil, client.ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	doc, err := c.get(ctx, txn, primaryKey, nil, showDeleted)
+	doc, err := c.get(ctx, primaryKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
-	return doc, c.commitImplicitTxn(ctx, txn)
+
+	if doc == nil {
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
+	}
+
+	return doc, txn.Commit(ctx)
 }
 
 func (c *collection) get(
 	ctx context.Context,
-	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
 	fields []client.FieldDefinition,
 	showDeleted bool,
 ) (*client.Document, error) {
+	txn := mustGetContextTxn(ctx)
+	identity := GetContextIdentity(ctx)
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
-	err := df.Init(ctx, txn, c, fields, nil, nil, false, showDeleted)
+	err := df.Init(ctx, identity, txn, c.db.acp, c, fields, nil, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
@@ -85,7 +94,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Schema())
+	doc, err := fetcher.Decode(encodedDoc, c.Definition())
 	if err != nil {
 		return nil, err
 	}

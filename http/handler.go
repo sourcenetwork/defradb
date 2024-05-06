@@ -31,6 +31,7 @@ var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 func NewApiRouter() (*Router, error) {
 	tx_handler := &txHandler{}
 	store_handler := &storeHandler{}
+	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
 	p2p_handler := &p2pHandler{}
 	lens_handler := &lensHandler{}
@@ -43,6 +44,7 @@ func NewApiRouter() (*Router, error) {
 
 	tx_handler.bindRoutes(router)
 	store_handler.bindRoutes(router)
+	acp_handler.bindRoutes(router)
 	p2p_handler.bindRoutes(router)
 	ccip_handler.bindRoutes(router)
 
@@ -52,7 +54,6 @@ func NewApiRouter() (*Router, error) {
 	})
 
 	router.AddRouteGroup(func(r *Router) {
-		r.AddMiddleware(LensMiddleware)
 		lens_handler.bindRoutes(r)
 	})
 
@@ -80,7 +81,7 @@ func NewHandler(db client.DB) (*Handler, error) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
-			StoreMiddleware,
+			IdentityMiddleware,
 		)
 		r.Handle("/*", router)
 	})

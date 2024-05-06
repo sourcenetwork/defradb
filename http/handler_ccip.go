@@ -35,7 +35,7 @@ type CCIPResponse struct {
 
 // ExecCCIP handles GraphQL over Cross Chain Interoperability Protocol requests.
 func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	store := req.Context().Value(dbContextKey).(client.Store)
 
 	var ccipReq CCIPRequest
 	switch req.Method {

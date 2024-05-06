@@ -16,95 +16,117 @@ import (
 )
 
 const (
-	errFailedToGetHeads                   string = "failed to get document heads"
-	errFailedToCreateCollectionQuery      string = "failed to create collection prefix query"
-	errFailedToGetCollection              string = "failed to get collection"
-	errFailedToGetAllCollections          string = "failed to get all collections"
-	errDocVerification                    string = "the document verification failed"
-	errAddingP2PCollection                string = "cannot add collection ID"
-	errRemovingP2PCollection              string = "cannot remove collection ID"
-	errAddCollectionWithPatch             string = "unknown collection, adding collections via patch is not supported"
-	errCollectionIDDoesntMatch            string = "CollectionID does not match existing"
-	errSchemaRootDoesntMatch              string = "SchemaRoot does not match existing"
-	errCannotModifySchemaName             string = "modifying the schema name is not supported"
-	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
-	errRelationalFieldMissingSchema       string = "a `Schema` [name] must be provided when adding a new relation field"
-	errRelationalFieldInvalidRelationType string = "invalid RelationType"
-	errRelationalFieldMissingIDField      string = "missing id field for relation object field"
-	errRelationalFieldMissingRelationName string = "missing relation name"
-	errPrimarySideNotDefined              string = "primary side of relation not defined"
-	errPrimarySideOnMany                  string = "cannot set the many side of a relation as primary"
-	errBothSidesPrimary                   string = "both sides of a relation cannot be primary"
-	errRelatedFieldKindMismatch           string = "invalid Kind of the related field"
-	errRelatedFieldRelationTypeMismatch   string = "invalid RelationType of the related field"
-	errRelationalFieldIDInvalidType       string = "relational id field of invalid kind"
-	errDuplicateField                     string = "duplicate field"
-	errCannotMutateField                  string = "mutating an existing field is not supported"
-	errCannotMoveField                    string = "moving fields is not currently supported"
-	errCannotDeleteField                  string = "deleting an existing field is not supported"
-	errFieldKindNotFound                  string = "no type found for given name"
-	errFieldKindDoesNotMatchFieldSchema   string = "field Kind does not match field Schema"
-	errSchemaNotFound                     string = "no schema found for given name"
-	errDocumentAlreadyExists              string = "a document with the given ID already exists"
-	errDocumentDeleted                    string = "a document with the given ID has been deleted"
-	errIndexMissingFields                 string = "index missing fields"
-	errNonZeroIndexIDProvided             string = "non-zero index ID provided"
-	errIndexFieldMissingName              string = "index field missing name"
-	errIndexFieldMissingDirection         string = "index field missing direction"
-	errIndexWithNameAlreadyExists         string = "index with name already exists"
-	errInvalidStoredIndex                 string = "invalid stored index"
-	errInvalidStoredIndexKey              string = "invalid stored index key"
-	errNonExistingFieldForIndex           string = "creating an index on a non-existing property"
-	errCollectionDoesntExisting           string = "collection with given name doesn't exist"
-	errFailedToStoreIndexedField          string = "failed to store indexed field"
-	errFailedToReadStoredIndexDesc        string = "failed to read stored index description"
-	errCanNotDeleteIndexedField           string = "can not delete indexed field"
-	errCanNotAddIndexWithPatch            string = "adding indexes via patch is not supported"
-	errCanNotDropIndexWithPatch           string = "dropping indexes via patch is not supported"
-	errCanNotChangeIndexWithPatch         string = "changing indexes via patch is not supported"
-	errIndexWithNameDoesNotExists         string = "index with name doesn't exists"
-	errCorruptedIndex                     string = "corrupted index. Please delete and recreate the index"
-	errInvalidFieldValue                  string = "invalid field value"
-	errUnsupportedIndexFieldType          string = "unsupported index field type"
-	errIndexDescriptionHasNoFields        string = "index description has no fields"
-	errFieldOrAliasToFieldNotExist        string = "The given field or alias to field does not exist"
-	errCreateFile                         string = "failed to create file"
-	errRemoveFile                         string = "failed to remove file"
-	errOpenFile                           string = "failed to open file"
-	errCloseFile                          string = "failed to close file"
-	errFailedtoCloseQueryReqAllIDs        string = "failed to close query requesting all docIDs"
-	errFailedToReadByte                   string = "failed to read byte"
-	errFailedToWriteString                string = "failed to write string"
-	errJSONDecode                         string = "failed to decode JSON"
-	errDocFromMap                         string = "failed to create a new doc from map"
-	errDocCreate                          string = "failed to save a new doc to collection"
-	errDocUpdate                          string = "failed to update doc to collection"
-	errExpectedJSONObject                 string = "expected JSON object"
-	errExpectedJSONArray                  string = "expected JSON array"
-	errOneOneAlreadyLinked                string = "target document is already linked to another document"
-	errIndexDoesNotMatchName              string = "the index used does not match the given name"
-	errCanNotIndexNonUniqueFields         string = "can not index a doc's field(s) that violates unique index"
-	errInvalidViewQuery                   string = "the query provided is not valid as a View"
+	errFailedToGetHeads                         string = "failed to get document heads"
+	errFailedToCreateCollectionQuery            string = "failed to create collection prefix query"
+	errFailedToGetCollection                    string = "failed to get collection"
+	errFailedToGetAllCollections                string = "failed to get all collections"
+	errDocVerification                          string = "the document verification failed"
+	errAddingP2PCollection                      string = "cannot add collection ID"
+	errRemovingP2PCollection                    string = "cannot remove collection ID"
+	errAddCollectionWithPatch                   string = "adding collections via patch is not supported"
+	errCollectionIDDoesntMatch                  string = "CollectionID does not match existing"
+	errSchemaRootDoesntMatch                    string = "SchemaRoot does not match existing"
+	errCannotModifySchemaName                   string = "modifying the schema name is not supported"
+	errCannotSetVersionID                       string = "setting the VersionID is not supported"
+	errRelationalFieldInvalidRelationType       string = "invalid RelationType"
+	errRelationalFieldMissingIDField            string = "missing id field for relation object field"
+	errRelatedFieldKindMismatch                 string = "invalid Kind of the related field"
+	errRelatedFieldRelationTypeMismatch         string = "invalid RelationType of the related field"
+	errRelationalFieldIDInvalidType             string = "relational id field of invalid kind"
+	errDuplicateField                           string = "duplicate field"
+	errCannotMutateField                        string = "mutating an existing field is not supported"
+	errCannotMoveField                          string = "moving fields is not currently supported"
+	errCannotDeleteField                        string = "deleting an existing field is not supported"
+	errFieldKindNotFound                        string = "no type found for given name"
+	errFieldKindDoesNotMatchFieldSchema         string = "field Kind does not match field Schema"
+	errDocumentAlreadyExists                    string = "a document with the given ID already exists"
+	errDocumentDeleted                          string = "a document with the given ID has been deleted"
+	errIndexMissingFields                       string = "index missing fields"
+	errNonZeroIndexIDProvided                   string = "non-zero index ID provided"
+	errIndexFieldMissingName                    string = "index field missing name"
+	errIndexFieldMissingDirection               string = "index field missing direction"
+	errIndexWithNameAlreadyExists               string = "index with name already exists"
+	errInvalidStoredIndex                       string = "invalid stored index"
+	errInvalidStoredIndexKey                    string = "invalid stored index key"
+	errNonExistingFieldForIndex                 string = "creating an index on a non-existing property"
+	errCollectionDoesntExisting                 string = "collection with given name doesn't exist"
+	errFailedToStoreIndexedField                string = "failed to store indexed field"
+	errFailedToReadStoredIndexDesc              string = "failed to read stored index description"
+	errCanNotDeleteIndexedField                 string = "can not delete indexed field"
+	errCanNotAddIndexWithPatch                  string = "adding indexes via patch is not supported"
+	errCanNotDropIndexWithPatch                 string = "dropping indexes via patch is not supported"
+	errCanNotChangeIndexWithPatch               string = "changing indexes via patch is not supported"
+	errIndexWithNameDoesNotExists               string = "index with name doesn't exists"
+	errCorruptedIndex                           string = "corrupted index. Please delete and recreate the index"
+	errInvalidFieldValue                        string = "invalid field value"
+	errUnsupportedIndexFieldType                string = "unsupported index field type"
+	errIndexDescriptionHasNoFields              string = "index description has no fields"
+	errFieldOrAliasToFieldNotExist              string = "The given field or alias to field does not exist"
+	errCreateFile                               string = "failed to create file"
+	errRemoveFile                               string = "failed to remove file"
+	errOpenFile                                 string = "failed to open file"
+	errCloseFile                                string = "failed to close file"
+	errFailedtoCloseQueryReqAllIDs              string = "failed to close query requesting all docIDs"
+	errFailedToReadByte                         string = "failed to read byte"
+	errFailedToWriteString                      string = "failed to write string"
+	errJSONDecode                               string = "failed to decode JSON"
+	errDocFromMap                               string = "failed to create a new doc from map"
+	errDocCreate                                string = "failed to save a new doc to collection"
+	errDocUpdate                                string = "failed to update doc to collection"
+	errExpectedJSONObject                       string = "expected JSON object"
+	errExpectedJSONArray                        string = "expected JSON array"
+	errOneOneAlreadyLinked                      string = "target document is already linked to another document"
+	errIndexDoesNotMatchName                    string = "the index used does not match the given name"
+	errCanNotIndexNonUniqueFields               string = "can not index a doc's field(s) that violates unique index"
+	errInvalidViewQuery                         string = "the query provided is not valid as a View"
+	errCollectionAlreadyExists                  string = "collection already exists"
+	errMultipleActiveCollectionVersions         string = "multiple versions of same collection cannot be active"
+	errCollectionSourcesCannotBeAddedRemoved    string = "collection sources cannot be added or removed"
+	errCollectionSourceIDMutated                string = "collection source ID cannot be mutated"
+	errCollectionIndexesCannotBeMutated         string = "collection indexes cannot be mutated"
+	errCollectionFieldsCannotBeMutated          string = "collection fields cannot be mutated"
+	errCollectionPolicyCannotBeMutated          string = "collection policy cannot be mutated"
+	errCollectionRootIDCannotBeMutated          string = "collection root ID cannot be mutated"
+	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
+	errCollectionIDCannotBeZero                 string = "collection ID cannot be zero"
+	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
+	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
+	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
+	errRelationMissingField                     string = "relation missing field"
 )
 
 var (
-	ErrFailedToGetCollection      = errors.New(errFailedToGetCollection)
-	ErrSubscriptionsNotAllowed    = errors.New("server does not accept subscriptions")
-	ErrInvalidFilter              = errors.New("invalid filter")
-	ErrCollectionAlreadyExists    = errors.New("collection already exists")
-	ErrCollectionNameEmpty        = errors.New("collection name can't be empty")
-	ErrSchemaNameEmpty            = errors.New("schema name can't be empty")
-	ErrSchemaRootEmpty            = errors.New("schema root can't be empty")
-	ErrSchemaVersionIDEmpty       = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                   = errors.New("key cannot be empty")
-	ErrCannotSetVersionID         = errors.New(errCannotSetVersionID)
-	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
-	ErrIndexFieldMissingName      = errors.New(errIndexFieldMissingName)
-	ErrCorruptedIndex             = errors.New(errCorruptedIndex)
-	ErrExpectedJSONObject         = errors.New(errExpectedJSONObject)
-	ErrExpectedJSONArray          = errors.New(errExpectedJSONArray)
-	ErrInvalidViewQuery           = errors.New(errInvalidViewQuery)
-	ErrCanNotIndexNonUniqueFields = errors.New(errCanNotIndexNonUniqueFields)
+	ErrFailedToGetCollection                    = errors.New(errFailedToGetCollection)
+	ErrCanNotCreateIndexOnCollectionWithPolicy  = errors.New("can not create index on a collection with a policy")
+	ErrSubscriptionsNotAllowed                  = errors.New("server does not accept subscriptions")
+	ErrInvalidFilter                            = errors.New("invalid filter")
+	ErrCollectionAlreadyExists                  = errors.New(errCollectionAlreadyExists)
+	ErrCollectionNameEmpty                      = errors.New("collection name can't be empty")
+	ErrSchemaNameEmpty                          = errors.New("schema name can't be empty")
+	ErrSchemaRootEmpty                          = errors.New("schema root can't be empty")
+	ErrSchemaVersionIDEmpty                     = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                                 = errors.New("key cannot be empty")
+	ErrCannotSetVersionID                       = errors.New(errCannotSetVersionID)
+	ErrIndexMissingFields                       = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName                    = errors.New(errIndexFieldMissingName)
+	ErrCorruptedIndex                           = errors.New(errCorruptedIndex)
+	ErrExpectedJSONObject                       = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray                        = errors.New(errExpectedJSONArray)
+	ErrInvalidViewQuery                         = errors.New(errInvalidViewQuery)
+	ErrCanNotIndexNonUniqueFields               = errors.New(errCanNotIndexNonUniqueFields)
+	ErrMultipleActiveCollectionVersions         = errors.New(errMultipleActiveCollectionVersions)
+	ErrCollectionSourcesCannotBeAddedRemoved    = errors.New(errCollectionSourcesCannotBeAddedRemoved)
+	ErrCollectionSourceIDMutated                = errors.New(errCollectionSourceIDMutated)
+	ErrCollectionIndexesCannotBeMutated         = errors.New(errCollectionIndexesCannotBeMutated)
+	ErrCollectionFieldsCannotBeMutated          = errors.New(errCollectionFieldsCannotBeMutated)
+	ErrCollectionRootIDCannotBeMutated          = errors.New(errCollectionRootIDCannotBeMutated)
+	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
+	ErrCollectionIDCannotBeZero                 = errors.New(errCollectionIDCannotBeZero)
+	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
+	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
+	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
+	ErrRelationMissingField                     = errors.New(errRelationMissingField)
+	ErrMultipleRelationPrimaries                = errors.New("relation can only have a single field set as primary")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -208,6 +230,13 @@ func NewErrAddCollectionWithPatch(name string) error {
 	)
 }
 
+func NewErrAddCollectionIDWithPatch(id uint32) error {
+	return errors.New(
+		errAddCollectionWithPatch,
+		errors.NewKV("ID", id),
+	)
+}
+
 func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID uint32) error {
 	return errors.New(
 		errCollectionIDDoesntMatch,
@@ -234,47 +263,11 @@ func NewErrCannotModifySchemaName(existingName, proposedName string) error {
 	)
 }
 
-func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) error {
-	return errors.New(
-		errRelationalFieldMissingSchema,
-		errors.NewKV("Field", name),
-		errors.NewKV("Kind", kind),
-	)
-}
-
 func NewErrRelationalFieldMissingIDField(name string, expectedName string) error {
 	return errors.New(
 		errRelationalFieldMissingIDField,
 		errors.NewKV("Field", name),
 		errors.NewKV("ExpectedIDFieldName", expectedName),
-	)
-}
-
-func NewErrRelationalFieldMissingRelationName(name string) error {
-	return errors.New(
-		errRelationalFieldMissingRelationName,
-		errors.NewKV("Field", name),
-	)
-}
-
-func NewErrPrimarySideNotDefined(relationName string) error {
-	return errors.New(
-		errPrimarySideNotDefined,
-		errors.NewKV("RelationName", relationName),
-	)
-}
-
-func NewErrPrimarySideOnMany(name string) error {
-	return errors.New(
-		errPrimarySideOnMany,
-		errors.NewKV("Field", name),
-	)
-}
-
-func NewErrBothSidesPrimary(relationName string) error {
-	return errors.New(
-		errBothSidesPrimary,
-		errors.NewKV("RelationName", relationName),
 	)
 }
 
@@ -296,9 +289,10 @@ func NewErrRelationalFieldIDInvalidType(name string, expected, actual client.Fie
 	)
 }
 
-func NewErrFieldKindNotFound(kind string) error {
+func NewErrFieldKindNotFound(name string, kind string) error {
 	return errors.New(
 		errFieldKindNotFound,
+		errors.NewKV("Field", name),
 		errors.NewKV("Kind", kind),
 	)
 }
@@ -307,14 +301,6 @@ func NewErrFieldKindDoesNotMatchFieldSchema(kind string, schema string) error {
 	return errors.New(
 		errFieldKindDoesNotMatchFieldSchema,
 		errors.NewKV("Kind", kind),
-		errors.NewKV("Schema", schema),
-	)
-}
-
-func NewErrSchemaNotFound(name string, schema string) error {
-	return errors.New(
-		errSchemaNotFound,
-		errors.NewKV("Field", name),
 		errors.NewKV("Schema", schema),
 	)
 }
@@ -541,5 +527,100 @@ func NewErrInvalidViewQueryMissingQuery() error {
 	return errors.New(
 		errInvalidViewQuery,
 		errors.NewKV("Reason", "No query provided"),
+	)
+}
+
+func NewErrCollectionAlreadyExists(name string) error {
+	return errors.New(
+		errCollectionAlreadyExists,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCollectionIDAlreadyExists(id uint32) error {
+	return errors.New(
+		errCollectionAlreadyExists,
+		errors.NewKV("ID", id),
+	)
+}
+
+func NewErrMultipleActiveCollectionVersions(name string, root uint32) error {
+	return errors.New(
+		errMultipleActiveCollectionVersions,
+		errors.NewKV("Name", name),
+		errors.NewKV("Root", root),
+	)
+}
+
+func NewErrCollectionSourcesCannotBeAddedRemoved(colID uint32) error {
+	return errors.New(
+		errCollectionSourcesCannotBeAddedRemoved,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionSourceIDMutated(colID uint32, newSrcID uint32, oldSrcID uint32) error {
+	return errors.New(
+		errCollectionSourceIDMutated,
+		errors.NewKV("CollectionID", colID),
+		errors.NewKV("NewCollectionSourceID", newSrcID),
+		errors.NewKV("OldCollectionSourceID", oldSrcID),
+	)
+}
+
+func NewErrCollectionIndexesCannotBeMutated(colID uint32) error {
+	return errors.New(
+		errCollectionIndexesCannotBeMutated,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionFieldsCannotBeMutated(colID uint32) error {
+	return errors.New(
+		errCollectionFieldsCannotBeMutated,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionPolicyCannotBeMutated(colID uint32) error {
+	return errors.New(
+		errCollectionPolicyCannotBeMutated,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionRootIDCannotBeMutated(colID uint32) error {
+	return errors.New(
+		errCollectionRootIDCannotBeMutated,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionSchemaVersionIDCannotBeMutated(colID uint32) error {
+	return errors.New(
+		errCollectionSchemaVersionIDCannotBeMutated,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionsCannotBeDeleted(colID uint32) error {
+	return errors.New(
+		errCollectionsCannotBeDeleted,
+		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrSecondaryFieldOnSchema(name string) error {
+	return errors.New(
+		errSecondaryFieldOnSchema,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrRelationMissingField(objectName, relationName string) error {
+	return errors.New(
+		errRelationMissingField,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("RelationName", relationName),
 	)
 }

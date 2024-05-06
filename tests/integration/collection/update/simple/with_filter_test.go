@@ -29,9 +29,11 @@ func TestUpdateWithInvalidFilterType(t *testing.T) {
 				func(c client.Collection) error {
 					ctx := context.Background()
 					// test with an invalid filter type
-					_, err := c.UpdateWithFilter(ctx, t, `{
-						"name": "Eric"
-					}`)
+					_, err := c.UpdateWithFilter(
+						ctx,
+						t,
+						`{"name": "Eric"}`,
+					)
 					return err
 				},
 			},
@@ -51,9 +53,11 @@ func TestUpdateWithEmptyFilter(t *testing.T) {
 				func(c client.Collection) error {
 					ctx := context.Background()
 					// test with an empty filter
-					_, err := c.UpdateWithFilter(ctx, "", `{
-						"name": "Eric"
-					}`)
+					_, err := c.UpdateWithFilter(
+						ctx,
+						"",
+						`{"name": "Eric"}`,
+					)
 					return err
 				},
 			},
@@ -70,7 +74,7 @@ func TestUpdateWithFilter(t *testing.T) {
 		"age": 21
 	}`
 
-	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"].Schema)
+	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"])
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -87,9 +91,11 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `{
-							name: "Eric"
-						}`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							filter,
+							`{name: "Eric"}`,
+						)
 						return err
 					},
 				},
@@ -104,7 +110,11 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `"name: Eric"`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							filter,
+							`"name: Eric"`,
+						)
 						return err
 					},
 				},
@@ -119,13 +129,17 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `[
-							{
-								"name": "Eric"
-							}, {
-								"name": "Sam"
-							}
-						]`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							filter,
+							`[
+								{
+									"name": "Eric"
+								}, {
+									"name": "Sam"
+								}
+							]`,
+						)
 						if err != nil {
 							return err
 						}
@@ -155,9 +169,11 @@ func TestUpdateWithFilter(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithFilter(ctx, filter, `{
-							"name": "Eric"
-						}`)
+						_, err := c.UpdateWithFilter(
+							ctx,
+							filter,
+							`{"name": "Eric"}`,
+						)
 						if err != nil {
 							return err
 						}

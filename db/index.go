@@ -36,8 +36,12 @@ func canConvertIndexFieldValue[T any](val any) bool {
 }
 
 func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
+	if kind.IsObject() && !kind.IsArray() {
+		return canConvertIndexFieldValue[string]
+	}
+
 	switch kind {
-	case client.FieldKind_NILLABLE_STRING, client.FieldKind_FOREIGN_OBJECT:
+	case client.FieldKind_NILLABLE_STRING:
 		return canConvertIndexFieldValue[string]
 	case client.FieldKind_NILLABLE_INT:
 		return canConvertIndexFieldValue[int64]
@@ -112,18 +116,22 @@ type collectionBaseIndex struct {
 	fieldsDescs        []client.SchemaFieldDescription
 }
 
-func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]*client.FieldValue, error) {
-	result := make([]*client.FieldValue, 0, len(index.fieldsDescs))
+func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]client.NormalValue, error) {
+	result := make([]client.NormalValue, 0, len(index.fieldsDescs))
 	for iter := range index.fieldsDescs {
 		fieldVal, err := doc.TryGetValue(index.fieldsDescs[iter].Name)
 		if err != nil {
 			return nil, err
 		}
 		if fieldVal == nil || fieldVal.Value() == nil {
-			result = append(result, client.NewFieldValue(client.NONE_CRDT, nil))
+			normalNil, err := client.NewNormalNil(index.fieldsDescs[iter].Kind)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, normalNil)
 			continue
 		}
-		result = append(result, fieldVal)
+		result = append(result, fieldVal.NormalValue())
 	}
 	return result, nil
 }
@@ -138,7 +146,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 
 	fields := make([]core.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
-		fields[i].Value = fieldValues[i].Value()
+		fields[i].Value = fieldValues[i]
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
 	return core.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields), nil
@@ -207,7 +215,7 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+	key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	return key, nil
 }
 
@@ -264,7 +272,7 @@ func (index *collectionSimpleIndex) deleteDocIndex(
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *core.IndexDataStoreKey) bool {
 	for i := range key.Fields {
-		if key.Fields[i].Value == nil {
+		if key.Fields[i].Value.IsNil() {
 			return true
 		}
 	}
@@ -330,7 +338,7 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+		key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 		return key, []byte{}, nil
 	} else {
 		return key, []byte(doc.ID().String()), nil
@@ -373,6 +381,11 @@ func (index *collectionUniqueIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
+	// We only need to update the index if one of the indexed fields
+	// on the document has been changed.
+	if !isUpdatingIndexedFields(index, oldDoc, newDoc) {
+		return nil
+	}
 	newKey, newVal, err := index.prepareIndexRecordToStore(ctx, txn, newDoc)
 	if err != nil {
 		return err
@@ -394,4 +407,26 @@ func (index *collectionUniqueIndex) deleteDocIndex(
 		return err
 	}
 	return index.deleteIndexKey(ctx, txn, key)
+}
+
+func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
+	for _, indexedFields := range index.Description().Fields {
+		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
+		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+
+		// GetValue will return an error when the field doesn't exist.
+		// This will happen for oldDoc only if the field hasn't been set
+		// when first creating the document. For newDoc, this will happen
+		// only if the field hasn't been set when first creating the document
+		// AND the field hasn't been set on the update.
+		switch {
+		case getOldValErr != nil && getNewValErr != nil:
+			continue
+		case getOldValErr != nil && getNewValErr == nil:
+			return true
+		case oldVal.Value() != newVal.Value():
+			return true
+		}
+	}
+	return false
 }

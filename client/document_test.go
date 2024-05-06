@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
 	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
 
@@ -27,8 +29,22 @@ var (
 
 	pref = ccid.NewDefaultSHA256PrefixV1()
 
-	schemaDescriptions = []SchemaDescription{
-		{
+	def = CollectionDefinition{
+		Description: CollectionDescription{
+			Name: immutable.Some("User"),
+			Fields: []CollectionFieldDescription{
+				{
+					Name: "Name",
+				},
+				{
+					Name: "Age",
+				},
+				{
+					Name: "Custom",
+				},
+			},
+		},
+		Schema: SchemaDescription{
 			Name: "User",
 			Fields: []SchemaFieldDescription{
 				{
@@ -52,7 +68,7 @@ var (
 )
 
 func TestNewFromJSON(t *testing.T) {
-	doc, err := NewDocFromJSON(testJSONObj, schemaDescriptions[0])
+	doc, err := NewDocFromJSON(testJSONObj, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -90,7 +106,7 @@ func TestNewFromJSON(t *testing.T) {
 }
 
 func TestSetWithJSON(t *testing.T) {
-	doc, err := NewDocFromJSON(testJSONObj, schemaDescriptions[0])
+	doc, err := NewDocFromJSON(testJSONObj, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -137,7 +153,7 @@ func TestSetWithJSON(t *testing.T) {
 }
 
 func TestNewDocsFromJSON_WithObjectInsteadOfArray_Error(t *testing.T) {
-	_, err := NewDocsFromJSON(testJSONObj, schemaDescriptions[0])
+	_, err := NewDocsFromJSON(testJSONObj, def)
 	require.ErrorContains(t, err, "value doesn't contain array; it contains object")
 }
 
@@ -147,7 +163,7 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 		"Age": 26,
 		"Custom": "{\"tree\":\"maple\", \"age\": 260}"
 	}`)
-	doc, err := NewDocFromJSON(objWithJSONField, schemaDescriptions[0])
+	doc, err := NewDocFromJSON(objWithJSONField, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -177,7 +193,7 @@ func TestNewFromJSON_WithInvalidJSONFieldValue_Error(t *testing.T) {
 		"Age": 26,
 		"Custom": "{\"tree\":\"maple, \"age\": 260}"
 	}`)
-	_, err := NewDocFromJSON(objWithJSONField, schemaDescriptions[0])
+	_, err := NewDocFromJSON(objWithJSONField, def)
 	require.ErrorContains(t, err, "invalid JSON payload. Payload: {\"tree\":\"maple, \"age\": 260}")
 }
 
@@ -187,6 +203,6 @@ func TestNewFromJSON_WithInvalidJSONFieldValueSimpleString_Error(t *testing.T) {
 		"Age": 26,
 		"Custom": "blah"
 	}`)
-	_, err := NewDocFromJSON(objWithJSONField, schemaDescriptions[0])
+	_, err := NewDocFromJSON(objWithJSONField, def)
 	require.ErrorContains(t, err, "invalid JSON payload. Payload: blah")
 }

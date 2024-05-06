@@ -38,6 +38,13 @@ type TestCase struct {
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between mutation types, or we need to temporarily document a bug.
 	SupportedMutationTypes immutable.Option[[]MutationType]
+
+	// If provided a value, SupportedClientTypes will limit the client types under test to those
+	// within this set.  If no active clients pass this filter the test will be skipped.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between client types, or we need to temporarily document a bug.
+	SupportedClientTypes immutable.Option[[]ClientType]
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
@@ -93,6 +100,18 @@ type SchemaPatch struct {
 	SetAsDefaultVersion immutable.Option[bool]
 
 	Lens immutable.Option[model.Lens]
+
+	ExpectedError string
+}
+
+type PatchCollection struct {
+	// NodeID may hold the ID (index) of a node to apply this patch to.
+	//
+	// If a value is not provided the patch will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// The Patch to apply to the collection description.
+	Patch string
 
 	ExpectedError string
 }
@@ -193,6 +212,14 @@ type CreateDoc struct {
 	// If a value is not provided the document will be created in all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided the created document(s) will be public.
+	//
+	// If an Identity is provided and the collection has a policy, then the
+	// created document(s) will be owned by this Identity.
+	Identity string
+
 	// The collection in which this document should be created.
 	CollectionID int
 
@@ -213,6 +240,14 @@ type DeleteDoc struct {
 	//
 	// If a value is not provided the document will be created in all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only delete public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then
+	// can also delete private document(s) that are owned by this Identity.
+	Identity string
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -238,6 +273,14 @@ type UpdateDoc struct {
 	//
 	// If a value is not provided the update will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only update public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then
+	// can also update private document(s) that are owned by this Identity.
+	Identity string
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -384,6 +427,14 @@ type Request struct {
 	// If a value is not provided the request will be executed against all nodes,
 	// in which case the expected results must all match across all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only operate over public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then can
+	// operate over private document(s) that are owned by this Identity.
+	Identity string
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]

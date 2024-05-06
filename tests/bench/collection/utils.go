@@ -72,7 +72,11 @@ func runCollectionBenchGetSync(b *testing.B,
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
-				collections[k].Get(ctx, listOfDocIDs[j][k], false) //nolint:errcheck
+				collections[k].Get( //nolint:errcheck
+					ctx,
+					listOfDocIDs[j][k],
+					false,
+				)
 			}
 		}
 	}
@@ -98,7 +102,11 @@ func runCollectionBenchGetAsync(b *testing.B,
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				wg.Add(1)
 				go func(ctx context.Context, col client.Collection, docID client.DocID) {
-					col.Get(ctx, docID, false) //nolint:errcheck
+					col.Get( //nolint:errcheck
+						ctx,
+						docID,
+						false,
+					)
 					wg.Done()
 				}(ctx, collections[k], listOfDocIDs[j][k])
 			}
@@ -170,7 +178,7 @@ func runCollectionBenchCreateMany(
 		docs := make([]*client.Document, opCount)
 		for j := 0; j < opCount; j++ {
 			d, _ := fixture.GenerateDocs()
-			docs[j], _ = client.NewDocFromJSON([]byte(d[0]), collections[0].Schema())
+			docs[j], _ = client.NewDocFromJSON([]byte(d[0]), collections[0].Definition())
 		}
 
 		collections[0].CreateMany(ctx, docs) //nolint:errcheck
@@ -193,7 +201,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 		for j := 0; j < runs; j++ {
 			docs, _ := fixture.GenerateDocs()
 			for k := 0; k < numTypes; k++ {
-				doc, _ := client.NewDocFromJSON([]byte(docs[k]), collections[k].Schema())
+				doc, _ := client.NewDocFromJSON([]byte(docs[k]), collections[k].Definition())
 				collections[k].Create(ctx, doc) //nolint:errcheck
 			}
 		}
@@ -232,7 +240,7 @@ func runCollectionBenchCreateAsync(b *testing.B,
 					docs, _ := fixture.GenerateDocs()
 					// create the documents
 					for j := 0; j < numTypes; j++ {
-						doc, _ := client.NewDocFromJSON([]byte(docs[j]), collections[j].Schema())
+						doc, _ := client.NewDocFromJSON([]byte(docs[j]), collections[j].Definition())
 						collections[j].Create(ctx, doc) //nolint:errcheck
 					}
 
