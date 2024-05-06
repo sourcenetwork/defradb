@@ -14,7 +14,7 @@
     "graphql": "^16.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "swagger-ui-react": "^5.17.2"
+    "swagger-ui-react": "^5.17.3"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
