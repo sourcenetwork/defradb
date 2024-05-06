@@ -265,7 +265,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(15).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(33).WithIndexFetches(3),
 			},
 		},
 	}
@@ -547,6 +547,116 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplain(t *testing.T) {
+	req := `query {
+		Device(filter: {
+			year: {_eq: 2021}
+		}) {
+			model
+			owner {
+				name
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "With filter on indexed field of secondary relation (N-1) should fetch secondary and primary objects",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					} 
+
+					type Device {
+						model: String 
+						year: Int @index
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{
+						"model": "Playstation 5",
+						"owner": map[string]any{
+							"name": "Islam",
+						},
+					},
+					{
+						"model": "Playstation 5",
+						"owner": map[string]any{
+							"name": "Addo",
+						},
+					},
+					{
+						"model": "iPhone 10",
+						"owner": map[string]any{
+							"name": "Addo",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(9).WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExplain(t *testing.T) {
+	req := `query {
+		Device(filter: {
+			owner: {age: {_eq: 48}}
+		}) {
+			model
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Upon querying secondary object with filter on indexed field of primary relation (in 1-N) should fetch all secondary objects of the same primary one",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int @index
+						devices: [Device]
+					} 
+
+					type Device {
+						model: String 
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"model": "iPad Mini"},
+					{"model": "iPhone 13"},
+					{"model": "MacBook Pro"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(44).WithIndexFetches(1),
 			},
 		},
 	}
