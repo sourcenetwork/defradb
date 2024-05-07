@@ -49,6 +49,14 @@ var (
 	colContextKey = contextKey("col")
 )
 
+// readPassword reads a user input password without echoing it to the terminal.
+var readPassword = func(cmd *cobra.Command, msg string) ([]byte, error) {
+	cmd.Print(msg)
+	pass, err := term.ReadPassword(int(syscall.Stdin))
+	cmd.Println("")
+	return pass, err
+}
+
 // mustGetContextDB returns the db for the current command context.
 //
 // If a db is not set in the current context this function panics.
@@ -171,10 +179,7 @@ func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
 		return nil, err
 	}
 	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
-		cmd.Print(s)
-		pass, err := term.ReadPassword(int(syscall.Stdin))
-		cmd.Println("")
-		return pass, err
+		return readPassword(cmd, s)
 	})
 	return keyring.OpenFileKeyring(path, prompt)
 }

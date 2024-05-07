@@ -57,6 +57,7 @@ Example: with system keyring
 			return keyring.Set(peerKeyName, peerKey)
 		},
 	}
-	cmd.Flags().BoolVar(&noEncryption, "no-encryption-key", false, "Skip generating an encryption key")
+	cmd.Flags().BoolVar(&noEncryption, "no-encryption-key", false,
+		"Skip generating an encryption. Encryption at rest will be disabled")
 	return cmd
 }
