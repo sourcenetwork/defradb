@@ -13,9 +13,15 @@ package keyring
 // Keyring provides a simple set/get interface for a keyring service.
 type Keyring interface {
 	// Set stores the given key in the keystore under the given name.
+	//
+	// If a key with the given name already exists it will be overriden.
 	Set(name string, key []byte) error
 	// Get returns the key with the given name from the keystore.
+	//
+	// If a key with the given name does not exist `ErrNotFound` is returned.
 	Get(name string) ([]byte, error)
 	// Delete removes the key with the given name from the keystore.
+	//
+	// If a key with that name does not exist `ErrNotFound` is returned.
 	Delete(name string) error
 }

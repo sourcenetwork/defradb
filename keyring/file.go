@@ -16,7 +16,6 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwe"
-	"github.com/zalando/go-keyring"
 )
 
 var _ Keyring = (*fileKeyring)(nil)
@@ -62,7 +61,7 @@ func (f *fileKeyring) Set(name string, key []byte) error {
 func (f *fileKeyring) Get(name string) ([]byte, error) {
 	cipher, err := os.ReadFile(filepath.Join(f.dir, name))
 	if os.IsNotExist(err) {
-		return nil, keyring.ErrNotFound
+		return nil, ErrNotFound
 	}
 	password, err := f.promptPassword()
 	if err != nil {
@@ -74,7 +73,7 @@ func (f *fileKeyring) Get(name string) ([]byte, error) {
 func (f *fileKeyring) Delete(user string) error {
 	err := os.Remove(filepath.Join(f.dir, user))
 	if os.IsNotExist(err) {
-		return keyring.ErrNotFound
+		return ErrNotFound
 	}
 	return err
 }
