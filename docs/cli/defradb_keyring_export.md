@@ -1,70 +1,29 @@
-## defradb client acp policy add
+## defradb keyring export
 
-Add new policy
+Export a private key
 
 ### Synopsis
 
-Add new policy
+Export a private key.
+Prints the hexadecimal representation of a private key.
 
-Notes:
-  - Can not add a policy without specifying an identity.
-  - ACP must be available (i.e. ACP can not be disabled).
-  - A non-DPI policy will be accepted (will be registered with acp system).
-  - But only a valid DPI policyID & resource can be specified on a schema.
-  - DPI validation happens when attempting to add a schema with '@policy'.
-  - Learn more about [ACP & DPI Rules](/acp/README.md)
-
-Example: add from an argument string:
-  defradb client acp policy add -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j '
-description: A Valid DefraDB Policy Interface
-
-actor:
-  name: actor
-
-resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader
-      write:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-'
-
-Example: add from file:
-  defradb client acp policy add -i cosmos17r39df0hdcrgnmmw4mvu7qgk5nu888c7uvv37y -f policy.yml
-
-Example: add from file, verbose flags:
-  defradb client acp policy add --identity cosmos1kpw734v54g0t0d8tcye8ee5jc3gld0tcr2q473 --file policy.yml
-
-Example: add from stdin:
-  cat policy.yml | defradb client acp policy add -
-
-
+Example:
+  defradb keyring export encryption-key
 
 ```
-defradb client acp policy add [-i --identity] [policy] [flags]
+defradb keyring export <name> [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File to load a policy from
-  -h, --help          help for add
+  -h, --help   help for export
 ```
 
 ### Options inherited from parent commands
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
-  -i, --identity string               ACP Identity
       --keyring-backend string        Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string      Service name to use when using the system backend (default "defradb")
       --keyring-path string           Path to store encrypted keys when using the file backend (default "keys")
@@ -84,12 +43,11 @@ defradb client acp policy add [-i --identity] [policy] [flags]
       --pubkeypath string             Path to the public key for tls
       --rootdir string                Directory for persistent data (default: $HOME/.defradb)
       --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
-      --tx uint                       Transaction ID
       --url string                    URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
       --valuelogfilesize int          Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
 ```
 
 ### SEE ALSO
 
-* [defradb client acp policy](defradb_client_acp_policy.md)	 - Interact with the acp policy features of DefraDB instance
+* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
 

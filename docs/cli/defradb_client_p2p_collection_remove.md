@@ -29,7 +29,9 @@ defradb client p2p collection remove [collectionIDs] [flags]
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
   -i, --identity string               ACP Identity
-      --keyring-path string           Path to store encrypted keys (default "keys")
+      --keyring-backend string        Keyring backend to use. Options are file or system (default "file")
+      --keyring-namespace string      Service name to use when using the system backend (default "defradb")
+      --keyring-path string           Path to store encrypted keys when using the file backend (default "keys")
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-no-color                  Disable colored log output
