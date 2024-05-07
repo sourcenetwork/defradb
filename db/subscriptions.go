@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/planner"
+	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
 func (db *db) checkForClientSubscriptions(r *request.Request) (

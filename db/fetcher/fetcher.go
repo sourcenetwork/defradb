@@ -28,7 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 

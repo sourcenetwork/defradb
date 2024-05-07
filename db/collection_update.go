@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/planner"
+	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
 // UpdateWithFilter updates using a filter to target documents for update.

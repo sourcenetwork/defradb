@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	"github.com/ipfs/go-datastore/query"
 )

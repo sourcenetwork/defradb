@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/planner"
+	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/request/graphql"
 	gqlSchema "github.com/sourcenetwork/defradb/request/graphql/schema"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"

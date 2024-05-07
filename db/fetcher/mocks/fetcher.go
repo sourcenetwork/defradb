@@ -18,7 +18,7 @@ import (
 
 	immutable "github.com/sourcenetwork/immutable"
 
-	mapper "github.com/sourcenetwork/defradb/planner/mapper"
+	mapper "github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	mock "github.com/stretchr/testify/mock"
 )
