@@ -19,11 +19,18 @@ import (
 )
 
 func TestFileKeyring(t *testing.T) {
-	kr, err := openFileKeyring(t.TempDir(), []byte("secret"))
+	prompt := PromptFunc(func(s string) ([]byte, error) {
+		return []byte("secret"), nil
+	})
+
+	kr, err := OpenFileKeyring(t.TempDir(), prompt)
 	require.NoError(t, err)
 
 	err = kr.Set("peer_key", []byte("abc"))
 	require.NoError(t, err)
+
+	// password should be remembered
+	assert.Equal(t, []byte("secret"), kr.password)
 
 	err = kr.Set("node_key", []byte("123"))
 	require.NoError(t, err)

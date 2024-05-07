@@ -22,7 +22,6 @@ import (
 
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +29,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
@@ -786,7 +786,7 @@ func configureNode(
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
-	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+	privateKey, err := crypto.GenerateEd25519()
 	require.NoError(s.t, err)
 
 	nodeOpts := action()

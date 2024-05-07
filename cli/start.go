@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
@@ -91,24 +92,22 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
-				keyring, err := openKeyring(cmd, cfg.GetString("keyring.path"), cfg.GetString("keyring.namespace"))
+				kr, err := openKeyring(cmd)
 				if err != nil {
-					return err
+					return NewErrKeyringHelp(err)
 				}
-
-				peerKey, err := loadOrGenerateEd25519(keyring, peerKeyName)
+				// load the required peer key
+				peerKey, err := kr.Get(peerKeyName)
 				if err != nil {
-					return err
+					return NewErrKeyringHelp(err)
 				}
 				netOpts = append(netOpts, net.WithPrivateKey(peerKey))
-
-				if !cfg.GetBool("datastore.encryptionDisabled") {
-					encryptionKey, err := loadOrGenerateAES256(keyring, badgerEncryptionKeyName)
-					if err != nil {
-						return err
-					}
-					storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
+				// load the optional encryption key
+				encryptionKey, err := kr.Get(encryptionKeyName)
+				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+					return err
 				}
+				storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
 			}
 
 			opts := []node.NodeOpt{

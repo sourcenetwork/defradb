@@ -16,6 +16,14 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+const errKeyringHelp = `%w
+
+Did you forget to initialize the keyring?
+
+Use the following command to generate the required keys: 
+  defradb keyring generate
+`
+
 const (
 	errInvalidLensConfig        string = "invalid lens configuration"
 	errSchemaVersionNotOfSchema string = "the given schema version is from a different schema"
@@ -52,4 +60,8 @@ func NewErrSchemaVersionNotOfSchema(schemaRoot string, schemaVersionID string) e
 		errors.NewKV("SchemaRoot", schemaRoot),
 		errors.NewKV("SchemaVersionID", schemaVersionID),
 	)
+}
+
+func NewErrKeyringHelp(inner error) error {
+	return fmt.Errorf(errKeyringHelp, inner)
 }

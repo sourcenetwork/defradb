@@ -29,20 +29,30 @@ type fileKeyring struct {
 	dir string
 	// password is the user defined password used to generate encryption keys
 	password []byte
+	// prompt func is used to retrieve the user password
+	prompt PromptFunc
 }
 
-func openFileKeyring(dir string, password []byte) (*fileKeyring, error) {
+// PromptFunc is a callback used to retrieve the user's password.
+type PromptFunc func(s string) ([]byte, error)
+
+// OpenFileKeyring opens the keyring in the given directory.
+func OpenFileKeyring(dir string, prompt PromptFunc) (*fileKeyring, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 	return &fileKeyring{
-		dir:      dir,
-		password: password,
+		dir:    dir,
+		prompt: prompt,
 	}, nil
 }
 
 func (f *fileKeyring) Set(name string, key []byte) error {
-	cipher, err := jwe.Encrypt(key, jwe.WithKey(keyEncryptionAlgorithm, f.password))
+	password, err := f.promptPassword()
+	if err != nil {
+		return err
+	}
+	cipher, err := jwe.Encrypt(key, jwe.WithKey(keyEncryptionAlgorithm, password))
 	if err != nil {
 		return err
 	}
@@ -54,7 +64,11 @@ func (f *fileKeyring) Get(name string) ([]byte, error) {
 	if os.IsNotExist(err) {
 		return nil, keyring.ErrNotFound
 	}
-	return jwe.Decrypt(cipher, jwe.WithKey(keyEncryptionAlgorithm, f.password))
+	password, err := f.promptPassword()
+	if err != nil {
+		return nil, err
+	}
+	return jwe.Decrypt(cipher, jwe.WithKey(keyEncryptionAlgorithm, password))
 }
 
 func (f *fileKeyring) Delete(user string) error {
@@ -63,4 +77,19 @@ func (f *fileKeyring) Delete(user string) error {
 		return keyring.ErrNotFound
 	}
 	return err
+}
+
+// promptPassword returns the password from the user.
+//
+// If the password has been previously prompted it will be remembered.
+func (f *fileKeyring) promptPassword() ([]byte, error) {
+	if len(f.password) > 0 {
+		return f.password, nil
+	}
+	password, err := f.prompt("Enter keystore password:")
+	if err != nil {
+		return nil, err
+	}
+	f.password = password
+	return password, nil
 }

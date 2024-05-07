@@ -17,10 +17,6 @@ The number of retries to make in the event of a transaction conflict. Defaults t
 
 Currently this is only used within the P2P system and will not affect operations initiated by users.
 
-## `datastore.encryptionDisabled`
-
-Disable datastore encryption at rest. Defaults to `false`.
-
 ## `datastore.badger.path`
 
 The path to the database data file(s). Defaults to `data`.
@@ -101,8 +97,6 @@ Disable colored log output. Defaults to `false`.
 
 Path to store encrypted key files in. Defaults to `keys`.
 
-When set to an empty string the default OS key management will be used.
-
 ## `keyring.disabled`
 
 Disable the keyring and generate ephemeral keys instead. Defaults to `false`.
@@ -110,3 +104,10 @@ Disable the keyring and generate ephemeral keys instead. Defaults to `false`.
 ## `keyring.namespace`
 
 The service name to use when using the system keyring. Defaults to `defradb`.
+
+## `keyring.backend`
+
+Keyring backend to use. Defaults to `file`.
+
+- `file` Stores keys in encrypted files
+- `system` Stores keys in the OS managed keyring

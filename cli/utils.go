@@ -15,14 +15,22 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/keyring"
+)
+
+const (
+	peerKeyName       = "peer-key"
+	encryptionKeyName = "encryption-key"
 )
 
 type contextKey string
@@ -150,6 +158,25 @@ func setContextRootDir(cmd *cobra.Command) error {
 	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)
 	cmd.SetContext(ctx)
 	return nil
+}
+
+// openKeyring opens the keyring for the current environment.
+func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
+	cfg := mustGetContextConfig(cmd)
+	if cfg.Get("keyring.backend") == "system" {
+		return keyring.OpenSystemKeyring(cfg.GetString("keyring.namespace")), nil
+	}
+	path := cfg.GetString("keyring.path")
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return nil, err
+	}
+	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
+		cmd.Print(s)
+		pass, err := term.ReadPassword(int(syscall.Stdin))
+		cmd.Println("")
+		return pass, err
+	})
+	return keyring.OpenFileKeyring(path, prompt)
 }
 
 func writeJSON(cmd *cobra.Command, out any) error {

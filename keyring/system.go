@@ -25,7 +25,8 @@ type systemKeyring struct {
 	service string
 }
 
-func openSystemKeyring(service string) *systemKeyring {
+// OpenSystemKeyring opens the system keyring managed by the OS.
+func OpenSystemKeyring(service string) *systemKeyring {
 	return &systemKeyring{
 		service: service,
 	}

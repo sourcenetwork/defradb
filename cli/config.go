@@ -58,6 +58,8 @@ var configFlags = map[string]string{
 	"api.allowed-origins":               "allowed-origins",
 	"api.pubkeypath":                    "pubkeypath",
 	"api.privkeypath":                   "privkeypath",
+	"keyring.namespace":                 "keyring-namespace",
+	"keyring.backend":                   "keyring-backend",
 	"keyring.path":                      "keyring-path",
 	"keyring.disabled":                  "no-keyring",
 }
@@ -74,8 +76,6 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigType("yaml")
 
 	cfg.SetDefault("datastore.badger.path", "data")
-	cfg.SetDefault("datastore.encryptionDisabled", false)
-	cfg.SetDefault("keyring.namespace", "defradb")
 	cfg.SetDefault("net.pubSubEnabled", true)
 	cfg.SetDefault("net.relay", false)
 	cfg.SetDefault("log.caller", false)
