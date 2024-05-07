@@ -20,6 +20,7 @@ import (
 	badger "github.com/sourcenetwork/badger/v4"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
@@ -29,10 +30,11 @@ import (
 type DatabaseType string
 
 const (
-	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
-	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
-	inMemoryEnvName       = "DEFRA_IN_MEMORY"
+	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName   = "DEFRA_BADGER_FILE_PATH"
+	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
+	inMemoryEnvName         = "DEFRA_IN_MEMORY"
 )
 
 const (
@@ -42,10 +44,12 @@ const (
 )
 
 var (
-	badgerInMemory bool
-	badgerFile     bool
-	inMemoryStore  bool
-	databaseDir    string
+	badgerInMemory   bool
+	badgerFile       bool
+	inMemoryStore    bool
+	databaseDir      string
+	badgerEncryption bool
+	encryptionKey    []byte
 )
 
 func init() {
@@ -54,6 +58,7 @@ func init() {
 	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
 	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
 
 	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.
@@ -71,6 +76,10 @@ func init() {
 func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
 	opts := badgerds.Options{
 		Options: badger.DefaultOptions("").WithInMemory(true),
+	}
+	if encryptionKey != nil {
+		opts.Options.EncryptionKey = encryptionKey
+		opts.Options.IndexCacheSize = 100 << 20
 	}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -112,7 +121,10 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 	opts := &badgerds.Options{
 		Options: badger.DefaultOptions(dbPath),
 	}
-
+	if encryptionKey != nil {
+		opts.Options.EncryptionKey = encryptionKey
+		opts.Options.IndexCacheSize = 100 << 20
+	}
 	rootstore, err := badgerds.NewDatastore(dbPath, opts)
 	if err != nil {
 		return nil, "", err
@@ -134,6 +146,14 @@ func setupDatabase(s *state) (impl client.DB, path string, err error) {
 	dbopts := []db.Option{
 		db.WithUpdateEvents(),
 		db.WithLensPoolSize(lensPoolSize),
+	}
+
+	if badgerEncryption && encryptionKey == nil {
+		key, err := crypto.GenerateAES256()
+		if err != nil {
+			return nil, "", err
+		}
+		encryptionKey = key
 	}
 
 	switch s.dbt {
