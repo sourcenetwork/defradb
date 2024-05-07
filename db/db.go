@@ -32,7 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/lens"
+	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/request/graphql"
 )
 
