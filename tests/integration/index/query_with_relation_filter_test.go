@@ -555,6 +555,8 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 }
 
 func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplain(t *testing.T) {
+	// This query will fetch first a matching device which is secondary doc and therefore
+	// has a reference to the primary User doc.
 	req := `query {
 		Device(filter: {
 			year: {_eq: 2021}
@@ -619,9 +621,13 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 }
 
 func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExplain(t *testing.T) {
+	// This query will fetch first a matching user (owner) which is primary doc and therefore
+	// has no direct reference to secondary Device docs.
+	// At the moment the db has to make a full scan of the Device docs to find the matching ones.
+	// Keenan has 3 devices.
 	req := `query {
 		Device(filter: {
-			owner: {age: {_eq: 48}}
+			owner: {name: {_eq: "Keenan"}}
 		}) {
 			model
 		}
@@ -632,8 +638,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String
-						age: Int @index
+						name: String @index
 						devices: [Device]
 					} 
 
@@ -649,8 +654,8 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"model": "iPad Mini"},
 					{"model": "iPhone 13"},
+					{"model": "iPad Mini"},
 					{"model": "MacBook Pro"},
 				},
 			},
