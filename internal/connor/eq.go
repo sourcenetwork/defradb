@@ -6,9 +6,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/connor/numbers"
-	ctime "github.com/sourcenetwork/defradb/connor/time"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/connor/numbers"
+	ctime "github.com/sourcenetwork/defradb/internal/connor/time"
 )
 
 // eq is an operator which performs object equality

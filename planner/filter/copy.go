@@ -10,7 +10,7 @@
 package filter
 
 import (
-	"github.com/sourcenetwork/defradb/connor"
+	"github.com/sourcenetwork/defradb/internal/connor"
 )
 
 // Copy performs a deep copy of the provided filter.

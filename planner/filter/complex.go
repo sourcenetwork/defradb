@@ -11,7 +11,7 @@ package filter
 
 import (
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/connor"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
