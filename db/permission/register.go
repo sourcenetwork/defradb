@@ -15,9 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 )
 
 // RegisterDocOnCollectionWithACP handles the registration of the document with acp.

@@ -15,11 +15,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/request/graphql"
 	gqlSchema "github.com/sourcenetwork/defradb/request/graphql/schema"

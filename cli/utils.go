@@ -20,10 +20,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 )
 
 type contextKey string

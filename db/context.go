@@ -15,8 +15,8 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 )
 
 // txnContextKey is the key type for transaction context values.

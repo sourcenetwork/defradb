@@ -21,14 +21,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )

@@ -13,8 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/db/permission"
+	"github.com/sourcenetwork/defradb/internal/acp"
 )
 
 // registerDocWithACP handles the registration of the document with acp.

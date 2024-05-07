@@ -18,8 +18,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 )
 
 func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
