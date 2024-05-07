@@ -11,7 +11,7 @@
 package container
 
 import (
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // DocumentContainer is a specialized buffer to store potentially

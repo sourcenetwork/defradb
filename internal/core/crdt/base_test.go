@@ -16,8 +16,8 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 func newDS() datastore.DSReaderWriter {

@@ -20,8 +20,8 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // heads manages the current Merkle-CRDT heads.

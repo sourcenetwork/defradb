@@ -21,8 +21,8 @@ import (
 
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 var (

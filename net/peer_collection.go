@@ -17,8 +17,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 const marker = byte(0xff)

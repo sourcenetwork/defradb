@@ -18,10 +18,10 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/core"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
-	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
 func newDS() ds.Datastore {

@@ -20,10 +20,10 @@ import (
 	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister

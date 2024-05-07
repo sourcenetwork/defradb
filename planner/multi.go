@@ -12,7 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 /*

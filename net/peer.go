@@ -35,11 +35,11 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/internal/core"
+	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )

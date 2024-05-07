@@ -14,8 +14,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/internal/connor"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 var (

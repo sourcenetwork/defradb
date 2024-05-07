@@ -8,7 +8,7 @@ import (
 
 	context "context"
 
-	core "github.com/sourcenetwork/defradb/core"
+	core "github.com/sourcenetwork/defradb/internal/core"
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 

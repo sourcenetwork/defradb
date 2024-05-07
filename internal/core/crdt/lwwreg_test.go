@@ -22,8 +22,8 @@ import (
 	mh "github.com/multiformats/go-multihash"
 	"github.com/ugorji/go/codec"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 func newMockStore() datastore.DSReaderWriter {

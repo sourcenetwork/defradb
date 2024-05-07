@@ -18,7 +18,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	mh "github.com/multiformats/go-multihash"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // Credit: This file is from github.com/ipfs/go-ds-crdt

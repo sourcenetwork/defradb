@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // viewNode applies a lens transform to data yielded from the source node.

@@ -21,9 +21,9 @@ import (
 
 	"github.com/ipfs/go-cid"
 
-	"github.com/sourcenetwork/defradb/core"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 func newRandomCID() cid.Cid {

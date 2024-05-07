@@ -17,9 +17,9 @@ import (
 	"github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 // CreateSchemaVersion creates and saves to the store a new schema version.

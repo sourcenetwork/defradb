@@ -11,8 +11,8 @@
 package planner
 
 import (
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/container"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // A lazily loaded cache-node that allows retrieval of cached documents at arbitrary indexes.

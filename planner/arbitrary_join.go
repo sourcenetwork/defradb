@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 

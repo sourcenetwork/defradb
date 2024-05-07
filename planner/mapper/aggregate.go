@@ -10,7 +10,7 @@
 
 package mapper
 
-import "github.com/sourcenetwork/defradb/core"
+import "github.com/sourcenetwork/defradb/internal/core"
 
 // An optional child target.
 type OptionalChildTarget struct {

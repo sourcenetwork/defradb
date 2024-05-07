@@ -20,8 +20,8 @@ import (
 	"github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // SaveCollection saves the given collection to the system store overwriting any

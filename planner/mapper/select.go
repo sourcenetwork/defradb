@@ -13,7 +13,7 @@ package mapper
 import (
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 // Select represents a request to return data from Defra.
