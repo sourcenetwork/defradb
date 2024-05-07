@@ -23,8 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	defrap "github.com/sourcenetwork/defradb/request/graphql/parser"
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
+	defrap "github.com/sourcenetwork/defradb/internal/request/graphql/parser"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
 var _ core.Parser = (*parser)(nil)

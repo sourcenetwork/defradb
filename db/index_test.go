@@ -30,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
 const (

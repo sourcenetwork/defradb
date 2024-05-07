@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // Given a basic developer defined schema in GraphQL Schema Definition Language

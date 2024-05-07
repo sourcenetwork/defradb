@@ -23,7 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.

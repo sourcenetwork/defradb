@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // ParseRequest parses a root ast.Document, and returns a formatted Request object.

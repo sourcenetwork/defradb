@@ -29,7 +29,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
-	"github.com/sourcenetwork/defradb/request/graphql/parser"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
 
 // ExecInfo contains statistics about the fetcher execution.

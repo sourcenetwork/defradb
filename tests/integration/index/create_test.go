@@ -13,7 +13,7 @@ package index
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 

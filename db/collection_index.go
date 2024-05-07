@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
 // createCollectionIndex creates a new collection index and saves it to the database in its system store.

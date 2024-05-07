@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
-	"github.com/sourcenetwork/defradb/request/graphql/parser"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
 
 // scanExecInfo contains information about the execution of a scan.

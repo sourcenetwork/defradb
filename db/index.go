@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // CollectionIndex is an interface for collection indexes

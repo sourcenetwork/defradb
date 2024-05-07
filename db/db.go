@@ -33,7 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/lens"
-	"github.com/sourcenetwork/defradb/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
 var (
