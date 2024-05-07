@@ -46,8 +46,8 @@ require (
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
 	github.com/zalando/go-keyring v0.2.4
-	go.opentelemetry.io/otel/metric v1.25.0
-	go.opentelemetry.io/otel/sdk/metric v1.25.0
+	go.opentelemetry.io/otel/metric v1.26.0
+	go.opentelemetry.io/otel/sdk/metric v1.26.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/term v0.19.0
@@ -294,9 +294,9 @@ require (
 	github.com/zondax/ledger-go v0.14.3 // indirect
 	go.etcd.io/bbolt v1.3.8 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.25.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.25.0 // indirect
-	go.opentelemetry.io/otel/trace v1.25.0 // indirect
+	go.opentelemetry.io/otel v1.26.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.26.0 // indirect
+	go.opentelemetry.io/otel/trace v1.26.0 // indirect
 	go.uber.org/dig v1.17.1 // indirect
 	go.uber.org/fx v1.20.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect

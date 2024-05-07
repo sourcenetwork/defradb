@@ -12,21 +12,21 @@
   "dependencies": {
     "graphiql": "^3.2.0",
     "graphql": "^16.8.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "swagger-ui-react": "^5.17.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "swagger-ui-react": "^5.17.2"
   },
   "devDependencies": {
-    "@types/react": "^18.2.79",
-    "@types/react-dom": "^18.2.25",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
     "@types/swagger-ui-react": "^4.18.3",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vitejs/plugin-react-swc": "^3.6.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.6",
     "typescript": "^5.4.5",
-    "vite": "^5.2.8"
+    "vite": "^5.2.10"
   }
 }

@@ -1,3 +1,70 @@
+
+<a name="v0.11.0"></a>
+## [v0.11.0](https://github.com/sourcenetwork/defradb/compare/v0.10.0...v0.11.0)
+
+> 2024-05-03
+
+DefraDB v0.11 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.10.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Update corelog to 0.0.7 ([#2547](https://github.com/sourcenetwork/defradb/issues/2547))
+* Move relation field properties onto collection ([#2529](https://github.com/sourcenetwork/defradb/issues/2529))
+* Lens runtime config ([#2497](https://github.com/sourcenetwork/defradb/issues/2497))
+* Add P Counter CRDT ([#2482](https://github.com/sourcenetwork/defradb/issues/2482))
+* Add Access Control Policy ([#2338](https://github.com/sourcenetwork/defradb/issues/2338))
+* Force explicit primary decl. in SDL for one-ones ([#2462](https://github.com/sourcenetwork/defradb/issues/2462))
+* Allow mutation of col sources via PatchCollection ([#2424](https://github.com/sourcenetwork/defradb/issues/2424))
+* Add Defra-Lens support for branching schema ([#2421](https://github.com/sourcenetwork/defradb/issues/2421))
+* Add PatchCollection ([#2402](https://github.com/sourcenetwork/defradb/issues/2402))
+
+### Fixes
+
+* Return correct results from one-many indexed filter ([#2579](https://github.com/sourcenetwork/defradb/issues/2579))
+* Handle compound filters on related indexed fields ([#2575](https://github.com/sourcenetwork/defradb/issues/2575))
+* Add check to filter result for logical ops ([#2573](https://github.com/sourcenetwork/defradb/issues/2573))
+* Make all array kinds nillable ([#2534](https://github.com/sourcenetwork/defradb/issues/2534))
+* Allow update when updating non-indexed field ([#2511](https://github.com/sourcenetwork/defradb/issues/2511))
+
+### Documentation
+
+* Add data definition document ([#2544](https://github.com/sourcenetwork/defradb/issues/2544))
+
+### Refactoring
+
+* Merge collection UpdateWith and DeleteWith ([#2531](https://github.com/sourcenetwork/defradb/issues/2531))
+* DB transactions context ([#2513](https://github.com/sourcenetwork/defradb/issues/2513))
+* Add NormalValue ([#2404](https://github.com/sourcenetwork/defradb/issues/2404))
+* Clean up client/request package ([#2443](https://github.com/sourcenetwork/defradb/issues/2443))
+* Rewrite convertImmutable ([#2445](https://github.com/sourcenetwork/defradb/issues/2445))
+* Unify Field Kind and Schema properties ([#2414](https://github.com/sourcenetwork/defradb/issues/2414))
+* Replace logging package with corelog ([#2406](https://github.com/sourcenetwork/defradb/issues/2406))
+
+### Testing
+
+* Add flag to skip network tests ([#2495](https://github.com/sourcenetwork/defradb/issues/2495))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 30-04-2024 ([#2570](https://github.com/sourcenetwork/defradb/issues/2570))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 7.7.0 to 7.7.1 in /playground ([#2550](https://github.com/sourcenetwork/defradb/issues/2550))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 7.7.0 to 7.7.1 in /playground ([#2551](https://github.com/sourcenetwork/defradb/issues/2551))
+* Bump swagger-ui-react from 5.16.2 to 5.17.0 in /playground ([#2549](https://github.com/sourcenetwork/defradb/issues/2549))
+* Update dependencies (bulk dependabot PRs) 23-04-2023 ([#2548](https://github.com/sourcenetwork/defradb/issues/2548))
+* Bump go.opentelemetry.io/otel/sdk/metric from 1.24.0 to 1.25.0 ([#2499](https://github.com/sourcenetwork/defradb/issues/2499))
+* Bump typescript from 5.4.3 to 5.4.5 in /playground ([#2515](https://github.com/sourcenetwork/defradb/issues/2515))
+* Bump swagger-ui-react from 5.14.0 to 5.15.0 in /playground ([#2514](https://github.com/sourcenetwork/defradb/issues/2514))
+* Update dependencies (bulk dependabot PRs) 2024-04-09 ([#2509](https://github.com/sourcenetwork/defradb/issues/2509))
+* Update dependencies (bulk dependabot PRs) 2024-04-03 ([#2492](https://github.com/sourcenetwork/defradb/issues/2492))
+* Update dependencies (bulk dependabot PRs) 03-04-2024 ([#2486](https://github.com/sourcenetwork/defradb/issues/2486))
+* Bump github.com/multiformats/go-multiaddr from 0.12.2 to 0.12.3 ([#2480](https://github.com/sourcenetwork/defradb/issues/2480))
+* Bump [@types](https://github.com/types)/react from 18.2.66 to 18.2.67 in /playground ([#2427](https://github.com/sourcenetwork/defradb/issues/2427))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 7.2.0 to 7.3.1 in /playground ([#2428](https://github.com/sourcenetwork/defradb/issues/2428))
+* Update dependencies (bulk dependabot PRs) 19-03-2024 ([#2426](https://github.com/sourcenetwork/defradb/issues/2426))
+* Update dependencies (bulk dependabot PRs) 03-11-2024 ([#2399](https://github.com/sourcenetwork/defradb/issues/2399))
+
 <a name="v0.10.0"></a>
 ## [v0.10.0](https://github.com/sourcenetwork/defradb/compare/v0.9.0...v0.10.0)
 

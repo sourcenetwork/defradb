@@ -93,7 +93,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         uses: actions/cache/save@v4
         with:
-          path: dist/darwin_amd64
+          path: dist/darwin_arm64
           key: darwin-${{ env.sha_short }}
 
       - name: Save cache on Windows
@@ -146,7 +146,7 @@ jobs:
         id: restore-macos
         uses: actions/cache/restore@v4
         with:
-          path: dist/darwin_amd64
+          path: dist/darwin_arm64
           key: darwin-${{ env.sha_short }}
           fail-on-cache-miss: true
 

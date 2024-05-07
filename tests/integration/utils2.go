@@ -170,6 +170,8 @@ func ExecuteTestCase(
 	require.NotEmpty(t, databases)
 	require.NotEmpty(t, clients)
 
+	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
+
 	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
@@ -1992,6 +1994,36 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
 		}
 	}
+}
+
+// skipIfClientTypeUnsupported returns a new set of client types that match the given supported set.
+//
+// If supportedClientTypes is none no filtering will take place and the input client set will be returned.
+// If the resultant filtered set is empty the test will be skipped.
+func skipIfClientTypeUnsupported(
+	t *testing.T,
+	clients []ClientType,
+	supportedClientTypes immutable.Option[[]ClientType],
+) []ClientType {
+	if !supportedClientTypes.HasValue() {
+		return clients
+	}
+
+	filteredClients := []ClientType{}
+	for _, supportedMutationType := range supportedClientTypes.Value() {
+		for _, client := range clients {
+			if supportedMutationType == client {
+				filteredClients = append(filteredClients, client)
+				break
+			}
+		}
+	}
+
+	if len(filteredClients) == 0 {
+		t.Skipf("test does not support any given client type. Type: %v", supportedClientTypes)
+	}
+
+	return filteredClients
 }
 
 // skipIfNetworkTest skips the current test if the given actions

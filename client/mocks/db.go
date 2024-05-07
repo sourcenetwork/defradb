@@ -32,23 +32,23 @@ func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
 }
 
-// AddPolicy provides a mock function with given fields: ctx, creatorID, policy
-func (_m *DB) AddPolicy(ctx context.Context, creatorID string, policy string) (client.AddPolicyResult, error) {
-	ret := _m.Called(ctx, creatorID, policy)
+// AddPolicy provides a mock function with given fields: ctx, policy
+func (_m *DB) AddPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ret := _m.Called(ctx, policy)
 
 	var r0 client.AddPolicyResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (client.AddPolicyResult, error)); ok {
-		return rf(ctx, creatorID, policy)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (client.AddPolicyResult, error)); ok {
+		return rf(ctx, policy)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) client.AddPolicyResult); ok {
-		r0 = rf(ctx, creatorID, policy)
+	if rf, ok := ret.Get(0).(func(context.Context, string) client.AddPolicyResult); ok {
+		r0 = rf(ctx, policy)
 	} else {
 		r0 = ret.Get(0).(client.AddPolicyResult)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, creatorID, policy)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, policy)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -63,15 +63,14 @@ type DB_AddPolicy_Call struct {
 
 // AddPolicy is a helper method to define mock.On call
 //   - ctx context.Context
-//   - creatorID string
 //   - policy string
-func (_e *DB_Expecter) AddPolicy(ctx interface{}, creatorID interface{}, policy interface{}) *DB_AddPolicy_Call {
-	return &DB_AddPolicy_Call{Call: _e.mock.On("AddPolicy", ctx, creatorID, policy)}
+func (_e *DB_Expecter) AddPolicy(ctx interface{}, policy interface{}) *DB_AddPolicy_Call {
+	return &DB_AddPolicy_Call{Call: _e.mock.On("AddPolicy", ctx, policy)}
 }
 
-func (_c *DB_AddPolicy_Call) Run(run func(ctx context.Context, creatorID string, policy string)) *DB_AddPolicy_Call {
+func (_c *DB_AddPolicy_Call) Run(run func(ctx context.Context, policy string)) *DB_AddPolicy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -81,7 +80,7 @@ func (_c *DB_AddPolicy_Call) Return(_a0 client.AddPolicyResult, _a1 error) *DB_A
 	return _c
 }
 
-func (_c *DB_AddPolicy_Call) RunAndReturn(run func(context.Context, string, string) (client.AddPolicyResult, error)) *DB_AddPolicy_Call {
+func (_c *DB_AddPolicy_Call) RunAndReturn(run func(context.Context, string) (client.AddPolicyResult, error)) *DB_AddPolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
