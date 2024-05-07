@@ -33,7 +33,7 @@ Example: with no encryption key
   defradb keyring generate --no-encryption-key
 
 Example: with system keyring
-  defradb keyring generate --backend system`,
+  defradb keyring generate --keyring-backend system`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyring, err := openKeyring(cmd)
 			if err != nil {
