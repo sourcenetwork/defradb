@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/encoding"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 // NormalizeFieldValue takes a field value and description and converts it to the
