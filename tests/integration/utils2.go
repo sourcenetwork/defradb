@@ -195,6 +195,7 @@ func executeTestCase(
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", mutationType),
 		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("badgerEncryption", badgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
 		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
 		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),

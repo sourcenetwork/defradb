@@ -35,12 +35,18 @@ jobs:
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         detect-changes: [false]
+        database-encryption: [false]
         include:
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: true
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            database-encryption: true
           - os: macos-latest
             client-type: go
             database-type: badger-memory
@@ -68,6 +74,7 @@ jobs:
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'badger-memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'badger-file' }}
+      DEFRA_BADGER_ENCRYPTION: ${{ matrix.database-encryption }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
 
     steps:
