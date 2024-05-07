@@ -16,7 +16,7 @@ Example: with no encryption key
   defradb keyring generate --no-encryption-key
 
 Example: with system keyring
-  defradb keyring generate --backend system
+  defradb keyring generate --keyring-backend system
 
 ```
 defradb keyring generate [flags]
@@ -26,7 +26,7 @@ defradb keyring generate [flags]
 
 ```
   -h, --help                help for generate
-      --no-encryption-key   Skip generating an encryption key
+      --no-encryption-key   Skip generating an encryption. Encryption at rest will be disabled
 ```
 
 ### Options inherited from parent commands
