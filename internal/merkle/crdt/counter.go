@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.

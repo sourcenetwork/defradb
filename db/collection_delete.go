@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.

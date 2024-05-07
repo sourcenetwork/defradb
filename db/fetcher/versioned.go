@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
-	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
+	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 

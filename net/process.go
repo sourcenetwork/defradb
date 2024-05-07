@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
+	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 type blockProcessor struct {

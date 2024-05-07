@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.

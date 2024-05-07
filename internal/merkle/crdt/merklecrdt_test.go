@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	crdt "github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 func newDS() ds.Datastore {

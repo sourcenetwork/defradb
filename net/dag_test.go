@@ -24,7 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 

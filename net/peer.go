@@ -40,7 +40,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
