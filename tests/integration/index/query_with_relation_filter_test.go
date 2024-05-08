@@ -252,7 +252,11 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
+				Request: makeExplainQuery(req1),
+				// we make 1 index fetch to get the only address with city == "London"
+				// then we scan all 10 users to find one with matching "address_id"
+				// after this we fetch the name of the user
+				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
 			},
 			testUtils.Request{
@@ -264,8 +268,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(15).WithIndexFetches(3),
+				Request: makeExplainQuery(req2),
+				// we make 3 index fetch to get the 3 address with city == "Montreal"
+				// then we scan all 10 users to find one with matching "address_id" for each address
+				// after this we fetch the name of each user
+				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(33).WithIndexFetches(3),
 			},
 		},
 	}
@@ -547,6 +555,126 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplain(t *testing.T) {
+	// This query will fetch first a matching device which is secondary doc and therefore
+	// has a reference to the primary User doc.
+	req := `query {
+		Device(filter: {
+			year: {_eq: 2021}
+		}) {
+			model
+			owner {
+				name
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "With filter on indexed field of secondary relation (N-1) should fetch secondary and primary objects",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					} 
+
+					type Device {
+						model: String 
+						year: Int @index
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{
+						"model": "Playstation 5",
+						"owner": map[string]any{
+							"name": "Islam",
+						},
+					},
+					{
+						"model": "Playstation 5",
+						"owner": map[string]any{
+							"name": "Addo",
+						},
+					},
+					{
+						"model": "iPhone 10",
+						"owner": map[string]any{
+							"name": "Addo",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// we make 3 index fetches to get all 3 devices with year 2021
+				// and 9 field fetches: for every device we fetch additionally "model", "owner_id" and owner's "name"
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(9).WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExplain(t *testing.T) {
+	// This query will fetch first a matching user (owner) which is primary doc and therefore
+	// has no direct reference to secondary Device docs.
+	// At the moment the db has to make a full scan of the Device docs to find the matching ones.
+	// Keenan has 3 devices.
+	req := `query {
+		Device(filter: {
+			owner: {name: {_eq: "Keenan"}}
+		}) {
+			model
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Upon querying secondary object with filter on indexed field of primary relation (in 1-N) should fetch all secondary objects of the same primary one",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						devices: [Device]
+					} 
+
+					type Device {
+						model: String 
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"model": "iPhone 13"},
+					{"model": "iPad Mini"},
+					{"model": "MacBook Pro"},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// we make only 1 index fetch to get the owner by it's name
+				// and 44 field fetches to get 2 fields for all 22 devices in the db.
+				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(44).WithIndexFetches(1),
 			},
 		},
 	}

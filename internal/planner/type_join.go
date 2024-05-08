@@ -294,7 +294,7 @@ func (n *typeJoinOne) Kind() string {
 	return "typeJoinOne"
 }
 
-func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uint) ([]core.Doc, error) {
+func fetchDocsWithFieldValue(plan planNode, fieldName string, val any) ([]core.Doc, error) {
 	propIndex := plan.DocumentMap().FirstIndexOfName(fieldName)
 	setSubTypeFilterToScanNode(plan, propIndex, val)
 
@@ -302,7 +302,7 @@ func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uin
 		return nil, NewErrSubTypeInit(err)
 	}
 
-	docs := make([]core.Doc, 0, limit)
+	var docs []core.Doc
 	for {
 		next, err := plan.Next()
 		if err != nil {
@@ -313,10 +313,6 @@ func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uin
 		}
 
 		docs = append(docs, plan.Value())
-
-		if limit > 0 && len(docs) >= int(limit) {
-			break
-		}
 	}
 
 	return docs, nil
@@ -587,7 +583,6 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 			// otherwise the user would not have been able to request it.
 			join.dir.secondaryField.Value(),
 			firstDoc.GetID(),
-			join.secondaryFetchLimit,
 		)
 		if err != nil {
 			return false, err

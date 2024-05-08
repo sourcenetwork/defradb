@@ -471,6 +471,24 @@ type GenerateDocs struct {
 }
 
 // CreatePredefinedDocs is an action that will trigger creation of predefined documents.
+// Predefined docs allows specifying a database state with complex schemas that can be used by
+// multiple tests while allowing each test to select a subset of the schemas (collection and
+// collection's fields) to work with.
+// Example:
+//
+//	 gen.DocsList{
+//		ColName: "User",
+//		Docs: []map[string]any{
+//		  {
+//			"name":     "Shahzad",
+//			"devices": []map[string]any{
+//			  {
+//				"model": "iPhone Xs",
+//			  }},
+//		  }},
+//	 }
+//
+// For more information refer to tests/predefined/README.md
 type CreatePredefinedDocs struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//

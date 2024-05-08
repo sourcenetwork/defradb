@@ -216,7 +216,7 @@ func getUserDocs() predefined.DocsList {
 					},
 					{
 						"model": "Playstation 5",
-						"year":  2022,
+						"year":  2021,
 						"type":  "game_console",
 						"specs": map[string]any{
 							"CPU":     3.5,
