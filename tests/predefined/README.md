@@ -36,6 +36,9 @@ gen.DocsList{
           "year":  2022,
           "type":  "phone",
         }},
+      "address": map[string]any{
+        "city": "Munich",
+      },
     }},
 }
 ```
