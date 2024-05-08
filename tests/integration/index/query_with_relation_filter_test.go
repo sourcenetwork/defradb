@@ -252,7 +252,11 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req1),
+				Request: makeExplainQuery(req1),
+				// we make 1 index fetch to get the only address with city == "London"
+				// then we scan all 10 users to find one with matching "address_id"
+				// after this we fetch the name of the user
+				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
 			},
 			testUtils.Request{
@@ -264,7 +268,11 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req2),
+				Request: makeExplainQuery(req2),
+				// we make 3 index fetch to get the 3 address with city == "Montreal"
+				// then we scan all 10 users to find one with matching "address_id" for each address
+				// after this we fetch the name of each user
+				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(33).WithIndexFetches(3),
 			},
 		},
@@ -611,7 +619,9 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req),
+				Request: makeExplainQuery(req),
+				// we make 3 index fetches to get all 3 devices with year 2021
+				// and 9 field fetches: for every device we fetch additionally "model", "owner_id" and owner's "name"
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(9).WithIndexFetches(3),
 			},
 		},
@@ -660,7 +670,10 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req),
+				Request: makeExplainQuery(req),
+				// we make only 1 index fetch to get the owner by it's name
+				// and 44 field fetches to get 2 fields for all 22 devices in the db.
+				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(44).WithIndexFetches(1),
 			},
 		},
