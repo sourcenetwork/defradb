@@ -17,7 +17,7 @@ import (
 	"unicode"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
 func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {

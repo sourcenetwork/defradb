@@ -22,8 +22,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/errors"
+	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 

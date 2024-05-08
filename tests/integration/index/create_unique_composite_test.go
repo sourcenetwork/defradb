@@ -14,8 +14,8 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
