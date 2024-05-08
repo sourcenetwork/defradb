@@ -16,8 +16,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 )
 
 func TestFetcherStartWithoutInit(t *testing.T) {

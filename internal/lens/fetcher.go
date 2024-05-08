@@ -21,10 +21,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 

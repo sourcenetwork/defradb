@@ -14,7 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 // ConfigureMigration is a test action which will configure a Lens migration using the

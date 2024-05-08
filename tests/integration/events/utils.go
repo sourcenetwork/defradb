@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 

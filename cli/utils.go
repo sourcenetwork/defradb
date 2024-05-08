@@ -21,9 +21,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 type contextKey string

@@ -23,11 +23,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
-	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/db/permission"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )

@@ -28,11 +28,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 

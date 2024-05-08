@@ -23,8 +23,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 // todo: This file, particularly the `lensPool` stuff, contains fairly sensitive code that is both

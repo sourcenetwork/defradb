@@ -26,11 +26,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
-	"github.com/sourcenetwork/defradb/db/fetcher"
-	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	fetcherMocks "github.com/sourcenetwork/defradb/internal/db/fetcher/mocks"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 

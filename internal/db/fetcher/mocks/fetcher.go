@@ -12,7 +12,7 @@ import (
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
-	fetcher "github.com/sourcenetwork/defradb/db/fetcher"
+	fetcher "github.com/sourcenetwork/defradb/internal/db/fetcher"
 
 	identity "github.com/sourcenetwork/defradb/internal/acp/identity"
 

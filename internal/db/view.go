@@ -20,7 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 func (db *db) addView(

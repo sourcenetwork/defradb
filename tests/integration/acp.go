@@ -14,8 +14,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/db"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 // AddPolicy will attempt to add the given policy using DefraDB's ACP system.

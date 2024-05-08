@@ -20,8 +20,8 @@ import (
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net"
 )
 

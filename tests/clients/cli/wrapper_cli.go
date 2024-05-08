@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 type cliWrapper struct {

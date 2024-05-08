@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 const (

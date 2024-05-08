@@ -23,8 +23,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 const (
