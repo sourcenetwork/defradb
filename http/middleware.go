@@ -21,10 +21,10 @@ import (
 	"github.com/go-chi/cors"
 	"golang.org/x/exp/slices"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 const (

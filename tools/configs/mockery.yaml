@@ -42,9 +42,9 @@ packages: # Packages and their interfaces to generate mocks for.
             DB:
             Collection:
 
-    github.com/sourcenetwork/defradb/db/fetcher:
+    github.com/sourcenetwork/defradb/internal/db/fetcher:
         config:
-            dir: "./db/fetcher/mocks"
+            dir: "./internal/db/fetcher/mocks"
         interfaces:
             Fetcher:
             EncodedDocument:

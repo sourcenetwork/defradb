@@ -24,7 +24,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 // This is the main implementation starting point for accessing the internal Document API

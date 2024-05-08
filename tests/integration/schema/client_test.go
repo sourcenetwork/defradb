@@ -13,7 +13,7 @@ package schema
 import (
 	"testing"
 
-	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
