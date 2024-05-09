@@ -256,12 +256,6 @@ func (c *collection) createIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
-	// Don't allow creating index on a permissioned collection, until following is implemented.
-	// TODO-ACP: ACP <> INDEX https://github.com/sourcenetwork/defradb/issues/2365
-	if c.Description().Policy.HasValue() {
-		return nil, ErrCanNotCreateIndexOnCollectionWithPolicy
-	}
-
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return nil, schema.NewErrIndexWithInvalidName("!")
 	}
