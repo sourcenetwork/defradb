@@ -97,7 +97,6 @@ const (
 
 var (
 	ErrFailedToGetCollection                    = errors.New(errFailedToGetCollection)
-	ErrCanNotCreateIndexOnCollectionWithPolicy  = errors.New("can not create index on a collection with a policy")
 	ErrSubscriptionsNotAllowed                  = errors.New("server does not accept subscriptions")
 	ErrInvalidFilter                            = errors.New("invalid filter")
 	ErrCollectionAlreadyExists                  = errors.New(errCollectionAlreadyExists)
