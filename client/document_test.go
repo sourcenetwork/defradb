@@ -18,7 +18,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	ccid "github.com/sourcenetwork/defradb/core/cid"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 var (

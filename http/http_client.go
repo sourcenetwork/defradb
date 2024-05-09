@@ -18,7 +18,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 type httpClient struct {

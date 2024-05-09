@@ -19,8 +19,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peerstore"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {

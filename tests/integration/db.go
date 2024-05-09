@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
