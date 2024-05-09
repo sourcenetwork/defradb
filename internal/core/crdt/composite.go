@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,14 +13,9 @@ package crdt
 import (
 	"bytes"
 	"context"
-	"sort"
-	"strings"
 
-	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -41,13 +36,9 @@ type CompositeDAGDelta struct {
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
 	Status client.DocumentStatus
-	// SubDAGS should not be marshalled as they are already
-	// stored as links in the DAG blocks. They are needed here to
-	// hold on to them for the block creation.
-	SubDAGs []core.DAGLink `json:"-"`
 }
 
-var _ core.CompositeDelta = (*CompositeDAGDelta)(nil)
+var _ core.Delta = (*CompositeDAGDelta)(nil)
 
 // GetPriority gets the current priority for this delta.
 func (delta *CompositeDAGDelta) GetPriority() uint64 {
@@ -57,30 +48,6 @@ func (delta *CompositeDAGDelta) GetPriority() uint64 {
 // SetPriority will set the priority for this delta.
 func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
-}
-
-// Marshal will serialize this delta to a byte array.
-func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
-	h := &codec.CborHandle{}
-	buf := bytes.NewBuffer(nil)
-	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(delta)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// Unmarshal decodes the delta from CBOR.
-func (delta *CompositeDAGDelta) Unmarshal(b []byte) error {
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(b, h)
-	return dec.Decode(delta)
-}
-
-// Links returns the links for this delta.
-func (delta *CompositeDAGDelta) Links() []core.DAGLink {
-	return delta.SubDAGs
 }
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
@@ -104,17 +71,13 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 	return nil, nil
 }
 
-// Set applies a delta to the composite DAG CRDT. TBD
-func (c CompositeDAG) Set(links []core.DAGLink) *CompositeDAGDelta {
-	// make sure the links are sorted lexicographically by CID
-	sort.Slice(links, func(i, j int) bool {
-		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
-	})
+// Set returns a new composite DAG delta CRDT with the given status.
+func (c CompositeDAG) Set(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{
 		DocID:           []byte(c.key.DocID),
 		FieldName:       c.fieldName,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
-		SubDAGs:         links,
+		Status:          status,
 	}
 }
 
@@ -197,33 +160,4 @@ func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKe
 	}
 
 	return nil
-}
-
-// DeltaDecode is a typed helper to extract.
-// a CompositeDAGDelta from a ipld.Node
-// for now let's do cbor (quick to implement)
-func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	pbNode, ok := node.(*dag.ProtoNode)
-	if !ok {
-		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
-	}
-
-	delta := &CompositeDAGDelta{}
-	err := delta.Unmarshal(pbNode.Data())
-	if err != nil {
-		return nil, err
-	}
-
-	// get links
-	for _, link := range pbNode.Links() {
-		if link.Name == "head" { // ignore the head links
-			continue
-		}
-
-		delta.SubDAGs = append(delta.SubDAGs, core.DAGLink{
-			Name: link.Name,
-			Cid:  link.Cid,
-		})
-	}
-	return delta, nil
 }

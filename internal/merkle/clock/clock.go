@@ -16,13 +16,14 @@ package clock
 import (
 	"context"
 
-	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
 var (
@@ -44,7 +45,7 @@ func NewMerkleClock(
 	dagstore datastore.DAGStore,
 	namespace core.HeadStoreKey,
 	crdt core.ReplicatedData,
-) core.MerkleClock {
+) *MerkleClock {
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
@@ -55,95 +56,88 @@ func NewMerkleClock(
 
 func (mc *MerkleClock) putBlock(
 	ctx context.Context,
-	heads []cid.Cid,
-	delta core.Delta,
-) (ipld.Node, error) {
-	node, err := makeNode(delta, heads)
+	block *coreblock.Block,
+) (cidlink.Link, error) {
+	nd := block.GenerateNode()
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(mc.dagstore.AsIPLDStorage())
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), nd)
 	if err != nil {
-		return nil, NewErrCreatingBlock(err)
+		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
 
-	// @todo Add a DagSyncer instance to the MerkleCRDT structure
-	// @body At the moment there is no configured DagSyncer so MerkleClock
-	// blocks are not persisted into the database.
-	// The following is an example implementation of how it might work:
-	//
-	// ctx := context.Background()
-	// err = mc.store.dagSyncer.Add(ctx, node)
-	// if err != nil {
-	// 	return nil, errors.Wrap("error writing new block %s ", node.Cid(), err)
-	// }
-	err = mc.dagstore.Put(ctx, node)
-	if err != nil {
-		return nil, NewErrWritingBlock(node.Cid(), err)
-	}
-
-	return node, nil
+	return link.(cidlink.Link), nil
 }
 
-// @todo Change AddDAGNode to AddDelta
-
-// AddDAGNode adds a new delta to the existing DAG for this MerkleClock: checks the current heads,
-// sets the delta priority in the Merkle DAG, and adds it to the blockstore the runs ProcessNode.
-func (mc *MerkleClock) AddDAGNode(
+// AddDelta adds a new delta to the existing DAG for this MerkleClock: checks the current heads,
+// sets the delta priority in the Merkle DAG, and adds it to the blockstore then runs ProcessBlock.
+func (mc *MerkleClock) AddDelta(
 	ctx context.Context,
 	delta core.Delta,
-) (ipld.Node, error) {
+	links ...coreblock.DAGLink,
+) (cidlink.Link, []byte, error) {
 	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
-		return nil, NewErrGettingHeads(err)
+		return cidlink.Link{}, nil, NewErrGettingHeads(err)
 	}
 	height = height + 1
 
 	delta.SetPriority(height)
+	block := coreblock.New(delta, links, heads...)
 
-	// write the delta and heads to a new block
-	nd, err := mc.putBlock(ctx, heads, delta)
+	// Write the new block to the dag store.
+	link, err := mc.putBlock(ctx, block)
 	if err != nil {
-		return nil, err
+		return cidlink.Link{}, nil, err
 	}
 
-	// apply the new node and merge the delta with state
-	err = mc.ProcessNode(
+	// merge the delta and update the state
+	err = mc.ProcessBlock(
 		ctx,
-		delta,
-		nd,
+		block,
+		link,
 	)
+	if err != nil {
+		return cidlink.Link{}, nil, err
+	}
 
-	return nd, err //@todo: Include raw block data in return
+	b, err := block.Marshal()
+	if err != nil {
+		return cidlink.Link{}, nil, err
+	}
+
+	return link, b, err
 }
 
-// ProcessNode processes an already merged delta into a CRDT by adding it to the state.
-func (mc *MerkleClock) ProcessNode(
+// ProcessBlock merges the delta CRDT and updates the state accordingly.
+func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
-	delta core.Delta,
-	node ipld.Node,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
 ) error {
-	nodeCid := node.Cid()
-	priority := delta.GetPriority()
+	priority := block.Delta.GetPriority()
 
-	err := mc.crdt.Merge(ctx, delta)
+	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
 	if err != nil {
-		return NewErrMergingDelta(nodeCid, err)
+		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
-	links := node.Links()
 	// check if we have any HEAD links
 	hasHeads := false
-	for _, l := range links {
+	for _, l := range block.Links {
 		if l.Name == "_head" {
 			hasHeads = true
 			break
 		}
 	}
 	if !hasHeads { // reached the bottom, at a leaf
-		err := mc.headset.Write(ctx, nodeCid, priority)
+		err := mc.headset.Write(ctx, blockLink.Cid, priority)
 		if err != nil {
-			return NewErrAddingHead(nodeCid, err)
+			return NewErrAddingHead(blockLink.Cid, err)
 		}
 	}
 
-	for _, l := range links {
+	for _, l := range block.Links {
 		linkCid := l.Cid
 		isHead, err := mc.headset.IsHead(ctx, linkCid)
 		if err != nil {
@@ -153,9 +147,9 @@ func (mc *MerkleClock) ProcessNode(
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, linkCid, nodeCid, priority)
+			err = mc.headset.Replace(ctx, linkCid, blockLink.Cid, priority)
 			if err != nil {
-				return NewErrReplacingHead(linkCid, nodeCid, err)
+				return NewErrReplacingHead(linkCid, blockLink.Cid, err)
 			}
 
 			continue
@@ -168,13 +162,13 @@ func (mc *MerkleClock) ProcessNode(
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			err := mc.headset.Write(ctx, nodeCid, priority)
+			err := mc.headset.Write(ctx, blockLink.Cid, priority)
 			if err != nil {
 				log.ErrorContextE(
 					ctx,
 					"Failure adding head (when root is a new head)",
 					err,
-					corelog.Any("Root", nodeCid),
+					corelog.Any("Root", blockLink.Cid),
 				)
 				// OR should this also return like below comment??
 				// return nil, errors.Wrap("error adding head (when root is new head): %s ", root, err)

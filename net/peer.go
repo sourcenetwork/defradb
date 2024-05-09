@@ -21,10 +21,10 @@ import (
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
 	exchange "github.com/ipfs/boxo/exchange"
-	dag "github.com/ipfs/boxo/ipld/merkledag"
+	"github.com/ipfs/boxo/fetcher"
+	bsfetcher "github.com/ipfs/boxo/fetcher/impl/blockservice"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	ipld "github.com/ipfs/go-ipld-format"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -76,7 +76,7 @@ type Peer struct {
 	mu          sync.Mutex
 
 	// peer DAG service
-	ipld.DAGService
+	bsfetcher.FetcherConfig
 	exch  exchange.Interface
 	bserv blockservice.BlockService
 
@@ -248,15 +248,11 @@ func (p *Peer) handleBroadcastLoop() {
 			return
 		}
 
-		// check log priority, 1 is new doc log
-		// 2 is update log
 		var err error
-		if update.Priority == 1 {
+		if update.IsCreate {
 			err = p.handleDocCreateLog(update)
-		} else if update.Priority > 1 {
-			err = p.handleDocUpdateLog(update)
 		} else {
-			log.InfoContext(p.ctx, "Skipping log with invalid priority of 0", corelog.Any("CID", update.Cid))
+			err = p.handleDocUpdateLog(update)
 		}
 
 		if err != nil {
@@ -270,7 +266,7 @@ func (p *Peer) RegisterNewDocument(
 	ctx context.Context,
 	docID client.DocID,
 	c cid.Cid,
-	nd ipld.Node,
+	rawBlock []byte,
 	schemaRoot string,
 ) error {
 	// register topic
@@ -285,17 +281,16 @@ func (p *Peer) RegisterNewDocument(
 	}
 
 	// publish log
-	body := &pb.PushLogRequest_Body{
-		DocID:      []byte(docID.String()),
-		Cid:        c.Bytes(),
-		SchemaRoot: []byte(schemaRoot),
-		Creator:    p.host.ID().String(),
-		Log: &pb.Document_Log{
-			Block: nd.RawData(),
-		},
-	}
 	req := &pb.PushLogRequest{
-		Body: body,
+		Body: &pb.PushLogRequest_Body{
+			DocID:      []byte(docID.String()),
+			Cid:        c.Bytes(),
+			SchemaRoot: []byte(schemaRoot),
+			Creator:    p.host.ID().String(),
+			Log: &pb.Document_Log{
+				Block: rawBlock,
+			},
+		},
 	}
 
 	return p.server.publishLog(p.ctx, schemaRoot, req)
@@ -318,7 +313,7 @@ func (p *Peer) pushToReplicator(
 			txn.Headstore(),
 			docID.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 		)
-		cids, priority, err := headset.List(ctx)
+		cids, _, err := headset.List(ctx)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,
@@ -340,19 +335,11 @@ func (p *Peer) pushToReplicator(
 				continue
 			}
 
-			// @todo: remove encode/decode loop for core.Log data
-			nd, err := dag.DecodeProtobuf(blk.RawData())
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to decode protobuf", err, corelog.Any("CID", c))
-				continue
-			}
-
 			evt := events.Update{
 				DocID:      docIDResult.ID.String(),
 				Cid:        c,
 				SchemaRoot: collection.SchemaRoot(),
-				Block:      nd,
-				Priority:   priority,
+				Block:      blk.RawData(),
 			}
 			if err := p.server.pushLog(ctx, evt, pid); err != nil {
 				log.ErrorContextE(
@@ -445,7 +432,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    p.host.ID().String(),
 		Log: &pb.Document_Log{
-			Block: evt.Block.RawData(),
+			Block: evt.Block,
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -510,20 +497,14 @@ func (p *Peer) setupBlockService() {
 }
 
 func (p *Peer) setupDAGService() {
-	p.DAGService = dag.NewDAGService(p.bserv)
+	p.FetcherConfig = bsfetcher.NewFetcherConfig(p.bserv)
 }
 
-func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) ipld.DAGService {
-	return dag.NewDAGService(blockservice.New(txn.DAGstore(), p.exch))
-}
-
-// Session returns a session-based NodeGetter.
-func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
-	ng := dag.NewSession(ctx, p.DAGService)
-	if ng == p.DAGService {
-		log.InfoContext(ctx, "DAGService does not support sessions")
-	}
-	return ng
+func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) fetcher.Fetcher {
+	return p.FetcherWithSession(
+		p.ctx,
+		blockservice.NewSession(p.ctx, blockservice.New(txn.DAGstore(), p.exch)),
+	)
 }
 
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {

@@ -23,7 +23,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -1708,7 +1709,7 @@ func (c *collection) save(
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
-	links := make([]core.DAGLink, 0)
+	links := make([]coreblock.DAGLink, 0)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -1773,20 +1774,16 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			node, _, err := merkleCRDT.Save(ctx, val)
+			link, _, err := merkleCRDT.Save(ctx, val)
 			if err != nil {
 				return cid.Undef, err
 			}
 
-			link := core.DAGLink{
-				Name: k,
-				Cid:  node.Cid(),
-			}
-			links = append(links, link)
+			links = append(links, coreblock.NewDAGLink(k, link))
 		}
 	}
 
-	headNode, priority, err := c.saveCompositeToMerkleCRDT(
+	link, headNode, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		primaryKey.ToDataStoreKey(),
 		links,
@@ -1795,17 +1792,16 @@ func (c *collection) save(
 	if err != nil {
 		return cid.Undef, err
 	}
-
 	if c.db.events.Updates.HasValue() {
 		txn.OnSuccess(
 			func() {
 				c.db.events.Updates.Value().Publish(
 					events.Update{
 						DocID:      doc.ID().String(),
-						Cid:        headNode.Cid(),
+						Cid:        link.Cid,
 						SchemaRoot: c.Schema().Root,
 						Block:      headNode,
-						Priority:   priority,
+						IsCreate:   isCreate,
 					},
 				)
 			},
@@ -1813,10 +1809,10 @@ func (c *collection) save(
 	}
 
 	txn.OnSuccess(func() {
-		doc.SetHead(headNode.Cid())
+		doc.SetHead(link.Cid)
 	})
 
-	return headNode.Cid(), nil
+	return link.Cid, nil
 }
 
 func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
@@ -1987,15 +1983,16 @@ func (c *collection) exists(
 }
 
 // saveCompositeToMerkleCRDT saves the composite to the merkle CRDT.
+// It returns the CID of the block and the encoded block.
 // saveCompositeToMerkleCRDT MUST not be called outside the `c.save`
 // and `c.applyDelete` methods as we wrap the acp logic around those methods.
 // Calling it elsewhere could cause the omission of acp checks.
 func (c *collection) saveCompositeToMerkleCRDT(
 	ctx context.Context,
 	dsKey core.DataStoreKey,
-	links []core.DAGLink,
+	links []coreblock.DAGLink,
 	status client.DocumentStatus,
-) (ipld.Node, uint64, error) {
+) (cidlink.Link, []byte, error) {
 	txn := mustGetContextTxn(ctx)
 	dsKey = dsKey.WithFieldId(core.COMPOSITE_NAMESPACE)
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(

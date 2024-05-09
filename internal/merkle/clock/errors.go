@@ -45,8 +45,8 @@ func NewErrCreatingBlock(inner error) error {
 	return errors.Wrap(errCreatingBlock, inner)
 }
 
-func NewErrWritingBlock(cid cid.Cid, inner error) error {
-	return errors.Wrap(errWritingBlock, inner, errors.NewKV("Cid", cid))
+func NewErrWritingBlock(inner error) error {
+	return errors.Wrap(errWritingBlock, inner)
 }
 
 func NewErrGettingHeads(inner error) error {

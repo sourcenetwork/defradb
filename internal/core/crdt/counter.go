@@ -18,10 +18,7 @@ import (
 	"math/big"
 
 	"github.com/fxamacker/cbor/v2"
-	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
-	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ugorji/go/codec"
 	"golang.org/x/exp/constraints"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -29,14 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
-)
-
-var (
-	// ensure types implements core interfaces
-	_ core.ReplicatedData = (*Counter[float64])(nil)
-	_ core.ReplicatedData = (*Counter[int64])(nil)
-	_ core.Delta          = (*CounterDelta[float64])(nil)
-	_ core.Delta          = (*CounterDelta[int64])(nil)
 )
 
 type Incrementable interface {
@@ -58,6 +47,9 @@ type CounterDelta[T Incrementable] struct {
 	Data            T
 }
 
+var _ core.Delta = (*CounterDelta[float64])(nil)
+var _ core.Delta = (*CounterDelta[int64])(nil)
+
 // GetPriority gets the current priority for this delta.
 func (delta *CounterDelta[T]) GetPriority() uint64 {
 	return delta.Priority
@@ -68,31 +60,15 @@ func (delta *CounterDelta[T]) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// Marshal encodes the delta using CBOR.
-func (delta *CounterDelta[T]) Marshal() ([]byte, error) {
-	h := &codec.CborHandle{}
-	buf := bytes.NewBuffer(nil)
-	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(delta)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// Unmarshal decodes the delta from CBOR.
-func (delta *CounterDelta[T]) Unmarshal(b []byte) error {
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(b, h)
-	return dec.Decode(delta)
-}
-
 // Counter, is a simple CRDT type that allows increment/decrement
 // of an Int and Float data types that ensures convergence.
 type Counter[T Incrementable] struct {
 	baseCRDT
 	AllowDecrement bool
 }
+
+var _ core.ReplicatedData = (*Counter[float64])(nil)
+var _ core.ReplicatedData = (*Counter[int64])(nil)
 
 // NewCounter returns a new instance of the Counter with the given ID.
 func NewCounter[T Incrementable](
@@ -199,22 +175,6 @@ func (c Counter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) 
 	}
 
 	return getNumericFromBytes[T](curValue)
-}
-
-// DeltaDecode is a typed helper to extract a CounterDelta from a ipld.Node
-func (c Counter[T]) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	pbNode, ok := node.(*dag.ProtoNode)
-	if !ok {
-		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
-	}
-
-	delta := &CounterDelta[T]{}
-	err := delta.Unmarshal(pbNode.Data())
-	if err != nil {
-		return nil, err
-	}
-
-	return delta, nil
 }
 
 func (c Counter[T]) CType() client.CType {

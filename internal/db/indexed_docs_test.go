@@ -18,6 +18,7 @@ import (
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -317,6 +318,9 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	mockTxn := f.mockTxn()
+	a := &mocks.DAGStore{}
+	mockTxn.MockDAGstore.EXPECT().AsIPLDStorage().Return(&bsadapter.Adapter{Wrapped: a})
+	a.EXPECT().Put(mock.Anything, mock.Anything).Return(nil)
 
 	dataStoreOn := mockTxn.MockDatastore.EXPECT()
 	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
@@ -358,6 +362,10 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 	doc := f.newUserDoc("John", 21, f.users)
 
 	mockTxn := f.mockTxn().ClearSystemStore()
+	a := &mocks.DAGStore{}
+	mockTxn.MockDAGstore.EXPECT().AsIPLDStorage().Return(&bsadapter.Adapter{Wrapped: a})
+	a.EXPECT().Put(mock.Anything, mock.Anything).Return(nil)
+
 	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
@@ -377,6 +385,10 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	testErr := errors.New("test error")
 
 	mockTxn := f.mockTxn().ClearSystemStore()
+	a := &mocks.DAGStore{}
+	mockTxn.MockDAGstore.EXPECT().AsIPLDStorage().Return(&bsadapter.Adapter{Wrapped: a})
+	a.EXPECT().Put(mock.Anything, mock.Anything).Return(nil)
+
 	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
 	systemStoreOn.Query(mock.Anything, mock.Anything).
 		Return(nil, testErr)

@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	sse "github.com/vito/go-sse/sse"
 
@@ -437,11 +437,15 @@ func (c *Client) Root() datastore.RootStore {
 	panic("client side database")
 }
 
-func (c *Client) Blockstore() blockstore.Blockstore {
+func (c *Client) Blockstore() datastore.DAGStore {
 	panic("client side database")
 }
 
 func (c *Client) Peerstore() datastore.DSBatching {
+	panic("client side database")
+}
+
+func (c *Client) Headstore() ds.Read {
 	panic("client side database")
 }
 

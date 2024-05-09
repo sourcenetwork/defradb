@@ -11,16 +11,15 @@
 package planner
 
 import (
-	"github.com/fxamacker/cbor/v2"
-	dag "github.com/ipfs/boxo/ipld/merkledag"
-	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -217,7 +216,12 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	currentValue, heads, err := n.dagBlockToNodeDoc(block)
+	dagBlock, err := coreblock.GetFromBytes(block.RawData())
+	if err != nil {
+		return false, err
+	}
+
+	currentValue, heads, err := n.dagBlockToNodeDoc(dagBlock)
 	if err != nil {
 		return false, err
 	}
@@ -238,7 +242,8 @@ func (n *dagScanNode) Next() (bool, error) {
 		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
 
 		for i, h := range heads {
-			n.queuedCids[len(heads)-i-1] = &h.Cid
+			link := h // TODO remove when Go 1.22
+			n.queuedCids[len(heads)-i-1] = &link.Cid
 		}
 	}
 
@@ -289,46 +294,28 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
+func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cidlink.Link, error) {
 	commit := n.commitSelect.DocumentMapping.NewDoc()
-	cid := block.Cid()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, cid.String())
-
-	// decode the delta, get the priority and payload
-	nd, err := dag.DecodeProtobuf(block.RawData())
+	link, err := block.GenerateLink()
 	if err != nil {
 		return core.Doc{}, nil, err
 	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
-	// @todo: Wrap delta unmarshaling into a proper typed interface.
-	var delta map[string]any
-	if err := cbor.Unmarshal(nd.Data(), &delta); err != nil {
-		return core.Doc{}, nil, err
-	}
+	prio := block.Delta.GetPriority()
 
-	prio, ok := delta[request.DeltaArgPriority].(uint64)
-	if !ok {
-		return core.Doc{}, nil, ErrDeltaMissingPriority
-	}
-
-	schemaVersionId, ok := delta[request.DeltaArgSchemaVersionID].(string)
-	if !ok {
-		return core.Doc{}, nil, ErrDeltaMissingSchemaVersionID
-	}
+	schemaVersionId := block.Delta.GetSchemaVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
 
-	fieldName, ok := delta[request.DeltaArgFieldName]
-	if !ok {
-		return core.Doc{}, nil, ErrDeltaMissingFieldName
-	}
+	var fieldName any
 
 	var fieldID string
-	switch fieldName {
-	case "":
+	if block.Delta.CompositeDAGDelta != nil {
 		fieldID = core.COMPOSITE_NAMESPACE
 		fieldName = nil
-
-	default:
+	} else {
+		fName := block.Delta.GetFieldName()
+		fieldName = fName
 		cols, err := n.planner.db.GetCollections(
 			n.planner.ctx,
 			client.CollectionFetchOptions{
@@ -345,22 +332,19 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 		// Because we only care about the schema, we can safely take the first - the schema is the same
 		// for all in the set.
-		field, ok := cols[0].Definition().GetFieldByName(fieldName.(string))
+		field, ok := cols[0].Definition().GetFieldByName(fName)
 		if !ok {
-			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
+			return core.Doc{}, nil, client.NewErrFieldNotExist(fName)
 		}
 		fieldID = field.ID.String()
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta[request.DeltaArgData])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, block.Delta.GetData())
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
-	docID, ok := delta[request.DeltaArgDocID].([]byte)
-	if !ok {
-		return core.Doc{}, nil, ErrDeltaMissingDocID
-	}
+	docID := block.Delta.GetDocID()
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.DocIDArgName, string(docID))
@@ -385,19 +369,19 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.CollectionIDFieldName, int64(cols[0].ID()))
 
-	heads := make([]*ipld.Link, 0)
+	heads := make([]cidlink.Link, 0)
 
 	// links
 	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
 
 	for _, linksIndex := range linksIndexes {
-		links := make([]core.Doc, len(nd.Links()))
+		links := make([]core.Doc, len(block.Links))
 		linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
 
-		for i, l := range nd.Links() {
+		for i, l := range block.Links {
 			link := linksMapping.NewDoc()
 			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
-			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Cid.String())
+			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Link.Cid.String())
 
 			links[i] = link
 		}
@@ -405,9 +389,9 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		commit.Fields[linksIndex] = links
 	}
 
-	for _, l := range nd.Links() {
+	for _, l := range block.Links {
 		if l.Name == "_head" {
-			heads = append(heads, l)
+			heads = append(heads, l.Link)
 		}
 	}
 

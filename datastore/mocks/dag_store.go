@@ -8,6 +8,8 @@ import (
 
 	context "context"
 
+	datastore "github.com/sourcenetwork/defradb/datastore"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -74,6 +76,49 @@ func (_c *DAGStore_AllKeysChan_Call) Return(_a0 <-chan cid.Cid, _a1 error) *DAGS
 }
 
 func (_c *DAGStore_AllKeysChan_Call) RunAndReturn(run func(context.Context) (<-chan cid.Cid, error)) *DAGStore_AllKeysChan_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AsIPLDStorage provides a mock function with given fields:
+func (_m *DAGStore) AsIPLDStorage() datastore.IPLDStorage {
+	ret := _m.Called()
+
+	var r0 datastore.IPLDStorage
+	if rf, ok := ret.Get(0).(func() datastore.IPLDStorage); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.IPLDStorage)
+		}
+	}
+
+	return r0
+}
+
+// DAGStore_AsIPLDStorage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AsIPLDStorage'
+type DAGStore_AsIPLDStorage_Call struct {
+	*mock.Call
+}
+
+// AsIPLDStorage is a helper method to define mock.On call
+func (_e *DAGStore_Expecter) AsIPLDStorage() *DAGStore_AsIPLDStorage_Call {
+	return &DAGStore_AsIPLDStorage_Call{Call: _e.mock.On("AsIPLDStorage")}
+}
+
+func (_c *DAGStore_AsIPLDStorage_Call) Run(run func()) *DAGStore_AsIPLDStorage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DAGStore_AsIPLDStorage_Call) Return(_a0 datastore.IPLDStorage) *DAGStore_AsIPLDStorage_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DAGStore_AsIPLDStorage_Call) RunAndReturn(run func() datastore.IPLDStorage) *DAGStore_AsIPLDStorage_Call {
 	_c.Call.Return(run)
 	return _c
 }

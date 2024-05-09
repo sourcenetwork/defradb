@@ -13,37 +13,21 @@
 package net
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/node/bindnode"
+
 	"github.com/sourcenetwork/corelog"
+
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
 var (
 	DAGSyncTimeout = time.Second * 60
 )
-
-// A DAGSyncer is an abstraction to an IPLD-based P2P storage layer.  A
-// DAGSyncer is a DAGService with the ability to publish new ipld nodes to the
-// network, and retrieving others from it.
-type DAGSyncer interface {
-	ipld.DAGService
-	// Returns true if the block is locally available (therefore, it
-	// is considered processed).
-	HasBlock(ctx context.Context, c cid.Cid) (bool, error)
-}
-
-// A SessionDAGSyncer is a Sessions-enabled DAGSyncer. This type of DAG-Syncer
-// provides an optimized NodeGetter to make multiple related requests. The
-// same session-enabled NodeGetter is used to download DAG branches when
-// the DAGSyncer supports it.
-type SessionDAGSyncer interface {
-	DAGSyncer
-	Session(context.Context) ipld.NodeGetter
-}
 
 type dagJob struct {
 	session     *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
@@ -108,8 +92,9 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		}
 
 		go func(j *dagJob) {
-			if j.bp.getter != nil && j.cid.Defined() {
-				cNode, err := j.bp.getter.Get(p.ctx, j.cid)
+			if j.bp.fetcher != nil && j.cid.Defined() {
+				proto := bindnode.Prototype(&coreblock.Block{}, coreblock.Schema)
+				nd, err := j.bp.fetcher.BlockOfType(p.ctx, cidlink.Link{Cid: j.cid}, proto)
 				if err != nil {
 					log.ErrorContextE(
 						p.ctx,
@@ -122,7 +107,7 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 				err = j.bp.processRemoteBlock(
 					p.ctx,
 					j.session,
-					cNode,
+					nd,
 					j.isComposite,
 				)
 				if err != nil {

@@ -19,10 +19,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/engine/module"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -140,13 +140,18 @@ func (db *db) Root() datastore.RootStore {
 }
 
 // Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Blockstore() blockstore.Blockstore {
+func (db *db) Blockstore() datastore.DAGStore {
 	return db.multistore.DAGstore()
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.
 func (db *db) Peerstore() datastore.DSBatching {
 	return db.multistore.Peerstore()
+}
+
+// Headstore returns the internal DAG store which contains IPLD blocks.
+func (db *db) Headstore() ds.Read {
+	return db.multistore.Headstore()
 }
 
 func (db *db) LensRegistry() client.LensRegistry {

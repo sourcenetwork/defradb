@@ -13,20 +13,18 @@ package core
 import (
 	"context"
 
-	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	cid "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
 // ReplicatedData is a data type that allows concurrent writers to deterministically merge other
 // replicated data so as to converge on the same state.
 type ReplicatedData interface {
 	Merge(ctx context.Context, other Delta) error
-	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
 	Value(ctx context.Context) ([]byte, error)
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore.
 type PersistedReplicatedData interface {
 	ReplicatedData
-	Publish(Delta) (cid.Cid, error)
+	Publish(Delta) (cid.Link, error)
 }

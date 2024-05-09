@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore/query"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -24,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 	net_pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -247,6 +250,27 @@ func TestDocQueue(t *testing.T) {
 	q.mu.Unlock()
 }
 
+func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
+	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE).ToString()
+	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
+	if err != nil {
+		return cid.Undef, err
+	}
+	entries, err := results.Rest()
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	if len(entries) > 0 {
+		hsKey, err := core.NewHeadStoreKey(entries[0].Key)
+		if err != nil {
+			return cid.Undef, err
+		}
+		return hsKey.Cid, nil
+	}
+	return cid.Undef, errors.New("no head found")
+}
+
 func TestPushLog(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
@@ -265,23 +289,27 @@ func TestPushLog(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
-	cid, err := createCID(doc)
-	require.NoError(t, err)
-
 	ctx = grpcpeer.NewContext(ctx, &grpcpeer.Peer{
 		Addr: addr{n.PeerID()},
 	})
 
-	block := &EmptyNode{}
+	err = col.Create(ctx, doc)
+	require.NoError(t, err)
+
+	headCID, err := getHead(ctx, db, doc.ID())
+	require.NoError(t, err)
+
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	require.NoError(t, err)
 
 	_, err = n.server.PushLog(ctx, &net_pb.PushLogRequest{
 		Body: &net_pb.PushLogRequest_Body{
 			DocID:      []byte(doc.ID().String()),
-			Cid:        cid.Bytes(),
+			Cid:        headCID.Bytes(),
 			SchemaRoot: []byte(col.SchemaRoot()),
 			Creator:    n.PeerID().String(),
 			Log: &net_pb.Document_Log{
-				Block: block.RawData(),
+				Block: b,
 			},
 		},
 	})

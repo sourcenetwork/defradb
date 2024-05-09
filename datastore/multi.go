@@ -46,7 +46,7 @@ func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 		head:   prefix(rootRW, headStoreKey),
 		peer:   namespace.Wrap(rootstore, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),
-		dag:    NewDAGStore(prefix(rootRW, blockStoreKey)),
+		dag:    newBlockstore(prefix(rootRW, blockStoreKey)),
 	}
 
 	return ms

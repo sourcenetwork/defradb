@@ -18,26 +18,26 @@ import (
 	"fmt"
 	"sync"
 
-	dag "github.com/ipfs/boxo/ipld/merkledag"
-	blocks "github.com/ipfs/go-block-format"
-	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/boxo/fetcher"
+	"github.com/ipld/go-ipld-prime"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 type blockProcessor struct {
 	*Peer
-	txn    datastore.Txn
-	col    client.Collection
-	dsKey  core.DataStoreKey
-	getter ipld.NodeGetter
+	txn     datastore.Txn
+	col     client.Collection
+	dsKey   core.DataStoreKey
+	fetcher fetcher.Fetcher
 	// List of composite blocks to eventually merge
 	composites *list.List
 }
@@ -47,7 +47,7 @@ func newBlockProcessor(
 	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
-	getter ipld.NodeGetter,
+	fetcher fetcher.Fetcher,
 ) *blockProcessor {
 	return &blockProcessor{
 		Peer:       p,
@@ -55,64 +55,67 @@ func newBlockProcessor(
 		txn:        txn,
 		col:        col,
 		dsKey:      dsKey,
-		getter:     getter,
+		fetcher:    fetcher,
 	}
 }
 
 // mergeBlock runs trough the list of composite blocks and sends them for processing.
 func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 	for e := bp.composites.Front(); e != nil; e = e.Next() {
-		nd := e.Value.(ipld.Node)
-		err := bp.processBlock(ctx, nd, "")
+		block := e.Value.(*coreblock.Block)
+		link, _ := block.GenerateLink()
+		err := bp.processBlock(ctx, block, link, "")
 		if err != nil {
 			log.ErrorContextE(
 				ctx,
 				"Failed to process block",
 				err,
 				corelog.String("DocID", bp.dsKey.DocID),
-				corelog.Any("CID", nd.Cid()),
+				corelog.Any("CID", link.Cid),
 			)
 		}
 	}
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
-func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field string) error {
+func (bp *blockProcessor) processBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+	field string,
+) error {
 	crdt, err := initCRDTForType(bp.txn, bp.col, bp.dsKey, field)
 	if err != nil {
 		return err
 	}
-	delta, err := crdt.DeltaDecode(nd)
-	if err != nil {
-		return errors.Wrap("failed to decode delta object", err)
-	}
 
-	err = crdt.Clock().ProcessNode(ctx, delta, nd)
+	err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
 	if err != nil {
 		return err
 	}
 
-	for _, link := range nd.Links() {
+	for _, link := range block.Links {
 		if link.Name == core.HEAD {
 			continue
 		}
 
-		block, err := bp.txn.DAGstore().Get(ctx, link.Cid)
-		if err != nil {
-			return err
-		}
-		nd, err := dag.DecodeProtobufBlock(block)
+		b, err := bp.txn.DAGstore().Get(ctx, link.Cid)
 		if err != nil {
 			return err
 		}
 
-		if err := bp.processBlock(ctx, nd, link.Name); err != nil {
+		childBlock, err := coreblock.GetFromBytes(b.RawData())
+		if err != nil {
+			return err
+		}
+
+		if err := bp.processBlock(ctx, childBlock, link.Link, link.Name); err != nil {
 			log.ErrorContextE(
 				ctx,
 				"Failed to process block",
 				err,
 				corelog.String("DocID", bp.dsKey.DocID),
-				corelog.Any("CID", nd.Cid()),
+				corelog.Any("CID", link.Cid),
 			)
 		}
 	}
@@ -164,30 +167,37 @@ func initCRDTForType(
 	)
 }
 
-func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
-	blk, err := blocks.NewBlockWithCid(buf, cid)
-	if err != nil {
-		return nil, errors.Wrap("failed to create block", err)
-	}
-	return ipld.Decode(blk, dag.DecodeProtobufBlock)
-}
-
 // processRemoteBlock stores the block in the DAG store and initiates a sync of the block's children.
 func (bp *blockProcessor) processRemoteBlock(
 	ctx context.Context,
 	session *sync.WaitGroup,
-	nd ipld.Node,
+	node ipld.Node,
 	isComposite bool,
 ) error {
-	if err := bp.txn.DAGstore().Put(ctx, nd); err != nil {
+	block, err := coreblock.GetFromNode(node)
+	if err != nil {
+		return err
+	}
+
+	link, err := block.GenerateLink()
+	if err != nil {
+		return err
+	}
+
+	b, err := block.Marshal()
+	if err != nil {
+		return err
+	}
+
+	if err := bp.txn.DAGstore().AsIPLDStorage().Put(ctx, link.Binary(), b); err != nil {
 		return err
 	}
 
 	if isComposite {
-		bp.composites.PushFront(nd)
+		bp.composites.PushFront(block)
 	}
 
-	bp.handleChildBlocks(ctx, session, nd, isComposite)
+	bp.handleChildBlocks(ctx, session, block, isComposite)
 
 	return nil
 }
@@ -195,17 +205,17 @@ func (bp *blockProcessor) processRemoteBlock(
 func (bp *blockProcessor) handleChildBlocks(
 	ctx context.Context,
 	session *sync.WaitGroup,
-	nd ipld.Node,
+	block *coreblock.Block,
 	isComposite bool,
 ) {
-	if len(nd.Links()) == 0 {
+	if len(block.Links) == 0 {
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, DAGSyncTimeout)
 	defer cancel()
 
-	for _, link := range nd.Links() {
+	for _, link := range block.Links {
 		if !bp.queuedChildren.Visit(link.Cid) { // reserve for processing
 			continue
 		}

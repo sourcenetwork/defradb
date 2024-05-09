@@ -12,7 +12,7 @@ package events
 
 import (
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -36,10 +36,10 @@ type Update struct {
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
 	SchemaRoot string
 
-	// Block is the contents of this composite commit, it contains the Cids of the field level commits that
+	// Block is the encoded contents of this composite commit, it contains the Cids of the field level commits that
 	// also formed this update.
-	Block ipld.Node
+	Block []byte
 
-	// Priority is used to determine the order in which concurrent updates are applied.
-	Priority uint64
+	// IsCreate is true if this update is the creation of a new document.
+	IsCreate bool
 }

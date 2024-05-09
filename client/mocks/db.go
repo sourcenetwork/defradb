@@ -3,14 +3,15 @@
 package mocks
 
 import (
-	blockstore "github.com/ipfs/boxo/blockstore"
-	client "github.com/sourcenetwork/defradb/client"
-
 	context "context"
+
+	client "github.com/sourcenetwork/defradb/client"
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
 	events "github.com/sourcenetwork/defradb/events"
+
+	go_datastore "github.com/ipfs/go-datastore"
 
 	immutable "github.com/sourcenetwork/immutable"
 
@@ -284,15 +285,15 @@ func (_c *DB_BasicImport_Call) RunAndReturn(run func(context.Context, string) er
 }
 
 // Blockstore provides a mock function with given fields:
-func (_m *DB) Blockstore() blockstore.Blockstore {
+func (_m *DB) Blockstore() datastore.DAGStore {
 	ret := _m.Called()
 
-	var r0 blockstore.Blockstore
-	if rf, ok := ret.Get(0).(func() blockstore.Blockstore); ok {
+	var r0 datastore.DAGStore
+	if rf, ok := ret.Get(0).(func() datastore.DAGStore); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(blockstore.Blockstore)
+			r0 = ret.Get(0).(datastore.DAGStore)
 		}
 	}
 
@@ -316,12 +317,12 @@ func (_c *DB_Blockstore_Call) Run(run func()) *DB_Blockstore_Call {
 	return _c
 }
 
-func (_c *DB_Blockstore_Call) Return(_a0 blockstore.Blockstore) *DB_Blockstore_Call {
+func (_c *DB_Blockstore_Call) Return(_a0 datastore.DAGStore) *DB_Blockstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Blockstore_Call) RunAndReturn(run func() blockstore.Blockstore) *DB_Blockstore_Call {
+func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.DAGStore) *DB_Blockstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -712,6 +713,49 @@ func (_c *DB_GetSchemas_Call) Return(_a0 []client.SchemaDescription, _a1 error) 
 }
 
 func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context.Context, client.SchemaFetchOptions) ([]client.SchemaDescription, error)) *DB_GetSchemas_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Headstore provides a mock function with given fields:
+func (_m *DB) Headstore() go_datastore.Read {
+	ret := _m.Called()
+
+	var r0 go_datastore.Read
+	if rf, ok := ret.Get(0).(func() go_datastore.Read); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(go_datastore.Read)
+		}
+	}
+
+	return r0
+}
+
+// DB_Headstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Headstore'
+type DB_Headstore_Call struct {
+	*mock.Call
+}
+
+// Headstore is a helper method to define mock.On call
+func (_e *DB_Expecter) Headstore() *DB_Headstore_Call {
+	return &DB_Headstore_Call{Call: _e.mock.On("Headstore")}
+}
+
+func (_c *DB_Headstore_Call) Run(run func()) *DB_Headstore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_Headstore_Call) Return(_a0 go_datastore.Read) *DB_Headstore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_Headstore_Call) RunAndReturn(run func() go_datastore.Read) *DB_Headstore_Call {
 	_c.Call.Return(run)
 	return _c
 }

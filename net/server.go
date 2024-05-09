@@ -18,7 +18,6 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -33,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -262,20 +262,17 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 
 		// Create a new DAG service with the current transaction
-		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)
-		if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-			getter = sessionMaker.Session(ctx)
-		}
+		fetcher := s.peer.newDAGSyncerTxn(txn)
 
 		// handleComposite
-		nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
+		block, err := coreblock.GetFromBytes(req.Body.Log.Block)
 		if err != nil {
-			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
+			return nil, errors.Wrap("failed to decode block", err)
 		}
 
 		var wg sync.WaitGroup
-		bp := newBlockProcessor(s.peer, txn, col, dsKey, getter)
-		err = bp.processRemoteBlock(ctx, &wg, nd, true)
+		bp := newBlockProcessor(s.peer, txn, col, dsKey, fetcher)
+		err = bp.processRemoteBlock(ctx, &wg, block.GenerateNode(), true)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,

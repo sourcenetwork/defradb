@@ -42,14 +42,14 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	reg := crdt.LWWRegister{}
 	delta := reg.Set([]byte("test"))
 
-	nd, err := bCRDT.clock.AddDAGNode(ctx, delta)
+	link, _, err := bCRDT.clock.AddDelta(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return
 	}
 
-	if nd.Cid() == cid.Undef {
-		t.Error("Published returned invalid CID Undef:", nd.Cid())
+	if link.Cid == cid.Undef {
+		t.Error("Published returned invalid CID Undef:", link.Cid)
 		return
 	}
 }
