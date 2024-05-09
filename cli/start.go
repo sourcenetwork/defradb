@@ -22,10 +22,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/node/db"
 )
 
 func MakeStartCommand() *cobra.Command {
@@ -47,7 +47,7 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			dbOpts := []db.Option{
+			dbOpts := []db.DBOpt{
 				db.WithUpdateEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,

@@ -14,42 +14,43 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWithACP(t *testing.T) {
-	d := &db{}
+	d := &db.Options{}
 	WithACP("test")(d)
-	assert.True(t, d.acp.HasValue())
+	assert.True(t, d.ACP.HasValue())
 }
 
 func TestWithACPInMemory(t *testing.T) {
-	d := &db{}
+	d := &db.Options{}
 	WithACPInMemory()(d)
-	assert.True(t, d.acp.HasValue())
+	assert.True(t, d.ACP.HasValue())
 }
 
 func TestWithUpdateEvents(t *testing.T) {
-	d := &db{}
+	d := &db.Options{}
 	WithUpdateEvents()(d)
-	assert.NotNil(t, d.events)
+	assert.NotNil(t, d.Events)
 }
 
 func TestWithMaxRetries(t *testing.T) {
-	d := &db{}
+	d := &db.Options{}
 	WithMaxRetries(10)(d)
-	assert.True(t, d.maxTxnRetries.HasValue())
-	assert.Equal(t, 10, d.maxTxnRetries.Value())
+	assert.True(t, d.MaxTxnRetries.HasValue())
+	assert.Equal(t, 10, d.MaxTxnRetries.Value())
 }
 
 func TestWithLensPoolSize(t *testing.T) {
-	d := &db{}
+	d := &db.Options{}
 	WithLensPoolSize(10)(d)
-	assert.Equal(t, 10, d.lensPoolSize.Value())
+	assert.Equal(t, 10, d.LensPoolSize.Value())
 }
 
 func TestWithLensRuntime(t *testing.T) {
-	d := &db{}
+	d := &db.Options{}
 	WithLensRuntime(wasmtime.New())(d)
-	assert.NotNil(t, d.lensRuntime.Value())
+	assert.NotNil(t, d.LensRuntime.Value())
 }

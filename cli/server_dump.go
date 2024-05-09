@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/node/db"
 )
 
 func MakeServerDumpCmd() *cobra.Command {

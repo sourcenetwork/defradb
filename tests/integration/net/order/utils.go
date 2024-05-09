@@ -21,9 +21,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	coreDB "github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
+	"github.com/sourcenetwork/defradb/node/db"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -81,7 +81,7 @@ func setupDefraNode(
 	ctx := context.Background()
 
 	log.InfoContext(ctx, "Building new memory store")
-	db, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
+	db, err := testutils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
 	}

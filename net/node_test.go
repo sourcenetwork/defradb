@@ -23,8 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/internal/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
+	"github.com/sourcenetwork/defradb/node/db"
 )
 
 // Node.Boostrap is not tested because the underlying, *ipfslite.Peer.Bootstrap is a best-effort function.

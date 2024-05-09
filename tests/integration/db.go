@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/node/db"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
@@ -68,7 +68,7 @@ func init() {
 	}
 }
 
-func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
+func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.DBOpt) (client.DB, error) {
 	opts := badgerds.Options{
 		Options: badger.DefaultOptions("").WithInMemory(true),
 	}
@@ -84,7 +84,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 	return db, nil
 }
 
-func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
+func NewInMemoryDB(ctx context.Context, dbopts ...db.DBOpt) (client.DB, error) {
 	dbopts = append(dbopts, db.WithACPInMemory())
 	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
 	if err != nil {
@@ -93,7 +93,7 @@ func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) 
 	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (client.DB, string, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.DBOpt) (client.DB, string, error) {
 	var dbPath string
 	switch {
 	case databaseDir != "":
@@ -131,7 +131,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 func setupDatabase(s *state) (impl client.DB, path string, err error) {
-	dbopts := []db.Option{
+	dbopts := []db.DBOpt{
 		db.WithUpdateEvents(),
 		db.WithLensPoolSize(lensPoolSize),
 	}

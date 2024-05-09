@@ -25,7 +25,7 @@ func newMemoryDB(ctx context.Context) (*db, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newDB(ctx, rootstore)
+	return newDB(ctx, rootstore, nil)
 }
 
 func TestNewDB(t *testing.T) {
@@ -37,7 +37,7 @@ func TestNewDB(t *testing.T) {
 		return
 	}
 
-	_, err = NewDB(ctx, rootstore)
+	_, err = NewDB(ctx, rootstore, nil)
 	if err != nil {
 		t.Error(err)
 	}

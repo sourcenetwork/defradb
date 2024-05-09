@@ -20,8 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node/db"
 )
 
 func TestWithStoreOpts(t *testing.T) {
@@ -33,7 +33,7 @@ func TestWithStoreOpts(t *testing.T) {
 }
 
 func TestWithDatabaseOpts(t *testing.T) {
-	dbOpts := []db.Option{db.WithMaxRetries(10)}
+	dbOpts := []db.DBOpt{db.WithMaxRetries(10)}
 
 	options := &Options{}
 	WithDatabaseOpts(dbOpts...)(options)

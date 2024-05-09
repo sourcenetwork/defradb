@@ -45,6 +45,10 @@ var (
 	_ client.Collection = (*collection)(nil)
 )
 
+const (
+	defaultMaxTxnRetries = 5
+)
+
 // DB is the main interface for interacting with the
 // DefraDB storage system.
 type db struct {
@@ -66,9 +70,6 @@ type db struct {
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
-	// The options used to init the database
-	options []Option
-
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
@@ -76,19 +77,27 @@ type db struct {
 	acp immutable.Option[acp.ACP]
 }
 
+type Options struct {
+	ACP           immutable.Option[acp.ACP]
+	Events        events.Events
+	MaxTxnRetries immutable.Option[int]
+	LensPoolSize  immutable.Option[int]
+	LensRuntime   immutable.Option[module.Runtime]
+}
+
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
-	options ...Option,
-) (client.DB, error) {
-	return newDB(ctx, rootstore, options...)
+	options *Options,
+) (*db, error) {
+	return newDB(ctx, rootstore, options)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
-	options ...Option,
+	options *Options,
 ) (*db, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
 
@@ -102,13 +111,14 @@ func newDB(
 		multistore: multistore,
 		acp:        acp.NoACP,
 		parser:     parser,
-		options:    options,
 	}
 
 	// apply options
-	for _, opt := range options {
-		opt(db)
-	}
+	db.acp = options.ACP
+	db.events = options.Events
+	db.maxTxnRetries = options.MaxTxnRetries
+	db.lensPoolSize = options.LensPoolSize
+	db.lensRuntime = options.LensRuntime
 
 	// lens options may be set by `WithLens` funcs, and because they are funcs on db
 	// we have to mutate `db` here to set the registry.

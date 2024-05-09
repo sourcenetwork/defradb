@@ -21,8 +21,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node/db"
 )
 
 var log = corelog.NewLogger("node")
@@ -30,7 +30,7 @@ var log = corelog.NewLogger("node")
 // Options contains start configuration values.
 type Options struct {
 	storeOpts  []StoreOpt
-	dbOpts     []db.Option
+	dbOpts     []db.DBOpt
 	netOpts    []net.NodeOpt
 	serverOpts []http.ServerOpt
 	peers      []peer.AddrInfo
@@ -54,7 +54,7 @@ func WithStoreOpts(opts ...StoreOpt) NodeOpt {
 }
 
 // WithDatabaseOpts sets the database options.
-func WithDatabaseOpts(opts ...db.Option) NodeOpt {
+func WithDatabaseOpts(opts ...db.DBOpt) NodeOpt {
 	return func(o *Options) {
 		o.dbOpts = opts
 	}
@@ -112,6 +112,7 @@ func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	db, err := db.NewDB(ctx, rootstore, options.dbOpts...)
 	if err != nil {
 		return nil, err
