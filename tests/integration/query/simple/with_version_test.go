@@ -244,7 +244,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 							{
 								"cid":          "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
 								"collectionID": int64(1),
-								"delta":        []uint8(nil),
+								"delta":        nil,
 								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 								"fieldId":      "C",
 								"fieldName":    nil,
@@ -323,7 +323,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							{
 								"cid":          "bafyreibbn2vjovh65xe5v2bqxqxkb6sek5xkbnouhryya6enesbhzfplvm",
 								"collectionID": int64(1),
-								"delta":        []uint8(nil),
+								"delta":        nil,
 								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 								"fieldId":      "C",
 								"fieldName":    nil,
@@ -343,7 +343,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							{
 								"cid":          "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
 								"collectionID": int64(1),
-								"delta":        []uint8(nil),
+								"delta":        nil,
 								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 								"fieldId":      "C",
 								"fieldName":    nil,
