@@ -18,7 +18,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipld/go-ipld-prime/node/bindnode"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -92,9 +91,8 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		}
 
 		go func(j *dagJob) {
-			if j.bp.fetcher != nil && j.cid.Defined() {
-				proto := bindnode.Prototype(&coreblock.Block{}, coreblock.Schema)
-				nd, err := j.bp.fetcher.BlockOfType(p.ctx, cidlink.Link{Cid: j.cid}, proto)
+			if j.bp.dagSyncer != nil && j.cid.Defined() {
+				nd, err := j.bp.dagSyncer.BlockOfType(p.ctx, cidlink.Link{Cid: j.cid}, coreblock.SchemaPrototype)
 				if err != nil {
 					log.ErrorContextE(
 						p.ctx,

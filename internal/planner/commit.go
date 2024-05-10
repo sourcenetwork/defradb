@@ -242,7 +242,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
 
 		for i, h := range heads {
-			link := h // TODO remove when Go 1.22
+			link := h // TODO remove when Go 1.22 #2431
 			n.queuedCids[len(heads)-i-1] = &link.Cid
 		}
 	}
@@ -338,6 +338,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cid
 		}
 		fieldID = field.ID.String()
 	}
+	// We need to explicitely set delta to nil otherwise it will be marshalled
+	// as an empty slice in the JSON response of the HTTP client.
 	d := block.Delta.GetData()
 	if d != nil {
 		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)

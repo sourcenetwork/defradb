@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/boxo/fetcher"
+	dagsyncer "github.com/ipfs/boxo/fetcher"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/corelog"
@@ -34,10 +34,10 @@ import (
 
 type blockProcessor struct {
 	*Peer
-	txn     datastore.Txn
-	col     client.Collection
-	dsKey   core.DataStoreKey
-	fetcher fetcher.Fetcher
+	txn       datastore.Txn
+	col       client.Collection
+	dsKey     core.DataStoreKey
+	dagSyncer dagsyncer.Fetcher
 	// List of composite blocks to eventually merge
 	composites *list.List
 }
@@ -47,7 +47,7 @@ func newBlockProcessor(
 	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
-	fetcher fetcher.Fetcher,
+	dagSyncer dagsyncer.Fetcher,
 ) *blockProcessor {
 	return &blockProcessor{
 		Peer:       p,
@@ -55,7 +55,7 @@ func newBlockProcessor(
 		txn:        txn,
 		col:        col,
 		dsKey:      dsKey,
-		fetcher:    fetcher,
+		dagSyncer:  dagSyncer,
 	}
 }
 

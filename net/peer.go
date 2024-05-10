@@ -21,8 +21,8 @@ import (
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
 	exchange "github.com/ipfs/boxo/exchange"
-	"github.com/ipfs/boxo/fetcher"
-	bsfetcher "github.com/ipfs/boxo/fetcher/impl/blockservice"
+	dagsyncer "github.com/ipfs/boxo/fetcher"
+	dagsyncerbs "github.com/ipfs/boxo/fetcher/impl/blockservice"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	gostream "github.com/libp2p/go-libp2p-gostream"
@@ -76,7 +76,7 @@ type Peer struct {
 	mu          sync.Mutex
 
 	// peer DAG service
-	bsfetcher.FetcherConfig
+	dagsyncerbs.FetcherConfig
 	exch  exchange.Interface
 	bserv blockservice.BlockService
 
@@ -497,10 +497,10 @@ func (p *Peer) setupBlockService() {
 }
 
 func (p *Peer) setupDAGService() {
-	p.FetcherConfig = bsfetcher.NewFetcherConfig(p.bserv)
+	p.FetcherConfig = dagsyncerbs.NewFetcherConfig(p.bserv)
 }
 
-func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) fetcher.Fetcher {
+func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) dagsyncer.Fetcher {
 	return p.FetcherWithSession(
 		p.ctx,
 		blockservice.NewSession(p.ctx, blockservice.New(txn.DAGstore(), p.exch)),
