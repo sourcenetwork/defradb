@@ -122,8 +122,8 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 
 	// Sort the heads lexicographically by CID.
 	// We need to do this to ensure that the block is deterministic.
-	sort.Slice(links, func(i, j int) bool {
-		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
+	sort.Slice(heads, func(i, j int) bool {
+		return strings.Compare(heads[i].String(), heads[j].String()) < 0
 	})
 	for _, head := range heads {
 		blockLinks = append(
