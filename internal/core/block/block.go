@@ -11,6 +11,7 @@
 package coreblock
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 
@@ -27,70 +28,45 @@ import (
 )
 
 // Schema is the IPLD schema type that represents a `Block`.
-var Schema schema.Type
+var (
+	Schema          schema.Type
+	SchemaPrototype schema.TypedPrototype
+)
 
 func init() {
-	Schema = mustSetSchema()
+	Schema, SchemaPrototype = mustSetSchema(
+		&Block{},
+		&DAGLink{},
+		&CRDT{},
+		&crdt.LWWRegDelta{},
+		&crdt.CompositeDAGDelta{},
+		&crdt.CounterDelta[int64]{}, // Only need to call one of the CounterDelta types.
+	)
 }
 
-func mustSetSchema() schema.Type {
-	ts, err := ipld.LoadSchemaBytes([]byte(`
-		type Block struct {
-			delta	CRDT
-			links	[ DAGLink ]
-		}
-		
-		type DAGLink struct { 
-			name	String
-			link 	Link
-		}
+type schemaDefinition interface {
+	// IPLDSchemaBytes returns the IPLD schema representation for the type.
+	IPLDSchemaBytes() []byte
+}
 
-		type CRDT union {
-			| LWWRegDelta "lww"
-			| CompositeDAGDelta "composite"
-			| CounterDeltaInt "counterInt"
-			| CounterDeltaFloat "counterFloat"
-		} representation keyed
+func mustSetSchema(schemas ...schemaDefinition) (schema.Type, schema.TypedPrototype) {
+	schemaBytes := make([][]byte, 0, len(schemas))
+	for _, s := range schemas {
+		schemaBytes = append(schemaBytes, s.IPLDSchemaBytes())
+	}
 
-		type LWWRegDelta struct {
-			docID     		Bytes
-			fieldName 		String
-			priority  		Int
-			schemaVersionID String
-			data            Bytes
-		}
-
-		type CompositeDAGDelta struct {
-			docID     		Bytes
-			fieldName 		String
-			priority  		Int
-			schemaVersionID String
-			status          Int
-		}
-
-		type CounterDeltaFloat struct {
-			docID     		Bytes
-			fieldName 		String
-			priority  		Int
-			nonce 			Int
-			schemaVersionID String
-			data            Float
-		}
-
-		type CounterDeltaInt struct {
-			docID     		Bytes
-			fieldName 		String
-			priority  		Int
-			nonce 			Int
-			schemaVersionID String
-			data            Int
-		}
-
-	`))
+	ts, err := ipld.LoadSchemaBytes(bytes.Join(schemaBytes, nil))
 	if err != nil {
 		panic(err)
 	}
-	return ts.TypeByName("Block")
+	blockSchemaType := ts.TypeByName("Block")
+
+	// Calling bindnode.Prototype here ensure that [Block] and all the types it contains
+	// are compatible with the IPLD schema defined by blockSchemaType.
+	// If [Block] and `blockSchematype` do not match, this will panic.
+	proto := bindnode.Prototype(&Block{}, blockSchemaType)
+
+	return blockSchemaType, proto
 }
 
 // DAGLink represents a link to another object in a DAG.
@@ -101,6 +77,17 @@ type DAGLink struct {
 	Name string
 	// Link is the CID link to the object.
 	cidlink.Link
+}
+
+// IPLDSchemaBytes returns the IPLD schema representation for the DAGLink.
+//
+// This needs to match the [DAGLink] struct or [mustSetSchema] will panic on init.
+func (l DAGLink) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type DAGLink struct { 
+		name	String
+		link 	Link
+	}`)
 }
 
 func NewDAGLink(name string, link cidlink.Link) DAGLink {
@@ -118,41 +105,60 @@ type Block struct {
 	Links []DAGLink
 }
 
+// IPLDSchemaBytes returns the IPLD schema representation for the block.
+//
+// This needs to match the [Block] struct or [mustSetSchema] will panic on init.
+func (b Block) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type Block struct {
+		delta	CRDT
+		links	[ DAGLink ]
+	}`)
+}
+
 // New creates a new block with the given delta and links.
 func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 	blockLinks := make([]DAGLink, 0, len(links)+len(heads))
+
+	// Sort the heads lexicographically by CID.
+	// We need to do this to ensure that the block is deterministic.
+	sort.Slice(links, func(i, j int) bool {
+		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
+	})
 	for _, head := range heads {
 		blockLinks = append(
 			blockLinks,
 			DAGLink{
-				Name: "_head",
+				Name: core.HEAD,
 				Link: cidlink.Link{Cid: head},
 			},
 		)
 	}
 
-	// make sure the links are sorted lexicographically by CID
+	// Sort the links lexicographically by CID.
+	// We need to do this to ensure that the block is deterministic.
 	sort.Slice(links, func(i, j int) bool {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 
 	blockLinks = append(blockLinks, links...)
 
-	block := &Block{
-		Links: blockLinks,
-	}
-
+	var crdtDelta CRDT
 	switch delta := delta.(type) {
 	case *crdt.LWWRegDelta:
-		block.Delta = CRDT{LWWRegDelta: delta}
+		crdtDelta = CRDT{LWWRegDelta: delta}
 	case *crdt.CompositeDAGDelta:
-		block.Delta = CRDT{CompositeDAGDelta: delta}
+		crdtDelta = CRDT{CompositeDAGDelta: delta}
 	case *crdt.CounterDelta[int64]:
-		block.Delta = CRDT{CounterDeltaInt: delta}
+		crdtDelta = CRDT{CounterDeltaInt: delta}
 	case *crdt.CounterDelta[float64]:
-		block.Delta = CRDT{CounterDeltaFloat: delta}
+		crdtDelta = CRDT{CounterDeltaFloat: delta}
 	}
-	return block
+
+	return &Block{
+		Links: blockLinks,
+		Delta: crdtDelta,
+	}
 }
 
 // GetFromBytes returns a block from encoded bytes.
@@ -244,6 +250,19 @@ type CRDT struct {
 	CompositeDAGDelta *crdt.CompositeDAGDelta
 	CounterDeltaInt   *crdt.CounterDelta[int64]
 	CounterDeltaFloat *crdt.CounterDelta[float64]
+}
+
+// IPLDSchemaBytes returns the IPLD schema representation for the CRDT.
+//
+// This needs to match the [CRDT] struct or [mustSetSchema] will panic on init.
+func (c CRDT) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type CRDT union {
+		| LWWRegDelta "lww"
+		| CompositeDAGDelta "composite"
+		| CounterDeltaInt "counterInt"
+		| CounterDeltaFloat "counterFloat"
+	} representation keyed`)
 }
 
 // GetDelta returns the delta that is stored in the CRDT.

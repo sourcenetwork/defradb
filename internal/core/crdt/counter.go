@@ -50,6 +50,30 @@ type CounterDelta[T Incrementable] struct {
 var _ core.Delta = (*CounterDelta[float64])(nil)
 var _ core.Delta = (*CounterDelta[int64])(nil)
 
+// IPLDSchemaBytes returns the IPLD schema representation for the type.
+//
+// This needs to match the [CounterDelta[T]] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta *CounterDelta[T]) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type CounterDeltaFloat struct {
+		docID     		Bytes
+		fieldName 		String
+		priority  		Int
+		nonce 			Int
+		schemaVersionID String
+		data            Float
+	}
+	
+	type CounterDeltaInt struct {
+		docID     		Bytes
+		fieldName 		String
+		priority  		Int
+		nonce 			Int
+		schemaVersionID String
+		data            Int
+	}`)
+}
+
 // GetPriority gets the current priority for this delta.
 func (delta *CounterDelta[T]) GetPriority() uint64 {
 	return delta.Priority

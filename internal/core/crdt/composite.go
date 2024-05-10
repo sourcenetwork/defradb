@@ -40,6 +40,20 @@ type CompositeDAGDelta struct {
 
 var _ core.Delta = (*CompositeDAGDelta)(nil)
 
+// IPLDSchemaBytes returns the IPLD schema representation for the type.
+//
+// This needs to match the [CompositeDAGDelta] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta *CompositeDAGDelta) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type CompositeDAGDelta struct {
+		docID     		Bytes
+		fieldName 		String
+		priority  		Int
+		schemaVersionID String
+		status          Int
+	}`)
+}
+
 // GetPriority gets the current priority for this delta.
 func (delta *CompositeDAGDelta) GetPriority() uint64 {
 	return delta.Priority

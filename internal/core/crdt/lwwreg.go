@@ -37,6 +37,20 @@ type LWWRegDelta struct {
 
 var _ core.Delta = (*LWWRegDelta)(nil)
 
+// IPLDSchemaBytes returns the IPLD schema representation for the type.
+//
+// This needs to match the [LWWRegDelta] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta LWWRegDelta) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type LWWRegDelta struct {
+		docID     		Bytes
+		fieldName 		String
+		priority  		Int
+		schemaVersionID String
+		data            Bytes
+	}`)
+}
+
 // GetPriority gets the current priority for this delta.
 func (delta *LWWRegDelta) GetPriority() uint64 {
 	return delta.Priority

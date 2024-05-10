@@ -17,7 +17,6 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
 	"github.com/stretchr/testify/require"
 
@@ -125,7 +124,7 @@ func TestBlock(t *testing.T) {
 	rootLink, err := generateBlocks(&lsys)
 	require.NoError(t, err)
 
-	proto := bindnode.Prototype(&Block{}, Schema).Representation()
+	proto := SchemaPrototype.Representation()
 	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, proto)
 	require.NoError(t, err)
 
@@ -166,7 +165,7 @@ func TestBlockDeltaPriority(t *testing.T) {
 	rootLink, err := generateBlocks(&lsys)
 	require.NoError(t, err)
 
-	proto := bindnode.Prototype(&Block{}, Schema).Representation()
+	proto := SchemaPrototype.Representation()
 	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, proto)
 	require.NoError(t, err)
 
