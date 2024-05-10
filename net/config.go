@@ -13,14 +13,13 @@
 package net
 
 import (
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"google.golang.org/grpc"
 )
 
 // Options is the node options.
 type Options struct {
 	ListenAddresses   []string
-	PrivateKey        crypto.PrivKey
+	PrivateKey        []byte
 	EnablePubSub      bool
 	EnableRelay       bool
 	GRPCServerOptions []grpc.ServerOption
@@ -39,7 +38,7 @@ func DefaultOptions() *Options {
 type NodeOpt func(*Options)
 
 // WithPrivateKey sets the p2p host private key.
-func WithPrivateKey(priv crypto.PrivKey) NodeOpt {
+func WithPrivateKey(priv []byte) NodeOpt {
 	return func(opt *Options) {
 		opt.PrivateKey = priv
 	}

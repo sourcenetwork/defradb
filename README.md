@@ -18,6 +18,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 ## Table of Contents
 
 - [Install](#install)
+- [Key Management](#key-management)
 - [Start](#start)
 - [Configuration](#configuration)
 - [External port binding](#external-port-binding)
@@ -57,6 +58,33 @@ export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
 We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://altairgraphql.dev/#download).
+
+## Key Management
+
+DefraDB has a built in keyring that can be used to store private keys securely.
+
+The following keys are loaded from the keyring on start:
+
+- `peer-key` Ed25519 private key (required)
+- `encryption-key` AES-128, AES-192, or AES-256 key (optional)
+
+To randomly generate the required keys, run the following command:
+
+```
+defradb keyring generate
+```
+
+To import externally generated keys, run the following command:
+
+```
+defradb keyring import <name> <private-key-hex>
+```
+
+To learn more about the available options:
+
+```
+defradb keyring --help
+```
 
 ## Start
 

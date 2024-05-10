@@ -30,7 +30,7 @@ import (
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
-	"github.com/libp2p/go-libp2p/core/crypto"
+	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -47,6 +47,7 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 var evtWaitTimeout = 10 * time.Second
@@ -108,11 +109,17 @@ func NewNode(
 
 	if options.PrivateKey == nil {
 		// generate an ephemeral private key
-		key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+		key, err := crypto.GenerateEd25519()
 		if err != nil {
 			return nil, fin.Cleanup(err)
 		}
 		options.PrivateKey = key
+	}
+
+	// unmarshal the private key bytes
+	privateKey, err := libp2pCrypto.UnmarshalEd25519PrivateKey(options.PrivateKey)
+	if err != nil {
+		return nil, fin.Cleanup(err)
 	}
 
 	var ddht *dualdht.DHT
@@ -120,7 +127,7 @@ func NewNode(
 	libp2pOpts := []libp2p.Option{
 		libp2p.ConnectionManager(connManager),
 		libp2p.DefaultTransports,
-		libp2p.Identity(options.PrivateKey),
+		libp2p.Identity(privateKey),
 		libp2p.ListenAddrs(listenAddresses...),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {

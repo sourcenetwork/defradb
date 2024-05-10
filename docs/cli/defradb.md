@@ -14,6 +14,9 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
   -h, --help                          help for defradb
+      --keyring-backend string        Keyring backend to use. Options are file or system (default "file")
+      --keyring-namespace string      Service name to use when using the system backend (default "defradb")
+      --keyring-path string           Path to store encrypted keys when using the file backend (default "keys")
       --log-format string             Log format to use. Options are text or json (default "text")
       --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
       --log-no-color                  Disable colored log output
@@ -22,6 +25,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
       --log-source                    Include source location in logs
       --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
+      --no-keyring                    Disable the keyring and generate ephemeral keys
       --no-p2p                        Disable the peer-to-peer network synchronization system
       --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray             List of peers to connect to
@@ -36,6 +40,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
 * [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
 * [defradb start](defradb_start.md)	 - Start a DefraDB node
 * [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components

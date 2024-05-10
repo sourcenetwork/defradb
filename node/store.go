@@ -74,5 +74,12 @@ func NewStore(opts ...StoreOpt) (datastore.RootStore, error) {
 	badgerOpts.ValueLogFileSize = options.valueLogFileSize
 	badgerOpts.EncryptionKey = options.encryptionKey
 
+	if len(options.encryptionKey) > 0 {
+		// Having a cache improves the performance.
+		// Otherwise, your reads would be very slow while encryption is enabled.
+		// https://dgraph.io/docs/badger/get-started/#encryption-mode
+		badgerOpts.IndexCacheSize = 100 << 20
+	}
+
 	return badger.NewDatastore(options.path, &badgerOpts)
 }
