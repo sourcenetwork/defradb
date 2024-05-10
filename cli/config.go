@@ -36,6 +36,7 @@ var configPaths = []string{
 	"datastore.badger.path",
 	"api.pubkeypath",
 	"api.privkeypath",
+	"keyring.path",
 }
 
 // configFlags is a mapping of config keys to cli flags to bind to.
@@ -57,6 +58,10 @@ var configFlags = map[string]string{
 	"api.allowed-origins":               "allowed-origins",
 	"api.pubkeypath":                    "pubkeypath",
 	"api.privkeypath":                   "privkeypath",
+	"keyring.namespace":                 "keyring-namespace",
+	"keyring.backend":                   "keyring-backend",
+	"keyring.path":                      "keyring-path",
+	"keyring.disabled":                  "no-keyring",
 }
 
 // defaultConfig returns a new config with default values.

@@ -22,13 +22,13 @@ import (
 
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
@@ -195,6 +195,7 @@ func executeTestCase(
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", mutationType),
 		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("badgerEncryption", badgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
 		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
 		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
@@ -788,7 +789,7 @@ func configureNode(
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
-	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+	privateKey, err := crypto.GenerateEd25519()
 	require.NoError(s.t, err)
 
 	nodeOpts := action()

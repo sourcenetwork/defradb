@@ -139,5 +139,29 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Path to the private key for tls",
 	)
 
+	cmd.PersistentFlags().String(
+		"keyring-namespace",
+		"defradb",
+		"Service name to use when using the system backend",
+	)
+
+	cmd.PersistentFlags().String(
+		"keyring-backend",
+		"file",
+		"Keyring backend to use. Options are file or system",
+	)
+
+	cmd.PersistentFlags().String(
+		"keyring-path",
+		"keys",
+		"Path to store encrypted keys when using the file backend",
+	)
+
+	cmd.PersistentFlags().Bool(
+		"no-keyring",
+		false,
+		"Disable the keyring and generate ephemeral keys",
+	)
+
 	return cmd
 }

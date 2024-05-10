@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -23,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
@@ -84,21 +84,30 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			if cfg.GetString("datastore.store") != configStoreMemory {
-				// It would be ideal to not have the key path tied to the datastore.
-				// Running with memory store mode will always generate a random key.
-				// Adding support for an ephemeral mode and moving the key to the
-				// config would solve both of these issues.
 				rootDir := mustGetContextRootDir(cmd)
-				key, err := loadOrGeneratePrivateKey(filepath.Join(rootDir, "data", "key"))
-				if err != nil {
-					return err
-				}
-				netOpts = append(netOpts, net.WithPrivateKey(key))
-
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
 				dbOpts = append(dbOpts, db.WithACP(rootDir))
+			}
+
+			if !cfg.GetBool("keyring.disabled") {
+				kr, err := openKeyring(cmd)
+				if err != nil {
+					return NewErrKeyringHelp(err)
+				}
+				// load the required peer key
+				peerKey, err := kr.Get(peerKeyName)
+				if err != nil {
+					return NewErrKeyringHelp(err)
+				}
+				netOpts = append(netOpts, net.WithPrivateKey(peerKey))
+				// load the optional encryption key
+				encryptionKey, err := kr.Get(encryptionKeyName)
+				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+					return err
+				}
+				storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
 			}
 
 			opts := []node.NodeOpt{

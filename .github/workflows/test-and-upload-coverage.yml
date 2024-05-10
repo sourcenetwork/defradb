@@ -35,17 +35,26 @@ jobs:
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         detect-changes: [false]
+        database-encryption: [false]
         include:
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: true
+            database-encryption: false
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: false
+            database-encryption: true
           - os: macos-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: false
+            database-encryption: false
 ## TODO: https://github.com/sourcenetwork/defradb/issues/2080
 ## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
 ##        - os: windows-latest
@@ -53,6 +62,7 @@ jobs:
 ##          database-type: badger-memory
 ##          mutation-type: collection-save
 ##          detect-changes: false
+##          database-encryption: false
 
     runs-on: ${{ matrix.os }}
 
@@ -68,6 +78,7 @@ jobs:
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'badger-memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'badger-file' }}
+      DEFRA_BADGER_ENCRYPTION: ${{ matrix.database-encryption }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
 
     steps:

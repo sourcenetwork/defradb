@@ -15,15 +15,22 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"syscall"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/keyring"
+)
+
+const (
+	peerKeyName       = "peer-key"
+	encryptionKeyName = "encryption-key"
 )
 
 type contextKey string
@@ -41,6 +48,14 @@ var (
 	// in the current transaction context.
 	colContextKey = contextKey("col")
 )
+
+// readPassword reads a user input password without echoing it to the terminal.
+var readPassword = func(cmd *cobra.Command, msg string) ([]byte, error) {
+	cmd.Print(msg)
+	pass, err := term.ReadPassword(int(syscall.Stdin))
+	cmd.Println("")
+	return pass, err
+}
 
 // mustGetContextDB returns the db for the current command context.
 //
@@ -153,44 +168,20 @@ func setContextRootDir(cmd *cobra.Command) error {
 	return nil
 }
 
-// loadOrGeneratePrivateKey loads the private key from the given path
-// or generates a new key and writes it to a file at the given path.
-func loadOrGeneratePrivateKey(path string) (crypto.PrivKey, error) {
-	key, err := loadPrivateKey(path)
-	if err == nil {
-		return key, nil
+// openKeyring opens the keyring for the current environment.
+func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
+	cfg := mustGetContextConfig(cmd)
+	if cfg.Get("keyring.backend") == "system" {
+		return keyring.OpenSystemKeyring(cfg.GetString("keyring.namespace")), nil
 	}
-	if os.IsNotExist(err) {
-		return generatePrivateKey(path)
-	}
-	return nil, err
-}
-
-// generatePrivateKey generates a new private key and writes it
-// to a file at the given path.
-func generatePrivateKey(path string) (crypto.PrivKey, error) {
-	key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
-	if err != nil {
+	path := cfg.GetString("keyring.path")
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
-	data, err := crypto.MarshalPrivateKey(key)
-	if err != nil {
-		return nil, err
-	}
-	err = os.MkdirAll(filepath.Dir(path), 0755)
-	if err != nil {
-		return nil, err
-	}
-	return key, os.WriteFile(path, data, 0644)
-}
-
-// loadPrivateKey reads the private key from the file at the given path.
-func loadPrivateKey(path string) (crypto.PrivKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.UnmarshalPrivateKey(data)
+	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
+		return readPassword(cmd, s)
+	})
+	return keyring.OpenFileKeyring(path, prompt)
 }
 
 func writeJSON(cmd *cobra.Command, out any) error {
