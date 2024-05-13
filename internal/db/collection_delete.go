@@ -153,10 +153,7 @@ func (c *collection) applyDelete(
 
 	dagLinks := make([]coreblock.DAGLink, len(cids))
 	for i, cid := range cids {
-		dagLinks[i] = coreblock.DAGLink{
-			Name: core.HEAD,
-			Link: cidlink.Link{Cid: cid},
-		}
+		dagLinks[i] = coreblock.NewDAGLink(core.HEAD, cidlink.Link{Cid: cid})
 	}
 
 	link, b, err := c.saveCompositeToMerkleCRDT(
