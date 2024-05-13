@@ -201,7 +201,7 @@ func MakeStartCommand() *cobra.Command {
 		},
 	}
 
-	startFlags.AddFlagSet(startFlags)
+	cmd.PersistentFlags().AddFlagSet(startFlags)
 
 	return cmd
 }
