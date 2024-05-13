@@ -338,7 +338,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cid
 		}
 		fieldID = field.ID.String()
 	}
-	// We need to explicitely set delta to nil otherwise it will be marshalled
+	// We need to explicitely set delta to an untyped nil otherwise it will be marshalled
 	// as an empty slice in the JSON response of the HTTP client.
 	d := block.Delta.GetData()
 	if d != nil {
