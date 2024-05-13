@@ -18,6 +18,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
@@ -27,6 +28,57 @@ import (
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
+
+// startFlags is a set of persistent flags that are bound to config values.
+var startFlags = pflag.NewFlagSet("start", pflag.ExitOnError)
+
+func init() {
+	startFlags.StringArray(
+		"peers",
+		[]string{},
+		"List of peers to connect to",
+	)
+	startFlags.Int(
+		"max-txn-retries",
+		5,
+		"Specify the maximum number of retries per transaction",
+	)
+	startFlags.String(
+		"store",
+		"badger",
+		"Specify the datastore to use (supported: badger, memory)",
+	)
+	startFlags.Int(
+		"valuelogfilesize",
+		1<<30,
+		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
+	)
+	startFlags.StringSlice(
+		"p2paddr",
+		[]string{"/ip4/127.0.0.1/tcp/9171"},
+		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
+	)
+	startFlags.Bool(
+		"no-p2p",
+		false,
+		"Disable the peer-to-peer network synchronization system",
+	)
+	startFlags.StringArray(
+		"allowed-origins",
+		[]string{},
+		"List of origins to allow for CORS requests",
+	)
+	startFlags.String(
+		"pubkeypath",
+		"",
+		"Path to the public key for tls",
+	)
+	startFlags.String(
+		"privkeypath",
+		"",
+		"Path to the private key for tls",
+	)
+}
 
 func MakeStartCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -149,59 +201,7 @@ func MakeStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringArray(
-		"peers",
-		[]string{},
-		"List of peers to connect to",
-	)
-
-	cmd.PersistentFlags().Int(
-		"max-txn-retries",
-		5,
-		"Specify the maximum number of retries per transaction",
-	)
-
-	cmd.PersistentFlags().String(
-		"store",
-		"badger",
-		"Specify the datastore to use (supported: badger, memory)",
-	)
-
-	cmd.PersistentFlags().Int(
-		"valuelogfilesize",
-		1<<30,
-		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
-	)
-
-	cmd.PersistentFlags().StringSlice(
-		"p2paddr",
-		[]string{"/ip4/127.0.0.1/tcp/9171"},
-		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"no-p2p",
-		false,
-		"Disable the peer-to-peer network synchronization system",
-	)
-
-	cmd.PersistentFlags().StringArray(
-		"allowed-origins",
-		[]string{},
-		"List of origins to allow for CORS requests",
-	)
-
-	cmd.PersistentFlags().String(
-		"pubkeypath",
-		"",
-		"Path to the public key for tls",
-	)
-
-	cmd.PersistentFlags().String(
-		"privkeypath",
-		"",
-		"Path to the private key for tls",
-	)
+	startFlags.AddFlagSet(startFlags)
 
 	return cmd
 }

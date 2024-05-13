@@ -12,7 +12,79 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
+
+// rootFlags is a set of persistent flags that are bound to config values.
+var rootFlags = pflag.NewFlagSet("root", pflag.ExitOnError)
+
+func init() {
+	rootFlags.String(
+		"rootdir",
+		"",
+		"Directory for persistent data (default: $HOME/.defradb)",
+	)
+	rootFlags.String(
+		"log-level",
+		"info",
+		"Log level to use. Options are debug, info, error, fatal",
+	)
+	rootFlags.String(
+		"log-output",
+		"stderr",
+		"Log output path. Options are stderr or stdout.",
+	)
+	rootFlags.String(
+		"log-format",
+		"text",
+		"Log format to use. Options are text or json",
+	)
+	rootFlags.Bool(
+		"log-stacktrace",
+		false,
+		"Include stacktrace in error and fatal logs",
+	)
+	rootFlags.Bool(
+		"log-source",
+		false,
+		"Include source location in logs",
+	)
+	rootFlags.String(
+		"log-overrides",
+		"",
+		"Logger config overrides. Format <name>,<key>=<val>,...;<name>,...",
+	)
+	rootFlags.Bool(
+		"log-no-color",
+		false,
+		"Disable colored log output",
+	)
+	rootFlags.String(
+		"url",
+		"127.0.0.1:9181",
+		"URL of HTTP endpoint to listen on or connect to",
+	)
+	rootFlags.String(
+		"keyring-namespace",
+		"defradb",
+		"Service name to use when using the system backend",
+	)
+	rootFlags.String(
+		"keyring-backend",
+		"file",
+		"Keyring backend to use. Options are file or system",
+	)
+	rootFlags.String(
+		"keyring-path",
+		"keys",
+		"Path to store encrypted keys when using the file backend",
+	)
+	rootFlags.Bool(
+		"no-keyring",
+		false,
+		"Disable the keyring and generate ephemeral keys",
+	)
+}
 
 func MakeRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -31,83 +103,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		},
 	}
 
-	cmd.PersistentFlags().String(
-		"rootdir",
-		"",
-		"Directory for persistent data (default: $HOME/.defradb)",
-	)
-
-	cmd.PersistentFlags().String(
-		"log-level",
-		"info",
-		"Log level to use. Options are debug, info, error, fatal",
-	)
-
-	cmd.PersistentFlags().String(
-		"log-output",
-		"stderr",
-		"Log output path. Options are stderr or stdout.",
-	)
-
-	cmd.PersistentFlags().String(
-		"log-format",
-		"text",
-		"Log format to use. Options are text or json",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"log-stacktrace",
-		false,
-		"Include stacktrace in error and fatal logs",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"log-source",
-		false,
-		"Include source location in logs",
-	)
-
-	cmd.PersistentFlags().String(
-		"log-overrides",
-		"",
-		"Logger config overrides. Format <name>,<key>=<val>,...;<name>,...",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"log-no-color",
-		false,
-		"Disable colored log output",
-	)
-
-	cmd.PersistentFlags().String(
-		"url",
-		"127.0.0.1:9181",
-		"URL of HTTP endpoint to listen on or connect to",
-	)
-
-	cmd.PersistentFlags().String(
-		"keyring-namespace",
-		"defradb",
-		"Service name to use when using the system backend",
-	)
-
-	cmd.PersistentFlags().String(
-		"keyring-backend",
-		"file",
-		"Keyring backend to use. Options are file or system",
-	)
-
-	cmd.PersistentFlags().String(
-		"keyring-path",
-		"keys",
-		"Path to store encrypted keys when using the file backend",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"no-keyring",
-		false,
-		"Disable the keyring and generate ephemeral keys",
-	)
+	cmd.PersistentFlags().AddFlagSet(rootFlags)
 
 	return cmd
 }

@@ -151,10 +151,10 @@ func loadConfig(rootdir string) (*viper.Viper, error) {
 // bindConfigFlags binds the set of cli flags to config values.
 func bindConfigFlags(cfg *viper.Viper) error {
 	var errs []error
-	MakeRootCommand().PersistentFlags().VisitAll(func(f *pflag.Flag) {
+	rootFlags.VisitAll(func(f *pflag.Flag) {
 		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
 	})
-	MakeStartCommand().PersistentFlags().VisitAll(func(f *pflag.Flag) {
+	startFlags.VisitAll(func(f *pflag.Flag) {
 		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
 	})
 	return errors.Join(errs...)
