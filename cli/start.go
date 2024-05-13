@@ -39,7 +39,7 @@ func MakeStartCommand() *cobra.Command {
 				return err
 			}
 			rootdir := mustGetContextRootDir(cmd)
-			if err := createConfig(rootdir, cmd.Root().PersistentFlags()); err != nil {
+			if err := createConfig(rootdir); err != nil {
 				return err
 			}
 			return setContextConfig(cmd)
@@ -148,6 +148,60 @@ func MakeStartCommand() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.PersistentFlags().StringArray(
+		"peers",
+		[]string{},
+		"List of peers to connect to",
+	)
+
+	cmd.PersistentFlags().Int(
+		"max-txn-retries",
+		5,
+		"Specify the maximum number of retries per transaction",
+	)
+
+	cmd.PersistentFlags().String(
+		"store",
+		"badger",
+		"Specify the datastore to use (supported: badger, memory)",
+	)
+
+	cmd.PersistentFlags().Int(
+		"valuelogfilesize",
+		1<<30,
+		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
+	)
+
+	cmd.PersistentFlags().StringSlice(
+		"p2paddr",
+		[]string{"/ip4/127.0.0.1/tcp/9171"},
+		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
+	)
+
+	cmd.PersistentFlags().Bool(
+		"no-p2p",
+		false,
+		"Disable the peer-to-peer network synchronization system",
+	)
+
+	cmd.PersistentFlags().StringArray(
+		"allowed-origins",
+		[]string{},
+		"List of origins to allow for CORS requests",
+	)
+
+	cmd.PersistentFlags().String(
+		"pubkeypath",
+		"",
+		"Path to the public key for tls",
+	)
+
+	cmd.PersistentFlags().String(
+		"privkeypath",
+		"",
+		"Path to the private key for tls",
+	)
 
 	return cmd
 }

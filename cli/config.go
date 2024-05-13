@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,29 +40,29 @@ var configPaths = []string{
 	"keyring.path",
 }
 
-// configFlags is a mapping of config keys to cli flags to bind to.
+// configFlags is a mapping of cli flag names to config keys to bind.
 var configFlags = map[string]string{
-	"log.level":                         "log-level",
-	"log.output":                        "log-output",
-	"log.format":                        "log-format",
-	"log.stacktrace":                    "log-stacktrace",
-	"log.source":                        "log-source",
-	"log.overrides":                     "log-overrides",
-	"log.nocolor":                       "log-no-color",
-	"api.address":                       "url",
-	"datastore.maxtxnretries":           "max-txn-retries",
-	"datastore.store":                   "store",
-	"datastore.badger.valuelogfilesize": "valuelogfilesize",
-	"net.peers":                         "peers",
-	"net.p2paddresses":                  "p2paddr",
-	"net.p2pdisabled":                   "no-p2p",
-	"api.allowed-origins":               "allowed-origins",
-	"api.pubkeypath":                    "pubkeypath",
-	"api.privkeypath":                   "privkeypath",
-	"keyring.namespace":                 "keyring-namespace",
-	"keyring.backend":                   "keyring-backend",
-	"keyring.path":                      "keyring-path",
-	"keyring.disabled":                  "no-keyring",
+	"log-level":         "log.level",
+	"log-output":        "log.output",
+	"log-format":        "log.format",
+	"log-stacktrace":    "log.stacktrace",
+	"log-source":        "log.source",
+	"log-overrides":     "log.overrides",
+	"log-no-color":      "log.nocolor",
+	"url":               "api.address",
+	"max-txn-retries":   "datastore.maxtxnretries",
+	"store":             "datastore.store",
+	"valuelogfilesize":  "datastore.badger.valuelogfilesize",
+	"peers":             "net.peers",
+	"p2paddr":           "net.p2paddresses",
+	"no-p2p":            "net.p2pdisabled",
+	"allowed-origins":   "api.allowed-origins",
+	"pubkeypath":        "api.pubkeypath",
+	"privkeypath":       "api.privkeypath",
+	"keyring-namespace": "keyring.namespace",
+	"keyring-backend":   "keyring.backend",
+	"keyring-path":      "keyring.path",
+	"no-keyring":        "keyring.disabled",
 }
 
 // defaultConfig returns a new config with default values.
@@ -84,11 +85,11 @@ func defaultConfig() *viper.Viper {
 }
 
 // createConfig writes the default config file if one does not exist.
-func createConfig(rootdir string, flags *pflag.FlagSet) error {
+func createConfig(rootdir string) error {
 	cfg := defaultConfig()
 	cfg.AddConfigPath(rootdir)
 
-	if err := bindConfigFlags(cfg, flags); err != nil {
+	if err := bindConfigFlags(cfg); err != nil {
 		return err
 	}
 	// make sure rootdir exists
@@ -106,7 +107,7 @@ func createConfig(rootdir string, flags *pflag.FlagSet) error {
 }
 
 // loadConfig returns a new config with values from the config in the given rootdir.
-func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
+func loadConfig(rootdir string) (*viper.Viper, error) {
 	cfg := defaultConfig()
 	cfg.AddConfigPath(rootdir)
 
@@ -119,7 +120,7 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 		return nil, err
 	}
 	// bind cli flags to config keys
-	if err := bindConfigFlags(cfg, flags); err != nil {
+	if err := bindConfigFlags(cfg); err != nil {
 		return nil, err
 	}
 
@@ -138,6 +139,7 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 		Output:           cfg.GetString("log.output"),
 		EnableStackTrace: cfg.GetBool("log.stacktrace"),
 		EnableSource:     cfg.GetBool("log.source"),
+		DisableColor:     cfg.GetBool("log.nocolor"),
 	})
 
 	// set logging config overrides
@@ -147,12 +149,13 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 }
 
 // bindConfigFlags binds the set of cli flags to config values.
-func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
-	for key, flag := range configFlags {
-		err := cfg.BindPFlag(key, flags.Lookup(flag))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func bindConfigFlags(cfg *viper.Viper) error {
+	var errs []error
+	MakeRootCommand().PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
+	})
+	MakeStartCommand().PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
+	})
+	return errors.Join(errs...)
 }
