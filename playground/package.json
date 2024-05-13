@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "graphiql": "^3.2.0",
+    "graphiql": "^3.2.2",
     "graphql": "^16.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
