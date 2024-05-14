@@ -132,7 +132,7 @@ func loadConfig(rootdir string) (*viper.Viper, error) {
 		}
 	}
 
-	// set default logging config
+	// set logging config
 	corelog.SetConfig(corelog.Config{
 		Level:            cfg.GetString("log.level"),
 		Format:           cfg.GetString("log.format"),
