@@ -30,7 +30,7 @@ import (
 )
 
 // startFlags is a set of persistent flags that are bound to config values.
-var startFlags = pflag.NewFlagSet("start", pflag.ExitOnError)
+var startFlags = pflag.NewFlagSet("start", pflag.ContinueOnError)
 
 func init() {
 	startFlags.StringArray(

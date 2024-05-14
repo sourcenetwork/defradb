@@ -16,7 +16,7 @@ import (
 )
 
 // rootFlags is a set of persistent flags that are bound to config values.
-var rootFlags = pflag.NewFlagSet("root", pflag.ExitOnError)
+var rootFlags = pflag.NewFlagSet("root", pflag.ContinueOnError)
 
 func init() {
 	rootFlags.String(
