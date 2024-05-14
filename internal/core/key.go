@@ -47,6 +47,7 @@ const (
 	COLLECTION_ID                  = "/collection/id"
 	COLLECTION_NAME                = "/collection/name"
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
+	COLLECTION_ROOT                = "/collection/root"
 	COLLECTION_INDEX               = "/collection/index"
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
@@ -141,6 +142,17 @@ type CollectionSchemaVersionKey struct {
 }
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
+
+// CollectionRootKey points to nil, but the keys/prefix can be used
+// to get collections that are of a given RootID.
+//
+// It is stored in the format `/collection/root/[RootID]/[CollectionID]`.
+type CollectionRootKey struct {
+	RootID       uint32
+	CollectionID uint32
+}
+
+var _ Key = (*CollectionRootKey)(nil)
 
 // CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
@@ -285,6 +297,37 @@ func NewCollectionSchemaVersionKeyFromString(key string) (CollectionSchemaVersio
 	return CollectionSchemaVersionKey{
 		SchemaVersionID: elements[len(elements)-2],
 		CollectionID:    uint32(colID),
+	}, nil
+}
+
+func NewCollectionRootKey(rootID uint32, collectionID uint32) CollectionRootKey {
+	return CollectionRootKey{
+		RootID:       rootID,
+		CollectionID: collectionID,
+	}
+}
+
+// NewCollectionRootKeyFromString creates a new [CollectionRootKey].
+//
+// It expects the key to be in the format `/collection/root/[RootID]/[CollectionID]`.
+func NewCollectionRootKeyFromString(key string) (CollectionRootKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) != 5 || keyArr[1] != COLLECTION || keyArr[2] != "root" {
+		return CollectionRootKey{}, ErrInvalidKey
+	}
+	rootID, err := strconv.Atoi(keyArr[3])
+	if err != nil {
+		return CollectionRootKey{}, err
+	}
+
+	collectionID, err := strconv.Atoi(keyArr[4])
+	if err != nil {
+		return CollectionRootKey{}, err
+	}
+
+	return CollectionRootKey{
+		RootID:       uint32(rootID),
+		CollectionID: uint32(collectionID),
 	}, nil
 }
 
@@ -585,6 +628,28 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k CollectionRootKey) ToString() string {
+	result := COLLECTION_ROOT
+
+	if k.RootID != 0 {
+		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.RootID)))
+	}
+
+	if k.CollectionID != 0 {
+		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.CollectionID)))
+	}
+
+	return result
+}
+
+func (k CollectionRootKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k CollectionRootKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

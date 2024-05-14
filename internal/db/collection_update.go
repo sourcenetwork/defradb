@@ -151,12 +151,12 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 
-	primaryCol, err := c.db.getCollectionByName(ctx, relationFieldDescription.Kind.Underlying())
+	primaryDef, _, err := client.GetDefinitionFromStore(ctx, c.db, c.Definition(), relationFieldDescription.Kind)
 	if err != nil {
 		return err
 	}
 
-	primaryField, ok := primaryCol.Description().GetFieldByRelation(
+	primaryField, ok := primaryDef.Description.GetFieldByRelation(
 		relationFieldDescription.RelationName,
 		secondaryCollectionName,
 		relationFieldDescription.Name,
@@ -165,11 +165,12 @@ func (c *collection) patchPrimaryDoc(
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
 	}
 
-	primaryIDField, ok := primaryCol.Definition().GetFieldByName(primaryField.Name + request.RelatedObjectID)
+	primaryIDField, ok := primaryDef.GetFieldByName(primaryField.Name + request.RelatedObjectID)
 	if !ok {
 		return client.NewErrFieldNotExist(primaryField.Name + request.RelatedObjectID)
 	}
 
+	primaryCol := c.db.newCollection(primaryDef.Description, primaryDef.Schema)
 	doc, err := primaryCol.Get(
 		ctx,
 		primaryDocID,
@@ -185,8 +186,7 @@ func (c *collection) patchPrimaryDoc(
 		return nil
 	}
 
-	pc := c.db.newCollection(primaryCol.Description(), primaryCol.Schema())
-	err = pc.validateOneToOneLinkDoesntAlreadyExist(
+	err = primaryCol.validateOneToOneLinkDoesntAlreadyExist(
 		ctx,
 		primaryDocID.String(),
 		primaryIDField,

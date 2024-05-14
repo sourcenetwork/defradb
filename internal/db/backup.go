@@ -134,10 +134,12 @@ func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			cols = append(cols, col)
 		}
 	}
-	colNameCache := map[string]struct{}{}
+
+	definitions := make([]client.CollectionDefinition, 0, len(cols))
 	for _, col := range cols {
-		colNameCache[col.Name().Value()] = struct{}{}
+		definitions = append(definitions, col.Definition())
 	}
+	definitionCache := client.NewDefinitionCache(definitions)
 
 	tempFile := config.Filepath + ".temp"
 	f, err := os.Create(tempFile)
@@ -213,9 +215,6 @@ func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			// replace any foreign key if it needs to be changed
 			for _, field := range col.Schema().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					if _, ok := colNameCache[field.Kind.Underlying()]; !ok {
-						continue
-					}
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
 							err := doc.Set(field.Name+request.RelatedObjectID, newKey)
@@ -227,10 +226,14 @@ func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignCol, err := db.getCollectionByName(ctx, field.Kind.Underlying())
-							if err != nil {
-								return NewErrFailedToGetCollection(field.Kind.Underlying(), err)
+							foreignDef, ok := client.GetDefinition(definitionCache, col.Definition(), field.Kind)
+							if !ok {
+								// If the collection is not in the cache the backup was not configured to
+								// handle this collection.
+								continue
 							}
+							foreignCol := db.newCollection(foreignDef.Description, foreignDef.Schema)
+
 							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {
 								return err

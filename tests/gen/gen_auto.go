@@ -38,7 +38,7 @@ func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, erro
 	if err != nil {
 		return nil, err
 	}
-	typeDefs, err := parseSDL(gqlSDL)
+	typeDefs, err := ParseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +119,15 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 }
 
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
-func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.FieldDefinition) string {
+func (g *randomDocGenerator) getNextPrimaryDocID(
+	host client.CollectionDefinition,
+	secondaryType string,
+	field *client.FieldDefinition,
+) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	return g.generatedDocs[field.Kind.Underlying()][ind].docID
+	otherDef, _ := client.GetDefinition(g.configurator.definitionCache, host, field.Kind)
+
+	return g.generatedDocs[otherDef.GetName()][ind].docID
 }
 
 func (g *randomDocGenerator) generateRandomDocs(order []string) error {
@@ -141,9 +147,9 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 				if field.IsRelation() {
 					if field.IsPrimaryRelation && field.Kind.IsObject() {
 						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
-							newDoc[field.Name] = g.getNextPrimaryDocID(typeName, &field)
+							newDoc[field.Name] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						} else {
-							newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeName, &field)
+							newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						}
 					}
 				} else {
@@ -210,7 +216,8 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 func validateDefinitions(definitions []client.CollectionDefinition) error {
 	colIDs := make(map[uint32]struct{})
 	colNames := make(map[string]struct{})
-	fieldRefs := []string{}
+	defCache := client.NewDefinitionCache(definitions)
+
 	for _, def := range definitions {
 		if def.Description.Name.Value() == "" {
 			return NewErrIncompleteColDefinition("description name is empty")
@@ -226,17 +233,16 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
 			if field.Kind.IsObject() {
-				fieldRefs = append(fieldRefs, field.Kind.Underlying())
+				_, found := client.GetDefinition(defCache, def, field.Kind)
+				if !found {
+					return NewErrIncompleteColDefinition("field schema references unknown collection")
+				}
 			}
 		}
 		colNames[def.Description.Name.Value()] = struct{}{}
 		colIDs[def.Description.ID] = struct{}{}
 	}
-	for _, ref := range fieldRefs {
-		if _, ok := colNames[ref]; !ok {
-			return NewErrIncompleteColDefinition("field schema references unknown collection")
-		}
-	}
+
 	if len(colIDs) != len(definitions) {
 		return NewErrIncompleteColDefinition("duplicate collection IDs")
 	}

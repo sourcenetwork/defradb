@@ -97,6 +97,12 @@ func SaveCollection(
 		return client.CollectionDescription{}, err
 	}
 
+	rootKey := core.NewCollectionRootKey(desc.RootID, desc.ID)
+	err = txn.Systemstore().Put(ctx, rootKey.ToDS(), []byte{})
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
 	return desc, nil
 }
 
@@ -141,6 +147,49 @@ func GetCollectionByName(
 	}
 
 	return GetCollectionByID(ctx, txn, id)
+}
+
+func GetCollectionsByRoot(
+	ctx context.Context,
+	txn datastore.Txn,
+	root uint32,
+) ([]client.CollectionDescription, error) {
+	rootKey := core.NewCollectionRootKey(root, 0)
+
+	rootQuery, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix:   rootKey.ToString(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+
+	cols := []client.CollectionDescription{}
+	for res := range rootQuery.Next() {
+		if res.Error != nil {
+			if err := rootQuery.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		rootKey, err := core.NewCollectionRootKeyFromString(string(res.Key))
+		if err != nil {
+			if err := rootQuery.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		col, err := GetCollectionByID(ctx, txn, rootKey.CollectionID)
+		if err != nil {
+			return nil, err
+		}
+
+		cols = append(cols, col)
+	}
+
+	return cols, nil
 }
 
 // GetCollectionsBySchemaVersionID returns all collections that use the given

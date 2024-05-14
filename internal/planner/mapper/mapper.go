@@ -821,9 +821,14 @@ func getCollectionName(
 
 		hostFieldDesc, parentHasField := parentCollection.Definition().GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.Kind.IsObject() {
+			def, found, err := client.GetDefinitionFromStore(ctx, store, parentCollection.Definition(), hostFieldDesc.Kind)
+			if !found {
+				return "", NewErrTypeNotFound(hostFieldDesc.Kind.String())
+			}
+
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
-			return hostFieldDesc.Kind.Underlying(), nil
+			return def.GetName(), err
 		}
 	}
 

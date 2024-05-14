@@ -88,7 +88,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 							{
 								Name:         "boss",
 								ID:           1,
-								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("User")),
+								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
@@ -100,7 +100,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 							{
 								Name:         "minion",
 								ID:           3,
-								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("User")),
+								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
@@ -126,7 +126,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 							},
 							{
 								Name: "boss",
-								Kind: client.ObjectKind("User"),
+								Kind: client.NewSelfKind("", false),
 								Typ:  client.LWW_REGISTER,
 							},
 							{

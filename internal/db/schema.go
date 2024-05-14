@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
@@ -131,18 +130,15 @@ func (db *db) patchSchema(
 		return err
 	}
 
-	for _, schema := range newSchemaByName {
-		err := db.updateSchema(
-			ctx,
-			existingSchemaByName,
-			newSchemaByName,
-			schema,
-			migration,
-			setAsDefaultVersion,
-		)
-		if err != nil {
-			return err
-		}
+	err = db.updateSchema(
+		ctx,
+		existingSchemaByName,
+		newSchemaByName,
+		migration,
+		setAsDefaultVersion,
+	)
+	if err != nil {
+		return err
 	}
 
 	return db.loadSchema(ctx)
@@ -332,192 +328,202 @@ func (db *db) updateSchema(
 	ctx context.Context,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
-	schema client.SchemaDescription,
 	migration immutable.Option[model.Lens],
 	setAsActiveVersion bool,
 ) error {
-	previousSchema := existingSchemaByName[schema.Name]
+	newSchemas := []client.SchemaDescription{}
+	for _, schema := range proposedDescriptionsByName {
+		previousSchema := existingSchemaByName[schema.Name]
 
-	areEqual := areSchemasEqual(schema, previousSchema)
-	if areEqual {
-		return nil
-	}
+		previousFieldNames := make(map[string]struct{}, len(previousSchema.Fields))
+		for _, field := range previousSchema.Fields {
+			previousFieldNames[field.Name] = struct{}{}
+		}
 
-	err := db.validateSchemaUpdate(ctx, proposedDescriptionsByName, existingSchemaByName)
-	if err != nil {
-		return err
-	}
-
-	for _, field := range schema.Fields {
-		if field.Kind.IsObject() && !field.Kind.IsArray() {
-			idFieldName := field.Name + "_id"
-			if _, ok := schema.GetFieldByName(idFieldName); !ok {
-				schema.Fields = append(schema.Fields, client.SchemaFieldDescription{
-					Name: idFieldName,
-					Kind: client.FieldKind_DocID,
-				})
+		for i, field := range schema.Fields {
+			if _, existed := previousFieldNames[field.Name]; !existed && field.Typ == client.NONE_CRDT {
+				// If no CRDT Type has been provided, default to LWW_REGISTER.
+				schema.Fields[i].Typ = client.LWW_REGISTER
 			}
 		}
-	}
 
-	previousFieldNames := make(map[string]struct{}, len(previousSchema.Fields))
-	for _, field := range previousSchema.Fields {
-		previousFieldNames[field.Name] = struct{}{}
-	}
-
-	for i, field := range schema.Fields {
-		if _, existed := previousFieldNames[field.Name]; !existed && field.Typ == client.NONE_CRDT {
-			// If no CRDT Type has been provided, default to LWW_REGISTER.
-			field.Typ = client.LWW_REGISTER
-			schema.Fields[i] = field
+		for _, field := range schema.Fields {
+			if field.Kind.IsObject() && !field.Kind.IsArray() {
+				idFieldName := field.Name + "_id"
+				if _, ok := schema.GetFieldByName(idFieldName); !ok {
+					schema.Fields = append(schema.Fields, client.SchemaFieldDescription{
+						Name: idFieldName,
+						Kind: client.FieldKind_DocID,
+					})
+				}
+			}
 		}
+
+		newSchemas = append(newSchemas, schema)
 	}
 
-	txn := mustGetContextTxn(ctx)
-	previousVersionID := schema.VersionID
-	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
+	err := setSchemaIDs(newSchemas)
 	if err != nil {
 		return err
 	}
 
-	// After creating the new schema version, we need to create new collection versions for
-	// any collection using the previous version.  These will be inactive unless [setAsActiveVersion]
-	// is true.
-
-	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, previousVersionID)
-	if err != nil {
-		return err
+	for _, schema := range newSchemas {
+		proposedDescriptionsByName[schema.Name] = schema
 	}
 
-	existingCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schema.VersionID)
-	if err != nil {
-		return err
-	}
+	for _, schema := range proposedDescriptionsByName {
+		previousSchema := existingSchemaByName[schema.Name]
 
-	colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
-	if err != nil {
-		return err
-	}
+		areEqual := areSchemasEqual(schema, previousSchema)
+		if areEqual {
+			continue
+		}
 
-	for _, col := range cols {
-		previousID := col.ID
+		txn := mustGetContextTxn(ctx)
+		schema, err = description.CreateSchemaVersion(ctx, txn, schema)
+		if err != nil {
+			return err
+		}
 
-		// The collection version may exist before the schema version was created locally.  This is
-		// because migrations for the globally known schema version may have been registered locally
-		// (typically to handle documents synced over P2P at higher versions) before the local schema
-		// was updated.  We need to check for them now, and update them instead of creating new ones
-		// if they exist.
-		var isExistingCol bool
-	existingColLoop:
-		for _, existingCol := range existingCols {
-			sources := existingCol.CollectionSources()
-			for _, source := range sources {
-				// Make sure that this collection is the parent of the current [col], and not part of
-				// another collection set that happens to be using the same schema.
-				if source.SourceCollectionID == previousID {
-					if existingCol.RootID == client.OrphanRootID {
-						existingCol.RootID = col.RootID
-					}
+		// After creating the new schema version, we need to create new collection versions for
+		// any collection using the previous version.  These will be inactive unless [setAsActiveVersion]
+		// is true.
 
-					fieldSeq, err := db.getSequence(ctx, core.NewFieldIDSequenceKey(existingCol.RootID))
-					if err != nil {
-						return err
-					}
+		previousVersionID := existingSchemaByName[schema.Name].VersionID
+		cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, previousVersionID)
+		if err != nil {
+			return err
+		}
 
-					for _, globalField := range schema.Fields {
-						var fieldID client.FieldID
-						// We must check the source collection if the field already exists, and take its ID
-						// from there, otherwise the field must be generated by the sequence.
-						existingField, ok := col.GetFieldByName(globalField.Name)
-						if ok {
-							fieldID = existingField.ID
-						} else {
-							nextFieldID, err := fieldSeq.next(ctx)
-							if err != nil {
-								return err
-							}
-							fieldID = client.FieldID(nextFieldID)
+		existingCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schema.VersionID)
+		if err != nil {
+			return err
+		}
+
+		definitions := make([]client.CollectionDefinition, 0, len(cols))
+
+		for _, col := range cols {
+			previousID := col.ID
+
+			// The collection version may exist before the schema version was created locally.  This is
+			// because migrations for the globally known schema version may have been registered locally
+			// (typically to handle documents synced over P2P at higher versions) before the local schema
+			// was updated.  We need to check for them now, and update them instead of creating new ones
+			// if they exist.
+			var isExistingCol bool
+		existingColLoop:
+			for _, existingCol := range existingCols {
+				sources := existingCol.CollectionSources()
+				for _, source := range sources {
+					// Make sure that this collection is the parent of the current [col], and not part of
+					// another collection set that happens to be using the same schema.
+					if source.SourceCollectionID == previousID {
+						if existingCol.RootID == client.OrphanRootID {
+							existingCol.RootID = col.RootID
 						}
 
-						existingCol.Fields = append(
-							existingCol.Fields,
+						for _, globalField := range schema.Fields {
+							var fieldID client.FieldID
+							// We must check the source collection if the field already exists, and take its ID
+							// from there, otherwise the field must be generated by the sequence.
+							existingField, ok := col.GetFieldByName(globalField.Name)
+							if ok {
+								fieldID = existingField.ID
+							}
+
+							existingCol.Fields = append(
+								existingCol.Fields,
+								client.CollectionFieldDescription{
+									Name: globalField.Name,
+									ID:   fieldID,
+								},
+							)
+						}
+
+						definitions = append(definitions, client.CollectionDefinition{
+							Description: existingCol,
+							Schema:      schema,
+						})
+
+						isExistingCol = true
+						break existingColLoop
+					}
+				}
+			}
+
+			if !isExistingCol {
+				// Create any new collections without a name (inactive), if [setAsActiveVersion] is true
+				// they will be activated later along with any existing collection versions.
+				col.ID = 0
+				col.Name = immutable.None[string]()
+				col.SchemaVersionID = schema.VersionID
+				col.Sources = []any{
+					&client.CollectionSource{
+						SourceCollectionID: previousID,
+						Transform:          migration,
+					},
+				}
+
+				for _, globalField := range schema.Fields {
+					_, exists := col.GetFieldByName(globalField.Name)
+					if !exists {
+						col.Fields = append(
+							col.Fields,
 							client.CollectionFieldDescription{
 								Name: globalField.Name,
-								ID:   fieldID,
 							},
 						)
 					}
-					existingCol, err = description.SaveCollection(ctx, txn, existingCol)
-					if err != nil {
-						return err
-					}
-					isExistingCol = true
-					break existingColLoop
 				}
+
+				definitions = append(definitions, client.CollectionDefinition{
+					Description: col,
+					Schema:      schema,
+				})
 			}
 		}
 
-		if !isExistingCol {
-			colID, err := colSeq.next(ctx)
-			if err != nil {
-				return err
-			}
+		err = db.setCollectionIDs(ctx, definitions)
+		if err != nil {
+			return err
+		}
 
-			fieldSeq, err := db.getSequence(ctx, core.NewFieldIDSequenceKey(col.RootID))
-			if err != nil {
-				return err
-			}
+		allExistingCols, err := db.getCollections(ctx, client.CollectionFetchOptions{})
+		if err != nil {
+			return err
+		}
 
-			// Create any new collections without a name (inactive), if [setAsActiveVersion] is true
-			// they will be activated later along with any existing collection versions.
-			col.Name = immutable.None[string]()
-			col.ID = uint32(colID)
-			col.SchemaVersionID = schema.VersionID
-			col.Sources = []any{
-				&client.CollectionSource{
-					SourceCollectionID: previousID,
-					Transform:          migration,
-				},
-			}
+		oldDefs := make([]client.CollectionDefinition, 0, len(allExistingCols))
+		for _, col := range allExistingCols {
+			oldDefs = append(oldDefs, col.Definition())
+		}
 
-			for _, globalField := range schema.Fields {
-				_, exists := col.GetFieldByName(globalField.Name)
-				if !exists {
-					fieldID, err := fieldSeq.next(ctx)
-					if err != nil {
-						return err
-					}
+		err = db.validateSchemaUpdate(ctx, oldDefs, definitions)
+		if err != nil {
+			return err
+		}
 
-					col.Fields = append(
-						col.Fields,
-						client.CollectionFieldDescription{
-							Name: globalField.Name,
-							ID:   client.FieldID(fieldID),
-						},
-					)
-				}
-			}
-
-			_, err = description.SaveCollection(ctx, txn, col)
+		for _, def := range definitions {
+			_, err = description.SaveCollection(ctx, txn, def.Description)
 			if err != nil {
 				return err
 			}
 
 			if migration.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, migration.Value())
+				err = db.LensRegistry().SetMigration(ctx, def.Description.ID, migration.Value())
 				if err != nil {
 					return err
 				}
 			}
 		}
-	}
 
-	if setAsActiveVersion {
-		// activate collection versions using the new schema ID.  This call must be made after
-		// all new collection versions have been saved.
-		err = db.setActiveSchemaVersion(ctx, schema.VersionID)
-		if err != nil {
-			return err
+		if setAsActiveVersion {
+			// activate collection versions using the new schema ID.  This call must be made after
+			// all new collection versions have been saved.
+			err = db.setActiveSchemaVersion(ctx, schema.VersionID)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -536,6 +542,5 @@ func areSchemasEqual(this client.SchemaDescription, that client.SchemaDescriptio
 	}
 
 	return this.Name == that.Name &&
-		this.Root == that.Root &&
-		this.VersionID == that.VersionID
+		this.Root == that.Root
 }

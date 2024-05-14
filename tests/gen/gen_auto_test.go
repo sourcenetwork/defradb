@@ -1209,7 +1209,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 						},
 						{
 							Name: "device",
-							Kind: immutable.Some[client.FieldKind](client.ObjectKind("Device")),
+							Kind: immutable.Some[client.FieldKind](client.NewNamedKind("Device", false)),
 						},
 					},
 				},
@@ -1233,7 +1233,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 						},
 						{
 							Name: "owner",
-							Kind: immutable.Some[client.FieldKind](client.ObjectKind("User")),
+							Kind: immutable.Some[client.FieldKind](client.NewNamedKind("User", false)),
 						},
 					},
 				},
@@ -1246,7 +1246,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 						},
 						{
 							Name: "owner",
-							Kind: client.ObjectKind("User"),
+							Kind: client.NewNamedKind("User", false),
 						},
 					},
 				},
@@ -1316,8 +1316,9 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Description: client.CollectionDescription{
-				Name: immutable.Some("User"),
-				ID:   0,
+				Name:   immutable.Some("User"),
+				ID:     0,
+				RootID: 0,
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "name",
@@ -1330,7 +1331,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 					},
 					{
 						Name:         "devices",
-						Kind:         immutable.Some[client.FieldKind](client.ObjectArrayKind("Device")),
+						Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(1, true)),
 						RelationName: immutable.Some("Device_owner"),
 					},
 				},
@@ -1355,15 +1356,16 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 		},
 		{
 			Description: client.CollectionDescription{
-				Name: immutable.Some("Device"),
-				ID:   1,
+				Name:   immutable.Some("Device"),
+				ID:     1,
+				RootID: 1,
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "model",
 					},
 					{
 						Name:         "owner",
-						Kind:         immutable.Some[client.FieldKind](client.ObjectKind("User")),
+						Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(0, false)),
 						RelationName: immutable.Some("Device_owner"),
 					},
 					{
@@ -1381,7 +1383,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 					},
 					{
 						Name: "owner",
-						Kind: client.ObjectKind("User"),
+						Kind: client.NewNamedKind("User", false),
 						Typ:  client.LWW_REGISTER,
 					},
 					{
