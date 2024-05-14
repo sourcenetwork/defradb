@@ -89,7 +89,7 @@ Include source location in logs. Defaults to `false`.
 
 Logger config overrides. Format `<name>,<key>=<val>,...;<name>,...`.
 
-## `log.nocolor`
+## `log.colordisabled`
 
 Disable colored log output. Defaults to `false`.
 
