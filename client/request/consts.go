@@ -85,15 +85,15 @@ var (
 		string(DESC): DESC,
 	}
 
-	ReservedFields = map[string]bool{
-		TypeNameFieldName: true,
-		VersionFieldName:  true,
-		GroupFieldName:    true,
-		CountFieldName:    true,
-		SumFieldName:      true,
-		AverageFieldName:  true,
-		DocIDFieldName:    true,
-		DeletedFieldName:  true,
+	ReservedFields = map[string]struct{}{
+		TypeNameFieldName: {},
+		VersionFieldName:  {},
+		GroupFieldName:    {},
+		CountFieldName:    {},
+		SumFieldName:      {},
+		AverageFieldName:  {},
+		DocIDFieldName:    {},
+		DeletedFieldName:  {},
 	}
 
 	Aggregates = map[string]struct{}{
