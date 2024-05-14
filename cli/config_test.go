@@ -57,7 +57,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, false, cfg.GetBool("log.stacktrace"))
 	assert.Equal(t, false, cfg.GetBool("log.source"))
 	assert.Equal(t, "", cfg.GetString("log.overrides"))
-	assert.Equal(t, false, cfg.GetBool("log.nocolor"))
+	assert.Equal(t, false, cfg.GetBool("log.colordisabled"))
 
 	assert.Equal(t, filepath.Join(rootdir, "keys"), cfg.GetString("keyring.path"))
 	assert.Equal(t, false, cfg.GetBool("keyring.disabled"))

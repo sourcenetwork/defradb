@@ -38,13 +38,13 @@ defradb client collection delete [-i --identity] [--filter <filter> --docID <doc
       --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")
       --log-format string          Log format to use. Options are text or json (default "text")
       --log-level string           Log level to use. Options are debug, info, error, fatal (default "info")
-      --log-no-color               Disable colored log output
       --log-output string          Log output path. Options are stderr or stdout. (default "stderr")
       --log-overrides string       Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
       --log-source                 Include source location in logs
       --log-stacktrace             Include stacktrace in error and fatal logs
       --name string                Collection name
       --no-keyring                 Disable the keyring and generate ephemeral keys
+      --no-log-color               Disable colored log output
       --rootdir string             Directory for persistent data (default: $HOME/.defradb)
       --schema string              Collection schema Root
       --tx uint                    Transaction ID

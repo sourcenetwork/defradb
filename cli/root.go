@@ -55,7 +55,7 @@ func init() {
 		"Logger config overrides. Format <name>,<key>=<val>,...;<name>,...",
 	)
 	rootFlags.Bool(
-		"log-no-color",
+		"no-log-color",
 		false,
 		"Disable colored log output",
 	)

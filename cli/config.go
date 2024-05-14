@@ -48,7 +48,7 @@ var configFlags = map[string]string{
 	"log-stacktrace":    "log.stacktrace",
 	"log-source":        "log.source",
 	"log-overrides":     "log.overrides",
-	"log-no-color":      "log.nocolor",
+	"no-log-color":      "log.colordisabled",
 	"url":               "api.address",
 	"max-txn-retries":   "datastore.maxtxnretries",
 	"store":             "datastore.store",
@@ -139,7 +139,7 @@ func loadConfig(rootdir string) (*viper.Viper, error) {
 		Output:           cfg.GetString("log.output"),
 		EnableStackTrace: cfg.GetBool("log.stacktrace"),
 		EnableSource:     cfg.GetBool("log.source"),
-		DisableColor:     cfg.GetBool("log.nocolor"),
+		DisableColor:     cfg.GetBool("log.colordisabled"),
 	})
 
 	// set logging config overrides
