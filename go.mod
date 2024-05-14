@@ -26,7 +26,7 @@ require (
 	github.com/libp2p/go-libp2p v0.33.2
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.25.2
-	github.com/libp2p/go-libp2p-pubsub v0.10.0
+	github.com/libp2p/go-libp2p-pubsub v0.10.1
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/multiformats/go-multiaddr v0.12.3
 	github.com/multiformats/go-multibase v0.2.0
@@ -50,7 +50,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.26.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	golang.org/x/term v0.19.0
+	golang.org/x/term v0.20.0
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 )
@@ -305,7 +305,7 @@ require (
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	gonum.org/v1/gonum v0.14.0 // indirect
