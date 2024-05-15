@@ -92,6 +92,11 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 
 		go func(j *dagJob) {
 			if j.bp.dagSyncer != nil && j.cid.Defined() {
+				// BlockOfType will return the block if it is already in the store or fetch it from the network
+				// if it is not. This is a blocking call and will wait for the block to be fetched.
+				// It uses the LinkSystem to fetch the block. Blocks retrieved from the network will
+				// also be stored in the blockstore in the same call.
+				// Blocks have to match the coreblock.SchemaPrototype to be returned.
 				nd, err := j.bp.dagSyncer.BlockOfType(p.ctx, cidlink.Link{Cid: j.cid}, coreblock.SchemaPrototype)
 				if err != nil {
 					log.ErrorContextE(

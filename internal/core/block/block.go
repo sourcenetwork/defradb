@@ -37,7 +37,7 @@ func init() {
 	Schema, SchemaPrototype = mustSetSchema(
 		&Block{},
 		&DAGLink{},
-		&CRDT{},
+		&crdt.CRDT{},
 		&crdt.LWWRegDelta{},
 		&crdt.CompositeDAGDelta{},
 		&crdt.CounterDelta[int64]{}, // Only need to call one of the CounterDelta types.
@@ -100,7 +100,7 @@ func NewDAGLink(name string, link cidlink.Link) DAGLink {
 // Block is a block that contains a CRDT delta and links to other blocks.
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
-	Delta CRDT
+	Delta crdt.CRDT
 	// Links are the links to other blocks in the DAG.
 	Links []DAGLink
 }
@@ -143,16 +143,16 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 
 	blockLinks = append(blockLinks, links...)
 
-	var crdtDelta CRDT
+	var crdtDelta crdt.CRDT
 	switch delta := delta.(type) {
 	case *crdt.LWWRegDelta:
-		crdtDelta = CRDT{LWWRegDelta: delta}
+		crdtDelta = crdt.CRDT{LWWRegDelta: delta}
 	case *crdt.CompositeDAGDelta:
-		crdtDelta = CRDT{CompositeDAGDelta: delta}
+		crdtDelta = crdt.CRDT{CompositeDAGDelta: delta}
 	case *crdt.CounterDelta[int64]:
-		crdtDelta = CRDT{CounterDeltaInt: delta}
+		crdtDelta = crdt.CRDT{CounterDeltaInt: delta}
 	case *crdt.CounterDelta[float64]:
-		crdtDelta = CRDT{CounterDeltaFloat: delta}
+		crdtDelta = crdt.CRDT{CounterDeltaFloat: delta}
 	}
 
 	return &Block{
@@ -242,120 +242,4 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 		MhType:   uint64(multicodec.Sha2_256),
 		MhLength: 32,
 	}}
-}
-
-// CRDT is a union type that can hold any of the CRDT deltas.
-type CRDT struct {
-	LWWRegDelta       *crdt.LWWRegDelta
-	CompositeDAGDelta *crdt.CompositeDAGDelta
-	CounterDeltaInt   *crdt.CounterDelta[int64]
-	CounterDeltaFloat *crdt.CounterDelta[float64]
-}
-
-// IPLDSchemaBytes returns the IPLD schema representation for the CRDT.
-//
-// This needs to match the [CRDT] struct or [mustSetSchema] will panic on init.
-func (c CRDT) IPLDSchemaBytes() []byte {
-	return []byte(`
-	type CRDT union {
-		| LWWRegDelta "lww"
-		| CompositeDAGDelta "composite"
-		| CounterDeltaInt "counterInt"
-		| CounterDeltaFloat "counterFloat"
-	} representation keyed`)
-}
-
-// GetDelta returns the delta that is stored in the CRDT.
-func (c CRDT) GetDelta() core.Delta {
-	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt
-	}
-	return nil
-}
-
-// GetPriority returns the priority of the delta.
-func (c CRDT) GetPriority() uint64 {
-	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.GetPriority()
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.GetPriority()
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.GetPriority()
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.GetPriority()
-	}
-	return 0
-}
-
-// GetFieldName returns the field name of the delta.
-func (c CRDT) GetFieldName() string {
-	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.FieldName
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.FieldName
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.FieldName
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.FieldName
-	}
-	return ""
-}
-
-// GetDocID returns the docID of the delta.
-func (c CRDT) GetDocID() []byte {
-	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.DocID
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.DocID
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.DocID
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.DocID
-	}
-	return nil
-}
-
-// GetSchemaVersionID returns the schema version ID of the delta.
-func (c CRDT) GetSchemaVersionID() string {
-	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.SchemaVersionID
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.SchemaVersionID
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.SchemaVersionID
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.SchemaVersionID
-	}
-	return ""
-}
-
-// GetStatus returns the status of the delta.
-//
-// Currently only implemented for CompositeDAGDelta.
-func (c CRDT) GetStatus() uint8 {
-	if c.CompositeDAGDelta != nil {
-		return uint8(c.CompositeDAGDelta.Status)
-	}
-	return 0
-}
-
-// GetData returns the data of the delta.
-//
-// Currently only implemented for LWWRegDelta.
-func (c CRDT) GetData() []byte {
-	if c.LWWRegDelta != nil {
-		return c.LWWRegDelta.Data
-	}
-	return nil
 }

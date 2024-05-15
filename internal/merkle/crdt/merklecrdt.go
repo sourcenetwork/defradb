@@ -35,13 +35,13 @@ type Stores interface {
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	core.ReplicatedData
-	Clock() MerkleClocker
+	Clock() MerkleClock
 	Save(ctx context.Context, data any) (cidlink.Link, []byte, error)
 }
 
-// MerkleClocker is the logical clock implementation that manages writing to and from
+// MerkleClock is the logical clock implementation that manages writing to and from
 // the MerkleDAG structure, ensuring a causal ordering of events.
-type MerkleClocker interface {
+type MerkleClock interface {
 	AddDelta(
 		ctx context.Context,
 		delta core.Delta,
@@ -53,13 +53,13 @@ type MerkleClocker interface {
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
 // retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
 type baseMerkleCRDT struct {
-	clock MerkleClocker
+	clock MerkleClock
 	crdt  core.ReplicatedData
 }
 
 var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 
-func (base *baseMerkleCRDT) Clock() MerkleClocker {
+func (base *baseMerkleCRDT) Clock() MerkleClock {
 	return base.clock
 }
 

@@ -27,7 +27,7 @@ import (
 func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 	// Generate new Block and save to lsys
 	fieldBlock := Block{
-		Delta: CRDT{
+		Delta: crdt.CRDT{
 			LWWRegDelta: &crdt.LWWRegDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
@@ -43,7 +43,7 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 	}
 
 	compositeBlock := Block{
-		Delta: CRDT{
+		Delta: crdt.CRDT{
 			CompositeDAGDelta: &crdt.CompositeDAGDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "C",
@@ -65,7 +65,7 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 	}
 
 	fieldUpdateBlock := Block{
-		Delta: CRDT{
+		Delta: crdt.CRDT{
 			LWWRegDelta: &crdt.LWWRegDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
@@ -87,7 +87,7 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 	}
 
 	compositeUpdateBlock := Block{
-		Delta: CRDT{
+		Delta: crdt.CRDT{
 			CompositeDAGDelta: &crdt.CompositeDAGDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "C",
