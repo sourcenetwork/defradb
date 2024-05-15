@@ -127,3 +127,8 @@ func (c CRDT) GetData() []byte {
 	}
 	return nil
 }
+
+// IsComposite returns true if the CRDT is a composite CRDT.
+func (c CRDT) IsComposite() bool {
+	return c.CompositeDAGDelta != nil
+}

@@ -186,10 +186,9 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	fetcher := n2.Peer.newDAGSyncerTxn(txn2)
 
 	n2.sendJobs <- &dagJob{
-		bp:          newBlockProcessor(n2.Peer, txn2, col, dsKey, fetcher),
-		session:     &wg,
-		cid:         heads[0],
-		isComposite: true,
+		bp:      newBlockProcessor(n2.Peer, txn2, col, dsKey, fetcher),
+		session: &wg,
+		cid:     heads[0],
 	}
 	wg.Wait()
 

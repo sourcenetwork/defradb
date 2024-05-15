@@ -272,7 +272,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		var wg sync.WaitGroup
 		bp := newBlockProcessor(s.peer, txn, col, dsKey, dagSyncer)
-		err = bp.processRemoteBlock(ctx, &wg, block.GenerateNode(), true)
+		err = bp.processRemoteBlock(ctx, &wg, block)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,

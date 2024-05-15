@@ -37,7 +37,7 @@ import (
 
 func emptyBlock() []byte {
 	block := coreblock.Block{
-		Delta: coreblock.CRDT{
+		Delta: crdt.CRDT{
 			CompositeDAGDelta: &crdt.CompositeDAGDelta{},
 		},
 	}

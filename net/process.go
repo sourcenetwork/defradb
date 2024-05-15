@@ -19,7 +19,6 @@ import (
 	"sync"
 
 	dagsyncer "github.com/ipfs/boxo/fetcher"
-	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/corelog"
 
@@ -171,14 +170,8 @@ func initCRDTForType(
 func (bp *blockProcessor) processRemoteBlock(
 	ctx context.Context,
 	session *sync.WaitGroup,
-	node ipld.Node,
-	isComposite bool,
+	block *coreblock.Block,
 ) error {
-	block, err := coreblock.GetFromNode(node)
-	if err != nil {
-		return err
-	}
-
 	link, err := block.GenerateLink()
 	if err != nil {
 		return err
@@ -193,11 +186,7 @@ func (bp *blockProcessor) processRemoteBlock(
 		return err
 	}
 
-	if isComposite {
-		bp.composites.PushFront(block)
-	}
-
-	bp.handleChildBlocks(ctx, session, block, isComposite)
+	bp.handleChildBlocks(ctx, session, block)
 
 	return nil
 }
@@ -206,8 +195,11 @@ func (bp *blockProcessor) handleChildBlocks(
 	ctx context.Context,
 	session *sync.WaitGroup,
 	block *coreblock.Block,
-	isComposite bool,
 ) {
+	if block.Delta.IsComposite() {
+		bp.composites.PushFront(block)
+	}
+
 	if len(block.Links) == 0 {
 		return
 	}
@@ -235,10 +227,9 @@ func (bp *blockProcessor) handleChildBlocks(
 
 		session.Add(1)
 		job := &dagJob{
-			session:     session,
-			cid:         link.Cid,
-			isComposite: isComposite && link.Name == core.HEAD,
-			bp:          bp,
+			session: session,
+			cid:     link.Cid,
+			bp:      bp,
 		}
 
 		select {

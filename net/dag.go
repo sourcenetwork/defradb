@@ -29,10 +29,9 @@ var (
 )
 
 type dagJob struct {
-	session     *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
-	bp          *blockProcessor // the block processor to use
-	cid         cid.Cid         // the cid of the block to fetch from the P2P network
-	isComposite bool            // whether this is a composite block
+	session *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
+	bp      *blockProcessor // the block processor to use
+	cid     cid.Cid         // the cid of the block to fetch from the P2P network
 
 	// OLD FIELDS
 	// root       cid.Cid         // the root of the branch we are walking down
@@ -107,19 +106,19 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 					j.session.Done()
 					return
 				}
-				err = j.bp.processRemoteBlock(
-					p.ctx,
-					j.session,
-					nd,
-					j.isComposite,
-				)
+				block, err := coreblock.GetFromNode(nd)
 				if err != nil {
 					log.ErrorContextE(
 						p.ctx,
-						"Failed to process remote block",
+						"Failed to convert ipld node to block",
 						err,
 						corelog.Any("CID", j.cid))
 				}
+				j.bp.handleChildBlocks(
+					p.ctx,
+					j.session,
+					block,
+				)
 			}
 			p.queuedChildren.Remove(j.cid)
 			j.session.Done()
