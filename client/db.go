@@ -13,7 +13,7 @@ package client
 import (
 	"context"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
@@ -48,12 +48,17 @@ type DB interface {
 	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	//
 	// It sits within the rootstore returned by [Root].
-	Blockstore() blockstore.Blockstore
+	Blockstore() datastore.DAGStore
 
 	// Peerstore returns the peerstore where known host information is stored.
 	//
 	// It sits within the rootstore returned by [Root].
 	Peerstore() datastore.DSBatching
+
+	// Headstore returns the headstore where the current heads of the database are stored.
+	//
+	// It is read-only and sits within the rootstore returned by [Root].
+	Headstore() ds.Read
 
 	// Close closes the database instance and releases any resources held.
 	//

@@ -16,14 +16,11 @@ import (
 	"testing"
 	"time"
 
-	dag "github.com/ipfs/boxo/ipld/merkledag"
-	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
-	mh "github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
@@ -186,28 +183,24 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
-	var getter ipld.NodeGetter = n2.Peer.newDAGSyncerTxn(txn2)
-	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-		getter = sessionMaker.Session(ctx)
-	}
+	fetcher := n2.Peer.newDAGSyncerTxn(txn2)
 
 	n2.sendJobs <- &dagJob{
-		bp:          newBlockProcessor(n2.Peer, txn2, col, dsKey, getter),
-		session:     &wg,
-		cid:         heads[0],
-		isComposite: true,
+		bp:      newBlockProcessor(n2.Peer, txn2, col, dsKey, fetcher),
+		session: &wg,
+		cid:     heads[0],
 	}
 	wg.Wait()
 
 	err = txn2.Commit(ctx)
 	require.NoError(t, err)
 
-	block, err := n1.db.Blockstore().Get(ctx, heads[0])
+	b, err := n1.db.Blockstore().Get(ctx, heads[0])
 	require.NoError(t, err)
-	nd, err := dag.DecodeProtobufBlock(block)
+	block, err := coreblock.GetFromBytes(b.RawData())
 	require.NoError(t, err)
 
-	for _, link := range nd.Links() {
+	for _, link := range block.Links {
 		exists, err := n2.db.Blockstore().Has(ctx, link.Cid)
 		require.NoError(t, err)
 		require.True(t, exists)
@@ -220,43 +213,4 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	case <-time.After(timeout):
 		t.Error("failed to close sendJobWorker")
 	}
-}
-
-func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
-	var data []byte
-	var err error
-	if delta != nil {
-		data, err = delta.Marshal()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	nd := dag.NodeWithData(data)
-	// The cid builder defaults to v0, we want to be using v1 Cids
-	err = nd.SetCidBuilder(cid.V1Builder{
-		Codec:    cid.DagProtobuf,
-		MhType:   mh.SHA2_256,
-		MhLength: -1,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// add heads
-	for _, h := range heads {
-		if err = nd.AddRawLink("_head", &ipld.Link{Cid: h}); err != nil {
-			return nil, err
-		}
-	}
-
-	// add delta specific links
-	if comp, ok := delta.(core.CompositeDelta); ok {
-		for _, dagLink := range comp.Links() {
-			if err = nd.AddRawLink(dagLink.Name, &ipld.Link{Cid: dagLink.Cid}); err != nil {
-				return nil, err
-			}
-		}
-	}
-	return nd, nil
 }

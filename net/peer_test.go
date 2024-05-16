@@ -18,7 +18,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	ipld "github.com/ipfs/go-ipld-format"
 	libp2p "github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -28,74 +27,27 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
-type EmptyNode struct{}
-
-var ErrEmptyNode error = errors.New("dummy node")
-
-func (n *EmptyNode) Resolve([]string) (any, []string, error) {
-	return nil, nil, ErrEmptyNode
-}
-
-func (n *EmptyNode) Tree(string, int) []string {
-	return nil
-}
-
-func (n *EmptyNode) ResolveLink([]string) (*ipld.Link, []string, error) {
-	return nil, nil, ErrEmptyNode
-}
-
-func (n *EmptyNode) Copy() ipld.Node {
-	return &EmptyNode{}
-}
-
-func (n *EmptyNode) Cid() cid.Cid {
-	id, err := cid.V1Builder{
-		Codec:    cid.DagProtobuf,
-		MhType:   mh.SHA2_256,
-		MhLength: 0, // default length
-	}.Sum(nil)
-
-	if err != nil {
-		panic("failed to create an empty cid!")
+func emptyBlock() []byte {
+	block := coreblock.Block{
+		Delta: crdt.CRDT{
+			CompositeDAGDelta: &crdt.CompositeDAGDelta{},
+		},
 	}
-	return id
-}
-
-func (n *EmptyNode) Links() []*ipld.Link {
-	return nil
-}
-
-func (n *EmptyNode) Loggable() map[string]any {
-	return nil
-}
-
-func (n *EmptyNode) String() string {
-	return "[]"
-}
-
-func (n *EmptyNode) RawData() []byte {
-	return nil
-}
-
-func (n *EmptyNode) Size() (uint64, error) {
-	return 0, nil
-}
-
-func (n *EmptyNode) Stat() (*ipld.NodeStat, error) {
-	return &ipld.NodeStat{}, nil
+	b, _ := block.Marshal()
+	return b
 }
 
 func createCID(doc *client.Document) (cid.Cid, error) {
 	pref := cid.V1Builder{
-		Codec:    cid.DagProtobuf,
+		Codec:    cid.DagCBOR,
 		MhType:   mh.SHA2_256,
 		MhLength: 0, // default length
 	}
@@ -339,7 +291,7 @@ func TestRegisterNewDocument_NoError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.ID(), cid, &EmptyNode{}, col.SchemaRoot())
+	err = n.RegisterNewDocument(ctx, doc.ID(), cid, emptyBlock(), col.SchemaRoot())
 	require.NoError(t, err)
 }
 
@@ -366,7 +318,7 @@ func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.ID(), cid, &EmptyNode{}, col.SchemaRoot())
+	err = n.RegisterNewDocument(ctx, doc.ID(), cid, emptyBlock(), col.SchemaRoot())
 	require.Equal(t, err.Error(), "creating topic: joining topic: topic already exists")
 }
 
@@ -946,24 +898,17 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	err = n.handleDocCreateLog(events.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
-		Priority:   0,
+		Block:      b,
 	})
 	require.NoError(t, err)
 }
@@ -1029,24 +974,17 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
-		Priority:   0,
+		Block:      b,
 	})
 	require.NoError(t, err)
 }
@@ -1082,16 +1020,10 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
@@ -1099,9 +1031,9 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 
 	err = n.handleDocUpdateLog(events.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
+		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -1126,16 +1058,10 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), col.SchemaRoot(), true)
@@ -1143,17 +1069,9 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 
 	err = n.handleDocUpdateLog(events.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
+		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
-}
-
-func TestSession_NoError(t *testing.T) {
-	ctx := context.Background()
-	_, n := newTestNode(ctx, t)
-	defer n.Close()
-	ng := n.Session(ctx)
-	require.Implements(t, (*ipld.NodeGetter)(nil), ng)
 }

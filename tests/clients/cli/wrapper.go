@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -512,8 +512,12 @@ func (w *Wrapper) Root() datastore.RootStore {
 	return w.node.Root()
 }
 
-func (w *Wrapper) Blockstore() blockstore.Blockstore {
+func (w *Wrapper) Blockstore() datastore.DAGStore {
 	return w.node.Blockstore()
+}
+
+func (w *Wrapper) Headstore() ds.Read {
+	return w.node.Headstore()
 }
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {

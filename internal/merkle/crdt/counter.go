@@ -13,7 +13,7 @@ package merklecrdt
 import (
 	"context"
 
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -47,15 +47,14 @@ func NewMerkleCounter[T crdt.Incrementable](
 }
 
 // Save the value of the  Counter to the DAG.
-func (mc *MerkleCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
+func (mc *MerkleCounter[T]) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
-		return nil, 0, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
+		return cidlink.Link{}, nil, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
 	}
 	delta, err := mc.reg.Increment(ctx, value.Value().(T))
 	if err != nil {
-		return nil, 0, err
+		return cidlink.Link{}, nil, err
 	}
-	nd, err := mc.clock.AddDAGNode(ctx, delta)
-	return nd, delta.GetPriority(), err
+	return mc.clock.AddDelta(ctx, delta)
 }

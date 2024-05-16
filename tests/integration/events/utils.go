@@ -58,7 +58,7 @@ type ExpectedUpdate struct {
 	// The expected Cid, as a string (results in much more readable errors)
 	Cid        immutable.Option[string]
 	SchemaRoot immutable.Option[string]
-	Priority   immutable.Option[uint64]
+	IsCreate   immutable.Option[bool]
 }
 
 const eventTimeout = 100 * time.Millisecond
@@ -97,7 +97,7 @@ func ExecuteRequestTestCase(
 				expectedEvent := testCase.ExpectedUpdates[indexOfNextExpectedUpdate]
 				assertIfExpected(t, expectedEvent.Cid, update.Cid.String())
 				assertIfExpected(t, expectedEvent.DocID, update.DocID)
-				assertIfExpected(t, expectedEvent.Priority, update.Priority)
+				assertIfExpected(t, expectedEvent.IsCreate, update.IsCreate)
 				assertIfExpected(t, expectedEvent.SchemaRoot, update.SchemaRoot)
 
 				indexOfNextExpectedUpdate++

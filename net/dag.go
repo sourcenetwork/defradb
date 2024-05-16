@@ -13,43 +13,25 @@
 package net
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/corelog"
+
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
 var (
 	DAGSyncTimeout = time.Second * 60
 )
 
-// A DAGSyncer is an abstraction to an IPLD-based P2P storage layer.  A
-// DAGSyncer is a DAGService with the ability to publish new ipld nodes to the
-// network, and retrieving others from it.
-type DAGSyncer interface {
-	ipld.DAGService
-	// Returns true if the block is locally available (therefore, it
-	// is considered processed).
-	HasBlock(ctx context.Context, c cid.Cid) (bool, error)
-}
-
-// A SessionDAGSyncer is a Sessions-enabled DAGSyncer. This type of DAG-Syncer
-// provides an optimized NodeGetter to make multiple related requests. The
-// same session-enabled NodeGetter is used to download DAG branches when
-// the DAGSyncer supports it.
-type SessionDAGSyncer interface {
-	DAGSyncer
-	Session(context.Context) ipld.NodeGetter
-}
-
 type dagJob struct {
-	session     *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
-	bp          *blockProcessor // the block processor to use
-	cid         cid.Cid         // the cid of the block to fetch from the P2P network
-	isComposite bool            // whether this is a composite block
+	session *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
+	bp      *blockProcessor // the block processor to use
+	cid     cid.Cid         // the cid of the block to fetch from the P2P network
 
 	// OLD FIELDS
 	// root       cid.Cid         // the root of the branch we are walking down
@@ -108,8 +90,13 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		}
 
 		go func(j *dagJob) {
-			if j.bp.getter != nil && j.cid.Defined() {
-				cNode, err := j.bp.getter.Get(p.ctx, j.cid)
+			if j.bp.dagSyncer != nil && j.cid.Defined() {
+				// BlockOfType will return the block if it is already in the store or fetch it from the network
+				// if it is not. This is a blocking call and will wait for the block to be fetched.
+				// It uses the LinkSystem to fetch the block. Blocks retrieved from the network will
+				// also be stored in the blockstore in the same call.
+				// Blocks have to match the coreblock.SchemaPrototype to be returned.
+				nd, err := j.bp.dagSyncer.BlockOfType(p.ctx, cidlink.Link{Cid: j.cid}, coreblock.SchemaPrototype)
 				if err != nil {
 					log.ErrorContextE(
 						p.ctx,
@@ -119,19 +106,19 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 					j.session.Done()
 					return
 				}
-				err = j.bp.processRemoteBlock(
-					p.ctx,
-					j.session,
-					cNode,
-					j.isComposite,
-				)
+				block, err := coreblock.GetFromNode(nd)
 				if err != nil {
 					log.ErrorContextE(
 						p.ctx,
-						"Failed to process remote block",
+						"Failed to convert ipld node to block",
 						err,
 						corelog.Any("CID", j.cid))
 				}
+				j.bp.handleChildBlocks(
+					p.ctx,
+					j.session,
+					block,
+				)
 			}
 			p.queuedChildren.Remove(j.cid)
 			j.session.Done()

@@ -13,7 +13,7 @@ package merklecrdt
 import (
 	"context"
 
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -46,18 +46,17 @@ func NewMerkleLWWRegister(
 }
 
 // Save the value of the register to the DAG.
-func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
+func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
-		return nil, 0, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
+		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
 	}
 	bytes, err := value.Bytes()
 	if err != nil {
-		return nil, 0, err
+		return cidlink.Link{}, nil, err
 	}
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(bytes)
-	nd, err := mlwwreg.clock.AddDAGNode(ctx, delta)
-	return nd, delta.GetPriority(), err
+	return mlwwreg.clock.AddDelta(ctx, delta)
 }

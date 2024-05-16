@@ -13,10 +13,13 @@ package db
 import (
 	"context"
 
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
@@ -148,15 +151,12 @@ func (c *collection) applyDelete(
 		return err
 	}
 
-	dagLinks := make([]core.DAGLink, len(cids))
+	dagLinks := make([]coreblock.DAGLink, len(cids))
 	for i, cid := range cids {
-		dagLinks[i] = core.DAGLink{
-			Name: core.HEAD,
-			Cid:  cid,
-		}
+		dagLinks[i] = coreblock.NewDAGLink(core.HEAD, cidlink.Link{Cid: cid})
 	}
 
-	headNode, priority, err := c.saveCompositeToMerkleCRDT(
+	link, b, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		dsKey,
 		dagLinks,
@@ -172,10 +172,9 @@ func (c *collection) applyDelete(
 				c.db.events.Updates.Value().Publish(
 					events.Update{
 						DocID:      primaryKey.DocID,
-						Cid:        headNode.Cid(),
+						Cid:        link.Cid,
 						SchemaRoot: c.Schema().Root,
-						Block:      headNode,
-						Priority:   priority,
+						Block:      b,
 					},
 				)
 			},

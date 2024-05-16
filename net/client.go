@@ -38,7 +38,7 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    s.peer.host.ID().String(),
 		Log: &pb.Document_Log{
-			Block: evt.Block.RawData(),
+			Block: evt.Block,
 		},
 	}
 	req := &pb.PushLogRequest{

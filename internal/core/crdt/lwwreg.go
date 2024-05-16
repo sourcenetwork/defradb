@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,12 +14,8 @@ import (
 	"bytes"
 	"context"
 
-	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
-	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ugorji/go/codec"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -41,6 +37,20 @@ type LWWRegDelta struct {
 
 var _ core.Delta = (*LWWRegDelta)(nil)
 
+// IPLDSchemaBytes returns the IPLD schema representation for the type.
+//
+// This needs to match the [LWWRegDelta] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta LWWRegDelta) IPLDSchemaBytes() []byte {
+	return []byte(`
+	type LWWRegDelta struct {
+		docID     		Bytes
+		fieldName 		String
+		priority  		Int
+		schemaVersionID String
+		data            Bytes
+	}`)
+}
+
 // GetPriority gets the current priority for this delta.
 func (delta *LWWRegDelta) GetPriority() uint64 {
 	return delta.Priority
@@ -49,26 +59,6 @@ func (delta *LWWRegDelta) GetPriority() uint64 {
 // SetPriority will set the priority for this delta.
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
-}
-
-// Marshal encodes the delta using CBOR.
-// for now le'ts do cbor (quick to implement)
-func (delta *LWWRegDelta) Marshal() ([]byte, error) {
-	h := &codec.CborHandle{}
-	buf := bytes.NewBuffer(nil)
-	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(delta)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// Unmarshal decodes the delta from CBOR.
-func (delta *LWWRegDelta) Unmarshal(b []byte) error {
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(b, h)
-	return dec.Decode(delta)
 }
 
 // LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
@@ -160,21 +150,4 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	}
 
 	return reg.setPriority(ctx, reg.key, priority)
-}
-
-// DeltaDecode is a typed helper to extract
-// a LWWRegDelta from a ipld.Node
-// for now let's do cbor (quick to implement)
-func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	pbNode, ok := node.(*dag.ProtoNode)
-	if !ok {
-		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
-	}
-
-	delta := &LWWRegDelta{}
-	err := delta.Unmarshal(pbNode.Data())
-	if err != nil {
-		return nil, err
-	}
-	return delta, nil
 }

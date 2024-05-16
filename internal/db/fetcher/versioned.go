@@ -14,20 +14,19 @@ import (
 	"container/list"
 	"context"
 
-	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	format "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -307,20 +306,14 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	}
 
 	// decode the block
-	nd, err := dag.DecodeProtobuf(blk.RawData())
+	block, err := coreblock.GetFromBytes(blk.RawData())
 	if err != nil {
 		return NewErrVFetcherFailedToDecodeNode(err)
 	}
 
-	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
-	l, err := nd.GetNodeLink(core.HEAD)
-	// ErrLinkNotFound is fine, it just means we have no more head links
-	if err != nil && !errors.Is(err, dag.ErrLinkNotFound) {
-		return NewErrVFetcherFailedToGetDagLink(err)
-	}
-
 	// only seekNext on parent if we have a HEAD link
-	if !errors.Is(err, dag.ErrLinkNotFound) {
+	l, ok := block.GetLinkByName(core.HEAD)
+	if ok {
 		err := vf.seekNext(l.Cid, true)
 		if err != nil {
 			return err
@@ -328,12 +321,12 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	}
 
 	// loop over links and ignore head links
-	for _, l := range nd.Links() {
+	for _, l := range block.Links {
 		if l.Name == core.HEAD {
 			continue
 		}
 
-		err := vf.seekNext(l.Cid, false)
+		err := vf.seekNext(l.Link.Cid, false)
 		if err != nil {
 			return err
 		}
@@ -353,25 +346,30 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // Currently we assume the CID is a CompositeDAG CRDT node.
 func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	// get node
-	nd, err := vf.getDAGNode(c)
+	block, err := vf.getDAGBlock(c)
+	if err != nil {
+		return err
+	}
+
+	link, err := block.GenerateLink()
 	if err != nil {
 		return err
 	}
 
 	// first arg 0 is the index for the composite DAG in the mCRDTs cache
-	if err := vf.processNode(0, nd, client.COMPOSITE, client.FieldKind_None, ""); err != nil {
+	if err := vf.processBlock(0, block, link, client.COMPOSITE, client.FieldKind_None, ""); err != nil {
 		return err
 	}
 
 	// handle subgraphs
 	// loop over links and ignore head links
-	for _, l := range nd.Links() {
+	for _, l := range block.Links {
 		if l.Name == core.HEAD {
 			continue
 		}
 
 		// get node
-		subNd, err := vf.getDAGNode(l.Cid)
+		subBlock, err := vf.getDAGBlock(l.Link.Cid)
 		if err != nil {
 			return err
 		}
@@ -380,7 +378,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
-		if err := vf.processNode(uint32(field.ID), subNd, field.Typ, field.Kind, l.Name); err != nil {
+		if err := vf.processBlock(uint32(field.ID), subBlock, l.Link, field.Typ, field.Kind, l.Name); err != nil {
 			return err
 		}
 	}
@@ -388,9 +386,10 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	return nil
 }
 
-func (vf *VersionedFetcher) processNode(
+func (vf *VersionedFetcher) processBlock(
 	crdtIndex uint32,
-	nd format.Node,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
 	ctype client.CType,
 	kind client.FieldKind,
 	fieldName string,
@@ -414,28 +413,20 @@ func (vf *VersionedFetcher) processNode(
 			return err
 		}
 		vf.mCRDTs[crdtIndex] = mcrdt
-		// compositeClock = compMCRDT
 	}
 
-	delta, err := mcrdt.DeltaDecode(nd)
-	if err != nil {
-		return err
-	}
-
-	err = mcrdt.Clock().ProcessNode(vf.ctx, delta, nd)
+	err = mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink)
 	return err
 }
 
-func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
+func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 	// get Block
 	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
 		return nil, NewErrFailedToGetDagNode(err)
 	}
 
-	// get node
-	// decode the block
-	return dag.DecodeProtobuf(blk.RawData())
+	return coreblock.GetFromBytes(blk.RawData())
 }
 
 // Close closes the VersionedFetcher.

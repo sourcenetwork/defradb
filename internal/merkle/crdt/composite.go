@@ -13,10 +13,11 @@ package merklecrdt
 import (
 	"context"
 
-	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
@@ -55,33 +56,25 @@ func NewMerkleCompositeDAG(
 // Delete sets the values of CompositeDAG for a delete.
 func (m *MerkleCompositeDAG) Delete(
 	ctx context.Context,
-	links []core.DAGLink,
-) (ipld.Node, uint64, error) {
-	// Set() call on underlying CompositeDAG CRDT
-	// persist/publish delta
-	delta := m.reg.Set(links)
-	delta.Status = client.Deleted
-	nd, err := m.clock.AddDAGNode(ctx, delta)
+	links []coreblock.DAGLink,
+) (cidlink.Link, []byte, error) {
+	delta := m.reg.Set(client.Deleted)
+	link, b, err := m.clock.AddDelta(ctx, delta, links...)
 	if err != nil {
-		return nil, 0, err
+		return cidlink.Link{}, nil, err
 	}
 
-	return nd, delta.GetPriority(), nil
+	return link, b, nil
 }
 
 // Save the value of the composite CRDT to DAG.
-func (m *MerkleCompositeDAG) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
-	value, ok := data.([]core.DAGLink)
+func (m *MerkleCompositeDAG) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
+	links, ok := data.([]coreblock.DAGLink)
 	if !ok {
-		return nil, 0, NewErrUnexpectedValueType(client.COMPOSITE, []core.DAGLink{}, data)
-	}
-	// Set() call on underlying CompositeDAG CRDT
-	// persist/publish delta
-	delta := m.reg.Set(value)
-	nd, err := m.clock.AddDAGNode(ctx, delta)
-	if err != nil {
-		return nil, 0, err
+		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.COMPOSITE, []coreblock.DAGLink{}, data)
 	}
 
-	return nd, delta.GetPriority(), nil
+	delta := m.reg.Set(client.Active)
+
+	return m.clock.AddDelta(ctx, delta, links...)
 }

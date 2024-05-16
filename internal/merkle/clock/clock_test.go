@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
@@ -38,14 +39,14 @@ func newTestMerkleClock() *MerkleClock {
 		multistore.DAGstore(),
 		core.HeadStoreKey{DocID: request.DocIDArgName, FieldId: "1"},
 		reg,
-	).(*MerkleClock)
+	)
 }
 
 func TestNewMerkleClock(t *testing.T) {
 	s := newDS()
 	multistore := datastore.MultiStoreFrom(s)
 	reg := crdt.NewLWWRegister(multistore.Rootstore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
-	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg).(*MerkleClock)
+	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg)
 
 	if clk.headstore != multistore.Headstore() {
 		t.Error("MerkleClock store not correctly set")
@@ -61,13 +62,14 @@ func TestMerkleClockPutBlock(t *testing.T) {
 	clk := newTestMerkleClock()
 	reg := crdt.LWWRegister{}
 	delta := reg.Set([]byte("test"))
-	node, err := clk.putBlock(ctx, nil, delta)
+	block := coreblock.New(delta, nil)
+	_, err := clk.putBlock(ctx, block)
 	if err != nil {
 		t.Errorf("Failed to putBlock, err: %v", err)
 	}
 
-	if len(node.Links()) != 0 {
-		t.Errorf("Node links should be empty. Have %v, want %v", len(node.Links()), 0)
+	if len(block.Links) != 0 {
+		t.Errorf("Node links should be empty. Have %v, want %v", len(block.Links), 0)
 		return
 	}
 
@@ -87,37 +89,38 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 		return
 	}
 	heads := []cid.Cid{c}
-	node, err := clk.putBlock(ctx, heads, delta)
+	block := coreblock.New(delta, nil, heads...)
+	_, err = clk.putBlock(ctx, block)
 	if err != nil {
 		t.Error("Failed to putBlock with heads:", err)
 		return
 	}
 
-	if len(node.Links()) != 1 {
-		t.Errorf("putBlock has incorrect number of heads. Have %v, want %v", len(node.Links()), 1)
+	if len(block.Links) != 1 {
+		t.Errorf("putBlock has incorrect number of heads. Have %v, want %v", len(block.Links), 1)
 	}
 }
 
-func TestMerkleClockAddDAGNode(t *testing.T) {
+func TestMerkleClockAddDelta(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	reg := crdt.LWWRegister{}
 	delta := reg.Set([]byte("test"))
 
-	_, err := clk.AddDAGNode(ctx, delta)
+	_, _, err := clk.AddDelta(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
 	}
 }
 
-func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
+func TestMerkleClockAddDeltaWithHeads(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	reg := crdt.LWWRegister{}
 	delta := reg.Set([]byte("test"))
 
-	_, err := clk.AddDAGNode(ctx, delta)
+	_, _, err := clk.AddDelta(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
@@ -126,7 +129,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 	reg2 := crdt.LWWRegister{}
 	delta2 := reg2.Set([]byte("test2"))
 
-	_, err = clk.AddDAGNode(ctx, delta2)
+	_, _, err = clk.AddDelta(ctx, delta2)
 	if err != nil {
 		t.Error("Failed to add second dag node with err:", err)
 		return
@@ -134,7 +137,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 
 	if delta.GetPriority() != 1 && delta2.GetPriority() != 2 {
 		t.Errorf(
-			"AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)",
+			"AddDelta failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)",
 			1,
 			2,
 			delta.GetPriority(),
