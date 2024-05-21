@@ -19,7 +19,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -121,7 +120,13 @@ func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	db, err := db.NewDB(ctx, rootstore, acp.NoACP, options.dbOpts...)
+
+	acp, err := NewACP(ctx, options.acpOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := db.NewDB(ctx, rootstore, acp, options.dbOpts...)
 	if err != nil {
 		return nil, err
 	}
