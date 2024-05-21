@@ -5,6 +5,9 @@ yaml-files:
   - '*.yml'
   - '.yamllint'
 
+ignore:
+  - playground/node_modules/
+
 rules:
   # Disabled lint rules
   comments: disable
