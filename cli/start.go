@@ -17,6 +17,7 @@ import (
 	"syscall"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -113,6 +114,10 @@ func MakeStartCommand() *cobra.Command {
 				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithACPType(node.LocalACPType),
+				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
+				node.WithSourceHubKeyName(cfg.GetString("acp.sourceHub.KeyName")),
 				node.WithPeers(peers...),
 				// db options
 				db.WithUpdateEvents(),
@@ -152,7 +157,10 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
+
 				opts = append(opts, node.WithEncryptionKey(encryptionKey))
+				// WARNING: This relies on the fact that the keyring password must have been entered at least once already
+				opts = append(opts, node.WithKeyring(immutable.Some(kr)))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)
