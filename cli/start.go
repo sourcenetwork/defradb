@@ -102,10 +102,6 @@ func MakeStartCommand() *cobra.Command {
 			dbOpts := []db.Option{
 				db.WithUpdateEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
-				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
-				// we can allow starting of db without acp. Currently that can only be done programmatically.
-				// https://github.com/sourcenetwork/defradb/issues/2271
-				db.WithACPInMemory(),
 			}
 
 			netOpts := []net.NodeOpt{
@@ -126,6 +122,10 @@ func MakeStartCommand() *cobra.Command {
 				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 			}
 
+			acpOpts := []node.ACPOpt{
+				node.WithACPType(node.LocalACPType),
+			}
+
 			var peers []peer.AddrInfo
 			if val := cfg.GetStringSlice("net.peers"); len(val) > 0 {
 				addrs, err := netutils.ParsePeers(val)
@@ -140,7 +140,7 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				dbOpts = append(dbOpts, db.WithACP(rootDir))
+				acpOpts = append(acpOpts, node.WithACPPath(rootDir))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -169,6 +169,7 @@ func MakeStartCommand() *cobra.Command {
 				node.WithNetOpts(netOpts...),
 				node.WithServerOpts(serverOpts...),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
+				node.WithACPOpts(acpOpts...),
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)

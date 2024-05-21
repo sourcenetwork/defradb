@@ -15,9 +15,9 @@ import (
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"

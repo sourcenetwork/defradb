@@ -11,13 +11,10 @@
 package db
 
 import (
-	"context"
-
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/internal/acp"
 )
 
 const (
@@ -27,18 +24,6 @@ const (
 
 // Option is a funtion that sets a config value on the db.
 type Option func(*db)
-
-// WithACP enables access control. If path is empty then acp runs in-memory.
-func WithACP(path string) Option {
-	return func(db *db) {
-		var acpLocal acp.ACPLocal
-		acpLocal.Init(context.Background(), path)
-		db.acp = immutable.Some[acp.ACP](&acpLocal)
-	}
-}
-
-// WithACPInMemory enables access control in-memory.
-func WithACPInMemory() Option { return WithACP("") }
 
 // WithUpdateEvents enables the update events channel.
 func WithUpdateEvents() Option {
