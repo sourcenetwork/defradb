@@ -25,10 +25,10 @@ import (
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/events"
-	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"

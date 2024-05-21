@@ -16,8 +16,8 @@ import (
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/internal/acp"
 )
 
 const (

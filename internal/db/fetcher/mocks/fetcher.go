@@ -4,7 +4,7 @@ package mocks
 
 import (
 	client "github.com/sourcenetwork/defradb/client"
-	acp "github.com/sourcenetwork/defradb/internal/acp"
+	acp "github.com/sourcenetwork/defradb/acp"
 
 	context "context"
 
@@ -14,7 +14,7 @@ import (
 
 	fetcher "github.com/sourcenetwork/defradb/internal/db/fetcher"
 
-	identity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	identity "github.com/sourcenetwork/defradb/acp/identity"
 
 	immutable "github.com/sourcenetwork/immutable"
 
