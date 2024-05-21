@@ -19,6 +19,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -33,6 +34,7 @@ type Options struct {
 	dbOpts     []db.Option
 	netOpts    []net.NodeOpt
 	serverOpts []http.ServerOpt
+	acpOpts    []ACPOpt
 	peers      []peer.AddrInfo
 	disableP2P bool
 	disableAPI bool
@@ -50,6 +52,13 @@ type NodeOpt func(*Options)
 func WithStoreOpts(opts ...StoreOpt) NodeOpt {
 	return func(o *Options) {
 		o.storeOpts = opts
+	}
+}
+
+// WithACPOpts sets the ACP options.
+func WithACPOpts(opts ...ACPOpt) NodeOpt {
+	return func(o *Options) {
+		o.acpOpts = opts
 	}
 }
 
@@ -112,7 +121,7 @@ func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	db, err := db.NewDB(ctx, rootstore, options.dbOpts...)
+	db, err := db.NewDB(ctx, rootstore, acp.NoACP, options.dbOpts...)
 	if err != nil {
 		return nil, err
 	}

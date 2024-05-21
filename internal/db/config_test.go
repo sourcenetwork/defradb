@@ -17,18 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithACP(t *testing.T) {
-	d := &db{}
-	WithACP("test")(d)
-	assert.True(t, d.acp.HasValue())
-}
-
-func TestWithACPInMemory(t *testing.T) {
-	d := &db{}
-	WithACPInMemory()(d)
-	assert.True(t, d.acp.HasValue())
-}
-
 func TestWithUpdateEvents(t *testing.T) {
 	d := &db{}
 	WithUpdateEvents()(d)

@@ -23,8 +23,10 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -69,7 +71,9 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents(), db.WithACPInMemory())
+	var acpLocal acp.ACPLocal
+	acpLocal.Init(context.Background(), "")
+	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](&acpLocal), db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -85,7 +89,7 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 func TestNewPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	h, err := libp2p.New()
@@ -108,7 +112,7 @@ func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, `type User {
@@ -158,11 +162,11 @@ func TestStartAndClose_NoError(t *testing.T) {
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db1, err := db.NewDB(ctx, store, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, db.WithUpdateEvents())
+	db2, err := db.NewDB(ctx, store2, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -194,11 +198,11 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db1, err := db.NewDB(ctx, store, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, db.WithUpdateEvents())
+	db2, err := db.NewDB(ctx, store2, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -234,7 +238,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store)
+	db, err := db.NewDB(ctx, store, acp.NoACP)
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -253,7 +257,7 @@ func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
 func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	n, err := NewNode(

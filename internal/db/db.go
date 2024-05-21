@@ -80,14 +80,16 @@ type db struct {
 func NewDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
+	acp immutable.Option[acp.ACP],
 	options ...Option,
 ) (client.DB, error) {
-	return newDB(ctx, rootstore, options...)
+	return newDB(ctx, rootstore, acp, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
+	acp immutable.Option[acp.ACP],
 	options ...Option,
 ) (*db, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
@@ -100,7 +102,7 @@ func newDB(
 	db := &db{
 		rootstore:  rootstore,
 		multistore: multistore,
-		acp:        acp.NoACP,
+		acp:        acp,
 		parser:     parser,
 		options:    options,
 	}

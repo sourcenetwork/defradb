@@ -24,6 +24,7 @@ import (
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
@@ -85,8 +86,13 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 	if err != nil {
 		return nil, err
 	}
-	dbopts = append(dbopts, db.WithACPInMemory())
-	db, err := db.NewDB(ctx, rootstore, dbopts...)
+
+	acp, err := node.NewACP(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := db.NewDB(ctx, rootstore, acp, dbopts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +100,12 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 }
 
 func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	dbopts = append(dbopts, db.WithACPInMemory())
-	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
+	acp, err := node.NewACP(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), acp, dbopts...)
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +140,12 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 		return nil, "", err
 	}
 
-	dbopts = append(dbopts, db.WithACP(dbPath))
-	db, err := db.NewDB(ctx, rootstore, dbopts...)
+	acp, err := node.NewACP(ctx, node.WithACPPath(dbPath))
+	if err != nil {
+		return nil, "", err
+	}
+
+	db, err := db.NewDB(ctx, rootstore, acp, dbopts...)
 	if err != nil {
 		return nil, "", err
 	}
