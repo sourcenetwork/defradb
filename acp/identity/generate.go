@@ -36,20 +36,16 @@ func Generate() (RawIdentity, error) {
 		return RawIdentity{}, err
 	}
 
-	maybeNewIdentity, err := FromPrivateKey(privateKey)
+	publicKey := privateKey.PubKey()
+
+	did, err := DIDFromPublicKey(publicKey)
 	if err != nil {
 		return RawIdentity{}, err
 	}
 
-	if !maybeNewIdentity.HasValue() {
-		return RawIdentity{}, ErrFailedToGenerateIdentityFromPrivateKey
-	}
-
-	newIdentity := maybeNewIdentity.Value()
-
 	return RawIdentity{
-		PrivateKey: hex.EncodeToString(newIdentity.PrivateKey.Serialize()),
-		PublicKey:  hex.EncodeToString(newIdentity.PublicKey.SerializeCompressed()),
-		DID:        newIdentity.DID,
+		PrivateKey: hex.EncodeToString(privateKey.Serialize()),
+		PublicKey:  hex.EncodeToString(publicKey.SerializeCompressed()),
+		DID:        did,
 	}, nil
 }

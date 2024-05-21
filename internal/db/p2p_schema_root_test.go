@@ -15,11 +15,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/stretchr/testify/require"
-
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -279,17 +279,17 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	identity, err := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(privKey, time.Hour, immutable.None[string](), immutable.None[string]())
 	require.NoError(t, err)
 
-	ctx = SetContextIdentity(ctx, identity)
+	ctx = SetContextIdentity(ctx, immutable.Some(identity))
 	policyResult, err := db.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
 	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
-		type User @policy(id: "%s", resource: "user") { 
+		type User @policy(id: "%s", resource: "user") {
 			name: String
 			age: Int
 		}

@@ -17,6 +17,7 @@ import (
 	"syscall"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -60,7 +61,10 @@ func MakeStartCommand() *cobra.Command {
 				node.WithStorePath(cfg.GetString("datastore.badger.path")),
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithACPType(node.LocalACPType),
+				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
+				node.WithSourceHubKeyName(cfg.GetString("acp.sourceHub.KeyName")),
 				node.WithPeers(peers...),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
@@ -100,7 +104,15 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
+
 				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+				// WARNING: This relies on the fact that the keyring password must have been entered at least once already
+				opts = append(opts, node.WithKeyring(immutable.Some(kr)))
+			}
+
+			acpType := getAcpType(cfg.GetString("acp.type"))
+			if acpType.HasValue() {
+				opts = append(opts, node.WithACPType(acpType.Value()))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)
@@ -180,4 +192,17 @@ func MakeStartCommand() *cobra.Command {
 		"Path to the private key for tls",
 	)
 	return cmd
+}
+
+func getAcpType(acpTypeString string) immutable.Option[node.ACPType] {
+	switch acpTypeString {
+	case "none":
+		return immutable.Some(node.NoACPType)
+	case "local":
+		return immutable.Some(node.LocalACPType)
+	case "source-hub":
+		return immutable.Some(node.SourceHubACPType)
+	default:
+		return immutable.None[node.ACPType]()
+	}
 }

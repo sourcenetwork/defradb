@@ -11,11 +11,10 @@
 package http
 
 import (
-	"encoding/hex"
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,126 +22,55 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func TestBuildAuthToken(t *testing.T) {
-	privKey, err := crypto.GenerateSecp256k1()
-	require.NoError(t, err)
-
-	identity, err := acpIdentity.FromPrivateKey(privKey)
-	require.NoError(t, err)
-	token, err := buildAuthToken(identity.Value(), "abc123")
-	require.NoError(t, err)
-
-	subject := hex.EncodeToString(privKey.PubKey().SerializeCompressed())
-	assert.Equal(t, subject, token.Subject())
-
-	assert.True(t, token.NotBefore().Before(time.Now()))
-	assert.True(t, token.Expiration().After(time.Now()))
-	assert.Equal(t, []string{"abc123"}, token.Audience())
-}
-
-func TestSignAuthTokenErrorsWithPublicIdentity(t *testing.T) {
-	privKey, err := crypto.GenerateSecp256k1()
-	require.NoError(t, err)
-
-	identity, err := acpIdentity.FromPublicKey(privKey.PubKey())
-	require.NoError(t, err)
-	token, err := buildAuthToken(identity.Value(), "abc123")
-	require.NoError(t, err)
-
-	_, err = signAuthToken(identity.Value(), token)
-	assert.ErrorIs(t, err, ErrMissingIdentityPrivateKey)
-}
-
 func TestVerifyAuthToken(t *testing.T) {
+	audience := "abc123"
+
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(privKey)
-	require.NoError(t, err)
-	token, err := buildAndSignAuthToken(identity.Value(), "abc123")
+	identity, err := acpIdentity.FromPrivateKey(
+		privKey,
+		time.Hour,
+		immutable.Some(audience),
+		immutable.None[string](),
+	)
 	require.NoError(t, err)
 
-	actual, err := verifyAuthToken(token, "abc123")
+	err = verifyAuthToken(identity, audience)
 	require.NoError(t, err)
-
-	expected, err := acpIdentity.FromPublicKey(privKey.PubKey())
-	require.NoError(t, err)
-	assert.Equal(t, expected.Value().DID, actual.Value().DID)
 }
 
 func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(privKey)
-	require.NoError(t, err)
-	token, err := buildAndSignAuthToken(identity.Value(), "valid")
-	require.NoError(t, err)
-
-	_, err = verifyAuthToken(token, "invalid")
-	assert.Error(t, err)
-}
-
-func TestVerifyAuthTokenErrorsWithWrongPublicKey(t *testing.T) {
-	privKey, err := crypto.GenerateSecp256k1()
+	identity, err := acpIdentity.FromPrivateKey(
+		privKey,
+		time.Hour,
+		immutable.Some("valid"),
+		immutable.None[string](),
+	)
 	require.NoError(t, err)
 
-	otherKey, err := crypto.GenerateSecp256k1()
-	require.NoError(t, err)
-
-	identity, err := acpIdentity.FromPrivateKey(privKey)
-	require.NoError(t, err)
-	token, err := buildAuthToken(identity.Value(), "123abc")
-	require.NoError(t, err)
-
-	// override subject
-	subject := hex.EncodeToString(otherKey.PubKey().SerializeCompressed())
-	err = token.Set(jwt.SubjectKey, subject)
-	require.NoError(t, err)
-
-	data, err := signAuthToken(identity.Value(), token)
-	require.NoError(t, err)
-
-	_, err = verifyAuthToken(data, "123abc")
+	err = verifyAuthToken(identity, "invalid")
 	assert.Error(t, err)
 }
 
 func TestVerifyAuthTokenErrorsWithExpired(t *testing.T) {
+	audience := "abc123"
+
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(privKey)
-	require.NoError(t, err)
-	token, err := buildAuthToken(identity.Value(), "123abc")
-	require.NoError(t, err)
-
-	// override expiration
-	err = token.Set(jwt.ExpirationKey, time.Now().Add(-15*time.Minute))
-	require.NoError(t, err)
-
-	data, err := signAuthToken(identity.Value(), token)
+	identity, err := acpIdentity.FromPrivateKey(
+		privKey,
+		// negative expiration
+		-time.Hour,
+		immutable.Some(audience),
+		immutable.None[string](),
+	)
 	require.NoError(t, err)
 
-	_, err = verifyAuthToken(data, "123abc")
-	assert.Error(t, err)
-}
-
-func TestVerifyAuthTokenErrorsWithNotBefore(t *testing.T) {
-	privKey, err := crypto.GenerateSecp256k1()
-	require.NoError(t, err)
-
-	identity, err := acpIdentity.FromPrivateKey(privKey)
-	require.NoError(t, err)
-	token, err := buildAuthToken(identity.Value(), "123abc")
-	require.NoError(t, err)
-
-	// override not before
-	err = token.Set(jwt.NotBeforeKey, time.Now().Add(15*time.Minute))
-	require.NoError(t, err)
-
-	data, err := signAuthToken(identity.Value(), token)
-	require.NoError(t, err)
-
-	_, err = verifyAuthToken(data, "123abc")
+	err = verifyAuthToken(identity, "123abc")
 	assert.Error(t, err)
 }

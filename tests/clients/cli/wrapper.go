@@ -43,14 +43,14 @@ type Wrapper struct {
 	httpServer *httptest.Server
 }
 
-func NewWrapper(node *node.Node) (*Wrapper, error) {
+func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
 
 	httpServer := httptest.NewServer(handler)
-	cmd := newCliWrapper(httpServer.URL)
+	cmd := newCliWrapper(httpServer.URL, sourceHubAddress)
 
 	return &Wrapper{
 		node:       node,
@@ -539,4 +539,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
 	w.node.Peer.Bootstrap(addrs)
+}
+
+func (w *Wrapper) Host() string {
+	return w.httpServer.URL
 }

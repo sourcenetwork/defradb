@@ -12,7 +12,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,14 +52,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	if !id.HasValue() {
 		return nil
 	}
-	token, err := buildAndSignAuthToken(id.Value(), strings.ToLower(c.baseURL.Host))
-	if errors.Is(err, ErrMissingIdentityPrivateKey) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, token))
+	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, []byte(id.Value().BearerToken)))
 	return nil
 }
 

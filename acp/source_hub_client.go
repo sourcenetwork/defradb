@@ -17,6 +17,9 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/keyring"
 )
 
 // sourceHubClient is a private abstraction to allow multiple ACP implementations
@@ -39,7 +42,7 @@ type sourceHubClient interface {
 	// otherwise returns error.
 	AddPolicy(
 		ctx context.Context,
-		creatorID string,
+		creator identity.Identity,
 		policy string,
 		marshalType policyMarshalType,
 		creationTime *protoTypes.Timestamp,
@@ -55,7 +58,7 @@ type sourceHubClient interface {
 	// No error is returned upon successful registering of an object.
 	RegisterObject(
 		ctx context.Context,
-		actorID string,
+		identity identity.Identity,
 		policyID string,
 		resourceName string,
 		objectID string,
@@ -100,6 +103,23 @@ func NewLocalACP() ACP {
 	}
 }
 
+func NewSourceHubACP(
+	chainID string,
+	grpcAddress string,
+	cometRPCAddress string,
+	keyring keyring.Keyring,
+	acpKeyName string,
+) (ACP, error) {
+	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, keyring, acpKeyName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sourceHubBridge{
+		client: acpSourceHub,
+	}, nil
+}
+
 func (a *sourceHubBridge) Init(ctx context.Context, path string) {
 	a.client.Init(ctx, path)
 }
@@ -108,9 +128,9 @@ func (a *sourceHubBridge) Start(ctx context.Context) error {
 	return a.client.Start(ctx)
 }
 
-func (a *sourceHubBridge) AddPolicy(ctx context.Context, creatorID string, policy string) (string, error) {
+func (a *sourceHubBridge) AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error) {
 	// Having a creator identity is a MUST requirement for adding a policy.
-	if creatorID == "" {
+	if creator.DID == "" {
 		return "", ErrPolicyCreatorMustNotBeEmpty
 	}
 
@@ -125,14 +145,14 @@ func (a *sourceHubBridge) AddPolicy(ctx context.Context, creatorID string, polic
 
 	policyID, err := a.client.AddPolicy(
 		ctx,
-		creatorID,
+		creator,
 		policy,
 		marshalType,
 		protoTypes.TimestampNow(),
 	)
 
 	if err != nil {
-		return "", NewErrFailedToAddPolicyWithACP(err, "Local", creatorID)
+		return "", NewErrFailedToAddPolicyWithACP(err, "Local", creator.DID)
 	}
 
 	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
@@ -206,14 +226,14 @@ func (a *sourceHubBridge) ValidateResourceExistsOnValidDPI(
 
 func (a *sourceHubBridge) RegisterDocObject(
 	ctx context.Context,
-	actorID string,
+	identity identity.Identity,
 	policyID string,
 	resourceName string,
 	docID string,
 ) error {
 	registerDocResult, err := a.client.RegisterObject(
 		ctx,
-		actorID,
+		identity,
 		policyID,
 		resourceName,
 		docID,
@@ -221,7 +241,7 @@ func (a *sourceHubBridge) RegisterDocObject(
 	)
 
 	if err != nil {
-		return NewErrFailedToRegisterDocWithACP(err, "Local", policyID, actorID, resourceName, docID)
+		return NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID, resourceName, docID)
 	}
 
 	switch registerDocResult {
@@ -233,7 +253,7 @@ func (a *sourceHubBridge) RegisterDocObject(
 			ctx,
 			"Document registered with local acp",
 			corelog.Any("PolicyID", policyID),
-			corelog.Any("Creator", actorID),
+			corelog.Any("Creator", identity.DID),
 			corelog.Any("Resource", resourceName),
 			corelog.Any("DocID", docID),
 		)
@@ -244,7 +264,7 @@ func (a *sourceHubBridge) RegisterDocObject(
 			ctx,
 			"Document re-registered (unarchived object) with local acp",
 			corelog.Any("PolicyID", policyID),
-			corelog.Any("Creator", actorID),
+			corelog.Any("Creator", identity.DID),
 			corelog.Any("Resource", resourceName),
 			corelog.Any("DocID", docID),
 		)
