@@ -72,12 +72,12 @@ func NewACP(ctx context.Context, opts ...ACPOpt) (immutable.Option[acp.ACP], err
 
 	case LocalACPType:
 		var acpLocal acp.ACPLocal
-		acpLocal.Init(context.Background(), options.path)
+		acpLocal.Init(ctx, options.path)
 		return immutable.Some[acp.ACP](&acpLocal), nil
 
 	default:
 		var acpLocal acp.ACPLocal
-		acpLocal.Init(context.Background(), options.path)
+		acpLocal.Init(ctx, options.path)
 		return immutable.Some[acp.ACP](&acpLocal), nil
 	}
 }
