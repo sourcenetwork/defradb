@@ -157,7 +157,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 func setupDatabase(s *state) (impl client.DB, path string, err error) {
-	dbopts := []db.Option{
+	dbOpts := []db.Option{
 		db.WithUpdateEvents(),
 		db.WithLensPoolSize(lensPoolSize),
 	}
@@ -172,13 +172,13 @@ func setupDatabase(s *state) (impl client.DB, path string, err error) {
 
 	switch s.dbt {
 	case badgerIMType:
-		impl, err = NewBadgerMemoryDB(s.ctx, dbopts...)
+		impl, err = NewBadgerMemoryDB(s.ctx, dbOpts...)
 
 	case badgerFileType:
-		impl, path, err = NewBadgerFileDB(s.ctx, s.t, dbopts...)
+		impl, path, err = NewBadgerFileDB(s.ctx, s.t, dbOpts...)
 
 	case defraIMType:
-		impl, err = NewInMemoryDB(s.ctx, dbopts...)
+		impl, err = NewInMemoryDB(s.ctx, dbOpts...)
 
 	default:
 		err = fmt.Errorf("invalid database type: %v", s.dbt)
