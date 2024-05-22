@@ -17,11 +17,8 @@ import (
 	"strconv"
 	"testing"
 
-	badger "github.com/sourcenetwork/badger/v4"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -73,29 +70,18 @@ func init() {
 	}
 }
 
-func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	opts := badgerds.Options{
-		Options: badger.DefaultOptions("").WithInMemory(true),
+func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
+	opts := []node.NodeOpt{
+		node.WithStoreOpts(node.WithInMemory(true)),
+		node.WithDatabaseOpts(db.WithUpdateEvents()),
 	}
-	if encryptionKey != nil {
-		opts.Options.EncryptionKey = encryptionKey
-		opts.Options.IndexCacheSize = 100 << 20
-	}
-	rootstore, err := badgerds.NewDatastore("", &opts)
+
+	node, err := node.NewNode(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	acp, err := node.NewACP(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := db.NewDB(ctx, rootstore, acp, dbopts...)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+	return node.DB, err
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {

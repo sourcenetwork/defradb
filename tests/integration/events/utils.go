@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -70,7 +69,7 @@ func ExecuteRequestTestCase(
 ) {
 	ctx := context.Background()
 
-	db, err := testUtils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
+	db, err := testUtils.NewBadgerMemoryDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, schema)
