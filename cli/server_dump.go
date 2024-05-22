@@ -33,7 +33,7 @@ func MakeServerDumpCmd() *cobra.Command {
 			storeOpts := []node.StoreOpt{
 				node.WithPath(cfg.GetString("datastore.badger.path")),
 			}
-			rootstore, err := node.NewStore(storeOpts...)
+			rootstore, err := node.NewStore(cmd.Context(), storeOpts...)
 			if err != nil {
 				return err
 			}

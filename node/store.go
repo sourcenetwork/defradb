@@ -11,14 +11,18 @@
 package node
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
 // StoreOptions contains store configuration values.
 type StoreOptions struct {
 	path             string
 	inMemory         bool
+	defraStore       bool
 	valueLogFileSize int64
 	encryptionKey    []byte
 }
@@ -38,6 +42,16 @@ type StoreOpt func(*StoreOptions)
 func WithInMemory(inMemory bool) StoreOpt {
 	return func(o *StoreOptions) {
 		o.inMemory = inMemory
+	}
+}
+
+// WithDefraStore sets the defra store flag.
+//
+// Setting this to true will result in the defra node being created with
+// the a custom defra implementation of the rootstore instead of badger.
+func WithDefraStore(defraStore bool) StoreOpt {
+	return func(o *StoreOptions) {
+		o.defraStore = defraStore
 	}
 }
 
@@ -63,10 +77,14 @@ func WithEncryptionKey(encryptionKey []byte) StoreOpt {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(opts ...StoreOpt) (datastore.RootStore, error) {
+func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.RootStore, error) {
 	options := DefaultStoreOptions()
 	for _, opt := range opts {
 		opt(options)
+	}
+
+	if options.defraStore {
+		return memory.NewDatastore(ctx), nil
 	}
 
 	badgerOpts := badger.DefaultOptions
