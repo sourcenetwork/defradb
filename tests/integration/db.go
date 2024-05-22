@@ -98,45 +98,19 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (client.DB, string, error) {
-	var dbPath string
-	switch {
-	case databaseDir != "":
-		// restarting database
-		dbPath = databaseDir
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
+	path := t.TempDir()
 
-	case changeDetector.Enabled:
-		// change detector
-		dbPath = changeDetector.DatabaseDir(t)
-
-	default:
-		// default test case
-		dbPath = t.TempDir()
+	opts := []node.NodeOpt{
+		node.WithStoreOpts(node.WithPath(path)),
 	}
 
-	opts := &badgerds.Options{
-		Options: badger.DefaultOptions(dbPath),
-	}
-	if encryptionKey != nil {
-		opts.Options.EncryptionKey = encryptionKey
-		opts.Options.IndexCacheSize = 100 << 20
-	}
-	rootstore, err := badgerds.NewDatastore(dbPath, opts)
+	node, err := node.NewNode(ctx, opts...)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	acp, err := node.NewACP(ctx, node.WithACPPath(dbPath))
-	if err != nil {
-		return nil, "", err
-	}
-
-	db, err := db.NewDB(ctx, rootstore, acp, dbopts...)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return db, dbPath, err
+	return node.DB, err
 }
 
 // setupDatabase returns the database implementation for the current
