@@ -116,7 +116,8 @@ func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 	for _, opt := range opts {
 		opt(options)
 	}
-	rootstore, err := NewStore(options.storeOpts...)
+
+	rootstore, err := NewStore(ctx, options.storeOpts...)
 	if err != nil {
 		return nil, err
 	}
