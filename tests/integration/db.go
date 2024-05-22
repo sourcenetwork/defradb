@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -99,19 +98,6 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 	return db, nil
 }
 
-func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	acp, err := node.NewACP(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), acp, dbopts...)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
 func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (client.DB, string, error) {
 	var dbPath string
 	switch {
@@ -156,11 +142,14 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 // setupDatabase returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupDatabase(s *state) (impl client.DB, path string, err error) {
+func setupDatabase(s *state) (client.DB, string, error) {
 	dbOpts := []db.Option{
 		db.WithUpdateEvents(),
 		db.WithLensPoolSize(lensPoolSize),
 	}
+	storeOpts := []node.StoreOpt{}
+	acpOpts := []node.ACPOpt{}
+	opts := []node.NodeOpt{}
 
 	if badgerEncryption && encryptionKey == nil {
 		key, err := crypto.GenerateAES256()
@@ -170,22 +159,48 @@ func setupDatabase(s *state) (impl client.DB, path string, err error) {
 		encryptionKey = key
 	}
 
-	switch s.dbt {
-	case badgerIMType:
-		impl, err = NewBadgerMemoryDB(s.ctx, dbOpts...)
-
-	case badgerFileType:
-		impl, path, err = NewBadgerFileDB(s.ctx, s.t, dbOpts...)
-
-	case defraIMType:
-		impl, err = NewInMemoryDB(s.ctx, dbOpts...)
-
-	default:
-		err = fmt.Errorf("invalid database type: %v", s.dbt)
+	if encryptionKey != nil {
+		storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
 	}
 
+	var path string
+	switch s.dbt {
+	case badgerIMType:
+		storeOpts = append(storeOpts, node.WithInMemory(true))
+
+	case badgerFileType:
+		switch {
+		case databaseDir != "":
+			// restarting database
+			path = databaseDir
+
+		case changeDetector.Enabled:
+			// change detector
+			path = changeDetector.DatabaseDir(s.t)
+
+		default:
+			// default test case
+			path = s.t.TempDir()
+		}
+
+		storeOpts = append(storeOpts, node.WithPath(path))
+		acpOpts = append(acpOpts, node.WithACPPath(path))
+
+	case defraIMType:
+		storeOpts = append(storeOpts, node.WithDefraStore(true))
+
+	default:
+		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
+	}
+
+	opts = append(opts, node.WithDatabaseOpts(dbOpts...))
+	opts = append(opts, node.WithStoreOpts(storeOpts...))
+	opts = append(opts, node.WithACPOpts(acpOpts...))
+
+	node, err := node.NewNode(s.ctx, opts...)
 	if err != nil {
 		return nil, "", err
 	}
-	return
+
+	return node.DB, path, nil
 }
