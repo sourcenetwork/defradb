@@ -227,7 +227,7 @@ func newBenchStoreInfo(ctx context.Context, t testing.TB) (client.DB, error) {
 	case "memory":
 		db, err = testutils.NewBadgerMemoryDB(ctx)
 	case "badger":
-		db, _, err = testutils.NewBadgerFileDB(ctx, t)
+		db, err = testutils.NewBadgerFileDB(ctx, t)
 	default:
 		return nil, errors.New(fmt.Sprintf("invalid storage engine backend: %s", storage))
 	}

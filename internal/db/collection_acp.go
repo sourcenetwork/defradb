@@ -13,7 +13,7 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/internal/acp"
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
