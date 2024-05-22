@@ -14,7 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/internal/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 

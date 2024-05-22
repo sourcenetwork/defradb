@@ -26,11 +26,11 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/internal/acp"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
@@ -80,14 +80,16 @@ type db struct {
 func NewDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
+	acp immutable.Option[acp.ACP],
 	options ...Option,
 ) (client.DB, error) {
-	return newDB(ctx, rootstore, options...)
+	return newDB(ctx, rootstore, acp, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
+	acp immutable.Option[acp.ACP],
 	options ...Option,
 ) (*db, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
@@ -100,7 +102,7 @@ func newDB(
 	db := &db{
 		rootstore:  rootstore,
 		multistore: multistore,
-		acp:        acp.NoACP,
+		acp:        acp,
 		parser:     parser,
 		options:    options,
 	}

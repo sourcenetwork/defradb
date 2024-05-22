@@ -16,6 +16,7 @@ import (
 
 	badger "github.com/sourcenetwork/badger/v4"
 
+	"github.com/sourcenetwork/defradb/acp"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
@@ -25,7 +26,7 @@ func newMemoryDB(ctx context.Context) (*db, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newDB(ctx, rootstore)
+	return newDB(ctx, rootstore, acp.NoACP)
 }
 
 func TestNewDB(t *testing.T) {
@@ -37,7 +38,7 @@ func TestNewDB(t *testing.T) {
 		return
 	}
 
-	_, err = NewDB(ctx, rootstore)
+	_, err = NewDB(ctx, rootstore, acp.NoACP)
 	if err != nil {
 		t.Error(err)
 	}

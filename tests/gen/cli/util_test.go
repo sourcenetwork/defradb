@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
@@ -49,7 +50,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to open datastore", err)
 	}
 
-	db, err := db.NewDB(ctx, rootstore)
+	db, err := db.NewDB(ctx, rootstore, acp.NoACP)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}
