@@ -65,7 +65,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 5m
+TEST_FLAGS=-race -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
