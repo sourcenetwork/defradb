@@ -109,7 +109,14 @@ func setupDatabase(s *state) (client.DB, string, error) {
 	}
 	storeOpts := []node.StoreOpt{}
 	acpOpts := []node.ACPOpt{}
-	opts := []node.NodeOpt{}
+	opts := []node.NodeOpt{
+		// The test framework sets this up elsewhere when required so that it may be wrapped
+		// into a [client.DB].
+		node.WithDisableAPI(true),
+		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
+		// to keep the tests as lightweight as possible.
+		node.WithDisableP2P(true),
+	}
 
 	if badgerEncryption && encryptionKey == nil {
 		key, err := crypto.GenerateAES256()
