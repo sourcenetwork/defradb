@@ -1,28 +1,32 @@
-## defradb start
+## defradb keyring generate
 
-Start a DefraDB node
+Generate private keys
 
 ### Synopsis
 
-Start a DefraDB node.
+Generate private keys.
+Randomly generate and store private keys in the keyring.
+
+WARNING: This will overwrite existing keys in the keyring.
+
+Example:
+  defradb keyring generate
+
+Example: with no encryption key
+  defradb keyring generate --no-encryption-key
+
+Example: with system keyring
+  defradb keyring generate --keyring-backend system
 
 ```
-defradb start [flags]
+defradb keyring generate [flags]
 ```
 
 ### Options
 
 ```
-      --allowed-origins stringArray   List of origins to allow for CORS requests
-  -h, --help                          help for start
-      --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
-      --no-p2p                        Disable the peer-to-peer network synchronization system
-      --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
-      --peers stringArray             List of peers to connect to
-      --privkeypath string            Path to the private key for tls
-      --pubkeypath string             Path to the public key for tls
-      --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
-      --valuelogfilesize int          Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
+  -h, --help                help for generate
+      --no-encryption-key   Skip generating an encryption. Encryption at rest will be disabled
 ```
 
 ### Options inherited from parent commands
@@ -45,5 +49,5 @@ defradb start [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
 

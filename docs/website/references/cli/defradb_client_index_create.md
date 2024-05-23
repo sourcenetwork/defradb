@@ -1,33 +1,38 @@
-## defradb start
+## defradb client index create
 
-Start a DefraDB node
+Creates a secondary index on a collection's field(s)
 
 ### Synopsis
 
-Start a DefraDB node.
+Creates a secondary index on a collection's field(s).
+		
+The --name flag is optional. If not provided, a name will be generated automatically.
+The --unique flag is optional. If provided, the index will be unique.
+
+Example: create an index for 'Users' collection on 'name' field:
+  defradb client index create --collection Users --fields name
+
+Example: create a named index for 'Users' collection on 'name' field:
+  defradb client index create --collection Users --fields name --name UsersByName
 
 ```
-defradb start [flags]
+defradb client index create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique] [flags]
 ```
 
 ### Options
 
 ```
-      --allowed-origins stringArray   List of origins to allow for CORS requests
-  -h, --help                          help for start
-      --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
-      --no-p2p                        Disable the peer-to-peer network synchronization system
-      --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
-      --peers stringArray             List of peers to connect to
-      --privkeypath string            Path to the private key for tls
-      --pubkeypath string             Path to the public key for tls
-      --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
-      --valuelogfilesize int          Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
+  -c, --collection string   Collection name
+      --fields strings      Fields to index
+  -h, --help                help for create
+  -n, --name string         Index name
+  -u, --unique              Make the index unique
 ```
 
 ### Options inherited from parent commands
 
 ```
+  -i, --identity string            ACP Identity
       --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string   Service name to use when using the system backend (default "defradb")
       --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")
@@ -40,10 +45,11 @@ defradb start [flags]
       --no-keyring                 Disable the keyring and generate ephemeral keys
       --no-log-color               Disable colored log output
       --rootdir string             Directory for persistent data (default: $HOME/.defradb)
+      --tx uint                    Transaction ID
       --url string                 URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
 

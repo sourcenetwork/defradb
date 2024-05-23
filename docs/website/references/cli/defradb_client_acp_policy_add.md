@@ -1,35 +1,62 @@
-## defradb client schema add
+## defradb client acp policy add
 
-Add new schema
+Add new policy
 
 ### Synopsis
 
-Add new schema.
+Add new policy
 
-Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
-  - ACP is available (i.e. ACP is not disabled).
-  - The specified resource adheres to the Document Access Control DPI Rules.
+Notes:
+  - Can not add a policy without specifying an identity.
+  - ACP must be available (i.e. ACP can not be disabled).
+  - A non-DPI policy will be accepted (will be registered with acp system).
+  - But only a valid DPI policyID & resource can be specified on a schema.
+  - DPI validation happens when attempting to add a schema with '@policy'.
   - Learn more about [ACP & DPI Rules](/acp/README.md)
 
 Example: add from an argument string:
-  defradb client schema add 'type Foo { ... }'
+  defradb client acp policy add -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j '
+description: A Valid DefraDB Policy Interface
+
+actor:
+  name: actor
+
+resources:
+  users:
+    permissions:
+      read:
+        expr: owner + reader
+      write:
+        expr: owner
+
+    relations:
+      owner:
+        types:
+          - actor
+      reader:
+        types:
+          - actor
+'
 
 Example: add from file:
-  defradb client schema add -f schema.graphql
+  defradb client acp policy add -i cosmos17r39df0hdcrgnmmw4mvu7qgk5nu888c7uvv37y -f policy.yml
+
+Example: add from file, verbose flags:
+  defradb client acp policy add --identity cosmos1kpw734v54g0t0d8tcye8ee5jc3gld0tcr2q473 --file policy.yml
 
 Example: add from stdin:
-  cat schema.graphql | defradb client schema add -
+  cat policy.yml | defradb client acp policy add -
 
-Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
+
 
 ```
-defradb client schema add [schema] [flags]
+defradb client acp policy add [-i --identity] [policy] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File to load a schema from
+  -f, --file string   File to load a policy from
   -h, --help          help for add
 ```
 
@@ -55,5 +82,5 @@ defradb client schema add [schema] [flags]
 
 ### SEE ALSO
 
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
+* [defradb client acp policy](defradb_client_acp_policy.md)	 - Interact with the acp policy features of DefraDB instance
 

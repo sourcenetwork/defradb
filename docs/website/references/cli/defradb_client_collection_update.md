@@ -1,42 +1,44 @@
-## defradb client query
+## defradb client collection update
 
-Send a DefraDB GraphQL query request
+Update documents by docID or filter.
 
 ### Synopsis
 
-Send a DefraDB GraphQL query request to the database.
+Update documents by docID or filter.
+		
+Example: update from string:
+  defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
-A query request can be sent as a single argument. Example command:
-  defradb client query 'query { ... }'
+Example: update by filter:
+  defradb client collection update --name User \
+  --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Do a query request from a file by using the '-f' flag. Example command:
-  defradb client query -f request.graphql
+Example: update by docID:
+  defradb client collection update --name User \
+  --docID bae-123 --updater '{ "verified": true }'
 
-Do a query request from a file and with an identity. Example command:
-  defradb client query -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j -f request.graphql
-
-Or it can be sent via stdin by using the '-' special syntax. Example command:
-  cat request.graphql | defradb client query -
-
-A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be used to interact
-with the database more conveniently.
-
-To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.
+Example: update private docID, with identity:
+  defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
+  --docID bae-123 --updater '{ "verified": true }'
+		
 
 ```
-defradb client query [-i --identity] [request] [flags]
+defradb client collection update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File containing the query request
-  -h, --help          help for query
+      --docID string     Document ID
+      --filter string    Document filter
+  -h, --help             help for update
+      --updater string   Document updater
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --get-inactive               Get inactive collections as well as active
   -i, --identity string            ACP Identity
       --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string   Service name to use when using the system backend (default "defradb")
@@ -47,14 +49,17 @@ defradb client query [-i --identity] [request] [flags]
       --log-overrides string       Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
       --log-source                 Include source location in logs
       --log-stacktrace             Include stacktrace in error and fatal logs
+      --name string                Collection name
       --no-keyring                 Disable the keyring and generate ephemeral keys
       --no-log-color               Disable colored log output
       --rootdir string             Directory for persistent data (default: $HOME/.defradb)
+      --schema string              Collection schema Root
       --tx uint                    Transaction ID
       --url string                 URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
+      --version string             Collection version ID
 ```
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
 
