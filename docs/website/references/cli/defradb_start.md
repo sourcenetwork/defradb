@@ -1,46 +1,49 @@
-# start
+## defradb start
 
 Start a DefraDB node
 
-## Synopsis
+### Synopsis
 
-Start a new instance of DefraDB node.
+Start a DefraDB node.
 
 ```
 defradb start [flags]
 ```
 
-## Options
+### Options
 
 ```
-      --email string                Email address used by the CA for notifications (default "example@example.com")
-  -h, --help                        help for start
-      --max-txn-retries int         Specify the maximum number of retries per transaction (default 5)
-      --no-p2p                      Disable the peer-to-peer network synchronization system
-      --p2paddr string              Listener address for the p2p network (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9171")
-      --peers string                List of peers to connect to
-      --privkeypath string          Path to the private key for tls (default "certs/server.crt")
-      --pubkeypath string           Path to the public key for tls (default "certs/server.key")
-      --store string                Specify the datastore to use (supported: badger, memory) (default "badger")
-      --tcpaddr string              Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9161")
-      --tls                         Enable serving the API over https
-      --valuelogfilesize ByteSize   Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1GiB)
+      --allowed-origins stringArray   List of origins to allow for CORS requests
+  -h, --help                          help for start
+      --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
+      --no-p2p                        Disable the peer-to-peer network synchronization system
+      --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
+      --peers stringArray             List of peers to connect to
+      --privkeypath string            Path to the private key for tls
+      --pubkeypath string             Path to the public key for tls
+      --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
+      --valuelogfilesize int          Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
 ```
 
-## Options inherited from parent commands
+### Options inherited from parent commands
 
 ```
-      --logformat string     Log format to use. Options are csv, json (default "csv")
-      --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
-      --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor           Disable colored log output
-      --logoutput string     Log output path (default "stderr")
-      --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
-      --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
+      --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
+      --keyring-namespace string   Service name to use when using the system backend (default "defradb")
+      --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")
+      --log-format string          Log format to use. Options are text or json (default "text")
+      --log-level string           Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-output string          Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string       Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                 Include source location in logs
+      --log-stacktrace             Include stacktrace in error and fatal logs
+      --no-keyring                 Disable the keyring and generate ephemeral keys
+      --no-log-color               Disable colored log output
+      --rootdir string             Directory for persistent data (default: $HOME/.defradb)
+      --url string                 URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
 
-## SEE ALSO
+### SEE ALSO
 
 * [defradb](defradb.md)	 - DefraDB Edge Database
 

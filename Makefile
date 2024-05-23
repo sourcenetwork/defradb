@@ -359,7 +359,8 @@ docs:
 
 .PHONY: docs\:cli
 docs\:cli:
-	go run cmd/genclidocs/main.go -o docs/cli/
+	rm -f docs/website/references/cli/*.md
+	go run cmd/genclidocs/main.go -o docs/website/references/cli
 
 .PHONY: docs\:manpages
 docs\:manpages:
