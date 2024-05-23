@@ -71,9 +71,9 @@ func init() {
 }
 
 func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
-	opts := []node.NodeOpt{
-		node.WithStoreOpts(node.WithInMemory(true)),
-		node.WithDatabaseOpts(db.WithUpdateEvents()),
+	opts := []node.Option{
+		node.WithInMemory(true),
+		db.WithUpdateEvents(),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -87,8 +87,8 @@ func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	path := t.TempDir()
 
-	opts := []node.NodeOpt{
-		node.WithStoreOpts(node.WithPath(path)),
+	opts := []node.Option{
+		node.WithPath(path),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -103,13 +103,9 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 func setupDatabase(s *state) (client.DB, string, error) {
-	dbOpts := []db.Option{
+	opts := []node.Option{
 		db.WithUpdateEvents(),
 		db.WithLensPoolSize(lensPoolSize),
-	}
-	storeOpts := []node.StoreOpt{}
-	acpOpts := []node.ACPOpt{}
-	opts := []node.NodeOpt{
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.DB].
 		node.WithDisableAPI(true),
@@ -127,13 +123,13 @@ func setupDatabase(s *state) (client.DB, string, error) {
 	}
 
 	if encryptionKey != nil {
-		storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
+		opts = append(opts, node.WithEncryptionKey(encryptionKey))
 	}
 
 	var path string
 	switch s.dbt {
 	case badgerIMType:
-		storeOpts = append(storeOpts, node.WithInMemory(true))
+		opts = append(opts, node.WithInMemory(true))
 
 	case badgerFileType:
 		switch {
@@ -150,19 +146,14 @@ func setupDatabase(s *state) (client.DB, string, error) {
 			path = s.t.TempDir()
 		}
 
-		storeOpts = append(storeOpts, node.WithPath(path))
-		acpOpts = append(acpOpts, node.WithACPPath(path))
+		opts = append(opts, node.WithPath(path), node.WithACPPath(path))
 
 	case defraIMType:
-		storeOpts = append(storeOpts, node.WithDefraStore(true))
+		opts = append(opts, node.WithDefraStore(true))
 
 	default:
 		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
 	}
-
-	opts = append(opts, node.WithDatabaseOpts(dbOpts...))
-	opts = append(opts, node.WithStoreOpts(storeOpts...))
-	opts = append(opts, node.WithACPOpts(acpOpts...))
 
 	node, err := node.NewNode(s.ctx, opts...)
 	if err != nil {
