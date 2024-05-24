@@ -46,7 +46,7 @@ resources:
 
 func Test_LocalACP_InMemory_StartAndClose_NoError(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -62,7 +62,7 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -74,7 +74,7 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 
 func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -123,7 +123,7 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -165,7 +165,7 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
 
 func Test_LocalACP_InMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -215,7 +215,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -278,7 +278,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 
 func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOtherwise(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -358,7 +358,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -454,7 +454,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 
 func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherwise(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -540,7 +540,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
