@@ -27,13 +27,19 @@ import (
 
 var log = corelog.NewLogger("node")
 
+// Option is a generic option that applies to any subsystem.
+//
+// Invalid option types will be silently ignored. Valid option types are:
+// - `ACPOpt`
+// - `NodeOpt`
+// - `StoreOpt`
+// - `db.Option`
+// - `http.ServerOpt`
+// - `net.NodeOpt`
+type Option any
+
 // Options contains start configuration values.
 type Options struct {
-	storeOpts  []StoreOpt
-	dbOpts     []db.Option
-	netOpts    []net.NodeOpt
-	serverOpts []http.ServerOpt
-	acpOpts    []ACPOpt
 	peers      []peer.AddrInfo
 	disableP2P bool
 	disableAPI bool
@@ -46,41 +52,6 @@ func DefaultOptions() *Options {
 
 // NodeOpt is a function for setting configuration values.
 type NodeOpt func(*Options)
-
-// WithStoreOpts sets the store options.
-func WithStoreOpts(opts ...StoreOpt) NodeOpt {
-	return func(o *Options) {
-		o.storeOpts = opts
-	}
-}
-
-// WithACPOpts sets the ACP options.
-func WithACPOpts(opts ...ACPOpt) NodeOpt {
-	return func(o *Options) {
-		o.acpOpts = opts
-	}
-}
-
-// WithDatabaseOpts sets the database options.
-func WithDatabaseOpts(opts ...db.Option) NodeOpt {
-	return func(o *Options) {
-		o.dbOpts = opts
-	}
-}
-
-// WithNetOpts sets the net / p2p options.
-func WithNetOpts(opts ...net.NodeOpt) NodeOpt {
-	return func(o *Options) {
-		o.netOpts = opts
-	}
-}
-
-// WithServerOpts sets the api server options.
-func WithServerOpts(opts ...http.ServerOpt) NodeOpt {
-	return func(o *Options) {
-		o.serverOpts = opts
-	}
-}
 
 // WithDisableP2P sets the disable p2p flag.
 func WithDisableP2P(disable bool) NodeOpt {
@@ -111,23 +82,49 @@ type Node struct {
 }
 
 // NewNode returns a new node instance configured with the given options.
-func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
+func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
+	var (
+		dbOpts     []db.Option
+		acpOpts    []ACPOpt
+		netOpts    []net.NodeOpt
+		storeOpts  []StoreOpt
+		serverOpts []http.ServerOpt
+	)
+
 	options := DefaultOptions()
 	for _, opt := range opts {
-		opt(options)
+		switch t := opt.(type) {
+		case ACPOpt:
+			acpOpts = append(acpOpts, t)
+
+		case NodeOpt:
+			t(options)
+
+		case StoreOpt:
+			storeOpts = append(storeOpts, t)
+
+		case db.Option:
+			dbOpts = append(dbOpts, t)
+
+		case http.ServerOpt:
+			serverOpts = append(serverOpts, t)
+
+		case net.NodeOpt:
+			netOpts = append(netOpts, t)
+		}
 	}
 
-	rootstore, err := NewStore(ctx, options.storeOpts...)
+	rootstore, err := NewStore(ctx, storeOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	acp, err := NewACP(ctx, options.acpOpts...)
+	acp, err := NewACP(ctx, acpOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore, acp, options.dbOpts...)
+	db, err := db.NewDB(ctx, rootstore, acp, dbOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +132,7 @@ func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 	var node *net.Node
 	if !options.disableP2P {
 		// setup net node
-		node, err = net.NewNode(ctx, db, options.netOpts...)
+		node, err = net.NewNode(ctx, db, netOpts...)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +153,7 @@ func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		server, err = http.NewServer(handler, options.serverOpts...)
+		server, err = http.NewServer(handler, serverOpts...)
 		if err != nil {
 			return nil, err
 		}

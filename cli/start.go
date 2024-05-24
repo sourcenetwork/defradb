@@ -99,33 +99,6 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			dbOpts := []db.Option{
-				db.WithUpdateEvents(),
-				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
-			}
-
-			netOpts := []net.NodeOpt{
-				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
-				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
-				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
-			}
-
-			serverOpts := []http.ServerOpt{
-				http.WithAddress(cfg.GetString("api.address")),
-				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
-				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
-				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
-			}
-
-			storeOpts := []node.StoreOpt{
-				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
-			}
-
-			acpOpts := []node.ACPOpt{
-				node.WithACPType(node.LocalACPType),
-			}
-
 			var peers []peer.AddrInfo
 			if val := cfg.GetStringSlice("net.peers"); len(val) > 0 {
 				addrs, err := netutils.ParsePeers(val)
@@ -135,12 +108,32 @@ func MakeStartCommand() *cobra.Command {
 				peers = addrs
 			}
 
+			opts := []node.Option{
+				node.WithPath(cfg.GetString("datastore.badger.path")),
+				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
+				node.WithACPType(node.LocalACPType),
+				node.WithPeers(peers...),
+				// db options
+				db.WithUpdateEvents(),
+				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				// net node options
+				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
+				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
+				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				// http server options
+				http.WithAddress(cfg.GetString("api.address")),
+				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
+				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
+				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
+			}
+
 			if cfg.GetString("datastore.store") != configStoreMemory {
 				rootDir := mustGetContextRootDir(cmd)
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				acpOpts = append(acpOpts, node.WithACPPath(rootDir))
+				opts = append(opts, node.WithACPPath(rootDir))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -153,23 +146,13 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return NewErrKeyringHelp(err)
 				}
-				netOpts = append(netOpts, net.WithPrivateKey(peerKey))
+				opts = append(opts, net.WithPrivateKey(peerKey))
 				// load the optional encryption key
 				encryptionKey, err := kr.Get(encryptionKeyName)
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
-				storeOpts = append(storeOpts, node.WithEncryptionKey(encryptionKey))
-			}
-
-			opts := []node.NodeOpt{
-				node.WithPeers(peers...),
-				node.WithStoreOpts(storeOpts...),
-				node.WithDatabaseOpts(dbOpts...),
-				node.WithNetOpts(netOpts...),
-				node.WithServerOpts(serverOpts...),
-				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithACPOpts(acpOpts...),
+				opts = append(opts, node.WithEncryptionKey(encryptionKey))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)
