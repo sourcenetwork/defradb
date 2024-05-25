@@ -12,16 +12,18 @@ package cli
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"syscall"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -139,12 +141,16 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 }
 
 // setContextIdentity sets the identity for the current command context.
-func setContextIdentity(cmd *cobra.Command, identity string) error {
-	// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
-	if identity == "" {
+func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
+	if privateKeyHex == "" {
 		return nil
 	}
-	ctx := db.SetContextIdentity(cmd.Context(), acpIdentity.New(identity))
+	data, err := hex.DecodeString(privateKeyHex)
+	if err != nil {
+		return err
+	}
+	privKey := secp256k1.PrivKeyFromBytes(data)
+	ctx := db.SetContextIdentity(cmd.Context(), acp.IdentityFromPrivateKey(privKey))
 	cmd.SetContext(ctx)
 	return nil
 }

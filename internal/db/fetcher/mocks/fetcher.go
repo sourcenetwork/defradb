@@ -3,8 +3,8 @@
 package mocks
 
 import (
-	client "github.com/sourcenetwork/defradb/client"
 	acp "github.com/sourcenetwork/defradb/acp"
+	client "github.com/sourcenetwork/defradb/client"
 
 	context "context"
 
@@ -13,8 +13,6 @@ import (
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
 	fetcher "github.com/sourcenetwork/defradb/internal/db/fetcher"
-
-	identity "github.com/sourcenetwork/defradb/acp/identity"
 
 	immutable "github.com/sourcenetwork/immutable"
 
@@ -138,13 +136,13 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetche
 	return _c
 }
 
-// Init provides a mock function with given fields: ctx, _a1, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted
-func (_m *Fetcher) Init(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
-	ret := _m.Called(ctx, _a1, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)
+// Init provides a mock function with given fields: ctx, identity, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted
+func (_m *Fetcher) Init(ctx context.Context, identity immutable.Option[acp.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
+	ret := _m.Called(ctx, identity, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[acp.ACP], client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
-		r0 = rf(ctx, _a1, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[acp.Identity], datastore.Txn, immutable.Option[acp.ACP], client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
+		r0 = rf(ctx, identity, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -159,7 +157,7 @@ type Fetcher_Init_Call struct {
 
 // Init is a helper method to define mock.On call
 //   - ctx context.Context
-//   - _a1 immutable.Option[identity.Identity]
+//   - identity immutable.Option[acp.Identity]
 //   - txn datastore.Txn
 //   - _a3 immutable.Option[acp.ACP]
 //   - col client.Collection
@@ -168,13 +166,13 @@ type Fetcher_Init_Call struct {
 //   - docmapper *core.DocumentMapping
 //   - reverse bool
 //   - showDeleted bool
-func (_e *Fetcher_Expecter) Init(ctx interface{}, _a1 interface{}, txn interface{}, _a3 interface{}, col interface{}, fields interface{}, filter interface{}, docmapper interface{}, reverse interface{}, showDeleted interface{}) *Fetcher_Init_Call {
-	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, _a1, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)}
+func (_e *Fetcher_Expecter) Init(ctx interface{}, identity interface{}, txn interface{}, _a3 interface{}, col interface{}, fields interface{}, filter interface{}, docmapper interface{}, reverse interface{}, showDeleted interface{}) *Fetcher_Init_Call {
+	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, identity, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity immutable.Option[acp.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(immutable.Option[identity.Identity]), args[2].(datastore.Txn), args[3].(immutable.Option[acp.ACP]), args[4].(client.Collection), args[5].([]client.FieldDefinition), args[6].(*mapper.Filter), args[7].(*core.DocumentMapping), args[8].(bool), args[9].(bool))
+		run(args[0].(context.Context), args[1].(immutable.Option[acp.Identity]), args[2].(datastore.Txn), args[3].(immutable.Option[acp.ACP]), args[4].(client.Collection), args[5].([]client.FieldDefinition), args[6].(*mapper.Filter), args[7].(*core.DocumentMapping), args[8].(bool), args[9].(bool))
 	})
 	return _c
 }
@@ -184,7 +182,7 @@ func (_c *Fetcher_Init_Call) Return(_a0 error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[acp.ACP], client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Option[acp.Identity], datastore.Txn, immutable.Option[acp.ACP], client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }

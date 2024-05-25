@@ -13,17 +13,29 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
+
+// GenerateSecp256k1 generates a new secp256k1 private key.
+func GenerateSecp256k1() (*secp256k1.PrivateKey, error) {
+	return secp256k1.GeneratePrivateKey()
+}
 
 // GenerateAES256 generates a new random AES-256 bit key.
 func GenerateAES256() ([]byte, error) {
-	data := make([]byte, 32)
-	_, err := rand.Read(data)
-	return data, err
+	return RandomBytes(32)
 }
 
 // GenerateEd25519 generates a new random Ed25519 private key.
 func GenerateEd25519() (ed25519.PrivateKey, error) {
 	_, priv, err := ed25519.GenerateKey(rand.Reader)
 	return priv, err
+}
+
+// RandomBytes returns a random slice of bytes of the given size.
+func RandomBytes(size int) ([]byte, error) {
+	data := make([]byte, size)
+	_, err := rand.Read(data)
+	return data, err
 }
