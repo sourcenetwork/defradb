@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "dfe202ffb4f0fe9b46157c313213a3839e08a6f0a7c3aba55e4724cb49ffde8a"
+	policyIDOfValidDPI := "aa664afaf8dff947ba85f4d464662d595af6c1e2466bd11fd6b82ea95b547ea3"
 
 	test := testUtils.TestCase{
 
@@ -113,7 +113,7 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "dfe202ffb4f0fe9b46157c313213a3839e08a6f0a7c3aba55e4724cb49ffde8a"
+	policyIDOfValidDPI := "aa664afaf8dff947ba85f4d464662d595af6c1e2466bd11fd6b82ea95b547ea3"
 
 	test := testUtils.TestCase{
 

@@ -10,7 +10,33 @@
 
 package test_acp
 
-var (
-	Actor1Identity = "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"
-	Actor2Identity = "cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll"
+import (
+	"encoding/hex"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
 )
+
+var (
+	Actor1Identity immutable.Option[acp.Identity]
+	Actor2Identity immutable.Option[acp.Identity]
+)
+
+func init() {
+	privKeyBytes1, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	if err != nil {
+		panic(err)
+	}
+	privKeyBytes2, err := hex.DecodeString("4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5")
+	if err != nil {
+		panic(err)
+	}
+
+	privKey1 := secp256k1.PrivKeyFromBytes(privKeyBytes1)
+	privKey2 := secp256k1.PrivKeyFromBytes(privKeyBytes2)
+
+	Actor1Identity = acp.IdentityFromPrivateKey(privKey1)
+	Actor2Identity = acp.IdentityFromPrivateKey(privKey2)
+}

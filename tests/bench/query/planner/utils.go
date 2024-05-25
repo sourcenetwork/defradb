@@ -16,7 +16,6 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -82,7 +81,7 @@ func runMakePlanBench(
 	for i := 0; i < b.N; i++ {
 		planner := planner.New(
 			ctx,
-			acpIdentity.None,
+			acp.NoIdentity,
 			acp.NoACP,
 			d,
 			txn,

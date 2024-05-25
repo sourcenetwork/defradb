@@ -22,12 +22,12 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 		testUtils.AddPolicy{
 			Identity:         acpUtils.Actor1Identity,
 			Policy:           bookAuthorPolicy,
-			ExpectedPolicyID: "68a4e64d5034b8a0565a90cd36483de0d61e0ea2450cf57c1fa8d27cbbf17c2c",
+			ExpectedPolicyID: "e3c35f345c844e8c0144d793933ea7287af1930d36e9d7d98e8d930fb9815a4a",
 		},
 		testUtils.SchemaUpdate{
 			Schema: `
 				type Author @policy(
-					id: "68a4e64d5034b8a0565a90cd36483de0d61e0ea2450cf57c1fa8d27cbbf17c2c",
+					id: "e3c35f345c844e8c0144d793933ea7287af1930d36e9d7d98e8d930fb9815a4a",
 					resource: "author"
 				) {
 					name: String
@@ -37,7 +37,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				}
 
 				type Book @policy(
-					id: "68a4e64d5034b8a0565a90cd36483de0d61e0ea2450cf57c1fa8d27cbbf17c2c",
+					id: "e3c35f345c844e8c0144d793933ea7287af1930d36e9d7d98e8d930fb9815a4a",
 					resource: "author"
 				) {
 					name: String

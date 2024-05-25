@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "16e39e650d4cbd5161ae0c572edad6f7e2950c1c4afa37e427af3c8708e68f0f"
+	policyIDOfValidDPI := "c137c80b1ad0fc52aa183c3b43dff62d1eefdd04cb0f49ca6a646b545843eece"
 
 	test := testUtils.TestCase{
 
@@ -118,7 +118,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 }
 
 func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "35b6f3db54cfb0f451a4faba77d2c71d8718215caeb5a15a8570dfdba07b694d"
+	policyIDOfValidDPI := "053f118041543b324f127a57a19e29c26aa95af8fa732ded2cf80e8dd96fa2d3"
 
 	test := testUtils.TestCase{
 
@@ -217,7 +217,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 }
 
 func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "7b6266a93bfb6920bf57884f55c3823a5a5147c4ce445a9fc703b7c1e59b2d12"
+	policyIDOfValidDPI := "b1758de0d20726e53c9c343382af0f834ed6a10381f96399ce7c39fab607c349"
 
 	test := testUtils.TestCase{
 
