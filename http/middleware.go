@@ -21,7 +21,6 @@ import (
 	"github.com/go-chi/cors"
 	"golang.org/x/exp/slices"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -31,12 +30,6 @@ const (
 	// txHeaderName is the name of the transaction header.
 	// This header should contain a valid transaction id.
 	txHeaderName = "x-defradb-tx"
-	// authHeaderName is the name of the authorization header.
-	// This header should contain an ACP identity.
-	authHeaderName = "Authorization"
-	// Using Basic right now, but this will soon change to 'Bearer' as acp authentication
-	// gets implemented: https://github.com/sourcenetwork/defradb/issues/2017
-	authSchemaPrefix = "Basic "
 )
 
 type contextKey string
@@ -120,26 +113,6 @@ func CollectionMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(req.Context(), colContextKey, col)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
-}
-
-func IdentityMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		authHeader := req.Header.Get(authHeaderName)
-		if authHeader == "" {
-			next.ServeHTTP(rw, req)
-			return
-		}
-
-		identity := strings.TrimPrefix(authHeader, authSchemaPrefix)
-		// If expected schema prefix was not found, or empty, then assume no identity.
-		if identity == authHeader || identity == "" {
-			next.ServeHTTP(rw, req)
-			return
-		}
-
-		ctx := db.SetContextIdentity(req.Context(), acpIdentity.New(identity))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

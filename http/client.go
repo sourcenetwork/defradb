@@ -354,7 +354,11 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = []error{err}
 		return result
 	}
-	c.http.setDefaultHeaders(req)
+	err = c.http.setDefaultHeaders(req)
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return result
+	}
 
 	res, err := c.http.client.Do(req)
 	if err != nil {

@@ -12,6 +12,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,8 +23,9 @@ import (
 )
 
 type httpClient struct {
-	client  *http.Client
-	baseURL *url.URL
+	client   *http.Client
+	baseURL  *url.URL
+	audience string
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
@@ -38,10 +40,21 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 		client:  http.DefaultClient,
 		baseURL: baseURL.JoinPath("/api/v0"),
 	}
+	// get the audience from the remote node so we can authenticate
+	methodURL := client.baseURL.JoinPath("audience")
+	req, err := http.NewRequest(http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	out, err := client.request(req)
+	if err != nil {
+		return nil, err
+	}
+	client.audience = string(out)
 	return &client, nil
 }
 
-func (c *httpClient) setDefaultHeaders(req *http.Request) {
+func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -50,14 +63,25 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
 	id := db.GetContextIdentity(req.Context())
-	if id.HasValue() {
-		req.Header.Add(authHeaderName, authSchemaPrefix+id.Value().String())
+	if !id.HasValue() || c.audience == "" {
+		return nil
 	}
+	token, err := buildAndSignAuthToken(id.Value(), c.audience)
+	if errors.Is(err, ErrPublicIdentityCannotSign) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, token))
+	return nil
 }
 
 func (c *httpClient) request(req *http.Request) ([]byte, error) {
-	c.setDefaultHeaders(req)
-
+	err := c.setDefaultHeaders(req)
+	if err != nil {
+		return nil, err
+	}
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
