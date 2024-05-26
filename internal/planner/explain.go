@@ -92,8 +92,8 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 		var explainGraphBuilder = map[string]any{}
 
 		// If root is not the last child then keep walking and explaining the root graph.
-		if node.root != nil {
-			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.root)
+		if node.parentPlan != nil {
+			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.parentPlan)
 			if err != nil {
 				return nil, err
 			}
@@ -101,8 +101,8 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 			explainGraphBuilder[joinRootLabel] = indexJoinRootExplainGraph
 		}
 
-		if node.subType != nil {
-			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.subType)
+		if node.childPlan != nil {
+			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.childPlan)
 			if err != nil {
 				return nil, err
 			}
@@ -117,8 +117,8 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 		var explainGraphBuilder = map[string]any{}
 
 		// If root is not the last child then keep walking and explaining the root graph.
-		if node.root != nil {
-			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.root)
+		if node.parentPlan != nil {
+			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.parentPlan)
 			if err != nil {
 				return nil, err
 			}
@@ -128,8 +128,8 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 			explainGraphBuilder[joinRootLabel] = nil
 		}
 
-		if node.subType != nil {
-			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.subType)
+		if node.childPlan != nil {
+			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.childPlan)
 			if err != nil {
 				return nil, err
 			}

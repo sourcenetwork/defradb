@@ -315,6 +315,19 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	return immutable.None[client.IndexDescription]()
 }
 
+func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
+	for _, field := range col.Schema().Fields {
+		if field.Name != fieldName {
+			continue
+		}
+		indexes := col.Description().GetIndexesOnField(field.Name)
+		if len(indexes) > 0 {
+			return immutable.Some(indexes[0])
+		}
+	}
+	return immutable.None[client.IndexDescription]()
+}
+
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
 	aggregates := []aggregateNode{}
 	// loop over the sub type

@@ -41,7 +41,7 @@ func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 	}
 
 	switch kind {
-	case client.FieldKind_NILLABLE_STRING:
+	case client.FieldKind_NILLABLE_STRING, client.FieldKind_DocID:
 		return canConvertIndexFieldValue[string]
 	case client.FieldKind_NILLABLE_INT:
 		return canConvertIndexFieldValue[int64]
