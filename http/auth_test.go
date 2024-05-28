@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
@@ -27,7 +27,7 @@ func TestBuildAuthToken(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPrivateKey(privKey)
+	identity := acpIdentity.FromPrivateKey(privKey)
 	token, err := buildAuthToken(identity.Value(), "abc123")
 	require.NoError(t, err)
 
@@ -43,7 +43,7 @@ func TestSignAuthTokenErrorsWithPublicIdentity(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPublicKey(privKey.PubKey())
+	identity := acpIdentity.FromPublicKey(privKey.PubKey())
 	token, err := buildAuthToken(identity.Value(), "abc123")
 	require.NoError(t, err)
 
@@ -55,14 +55,14 @@ func TestVerifyAuthToken(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPrivateKey(privKey)
+	identity := acpIdentity.FromPrivateKey(privKey)
 	token, err := buildAndSignAuthToken(identity.Value(), "abc123")
 	require.NoError(t, err)
 
 	actual, err := verifyAuthToken(token, "abc123")
 	require.NoError(t, err)
 
-	expected := acp.IdentityFromPublicKey(privKey.PubKey())
+	expected := acpIdentity.FromPublicKey(privKey.PubKey())
 	assert.Equal(t, expected.Value().Address, actual.Value().Address)
 }
 
@@ -70,7 +70,7 @@ func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPrivateKey(privKey)
+	identity := acpIdentity.FromPrivateKey(privKey)
 	token, err := buildAndSignAuthToken(identity.Value(), "valid")
 	require.NoError(t, err)
 
@@ -85,7 +85,7 @@ func TestVerifyAuthTokenErrorsWithWrongPublicKey(t *testing.T) {
 	otherKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPrivateKey(privKey)
+	identity := acpIdentity.FromPrivateKey(privKey)
 	token, err := buildAuthToken(identity.Value(), "123abc")
 	require.NoError(t, err)
 
@@ -105,7 +105,7 @@ func TestVerifyAuthTokenErrorsWithExpired(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPrivateKey(privKey)
+	identity := acpIdentity.FromPrivateKey(privKey)
 	token, err := buildAuthToken(identity.Value(), "123abc")
 	require.NoError(t, err)
 
@@ -124,7 +124,7 @@ func TestVerifyAuthTokenErrorsWithNotBefore(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity := acp.IdentityFromPrivateKey(privKey)
+	identity := acpIdentity.FromPrivateKey(privKey)
 	token, err := buildAuthToken(identity.Value(), "123abc")
 	require.NoError(t, err)
 

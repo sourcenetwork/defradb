@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/events"
@@ -1084,9 +1085,9 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func loadIdentity(t *testing.T) immutable.Option[acp.Identity] {
+func loadIdentity(t *testing.T) immutable.Option[acpIdentity.Identity] {
 	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	return acp.IdentityFromPrivateKey(privKey)
+	return acpIdentity.FromPrivateKey(privKey)
 }

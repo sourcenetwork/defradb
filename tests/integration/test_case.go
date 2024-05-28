@@ -16,7 +16,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -219,7 +219,7 @@ type CreateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
-	Identity immutable.Option[acp.Identity]
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The collection in which this document should be created.
 	CollectionID int
@@ -248,7 +248,7 @@ type DeleteDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
-	Identity immutable.Option[acp.Identity]
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -281,7 +281,7 @@ type UpdateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
-	Identity immutable.Option[acp.Identity]
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -435,7 +435,7 @@ type Request struct {
 	//
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
-	Identity immutable.Option[acp.Identity]
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]

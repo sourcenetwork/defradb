@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package acp
+package identity
 
 import (
 	cosmosSecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -17,8 +17,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// NoIdentity specifies an anonymous actor.
-var NoIdentity = immutable.None[Identity]()
+// None specifies an anonymous actor.
+var None = immutable.None[Identity]()
 
 type Identity struct {
 	// PublicKey is the identity public key.
@@ -29,8 +29,8 @@ type Identity struct {
 	Address string
 }
 
-// IdentityFromPublicKey returns a new identity using the given private key.
-func IdentityFromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity] {
+// FromPrivateKey returns a new identity using the given private key.
+func FromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity] {
 	pubKey := privateKey.PubKey()
 	return immutable.Some(Identity{
 		Address:    AddressFromPublicKey(pubKey),
@@ -39,8 +39,8 @@ func IdentityFromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[I
 	})
 }
 
-// IdentityFromPublicKey returns a new identity using the given public key.
-func IdentityFromPublicKey(publicKey *secp256k1.PublicKey) immutable.Option[Identity] {
+// FromPublicKey returns a new identity using the given public key.
+func FromPublicKey(publicKey *secp256k1.PublicKey) immutable.Option[Identity] {
 	return immutable.Some(Identity{
 		Address:   AddressFromPublicKey(publicKey),
 		PublicKey: publicKey,

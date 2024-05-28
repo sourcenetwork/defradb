@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 
-	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -150,7 +150,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	ctx := db.SetContextIdentity(cmd.Context(), acp.IdentityFromPrivateKey(privKey))
+	ctx := db.SetContextIdentity(cmd.Context(), acpIdentity.FromPrivateKey(privKey))
 	cmd.SetContext(ctx)
 	return nil
 }

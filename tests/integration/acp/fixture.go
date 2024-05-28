@@ -16,12 +16,12 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
 var (
-	Actor1Identity immutable.Option[acp.Identity]
-	Actor2Identity immutable.Option[acp.Identity]
+	Actor1Identity immutable.Option[acpIdentity.Identity]
+	Actor2Identity immutable.Option[acpIdentity.Identity]
 )
 
 func init() {
@@ -37,6 +37,6 @@ func init() {
 	privKey1 := secp256k1.PrivKeyFromBytes(privKeyBytes1)
 	privKey2 := secp256k1.PrivKeyFromBytes(privKeyBytes2)
 
-	Actor1Identity = acp.IdentityFromPrivateKey(privKey1)
-	Actor2Identity = acp.IdentityFromPrivateKey(privKey2)
+	Actor1Identity = acpIdentity.FromPrivateKey(privKey1)
+	Actor2Identity = acpIdentity.FromPrivateKey(privKey2)
 }
