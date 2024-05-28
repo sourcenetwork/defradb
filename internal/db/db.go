@@ -169,12 +169,11 @@ func (db *db) AddPolicy(
 	}
 	identity := GetContextIdentity(ctx)
 
-	var creatorID string
-	if identity.HasValue() {
-		creatorID = identity.Value().Address()
-	}
-
-	policyID, err := db.acp.Value().AddPolicy(ctx, creatorID, policy)
+	policyID, err := db.acp.Value().AddPolicy(
+		ctx,
+		identity.Value().Address,
+		policy,
+	)
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}

@@ -40,7 +40,10 @@ var authTokenSignatureScheme = jwa.ES256K
 // buildAuthToken returns a new jwt auth token with the subject and audience set
 // to the given values. Default expiration and not before values will also be set.
 func buildAuthToken(identity acp.Identity, audience string) (jwt.Token, error) {
-	subject := hex.EncodeToString(identity.PublicKey().SerializeCompressed())
+	if identity.PublicKey == nil {
+		return nil, ErrMissingIdentityPublicKey
+	}
+	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
 	return jwt.NewBuilder().
 		Subject(subject).
 		Audience([]string{audience}).
@@ -52,11 +55,10 @@ func buildAuthToken(identity acp.Identity, audience string) (jwt.Token, error) {
 // signAuthToken returns a signed jwt auth token that can be used to authenticate the
 // actor identified by the given identity with a defraDB node identified by the given audience.
 func signAuthToken(identity acp.Identity, token jwt.Token) ([]byte, error) {
-	privIdentity, ok := identity.(acp.PrivateKeyIdentity)
-	if !ok {
-		return nil, ErrPublicIdentityCannotSign
+	if identity.PrivateKey == nil {
+		return nil, ErrMissingIdentityPrivateKey
 	}
-	return jwt.Sign(token, jwt.WithKey(authTokenSignatureScheme, privIdentity.PrivateKey().ToECDSA()))
+	return jwt.Sign(token, jwt.WithKey(authTokenSignatureScheme, identity.PrivateKey.ToECDSA()))
 }
 
 // buildAndSignAuthToken returns a signed jwt auth token that can be used to authenticate the

@@ -39,7 +39,7 @@ func RegisterDocOnCollectionWithACP(
 	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && identity.HasValue() {
 		return acpSystem.RegisterDocObject(
 			ctx,
-			identity.Value().Address(),
+			identity.Value().Address,
 			policyID,
 			resourceName,
 			docID,

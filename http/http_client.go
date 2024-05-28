@@ -67,7 +67,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 		return nil
 	}
 	token, err := buildAndSignAuthToken(id.Value(), c.audience)
-	if errors.Is(err, ErrPublicIdentityCannotSign) {
+	if errors.Is(err, ErrMissingIdentityPrivateKey) {
 		return nil
 	}
 	if err != nil {

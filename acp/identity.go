@@ -20,56 +20,36 @@ import (
 // NoIdentity specifies an anonymous actor.
 var NoIdentity = immutable.None[Identity]()
 
-// Identity uniquely identifies an acp actor.
-type Identity interface {
-	// PublicKey returns the public key of the identity.
-	PublicKey() *secp256k1.PublicKey
-	// Address returns the bech32 address of the identity.
-	Address() string
+type Identity struct {
+	// PublicKey is the identity public key.
+	PublicKey *secp256k1.PublicKey
+	// PrivateKey is the identity private key.
+	PrivateKey *secp256k1.PrivateKey
+	// Address is the identity address.
+	Address string
 }
 
-var _ (Identity) = (*PublicKeyIdentity)(nil)
-
-// PublicKeyIdentity is an identity with only a public key.
-type PublicKeyIdentity struct {
-	pubKey *secp256k1.PublicKey
+// IdentityFromPublicKey returns a new identity using the given private key.
+func IdentityFromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity] {
+	pubKey := privateKey.PubKey()
+	return immutable.Some(Identity{
+		Address:    AddressFromPublicKey(pubKey),
+		PublicKey:  pubKey,
+		PrivateKey: privateKey,
+	})
 }
 
 // IdentityFromPublicKey returns a new identity using the given public key.
-func IdentityFromPublicKey(pubKey *secp256k1.PublicKey) immutable.Option[Identity] {
-	identity := PublicKeyIdentity{pubKey}
-	return immutable.Some(Identity(identity))
+func IdentityFromPublicKey(publicKey *secp256k1.PublicKey) immutable.Option[Identity] {
+	return immutable.Some(Identity{
+		Address:   AddressFromPublicKey(publicKey),
+		PublicKey: publicKey,
+	})
 }
 
-func (i PublicKeyIdentity) PublicKey() *secp256k1.PublicKey {
-	return i.pubKey
-}
-
-func (i PublicKeyIdentity) Address() string {
-	pubKey := cosmosSecp256k1.PubKey{Key: i.pubKey.SerializeCompressed()}
-	return types.MustBech32ifyAddressBytes("cosmos", pubKey.Address().Bytes())
-}
-
-// PrivateKeyIdentity is an identity with both a private and public key.
-type PrivateKeyIdentity struct {
-	privKey *secp256k1.PrivateKey
-}
-
-// IdentityFromPrivateKey returns a new identity using the given private key.
-func IdentityFromPrivateKey(privKey *secp256k1.PrivateKey) immutable.Option[Identity] {
-	identity := PrivateKeyIdentity{privKey}
-	return immutable.Some(Identity(identity))
-}
-
-func (i PrivateKeyIdentity) PublicKey() *secp256k1.PublicKey {
-	return i.privKey.PubKey()
-}
-
-func (i PrivateKeyIdentity) PrivateKey() *secp256k1.PrivateKey {
-	return i.privKey
-}
-
-func (i PrivateKeyIdentity) Address() string {
-	pubKey := cosmosSecp256k1.PubKey{Key: i.privKey.PubKey().SerializeCompressed()}
-	return types.MustBech32ifyAddressBytes("cosmos", pubKey.Address().Bytes())
+// AddressFromPublicKey returns the unique address of the given public key.
+func AddressFromPublicKey(publicKey *secp256k1.PublicKey) string {
+	pub := cosmosSecp256k1.PubKey{Key: publicKey.SerializeCompressed()}
+	// conversion from well known types should never cause a panic
+	return types.MustBech32ifyAddressBytes("cosmos", pub.Address().Bytes())
 }

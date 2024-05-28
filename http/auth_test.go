@@ -16,11 +16,11 @@ import (
 	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/crypto"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 func TestBuildAuthToken(t *testing.T) {
@@ -48,7 +48,7 @@ func TestSignAuthTokenErrorsWithPublicIdentity(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = signAuthToken(identity.Value(), token)
-	assert.ErrorIs(t, err, ErrPublicIdentityCannotSign)
+	assert.ErrorIs(t, err, ErrMissingIdentityPrivateKey)
 }
 
 func TestVerifyAuthToken(t *testing.T) {
@@ -63,7 +63,7 @@ func TestVerifyAuthToken(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := acp.IdentityFromPublicKey(privKey.PubKey())
-	assert.Equal(t, expected.Value().Address(), actual.Value().Address())
+	assert.Equal(t, expected.Value().Address, actual.Value().Address)
 }
 
 func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
