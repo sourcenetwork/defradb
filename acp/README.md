@@ -176,7 +176,7 @@ resources:
 
 CLI Command:
 ```sh
-defradb client acp policy add -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j -f examples/dpi_policy/user_dpi_policy.yml
+defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f -f examples/dpi_policy/user_dpi_policy.yml
 
 ```
 
@@ -242,7 +242,7 @@ Result:
 
 CLI Command:
 ```sh
-defradb client collection create -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j  --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]'
+defradb client collection create -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f  --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]'
 ```
 
 ### Create public documents (without identity)
@@ -255,7 +255,7 @@ defradb client collection create  --name Users '[{ "name": "PublicShahzad" }, { 
 ### Get all docIDs without an identity (shows only public):
 CLI Command:
 ```sh
-defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j
+defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 ```
 
 Result:
@@ -273,7 +273,7 @@ Result:
 
 ### Get all docIDs with an identity (shows public and owned documents):
 ```sh
-defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j
+defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 ```
 
 Result:
@@ -300,7 +300,7 @@ Result:
 ### Access the private document (including field names):
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Result:
@@ -325,7 +325,7 @@ Error:
 ### Accessing the private document with wrong identity:
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get -i 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5 --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Error:
@@ -336,7 +336,7 @@ Error:
 ### Update private document:
 CLI Command:
 ```sh
-defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }'
+defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }'
 ```
 
 Result:
@@ -352,7 +352,7 @@ Result:
 #### Check if it actually got updated:
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Result:
@@ -368,7 +368,7 @@ Result:
 ### Delete private document:
 CLI Command:
 ```sh
-defradb client collection delete -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection delete -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Result:
@@ -384,7 +384,7 @@ Result:
 #### Check if it actually got deleted:
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Error:

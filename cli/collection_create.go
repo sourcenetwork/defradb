@@ -30,7 +30,7 @@ Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
 
 Example: create from string, with identity:
-  defradb client collection create -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User '{ "name": "Bob" }'
+  defradb client collection create -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User '{ "name": "Bob" }'
 
 Example: create multiple from string:
   defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'

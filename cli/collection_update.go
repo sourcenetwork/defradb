@@ -37,7 +37,7 @@ Example: update by docID:
   --docID bae-123 --updater '{ "verified": true }'
 
 Example: update private docID, with identity:
-  defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
+  defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
   --docID bae-123 --updater '{ "verified": true }'
 		`,
 		Args: cobra.RangeArgs(0, 1),
