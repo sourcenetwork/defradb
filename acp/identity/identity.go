@@ -20,12 +20,15 @@ import (
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
 
+// Identity describes a unique actor.
 type Identity struct {
-	// PublicKey is the identity public key.
+	// PublicKey is the actor's public key.
 	PublicKey *secp256k1.PublicKey
-	// PrivateKey is the identity private key.
+	// PrivateKey is the actor's private key.
 	PrivateKey *secp256k1.PrivateKey
-	// Address is the identity address.
+	// Address is the actor's unique address.
+	//
+	// The address is derived from the actor's public key.
 	Address string
 }
 

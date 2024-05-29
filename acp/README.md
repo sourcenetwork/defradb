@@ -145,8 +145,39 @@ Here are some valid expression examples. Assuming these `expr` are under a requi
 - `expr: owner +reader`
 - `expr: owner+reader`
 
-
 ## DAC Usage CLI:
+
+### Authentication
+
+To perform authenticated operations you will need to generate a `secp256k1` key pair:
+
+```sh
+openssl ecparam -name secp256k1 -genkey | openssl ec -text -noout
+```
+
+Copy the private key hex from the output:
+
+```sh
+read EC key
+Private-Key: (256 bit)
+priv:
+    e3:b7:22:90:6e:e4:e5:63:68:f5:81:cd:8b:18:ab:
+    0f:48:af:1e:a5:3e:63:5e:3f:7b:8a:cd:07:66:76:
+    f6:ac
+pub:
+    04:03:96:9a:de:33:20:ec:fe:46:fb:ee:3e:d2:d8:
+    45:d8:a2:eb:ba:07:0c:50:51:37:13:5b:22:ca:d0:
+    14:1e:40:b8:75:62:04:8e:dd:a0:7d:41:32:c6:10:
+    7d:5a:9f:c9:e5:8f:6a:e3:95:88:88:ef:86:e1:86:
+    45:d6:84:dc:79
+ASN1 OID: secp256k1
+```
+
+Authenticate with the identity:
+
+```sh
+defradb client ... --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
 
 ### Adding a Policy:
 
@@ -176,8 +207,8 @@ resources:
 
 CLI Command:
 ```sh
-defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f -f examples/dpi_policy/user_dpi_policy.yml
-
+defradb client acp policy add -f examples/dpi_policy/user_dpi_policy.yml \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -242,7 +273,9 @@ Result:
 
 CLI Command:
 ```sh
-defradb client collection create -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f  --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]'
+defradb client collection create --name Users \
+'[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 ### Create public documents (without identity)
@@ -255,7 +288,8 @@ defradb client collection create  --name Users '[{ "name": "PublicShahzad" }, { 
 ### Get all docIDs without an identity (shows only public):
 CLI Command:
 ```sh
-defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+defradb client collection docIDs \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -273,7 +307,8 @@ Result:
 
 ### Get all docIDs with an identity (shows public and owned documents):
 ```sh
-defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+defradb client collection docIDs \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -300,7 +335,8 @@ Result:
 ### Access the private document (including field names):
 CLI Command:
 ```sh
-defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -325,7 +361,8 @@ Error:
 ### Accessing the private document with wrong identity:
 CLI Command:
 ```sh
-defradb client collection get -i 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5 --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" \
+--identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
 Error:
@@ -336,7 +373,10 @@ Error:
 ### Update private document:
 CLI Command:
 ```sh
-defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }'
+defradb client collection update --name Users \
+--docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" \
+--updater '{ "name": "SecretUpdatedShahzad" }' \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -352,7 +392,8 @@ Result:
 #### Check if it actually got updated:
 CLI Command:
 ```sh
-defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -368,7 +409,7 @@ Result:
 ### Delete private document:
 CLI Command:
 ```sh
-defradb client collection delete -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection delete -i e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Result:
@@ -384,7 +425,8 @@ Result:
 #### Check if it actually got deleted:
 CLI Command:
 ```sh
-defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Error:
