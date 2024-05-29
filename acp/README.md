@@ -409,7 +409,8 @@ Result:
 ### Delete private document:
 CLI Command:
 ```sh
-defradb client collection delete -i e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection delete --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
