@@ -24,14 +24,14 @@ func MakeCollectionCreateCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "create [-i --identity] <document>",
 		Short: "Create a new document.",
-		//nolint:lll
 		Long: `Create a new document.
 
 Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
 
 Example: create from string, with identity:
-  defradb client collection create -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User '{ "name": "Bob" }'
+  defradb client collection create --name User '{ "name": "Bob" }' \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Example: create multiple from string:
   defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'

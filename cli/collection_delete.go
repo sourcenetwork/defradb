@@ -22,14 +22,14 @@ func MakeCollectionDeleteCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
 		Short: "Delete documents by docID or filter.",
-		//nolint:lll
 		Long: `Delete documents by docID or filter and lists the number of documents deleted.
 		
 Example: delete by docID:
   defradb client collection delete  --name User --docID bae-123
 
 Example: delete by docID with identity:
-  defradb client collection delete -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User --docID bae-123
+  defradb client collection delete --name User --docID bae-123 \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Example: delete by filter:
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
