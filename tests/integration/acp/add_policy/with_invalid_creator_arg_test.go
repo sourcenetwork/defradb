@@ -13,16 +13,27 @@ package test_acp_add_policy
 import (
 	"testing"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		// Using an invalid creator is not possible with other client
+		// types as the address is derived from the public key used
+		// to sign the jwt auth token.
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+			testUtils.GoClientType,
+		}),
 
 		Description: "Test acp, adding policy, with invalid creator, with valid policy, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
+				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
+
 				Policy: `
                     description: a basic policy that satisfies minimum DPI requirements
 
@@ -49,19 +60,28 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2357
+	testUtils.AssertPanic(t, func() { testUtils.ExecuteTestCase(t, test) })
 }
 
-func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyCreator_Error(t *testing.T) {
+func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		// Using an invalid creator is not possible with other client
+		// types as the address is derived from the public key used
+		// to sign the jwt auth token.
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+			testUtils.GoClientType,
+		}),
 
 		Description: "Test acp, adding policy, with invalid creator, with empty policy, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
+				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
+
 				Policy: "",
 
-				ExpectedError: "policy creator can not be empty",
+				ExpectedError: "policy data can not be empty",
 			},
 		},
 	}
