@@ -22,6 +22,7 @@ func MakeCollectionDeleteCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
 		Short: "Delete documents by docID or filter.",
+		//nolint:lll
 		Long: `Delete documents by docID or filter and lists the number of documents deleted.
 		
 Example: delete by docID:

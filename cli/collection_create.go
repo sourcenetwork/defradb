@@ -24,6 +24,7 @@ func MakeCollectionCreateCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "create [-i --identity] <document>",
 		Short: "Create a new document.",
+		//nolint:lll
 		Long: `Create a new document.
 
 Example: create from string:

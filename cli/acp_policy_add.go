@@ -26,6 +26,7 @@ func MakeACPPolicyAddCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [-i --identity] [policy]",
 		Short: "Add new policy",
+		//nolint:lll
 		Long: `Add new policy
 
 Notes:
