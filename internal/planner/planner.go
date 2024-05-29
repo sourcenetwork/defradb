@@ -357,7 +357,7 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
 	)
-	slct := node.childPlan.(*selectTopNode).selectNode
+	slct := node.childSide.plan.(*selectTopNode).selectNode
 	desc := slct.collection.Description()
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
@@ -383,7 +383,7 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 // expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
 func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	if parentPlan.selectNode.filter == nil {
-		return p.expandPlan(node.childPlan, parentPlan)
+		return p.expandPlan(node.childSide.plan, parentPlan)
 	}
 
 	err := p.tryOptimizeJoinDirection(node, parentPlan)
@@ -391,7 +391,7 @@ func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTop
 		return err
 	}
 
-	return p.expandPlan(node.childPlan, parentPlan)
+	return p.expandPlan(node.childSide.plan, parentPlan)
 }
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
