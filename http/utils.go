@@ -28,10 +28,28 @@ func requestJSON(req *http.Request, out any) error {
 	return json.Unmarshal(data, out)
 }
 
-func responseJSON(rw http.ResponseWriter, status int, out any) {
+// responseJSON writes a json response with the given status and data
+// to the response writer. Any errors encountered will be logged.
+func responseJSON(rw http.ResponseWriter, status int, data any) {
 	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(status)
-	json.NewEncoder(rw).Encode(out) //nolint:errcheck
+
+	err := json.NewEncoder(rw).Encode(data)
+	if err != nil {
+		log.ErrorE("failed to write response", err)
+	}
+}
+
+// responseText writes a text response with the given status and data
+// to the response writer. Any errors encountered will be logged.
+func responseText(rw http.ResponseWriter, status int, data []byte) {
+	rw.Header().Add("Content-Type", "text/plain")
+	rw.WriteHeader(status)
+
+	_, err := rw.Write(data)
+	if err != nil {
+		log.ErrorE("failed to write response", err)
+	}
 }
 
 func parseError(msg any) error {

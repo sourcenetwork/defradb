@@ -92,11 +92,7 @@ func NewHandler(db client.DB) (*Handler, error) {
 			AuthMiddleware(audience),
 		)
 		r.Get("/audience", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Add("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusOK)
-			// ignore errors because the headers have
-			// already been written to the response stream
-			w.Write([]byte(audience)) //nolint:errcheck
+			responseText(w, http.StatusOK, []byte(audience))
 		})
 		r.Handle("/*", router)
 	})
