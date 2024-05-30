@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cosmosTypes "github.com/cosmos/cosmos-sdk/types"
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/sourcenetwork/sourcehub/x/acp/did"
@@ -21,6 +22,28 @@ import (
 
 	"github.com/sourcenetwork/defradb/keyring"
 )
+
+func init() {
+	// temp - SourceHub only works without this workaround
+	// LocalACP only works with this workaround
+
+	// return
+
+	// temp - overwrite "github.com/sourcenetwork/sourcehub/sdk" init
+	p := "cosmos"
+
+	accountPubKeyPrefix := p + "pub"
+	validatorAddressPrefix := p + "valoper"
+	validatorPubKeyPrefix := p + "valoperpub"
+	consNodeAddressPrefix := p + "valcons"
+	consNodePubKeyPrefix := p + "valconspub"
+
+	// Set and seal config
+	config := cosmosTypes.GetConfig()
+	config.SetBech32PrefixForAccount(p, accountPubKeyPrefix)
+	config.SetBech32PrefixForValidator(validatorAddressPrefix, validatorPubKeyPrefix)
+	config.SetBech32PrefixForConsensusNode(consNodeAddressPrefix, consNodePubKeyPrefix)
+}
 
 type acpSourceHub struct {
 	client     *sdk.Client
@@ -84,8 +107,9 @@ func (a *acpSourceHub) AddPolicy(
 	})
 
 	msgSet := sdk.MsgSet{}
+	// todo - signer.GetAccAddress() should be the creator id, but changing that atm hits the source vs cosmos prefix issue
 	policyMapper := msgSet.WithCreatePolicy(
-		acptypes.NewMsgCreatePolicyNow(creatorID, policy, policyMarshalType),
+		acptypes.NewMsgCreatePolicyNow(signer.GetAccAddress(), policy, policyMarshalType),
 	)
 	tx, err := a.txBuilder.Build(ctx, signer, &msgSet)
 	if err != nil {
