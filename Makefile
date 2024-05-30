@@ -256,6 +256,10 @@ test\:gql-mutations:
 test\:col-named-mutations:
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
+.PHONY: test\:source-hub
+test\:source-hub:
+	DEFRA_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+
 .PHONY: test\:go
 test\:go:
 	go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
