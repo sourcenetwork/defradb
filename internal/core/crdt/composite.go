@@ -90,7 +90,7 @@ func (c CompositeDAG) Set(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{
 		DocID:           []byte(c.key.DocID),
 		FieldName:       c.fieldName,
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
+		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
 		Status:          status,
 	}
 }
@@ -130,7 +130,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 		// been migrated yet locally.
 		schemaVersionId = dagDelta.SchemaVersionID
 	} else {
-		schemaVersionId = c.schemaVersionKey.SchemaVersionId
+		schemaVersionId = c.schemaVersionKey.SchemaVersionID
 	}
 
 	err = c.store.Put(ctx, versionKey.ToDS(), []byte(schemaVersionId))

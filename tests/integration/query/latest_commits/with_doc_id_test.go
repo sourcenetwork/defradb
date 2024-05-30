@@ -56,7 +56,7 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryLatestCommitsWithDocIDWithSchemaVersionIdField(t *testing.T) {
+func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID and schema versiion id field",
 		Request: `query {

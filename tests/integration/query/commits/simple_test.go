@@ -104,7 +104,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
+func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple commits query yielding schemaVersionId",
 		Actions: []any{
