@@ -149,31 +149,22 @@ Here are some valid expression examples. Assuming these `expr` are under a requi
 
 ### Authentication
 
-To perform authenticated operations you will need to generate a `secp256k1` key pair:
+To perform authenticated operations you will need to generate a `secp256k1` key pair.
+
+The command below will generate a new secp256k1 private key and print the 256 bit X coordinate as a hexadecimal value.
 
 ```sh
-openssl ecparam -name secp256k1 -genkey | openssl ec -text -noout
+openssl ecparam -name secp256k1 -genkey | openssl ec -text -noout | head -n5 | tail -n3 | tr -d '\n:\ '
 ```
 
-Copy the private key hex from the output:
+Copy the private key hex from the output.
 
 ```sh
 read EC key
-Private-Key: (256 bit)
-priv:
-    e3:b7:22:90:6e:e4:e5:63:68:f5:81:cd:8b:18:ab:
-    0f:48:af:1e:a5:3e:63:5e:3f:7b:8a:cd:07:66:76:
-    f6:ac
-pub:
-    04:03:96:9a:de:33:20:ec:fe:46:fb:ee:3e:d2:d8:
-    45:d8:a2:eb:ba:07:0c:50:51:37:13:5b:22:ca:d0:
-    14:1e:40:b8:75:62:04:8e:dd:a0:7d:41:32:c6:10:
-    7d:5a:9f:c9:e5:8f:6a:e3:95:88:88:ef:86:e1:86:
-    45:d6:84:dc:79
-ASN1 OID: secp256k1
+e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
-Authenticate with the identity:
+Use the private key to generate authentication tokens for each request.
 
 ```sh
 defradb client ... --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
@@ -438,9 +429,21 @@ Error:
 
 
 ## DAC Usage HTTP:
-HTTP requests work similar to their CLI counter parts, the main difference is that the identity will just be specified within the Auth Header like so: `Authorization: Basic <identity>`.
 
-Note: The `Basic` label will change to `Bearer ` after JWS Authentication Tokens are supported.
+### Authentication
+
+To perform authenticated operations you will need to build and sign a JWT token with the following required fields:
+
+- `sub` public key of the identity
+- `aud` host name of the defradb api
+
+> The `exp` and `nbf` fields should also be set to short-lived durations.
+
+The JWT must be signed with the `secp256k1` private key of the identity you wish to perform actions as.
+
+The signed token must be set on the `Authorization` header of the HTTP request with the `bearer ` prefix prepended to it.
+
+If authentication fails for any reason a `403` forbidden response will be returned.
 
 ## _AAC DPI Rules (coming soon)_
 ## _AAC Usage: (coming soon)_
