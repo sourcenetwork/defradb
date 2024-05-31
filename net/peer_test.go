@@ -73,9 +73,9 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	var acpLocal acp.ACPLocal
+	acpLocal := acp.NewLocalACP()
 	acpLocal.Init(context.Background(), "")
-	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](&acpLocal), db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](acpLocal), db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	n, err := NewNode(
