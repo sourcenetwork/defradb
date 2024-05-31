@@ -13,9 +13,10 @@ package test_acp_add_policy
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
