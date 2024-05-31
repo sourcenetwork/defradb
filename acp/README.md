@@ -145,8 +145,30 @@ Here are some valid expression examples. Assuming these `expr` are under a requi
 - `expr: owner +reader`
 - `expr: owner+reader`
 
-
 ## DAC Usage CLI:
+
+### Authentication
+
+To perform authenticated operations you will need to generate a `secp256k1` key pair.
+
+The command below will generate a new secp256k1 private key and print the 256 bit X coordinate as a hexadecimal value.
+
+```sh
+openssl ecparam -name secp256k1 -genkey | openssl ec -text -noout | head -n5 | tail -n3 | tr -d '\n:\ '
+```
+
+Copy the private key hex from the output.
+
+```sh
+read EC key
+e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Use the private key to generate authentication tokens for each request.
+
+```sh
+defradb client ... --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
 
 ### Adding a Policy:
 
@@ -176,14 +198,13 @@ resources:
 
 CLI Command:
 ```sh
-defradb client acp policy add -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j -f examples/dpi_policy/user_dpi_policy.yml
-
+defradb client acp policy add -f examples/dpi_policy/user_dpi_policy.yml --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
 ```json
 {
-  "PolicyID": "24ab8cba6d6f0bcfe4d2712c7d95c09dd1b8076ea5a8896476413fd6c891c18c"
+  "PolicyID": "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765"
 }
 ```
 
@@ -192,7 +213,7 @@ Result:
 We have in `examples/schema/permissioned/users.graphql`:
 ```graphql
 type Users @policy(
-    id: "24ab8cba6d6f0bcfe4d2712c7d95c09dd1b8076ea5a8896476413fd6c891c18c",
+    id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",
     resource: "users"
 ) {
     name: String
@@ -230,7 +251,7 @@ Result:
     ],
     "Indexes": [],
     "Policy": {
-      "ID": "24ab8cba6d6f0bcfe4d2712c7d95c09dd1b8076ea5a8896476413fd6c891c18c",
+      "ID": "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",
       "ResourceName": "users"
     }
   }
@@ -242,7 +263,7 @@ Result:
 
 CLI Command:
 ```sh
-defradb client collection create -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j  --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]'
+defradb client collection create --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 ### Create public documents (without identity)
@@ -255,7 +276,7 @@ defradb client collection create  --name Users '[{ "name": "PublicShahzad" }, { 
 ### Get all docIDs without an identity (shows only public):
 CLI Command:
 ```sh
-defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j
+defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -273,7 +294,7 @@ Result:
 
 ### Get all docIDs with an identity (shows public and owned documents):
 ```sh
-defradb client collection docIDs -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j
+defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -300,7 +321,7 @@ Result:
 ### Access the private document (including field names):
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -325,7 +346,7 @@ Error:
 ### Accessing the private document with wrong identity:
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
 Error:
@@ -336,7 +357,7 @@ Error:
 ### Update private document:
 CLI Command:
 ```sh
-defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }'
+defradb client collection update --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -352,7 +373,7 @@ Result:
 #### Check if it actually got updated:
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -368,7 +389,7 @@ Result:
 ### Delete private document:
 CLI Command:
 ```sh
-defradb client collection delete -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection delete --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -384,7 +405,7 @@ Result:
 #### Check if it actually got deleted:
 CLI Command:
 ```sh
-defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Error:
@@ -408,9 +429,21 @@ Error:
 
 
 ## DAC Usage HTTP:
-HTTP requests work similar to their CLI counter parts, the main difference is that the identity will just be specified within the Auth Header like so: `Authorization: Basic <identity>`.
 
-Note: The `Basic` label will change to `Bearer ` after JWS Authentication Tokens are supported.
+### Authentication
+
+To perform authenticated operations you will need to build and sign a JWT token with the following required fields:
+
+- `sub` public key of the identity
+- `aud` host name of the defradb api
+
+> The `exp` and `nbf` fields should also be set to short-lived durations.
+
+The JWT must be signed with the `secp256k1` private key of the identity you wish to perform actions as.
+
+The signed token must be set on the `Authorization` header of the HTTP request with the `bearer ` prefix prepended to it.
+
+If authentication fails for any reason a `403` forbidden response will be returned.
 
 ## _AAC DPI Rules (coming soon)_
 ## _AAC Usage: (coming soon)_

@@ -168,12 +168,12 @@ func (db *db) AddPolicy(
 		return client.AddPolicyResult{}, client.ErrPolicyAddFailureNoACP
 	}
 	identity := GetContextIdentity(ctx)
+
 	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
-		identity.Value().String(),
+		identity.Value().Address,
 		policy,
 	)
-
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}

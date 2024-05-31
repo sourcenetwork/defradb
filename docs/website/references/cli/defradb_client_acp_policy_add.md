@@ -15,7 +15,8 @@ Notes:
   - Learn more about [ACP & DPI Rules](/acp/README.md)
 
 Example: add from an argument string:
-  defradb client acp policy add -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j '
+  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
+'
 description: A Valid DefraDB Policy Interface
 
 actor:
@@ -39,10 +40,12 @@ resources:
 '
 
 Example: add from file:
-  defradb client acp policy add -i cosmos17r39df0hdcrgnmmw4mvu7qgk5nu888c7uvv37y -f policy.yml
+  defradb client acp policy add -f policy.yml \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Example: add from file, verbose flags:
-  defradb client acp policy add --identity cosmos1kpw734v54g0t0d8tcye8ee5jc3gld0tcr2q473 --file policy.yml
+  defradb client acp policy add --file policy.yml \
+  	--identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Example: add from stdin:
   cat policy.yml | defradb client acp policy add -
@@ -63,7 +66,7 @@ defradb client acp policy add [-i --identity] [policy] [flags]
 ### Options inherited from parent commands
 
 ```
-  -i, --identity string            ACP Identity
+  -i, --identity string            Hex formatted private key used to authenticate with ACP
       --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string   Service name to use when using the system backend (default "defradb")
       --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")

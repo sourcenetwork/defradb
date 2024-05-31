@@ -10,7 +10,7 @@
 # The policy must be a valid DPI, learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
 
 type Users @policy(
-    id: "24ab8cba6d6f0bcfe4d2712c7d95c09dd1b8076ea5a8896476413fd6c891c18c",
+    id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",
     resource: "users"
 ) {
     name: String

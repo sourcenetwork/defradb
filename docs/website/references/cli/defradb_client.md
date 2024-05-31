@@ -11,7 +11,7 @@ Execute queries, add schema types, obtain node info, etc.
 
 ```
   -h, --help              help for client
-  -i, --identity string   ACP Identity
+  -i, --identity string   Hex formatted private key used to authenticate with ACP
       --tx uint           Transaction ID
 ```
 

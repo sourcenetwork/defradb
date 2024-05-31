@@ -11,7 +11,7 @@ Create, read, update, and delete documents within a collection.
 ```
       --get-inactive      Get inactive collections as well as active
   -h, --help              help for collection
-  -i, --identity string   ACP Identity
+  -i, --identity string   Hex formatted private key used to authenticate with ACP
       --name string       Collection name
       --schema string     Collection schema Root
       --tx uint           Transaction ID

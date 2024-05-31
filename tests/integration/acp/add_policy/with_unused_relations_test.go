@@ -49,7 +49,7 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "e1bb7702f653d4f9a0595d2d97c209fc0da8f315be007bd19545599eed41ae42",
+				ExpectedPolicyID: "a6d42bfedff5db1feca0313793e4f9540851e3feaefffaebc98a1ee5bb140e45",
 			},
 		},
 	}

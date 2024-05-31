@@ -32,7 +32,7 @@ defradb client schema migration down --collection <collectionID> <documents> [fl
 ### Options inherited from parent commands
 
 ```
-  -i, --identity string            ACP Identity
+  -i, --identity string            Hex formatted private key used to authenticate with ACP
       --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string   Service name to use when using the system backend (default "defradb")
       --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")

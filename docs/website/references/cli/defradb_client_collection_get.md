@@ -10,7 +10,7 @@ Example:
   defradb client collection get --name User bae-123
 
 Example to get a private document we must use an identity:
-  defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User bae-123
+  defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User bae-123
 		
 
 ```
@@ -28,7 +28,7 @@ defradb client collection get [-i --identity] [--show-deleted] <docID>  [flags]
 
 ```
       --get-inactive               Get inactive collections as well as active
-  -i, --identity string            ACP Identity
+  -i, --identity string            Hex formatted private key used to authenticate with ACP
       --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string   Service name to use when using the system backend (default "defradb")
       --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")
