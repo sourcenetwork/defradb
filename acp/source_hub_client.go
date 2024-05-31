@@ -21,10 +21,10 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-// sourcehubClient is a private abstraction to allow multiple ACP implementations
+// sourceHubClient is a private abstraction to allow multiple ACP implementations
 // based off of the SourceHub libraries to share the same Defra-specific logic via the
 // sourceHubBridge.
-type sourcehubClient interface {
+type sourceHubClient interface {
 	// Init initializes the acp, with an absolute path. The provided path indicates where the
 	// persistent data will be stored for acp.
 	//
@@ -88,10 +88,10 @@ type sourcehubClient interface {
 	Close() error
 }
 
-// sourceHubBridge wraps a sourcehubClient, hosting the Defra-specific logic away from client-specific
+// sourceHubBridge wraps a sourceHubClient, hosting the Defra-specific logic away from client-specific
 // code.
 type sourceHubBridge struct {
-	client sourcehubClient
+	client sourceHubClient
 }
 
 var _ ACP = (*sourceHubBridge)(nil)

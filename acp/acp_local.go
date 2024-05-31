@@ -25,7 +25,7 @@ type ACPLocal struct {
 	localACP    *embedded.LocalACP
 }
 
-var _ sourcehubClient = (*ACPLocal)(nil)
+var _ sourceHubClient = (*ACPLocal)(nil)
 
 func (l *ACPLocal) Init(ctx context.Context, path string) {
 	if path == "" {
