@@ -12,13 +12,11 @@ package http
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/go-chi/chi/v5"
@@ -76,31 +74,20 @@ func NewHandler(db client.DB) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	// generate a secure random audience value
-	audienceBytes, err := crypto.RandomBytes(64)
-	if err != nil {
-		return nil, err
-	}
-	audience := hex.EncodeToString(audienceBytes)
 	txs := &sync.Map{}
-
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
-			AuthMiddleware(audience),
+			AuthMiddleware,
 		)
-		r.Get("/audience", func(w http.ResponseWriter, r *http.Request) {
-			responseText(w, http.StatusOK, []byte(audience))
-		})
 		r.Handle("/*", router)
 	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
 	mux.Handle("/*", playgroundHandler)
-
 	return &Handler{
 		db:  db,
 		mux: mux,

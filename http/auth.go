@@ -94,21 +94,19 @@ func verifyAuthToken(data []byte, audience string) (immutable.Option[acpIdentity
 }
 
 // AuthMiddleware authenticates an actor and sets their identity for all subsequent actions.
-func AuthMiddleware(audience string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			token := strings.TrimPrefix(req.Header.Get(authHeaderName), authSchemaPrefix)
-			if token == "" {
-				next.ServeHTTP(rw, req)
-				return
-			}
-			identity, err := verifyAuthToken([]byte(token), audience)
-			if err != nil {
-				http.Error(rw, "forbidden", http.StatusForbidden)
-				return
-			}
-			ctx := db.SetContextIdentity(req.Context(), identity)
-			next.ServeHTTP(rw, req.WithContext(ctx))
-		})
-	}
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		token := strings.TrimPrefix(req.Header.Get(authHeaderName), authSchemaPrefix)
+		if token == "" {
+			next.ServeHTTP(rw, req)
+			return
+		}
+		identity, err := verifyAuthToken([]byte(token), strings.ToLower(req.Host))
+		if err != nil {
+			http.Error(rw, "forbidden", http.StatusForbidden)
+			return
+		}
+		ctx := db.SetContextIdentity(req.Context(), identity)
+		next.ServeHTTP(rw, req.WithContext(ctx))
+	})
 }

@@ -40,18 +40,6 @@ func responseJSON(rw http.ResponseWriter, status int, data any) {
 	}
 }
 
-// responseText writes a text response with the given status and data
-// to the response writer. Any errors encountered will be logged.
-func responseText(rw http.ResponseWriter, status int, data []byte) {
-	rw.Header().Add("Content-Type", "text/plain")
-	rw.WriteHeader(status)
-
-	_, err := rw.Write(data)
-	if err != nil {
-		log.ErrorE("failed to write response", err)
-	}
-}
-
 func parseError(msg any) error {
 	switch msg {
 	case client.ErrDocumentNotFoundOrNotAuthorized.Error():

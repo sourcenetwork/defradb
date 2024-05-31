@@ -59,7 +59,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
 	id := db.GetContextIdentity(ctx)
-	if id.Value().PrivateKey != nil {
+	if id.HasValue() && id.Value().PrivateKey != nil {
 		args = append(args, "--identity", hex.EncodeToString(id.Value().PrivateKey.Serialize()))
 	}
 	args = append(args, "--url", w.address)

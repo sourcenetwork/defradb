@@ -23,9 +23,8 @@ import (
 )
 
 type httpClient struct {
-	client   *http.Client
-	baseURL  *url.URL
-	audience string
+	client  *http.Client
+	baseURL *url.URL
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
@@ -36,22 +35,10 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := httpClient{
+	return &httpClient{
 		client:  http.DefaultClient,
 		baseURL: baseURL.JoinPath("/api/v0"),
-	}
-	// get the audience from the remote node so we can authenticate
-	methodURL := client.baseURL.JoinPath("audience")
-	req, err := http.NewRequest(http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	out, err := client.request(req)
-	if err != nil {
-		return nil, err
-	}
-	client.audience = string(out)
-	return &client, nil
+	}, nil
 }
 
 func (c *httpClient) setDefaultHeaders(req *http.Request) error {
@@ -63,10 +50,10 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
 	id := db.GetContextIdentity(req.Context())
-	if !id.HasValue() || c.audience == "" {
+	if !id.HasValue() {
 		return nil
 	}
-	token, err := buildAndSignAuthToken(id.Value(), c.audience)
+	token, err := buildAndSignAuthToken(id.Value(), strings.ToLower(c.baseURL.Host))
 	if errors.Is(err, ErrMissingIdentityPrivateKey) {
 		return nil
 	}
