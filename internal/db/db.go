@@ -118,6 +118,14 @@ func newDB(
 		return nil, err
 	}
 
+	if db.events.DAGMerges.HasValue() {
+		merges, err := db.events.DAGMerges.Value().Subscribe()
+		if err != nil {
+			return nil, err
+		}
+		go db.handleMerges(ctx, merges)
+	}
+
 	return db, nil
 }
 
@@ -261,6 +269,9 @@ func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
 	if db.events.Updates.HasValue() {
 		db.events.Updates.Value().Close()
+	}
+	if db.events.DAGMerges.HasValue() {
+		db.events.DAGMerges.Value().Close()
 	}
 
 	err := db.rootstore.Close()

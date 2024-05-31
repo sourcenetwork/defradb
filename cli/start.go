@@ -116,6 +116,7 @@ func MakeStartCommand() *cobra.Command {
 				node.WithPeers(peers...),
 				// db options
 				db.WithUpdateEvents(),
+				db.WithDAGMergeEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// net node options
 				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),

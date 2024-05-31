@@ -36,8 +36,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-
 	"github.com/multiformats/go-multiaddr"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
 

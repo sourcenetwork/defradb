@@ -27,9 +27,14 @@ type Option func(*db)
 // WithUpdateEvents enables the update events channel.
 func WithUpdateEvents() Option {
 	return func(db *db) {
-		db.events = events.Events{
-			Updates: immutable.Some(events.New[events.Update](0, updateEventBufferSize)),
-		}
+		db.events.Updates = immutable.Some(events.New[events.Update](0, updateEventBufferSize))
+	}
+}
+
+// WithDAGMergeEvents enables the dag merge events channel.
+func WithDAGMergeEvents() Option {
+	return func(db *db) {
+		db.events.DAGMerges = immutable.Some(events.New[events.DAGMerge](0, updateEventBufferSize))
 	}
 }
 

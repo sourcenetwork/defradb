@@ -109,53 +109,13 @@ func (db *db) fetchCollectionIndexDescriptions(
 	return indexDescriptions, nil
 }
 
-func (c *collection) CreateDocIndex(ctx context.Context, doc *client.Document) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = c.indexNewDoc(ctx, doc)
+func (c *collection) updateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	err := c.deleteIndexedDoc(ctx, oldDoc)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
-}
-
-func (c *collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = c.deleteIndexedDoc(ctx, oldDoc)
-	if err != nil {
-		return err
-	}
-	err = c.indexNewDoc(ctx, newDoc)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
-}
-
-func (c *collection) DeleteDocIndex(ctx context.Context, doc *client.Document) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = c.deleteIndexedDoc(ctx, doc)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
+	return c.indexNewDoc(ctx, newDoc)
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, doc *client.Document) error {
