@@ -33,6 +33,8 @@ const (
 	// authSchemaPrefix is the prefix added to the
 	// authorization header value.
 	authSchemaPrefix = "Bearer "
+	// authTokenExpiration is the default expiration time for auth tokens.
+	authTokenExpiration = time.Minute * 15
 )
 
 var authTokenSignatureScheme = jwa.ES256K
@@ -44,11 +46,12 @@ func buildAuthToken(identity acpIdentity.Identity, audience string) (jwt.Token, 
 		return nil, ErrMissingIdentityPublicKey
 	}
 	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
+	now := time.Now()
 	return jwt.NewBuilder().
 		Subject(subject).
 		Audience([]string{audience}).
-		Expiration(time.Now().Add(15 * time.Minute)).
-		NotBefore(time.Now()).
+		Expiration(now.Add(authTokenExpiration)).
+		NotBefore(now).
 		Build()
 }
 

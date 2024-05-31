@@ -20,23 +20,16 @@ import (
 )
 
 var (
-	Actor1Identity immutable.Option[acpIdentity.Identity]
-	Actor2Identity immutable.Option[acpIdentity.Identity]
+	Actor1Identity = MustParseIdentity("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	Actor2Identity = MustParseIdentity("4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5")
 )
 
-func init() {
-	privKeyBytes1, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+// MustParseIdentity returns an identity that uses the given private key or panics.
+func MustParseIdentity(privateKeyHex string) immutable.Option[acpIdentity.Identity] {
+	privateKeyBytes, err := hex.DecodeString(privateKeyHex)
 	if err != nil {
 		panic(err)
 	}
-	privKeyBytes2, err := hex.DecodeString("4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5")
-	if err != nil {
-		panic(err)
-	}
-
-	privKey1 := secp256k1.PrivKeyFromBytes(privKeyBytes1)
-	privKey2 := secp256k1.PrivKeyFromBytes(privKeyBytes2)
-
-	Actor1Identity = acpIdentity.FromPrivateKey(privKey1)
-	Actor2Identity = acpIdentity.FromPrivateKey(privKey2)
+	privateKey := secp256k1.PrivKeyFromBytes(privateKeyBytes)
+	return acpIdentity.FromPrivateKey(privateKey)
 }

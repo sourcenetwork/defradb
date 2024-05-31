@@ -15,7 +15,8 @@ Notes:
   - Learn more about [ACP & DPI Rules](/acp/README.md)
 
 Example: add from an argument string:
-  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f '
+  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
+'
 description: A Valid DefraDB Policy Interface
 
 actor:
@@ -39,10 +40,12 @@ resources:
 '
 
 Example: add from file:
-  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f -f policy.yml
+  defradb client acp policy add -f policy.yml \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Example: add from file, verbose flags:
-  defradb client acp policy add --identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --file policy.yml
+  defradb client acp policy add --file policy.yml \
+  	--identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Example: add from stdin:
   cat policy.yml | defradb client acp policy add -

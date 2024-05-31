@@ -22,8 +22,7 @@ import (
 func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		// Using an invalid creator is not possible with other client
-		// types as the address is derived from the public key used
-		// to sign the jwt auth token.
+		// types since the token authentication will fail
 		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
 			testUtils.GoClientType,
 		}),
@@ -67,8 +66,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		// Using an invalid creator is not possible with other client
-		// types as the address is derived from the public key used
-		// to sign the jwt auth token.
+		// types since the token authentication will fail
 		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
 			testUtils.GoClientType,
 		}),

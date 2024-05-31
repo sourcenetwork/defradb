@@ -373,7 +373,12 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
                 types:
                   - actor
     `
-	identity := loadIdentity(t)
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity := acpIdentity.FromPrivateKey(privKey)
+
 	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
@@ -425,7 +430,12 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
                 types:
                   - actor
     `
-	identity := loadIdentity(t)
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity := acpIdentity.FromPrivateKey(privKey)
+
 	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
@@ -785,7 +795,12 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
                 types:
                   - actor
     `
-	identity := loadIdentity(t)
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity := acpIdentity.FromPrivateKey(privKey)
+
 	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
@@ -1083,11 +1098,4 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
-}
-
-func loadIdentity(t *testing.T) immutable.Option[acpIdentity.Identity] {
-	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
-	require.NoError(t, err)
-	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	return acpIdentity.FromPrivateKey(privKey)
 }
