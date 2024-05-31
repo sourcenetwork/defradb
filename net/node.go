@@ -277,7 +277,14 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 		for {
 			select {
 			case <-n.ctx.Done():
-				sub.Close()
+				err := sub.Close()
+				if err != nil {
+					log.ErrorContextE(
+						n.ctx,
+						"Failed to close peer connectedness changed event subscription",
+						err,
+					)
+				}
 				return
 			case e, ok := <-sub.Out():
 				if !ok {
@@ -308,7 +315,14 @@ func (n *Node) subscribeToPubSubEvents() {
 		for {
 			select {
 			case <-n.ctx.Done():
-				sub.Close()
+				err := sub.Close()
+				if err != nil {
+					log.ErrorContextE(
+						n.ctx,
+						"Failed to close pubsub event subscription",
+						err,
+					)
+				}
 				return
 			case e, ok := <-sub.Out():
 				if !ok {
@@ -339,7 +353,14 @@ func (n *Node) subscribeToPushLogEvents() {
 		for {
 			select {
 			case <-n.ctx.Done():
-				sub.Close()
+				err := sub.Close()
+				if err != nil {
+					log.ErrorContextE(
+						n.ctx,
+						"Failed to close push log event subscription",
+						err,
+					)
+				}
 				return
 			case e, ok := <-sub.Out():
 				if !ok {
@@ -462,7 +483,10 @@ func (n Node) Close() {
 		n.Peer.Close()
 	}
 	if n.dhtClose != nil {
-		n.dhtClose()
+		err := n.dhtClose()
+		if err != nil {
+			log.ErrorContextE(n.ctx, "Failed to close DHT", err)
+		}
 	}
 	n.DB.Close()
 }
