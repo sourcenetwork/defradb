@@ -167,9 +167,9 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 	case *typeJoinOne:
 		// Add the direction attribute.
 		if joinType.parentSide.isPrimary() {
-			simpleExplainMap[joinDirectionLabel] = joinDirectionSecondaryLabel
-		} else {
 			simpleExplainMap[joinDirectionLabel] = joinDirectionPrimaryLabel
+		} else {
+			simpleExplainMap[joinDirectionLabel] = joinDirectionSecondaryLabel
 		}
 
 		err = addExplainData(&joinType.invertibleTypeJoin)
