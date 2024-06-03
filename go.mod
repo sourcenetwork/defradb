@@ -82,8 +82,9 @@ require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
-	github.com/btcsuite/btcd v0.22.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/btcutil v1.1.5 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/bytecodealliance/wasmtime-go/v15 v15.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
