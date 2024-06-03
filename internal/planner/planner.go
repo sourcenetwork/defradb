@@ -362,8 +362,8 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
-			subInd := node.documentMapping.FirstIndexOfName(node.getSubTypeName())
-			relatedField := mapper.Field{Name: node.getSubTypeName(), Index: subInd}
+			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Name)
+			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Name, Index: subInd}
 			fieldFilter := filter.UnwrapRelation(filter.CopyField(
 				parentPlan.selectNode.filter,
 				relatedField,

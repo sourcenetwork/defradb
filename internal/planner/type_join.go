@@ -149,8 +149,8 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 
 	addExplainData := func(j *invertibleTypeJoin) error {
 		// Add the attribute(s).
-		simpleExplainMap[joinRootLabel] = immutable.Some(j.getRootTypeName())
-		simpleExplainMap[joinSubTypeNameLabel] = j.getSubTypeName()
+		simpleExplainMap[joinRootLabel] = immutable.Some(j.childSide.relFieldDef.Name)
+		simpleExplainMap[joinSubTypeNameLabel] = j.parentSide.relFieldDef.Name
 
 		subTypeExplainGraph, err := buildSimpleExplainGraph(j.childSide.plan)
 		if err != nil {
@@ -344,7 +344,6 @@ func (p *Planner) newInvertableTypeJoin(
 		relFieldDef:      parentsRelFieldDef,
 		relFieldMapIndex: immutable.Some(subSelect.Index),
 		col:              parent.collection,
-		requestedFields:  getRequestedFields(sourcePlan),
 		isFirst:          true,
 		isParent:         true,
 	}
@@ -355,12 +354,11 @@ func (p *Planner) newInvertableTypeJoin(
 	}
 
 	childSide := joinSide{
-		plan:            subSelectPlan,
-		relFieldDef:     childsRelFieldDef,
-		col:             subCol,
-		requestedFields: getRequestedFields(subSelectPlan),
-		isFirst:         false,
-		isParent:        false,
+		plan:        subSelectPlan,
+		relFieldDef: childsRelFieldDef,
+		col:         subCol,
+		isFirst:     false,
+		isParent:    false,
 	}
 
 	ind = subSelectPlan.DocumentMap().IndexesByName[childsRelFieldDef.Name+request.RelatedObjectID]
@@ -369,24 +367,11 @@ func (p *Planner) newInvertableTypeJoin(
 	}
 
 	return invertibleTypeJoin{
-		docMapper:   docMapper{parent.documentMapping},
-		parentSide:  parentSide,
-		childSide:   childSide,
-		childSelect: subSelect,
-		skipChild:   skipChild,
+		docMapper:  docMapper{parent.documentMapping},
+		parentSide: parentSide,
+		childSide:  childSide,
+		skipChild:  skipChild,
 	}, nil
-}
-
-func getRequestedFields(sourcePlan planNode) []string {
-	scan := getScanNode(sourcePlan)
-	if scan == nil {
-		return nil
-	}
-	fields := make([]string, len(scan.fields))
-	for i := range scan.fields {
-		fields[i] = scan.fields[i].Name
-	}
-	return fields
 }
 
 type joinSide struct {
@@ -395,7 +380,6 @@ type joinSide struct {
 	relFieldMapIndex   immutable.Option[int]
 	relIDFieldMapIndex immutable.Option[int]
 	col                client.Collection
-	requestedFields    []string
 	isFirst            bool
 	isParent           bool
 }
@@ -436,12 +420,14 @@ func (n *typeJoinMany) Kind() string {
 	return "typeJoinMany"
 }
 
+// getForeignKey returns the docID of the related object referenced by the given relation field.
 func getForeignKey(node planNode, relFieldName string) string {
 	ind := node.DocumentMap().FirstIndexOfName(relFieldName + request.RelatedObjectID)
 	docIDStr, _ := node.Value().Fields[ind].(string)
 	return docIDStr
 }
 
+// fetchDocWithID fetches a document with the given docID from the given planNode.
 func fetchDocWithID(node planNode, docID string) (bool, error) {
 	scan := getScanNode(node)
 	if scan == nil {
@@ -469,8 +455,7 @@ func fetchDocWithID(node planNode, docID string) (bool, error) {
 type invertibleTypeJoin struct {
 	docMapper
 
-	childSelect *mapper.Select
-	skipChild   bool
+	skipChild bool
 
 	parentSide joinSide
 	childSide  joinSide
@@ -482,16 +467,7 @@ type invertibleTypeJoin struct {
 	encounteredDocIDs []string
 }
 
-func (join *invertibleTypeJoin) getRootTypeName() string {
-	return join.getSecondSide().relFieldDef.Name
-}
-
-func (join *invertibleTypeJoin) getSubTypeName() string {
-	return join.getFirstSide().relFieldDef.Name
-}
-
 func (join *invertibleTypeJoin) replaceRoot(node planNode) {
-	join.parentSide.plan = node
 	join.getFirstSide().plan = node
 }
 
@@ -523,12 +499,7 @@ func (join *invertibleTypeJoin) Spans(spans core.Spans) {
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
 
-func (join *invertibleTypeJoin) invert() {
-	join.childSide.isFirst = join.parentSide.isFirst
-	join.parentSide.isFirst = !join.parentSide.isFirst
-}
-
-type docsJoiner struct {
+type primaryObjectsFetcher struct {
 	relIDFieldDef client.FieldDefinition
 	primarySide   *joinSide
 	secondarySide *joinSide
@@ -539,17 +510,17 @@ type docsJoiner struct {
 	resultSecondaryDoc core.Doc
 }
 
-func newSecondaryDocsJoiner(
+func newPrimaryObjectsFetcher(
 	primarySide, secondarySide *joinSide,
-) docsJoiner {
-	j := docsJoiner{
+) primaryObjectsFetcher {
+	j := primaryObjectsFetcher{
 		primarySide:   primarySide,
 		secondarySide: secondarySide,
 	}
 	return j
 }
 
-func (j *docsJoiner) fetchPrimaryDocsReferencingSecondaryDoc() error {
+func (j *primaryObjectsFetcher) fetchPrimaryDocsReferencingSecondaryDoc() error {
 	relIDFieldDef, ok := j.primarySide.col.Definition().GetFieldByName(
 		j.primarySide.relFieldDef.Name + request.RelatedObjectID)
 	if !ok {
@@ -571,7 +542,7 @@ func (j *docsJoiner) fetchPrimaryDocsReferencingSecondaryDoc() error {
 	return nil
 }
 
-func (j *docsJoiner) addIDFieldToScanner() {
+func (j *primaryObjectsFetcher) addIDFieldToScanner() {
 	found := false
 	for i := range j.primaryScan.fields {
 		if j.primaryScan.fields[i].Name == j.relIDFieldDef.Name {
@@ -584,7 +555,7 @@ func (j *docsJoiner) addIDFieldToScanner() {
 	}
 }
 
-func (j *docsJoiner) collectDocs(numDocs int) ([]core.Doc, error) {
+func (j *primaryObjectsFetcher) collectDocs(numDocs int) ([]core.Doc, error) {
 	p := j.primarySide.plan
 	if err := p.Init(); err != nil {
 		return nil, NewErrSubTypeInit(err)
@@ -609,15 +580,13 @@ func (j *docsJoiner) collectDocs(numDocs int) ([]core.Doc, error) {
 	return docs, nil
 }
 
-func (j *docsJoiner) fetchPrimaryDocs() ([]core.Doc, error) {
+func (j *primaryObjectsFetcher) fetchPrimaryDocs() ([]core.Doc, error) {
 	j.addIDFieldToScanner()
 
 	secondaryDoc := j.secondarySide.plan.Value()
 	addFilterOnIDField(j.primaryScan, j.primarySide.relIDFieldMapIndex.Value(), secondaryDoc.GetID())
 
 	oldFetcher := j.primaryScan.fetcher
-	// TODO: check if spans are necessary to be saved
-	oldSpans := j.primaryScan.spans
 
 	indexOnRelation := findIndexByFieldName(j.primaryScan.col, j.relIDFieldDef.Name)
 	j.primaryScan.initFetcher(immutable.None[string](), indexOnRelation)
@@ -626,7 +595,6 @@ func (j *docsJoiner) fetchPrimaryDocs() ([]core.Doc, error) {
 
 	j.primaryScan.fetcher.Close()
 
-	j.primaryScan.spans = oldSpans
 	j.primaryScan.fetcher = oldFetcher
 
 	if err != nil {
@@ -679,7 +647,7 @@ func joinPrimaryDocs(primaryDocs []core.Doc, secondarySide, primarySide *joinSid
 }
 
 func (join *invertibleTypeJoin) fetchPrimaryDocsReferencingSecondaryDoc() ([]core.Doc, core.Doc, error) {
-	secJoiner := newSecondaryDocsJoiner(join.getPrimarySide(), join.getSecondarySide())
+	secJoiner := newPrimaryObjectsFetcher(join.getPrimarySide(), join.getSecondarySide())
 	err := secJoiner.fetchPrimaryDocsReferencingSecondaryDoc()
 	return secJoiner.resultPrimaryDocs, secJoiner.resultSecondaryDoc, err
 }
@@ -703,63 +671,8 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		return false, err
 	}
 
-	secondSide := join.getSecondSide()
-
 	if firstSide.isPrimary() {
-		secondaryDocID := getForeignKey(firstSide.plan, firstSide.relFieldDef.Name)
-		// TODO: add some tests with filter on nil relation
-		if secondaryDocID == "" {
-			if firstSide.isParent {
-				join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
-				return true, nil
-			}
-			return join.Next()
-		}
-
-		if !firstSide.isParent {
-			for i := range join.encounteredDocIDs {
-				if join.encounteredDocIDs[i] == secondaryDocID {
-					return join.Next()
-				}
-			}
-			join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
-		}
-
-		// check if there can ever be false (a.k.a. hasDoc = false)
-		hasDoc, err := fetchDocWithID(secondSide.plan, secondaryDocID)
-		if err != nil {
-			return false, err
-		}
-
-		// TODO: add some tests that either return error if the doc is not found or return
-		// the related doc (without this one) and let it be filtered.
-		if !hasDoc {
-			if firstSide.isParent {
-				join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
-				return true, nil
-			}
-			return join.Next()
-		}
-
-		if join.parentSide.relFieldDef.Kind.IsArray() {
-			var primaryDocs []core.Doc
-			var secondaryDoc core.Doc
-			if join.skipChild {
-				primaryDocs, secondaryDoc = joinPrimaryDocs([]core.Doc{firstSide.plan.Value()}, secondSide, firstSide)
-			} else {
-				primaryDocs, secondaryDoc, err = join.fetchPrimaryDocsReferencingSecondaryDoc()
-				if err != nil {
-					return false, err
-				}
-			}
-			secondaryDoc.Fields[join.childSelect.Index] = primaryDocs
-
-			join.docsToYield = append(join.docsToYield, secondaryDoc)
-		} else {
-			parentDoc := join.parentSide.plan.Value()
-			parentDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = join.childSide.plan.Value()
-			join.docsToYield = append(join.docsToYield, parentDoc)
-		}
+		return join.nextJoinedSecondaryDoc()
 	} else {
 		primaryDocs, secondaryDoc, err := join.fetchPrimaryDocsReferencingSecondaryDoc()
 		if err != nil {
@@ -772,6 +685,69 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		}
 	}
 
+	return true, nil
+}
+
+func (join *invertibleTypeJoin) nextJoinedSecondaryDoc() (bool, error) {
+	firstSide := join.getFirstSide()
+	secondSide := join.getSecondSide()
+
+	secondaryDocID := getForeignKey(firstSide.plan, firstSide.relFieldDef.Name)
+	// TODO: add some tests with filter on nil relation
+	if secondaryDocID == "" {
+		if firstSide.isParent {
+			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
+			return true, nil
+		}
+		return join.Next()
+	}
+
+	if !firstSide.isParent {
+		for i := range join.encounteredDocIDs {
+			if join.encounteredDocIDs[i] == secondaryDocID {
+				return join.Next()
+			}
+		}
+		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
+	}
+
+	// check if there can ever be false (a.k.a. hasDoc = false)
+	hasDoc, err := fetchDocWithID(secondSide.plan, secondaryDocID)
+	if err != nil {
+		return false, err
+	}
+
+	// TODO: add some tests that either return error if the doc is not found or return
+	// the related doc (without this one) and let it be filtered.
+	if !hasDoc {
+		if firstSide.isParent {
+			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
+			return true, nil
+		}
+		return join.Next()
+	}
+
+	if join.parentSide.relFieldDef.Kind.IsArray() {
+		var primaryDocs []core.Doc
+		var secondaryDoc core.Doc
+		// if child is not requested as part of the response, we just add the existing one (fetched by the secondary index
+		// on a filtered value) so that top select node that runs the filter again can yield it.
+		if join.skipChild {
+			primaryDocs, secondaryDoc = joinPrimaryDocs([]core.Doc{firstSide.plan.Value()}, secondSide, firstSide)
+		} else {
+			primaryDocs, secondaryDoc, err = join.fetchPrimaryDocsReferencingSecondaryDoc()
+			if err != nil {
+				return false, err
+			}
+		}
+		secondaryDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = primaryDocs
+
+		join.docsToYield = append(join.docsToYield, secondaryDoc)
+	} else {
+		parentDoc := join.parentSide.plan.Value()
+		parentDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = join.childSide.plan.Value()
+		join.docsToYield = append(join.docsToYield, parentDoc)
+	}
 	return true, nil
 }
 
@@ -792,7 +768,8 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	s.filter = fieldFilter
 	s.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 
-	join.invert()
+	join.childSide.isFirst = join.parentSide.isFirst
+	join.parentSide.isFirst = !join.parentSide.isFirst
 
 	return nil
 }

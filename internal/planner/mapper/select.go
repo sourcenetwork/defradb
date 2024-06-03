@@ -39,8 +39,8 @@ type Select struct {
 	// Selects.
 	Fields []Requestable
 
-	// SkipResolve is a flag that indicates that the fields in this select should not be resolved.
-	// It is used avoid resolving related objects if they are used in a filter and not requested in a response.
+	// SkipResolve is a flag that indicates that the fields in this Select don't need to be resolved.
+	// It is used to avoid resolving related objects if they are used only in a filter and not requested in a response.
 	SkipResolve bool
 }
 
