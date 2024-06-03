@@ -119,6 +119,8 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 				ctx = SetContextTxn(ctx, txn)
 				mp.txn = txn
 				mp.ls.SetReadStorage(txn.DAGstore().AsIPLDStorage())
+				// Reset the CRDTs to avoid reusing the old transaction.
+				mp.mCRDTs = make(map[string]merklecrdt.MerkleCRDT)
 				continue
 			}
 			return err
