@@ -17,6 +17,7 @@ import (
 )
 
 func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilter2(t *testing.T) {
+	// 3 users have a MacBook Pro: Islam, Shahzad, Keenan
 	req1 := `query {
 		User(filter: {
 			devices: {model: {_eq: "MacBook Pro"}}
@@ -24,6 +25,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			name
 		}
 	}`
+	// 1 user has an iPhone 10: Addo
 	req2 := `query {
 		User(filter: {
 			devices: {model: {_eq: "iPhone 10"}}
@@ -53,16 +55,14 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
-					{"name": "Keenan"},
 					{"name": "Islam"},
 					{"name": "Shahzad"},
+					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
-				Request: makeExplainQuery(req1),
-				// The invertable join does not support inverting one-many relations, so the index is
-				// not used.
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -71,10 +71,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				},
 			},
 			testUtils.Request{
-				Request: makeExplainQuery(req2),
-				// The invertable join does not support inverting one-many relations, so the index is
-				// not used.
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},
 	}
@@ -83,6 +81,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 }
 
 func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	// 3 users have a MacBook Pro: Islam, Shahzad, Keenan
 	req1 := `query {
 		User(filter: {
 			devices: {model: {_eq: "MacBook Pro"}}
@@ -90,6 +89,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			name
 		}
 	}`
+	// 1 user has an iPhone 10: Addo
 	req2 := `query {
 		User(filter: {
 			devices: {model: {_eq: "iPhone 10"}}
@@ -119,16 +119,14 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
-					{"name": "Keenan"},
 					{"name": "Islam"},
 					{"name": "Shahzad"},
+					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
-				Request: makeExplainQuery(req1),
-				// The invertable join does not support inverting one-many relations, so the index is
-				// not used.
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -137,10 +135,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				},
 			},
 			testUtils.Request{
-				Request: makeExplainQuery(req2),
-				// The invertable join does not support inverting one-many relations, so the index is
-				// not used.
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(450).WithIndexFetches(0),
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},
 	}
@@ -149,6 +145,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 }
 
 func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	// 1 user lives in Munich: Islam
 	req1 := `query {
 		User(filter: {
 			address: {city: {_eq: "Munich"}}
@@ -156,6 +153,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			name
 		}
 	}`
+	// 3 users live in Montreal: Shahzad, Fred, John
 	req2 := `query {
 		User(filter: {
 			address: {city: {_eq: "Montreal"}}
@@ -176,7 +174,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 
 					type Address {
 						user: User @primary
-						city: String @index
+						city: String @index 
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -210,7 +208,8 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelationAndRelation_ShouldFilter(t *testing.T) {
+	// 1 user lives in London: Andy
 	req1 := `query {
 		User(filter: {
 			address: {city: {_eq: "London"}}
@@ -218,6 +217,78 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			name
 		}
 	}`
+	// 3 users live in Montreal: Shahzad, Fred, John
+	req2 := `query {
+		User(filter: {
+			address: {city: {_eq: "Montreal"}}
+		}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed field of primary relation in 1-1 relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int
+						address: Address @primary @index
+					} 
+
+					type Address {
+						user: User
+						city: String @index
+						street: String 
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: []map[string]any{
+					{"name": "Andy"},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req1),
+				// we make 2 index fetches: 1. to get the only address with city == "London"
+				// and 2. to get the corresponding user
+				// then 1 field fetch to get the name of the user
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(2),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: []map[string]any{
+					{"name": "John"},
+					{"name": "Fred"},
+					{"name": "Shahzad"},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req2),
+				// we make 3 index fetches to get the 3 address with city == "Montreal"
+				// and 3 more index fetches to get the corresponding users
+				// then 3 field fetches to get the name of each user
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(6),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelation_ShouldFilter(t *testing.T) {
+	// 1 user lives in London: Andy
+	req1 := `query {
+		User(filter: {
+			address: {city: {_eq: "London"}}
+		}) {
+			name
+		}
+	}`
+	// 3 users live in Montreal: Shahzad, Fred, John
 	req2 := `query {
 		User(filter: {
 			address: {city: {_eq: "Montreal"}}
@@ -256,7 +327,6 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				// we make 1 index fetch to get the only address with city == "London"
 				// then we scan all 10 users to find one with matching "address_id"
 				// after this we fetch the name of the user
-				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
 			},
 			testUtils.Request{
@@ -272,7 +342,6 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				// we make 3 index fetch to get the 3 address with city == "Montreal"
 				// then we scan all 10 users to find one with matching "address_id" for each address
 				// after this we fetch the name of each user
-				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(33).WithIndexFetches(3),
 			},
 		},
@@ -282,6 +351,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 }
 
 func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileIndexedForeignField_ShouldFilter(t *testing.T) {
+	// 1 user lives in London: Andy
 	req := `query {
 		User(filter: {
 			address: {city: {_eq: "London"}}
@@ -317,7 +387,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(2),
 			},
 		},
 	}
@@ -500,10 +570,8 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 				},
 			},
 			testUtils.Request{
-				Request: makeExplainQuery(req),
-				// The invertable join does not support inverting one-many relations, so the index is
-				// not used.
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(10).WithIndexFetches(0),
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(14).WithIndexFetches(2),
 			},
 		},
 	}
@@ -512,6 +580,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 }
 
 func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	// 1 user lives in Munich: Islam
 	req := `query {
 		User(filter: {
 			address: {city: {_eq: "Munich"}}
@@ -563,8 +632,8 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 }
 
 func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplain(t *testing.T) {
-	// This query will fetch first a matching device which is secondary doc and therefore
-	// has a reference to the primary User doc.
+	// This query will fetch first a matching device which is primary doc and therefore
+	// has a reference to the secondary User doc.
 	req := `query {
 		Device(filter: {
 			year: {_eq: 2021}
@@ -633,7 +702,6 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExplain(t *testing.T) {
 	// This query will fetch first a matching user (owner) which is primary doc and therefore
 	// has no direct reference to secondary Device docs.
-	// At the moment the db has to make a full scan of the Device docs to find the matching ones.
 	// Keenan has 3 devices.
 	req := `query {
 		Device(filter: {
@@ -650,11 +718,11 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 					type User {
 						name: String @index
 						devices: [Device]
-					} 
+					}
 
 					type Device {
-						model: String 
-						owner: User
+						model: String
+						owner: User @index
 					}
 				`,
 			},
@@ -671,10 +739,10 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// we make only 1 index fetch to get the owner by it's name
-				// and 44 field fetches to get 2 fields for all 22 devices in the db.
-				// it should be optimized after this is done https://github.com/sourcenetwork/defradb/issues/2601
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(44).WithIndexFetches(1),
+				// we make 1 index fetch to get the owner by it's name
+				// and 3 index fetches to get all 3 devices of the owner
+				// and 3 field fetches to get 1 'model' field for every fetched device.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(4),
 			},
 		},
 	}
