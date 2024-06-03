@@ -19,6 +19,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/keyring"
 )
 
 // sourceHubClient is a private abstraction to allow multiple ACP implementations
@@ -100,6 +101,23 @@ func NewLocalACP() ACP {
 	return &sourceHubBridge{
 		client: &ACPLocal{},
 	}
+}
+
+func NewSourceHubACP(
+	chainID string,
+	grpcAddress string,
+	cometRPCAddress string,
+	keyring keyring.Keyring,
+	acpKeyName string,
+) (ACP, error) {
+	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, keyring, acpKeyName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sourceHubBridge{
+		client: acpSourceHub,
+	}, nil
 }
 
 func (a *sourceHubBridge) Init(ctx context.Context, path string) {
