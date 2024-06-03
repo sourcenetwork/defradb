@@ -987,6 +987,7 @@ func resolveInnerFilterDependencies(
 				return nil, err
 			}
 
+			childSelect.SkipResolve = true
 			newFields = append(newFields, childSelect)
 		}
 
