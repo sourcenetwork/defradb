@@ -413,25 +413,23 @@ func resolveAggregates(
 				childMapping = childMapping.CloneWithoutRender()
 				mapping.SetChildAt(index, childMapping)
 
-				if !childIsMapped {
-					filterDependencies, err := resolveFilterDependencies(
-						ctx,
-						store,
-						rootSelectType,
-						childCollectionName,
-						target.filter,
-						mapping.ChildMappings[index],
-						childFields,
-					)
-					if err != nil {
-						return nil, err
-					}
-					childFields = append(childFields, filterDependencies...)
-
-					// If the child was not mapped, the filter will not have been converted yet
-					// so we must do that now.
-					convertedFilter = ToFilter(target.filter.Value(), mapping.ChildMappings[index])
+				filterDependencies, err := resolveFilterDependencies(
+					ctx,
+					store,
+					rootSelectType,
+					childCollectionName,
+					target.filter,
+					mapping.ChildMappings[index],
+					childFields,
+				)
+				if err != nil {
+					return nil, err
 				}
+				childFields = append(childFields, filterDependencies...)
+
+				// If the child was not mapped, the filter will not have been converted yet
+				// so we must do that now.
+				convertedFilter = ToFilter(target.filter.Value(), mapping.ChildMappings[index])
 
 				dummyJoin := &Select{
 					Targetable: Targetable{
