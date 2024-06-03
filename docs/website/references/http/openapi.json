@@ -1,0 +1,2094 @@
+{
+    "components": {
+        "parameters": {
+            "txn": {
+                "description": "Transaction id",
+                "in": "header",
+                "name": "x-defradb-tx",
+                "schema": {
+                    "format": "int64",
+                    "type": "integer"
+                }
+            }
+        },
+        "responses": {
+            "error": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/error"
+                        }
+                    }
+                },
+                "description": "error"
+            },
+            "success": {
+                "description": "ok"
+            }
+        },
+        "schemas": {
+            "add_view_request": {
+                "properties": {
+                    "Query": {
+                        "type": "string"
+                    },
+                    "SDL": {
+                        "type": "string"
+                    },
+                    "Transform": {}
+                },
+                "type": "object"
+            },
+            "backup_config": {
+                "properties": {
+                    "collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "filepath": {
+                        "type": "string"
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "pretty": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ccip_request": {
+                "properties": {
+                    "data": {
+                        "type": "string"
+                    },
+                    "sender": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ccip_response": {
+                "properties": {
+                    "data": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "collection": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "ID": {
+                                    "maximum": 4294967295,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                },
+                                "Kind": {},
+                                "Name": {
+                                    "type": "string"
+                                },
+                                "RelationName": {}
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "ID": {
+                        "maximum": 4294967295,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "Indexes": {
+                        "items": {
+                            "properties": {
+                                "Fields": {
+                                    "items": {
+                                        "properties": {
+                                            "Descending": {
+                                                "type": "boolean"
+                                            },
+                                            "Name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "type": "array"
+                                },
+                                "ID": {
+                                    "maximum": 4294967295,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                },
+                                "Unique": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "Name": {},
+                    "Policy": {},
+                    "RootID": {
+                        "maximum": 4294967295,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "SchemaVersionID": {
+                        "type": "string"
+                    },
+                    "Sources": {
+                        "items": {},
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "collection_definition": {
+                "properties": {
+                    "description": {
+                        "properties": {
+                            "Fields": {
+                                "items": {
+                                    "properties": {
+                                        "ID": {
+                                            "maximum": 4294967295,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        },
+                                        "Kind": {},
+                                        "Name": {
+                                            "type": "string"
+                                        },
+                                        "RelationName": {}
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "ID": {
+                                "maximum": 4294967295,
+                                "minimum": 0,
+                                "type": "integer"
+                            },
+                            "Indexes": {
+                                "items": {
+                                    "properties": {
+                                        "Fields": {
+                                            "items": {
+                                                "properties": {
+                                                    "Descending": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "Name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "ID": {
+                                            "maximum": 4294967295,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        },
+                                        "Name": {
+                                            "type": "string"
+                                        },
+                                        "Unique": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "Name": {},
+                            "Policy": {},
+                            "RootID": {
+                                "maximum": 4294967295,
+                                "minimum": 0,
+                                "type": "integer"
+                            },
+                            "SchemaVersionID": {
+                                "type": "string"
+                            },
+                            "Sources": {
+                                "items": {},
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "schema": {
+                        "properties": {
+                            "Fields": {
+                                "items": {
+                                    "properties": {
+                                        "Kind": {},
+                                        "Name": {
+                                            "type": "string"
+                                        },
+                                        "Typ": {
+                                            "maximum": 255,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "Name": {
+                                "type": "string"
+                            },
+                            "Root": {
+                                "type": "string"
+                            },
+                            "VersionID": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "collection_delete": {
+                "properties": {
+                    "filter": {}
+                },
+                "type": "object"
+            },
+            "collection_update": {
+                "properties": {
+                    "filter": {},
+                    "updater": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "create_tx": {
+                "properties": {
+                    "id": {
+                        "maximum": 18446744073709552000,
+                        "minimum": 0,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "delete_result": {
+                "properties": {
+                    "Count": {
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "DocIDs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "document": {
+                "additionalProperties": true,
+                "type": "object"
+            },
+            "error": {
+                "properties": {
+                    "error": {}
+                },
+                "type": "object"
+            },
+            "graphql_request": {
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "graphql_response": {
+                "properties": {
+                    "data": {},
+                    "errors": {
+                        "items": {},
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "index": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Descending": {
+                                    "type": "boolean"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "ID": {
+                        "maximum": 4294967295,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Unique": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "lens_config": {
+                "properties": {
+                    "DestinationSchemaVersionID": {
+                        "type": "string"
+                    },
+                    "Lenses": {
+                        "items": {
+                            "properties": {
+                                "Arguments": {
+                                    "additionalProperties": {},
+                                    "type": "object"
+                                },
+                                "Inverse": {
+                                    "type": "boolean"
+                                },
+                                "Path": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "SourceSchemaVersionID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "migrate_request": {
+                "properties": {
+                    "CollectionID": {
+                        "maximum": 4294967295,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "Data": {
+                        "items": {
+                            "additionalProperties": {},
+                            "type": "object"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "patch_schema_request": {
+                "properties": {
+                    "Migration": {},
+                    "Patch": {
+                        "type": "string"
+                    },
+                    "SetAsDefaultVersion": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "peer_info": {
+                "properties": {
+                    "Addrs": {
+                        "items": {},
+                        "type": "array"
+                    },
+                    "ID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "replicator": {
+                "properties": {
+                    "Info": {
+                        "properties": {
+                            "Addrs": {
+                                "items": {},
+                                "type": "array"
+                            },
+                            "ID": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "Schemas": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "schema": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Kind": {},
+                                "Name": {
+                                    "type": "string"
+                                },
+                                "Typ": {
+                                    "maximum": 255,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Root": {
+                        "type": "string"
+                    },
+                    "VersionID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "set_migration_request": {
+                "properties": {
+                    "CollectionID": {
+                        "maximum": 4294967295,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "Config": {
+                        "properties": {
+                            "Lenses": {
+                                "items": {
+                                    "properties": {
+                                        "Arguments": {
+                                            "additionalProperties": {},
+                                            "type": "object"
+                                        },
+                                        "Inverse": {
+                                            "type": "boolean"
+                                        },
+                                        "Path": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "update_result": {
+                "properties": {
+                    "Count": {
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "DocIDs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerToken": {
+                "bearerFormat": "JWT",
+                "scheme": "bearer",
+                "type": "http"
+            }
+        }
+    },
+    "externalDocs": {
+        "description": "Learn more about DefraDB",
+        "url": "https://docs.source.network"
+    },
+    "info": {
+        "title": "DefraDB API",
+        "version": "0"
+    },
+    "openapi": "3.0.3",
+    "paths": {
+        "/acp/policy": {
+            "post": {
+                "description": "Add a policy using acp system",
+                "operationId": "add policy",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_policy"
+                ]
+            }
+        },
+        "/backup/export": {
+            "post": {
+                "description": "Export a database backup to file",
+                "operationId": "backup_export",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/backup_config"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "backup"
+                ]
+            }
+        },
+        "/backup/import": {
+            "post": {
+                "description": "Import a database backup from file",
+                "operationId": "backup_import",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/backup_config"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "backup"
+                ]
+            }
+        },
+        "/ccip": {
+            "post": {
+                "description": "CCIP POST endpoint",
+                "operationId": "ccip_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ccip_request"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ccip_response"
+                                }
+                            }
+                        },
+                        "description": "GraphQL response"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "ccip"
+                ]
+            }
+        },
+        "/ccip/{sender}/{data}": {
+            "get": {
+                "description": "CCIP GET endpoint",
+                "operationId": "ccip_get",
+                "parameters": [
+                    {
+                        "description": "Hex encoded request data",
+                        "in": "path",
+                        "name": "data",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Hex encoded sender address",
+                        "in": "path",
+                        "name": "sender",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ccip_response"
+                                }
+                            }
+                        },
+                        "description": "GraphQL response"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "ccip"
+                ]
+            }
+        },
+        "/collections": {
+            "get": {
+                "description": "Introspect collection(s) by name, schema id, or version id.",
+                "operationId": "collection_describe",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Collection schema root",
+                        "in": "query",
+                        "name": "schema_root",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Collection schema version id",
+                        "in": "query",
+                        "name": "version_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "If true, inactive collections will be returned in addition to active ones",
+                        "in": "query",
+                        "name": "get_inactive",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/collection"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/collection"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "description": "Collection(s) with matching name, schema id, or version id."
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "patch": {
+                "description": "Update collection definitions",
+                "operationId": "patch_collection",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            }
+        },
+        "/collections/{name}": {
+            "delete": {
+                "description": "Delete document(s) from a collection",
+                "operationId": "collection_delete_with_filter",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/collection_delete"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete results"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "get": {
+                "description": "Get all document IDs",
+                "operationId": "collection_keys",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "patch": {
+                "description": "Update document(s) in a collection",
+                "operationId": "collection_update_with_filter",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/collection_update"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/update_result"
+                                }
+                            }
+                        },
+                        "description": "Update results"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "post": {
+                "description": "Create document(s) in a collection",
+                "operationId": "collection_create",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/document"
+                                    },
+                                    {
+                                        "items": {
+                                            "$ref": "#/components/schemas/document"
+                                        },
+                                        "type": "array"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            }
+        },
+        "/collections/{name}/indexes": {
+            "get": {
+                "description": "List secondary indexes",
+                "operationId": "index_list",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/index"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "List of indexes"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "index"
+                ]
+            },
+            "post": {
+                "description": "Create a secondary index",
+                "operationId": "index_create",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/index"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/index"
+                                }
+                            }
+                        },
+                        "description": "Index description"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "index"
+                ]
+            }
+        },
+        "/collections/{name}/indexes/{index}": {
+            "delete": {
+                "description": "Delete a secondary index",
+                "operationId": "index_drop",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "index",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "index"
+                ]
+            }
+        },
+        "/collections/{name}/{docID}": {
+            "delete": {
+                "description": "Delete a document by docID",
+                "operationId": "collection_delete",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "get": {
+                "description": "Get a document by docID",
+                "operationId": "collection_get",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/document"
+                                }
+                            }
+                        },
+                        "description": "Document value"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "patch": {
+                "description": "Update a document by docID",
+                "operationId": "collection_update",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            }
+        },
+        "/debug/dump": {
+            "get": {
+                "description": "Dump database",
+                "operationId": "debug_dump",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "debug"
+                ]
+            }
+        },
+        "/graphql": {
+            "get": {
+                "description": "GraphQL GET endpoint",
+                "operationId": "graphql_get",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/graphql_response"
+                                }
+                            }
+                        },
+                        "description": "GraphQL response"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "graphql"
+                ]
+            },
+            "post": {
+                "description": "GraphQL POST endpoint",
+                "operationId": "graphql_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/graphql_request"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/graphql_response"
+                                }
+                            }
+                        },
+                        "description": "GraphQL response"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "graphql"
+                ]
+            }
+        },
+        "/lens": {
+            "post": {
+                "description": "Add a new lens migration",
+                "operationId": "lens_set_migration",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/lens_config"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            }
+        },
+        "/lens/registry": {
+            "post": {
+                "description": "Add a new lens migration to registry",
+                "operationId": "lens_registry_set_migration",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/set_migration_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            }
+        },
+        "/lens/registry/reload": {
+            "post": {
+                "description": "Reload lens migrations",
+                "operationId": "lens_registry_reload",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            }
+        },
+        "/lens/registry/{version}/down": {
+            "post": {
+                "description": "Migrate documents from a collection",
+                "operationId": "lens_registry_migrate_down",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "version",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/migrate_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            }
+        },
+        "/lens/registry/{version}/up": {
+            "post": {
+                "description": "Migrate documents to a collection",
+                "operationId": "lens_registry_migrate_up",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "version",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/migrate_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            }
+        },
+        "/p2p/collections": {
+            "delete": {
+                "description": "Remove peer collections",
+                "operationId": "peer_collection_remove",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "get": {
+                "description": "List peer collections",
+                "operationId": "peer_collection_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Peer collections"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "post": {
+                "description": "Add peer collections",
+                "operationId": "peer_collection_add",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/info": {
+            "get": {
+                "operationId": "peer_info",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/peer_info"
+                                }
+                            }
+                        },
+                        "description": "Peer network info"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/replicators": {
+            "delete": {
+                "description": "Delete peer replicators",
+                "operationId": "peer_replicator_delete",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/replicator"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "get": {
+                "description": "List peer replicators",
+                "operationId": "peer_replicator_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/replicator"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Replicators"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "post": {
+                "description": "Add peer replicators",
+                "operationId": "peer_replicator_set",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/replicator"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/schema": {
+            "get": {
+                "description": "Introspect schema(s) by name, schema root, or version id.",
+                "operationId": "schema_describe",
+                "parameters": [
+                    {
+                        "description": "Schema name",
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Schema root",
+                        "in": "query",
+                        "name": "root",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Schema version id",
+                        "in": "query",
+                        "name": "version_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/schema"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/schema"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "description": "Schema(s) with matching name, schema id, or version id."
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "schema"
+                ]
+            },
+            "patch": {
+                "description": "Update a schema definition",
+                "operationId": "patch_schema",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/patch_schema_request"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "schema"
+                ]
+            },
+            "post": {
+                "description": "Add a new schema definition",
+                "operationId": "add_schema",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/collection"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Collection(s)"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "schema"
+                ]
+            }
+        },
+        "/schema/default": {
+            "post": {
+                "description": "Set the default schema version for a collection",
+                "operationId": "set_default_schema_version",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "schema"
+                ]
+            }
+        },
+        "/tx": {
+            "post": {
+                "description": "Create a new transaction",
+                "operationId": "new_transaction",
+                "parameters": [
+                    {
+                        "description": "Read only transaction",
+                        "in": "query",
+                        "name": "read_only",
+                        "schema": {
+                            "default": false,
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/create_tx"
+                                }
+                            }
+                        },
+                        "description": "Transaction info"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "transaction"
+                ]
+            }
+        },
+        "/tx/concurrent": {
+            "post": {
+                "description": "Create a new concurrent transaction",
+                "operationId": "new_concurrent_transaction",
+                "parameters": [
+                    {
+                        "description": "Read only transaction",
+                        "in": "query",
+                        "name": "read_only",
+                        "schema": {
+                            "default": false,
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/create_tx"
+                                }
+                            }
+                        },
+                        "description": "Transaction info"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "transaction"
+                ]
+            }
+        },
+        "/tx/{id}": {
+            "delete": {
+                "description": "Discard a transaction",
+                "operationId": "transaction_discard",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "int64",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "transaction"
+                ]
+            },
+            "post": {
+                "description": "Commit a transaction",
+                "operationId": "transaction_commit",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "int64",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "transaction"
+                ]
+            }
+        },
+        "/view": {
+            "post": {
+                "description": "Manage database views.",
+                "operationId": "view",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/add_view_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/collection_definition"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/collection_definition"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "description": "The created collection and embedded schemas for the added view."
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "view"
+                ]
+            }
+        }
+    },
+    "servers": [
+        {
+            "description": "Local DefraDB instance",
+            "url": "http://localhost:9181/api/v0"
+        }
+    ],
+    "tags": [
+        {
+            "description": "Add or update schema definitions",
+            "name": "schema"
+        },
+        {
+            "description": "Add, remove, or update documents",
+            "name": "collection"
+        },
+        {
+            "description": "Add views",
+            "name": "view"
+        },
+        {
+            "description": "Add, update, or remove indexes",
+            "name": "index"
+        },
+        {
+            "description": "Migrate documents to and from schema versions",
+            "name": "lens"
+        },
+        {
+            "description": "Peer-to-peer network operations",
+            "name": "p2p"
+        },
+        {
+            "description": "Access control policy operations",
+            "name": "acp"
+        },
+        {
+            "description": "Database transaction operations",
+            "name": "transaction"
+        },
+        {
+            "description": "Database backup operations",
+            "name": "backup"
+        },
+        {
+            "description": "GraphQL query endpoints",
+            "name": "graphql"
+        },
+        {
+            "externalDocs": {
+                "description": "EIP-3668",
+                "url": "https://eips.ethereum.org/EIPS/eip-3668"
+            },
+            "name": "ccip"
+        }
+    ]
+}
