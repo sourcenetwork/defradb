@@ -259,15 +259,6 @@ func (p *Planner) makeTypeJoinOne(
 		return nil, client.NewErrFieldNotExist(subSelect.Name)
 	}
 
-	// TODO: remove this block?
-	var secondaryFieldIndex immutable.Option[int]
-	if !parentsRelFieldDef.IsPrimaryRelation {
-		idFieldName := parentsRelFieldDef.Name
-		secondaryFieldIndex = immutable.Some(
-			parent.documentMapping.FirstIndexOfName(idFieldName + request.RelatedObjectID),
-		)
-	}
-
 	parentSide := joinSide{
 		plan:             sourcePlan,
 		relFieldDef:      parentsRelFieldDef,
@@ -303,7 +294,6 @@ func (p *Planner) makeTypeJoinOne(
 			parentSide:          parentSide,
 			childSide:           childSide,
 			childSelect:         subSelect,
-			secondaryFieldIndex: secondaryFieldIndex,
 			secondaryFetchLimit: 1,
 		},
 	}, nil
@@ -535,7 +525,6 @@ type invertibleTypeJoin struct {
 	parentSide joinSide
 	childSide  joinSide
 
-	secondaryFieldIndex immutable.Option[int]
 	secondaryFetchLimit uint
 
 	// docsToYield contains documents read and ready to be yielded by this node.
