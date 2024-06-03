@@ -496,7 +496,7 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 
 // checkExistingFieldsAndAdjustRelFieldNames checks if the fields in the index description
 // exist in the collection schema.
-// If a field is a relation, it will be adjusted to relation id field name, a.k.a. `field_name + _id`. 
+// If a field is a relation, it will be adjusted to relation id field name, a.k.a. `field_name + _id`.
 func (c *collection) checkExistingFieldsAndAdjustRelFieldNames(
 	fields []client.IndexedFieldDescription,
 ) error {

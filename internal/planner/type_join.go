@@ -592,14 +592,16 @@ func (j *primaryObjectsFetcher) fetchPrimaryDocs() ([]core.Doc, error) {
 	j.primaryScan.initFetcher(immutable.None[string](), indexOnRelation)
 
 	docs, err := j.collectDocs(0)
-
-	j.primaryScan.fetcher.Close()
-
-	j.primaryScan.fetcher = oldFetcher
-
 	if err != nil {
 		return nil, err
 	}
+
+	err = j.primaryScan.fetcher.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	j.primaryScan.fetcher = oldFetcher
 
 	return docs, nil
 }
