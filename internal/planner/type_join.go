@@ -227,76 +227,12 @@ func (p *Planner) makeTypeJoinOne(
 	sourcePlan planNode,
 	subSelect *mapper.Select,
 ) (*typeJoinOne, error) {
-	prepareScanNodeFilterForTypeJoin(parent, sourcePlan, subSelect)
-
-	subSelectPlan, err := p.Select(subSelect)
+	invertibleTypeJoin, err := p.newInvertableTypeJoin(parent, sourcePlan, subSelect)
 	if err != nil {
 		return nil, err
 	}
-
-	// get the correct sub field schema type (collection)
-	parentsRelFieldDef, ok := parent.collection.Definition().GetFieldByName(subSelect.Name)
-	if !ok {
-		return nil, client.NewErrFieldNotExist(subSelect.Name)
-	}
-
-	subCol, err := p.db.GetCollectionByName(p.ctx, subSelect.CollectionName)
-	if err != nil {
-		return nil, err
-	}
-
-	childsRelFieldDesc, ok := subCol.Description().GetFieldByRelation(
-		parentsRelFieldDef.RelationName,
-		parent.collection.Name().Value(),
-		parentsRelFieldDef.Name,
-	)
-	if !ok {
-		return nil, client.NewErrFieldNotExist(parentsRelFieldDef.Name)
-	}
-
-	childsRelFieldDef, ok := subCol.Definition().GetFieldByName(childsRelFieldDesc.Name)
-	if !ok {
-		return nil, client.NewErrFieldNotExist(subSelect.Name)
-	}
-
-	parentSide := joinSide{
-		plan:             sourcePlan,
-		relFieldDef:      parentsRelFieldDef,
-		relFieldMapIndex: immutable.Some(subSelect.Index),
-		col:              parent.collection,
-		requestedFields:  getRequestedFields(sourcePlan),
-		isFirst:          true,
-		isParent:         true,
-	}
-
-	ind := parent.documentMapping.IndexesByName[parentsRelFieldDef.Name+request.RelatedObjectID]
-	if len(ind) > 0 {
-		parentSide.relIDFieldMapIndex = immutable.Some(ind[0])
-	}
-
-	childSide := joinSide{
-		plan:            subSelectPlan,
-		relFieldDef:     childsRelFieldDef,
-		col:             subCol,
-		requestedFields: getRequestedFields(subSelectPlan),
-		isFirst:         false,
-		isParent:        false,
-	}
-
-	ind = subSelectPlan.DocumentMap().IndexesByName[childsRelFieldDef.Name+request.RelatedObjectID]
-	if len(ind) > 0 {
-		childSide.relIDFieldMapIndex = immutable.Some(ind[0])
-	}
-
-	return &typeJoinOne{
-		invertibleTypeJoin: invertibleTypeJoin{
-			docMapper:           docMapper{parent.documentMapping},
-			parentSide:          parentSide,
-			childSide:           childSide,
-			childSelect:         subSelect,
-			secondaryFetchLimit: 1,
-		},
-	}, nil
+	invertibleTypeJoin.secondaryFetchLimit = 1
+	return &typeJoinOne{invertibleTypeJoin: invertibleTypeJoin}, nil
 }
 
 func (n *typeJoinOne) Kind() string {
@@ -305,6 +241,19 @@ func (n *typeJoinOne) Kind() string {
 
 type typeJoinMany struct {
 	invertibleTypeJoin
+}
+
+func (p *Planner) makeTypeJoinMany(
+	parent *selectNode,
+	sourcePlan planNode,
+	subSelect *mapper.Select,
+) (*typeJoinMany, error) {
+	invertibleTypeJoin, err := p.newInvertableTypeJoin(parent, sourcePlan, subSelect)
+	if err != nil {
+		return nil, err
+	}
+	invertibleTypeJoin.secondaryFetchLimit = 0
+	return &typeJoinMany{invertibleTypeJoin: invertibleTypeJoin}, nil
 }
 
 func prepareScanNodeFilterForTypeJoin(
@@ -342,21 +291,21 @@ func prepareScanNodeFilterForTypeJoin(
 	}
 }
 
-func (p *Planner) makeTypeJoinMany(
+func (p *Planner) newInvertableTypeJoin(
 	parent *selectNode,
 	sourcePlan planNode,
 	subSelect *mapper.Select,
-) (*typeJoinMany, error) {
+) (invertibleTypeJoin, error) {
 	prepareScanNodeFilterForTypeJoin(parent, sourcePlan, subSelect)
 
 	subSelectPlan, err := p.Select(subSelect)
 	if err != nil {
-		return nil, err
+		return invertibleTypeJoin{}, err
 	}
 
 	parentsRelFieldDef, ok := parent.collection.Definition().GetFieldByName(subSelect.Name)
 	if !ok {
-		return nil, client.NewErrFieldNotExist(subSelect.Name)
+		return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
 	}
 
 	skipChild := false
@@ -373,7 +322,7 @@ func (p *Planner) makeTypeJoinMany(
 
 	subCol, err := p.db.GetCollectionByName(p.ctx, subSelect.CollectionName)
 	if err != nil {
-		return nil, err
+		return invertibleTypeJoin{}, err
 	}
 
 	childsRelFieldDesc, ok := subCol.Description().GetFieldByRelation(
@@ -382,12 +331,12 @@ func (p *Planner) makeTypeJoinMany(
 		parentsRelFieldDef.Name,
 	)
 	if !ok {
-		return nil, client.NewErrFieldNotExist(parentsRelFieldDef.Name)
+		return invertibleTypeJoin{}, client.NewErrFieldNotExist(parentsRelFieldDef.Name)
 	}
 
 	childsRelFieldDef, ok := subCol.Definition().GetFieldByName(childsRelFieldDesc.Name)
 	if !ok {
-		return nil, client.NewErrFieldNotExist(subSelect.Name)
+		return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
 	}
 
 	parentSide := joinSide{
@@ -400,6 +349,11 @@ func (p *Planner) makeTypeJoinMany(
 		isParent:         true,
 	}
 
+	ind := parent.documentMapping.IndexesByName[parentsRelFieldDef.Name+request.RelatedObjectID]
+	if len(ind) > 0 {
+		parentSide.relIDFieldMapIndex = immutable.Some(ind[0])
+	}
+
 	childSide := joinSide{
 		plan:            subSelectPlan,
 		relFieldDef:     childsRelFieldDef,
@@ -409,21 +363,17 @@ func (p *Planner) makeTypeJoinMany(
 		isParent:        false,
 	}
 
-	subDocMap := subSelectPlan.DocumentMap()
-	ind := subDocMap.IndexesByName[childsRelFieldDef.Name+request.RelatedObjectID]
+	ind = subSelectPlan.DocumentMap().IndexesByName[childsRelFieldDef.Name+request.RelatedObjectID]
 	if len(ind) > 0 {
 		childSide.relIDFieldMapIndex = immutable.Some(ind[0])
 	}
 
-	return &typeJoinMany{
-		invertibleTypeJoin: invertibleTypeJoin{
-			docMapper:           docMapper{parent.documentMapping},
-			parentSide:          parentSide,
-			childSide:           childSide,
-			childSelect:         subSelect,
-			skipChild:           skipChild,
-			secondaryFetchLimit: 0,
-		},
+	return invertibleTypeJoin{
+		docMapper:   docMapper{parent.documentMapping},
+		parentSide:  parentSide,
+		childSide:   childSide,
+		childSelect: subSelect,
+		skipChild:   skipChild,
 	}, nil
 }
 
