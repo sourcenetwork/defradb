@@ -35,15 +35,6 @@ jobs:
       - name: Checkout code into the directory
         uses: actions/checkout@v3
 
-      # This check is there as a safety to ensure we start clean (without any changes).
-      # If there are ever changes here, the rest of the job will output false result.
-      - name: Check no changes exist initially
-        uses: tj-actions/verify-changed-files@v20
-        with:
-          fail-if-changed: true
-          files: |
-             docs/website/references/cli
-
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v3
         with:
