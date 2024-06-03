@@ -158,7 +158,7 @@ func (db *db) newMergeProcessor(
 
 type mergeTarget struct {
 	heads      map[cid.Cid]*coreblock.Block
-	headHeigth uint64
+	headHeight uint64
 }
 
 func newMergeTarget() mergeTarget {
@@ -189,7 +189,7 @@ func (mp *mergeProcessor) loadComposites(
 		return nil
 	}
 
-	if block.Delta.GetPriority() >= mt.headHeigth {
+	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.composites.PushFront(block)
 		for _, link := range block.Links {
 			if link.Name == core.HEAD {
@@ -214,7 +214,7 @@ func (mp *mergeProcessor) loadComposites(
 				}
 
 				newMT.heads[link.Cid] = childBlock
-				newMT.headHeigth = childBlock.Delta.GetPriority()
+				newMT.headHeight = childBlock.Delta.GetPriority()
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
@@ -385,7 +385,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.Da
 
 		mt.heads[cid] = block
 		// All heads have the same height so overwriting is ok.
-		mt.headHeigth = block.Delta.GetPriority()
+		mt.headHeight = block.Delta.GetPriority()
 	}
 	return mt, nil
 }

@@ -34,7 +34,7 @@ type blockProcessor struct {
 	*Peer
 	wg             *sync.WaitGroup
 	bsSession      *blockservice.Session
-	queuedChildren *cidSafeSet
+	queuedChildren *sync.Map
 }
 
 func newBlockProcessor(
@@ -45,7 +45,7 @@ func newBlockProcessor(
 		Peer:           p,
 		wg:             &sync.WaitGroup{},
 		bsSession:      blockservice.NewSession(ctx, p.bserv),
-		queuedChildren: newCidSafeSet(),
+		queuedChildren: &sync.Map{},
 	}
 }
 
@@ -93,7 +93,7 @@ func (bp *blockProcessor) handleChildBlocks(
 		if exists {
 			continue
 		}
-		if bp.queuedChildren.Visit(link.Cid) {
+		if _, loaded := bp.queuedChildren.LoadOrStore(link.Cid, struct{}{}); !loaded {
 			links = append(links, link.Cid)
 		}
 	}
@@ -119,40 +119,6 @@ func (bp *blockProcessor) handleChildBlocks(
 	}
 
 	for _, link := range links {
-		bp.queuedChildren.Remove(link)
+		bp.queuedChildren.Delete(link)
 	}
-}
-
-type cidSafeSet struct {
-	set map[cid.Cid]struct{}
-	mux sync.Mutex
-}
-
-func newCidSafeSet() *cidSafeSet {
-	return &cidSafeSet{
-		set: make(map[cid.Cid]struct{}),
-	}
-}
-
-// Visit checks if we can visit this node, or
-// if its already being visited
-func (s *cidSafeSet) Visit(c cid.Cid) bool {
-	var b bool
-	s.mux.Lock()
-	{
-		if _, ok := s.set[c]; !ok {
-			s.set[c] = struct{}{}
-			b = true
-		}
-	}
-	s.mux.Unlock()
-	return b
-}
-
-func (s *cidSafeSet) Remove(c cid.Cid) {
-	s.mux.Lock()
-	{
-		delete(s.set, c)
-	}
-	s.mux.Unlock()
 }
