@@ -8,34 +8,51 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-/*
-Package identity provides defradb identity.
-*/
-
 package identity
 
-import "github.com/sourcenetwork/immutable"
-
-// Identity is the unique identifier for an actor.
-type Identity string
-
-var (
-	// None is an empty identity.
-	None = immutable.None[Identity]()
+import (
+	cosmosSecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/sourcenetwork/immutable"
 )
 
-// New makes a new identity if the input is not empty otherwise, returns None.
-func New(identity string) immutable.Option[Identity] {
-	// TODO-ACP: There will be more validation once sourcehub gets some utilities.
-	// Then a validation function would do the validation, will likely do outside this function.
-	// https://github.com/sourcenetwork/defradb/issues/2358
-	if identity == "" {
-		return None
-	}
-	return immutable.Some(Identity(identity))
+// None specifies an anonymous actor.
+var None = immutable.None[Identity]()
+
+// Identity describes a unique actor.
+type Identity struct {
+	// PublicKey is the actor's public key.
+	PublicKey *secp256k1.PublicKey
+	// PrivateKey is the actor's private key.
+	PrivateKey *secp256k1.PrivateKey
+	// Address is the actor's unique address.
+	//
+	// The address is derived from the actor's public key.
+	Address string
 }
 
-// String returns the string representation of the identity.
-func (i Identity) String() string {
-	return string(i)
+// FromPrivateKey returns a new identity using the given private key.
+func FromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity] {
+	pubKey := privateKey.PubKey()
+	return immutable.Some(Identity{
+		Address:    AddressFromPublicKey(pubKey),
+		PublicKey:  pubKey,
+		PrivateKey: privateKey,
+	})
+}
+
+// FromPublicKey returns a new identity using the given public key.
+func FromPublicKey(publicKey *secp256k1.PublicKey) immutable.Option[Identity] {
+	return immutable.Some(Identity{
+		Address:   AddressFromPublicKey(publicKey),
+		PublicKey: publicKey,
+	})
+}
+
+// AddressFromPublicKey returns the unique address of the given public key.
+func AddressFromPublicKey(publicKey *secp256k1.PublicKey) string {
+	pub := cosmosSecp256k1.PubKey{Key: publicKey.SerializeCompressed()}
+	// conversion from well known types should never cause a panic
+	return types.MustBech32ifyAddressBytes("cosmos", pub.Address().Bytes())
 }

@@ -29,7 +29,7 @@ type AddPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity string
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -52,7 +52,7 @@ func addPolicyACP(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
+		ctx := db.SetContextIdentity(s.ctx, action.Identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		if err == nil {

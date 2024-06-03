@@ -3,8 +3,8 @@
 package mocks
 
 import (
-	client "github.com/sourcenetwork/defradb/client"
 	acp "github.com/sourcenetwork/defradb/acp"
+	client "github.com/sourcenetwork/defradb/client"
 
 	context "context"
 

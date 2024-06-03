@@ -80,7 +80,8 @@ func MakeCollectionCommand() *cobra.Command {
 		},
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
-	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "", "ACP Identity")
+	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
+		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
 	cmd.PersistentFlags().StringVar(&schemaRoot, "schema", "", "Collection schema Root")
 	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")

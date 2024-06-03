@@ -12,10 +12,12 @@ package net
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -71,9 +73,9 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	var acpLocal acp.ACPLocal
+	acpLocal := acp.NewLocalACP()
 	acpLocal.Init(context.Background(), "")
-	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](&acpLocal), db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](acpLocal), db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -371,11 +373,17 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity := acpIdentity.FromPrivateKey(privKey)
+
+	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+	require.Equal(t, "7bef56a54eae563eafdc48c57cf37075351498ebb5a200f59cf9b8c6f8149606", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -422,11 +430,17 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity := acpIdentity.FromPrivateKey(privKey)
+
+	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+	require.Equal(t, "7bef56a54eae563eafdc48c57cf37075351498ebb5a200f59cf9b8c6f8149606", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -781,11 +795,17 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity := acpIdentity.FromPrivateKey(privKey)
+
+	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+	require.Equal(t, "7bef56a54eae563eafdc48c57cf37075351498ebb5a200f59cf9b8c6f8149606", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 

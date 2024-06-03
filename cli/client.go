@@ -38,7 +38,8 @@ Execute queries, add schema types, obtain node info, etc.`,
 			return setContextDB(cmd)
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "", "ACP Identity")
+	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
+		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 	return cmd
 }

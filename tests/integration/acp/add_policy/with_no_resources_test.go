@@ -36,7 +36,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
                     resources:
                 `,
 
-				ExpectedPolicyID: "b72d8ec56ffb141922781d2b1b0803404bef57be0eeec98f1662f3017fc2de35",
+				ExpectedPolicyID: "e16824022121b55f2b2babbd2ab82960a8837767197e20acf9c577cbb4539991",
 			},
 		},
 	}
@@ -62,7 +62,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
                       name: actor
                 `,
 
-				ExpectedPolicyID: "b72d8ec56ffb141922781d2b1b0803404bef57be0eeec98f1662f3017fc2de35",
+				ExpectedPolicyID: "e16824022121b55f2b2babbd2ab82960a8837767197e20acf9c577cbb4539991",
 			},
 		},
 	}
@@ -83,7 +83,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_ValidID(t *testing.T) {
 
 				Policy: " ",
 
-				ExpectedPolicyID: "b72d8ec56ffb141922781d2b1b0803404bef57be0eeec98f1662f3017fc2de35",
+				ExpectedPolicyID: "e16824022121b55f2b2babbd2ab82960a8837767197e20acf9c577cbb4539991",
 			},
 		},
 	}

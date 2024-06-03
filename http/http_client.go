@@ -12,6 +12,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,14 +35,13 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := httpClient{
+	return &httpClient{
 		client:  http.DefaultClient,
 		baseURL: baseURL.JoinPath("/api/v0"),
-	}
-	return &client, nil
+	}, nil
 }
 
-func (c *httpClient) setDefaultHeaders(req *http.Request) {
+func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -50,14 +50,25 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
 	id := db.GetContextIdentity(req.Context())
-	if id.HasValue() {
-		req.Header.Add(authHeaderName, authSchemaPrefix+id.Value().String())
+	if !id.HasValue() {
+		return nil
 	}
+	token, err := buildAndSignAuthToken(id.Value(), strings.ToLower(c.baseURL.Host))
+	if errors.Is(err, ErrMissingIdentityPrivateKey) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, token))
+	return nil
 }
 
 func (c *httpClient) request(req *http.Request) ([]byte, error) {
-	c.setDefaultHeaders(req)
-
+	err := c.setDefaultHeaders(req)
+	if err != nil {
+		return nil, err
+	}
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err

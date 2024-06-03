@@ -13,7 +13,7 @@ Do a query request from a file by using the '-f' flag. Example command:
   defradb client query -f request.graphql
 
 Do a query request from a file and with an identity. Example command:
-  defradb client query -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j -f request.graphql
+  defradb client query -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f -f request.graphql
 
 Or it can be sent via stdin by using the '-' special syntax. Example command:
   cat request.graphql | defradb client query -
@@ -37,7 +37,7 @@ defradb client query [-i --identity] [request] [flags]
 ### Options inherited from parent commands
 
 ```
-  -i, --identity string            ACP Identity
+  -i, --identity string            Hex formatted private key used to authenticate with ACP
       --keyring-backend string     Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string   Service name to use when using the system backend (default "defradb")
       --keyring-path string        Path to store encrypted keys when using the file backend (default "keys")

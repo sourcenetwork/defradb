@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "f3e521de628fa607ba11af0e9b53e2fb74ca0e6ea33622003d1f43dbae0ce41d"
+	policyIDOfValidDPI := "6209c5d12fce1fb0db4140ffa9d6b14a4d38133f601ab83f12dbb6ef84ee7da3"
 
 	test := testUtils.TestCase{
 
@@ -128,7 +128,7 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "f3e521de628fa607ba11af0e9b53e2fb74ca0e6ea33622003d1f43dbae0ce41d"
+	policyIDOfValidDPI := "6209c5d12fce1fb0db4140ffa9d6b14a4d38133f601ab83f12dbb6ef84ee7da3"
 
 	test := testUtils.TestCase{
 

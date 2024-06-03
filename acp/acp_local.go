@@ -14,17 +14,9 @@ import (
 	"context"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/sourcehub/x/acp/embedded"
 	"github.com/sourcenetwork/sourcehub/x/acp/types"
-	"github.com/valyala/fastjson"
-
-	"github.com/sourcenetwork/defradb/errors"
-)
-
-var (
-	_ ACP = (*ACPLocal)(nil)
 )
 
 // ACPLocal represents a local acp implementation that makes no remote calls.
@@ -32,6 +24,8 @@ type ACPLocal struct {
 	pathToStore immutable.Option[string]
 	localACP    *embedded.LocalACP
 }
+
+var _ sourceHubClient = (*ACPLocal)(nil)
 
 func (l *ACPLocal) Init(ctx context.Context, path string) {
 	if path == "" {
@@ -75,22 +69,9 @@ func (l *ACPLocal) AddPolicy(
 	ctx context.Context,
 	creatorID string,
 	policy string,
+	policyMarshalType types.PolicyMarshalingType,
+	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	// Having a creator identity is a MUST requirement for adding a policy.
-	if creatorID == "" {
-		return "", ErrPolicyCreatorMustNotBeEmpty
-	}
-
-	if policy == "" {
-		return "", ErrPolicyDataMustNotBeEmpty
-	}
-
-	// Assume policy is in YAML format by default.
-	policyMarshalType := types.PolicyMarshalingType_SHORT_YAML
-	if isJSON := fastjson.Validate(policy) == nil; isJSON { // Detect JSON format.
-		policyMarshalType = types.PolicyMarshalingType_SHORT_JSON
-	}
-
 	createPolicy := types.MsgCreatePolicy{
 		Creator:      creatorID,
 		Policy:       policy,
@@ -102,160 +83,68 @@ func (l *ACPLocal) AddPolicy(
 		l.localACP.GetCtx(),
 		&createPolicy,
 	)
-
 	if err != nil {
-		return "", NewErrFailedToAddPolicyWithACP(err, "Local", creatorID)
+		return "", err
 	}
 
-	policyID := createPolicyResponse.Policy.Id
-	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
-
-	return policyID, nil
+	return createPolicyResponse.Policy.Id, nil
 }
 
-func (l *ACPLocal) ValidateResourceExistsOnValidDPI(
+func (l *ACPLocal) Policy(
 	ctx context.Context,
 	policyID string,
-	resourceName string,
-) error {
-	if policyID == "" && resourceName == "" {
-		return ErrNoPolicyArgs
-	}
-
-	if policyID == "" {
-		return ErrPolicyIDMustNotBeEmpty
-	}
-
-	if resourceName == "" {
-		return ErrResourceNameMustNotBeEmpty
-	}
-
-	queryPolicyRequest := types.QueryPolicyRequest{Id: policyID}
+) (*types.Policy, error) {
 	queryPolicyResponse, err := l.localACP.GetQueryService().Policy(
 		l.localACP.GetCtx(),
-		&queryPolicyRequest,
+		&types.QueryPolicyRequest{Id: policyID},
 	)
-
 	if err != nil {
-		if errors.Is(err, types.ErrPolicyNotFound) {
-			return newErrPolicyDoesNotExistWithACP(err, policyID)
-		} else {
-			return newErrPolicyValidationFailedWithACP(err, policyID)
-		}
+		return nil, err
 	}
 
-	// So far we validated that the policy exists, now lets validate that resource exists.
-	resourceResponse := queryPolicyResponse.Policy.GetResourceByName(resourceName)
-	if resourceResponse == nil {
-		return newErrResourceDoesNotExistOnTargetPolicy(resourceName, policyID)
-	}
-
-	// Now that we have validated that policyID exists and it contains a corresponding
-	// resource with the matching name, validate that all required permissions
-	// for DPI actually exist on the target resource.
-	for _, requiredPermission := range dpiRequiredPermissions {
-		permissionResponse := resourceResponse.GetPermissionByName(requiredPermission)
-		if permissionResponse == nil {
-			return newErrResourceIsMissingRequiredPermission(
-				resourceName,
-				requiredPermission,
-				policyID,
-			)
-		}
-
-		// Now we need to ensure that the "owner" relation has access to all the required
-		// permissions for DPI. This is important because even if the policy has the required
-		// permissions under the resource, it's possible that those permissions are not granted
-		// to the "owner" relation, this will help users not shoot themseleves in the foot.
-		// TODO-ACP: Better validation, once sourcehub implements meta-policies.
-		// Issue: https://github.com/sourcenetwork/defradb/issues/2359
-		if err := validateDPIExpressionOfRequiredPermission(
-			permissionResponse.Expression,
-			requiredPermission,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return queryPolicyResponse.Policy, nil
 }
 
-func (l *ACPLocal) RegisterDocObject(
+func (l *ACPLocal) RegisterObject(
 	ctx context.Context,
 	actorID string,
 	policyID string,
 	resourceName string,
-	docID string,
-) error {
-	registerDoc := types.MsgRegisterObject{
-		Creator:      actorID,
-		PolicyId:     policyID,
-		Object:       types.NewObject(resourceName, docID),
-		CreationTime: protoTypes.TimestampNow(),
-	}
-
+	objectID string,
+	creationTime *protoTypes.Timestamp,
+) (types.RegistrationResult, error) {
 	registerDocResponse, err := l.localACP.GetMsgService().RegisterObject(
 		l.localACP.GetCtx(),
-		&registerDoc,
+		&types.MsgRegisterObject{
+			Creator:      actorID,
+			PolicyId:     policyID,
+			Object:       types.NewObject(resourceName, objectID),
+			CreationTime: creationTime,
+		},
 	)
-
 	if err != nil {
-		return NewErrFailedToRegisterDocWithACP(err, "Local", policyID, actorID, resourceName, docID)
+		return types.RegistrationResult(0), err
 	}
 
-	switch registerDocResponse.Result {
-	case types.RegistrationResult_NoOp:
-		return ErrObjectDidNotRegister
-
-	case types.RegistrationResult_Registered:
-		log.InfoContext(
-			ctx,
-			"Document registered with local acp",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("Creator", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return nil
-
-	case types.RegistrationResult_Unarchived:
-		log.InfoContext(
-			ctx,
-			"Document re-registered (unarchived object) with local acp",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("Creator", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return nil
-	}
-
-	return ErrObjectDidNotRegister
+	return registerDocResponse.Result, nil
 }
 
-func (l *ACPLocal) IsDocRegistered(
+func (l *ACPLocal) ObjectOwner(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
-	docID string,
-) (bool, error) {
-	queryObjectOwner := types.QueryObjectOwnerRequest{
-		PolicyId: policyID,
-		Object:   types.NewObject(resourceName, docID),
-	}
-
-	queryObjectOwnerResponse, err := l.localACP.GetQueryService().ObjectOwner(
+	objectID string,
+) (*types.QueryObjectOwnerResponse, error) {
+	return l.localACP.GetQueryService().ObjectOwner(
 		l.localACP.GetCtx(),
-		&queryObjectOwner,
+		&types.QueryObjectOwnerRequest{
+			PolicyId: policyID,
+			Object:   types.NewObject(resourceName, objectID),
+		},
 	)
-	if err != nil {
-		return false, NewErrFailedToCheckIfDocIsRegisteredWithACP(err, "Local", policyID, resourceName, docID)
-	}
-
-	return queryObjectOwnerResponse.IsRegistered, nil
 }
 
-func (l *ACPLocal) CheckDocAccess(
+func (l *ACPLocal) VerifyAccessRequest(
 	ctx context.Context,
 	permission DPIPermission,
 	actorID string,
@@ -263,48 +152,26 @@ func (l *ACPLocal) CheckDocAccess(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	checkDoc := types.QueryVerifyAccessRequestRequest{
-		PolicyId: policyID,
-		AccessRequest: &types.AccessRequest{
-			Operations: []*types.Operation{
-				{
-					Object:     types.NewObject(resourceName, docID),
-					Permission: permission.String(),
-				},
-			},
-			Actor: &types.Actor{
-				Id: actorID,
-			},
-		},
-	}
-
 	checkDocResponse, err := l.localACP.GetQueryService().VerifyAccessRequest(
 		l.localACP.GetCtx(),
-		&checkDoc,
+		&types.QueryVerifyAccessRequestRequest{
+			PolicyId: policyID,
+			AccessRequest: &types.AccessRequest{
+				Operations: []*types.Operation{
+					{
+						Object:     types.NewObject(resourceName, docID),
+						Permission: permission.String(),
+					},
+				},
+				Actor: &types.Actor{
+					Id: actorID,
+				},
+			},
+		},
 	)
 	if err != nil {
-		return false, NewErrFailedToVerifyDocAccessWithACP(err, "Local", policyID, actorID, resourceName, docID)
+		return false, err
 	}
 
-	if checkDocResponse.Valid {
-		log.InfoContext(
-			ctx,
-			"Document accessible",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return true, nil
-	} else {
-		log.InfoContext(
-			ctx,
-			"Document inaccessible",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return false, nil
-	}
+	return checkDocResponse.Valid, nil
 }

@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_AddDPISchema_MissingRequiredReadPermissionOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "7eb7448daa631cfe33da3a149f5eea716026f54bf23ce1315c594259382c5c57"
+	policyIDOfInvalidDPI := "07da6260811df769d551e89e02364b3e939cb585696c1a69b626bb8ecdd378f9"
 
 	test := testUtils.TestCase{
 
