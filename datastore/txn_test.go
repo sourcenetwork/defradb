@@ -122,6 +122,7 @@ func TestShimTxnStoreClose(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// This test documents https://github.com/sourcenetwork/defradb/issues/2673
 func TestMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
@@ -204,6 +205,7 @@ func TestMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflic
 	require.ErrorIs(t, err, badger.ErrConflict)
 }
 
+// This test documents https://github.com/sourcenetwork/defradb/issues/2673
 func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
@@ -295,6 +297,7 @@ func TestBadgerMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithC
 	require.ErrorIs(t, err, badger.ErrConflict)
 }
 
+// This test documents https://github.com/sourcenetwork/defradb/issues/2673
 func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("")}
