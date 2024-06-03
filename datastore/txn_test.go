@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
 func TestNewTxnFrom(t *testing.T) {
@@ -119,4 +120,271 @@ func TestShimTxnStoreClose(t *testing.T) {
 	shimTxn := ShimTxnStore{txn}
 	err = shimTxn.Close()
 	require.NoError(t, err)
+}
+
+// This test documents https://github.com/sourcenetwork/defradb/issues/2673
+func TestMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Get(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Has(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+// This test documents https://github.com/sourcenetwork/defradb/issues/2673
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	// We are expecting this to fail because of the conflict but badger does not return an error.
+	// Conflicts in badger only occurs when the value of a key was changed between the time you read and you rewrite it.
+	// require.ErrorIs(t, err, badger.ErrConflict)
+	require.NoError(t, err)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Get(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Has(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+// This test documents https://github.com/sourcenetwork/defradb/issues/2673
+func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	// We are expecting this to fail because of the conflict but badger does not return an error.
+	// Conflicts in badger only occurs when the value of a key was changed between the time you read and you rewrite it.
+	// require.ErrorIs(t, err, badger.ErrConflict)
+	require.NoError(t, err)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Get(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Has(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
 }
