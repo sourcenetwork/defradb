@@ -50,7 +50,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to open datastore", err)
 	}
 
-	db, err := db.NewDB(ctx, rootstore, acp.NoACP)
+	db, err := db.NewDB(ctx, rootstore, acp.NoACP, nil)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}

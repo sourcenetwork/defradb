@@ -34,6 +34,7 @@ jobs:
         client-type: [go, http, cli]
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
+        lens-type: [wasm-time]
         detect-changes: [false]
         database-encryption: [false]
         include:
@@ -63,6 +64,20 @@ jobs:
 ##          mutation-type: collection-save
 ##          detect-changes: false
 ##          database-encryption: false
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wazero
+            detect-changes: false
+            database-encryption: false
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wasmer
+            detect-changes: false
+            database-encryption: false
 
     runs-on: ${{ matrix.os }}
 
@@ -80,6 +95,7 @@ jobs:
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'badger-file' }}
       DEFRA_BADGER_ENCRYPTION: ${{ matrix.database-encryption }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
+      DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
 
     steps:
       - name: Checkout code into the directory

@@ -89,6 +89,7 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 		netOpts    []net.NodeOpt
 		storeOpts  []StoreOpt
 		serverOpts []http.ServerOpt
+		lensOpts   []LenOpt
 	)
 
 	options := DefaultOptions()
@@ -111,6 +112,9 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 
 		case net.NodeOpt:
 			netOpts = append(netOpts, t)
+
+		case LenOpt:
+			lensOpts = append(lensOpts, t)
 		}
 	}
 
@@ -124,7 +128,12 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 		return nil, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore, acp, dbOpts...)
+	lens, err := NewLens(ctx, lensOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := db.NewDB(ctx, rootstore, acp, lens, dbOpts...)
 	if err != nil {
 		return nil, err
 	}

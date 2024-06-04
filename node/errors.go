@@ -8,23 +8,18 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package node
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
-func TestWithUpdateEvents(t *testing.T) {
-	d := &db{}
-	WithUpdateEvents()(d)
-	assert.NotNil(t, d.events)
-}
+const (
+	errLensRuntimeNotSupported string = "the selected lens runtime is not supported by this build"
+)
 
-func TestWithMaxRetries(t *testing.T) {
-	d := &db{}
-	WithMaxRetries(10)(d)
-	assert.True(t, d.maxTxnRetries.HasValue())
-	assert.Equal(t, 10, d.maxTxnRetries.Value())
+var ErrLensRuntimeNotSupported = errors.New(errLensRuntimeNotSupported)
+
+func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
+	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
 }
