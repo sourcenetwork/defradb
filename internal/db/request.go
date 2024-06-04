@@ -35,27 +35,20 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 		return res
 	}
 
-	pub, subRequest, err := db.checkForClientSubscriptions(parsedRequest)
+	pub, err := db.handleSubscription(ctx, parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []error{err}
 		return res
 	}
 
 	if pub != nil {
-		res.Pub = pub
-		go db.handleSubscription(ctx, pub, subRequest)
+		res.Subscription = pub
 		return res
 	}
 
 	txn := mustGetContextTxn(ctx)
 	identity := GetContextIdentity(ctx)
-	planner := planner.New(
-		ctx,
-		identity,
-		db.acp,
-		db,
-		txn,
-	)
+	planner := planner.New(ctx, identity, db.acp, db, txn)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {

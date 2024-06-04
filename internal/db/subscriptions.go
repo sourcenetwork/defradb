@@ -19,83 +19,77 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
-func (db *db) checkForClientSubscriptions(r *request.Request) (
-	*events.Publisher[events.Update],
-	*request.ObjectSubscription,
-	error,
-) {
+// handleSubscription checks for a subscription within the given request and
+// starts a new go routine that will return all subscription results on the returned
+// channel. If a subscription does not exist on the given request nil will be returned.
+func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-chan client.GQLResult, error) {
 	if len(r.Subscription) == 0 || len(r.Subscription[0].Selections) == 0 {
-		// This is not a subscription request and we have nothing to do here
-		return nil, nil, nil
+		return nil, nil // This is not a subscription request and we have nothing to do here
 	}
-
 	if !db.events.Updates.HasValue() {
-		return nil, nil, ErrSubscriptionsNotAllowed
+		return nil, ErrSubscriptionsNotAllowed
 	}
-
-	s := r.Subscription[0].Selections[0]
-	if subRequest, ok := s.(*request.ObjectSubscription); ok {
-		pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return pub, subRequest, nil
+	selections := r.Subscription[0].Selections[0]
+	subRequest, ok := selections.(*request.ObjectSubscription)
+	if !ok {
+		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
 	}
-
-	return nil, nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", s)
-}
-
-func (db *db) handleSubscription(
-	ctx context.Context,
-	pub *events.Publisher[events.Update],
-	r *request.ObjectSubscription,
-) {
-	for evt := range pub.Event() {
-		txn, err := db.NewTxn(ctx, false)
-		if err != nil {
-			log.ErrorContext(ctx, err.Error())
-			continue
-		}
-
-		ctx := SetContextTxn(ctx, txn)
-		db.handleEvent(ctx, pub, evt, r)
-		txn.Discard(ctx)
-	}
-}
-
-func (db *db) handleEvent(
-	ctx context.Context,
-	pub *events.Publisher[events.Update],
-	evt events.Update,
-	r *request.ObjectSubscription,
-) {
-	txn := mustGetContextTxn(ctx)
-	identity := GetContextIdentity(ctx)
-	p := planner.New(
-		ctx,
-		identity,
-		db.acp,
-		db,
-		txn,
-	)
-
-	s := r.ToSelect(evt.DocID, evt.Cid.String())
-
-	result, err := p.RunSubscriptionRequest(ctx, s)
+	pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
 	if err != nil {
-		pub.Publish(client.GQLResult{
-			Errors: []error{err},
-		})
-		return
+		return nil, err
 	}
 
-	// Don't send anything back to the client if the request yields an empty dataset.
-	if len(result) == 0 {
-		return
-	}
+	resCh := make(chan client.GQLResult)
+	go func() {
+		// clean up channel and subscription
+		defer func() {
+			close(resCh)
+			pub.Unsubscribe()
+		}()
 
-	pub.Publish(client.GQLResult{
-		Data: result,
-	})
+		// listen for events and send to the result channel
+		for {
+			var evt events.Update
+			select {
+			case val := <-pub.Event():
+				evt = val
+			case <-ctx.Done():
+				return // context cancelled
+			}
+
+			txn, err := db.NewTxn(ctx, false)
+			if err != nil {
+				log.ErrorContext(ctx, err.Error())
+				continue
+			}
+
+			ctx := SetContextTxn(ctx, txn)
+			identity := GetContextIdentity(ctx)
+
+			p := planner.New(ctx, identity, db.acp, db, txn)
+			s := subRequest.ToSelect(evt.DocID, evt.Cid.String())
+
+			result, err := p.RunSubscriptionRequest(ctx, s)
+			if err == nil && len(result) == 0 {
+				txn.Discard(ctx)
+				continue // Don't send anything back to the client if the request yields an empty dataset.
+			}
+			res := client.GQLResult{
+				Data: result,
+			}
+			if err != nil {
+				res.Errors = []error{err}
+			}
+
+			select {
+			case resCh <- res:
+				txn.Discard(ctx)
+			case <-ctx.Done():
+				txn.Discard(ctx)
+				return // context cancelled
+			}
+		}
+	}()
+
+	return resCh, nil
 }

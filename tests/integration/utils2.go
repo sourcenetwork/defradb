@@ -1679,13 +1679,11 @@ func executeSubscriptionRequest(
 
 			allActionsAreDone := false
 			expectedDataRecieved := len(action.Results) == 0
-			stream := result.Pub.Stream()
 			for {
 				select {
-				case s := <-stream:
-					sResult, _ := s.(client.GQLResult)
-					sData, _ := sResult.Data.([]map[string]any)
-					errs = append(errs, sResult.Errors...)
+				case s := <-result.Subscription:
+					sData, _ := s.Data.([]map[string]any)
+					errs = append(errs, s.Errors...)
 					data = append(data, sData...)
 
 					if len(data) >= len(action.Results) {

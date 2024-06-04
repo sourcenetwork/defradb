@@ -77,12 +77,12 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			for _, err := range result.GQL.Errors {
 				errors = append(errors, err.Error())
 			}
-			if result.Pub == nil {
+			if result.Subscription == nil {
 				cmd.Print(REQ_RESULTS_HEADER)
 				return writeJSON(cmd, map[string]any{"data": result.GQL.Data, "errors": errors})
 			}
 			cmd.Print(SUB_RESULTS_HEADER)
-			for item := range result.Pub.Stream() {
+			for item := range result.Subscription {
 				writeJSON(cmd, item) //nolint:errcheck
 			}
 			return nil
