@@ -158,8 +158,8 @@ deps\:chglog:
 deps\:modules:
 	go mod download
 
-.PHONY: deps\:mock
-deps\:mock:
+.PHONY: deps\:mocks
+deps\:mocks:
 	go install github.com/vektra/mockery/v2@v2.32.0
 
 .PHONY: deps\:playground
@@ -173,11 +173,11 @@ deps:
 	$(MAKE) deps:chglog && \
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:test && \
-	$(MAKE) deps:mock
+	$(MAKE) deps:mocks
 
-.PHONY: mock
-mock:
-	@$(MAKE) deps:mock
+.PHONY: mocks
+mocks:
+	@$(MAKE) deps:mocks
 	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: dev\:start
