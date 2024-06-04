@@ -11,7 +11,6 @@
 package one_to_many
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -122,8 +121,6 @@ func TestMutationCreateOneToMany_AliasedRelationNameInvalidIDManySide_CreatedDoc
 }
 
 func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
-	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-
 	test := testUtils.TestCase{
 		Description: "One to many create mutation using relation id from many side, with alias.",
 		Actions: []any{
@@ -135,13 +132,10 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -189,7 +183,6 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
 	// These IDs MUST be shared by both tests below.
-	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	nonAliasedTest := testUtils.TestCase{
@@ -203,13 +196,10 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -241,13 +231,10 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

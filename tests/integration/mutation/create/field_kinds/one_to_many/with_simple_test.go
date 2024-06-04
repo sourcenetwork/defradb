@@ -11,7 +11,6 @@
 package one_to_many
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -95,8 +94,6 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 }
 
 func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
-	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-
 	test := testUtils.TestCase{
 		Description: "One to many create mutation using relation id from many side",
 		Actions: []any{
@@ -108,13 +105,10 @@ func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					authorKey,
-				),
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
