@@ -357,18 +357,20 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
 	)
-	slct := node.subType.(*selectTopNode).selectNode
+	slct := node.childSide.plan.(*selectTopNode).selectNode
 	desc := slct.collection.Description()
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
-			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
-			relatedField := mapper.Field{Name: node.subTypeName, Index: subInd}
+			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Name)
+			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Name, Index: subInd}
 			fieldFilter := filter.UnwrapRelation(filter.CopyField(
 				parentPlan.selectNode.filter,
 				relatedField,
 				mapper.Field{Name: subFieldName, Index: subFieldInd},
 			), relatedField)
+			// At the moment we just take the first index, but later we want to run some kind of analysis to
+			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
 			err := node.invertJoinDirectionWithIndex(fieldFilter, indexes[0])
 			if err != nil {
 				return err
@@ -383,7 +385,7 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 // expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
 func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	if parentPlan.selectNode.filter == nil {
-		return p.expandPlan(node.subType, parentPlan)
+		return p.expandPlan(node.childSide.plan, parentPlan)
 	}
 
 	err := p.tryOptimizeJoinDirection(node, parentPlan)
@@ -391,7 +393,7 @@ func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTop
 		return err
 	}
 
-	return p.expandPlan(node.subType, parentPlan)
+	return p.expandPlan(node.childSide.plan, parentPlan)
 }
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {

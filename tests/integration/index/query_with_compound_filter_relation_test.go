@@ -144,17 +144,17 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-					"certificationBodyOrg": "bae-2b020aba-0681-5896-91d6-e3224938c32e",
-					"name": "DefraDB"
-				}`,
+				DocMap: map[string]any{
+					"name":                 "DefraDB",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-					"certificationBodyOrg": "bae-2b020aba-0681-5896-91d6-e3224938c32e",
-					"name": "LensVM"
-				}`,
+				DocMap: map[string]any{
+					"name":                 "LensVM",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -164,10 +164,10 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-                    "certificationBodyOrg": "bae-5e7a0a2c-40a0-572c-93b6-79930cab3317",
-                    "name": "Horizon"
-                }`,
+				DocMap: map[string]any{
+					"name":                 "Horizon",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -225,17 +225,17 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-                    "certificationBodyOrg": "bae-2b020aba-0681-5896-91d6-e3224938c32e",
-                    "name": "DefraDB"
-                }`,
+				DocMap: map[string]any{
+					"name":                 "DefraDB",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-                    "certificationBodyOrg": "bae-2b020aba-0681-5896-91d6-e3224938c32e",
-                    "name": "LensVM"
-                }`,
+				DocMap: map[string]any{
+					"name":                 "LensVM",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -245,10 +245,10 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-                    "certificationBodyOrg": "bae-5e7a0a2c-40a0-572c-93b6-79930cab3317",
-                    "name": "Horizon"
-                }`,
+				DocMap: map[string]any{
+					"name":                 "Horizon",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -310,10 +310,10 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-                    "certificationBodyOrg": "bae-2b020aba-0681-5896-91d6-e3224938c32e",
-                    "name": "DefraDB"
-                }`,
+				DocMap: map[string]any{
+					"name":                 "DefraDB",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -323,10 +323,10 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: `{
-                    "certificationBodyOrg": "bae-5e7a0a2c-40a0-572c-93b6-79930cab3317",
-                    "name": "Horizon"
-                }`,
+				DocMap: map[string]any{
+					"name":                 "Horizon",
+					"certificationBodyOrg": testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,

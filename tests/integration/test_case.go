@@ -225,13 +225,47 @@ type CreateDoc struct {
 	CollectionID int
 
 	// The document to create, in JSON string format.
+	//
+	// If [DocMap] is provided this value will be ignored.
 	Doc string
+
+	// The document to create, in map format.
+	//
+	// If this is provided [Doc] will be ignored.
+	DocMap map[string]any
 
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+}
+
+// DocIndex represents a relation field value, it allows relation fields to be set without worrying
+// about the specific document id.
+//
+// The test harness will substitute this struct for the document at the given index before
+// performing the host action.
+//
+// The targeted document must have been defined in an action prior to the action that this index
+// is hosted upon.
+type DocIndex struct {
+	// CollectionIndex is the index of the collection holding the document to target.
+	CollectionIndex int
+
+	// Index is the index within the target collection at which the document exists.
+	//
+	// This is dependent on the order in which test [CreateDoc] actions were defined.
+	Index int
+}
+
+// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
+// about the specific document id.
+func NewDocIndex(collectionIndex int, index int) DocIndex {
+	return DocIndex{
+		CollectionIndex: collectionIndex,
+		Index:           index,
+	}
 }
 
 // DeleteDoc will attempt to delete the given document in the given collection

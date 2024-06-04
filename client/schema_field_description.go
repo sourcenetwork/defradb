@@ -104,7 +104,7 @@ func (k ScalarKind) Underlying() string {
 }
 
 func (k ScalarKind) IsNillable() bool {
-	return k != FieldKind_DocID
+	return true
 }
 
 func (k ScalarKind) IsObject() bool {
