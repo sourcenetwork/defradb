@@ -322,6 +322,8 @@ func findIndexByFieldName(col client.Collection, fieldName string) immutable.Opt
 		}
 		indexes := col.Description().GetIndexesOnField(field.Name)
 		if len(indexes) > 0 {
+			// At the moment we just take the first index, but later we want to run some kind of analysis to
+			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
 			return immutable.Some(indexes[0])
 		}
 	}

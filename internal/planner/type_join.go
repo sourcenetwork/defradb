@@ -499,7 +499,7 @@ func (join *invertibleTypeJoin) Spans(spans core.Spans) {
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
 
-type primaryObjectsFetcher struct {
+type primaryObjectsRetriever struct {
 	relIDFieldDef client.FieldDefinition
 	primarySide   *joinSide
 	secondarySide *joinSide
@@ -510,17 +510,17 @@ type primaryObjectsFetcher struct {
 	resultSecondaryDoc core.Doc
 }
 
-func newPrimaryObjectsFetcher(
+func newPrimaryObjectsRetriever(
 	primarySide, secondarySide *joinSide,
-) primaryObjectsFetcher {
-	j := primaryObjectsFetcher{
+) primaryObjectsRetriever {
+	j := primaryObjectsRetriever{
 		primarySide:   primarySide,
 		secondarySide: secondarySide,
 	}
 	return j
 }
 
-func (j *primaryObjectsFetcher) fetchPrimaryDocsReferencingSecondaryDoc() error {
+func (j *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {
 	relIDFieldDef, ok := j.primarySide.col.Definition().GetFieldByName(
 		j.primarySide.relFieldDef.Name + request.RelatedObjectID)
 	if !ok {
@@ -531,7 +531,7 @@ func (j *primaryObjectsFetcher) fetchPrimaryDocsReferencingSecondaryDoc() error 
 
 	j.relIDFieldDef = relIDFieldDef
 
-	primaryDocs, err := j.fetchPrimaryDocs()
+	primaryDocs, err := j.retrievePrimaryDocs()
 
 	if err != nil {
 		return err
@@ -542,7 +542,7 @@ func (j *primaryObjectsFetcher) fetchPrimaryDocsReferencingSecondaryDoc() error 
 	return nil
 }
 
-func (j *primaryObjectsFetcher) addIDFieldToScanner() {
+func (j *primaryObjectsRetriever) addIDFieldToScanner() {
 	found := false
 	for i := range j.primaryScan.fields {
 		if j.primaryScan.fields[i].Name == j.relIDFieldDef.Name {
@@ -555,7 +555,7 @@ func (j *primaryObjectsFetcher) addIDFieldToScanner() {
 	}
 }
 
-func (j *primaryObjectsFetcher) collectDocs(numDocs int) ([]core.Doc, error) {
+func (j *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
 	p := j.primarySide.plan
 	if err := p.Init(); err != nil {
 		return nil, NewErrSubTypeInit(err)
@@ -580,7 +580,7 @@ func (j *primaryObjectsFetcher) collectDocs(numDocs int) ([]core.Doc, error) {
 	return docs, nil
 }
 
-func (j *primaryObjectsFetcher) fetchPrimaryDocs() ([]core.Doc, error) {
+func (j *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	j.addIDFieldToScanner()
 
 	secondaryDoc := j.secondarySide.plan.Value()
@@ -649,9 +649,9 @@ func joinPrimaryDocs(primaryDocs []core.Doc, secondarySide, primarySide *joinSid
 }
 
 func (join *invertibleTypeJoin) fetchPrimaryDocsReferencingSecondaryDoc() ([]core.Doc, core.Doc, error) {
-	secJoiner := newPrimaryObjectsFetcher(join.getPrimarySide(), join.getSecondarySide())
-	err := secJoiner.fetchPrimaryDocsReferencingSecondaryDoc()
-	return secJoiner.resultPrimaryDocs, secJoiner.resultSecondaryDoc, err
+	retriever := newPrimaryObjectsRetriever(join.getPrimarySide(), join.getSecondarySide())
+	err := retriever.retrievePrimaryDocsReferencingSecondaryDoc()
+	return retriever.resultPrimaryDocs, retriever.resultSecondaryDoc, err
 }
 
 func (join *invertibleTypeJoin) Next() (bool, error) {
@@ -713,7 +713,6 @@ func (join *invertibleTypeJoin) nextJoinedSecondaryDoc() (bool, error) {
 		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
 	}
 
-	// check if there can ever be false (a.k.a. hasDoc = false)
 	hasDoc, err := fetchDocWithID(secondSide.plan, secondaryDocID)
 	if err != nil {
 		return false, err

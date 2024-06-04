@@ -369,6 +369,8 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 				relatedField,
 				mapper.Field{Name: subFieldName, Index: subFieldInd},
 			), relatedField)
+			// At the moment we just take the first index, but later we want to run some kind of analysis to
+			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
 			err := node.invertJoinDirectionWithIndex(fieldFilter, indexes[0])
 			if err != nil {
 				return err
