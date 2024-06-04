@@ -38,6 +38,11 @@ type Select struct {
 	// These can include stuff such as version information, aggregates, and other
 	// Selects.
 	Fields []Requestable
+
+	// SkipResolve is a flag that indicates that the fields in this Select don't need to be resolved,
+	// i.e. it's value doesn't need to be fetched and provided to the user.
+	// It is used to avoid resolving related objects if they are used only in a filter and not requested in a response.
+	SkipResolve bool
 }
 
 func (s *Select) AsTargetable() (*Targetable, bool) {

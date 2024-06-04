@@ -147,45 +147,41 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 	// Add the type attribute.
 	simpleExplainMap[joinTypeLabel] = n.joinPlan.Kind()
 
+	addExplainData := func(j *invertibleTypeJoin) error {
+		// Add the attribute(s).
+		simpleExplainMap[joinRootLabel] = immutable.Some(j.childSide.relFieldDef.Name)
+		simpleExplainMap[joinSubTypeNameLabel] = j.parentSide.relFieldDef.Name
+
+		subTypeExplainGraph, err := buildSimpleExplainGraph(j.childSide.plan)
+		if err != nil {
+			return err
+		}
+
+		// Add the joined (subType) type's entire explain graph.
+		simpleExplainMap[joinSubTypeLabel] = subTypeExplainGraph
+		return nil
+	}
+
+	var err error
 	switch joinType := n.joinPlan.(type) {
 	case *typeJoinOne:
 		// Add the direction attribute.
-		if joinType.isSecondary {
-			simpleExplainMap[joinDirectionLabel] = joinDirectionSecondaryLabel
-		} else {
+		if joinType.parentSide.isPrimary() {
 			simpleExplainMap[joinDirectionLabel] = joinDirectionPrimaryLabel
+		} else {
+			simpleExplainMap[joinDirectionLabel] = joinDirectionSecondaryLabel
 		}
 
-		// Add the attribute(s).
-		simpleExplainMap[joinRootLabel] = joinType.rootName
-		simpleExplainMap[joinSubTypeNameLabel] = joinType.subTypeName
-
-		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
-		if err != nil {
-			return nil, err
-		}
-
-		// Add the joined (subType) type's entire explain graph.
-		simpleExplainMap[joinSubTypeLabel] = subTypeExplainGraph
+		err = addExplainData(&joinType.invertibleTypeJoin)
 
 	case *typeJoinMany:
-		// Add the attribute(s).
-		simpleExplainMap[joinRootLabel] = joinType.rootName
-		simpleExplainMap[joinSubTypeNameLabel] = joinType.subTypeName
-
-		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
-		if err != nil {
-			return nil, err
-		}
-
-		// Add the joined (subType) type's entire explain graph.
-		simpleExplainMap[joinSubTypeLabel] = subTypeExplainGraph
+		err = addExplainData(&joinType.invertibleTypeJoin)
 
 	default:
-		return simpleExplainMap, client.NewErrUnhandledType("join plan", n.joinPlan)
+		err = client.NewErrUnhandledType("join plan", n.joinPlan)
 	}
 
-	return simpleExplainMap, nil
+	return simpleExplainMap, err
 }
 
 // Explain method returns a map containing all attributes of this node that
@@ -201,10 +197,10 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 		}
 		var subScan *scanNode
 		if joinMany, isJoinMany := n.joinPlan.(*typeJoinMany); isJoinMany {
-			subScan = getScanNode(joinMany.subType)
+			subScan = getScanNode(joinMany.childSide.plan)
 		}
 		if joinOne, isJoinOne := n.joinPlan.(*typeJoinOne); isJoinOne {
-			subScan = getScanNode(joinOne.subType)
+			subScan = getScanNode(joinOne.childSide.plan)
 		}
 		if subScan != nil {
 			subScanExplain, err := subScan.Explain(explainType)
@@ -228,98 +224,36 @@ type typeJoinOne struct {
 
 func (p *Planner) makeTypeJoinOne(
 	parent *selectNode,
-	source planNode,
-	subType *mapper.Select,
+	sourcePlan planNode,
+	subSelect *mapper.Select,
 ) (*typeJoinOne, error) {
-	prepareScanNodeFilterForTypeJoin(parent, source, subType)
-
-	selectPlan, err := p.Select(subType)
+	invertibleTypeJoin, err := p.newInvertableTypeJoin(parent, sourcePlan, subSelect)
 	if err != nil {
 		return nil, err
 	}
-
-	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := parent.collection.Definition().GetFieldByName(subType.Name)
-	if !ok {
-		return nil, client.NewErrFieldNotExist(subType.Name)
-	}
-
-	subTypeCol, err := p.db.GetCollectionByName(p.ctx, subType.CollectionName)
-	if err != nil {
-		return nil, err
-	}
-
-	subTypeField, subTypeFieldNameFound := subTypeCol.Description().GetFieldByRelation(
-		subTypeFieldDesc.RelationName,
-		parent.collection.Name().Value(),
-		subTypeFieldDesc.Name,
-	)
-	if !subTypeFieldNameFound {
-		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
-	}
-
-	var secondaryFieldIndex immutable.Option[int]
-	if !subTypeFieldDesc.IsPrimaryRelation {
-		idFieldName := subTypeFieldDesc.Name + request.RelatedObjectID
-		secondaryFieldIndex = immutable.Some(
-			parent.documentMapping.FirstIndexOfName(idFieldName),
-		)
-	}
-
-	dir := joinDirection{
-		firstNode:      source,
-		secondNode:     selectPlan,
-		secondaryField: immutable.Some(subTypeField.Name + request.RelatedObjectID),
-		primaryField:   subTypeFieldDesc.Name + request.RelatedObjectID,
-	}
-
-	return &typeJoinOne{
-		invertibleTypeJoin: invertibleTypeJoin{
-			docMapper:           docMapper{parent.documentMapping},
-			root:                source,
-			subType:             selectPlan,
-			subSelect:           subType,
-			subSelectFieldDef:   subTypeFieldDesc,
-			rootName:            immutable.Some(subTypeField.Name),
-			subTypeName:         subType.Name,
-			isSecondary:         !subTypeFieldDesc.IsPrimaryRelation,
-			secondaryFieldIndex: secondaryFieldIndex,
-			secondaryFetchLimit: 1,
-			dir:                 dir,
-		},
-	}, nil
+	invertibleTypeJoin.secondaryFetchLimit = 1
+	return &typeJoinOne{invertibleTypeJoin: invertibleTypeJoin}, nil
 }
 
 func (n *typeJoinOne) Kind() string {
 	return "typeJoinOne"
 }
 
-func fetchDocsWithFieldValue(plan planNode, fieldName string, val any) ([]core.Doc, error) {
-	propIndex := plan.DocumentMap().FirstIndexOfName(fieldName)
-	setSubTypeFilterToScanNode(plan, propIndex, val)
-
-	if err := plan.Init(); err != nil {
-		return nil, NewErrSubTypeInit(err)
-	}
-
-	var docs []core.Doc
-	for {
-		next, err := plan.Next()
-		if err != nil {
-			return nil, err
-		}
-		if !next {
-			break
-		}
-
-		docs = append(docs, plan.Value())
-	}
-
-	return docs, nil
-}
-
 type typeJoinMany struct {
 	invertibleTypeJoin
+}
+
+func (p *Planner) makeTypeJoinMany(
+	parent *selectNode,
+	sourcePlan planNode,
+	subSelect *mapper.Select,
+) (*typeJoinMany, error) {
+	invertibleTypeJoin, err := p.newInvertableTypeJoin(parent, sourcePlan, subSelect)
+	if err != nil {
+		return nil, err
+	}
+	invertibleTypeJoin.secondaryFetchLimit = 0
+	return &typeJoinMany{invertibleTypeJoin: invertibleTypeJoin}, nil
 }
 
 func prepareScanNodeFilterForTypeJoin(
@@ -357,83 +291,149 @@ func prepareScanNodeFilterForTypeJoin(
 	}
 }
 
-func (p *Planner) makeTypeJoinMany(
+func (p *Planner) newInvertableTypeJoin(
 	parent *selectNode,
-	source planNode,
-	subType *mapper.Select,
-) (*typeJoinMany, error) {
-	prepareScanNodeFilterForTypeJoin(parent, source, subType)
+	sourcePlan planNode,
+	subSelect *mapper.Select,
+) (invertibleTypeJoin, error) {
+	prepareScanNodeFilterForTypeJoin(parent, sourcePlan, subSelect)
 
-	selectPlan, err := p.Select(subType)
+	subSelectPlan, err := p.Select(subSelect)
 	if err != nil {
-		return nil, err
+		return invertibleTypeJoin{}, err
 	}
 
-	subTypeFieldDesc, ok := parent.collection.Definition().GetFieldByName(subType.Name)
+	parentsRelFieldDef, ok := parent.collection.Definition().GetFieldByName(subSelect.Name)
 	if !ok {
-		return nil, client.NewErrFieldNotExist(subType.Name)
+		return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
 	}
 
-	subTypeCol, err := p.db.GetCollectionByName(p.ctx, subType.CollectionName)
-	if err != nil {
-		return nil, err
-	}
-
-	var secondaryFieldName immutable.Option[string]
-	var rootName immutable.Option[string]
-	if subTypeFieldDesc.RelationName != "" {
-		rootField, rootNameFound := subTypeCol.Description().GetFieldByRelation(
-			subTypeFieldDesc.RelationName,
-			parent.collection.Name().Value(),
-			subTypeFieldDesc.Name,
-		)
-		if rootNameFound {
-			rootName = immutable.Some(rootField.Name)
-			secondaryFieldName = immutable.Some(rootField.Name + request.RelatedObjectID)
+	skipChild := false
+	for _, field := range parent.selectReq.Fields {
+		if field.GetName() == subSelect.Name {
+			if childSelect, ok := field.AsSelect(); ok {
+				if childSelect.SkipResolve {
+					skipChild = true
+				}
+			}
+			break
 		}
 	}
 
-	dir := joinDirection{
-		firstNode:      source,
-		secondNode:     selectPlan,
-		secondaryField: secondaryFieldName,
-		primaryField:   subTypeFieldDesc.Name + request.RelatedObjectID,
+	subCol, err := p.db.GetCollectionByName(p.ctx, subSelect.CollectionName)
+	if err != nil {
+		return invertibleTypeJoin{}, err
 	}
 
-	return &typeJoinMany{
-		invertibleTypeJoin: invertibleTypeJoin{
-			docMapper:           docMapper{parent.documentMapping},
-			root:                source,
-			subType:             selectPlan,
-			subSelect:           subType,
-			subSelectFieldDef:   subTypeFieldDesc,
-			rootName:            rootName,
-			isSecondary:         true,
-			subTypeName:         subType.Name,
-			secondaryFetchLimit: 0,
-			dir:                 dir,
-		},
+	childsRelFieldDesc, ok := subCol.Description().GetFieldByRelation(
+		parentsRelFieldDef.RelationName,
+		parent.collection.Name().Value(),
+		parentsRelFieldDef.Name,
+	)
+	if !ok {
+		return invertibleTypeJoin{}, client.NewErrFieldNotExist(parentsRelFieldDef.Name)
+	}
+
+	childsRelFieldDef, ok := subCol.Definition().GetFieldByName(childsRelFieldDesc.Name)
+	if !ok {
+		return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
+	}
+
+	parentSide := joinSide{
+		plan:             sourcePlan,
+		relFieldDef:      parentsRelFieldDef,
+		relFieldMapIndex: immutable.Some(subSelect.Index),
+		col:              parent.collection,
+		isFirst:          true,
+		isParent:         true,
+	}
+
+	ind := parent.documentMapping.IndexesByName[parentsRelFieldDef.Name+request.RelatedObjectID]
+	if len(ind) > 0 {
+		parentSide.relIDFieldMapIndex = immutable.Some(ind[0])
+	}
+
+	childSide := joinSide{
+		plan:        subSelectPlan,
+		relFieldDef: childsRelFieldDef,
+		col:         subCol,
+		isFirst:     false,
+		isParent:    false,
+	}
+
+	ind = subSelectPlan.DocumentMap().IndexesByName[childsRelFieldDef.Name+request.RelatedObjectID]
+	if len(ind) > 0 {
+		childSide.relIDFieldMapIndex = immutable.Some(ind[0])
+	}
+
+	return invertibleTypeJoin{
+		docMapper:  docMapper{parent.documentMapping},
+		parentSide: parentSide,
+		childSide:  childSide,
+		skipChild:  skipChild,
 	}, nil
+}
+
+type joinSide struct {
+	plan               planNode
+	relFieldDef        client.FieldDefinition
+	relFieldMapIndex   immutable.Option[int]
+	relIDFieldMapIndex immutable.Option[int]
+	col                client.Collection
+	isFirst            bool
+	isParent           bool
+}
+
+func (s *joinSide) isPrimary() bool {
+	return s.relFieldDef.IsPrimaryRelation
+}
+
+func (join *invertibleTypeJoin) getFirstSide() *joinSide {
+	if join.parentSide.isFirst {
+		return &join.parentSide
+	}
+	return &join.childSide
+}
+
+func (join *invertibleTypeJoin) getSecondSide() *joinSide {
+	if !join.parentSide.isFirst {
+		return &join.parentSide
+	}
+	return &join.childSide
+}
+
+func (join *invertibleTypeJoin) getPrimarySide() *joinSide {
+	if join.parentSide.isPrimary() {
+		return &join.parentSide
+	}
+	return &join.childSide
+}
+
+func (join *invertibleTypeJoin) getSecondarySide() *joinSide {
+	if !join.parentSide.isPrimary() {
+		return &join.parentSide
+	}
+	return &join.childSide
 }
 
 func (n *typeJoinMany) Kind() string {
 	return "typeJoinMany"
 }
 
-func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
-	subDoc := subNode.Value()
-	ind := subNode.DocumentMap().FirstIndexOfName(parentProp)
+// getForeignKey returns the docID of the related object referenced by the given relation field.
+func getForeignKey(node planNode, relFieldName string) string {
+	ind := node.DocumentMap().FirstIndexOfName(relFieldName + request.RelatedObjectID)
+	docIDStr, _ := node.Value().Fields[ind].(string)
+	return docIDStr
+}
 
-	docIDStr, isStr := subDoc.Fields[ind].(string)
-	if !isStr {
-		return false, nil
-	}
-
+// fetchDocWithID fetches a document with the given docID from the given planNode.
+func fetchDocWithID(node planNode, docID string) (bool, error) {
 	scan := getScanNode(node)
 	if scan == nil {
 		return false, nil
 	}
-	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docIDStr)
+	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docID)
 
 	spans := core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
 
@@ -452,108 +452,206 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	return true, nil
 }
 
-type joinDirection struct {
-	firstNode      planNode
-	secondNode     planNode
-	secondaryField immutable.Option[string]
-	primaryField   string
-	isInverted     bool
-}
-
-func (dir *joinDirection) invert() {
-	if !dir.secondaryField.HasValue() {
-		// If the secondary field has no value it cannot be inverted
-		return
-	}
-	dir.isInverted = !dir.isInverted
-	dir.firstNode, dir.secondNode = dir.secondNode, dir.firstNode
-	dir.secondaryField, dir.primaryField = immutable.Some(dir.primaryField), dir.secondaryField.Value()
-}
-
 type invertibleTypeJoin struct {
 	docMapper
 
-	root        planNode
-	subType     planNode
-	rootName    immutable.Option[string]
-	subTypeName string
+	skipChild bool
 
-	subSelect         *mapper.Select
-	subSelectFieldDef client.FieldDefinition
+	parentSide joinSide
+	childSide  joinSide
 
-	isSecondary         bool
-	secondaryFieldIndex immutable.Option[int]
 	secondaryFetchLimit uint
 
 	// docsToYield contains documents read and ready to be yielded by this node.
-	docsToYield []core.Doc
-
-	dir joinDirection
+	docsToYield       []core.Doc
+	encounteredDocIDs []string
 }
 
 func (join *invertibleTypeJoin) replaceRoot(node planNode) {
-	join.root = node
-	if join.dir.isInverted {
-		join.dir.secondNode = node
-	} else {
-		join.dir.firstNode = node
-	}
+	join.getFirstSide().plan = node
 }
 
 func (join *invertibleTypeJoin) Init() error {
-	if err := join.subType.Init(); err != nil {
+	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
-	return join.root.Init()
+	return join.parentSide.plan.Init()
 }
 
 func (join *invertibleTypeJoin) Start() error {
-	if err := join.subType.Start(); err != nil {
+	if err := join.childSide.plan.Start(); err != nil {
 		return err
 	}
-	return join.root.Start()
+	return join.parentSide.plan.Start()
 }
 
 func (join *invertibleTypeJoin) Close() error {
-	if err := join.root.Close(); err != nil {
+	if err := join.parentSide.plan.Close(); err != nil {
 		return err
 	}
 
-	return join.subType.Close()
+	return join.childSide.plan.Close()
 }
 
 func (join *invertibleTypeJoin) Spans(spans core.Spans) {
-	join.root.Spans(spans)
+	join.parentSide.plan.Spans(spans)
 }
 
-func (join *invertibleTypeJoin) Source() planNode { return join.root }
+func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
 
-func (tj *invertibleTypeJoin) invert() {
-	tj.dir.invert()
-	tj.isSecondary = !tj.isSecondary
+type primaryObjectsRetriever struct {
+	relIDFieldDef client.FieldDefinition
+	primarySide   *joinSide
+	secondarySide *joinSide
+
+	primaryScan *scanNode
+
+	resultPrimaryDocs  []core.Doc
+	resultSecondaryDoc core.Doc
 }
 
-func (join *invertibleTypeJoin) processSecondResult(secondDocs []core.Doc) (any, any) {
-	var secondResult any
-	var secondIDResult any
-	if join.secondaryFetchLimit == 1 {
-		if len(secondDocs) != 0 {
-			secondResult = secondDocs[0]
-			secondIDResult = secondDocs[0].GetID()
-		}
-	} else {
-		secondResult = secondDocs
-		secondDocIDs := make([]string, len(secondDocs))
-		for i, doc := range secondDocs {
-			secondDocIDs[i] = doc.GetID()
-		}
-		secondIDResult = secondDocIDs
+func newPrimaryObjectsRetriever(
+	primarySide, secondarySide *joinSide,
+) primaryObjectsRetriever {
+	j := primaryObjectsRetriever{
+		primarySide:   primarySide,
+		secondarySide: secondarySide,
 	}
-	join.root.Value().Fields[join.subSelect.Index] = secondResult
-	if join.secondaryFieldIndex.HasValue() {
-		join.root.Value().Fields[join.secondaryFieldIndex.Value()] = secondIDResult
+	return j
+}
+
+func (j *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {
+	relIDFieldDef, ok := j.primarySide.col.Definition().GetFieldByName(
+		j.primarySide.relFieldDef.Name + request.RelatedObjectID)
+	if !ok {
+		return client.NewErrFieldNotExist(j.primarySide.relFieldDef.Name + request.RelatedObjectID)
 	}
-	return secondResult, secondIDResult
+
+	j.primaryScan = getScanNode(j.primarySide.plan)
+
+	j.relIDFieldDef = relIDFieldDef
+
+	primaryDocs, err := j.retrievePrimaryDocs()
+
+	if err != nil {
+		return err
+	}
+
+	j.resultPrimaryDocs, j.resultSecondaryDoc = joinPrimaryDocs(primaryDocs, j.secondarySide, j.primarySide)
+
+	return nil
+}
+
+func (j *primaryObjectsRetriever) addIDFieldToScanner() {
+	found := false
+	for i := range j.primaryScan.fields {
+		if j.primaryScan.fields[i].Name == j.relIDFieldDef.Name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		j.primaryScan.fields = append(j.primaryScan.fields, j.relIDFieldDef)
+	}
+}
+
+func (j *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
+	p := j.primarySide.plan
+	if err := p.Init(); err != nil {
+		return nil, NewErrSubTypeInit(err)
+	}
+
+	docs := make([]core.Doc, 0, numDocs)
+
+	for {
+		hasValue, err := p.Next()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if !hasValue {
+			break
+		}
+
+		docs = append(docs, p.Value())
+	}
+
+	return docs, nil
+}
+
+func (j *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
+	j.addIDFieldToScanner()
+
+	secondaryDoc := j.secondarySide.plan.Value()
+	addFilterOnIDField(j.primaryScan, j.primarySide.relIDFieldMapIndex.Value(), secondaryDoc.GetID())
+
+	oldFetcher := j.primaryScan.fetcher
+
+	indexOnRelation := findIndexByFieldName(j.primaryScan.col, j.relIDFieldDef.Name)
+	j.primaryScan.initFetcher(immutable.None[string](), indexOnRelation)
+
+	docs, err := j.collectDocs(0)
+	if err != nil {
+		return nil, err
+	}
+
+	err = j.primaryScan.fetcher.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	j.primaryScan.fetcher = oldFetcher
+
+	return docs, nil
+}
+
+func docsToDocIDs(docs []core.Doc) []string {
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.GetID()
+	}
+	return docIDs
+}
+
+func joinPrimaryDocs(primaryDocs []core.Doc, secondarySide, primarySide *joinSide) ([]core.Doc, core.Doc) {
+	secondaryDoc := secondarySide.plan.Value()
+
+	if secondarySide.relFieldMapIndex.HasValue() {
+		if secondarySide.relFieldDef.Kind.IsArray() {
+			secondaryDoc.Fields[secondarySide.relFieldMapIndex.Value()] = primaryDocs
+		} else if len(primaryDocs) > 0 {
+			secondaryDoc.Fields[secondarySide.relFieldMapIndex.Value()] = primaryDocs[0]
+		}
+	}
+
+	if secondarySide.relIDFieldMapIndex.HasValue() {
+		if secondarySide.relFieldDef.Kind.IsArray() {
+			secondaryDoc.Fields[secondarySide.relIDFieldMapIndex.Value()] = docsToDocIDs(primaryDocs)
+		} else if len(primaryDocs) > 0 {
+			secondaryDoc.Fields[secondarySide.relIDFieldMapIndex.Value()] = primaryDocs[0].GetID()
+		}
+	}
+
+	if primarySide.relFieldMapIndex.HasValue() {
+		for i := range primaryDocs {
+			primaryDocs[i].Fields[primarySide.relFieldMapIndex.Value()] = secondaryDoc
+		}
+	}
+
+	if primarySide.relIDFieldMapIndex.HasValue() {
+		for i := range primaryDocs {
+			primaryDocs[i].Fields[primarySide.relIDFieldMapIndex.Value()] = secondaryDoc.GetID()
+		}
+	}
+
+	return primaryDocs, secondaryDoc
+}
+
+func (join *invertibleTypeJoin) fetchPrimaryDocsReferencingSecondaryDoc() ([]core.Doc, core.Doc, error) {
+	retriever := newPrimaryObjectsRetriever(join.getPrimarySide(), join.getSecondarySide())
+	err := retriever.retrievePrimaryDocsReferencingSecondaryDoc()
+	return retriever.resultPrimaryDocs, retriever.resultSecondaryDoc, err
 }
 
 func (join *invertibleTypeJoin) Next() (bool, error) {
@@ -568,54 +666,86 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		}
 	}
 
-	hasFirstValue, err := join.dir.firstNode.Next()
+	firstSide := join.getFirstSide()
+	hasFirstValue, err := firstSide.plan.Next()
 
 	if err != nil || !hasFirstValue {
 		return false, err
 	}
 
-	firstDoc := join.dir.firstNode.Value()
-
-	if join.isSecondary {
-		secondDocs, err := fetchDocsWithFieldValue(
-			join.dir.secondNode,
-			// As the join is from the secondary field, we know that [join.dir.secondaryField] must have a value
-			// otherwise the user would not have been able to request it.
-			join.dir.secondaryField.Value(),
-			firstDoc.GetID(),
-		)
-		if err != nil {
-			return false, err
-		}
-		if join.dir.secondNode == join.root {
-			if len(secondDocs) == 0 {
-				return false, nil
-			}
-			for i := range secondDocs {
-				secondDocs[i].Fields[join.subSelect.Index] = join.subType.Value()
-			}
-			join.docsToYield = append(join.docsToYield, secondDocs...)
-			return true, nil
-		} else {
-			secondResult, secondIDResult := join.processSecondResult(secondDocs)
-			join.dir.firstNode.Value().Fields[join.subSelect.Index] = secondResult
-			if join.secondaryFieldIndex.HasValue() {
-				join.dir.firstNode.Value().Fields[join.secondaryFieldIndex.Value()] = secondIDResult
-			}
-		}
+	if firstSide.isPrimary() {
+		return join.nextJoinedSecondaryDoc()
 	} else {
-		hasDoc, err := fetchPrimaryDoc(join.dir.secondNode, join.dir.firstNode, join.dir.primaryField)
+		primaryDocs, secondaryDoc, err := join.fetchPrimaryDocsReferencingSecondaryDoc()
 		if err != nil {
 			return false, err
 		}
-
-		if hasDoc {
-			join.root.Value().Fields[join.subSelect.Index] = join.subType.Value()
+		if join.parentSide.isPrimary() {
+			join.docsToYield = append(join.docsToYield, primaryDocs...)
+		} else {
+			join.docsToYield = append(join.docsToYield, secondaryDoc)
 		}
 	}
 
-	join.docsToYield = append(join.docsToYield, join.root.Value())
+	return true, nil
+}
 
+func (join *invertibleTypeJoin) nextJoinedSecondaryDoc() (bool, error) {
+	firstSide := join.getFirstSide()
+	secondSide := join.getSecondSide()
+
+	secondaryDocID := getForeignKey(firstSide.plan, firstSide.relFieldDef.Name)
+	if secondaryDocID == "" {
+		if firstSide.isParent {
+			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
+			return true, nil
+		}
+		return join.Next()
+	}
+
+	if !firstSide.isParent {
+		for i := range join.encounteredDocIDs {
+			if join.encounteredDocIDs[i] == secondaryDocID {
+				return join.Next()
+			}
+		}
+		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
+	}
+
+	hasDoc, err := fetchDocWithID(secondSide.plan, secondaryDocID)
+	if err != nil {
+		return false, err
+	}
+
+	if !hasDoc {
+		if firstSide.isParent {
+			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
+			return true, nil
+		}
+		return join.Next()
+	}
+
+	if join.parentSide.relFieldDef.Kind.IsArray() {
+		var primaryDocs []core.Doc
+		var secondaryDoc core.Doc
+		// if child is not requested as part of the response, we just add the existing one (fetched by the secondary index
+		// on a filtered value) so that top select node that runs the filter again can yield it.
+		if join.skipChild {
+			primaryDocs, secondaryDoc = joinPrimaryDocs([]core.Doc{firstSide.plan.Value()}, secondSide, firstSide)
+		} else {
+			primaryDocs, secondaryDoc, err = join.fetchPrimaryDocsReferencingSecondaryDoc()
+			if err != nil {
+				return false, err
+			}
+		}
+		secondaryDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = primaryDocs
+
+		join.docsToYield = append(join.docsToYield, secondaryDoc)
+	} else {
+		parentDoc := join.parentSide.plan.Value()
+		parentDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = join.childSide.plan.Value()
+		join.docsToYield = append(join.docsToYield, parentDoc)
+	}
 	return true, nil
 }
 
@@ -630,26 +760,19 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	fieldFilter *mapper.Filter,
 	index client.IndexDescription,
 ) error {
-	if !join.rootName.HasValue() {
-		// If the root field has no value it cannot be inverted
-		return nil
-	}
-	if join.subSelectFieldDef.Kind.IsArray() {
-		// invertibleTypeJoin does not support inverting one-many relations atm
-		return nil
-	}
-	subScan := getScanNode(join.subType)
-	subScan.tryAddField(join.rootName.Value() + request.RelatedObjectID)
-	subScan.filter = fieldFilter
-	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(index))
+	p := join.childSide.plan
+	s := getScanNode(p)
+	s.tryAddField(join.childSide.relFieldDef.Name + request.RelatedObjectID)
+	s.filter = fieldFilter
+	s.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 
-	join.invert()
+	join.childSide.isFirst = join.parentSide.isFirst
+	join.parentSide.isFirst = !join.parentSide.isFirst
 
 	return nil
 }
 
-func setSubTypeFilterToScanNode(plan planNode, propIndex int, val any) {
-	scan := getScanNode(plan)
+func addFilterOnIDField(scan *scanNode, propIndex int, val any) {
 	if scan == nil {
 		return
 	}

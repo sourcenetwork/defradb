@@ -315,6 +315,21 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	return immutable.None[client.IndexDescription]()
 }
 
+func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
+	for _, field := range col.Schema().Fields {
+		if field.Name != fieldName {
+			continue
+		}
+		indexes := col.Description().GetIndexesOnField(field.Name)
+		if len(indexes) > 0 {
+			// At the moment we just take the first index, but later we want to run some kind of analysis to
+			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
+			return immutable.Some(indexes[0])
+		}
+	}
+	return immutable.None[client.IndexDescription]()
+}
+
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
 	aggregates := []aggregateNode{}
 	// loop over the sub type
