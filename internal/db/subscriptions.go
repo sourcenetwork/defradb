@@ -34,6 +34,8 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
 	}
+	// unsubscribing from this publisher will cause a race condition
+	// https://github.com/sourcenetwork/defradb/issues/2687
 	pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
 	if err != nil {
 		return nil, err
@@ -41,11 +43,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 	resCh := make(chan client.GQLResult)
 	go func() {
-		// clean up channel and subscription
-		defer func() {
-			close(resCh)
-			pub.Unsubscribe()
-		}()
+		defer close(resCh)
 
 		// listen for events and send to the result channel
 		for {
