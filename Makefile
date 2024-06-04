@@ -357,6 +357,7 @@ docs:
 	@$(MAKE) docs\:cli
 	@$(MAKE) docs\:manpages
 	@$(MAKE) docs\:http
+	@$(MAKE) toc
 
 .PHONY: docs\:cli
 docs\:cli:
@@ -375,3 +376,7 @@ docs\:manpages:
 docs\:godoc:
 	godoc -http=:6060
 	# open http://localhost:6060/pkg/github.com/sourcenetwork/defradb/
+
+.PHONY: toc
+toc:
+	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
