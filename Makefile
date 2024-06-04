@@ -356,11 +356,16 @@ chglog:
 docs:
 	@$(MAKE) docs\:cli
 	@$(MAKE) docs\:manpages
+	@$(MAKE) docs\:http
 
 .PHONY: docs\:cli
 docs\:cli:
 	rm -f docs/website/references/cli/*.md
 	go run cmd/genclidocs/main.go -o docs/website/references/cli
+
+.PHONY: docs\:http
+docs\:http:
+	go run cmd/genopenapi/main.go | python -m json.tool > docs/website/references/http/openapi.json
 
 .PHONY: docs\:manpages
 docs\:manpages:
