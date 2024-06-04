@@ -30,7 +30,7 @@ func NewNormalNil(kind FieldKind) (NormalValue, error) {
 		return NewNormalNillableFloat(immutable.None[float64]()), nil
 	case FieldKind_NILLABLE_DATETIME:
 		return NewNormalNillableTime(immutable.None[time.Time]()), nil
-	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_JSON:
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_JSON, FieldKind_DocID:
 		return NewNormalNillableString(immutable.None[string]()), nil
 	case FieldKind_NILLABLE_BLOB:
 		return NewNormalNillableBytes(immutable.None[[]byte]()), nil

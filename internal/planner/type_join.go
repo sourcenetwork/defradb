@@ -695,7 +695,6 @@ func (join *invertibleTypeJoin) nextJoinedSecondaryDoc() (bool, error) {
 	secondSide := join.getSecondSide()
 
 	secondaryDocID := getForeignKey(firstSide.plan, firstSide.relFieldDef.Name)
-	// TODO: add some tests with filter on nil relation
 	if secondaryDocID == "" {
 		if firstSide.isParent {
 			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
@@ -718,8 +717,6 @@ func (join *invertibleTypeJoin) nextJoinedSecondaryDoc() (bool, error) {
 		return false, err
 	}
 
-	// TODO: add some tests that either return error if the doc is not found or return
-	// the related doc (without this one) and let it be filtered.
 	if !hasDoc {
 		if firstSide.isParent {
 			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())

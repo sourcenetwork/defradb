@@ -749,3 +749,164 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIndex(t *testing.T) {
+	req := `query {
+		Device(filter: {
+			owner_id: {_ne: null}
+		}) {
+			model
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String 
+						manufacturer: String
+						owner: User @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "Sony",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"iPhone",
+					"manufacturer": "Apple",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Running Man",
+					"manufacturer": "Braveworld Productions"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"PlayStation 5",
+					"manufacturer": "Sony"
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"model": "iPhone"},
+					{"model": "Walkman"},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// we make 4 index fetches to find 2 devices with owner_id != null
+				// and 2 field fetches to get 1 'model' field for every fetched device
+				// plus 2 more field fetches to get related User docs
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(4).WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIndex(t *testing.T) {
+	req := `query {
+		Device(filter: {
+			owner_id: {_eq: null}
+		}) {
+			model
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String 
+						manufacturer: String
+						owner: User @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Walkman",
+					"manufacturer": "Sony",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"iPhone",
+					"manufacturer": "Apple",
+					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"Running Man",
+					"manufacturer": "Braveworld Productions"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"model":	"PlayStation 5",
+					"manufacturer": "Sony"
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"model": "Running Man"},
+					{"model": "PlayStation 5"},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// we make 2 index fetches to get all 2 devices with owner_id == null
+				// and 2 field fetches to get 1 'model' field for every fetched device.
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
