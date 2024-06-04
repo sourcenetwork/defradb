@@ -1404,7 +1404,7 @@ func TestNormalValue_NewNormalNil(t *testing.T) {
 			assert.True(t, v.IsNil())
 		} else {
 			_, err := NewNormalNil(kind)
-			require.Error(t, err, "field kind: " + kind.String())
+			require.Error(t, err, "field kind: "+kind.String())
 		}
 	}
 }
