@@ -1152,6 +1152,10 @@ func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
+	if action.DocMap != nil {
+		substituteRelations(s, action)
+	}
+
 	var mutation func(*state, CreateDoc, client.P2P, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
@@ -1197,7 +1201,12 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	var doc *client.Document
+	if action.DocMap != nil {
+		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+	} else {
+		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1217,7 +1226,12 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	var doc *client.Document
+	if action.DocMap != nil {
+		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+	} else {
+		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1237,8 +1251,14 @@ func createDocViaGQL(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
+	var err error
+	var input string
 
-	input, err := jsonToGQL(action.Doc)
+	if action.DocMap != nil {
+		input, err = valueToGQL(action.DocMap)
+	} else {
+		input, err = jsonToGQL(action.Doc)
+	}
 	require.NoError(s.t, err)
 
 	request := fmt.Sprintf(
@@ -1277,6 +1297,25 @@ func createDocViaGQL(
 	require.NoError(s.t, err)
 
 	return doc, nil
+}
+
+// substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
+// it will substitute the [DocIndex] for the the corresponding document ID found in the state.
+//
+// If a document at that index is not found it will panic.
+func substituteRelations(
+	s *state,
+	action CreateDoc,
+) {
+	for k, v := range action.DocMap {
+		index, isIndex := v.(DocIndex)
+		if !isIndex {
+			continue
+		}
+
+		doc := s.documents[index.CollectionIndex][index.Index]
+		action.DocMap[k] = doc.ID().String()
+	}
 }
 
 // deleteDoc deletes a document using the collection api and caches it in the
