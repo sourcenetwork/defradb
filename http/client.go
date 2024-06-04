@@ -393,10 +393,13 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult 
 	resCh := make(chan client.GQLResult)
 	go func() {
 		eventReader := sse.NewReadCloser(r)
-		// ignore close errors because the status
-		// and body of the request are already
-		// checked and it cannot be handled properly
-		defer eventReader.Close() //nolint:errcheck
+		defer func() {
+			// ignore close errors because the status
+			// and body of the request are already
+			// checked and it cannot be handled properly
+			eventReader.Close() //nolint:errcheck
+			close(resCh)
+		}()
 
 		for {
 			evt, err := eventReader.Next()

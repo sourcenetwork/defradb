@@ -443,6 +443,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 	resCh := make(chan client.GQLResult)
 	go func() {
 		dec := json.NewDecoder(r)
+		defer close(resCh)
 
 		for {
 			var response http.GraphQLResponse
