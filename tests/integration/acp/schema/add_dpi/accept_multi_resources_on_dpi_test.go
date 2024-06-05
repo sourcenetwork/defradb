@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "6209c5d12fce1fb0db4140ffa9d6b14a4d38133f601ab83f12dbb6ef84ee7da3"
+	policyIDOfValidDPI := "65d58052e3304b4dc564410b7ab27aeff5d68b5c676b05883f8799c0b1f7a795"
 
 	test := testUtils.TestCase{
 
@@ -32,6 +32,7 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:
@@ -128,7 +129,7 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "6209c5d12fce1fb0db4140ffa9d6b14a4d38133f601ab83f12dbb6ef84ee7da3"
+	policyIDOfValidDPI := "65d58052e3304b4dc564410b7ab27aeff5d68b5c676b05883f8799c0b1f7a795"
 
 	test := testUtils.TestCase{
 
@@ -141,6 +142,7 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:

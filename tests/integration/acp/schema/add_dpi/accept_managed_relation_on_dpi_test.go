@@ -32,6 +32,7 @@ func TestACP_AddDPISchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:

@@ -68,7 +68,7 @@ func TestACP_AddDPISchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaRejected(t *testing.T) {
-	policyAdded := "d5b240c738dba7fe7d8ae55acf257d8e4010c9d8b78e0b1f0bd26741b1ec5663"
+	policyAdded := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 	incorrectPolicyID := "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262"
 
 	test := testUtils.TestCase{
@@ -82,6 +82,7 @@ func TestACP_AddDPISchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaR
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:

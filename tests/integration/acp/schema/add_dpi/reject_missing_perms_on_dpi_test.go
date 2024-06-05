@@ -31,6 +31,7 @@ func TestACP_AddDPISchema_MissingRequiredReadPermissionOnDPI_SchemaRejected(t *t
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A policy
 
                     actor:
