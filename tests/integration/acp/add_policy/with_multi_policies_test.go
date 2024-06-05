@@ -26,6 +26,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     actor:
@@ -53,6 +54,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: another policy
 
                     actor:
@@ -99,6 +101,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
 
 				Policy: `
                     {
+                      "name": "test",
                       "description": "a policy",
                       "actor": {
                         "name": "actor"
@@ -132,6 +135,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: another policy
 
                     actor:
@@ -169,6 +173,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
 
 func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testing.T) {
 	const policyUsedByBoth string = `
+        name: test
         description: a policy
 
         actor:
@@ -224,6 +229,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -251,6 +257,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -289,6 +296,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_Error(t *testin
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -316,6 +324,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_Error(t *testin
 
 				Policy: `
                    {
+                     "name": "test",
                      "description": "a policy",
                      "actor": {
                        "name": "actor"

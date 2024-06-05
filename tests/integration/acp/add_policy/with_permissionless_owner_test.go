@@ -33,6 +33,7 @@ func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -73,6 +74,7 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -113,6 +115,7 @@ func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

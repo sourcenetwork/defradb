@@ -34,6 +34,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
 
 				Policy: `
+                    name: a policy
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:

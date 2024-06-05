@@ -26,6 +26,7 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     actor:

@@ -26,6 +26,7 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -66,6 +67,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -106,6 +108,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpac
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

@@ -26,6 +26,7 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -80,6 +81,7 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -131,6 +133,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

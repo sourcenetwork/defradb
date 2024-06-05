@@ -34,6 +34,7 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -68,6 +69,7 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -105,6 +107,7 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -137,6 +140,7 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

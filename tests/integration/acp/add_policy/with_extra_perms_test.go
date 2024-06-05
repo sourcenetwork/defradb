@@ -26,6 +26,7 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     resources:
@@ -65,6 +66,7 @@ func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     resources:

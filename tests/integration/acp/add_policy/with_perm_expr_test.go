@@ -26,6 +26,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -67,6 +68,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

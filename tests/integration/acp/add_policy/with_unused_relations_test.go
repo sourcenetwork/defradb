@@ -26,6 +26,7 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

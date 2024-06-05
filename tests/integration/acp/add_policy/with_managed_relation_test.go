@@ -25,6 +25,7 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy with admin relation managing reader relation
 
                     actor:

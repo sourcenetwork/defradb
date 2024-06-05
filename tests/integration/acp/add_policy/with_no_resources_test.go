@@ -28,6 +28,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -56,6 +57,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

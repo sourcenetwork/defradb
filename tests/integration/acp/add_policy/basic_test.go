@@ -26,6 +26,7 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:
@@ -65,6 +66,7 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 
 				Policy: `
 					{
+					  "name": "test",
 					  "description": "a basic policy that satisfies minimum DPI requirements",
 					  "resources": {
 					    "users": {
