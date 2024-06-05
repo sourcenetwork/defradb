@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -166,20 +165,16 @@ func (c *collection) applyDelete(
 		return err
 	}
 
-	if c.db.events.Updates.HasValue() {
-		txn.OnSuccess(
-			func() {
-				c.db.events.Updates.Value().Publish(
-					events.Update{
-						DocID:      primaryKey.DocID,
-						Cid:        link.Cid,
-						SchemaRoot: c.Schema().Root,
-						Block:      b,
-					},
-				)
-			},
-		)
+	// publish an update event if the txn succeeds
+	updateEvent := client.UpdateEvent{
+		DocID:      primaryKey.DocID,
+		Cid:        link.Cid,
+		SchemaRoot: c.Schema().Root,
+		Block:      b,
 	}
+	txn.OnSuccess(func() {
+		c.db.events.Publish(client.UpdateEventName, updateEvent)
+	})
 
 	return nil
 }

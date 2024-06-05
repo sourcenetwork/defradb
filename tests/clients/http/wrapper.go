@@ -221,7 +221,7 @@ func (w *Wrapper) Close() {
 	w.node.Close()
 }
 
-func (w *Wrapper) Events() events.Events {
+func (w *Wrapper) Events() *events.Bus {
 	return w.node.Events()
 }
 

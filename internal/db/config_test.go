@@ -16,12 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithUpdateEvents(t *testing.T) {
-	d := &db{}
-	WithUpdateEvents()(d)
-	assert.NotNil(t, d.events)
-}
-
 func TestWithMaxRetries(t *testing.T) {
 	d := &db{}
 	WithMaxRetries(10)(d)

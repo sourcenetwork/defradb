@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
@@ -26,36 +25,33 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if len(r.Subscription) == 0 || len(r.Subscription[0].Selections) == 0 {
 		return nil, nil // This is not a subscription request and we have nothing to do here
 	}
-	if !db.events.Updates.HasValue() {
-		return nil, ErrSubscriptionsNotAllowed
-	}
 	selections := r.Subscription[0].Selections[0]
 	subRequest, ok := selections.(*request.ObjectSubscription)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
 	}
-	// unsubscribing from this publisher will cause a race condition
-	// https://github.com/sourcenetwork/defradb/issues/2687
-	pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
-	if err != nil {
-		return nil, err
-	}
-
+	sub := db.events.Subscribe(5, client.UpdateEventName)
 	resCh := make(chan client.GQLResult)
 	go func() {
-		defer close(resCh)
+		defer func() {
+			db.events.Unsubscribe(sub)
+			close(resCh)
+		}()
 
 		// listen for events and send to the result channel
 		for {
-			var evt events.Update
+			var evt client.UpdateEvent
 			select {
 			case <-ctx.Done():
 				return // context cancelled
-			case val, ok := <-pub.Event():
+			case val, ok := <-sub.Value():
 				if !ok {
 					return // channel closed
 				}
-				evt = val
+				evt, ok = val.(client.UpdateEvent)
+				if !ok {
+					continue // invalid event value
+				}
 			}
 
 			txn, err := db.NewTxn(ctx, false)

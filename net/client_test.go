@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
 )
 
 var def = client.CollectionDefinition{
@@ -62,7 +61,7 @@ func TestPushlogWithDialFailure(t *testing.T) {
 		grpc.WithCredentialsBundle(nil),
 	)
 
-	err = n.server.pushLog(ctx, events.Update{
+	err = n.server.pushLog(ctx, client.UpdateEvent{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
@@ -84,7 +83,7 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.server.pushLog(ctx, events.Update{
+	err = n.server.pushLog(ctx, client.UpdateEvent{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
@@ -132,7 +131,7 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n1.server.pushLog(ctx, events.Update{
+	err = n1.server.pushLog(ctx, client.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        cid,
 		SchemaRoot: col.SchemaRoot(),

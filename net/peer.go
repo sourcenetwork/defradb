@@ -53,8 +53,8 @@ var (
 type Peer struct {
 	//config??
 
-	db            client.DB
-	updateChannel chan events.Update
+	db        client.DB
+	updateSub *events.Subscription
 
 	host host.Host
 	dht  routing.Routing
@@ -163,16 +163,7 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		if !p.db.Events().Updates.HasValue() {
-			return ErrNilUpdateChannel
-		}
-
-		updateChannel, err := p.db.Events().Updates.Value().Subscribe()
-		if err != nil {
-			return err
-		}
-		p.updateChannel = updateChannel
-
+		p.updateSub = p.db.Events().Subscribe(100, client.UpdateEventName)
 		log.InfoContext(p.ctx, "Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
 	}
@@ -224,8 +215,8 @@ func (p *Peer) Close() {
 		}
 	}
 
-	if p.db.Events().Updates.HasValue() {
-		p.db.Events().Updates.Value().Unsubscribe(p.updateChannel)
+	if p.updateSub != nil {
+		p.db.Events().Unsubscribe(p.updateSub)
 	}
 
 	if err := p.bserv.Close(); err != nil {
@@ -243,9 +234,13 @@ func (p *Peer) Close() {
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
 	for {
-		update, isOpen := <-p.updateChannel
+		value, isOpen := <-p.updateSub.Value()
 		if !isOpen {
 			return
+		}
+		update, ok := value.(client.UpdateEvent)
+		if !ok {
+			continue // ignore invalid value
 		}
 
 		var err error
@@ -335,7 +330,7 @@ func (p *Peer) pushToReplicator(
 				continue
 			}
 
-			evt := events.Update{
+			evt := client.UpdateEvent{
 				DocID:      docIDResult.ID.String(),
 				Cid:        c,
 				SchemaRoot: collection.SchemaRoot(),
@@ -402,7 +397,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 	return colMap, nil
 }
 
-func (p *Peer) handleDocCreateLog(evt events.Update) error {
+func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -420,7 +415,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) handleDocUpdateLog(evt events.Update) error {
+func (p *Peer) handleDocUpdateLog(evt client.UpdateEvent) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -453,7 +448,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(lg events.Update) {
+func (p *Peer) pushLogToReplicators(lg client.UpdateEvent) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
 	for _, peer := range p.ps.ListPeers(lg.DocID) {

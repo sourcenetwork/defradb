@@ -12,8 +12,6 @@ package db
 
 import (
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/events"
 )
 
 const (
@@ -23,15 +21,6 @@ const (
 
 // Option is a funtion that sets a config value on the db.
 type Option func(*db)
-
-// WithUpdateEvents enables the update events channel.
-func WithUpdateEvents() Option {
-	return func(db *db) {
-		db.events = events.Events{
-			Updates: immutable.Some(events.New[events.Update](0, updateEventBufferSize)),
-		}
-	}
-}
 
 // WithMaxRetries sets the maximum number of retries per transaction.
 func WithMaxRetries(num int) Option {

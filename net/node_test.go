@@ -36,7 +36,7 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
-	database, err = db.NewDB(ctx, rootstore, acp.NoACP, nil, db.WithUpdateEvents())
+	database, err = db.NewDB(ctx, rootstore, acp.NoACP, nil)
 	require.NoError(t, err)
 	return database
 }
@@ -44,7 +44,7 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -59,7 +59,7 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	db.Close()
 
@@ -73,7 +73,7 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 func TestNewNode_NoPubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -88,7 +88,7 @@ func TestNewNode_NoPubSub_NoError(t *testing.T) {
 func TestNewNode_WithEnablePubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -106,7 +106,7 @@ func TestNewNode_WithEnablePubSub_NoError(t *testing.T) {
 func TestNodeClose_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -119,7 +119,7 @@ func TestNodeClose_NoError(t *testing.T) {
 func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -135,7 +135,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -162,7 +162,7 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -192,7 +192,7 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),

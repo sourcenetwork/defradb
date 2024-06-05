@@ -31,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -1792,21 +1791,18 @@ func (c *collection) save(
 	if err != nil {
 		return cid.Undef, err
 	}
-	if c.db.events.Updates.HasValue() {
-		txn.OnSuccess(
-			func() {
-				c.db.events.Updates.Value().Publish(
-					events.Update{
-						DocID:      doc.ID().String(),
-						Cid:        link.Cid,
-						SchemaRoot: c.Schema().Root,
-						Block:      headNode,
-						IsCreate:   isCreate,
-					},
-				)
-			},
-		)
+
+	// publish an update event when the txn succeeds
+	updateEvent := client.UpdateEvent{
+		DocID:      doc.ID().String(),
+		Cid:        link.Cid,
+		SchemaRoot: c.Schema().Root,
+		Block:      headNode,
+		IsCreate:   isCreate,
 	}
+	txn.OnSuccess(func() {
+		c.db.events.Publish(client.UpdateEventName, updateEvent)
+	})
 
 	txn.OnSuccess(func() {
 		doc.SetHead(link.Cid)

@@ -79,14 +79,19 @@ func ExecuteRequestTestCase(
 
 	testRoutineClosedChan := make(chan struct{})
 	closeTestRoutineChan := make(chan struct{})
-	eventsChan, err := db.Events().Updates.Value().Subscribe()
+	eventsSub := db.Events().Subscribe(5, client.UpdateEventName)
 	require.NoError(t, err)
 
 	indexOfNextExpectedUpdate := 0
 	go func() {
 		for {
 			select {
-			case update := <-eventsChan:
+			case value := <-eventsSub.Value():
+				update, ok := value.(client.UpdateEvent)
+				if !ok {
+					continue // ignore invaid value
+				}
+
 				if indexOfNextExpectedUpdate >= len(testCase.ExpectedUpdates) {
 					assert.Fail(t, "More events recieved than were expected", update)
 					testRoutineClosedChan <- struct{}{}

@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
@@ -73,7 +72,6 @@ func init() {
 func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	opts := []node.Option{
 		node.WithInMemory(true),
-		db.WithUpdateEvents(),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -104,7 +102,6 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 // select the datastore implementation to use.
 func setupDatabase(s *state) (client.DB, string, error) {
 	opts := []node.Option{
-		db.WithUpdateEvents(),
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.DB].

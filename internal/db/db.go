@@ -51,7 +51,7 @@ type db struct {
 	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
-	events events.Events
+	events *events.Bus
 
 	parser core.Parser
 
@@ -237,7 +237,7 @@ func (db *db) initialize(ctx context.Context) error {
 }
 
 // Events returns the events Channel.
-func (db *db) Events() events.Events {
+func (db *db) Events() *events.Bus {
 	return db.events
 }
 
@@ -259,9 +259,7 @@ func (db *db) PrintDump(ctx context.Context) error {
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
-	if db.events.Updates.HasValue() {
-		db.events.Updates.Value().Close()
-	}
+	db.events.Close()
 
 	err := db.rootstore.Close()
 	if err != nil {

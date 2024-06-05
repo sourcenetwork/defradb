@@ -193,7 +193,7 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 func setupDatabase(t *testing.T) client.DB {
 	ctx := context.Background()
 
-	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), acp.NoACP, nil, db.WithUpdateEvents())
+	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), acp.NoACP, nil)
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {
