@@ -27,6 +27,7 @@ func TestACP_CreateWithoutIdentityAndReadWithoutIdentity_CanRead(t *testing.T) {
 				Identity: Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -115,6 +116,7 @@ func TestACP_CreateWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 				Identity: Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -205,6 +207,7 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 				Identity: Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -297,6 +300,7 @@ func TestACP_CreateWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
 				Identity: Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -381,6 +385,7 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
 				Identity: Actor1Identity,
 
 				Policy: `
+                     name: test
                      description: a test policy which marks a collection in a database as a resource
 
                      actor:
