@@ -103,7 +103,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionOnDPI_SchemaRejecte
 }
 
 func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "f0c8fc28378030d268ccdab9931e788d8839e0640085e43c1d48deebfe859f34"
+	policyIDOfInvalidDPI := "73c85066924b28fafb4103fc764ae35f6891a50292634df5a870f45525095bca"
 
 	test := testUtils.TestCase{
 
@@ -116,7 +116,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRe
 				Identity: actor1Identity,
 
 				Policy: `
-                    name: test
+                     name: test
                      description: a policy
 
                      actor:
@@ -187,7 +187,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRe
 }
 
 func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "e94d4ca7705564e39014bec198c3e20f5fae86c4dd44297711bd6a2257e579dc"
+	policyIDOfInvalidDPI := "1e4cd20ab842fb837ed3e03c69014732593261ffc56142f7c907f32200f6d255"
 
 	test := testUtils.TestCase{
 
@@ -200,7 +200,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_Sc
 				Identity: actor1Identity,
 
 				Policy: `
-                    name: test
+                     name: test
                      description: a policy
 
                      actor:
