@@ -35,6 +35,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_Error(t *testing
 				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
