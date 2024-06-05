@@ -111,3 +111,12 @@ Keyring backend to use. Defaults to `file`.
 
 - `file` Stores keys in encrypted files
 - `system` Stores keys in the OS managed keyring
+
+## `lens.runtime`
+
+The LensVM wasm runtime to run lens modules in.
+
+Possible values:
+- `wasm-time` (default): https://github.com/bytecodealliance/wasmtime-go
+- `wasmer` (windows not supported): https://github.com/wasmerio/wasmer-go
+- `wazero`: https://github.com/tetratelabs/wazero
