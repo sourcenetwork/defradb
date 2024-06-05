@@ -49,10 +49,13 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 		for {
 			var evt events.Update
 			select {
-			case val := <-pub.Event():
-				evt = val
 			case <-ctx.Done():
 				return // context cancelled
+			case val, ok := <-pub.Event():
+				if !ok {
+					return // channel closed
+				}
+				evt = val
 			}
 
 			txn, err := db.NewTxn(ctx, false)
@@ -80,11 +83,11 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 
 			select {
-			case resCh <- res:
-				txn.Discard(ctx)
 			case <-ctx.Done():
 				txn.Discard(ctx)
 				return // context cancelled
+			case resCh <- res:
+				txn.Discard(ctx)
 			}
 		}
 	}()
