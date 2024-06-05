@@ -37,7 +37,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
                     resources:
                 `,
 
-				ExpectedPolicyID: "e16824022121b55f2b2babbd2ab82960a8837767197e20acf9c577cbb4539991",
+				ExpectedPolicyID: "e3ffe8e802e4612dc41d7a638cd77dc16d51eb1db0d18682eec75b05234e6ee2",
 			},
 		},
 	}
@@ -64,7 +64,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
                       name: actor
                 `,
 
-				ExpectedPolicyID: "e16824022121b55f2b2babbd2ab82960a8837767197e20acf9c577cbb4539991",
+				ExpectedPolicyID: "e3ffe8e802e4612dc41d7a638cd77dc16d51eb1db0d18682eec75b05234e6ee2",
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 
 // Eventhough empty resources make no sense from a DefraDB (DPI) perspective,
 // it is still a valid sourcehub policy for now.
-func TestACP_AddPolicy_PolicyWithOnlySpace_ValidID(t *testing.T) {
+func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Test acp, adding a policy that has only space",
@@ -85,7 +85,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_ValidID(t *testing.T) {
 
 				Policy: " ",
 
-				ExpectedPolicyID: "e16824022121b55f2b2babbd2ab82960a8837767197e20acf9c577cbb4539991",
+				ExpectedError: "name is required",
 			},
 		},
 	}

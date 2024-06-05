@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/acp_core/pkg/runtime"
 	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
+	"github.com/valyala/fastjson"
 )
 
 // ACPLocal represents a local acp implementation that makes no remote calls.
@@ -122,9 +123,11 @@ func (l *ACPLocal) AddPolicy(
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
-	// Since YAML is a superset of JSON, assume Policy is YAML
-	// and let SourceHub figure it out.
 	marshalType := types.PolicyMarshalingType_SHORT_YAML
+	if isJSON := fastjson.Validate(policy) == nil; isJSON { // Detect JSON format.
+		marshalType = types.PolicyMarshalingType_SHORT_JSON
+	}
+
 	createPolicy := types.CreatePolicyRequest{
 		Policy:       policy,
 		MarshalType:  marshalType,

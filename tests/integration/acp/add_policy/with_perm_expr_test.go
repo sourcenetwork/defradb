@@ -49,7 +49,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
                               - actor
                 `,
 
-				ExpectedPolicyID: "fcb989d8bad149e3c4b22f8a69969760187b29ea1c796a3f9d2e16e32f493590",
+				ExpectedPolicyID: "2b10641de73790b95452f496a37ad53a8d8a0703803f35f6961457af912947c0",
 			},
 		},
 	}
@@ -91,7 +91,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
                               - actor
                 `,
 
-				ExpectedPolicyID: "50d8fbaf70a08c2c0e2bf0355a353a8bb06cc4d6e2f3ddbf71d91f9ef5aa49af",
+				ExpectedPolicyID: "b6b305214247a08903e01466a1bfd01516206458d2725506797300b285e63690",
 			},
 		},
 	}

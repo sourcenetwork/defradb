@@ -10,7 +10,7 @@
 
 package test_acp_index
 
-// policy id: "a42e109f1542da3fef5f8414621a09aa4805bf1ac9ff32ad9940bd2c488ee6cd"
+// policy id: "7bcb558ef8dac6b744a11ea144a61a756ea38475554097ac04612037c36ffe52"
 const userPolicy = `
 description: a test policy which marks a collection in a database as a resource
 

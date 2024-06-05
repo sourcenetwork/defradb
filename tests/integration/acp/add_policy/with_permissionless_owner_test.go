@@ -56,7 +56,7 @@ func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedPolicyID: "f7e7b84108ba67bcdeb211ff740eee13b2b6770106dcf0d0436a3a33d8a2f9f0",
+				ExpectedPolicyID: "9328e41c1969c6269bfd82162b45831ccec8df9fc8d57902620ad43baaa0d77d",
 			},
 		},
 	}
@@ -97,7 +97,7 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedPolicyID: "22c3eee3b3d216c01244a47a6aa241a08b767b3ef0a9edfbd30b3575a6bd94f4",
+				ExpectedPolicyID: "74f3c0996d5b1669b9efda5ef45f93a925df9f770e2dcd53f352b5f0693a2b0f",
 			},
 		},
 	}
@@ -138,7 +138,7 @@ func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedPolicyID: "f7e7b84108ba67bcdeb211ff740eee13b2b6770106dcf0d0436a3a33d8a2f9f0",
+				ExpectedPolicyID: "9328e41c1969c6269bfd82162b45831ccec8df9fc8d57902620ad43baaa0d77d",
 			},
 		},
 	}

@@ -55,13 +55,12 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
                 `,
 
-				ExpectedError: "policy creator can not be empty",
+				ExpectedError: "cannot generate did if address is not prefixed",
 			},
 		},
 	}
 
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2357
-	testUtils.AssertPanic(t, func() { testUtils.ExecuteTestCase(t, test) })
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T) {
