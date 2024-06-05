@@ -13,7 +13,7 @@ package connor
 /*
 #include <stdbool.h>
 #include <stdlib.h>
-#cgo LDFLAGS: -L./../libs -labi
+#cgo LDFLAGS: -L./../../libs -labi
 
 typedef struct {
     char* data;
