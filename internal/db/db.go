@@ -21,7 +21,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/lens-vm/lens/host-go/engine/module"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -32,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
@@ -57,10 +55,6 @@ type db struct {
 
 	parser core.Parser
 
-	// The maximum number of cached migrations instances to preserve per schema version.
-	lensPoolSize immutable.Option[int]
-	lensRuntime  immutable.Option[module.Runtime]
-
 	lensRegistry client.LensRegistry
 
 	// The maximum number of retries per transaction.
@@ -81,15 +75,17 @@ func NewDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
 	acp immutable.Option[acp.ACP],
+	lens client.LensRegistry,
 	options ...Option,
 ) (client.DB, error) {
-	return newDB(ctx, rootstore, acp, options...)
+	return newDB(ctx, rootstore, acp, lens, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.RootStore,
 	acp immutable.Option[acp.ACP],
+	lens client.LensRegistry,
 	options ...Option,
 ) (*db, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
@@ -100,11 +96,12 @@ func newDB(
 	}
 
 	db := &db{
-		rootstore:  rootstore,
-		multistore: multistore,
-		acp:        acp,
-		parser:     parser,
-		options:    options,
+		rootstore:    rootstore,
+		multistore:   multistore,
+		acp:          acp,
+		lensRegistry: lens,
+		parser:       parser,
+		options:      options,
 	}
 
 	// apply options
@@ -112,9 +109,9 @@ func newDB(
 		opt(db)
 	}
 
-	// lens options may be set by `WithLens` funcs, and because they are funcs on db
-	// we have to mutate `db` here to set the registry.
-	db.lensRegistry = lens.NewRegistry(db, db.lensPoolSize, db.lensRuntime)
+	if lens != nil {
+		lens.Init(db)
+	}
 
 	err = db.initialize(ctx)
 	if err != nil {

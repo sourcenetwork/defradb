@@ -8,9 +8,9 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-# This workflow checks that all CLI documentation is up to date.
+# This workflow checks that all HTTP documentation is up to date.
 # If the documentation is not up to date then this action will fail.
-name: Check CLI Documentation Workflow
+name: Check HTTP Documentation Workflow
 
 on:
   pull_request:
@@ -26,8 +26,8 @@ on:
       - develop
 
 jobs:
-  check-cli-documentation:
-    name: Check cli documentation job
+  check-http-documentation:
+    name: Check http documentation job
 
     runs-on: ubuntu-latest
 
@@ -41,12 +41,12 @@ jobs:
           go-version: "1.21"
           check-latest: true
 
-      - name: Try generating cli documentation
-        run: make docs:cli
+      - name: Try generating http documentation
+        run: make docs:http
 
       - name: Check no new changes exist
         uses: tj-actions/verify-changed-files@v20
         with:
           fail-if-changed: true
           files: |
-             docs/website/references/cli
+             docs/website/references/http

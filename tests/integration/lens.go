@@ -11,11 +11,26 @@
 package tests
 
 import (
+	"os"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/node"
 )
+
+const (
+	lensTypeEnvName = "DEFRA_LENS_TYPE"
+)
+
+var (
+	lensType node.LensRuntimeType
+)
+
+func init() {
+	lensType = node.LensRuntimeType(os.Getenv(lensTypeEnvName))
+}
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
 // provided configuration.

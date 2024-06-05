@@ -8,23 +8,17 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+//go:build !windows && !js
+
+package node
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
 )
 
-func TestWithUpdateEvents(t *testing.T) {
-	d := &db{}
-	WithUpdateEvents()(d)
-	assert.NotNil(t, d.events)
-}
+const Wasmer LensRuntimeType = "wasmer"
 
-func TestWithMaxRetries(t *testing.T) {
-	d := &db{}
-	WithMaxRetries(10)(d)
-	assert.True(t, d.maxTxnRetries.HasValue())
-	assert.Equal(t, 10, d.maxTxnRetries.Value())
+func init() {
+	runtimeConstructors[Wasmer] = func() module.Runtime { return wasmer.New() }
 }
