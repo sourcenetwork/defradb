@@ -17,8 +17,6 @@ import (
 	"github.com/lens-vm/lens/host-go/config"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine/module"
-	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
-	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -72,12 +70,6 @@ func newTxnCtx(txn datastore.Txn) *txnContext {
 	}
 }
 
-// TxnSource represents an object capable of constructing the transactions that
-// implicit-transaction registries need internally.
-type TxnSource interface {
-	NewTxn(context.Context, bool) (datastore.Txn, error)
-}
-
 // DefaultPoolSize is the default size of the lens pool for each schema version.
 const DefaultPoolSize int = 5
 
@@ -85,28 +77,19 @@ const DefaultPoolSize int = 5
 //
 // It will be of size 5 (per schema version) if a size is not provided.
 func NewRegistry(
-	db TxnSource,
-	poolSize immutable.Option[int],
-	runtime immutable.Option[module.Runtime],
+	poolSize int,
+	runtime module.Runtime,
 ) client.LensRegistry {
 	registry := &lensRegistry{
-		poolSize:                    DefaultPoolSize,
-		runtime:                     wasmtime.New(),
+		poolSize:                    poolSize,
+		runtime:                     runtime,
 		modulesByPath:               map[string]module.Module{},
 		lensPoolsByCollectionID:     map[uint32]*lensPool{},
 		reversedPoolsByCollectionID: map[uint32]*lensPool{},
 		txnCtxs:                     map[uint64]*txnContext{},
 	}
 
-	if poolSize.HasValue() {
-		registry.poolSize = poolSize.Value()
-	}
-	if runtime.HasValue() {
-		registry.runtime = runtime.Value()
-	}
-
 	return &implicitTxnLensRegistry{
-		db:       db,
 		registry: registry,
 	}
 }

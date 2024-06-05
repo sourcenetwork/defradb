@@ -15,6 +15,8 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
+
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // LensConfig represents the configuration of a Lens migration in Defra.
@@ -38,9 +40,18 @@ type LensConfig struct {
 	model.Lens
 }
 
+// TxnSource represents an object capable of constructing the transactions that
+// implicit-transaction registries need internally.
+type TxnSource interface {
+	NewTxn(context.Context, bool) (datastore.Txn, error)
+}
+
 // LensRegistry exposes several useful thread-safe migration related functions which may
 // be used to manage migrations.
 type LensRegistry interface {
+	// Init initializes the registry with the provided transaction source.
+	Init(TxnSource)
+
 	// SetMigration caches the migration for the given collection ID. It does not persist the migration in long
 	// term storage, for that one should call [Store.SetMigration(ctx, cfg)].
 	//

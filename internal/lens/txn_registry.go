@@ -22,7 +22,7 @@ import (
 
 type implicitTxnLensRegistry struct {
 	registry *lensRegistry
-	db       TxnSource
+	db       client.TxnSource
 }
 
 type explicitTxnLensRegistry struct {
@@ -33,12 +33,11 @@ type explicitTxnLensRegistry struct {
 var _ client.LensRegistry = (*implicitTxnLensRegistry)(nil)
 var _ client.LensRegistry = (*explicitTxnLensRegistry)(nil)
 
-func (r *implicitTxnLensRegistry) WithTxn(txn datastore.Txn) client.LensRegistry {
-	return &explicitTxnLensRegistry{
-		registry: r.registry,
-		txn:      txn,
-	}
+func (r *implicitTxnLensRegistry) Init(txnSource client.TxnSource) {
+	r.db = txnSource
 }
+
+func (r *explicitTxnLensRegistry) Init(txnSource client.TxnSource) {}
 
 func (r *explicitTxnLensRegistry) WithTxn(txn datastore.Txn) client.LensRegistry {
 	return &explicitTxnLensRegistry{

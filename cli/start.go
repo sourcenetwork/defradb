@@ -126,6 +126,7 @@ func MakeStartCommand() *cobra.Command {
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
 				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
 				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
+				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 			}
 
 			if cfg.GetString("datastore.store") != configStoreMemory {
