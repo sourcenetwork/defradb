@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/events"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -79,7 +80,7 @@ func ExecuteRequestTestCase(
 
 	testRoutineClosedChan := make(chan struct{})
 	closeTestRoutineChan := make(chan struct{})
-	eventsSub := db.Events().Subscribe(5, client.UpdateEventName)
+	eventsSub := db.Events().Subscribe(5, events.UpdateEventName)
 	require.NoError(t, err)
 
 	indexOfNextExpectedUpdate := 0
@@ -87,7 +88,7 @@ func ExecuteRequestTestCase(
 		for {
 			select {
 			case value := <-eventsSub.Value():
-				update, ok := value.(client.UpdateEvent)
+				update, ok := value.(events.UpdateEvent)
 				if !ok {
 					continue // ignore invaid value
 				}

@@ -102,6 +102,7 @@ func newDB(
 		lensRegistry: lens,
 		parser:       parser,
 		options:      options,
+		events:       events.NewBus(),
 	}
 
 	// apply options

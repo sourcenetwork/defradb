@@ -32,6 +32,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
+	"github.com/sourcenetwork/defradb/events"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -234,46 +235,6 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 
 	db1.Close()
 	db2.Close()
-}
-
-func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-
-	n, err := NewNode(
-		ctx,
-		db,
-		WithEnablePubSub(true),
-	)
-	require.NoError(t, err)
-
-	err = n.Start()
-	require.ErrorIs(t, err, ErrNilUpdateChannel)
-
-	db.Close()
-}
-
-func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-
-	n, err := NewNode(
-		ctx,
-		db,
-		WithEnablePubSub(true),
-	)
-	require.NoError(t, err)
-
-	db.Events().Close()
-
-	err = n.Start()
-	require.ErrorContains(t, err, "cannot subscribe to a closed channel")
-
-	db.Close()
 }
 
 func TestRegisterNewDocument_NoError(t *testing.T) {
@@ -927,7 +888,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n.handleDocCreateLog(client.UpdateEvent{
+	err = n.handleDocCreateLog(events.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -941,7 +902,7 @@ func TestHandleDocCreateLog_WithInvalidDocID_NoError(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	err := n.handleDocCreateLog(client.UpdateEvent{
+	err := n.handleDocCreateLog(events.UpdateEvent{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
@@ -970,7 +931,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocCreateLog(client.UpdateEvent{
+	err = n.handleDocCreateLog(events.UpdateEvent{
 		DocID:      doc.ID().String(),
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -1003,7 +964,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(client.UpdateEvent{
+	err = n.handleDocUpdateLog(events.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -1017,7 +978,7 @@ func TestHandleDoUpdateLog_WithInvalidDocID_NoError(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	err := n.handleDocUpdateLog(client.UpdateEvent{
+	err := n.handleDocUpdateLog(events.UpdateEvent{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
@@ -1052,7 +1013,7 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(client.UpdateEvent{
+	err = n.handleDocUpdateLog(events.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -1090,7 +1051,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), col.SchemaRoot(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(client.UpdateEvent{
+	err = n.handleDocUpdateLog(events.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),

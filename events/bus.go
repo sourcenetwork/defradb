@@ -38,7 +38,16 @@ func (b *Bus) Publish(event string, value any) {
 	b.mutex.RLock()
 	defer b.mutex.RUnlock()
 
+	subscribers := make(map[int]any)
+	// publish to event subscribers
 	for id := range b.events[event] {
+		subscribers[id] = struct{}{}
+	}
+	// also publish to wildcard recipients
+	for id := range b.events[WildCardEventName] {
+		subscribers[id] = struct{}{}
+	}
+	for id := range subscribers {
 		select {
 		case b.subs[id].value <- value:
 			// published event
@@ -66,6 +75,9 @@ func (b *Bus) Subscribe(size int, events ...string) *Subscription {
 
 	// add sub to all events
 	for _, event := range events {
+		if _, ok := b.events[event]; !ok {
+			b.events[event] = make(map[int]any)
+		}
 		b.events[event][sub.id] = struct{}{}
 	}
 	return sub
@@ -80,9 +92,11 @@ func (b *Bus) Unsubscribe(sub *Subscription) {
 	for _, event := range sub.events {
 		delete(b.events[event], sub.id)
 	}
-
+	// only close channel once
+	if _, ok := b.subs[sub.id]; ok {
+		close(sub.value)
+	}
 	delete(b.subs, sub.id)
-	close(sub.value)
 }
 
 // Close closes the event bus by unsubscribing all subscribers.

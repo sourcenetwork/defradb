@@ -1,8 +1,20 @@
-package client
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package events
 
 import "github.com/ipfs/go-cid"
 
 const (
+	// WildCardEventName is the alias used to subscribe to all events.
+	WildCardEventName = "*"
 	// UpdateEventName is the name of the database update event.
 	UpdateEventName = "db:update"
 	// ResultsEventName is the name of the database results event.

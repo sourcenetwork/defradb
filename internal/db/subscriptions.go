@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
@@ -30,7 +31,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
 	}
-	sub := db.events.Subscribe(5, client.UpdateEventName)
+	sub := db.events.Subscribe(5, events.UpdateEventName)
 	resCh := make(chan client.GQLResult)
 	go func() {
 		defer func() {
@@ -40,7 +41,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 		// listen for events and send to the result channel
 		for {
-			var evt client.UpdateEvent
+			var evt events.UpdateEvent
 			select {
 			case <-ctx.Done():
 				return // context cancelled
@@ -48,7 +49,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				if !ok {
 					return // channel closed
 				}
-				evt, ok = val.(client.UpdateEvent)
+				evt, ok = val.(events.UpdateEvent)
 				if !ok {
 					continue // invalid event value
 				}
