@@ -14,6 +14,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"errors"
+	"strings"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/acp_core/pkg/auth"
@@ -36,6 +37,7 @@ var _ sourceHubClient = (*ACPLocal)(nil)
 var _ Policy = (*localACPPolicyAdapter)(nil)
 var _ Resource = (*localACPResourceAdapter)(nil)
 var _ Permission = (*types.Permission)(nil)
+var errGeneratingDIDFromNonAccAddr = errors.New("cannot generate did if address is not prefixed")
 
 type localACPResourceAdapter struct {
 	resource *types.Resource
@@ -108,6 +110,7 @@ func (l *ACPLocal) AddPolicy(
 	policy string,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
+	// FIXME remove once Identity is refactored
 	did, err := genDIDFromSourceHubAddr(creatorID)
 	if err != nil {
 		return "", err
@@ -167,6 +170,7 @@ func (l *ACPLocal) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) (RegistrationResult, error) {
+	// FIXME remove once Identity is refactored
 	did, err := genDIDFromSourceHubAddr(actorID)
 	if err != nil {
 		return RegistrationResult_NoOp, err
@@ -200,7 +204,7 @@ func (l *ACPLocal) ObjectOwner(
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
-	empty := immutable.None[string]()
+	none := immutable.None[string]()
 
 	req := types.GetObjectRegistrationRequest{
 		PolicyId: policyID,
@@ -208,14 +212,14 @@ func (l *ACPLocal) ObjectOwner(
 	}
 	result, err := l.engine.GetObjectRegistration(ctx, &req)
 	if err != nil {
-		return empty, err
+		return none, err
 	}
 
 	if result.IsRegistered {
 		return immutable.Some(result.OwnerId), nil
 	}
 
-	return empty, nil
+	return none, nil
 }
 
 func (l *ACPLocal) VerifyAccessRequest(
@@ -226,6 +230,7 @@ func (l *ACPLocal) VerifyAccessRequest(
 	resourceName string,
 	docID string,
 ) (bool, error) {
+	// FIXME remove once Identity is refactored
 	did, err := genDIDFromSourceHubAddr(actorID)
 	if err != nil {
 		return false, err
@@ -253,7 +258,23 @@ func (l *ACPLocal) VerifyAccessRequest(
 	return resp.Valid, nil
 }
 
+// genDIDFromSourceHubAddr uses an account addr as a seed to produce a key pair
+// and consequently generate a DID.
+//
+// NOTE: This is by no means a *safe* practice, however it's "okay" for two reasons:
+//  1. It's a temporary workaround which will be invalidated once the new identity system
+//     is in place (ie. Identity is a DID as opposed to a SourceHub Addr)
+//  2. In Local ACP, the the temporary keys used to generate the DID aren't effectively
+//     used for any cryptographic operations.
+//
+// This method will produce an error if `addr` does not begin with "source".
+// The error will ensure that the tests break after the identity system is refactored,
+// which will be a sign that this method can be deleted entirely
 func genDIDFromSourceHubAddr(addr string) (string, error) {
+	if !strings.HasPrefix(addr, "source") {
+		return "", errGeneratingDIDFromNonAccAddr
+	}
+
 	seed := make([]byte, ed25519.SeedSize)
 	copy(seed, []byte(addr))
 	did, _, err := did.ProduceDIDFromSeed(seed)
