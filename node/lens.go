@@ -22,9 +22,16 @@ import (
 type LensRuntimeType string
 
 const (
+	// The Go-enum default LensRuntimeType.
+	//
+	// The actual runtime type that this resolves to depends on the build target.
 	DefaultLens LensRuntimeType = ""
 )
 
+// runtimeConstructors is a map of [LensRuntimeType]s to lens runtimes.
+//
+// Is is populated by the `init` functions in the runtime-specific files - this
+// allows it's population to be managed by build flags.
 var runtimeConstructors = map[LensRuntimeType]func() module.Runtime{}
 
 // LensOptions contains Lens configuration values.
