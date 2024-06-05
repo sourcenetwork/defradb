@@ -265,9 +265,9 @@ type RequestResult struct {
 	// GQL contains the immediate results of the GQL request.
 	GQL GQLResult
 
-	// Pub contains a pointer to an event stream which channels any subscription results
-	// if the request was a GQL subscription.
-	Pub *events.Publisher[events.Update]
+	// Subscription is an optional channel which returns results
+	// from a subscription request.
+	Subscription <-chan GQLResult
 }
 
 // CollectionFetchOptions represents a set of options used for fetching collections.

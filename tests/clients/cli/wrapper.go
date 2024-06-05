@@ -411,7 +411,7 @@ func (w *Wrapper) ExecRequest(
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
-		result.Pub = w.execRequestSubscription(buffer)
+		result.Subscription = w.execRequestSubscription(buffer)
 		return result
 	}
 	data, err := io.ReadAll(buffer)
@@ -439,29 +439,24 @@ func (w *Wrapper) ExecRequest(
 	return result
 }
 
-func (w *Wrapper) execRequestSubscription(r io.Reader) *events.Publisher[events.Update] {
-	pubCh := events.New[events.Update](0, 0)
-	pub, err := events.NewPublisher[events.Update](pubCh, 0)
-	if err != nil {
-		return nil
-	}
-
+func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
+	resCh := make(chan client.GQLResult)
 	go func() {
 		dec := json.NewDecoder(r)
+		defer close(resCh)
 
 		for {
 			var response http.GraphQLResponse
 			if err := dec.Decode(&response); err != nil {
 				return
 			}
-			pub.Publish(client.GQLResult{
+			resCh <- client.GQLResult{
 				Errors: response.Errors,
 				Data:   response.Data,
-			})
+			}
 		}
 	}()
-
-	return pub
+	return resCh
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {

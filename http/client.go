@@ -366,7 +366,7 @@ func (c *Client) ExecRequest(
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
-		result.Pub = c.execRequestSubscription(res.Body)
+		result.Subscription = c.execRequestSubscription(res.Body)
 		return result
 	}
 	// ignore close errors because they have
@@ -389,19 +389,17 @@ func (c *Client) ExecRequest(
 	return result
 }
 
-func (c *Client) execRequestSubscription(r io.ReadCloser) *events.Publisher[events.Update] {
-	pubCh := events.New[events.Update](0, 0)
-	pub, err := events.NewPublisher[events.Update](pubCh, 0)
-	if err != nil {
-		return nil
-	}
-
+func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult {
+	resCh := make(chan client.GQLResult)
 	go func() {
 		eventReader := sse.NewReadCloser(r)
-		// ignore close errors because the status
-		// and body of the request are already
-		// checked and it cannot be handled properly
-		defer eventReader.Close() //nolint:errcheck
+		defer func() {
+			// ignore close errors because the status
+			// and body of the request are already
+			// checked and it cannot be handled properly
+			eventReader.Close() //nolint:errcheck
+			close(resCh)
+		}()
 
 		for {
 			evt, err := eventReader.Next()
@@ -412,14 +410,14 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) *events.Publisher[even
 			if err := json.Unmarshal(evt.Data, &response); err != nil {
 				return
 			}
-			pub.Publish(client.GQLResult{
+			resCh <- client.GQLResult{
 				Errors: response.Errors,
 				Data:   response.Data,
-			})
+			}
 		}
 	}()
 
-	return pub
+	return resCh
 }
 
 func (c *Client) PrintDump(ctx context.Context) error {
