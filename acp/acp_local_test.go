@@ -17,11 +17,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var identity1 = "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"
-var identity2 = "cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll"
+var identity1 = "source1d476r2znvsjr6asr54mltayhq7e0r859j86kt6"
+var identity2 = "source19djduggm345yf2dn0y0jqqgkr5q0pt234dkyvd"
 
-var validPolicyID string = "4f13c5084c3d0e1e5c5db702fceef84c3b6ab948949ca8e27fcaad3fb8bc39f4"
+var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 var validPolicy string = `
+name: test
 description: a policy
 
 actor:
@@ -72,7 +73,7 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
+func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterWipeReturnsSameID(t *testing.T) {
 	ctx := context.Background()
 	localACP := NewLocalACP()
 
@@ -96,7 +97,7 @@ func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 
-	// Since nothing is persisted should allow adding same policy again.
+	// Since nothing is persisted should allow adding same policy again with same ID
 
 	localACP.Init(ctx, "")
 	errStart = localACP.Start(ctx)
@@ -118,7 +119,7 @@ func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
 	require.Nil(t, errClose)
 }
 
-func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
+func Test_LocalACP_PersistentMemory_AddPolicy_CreatingSamePolicyReturnsDifferentIDs(t *testing.T) {
 	acpPath := t.TempDir()
 	require.NotEqual(t, "", acpPath)
 
@@ -150,14 +151,14 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
 	errStart = localACP.Start(ctx)
 	require.Nil(t, errStart)
 
-	// Should not allow us to create the same policy again as it exists already.
-	_, errAddPolicy = localACP.AddPolicy(
+	// Should generate a different ID for the new policy, even though the payload is the same
+	newPolicyID, errAddPolicy := localACP.AddPolicy(
 		ctx,
 		identity1,
 		validPolicy,
 	)
-	require.Error(t, errAddPolicy)
-	require.ErrorIs(t, errAddPolicy, ErrFailedToAddPolicyWithACP)
+	require.NoError(t, errAddPolicy)
+	require.NotEqual(t, newPolicyID, policyID)
 
 	errClose = localACP.Close()
 	require.Nil(t, errClose)

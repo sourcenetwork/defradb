@@ -12,20 +12,53 @@ package acp
 
 import (
 	"context"
+	"crypto/ed25519"
+	"errors"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
+	"github.com/sourcenetwork/acp_core/pkg/auth"
+	"github.com/sourcenetwork/acp_core/pkg/did"
+	"github.com/sourcenetwork/acp_core/pkg/engine"
+	"github.com/sourcenetwork/acp_core/pkg/runtime"
+	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/x/acp/embedded"
-	"github.com/sourcenetwork/sourcehub/x/acp/types"
 )
 
 // ACPLocal represents a local acp implementation that makes no remote calls.
 type ACPLocal struct {
 	pathToStore immutable.Option[string]
-	localACP    *embedded.LocalACP
+	engine      types.ACPEngineServer
+	manager     runtime.RuntimeManager
 }
 
 var _ sourceHubClient = (*ACPLocal)(nil)
+
+var _ Policy = (*localACPPolicyAdapter)(nil)
+var _ Resource = (*localACPResourceAdapter)(nil)
+var _ Permission = (*types.Permission)(nil)
+
+type localACPResourceAdapter struct {
+	resource *types.Resource
+}
+
+func (a *localACPResourceAdapter) GetPermissionByName(name string) Permission {
+	return a.resource.GetPermissionByName(name)
+}
+
+type localACPPolicyAdapter struct {
+	policy *types.Policy
+}
+
+func (a *localACPPolicyAdapter) GetResourceByName(name string) Resource {
+	resource := a.policy.GetResourceByName(name)
+	if resource == nil {
+		return nil
+	}
+
+	return &localACPResourceAdapter{
+		resource: resource,
+	}
+}
 
 func (l *ACPLocal) Init(ctx context.Context, path string) {
 	if path == "" {
@@ -36,73 +69,94 @@ func (l *ACPLocal) Init(ctx context.Context, path string) {
 }
 
 func (l *ACPLocal) Start(ctx context.Context) error {
-	var localACP embedded.LocalACP
+	var manager runtime.RuntimeManager
 	var err error
 
 	if !l.pathToStore.HasValue() { // Use a non-persistent, i.e. in memory store.
-		localACP, err = embedded.NewLocalACP(
-			embedded.WithInMemStore(),
+		manager, err = runtime.NewRuntimeManager(
+			runtime.WithMemKV(),
 		)
 
 		if err != nil {
 			return NewErrInitializationOfACPFailed(err, "Local", "in-memory")
 		}
 	} else { // Use peristent storage.
-		acpStorePath := l.pathToStore.Value() + "/" + embedded.DefaultDataDir
-		localACP, err = embedded.NewLocalACP(
-			embedded.WithPersistentStorage(acpStorePath),
+		//acpStorePath := l.pathToStore.Value() + "/" + embedded.DefaultDataDir
+		acpStorePath := l.pathToStore.Value() + "/" + "localacp"
+		manager, err = runtime.NewRuntimeManager(
+			runtime.WithPersistentKV(acpStorePath),
 		)
+
 		if err != nil {
 			return NewErrInitializationOfACPFailed(err, "Local", l.pathToStore.Value())
 		}
 	}
 
-	l.localACP = &localACP
+	engine := engine.NewACPEngine(manager)
+	l.engine = engine
+	l.manager = manager
 	return nil
 }
 
 func (l *ACPLocal) Close() error {
-	return l.localACP.Close()
+	return l.manager.Terminate()
 }
 
 func (l *ACPLocal) AddPolicy(
 	ctx context.Context,
 	creatorID string,
 	policy string,
-	policyMarshalType types.PolicyMarshalingType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	createPolicy := types.MsgCreatePolicy{
-		Creator:      creatorID,
-		Policy:       policy,
-		MarshalType:  policyMarshalType,
-		CreationTime: protoTypes.TimestampNow(),
-	}
-
-	createPolicyResponse, err := l.localACP.GetMsgService().CreatePolicy(
-		l.localACP.GetCtx(),
-		&createPolicy,
-	)
+	did, err := genDIDFromSourceHubAddr(creatorID)
 	if err != nil {
 		return "", err
 	}
 
-	return createPolicyResponse.Policy.Id, nil
+	principal, err := auth.NewDIDPrincipal(did)
+	if err != nil {
+		return "", err // TODO wrap
+	}
+	ctx = auth.InjectPrincipal(ctx, principal)
+
+	// Since YAML is a superset of JSON, assume Policy is YAML
+	// and let SourceHub figure it out.
+	marshalType := types.PolicyMarshalingType_SHORT_YAML
+	createPolicy := types.CreatePolicyRequest{
+		Policy:       policy,
+		MarshalType:  marshalType,
+		CreationTime: protoTypes.TimestampNow(),
+	}
+
+	response, err := l.engine.CreatePolicy(ctx, &createPolicy)
+
+	if err != nil {
+		return "", err
+	}
+
+	return response.Policy.Id, nil
 }
 
 func (l *ACPLocal) Policy(
 	ctx context.Context,
 	policyID string,
-) (*types.Policy, error) {
-	queryPolicyResponse, err := l.localACP.GetQueryService().Policy(
-		l.localACP.GetCtx(),
-		&types.QueryPolicyRequest{Id: policyID},
-	)
+) (immutable.Option[Policy], error) {
+	none := immutable.None[Policy]()
+
+	request := types.GetPolicyRequest{Id: policyID}
+	response, err := l.engine.GetPolicy(ctx, &request)
+
 	if err != nil {
-		return nil, err
+		if errors.Is(err, types.ErrPolicyNotFound) {
+			return none, nil
+		}
+		return none, err
 	}
 
-	return queryPolicyResponse.Policy, nil
+	adapter := &localACPPolicyAdapter{
+		policy: response.Policy,
+	}
+	return immutable.Some[Policy](adapter), nil
 }
 
 func (l *ACPLocal) RegisterObject(
@@ -112,21 +166,32 @@ func (l *ACPLocal) RegisterObject(
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
-) (types.RegistrationResult, error) {
-	registerDocResponse, err := l.localACP.GetMsgService().RegisterObject(
-		l.localACP.GetCtx(),
-		&types.MsgRegisterObject{
-			Creator:      actorID,
-			PolicyId:     policyID,
-			Object:       types.NewObject(resourceName, objectID),
-			CreationTime: creationTime,
-		},
-	)
+) (RegistrationResult, error) {
+	did, err := genDIDFromSourceHubAddr(actorID)
 	if err != nil {
-		return types.RegistrationResult(0), err
+		return RegistrationResult_NoOp, err
 	}
 
-	return registerDocResponse.Result, nil
+	principal, err := auth.NewDIDPrincipal(did)
+	if err != nil {
+		return RegistrationResult_NoOp, err // TODO wrap
+	}
+
+	ctx = auth.InjectPrincipal(ctx, principal)
+	req := types.RegisterObjectRequest{
+		PolicyId:     policyID,
+		Object:       types.NewObject(resourceName, objectID),
+		CreationTime: creationTime,
+	}
+
+	registerDocResponse, err := l.engine.RegisterObject(ctx, &req)
+
+	if err != nil {
+		return RegistrationResult_NoOp, err
+	}
+
+	result := RegistrationResult(registerDocResponse.Result)
+	return result, nil
 }
 
 func (l *ACPLocal) ObjectOwner(
@@ -134,14 +199,23 @@ func (l *ACPLocal) ObjectOwner(
 	policyID string,
 	resourceName string,
 	objectID string,
-) (*types.QueryObjectOwnerResponse, error) {
-	return l.localACP.GetQueryService().ObjectOwner(
-		l.localACP.GetCtx(),
-		&types.QueryObjectOwnerRequest{
-			PolicyId: policyID,
-			Object:   types.NewObject(resourceName, objectID),
-		},
-	)
+) (immutable.Option[string], error) {
+	empty := immutable.None[string]()
+
+	req := types.GetObjectRegistrationRequest{
+		PolicyId: policyID,
+		Object:   types.NewObject(resourceName, objectID),
+	}
+	result, err := l.engine.GetObjectRegistration(ctx, &req)
+	if err != nil {
+		return empty, err
+	}
+
+	if result.IsRegistered {
+		return immutable.Some(result.OwnerId), nil
+	}
+
+	return empty, nil
 }
 
 func (l *ACPLocal) VerifyAccessRequest(
@@ -152,26 +226,39 @@ func (l *ACPLocal) VerifyAccessRequest(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	checkDocResponse, err := l.localACP.GetQueryService().VerifyAccessRequest(
-		l.localACP.GetCtx(),
-		&types.QueryVerifyAccessRequestRequest{
-			PolicyId: policyID,
-			AccessRequest: &types.AccessRequest{
-				Operations: []*types.Operation{
-					{
-						Object:     types.NewObject(resourceName, docID),
-						Permission: permission.String(),
-					},
-				},
-				Actor: &types.Actor{
-					Id: actorID,
+	did, err := genDIDFromSourceHubAddr(actorID)
+	if err != nil {
+		return false, err
+	}
+	req := types.VerifyAccessRequestRequest{
+		PolicyId: policyID,
+		AccessRequest: &types.AccessRequest{
+			Operations: []*types.Operation{
+				{
+					Object:     types.NewObject(resourceName, docID),
+					Permission: permission.String(),
 				},
 			},
+			Actor: &types.Actor{
+				Id: did,
+			},
 		},
-	)
+	}
+	resp, err := l.engine.VerifyAccessRequest(ctx, &req)
+
 	if err != nil {
 		return false, err
 	}
 
-	return checkDocResponse.Valid, nil
+	return resp.Valid, nil
+}
+
+func genDIDFromSourceHubAddr(addr string) (string, error) {
+	seed := make([]byte, ed25519.SeedSize)
+	copy(seed, []byte(addr))
+	did, _, err := did.ProduceDIDFromSeed(seed)
+	if err != nil {
+		return "", err // TODO WRAP
+	}
+	return did, nil
 }
