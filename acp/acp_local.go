@@ -26,6 +26,8 @@ import (
 	"github.com/valyala/fastjson"
 )
 
+const localACPStoreName = "local_acp"
+
 // ACPLocal represents a local acp implementation that makes no remote calls.
 type ACPLocal struct {
 	pathToStore immutable.Option[string]
@@ -34,38 +36,39 @@ type ACPLocal struct {
 }
 
 var _ sourceHubClient = (*ACPLocal)(nil)
-var _ Policy = (*localACPPolicyAdapter)(nil)
-var _ Resource = (*localACPResourceAdapter)(nil)
-var _ Permission = (*types.Permission)(nil)
 
 var errGeneratingDIDFromNonAccAddr = errors.New("cannot generate did if address is not prefixed")
 
-// localACPResourceAdapter wraps an acp_core Resource and implements acp's pkg Resource interface
-type localACPResourceAdapter struct {
-	resource *types.Resource
-}
-
-func (a *localACPResourceAdapter) GetPermissionByName(name string) Permission {
-	perm := a.resource.GetPermissionByName(name)
-	if perm == nil {
-		return nil
-	}
-	return perm
-}
-
-// localACPPolicyAdapter wraps an acp_core Policy and implements acp's pkg Policy interface
-type localACPPolicyAdapter struct {
-	policy *types.Policy
-}
-
-func (a *localACPPolicyAdapter) GetResourceByName(name string) Resource {
-	resource := a.policy.GetResourceByName(name)
-	if resource == nil {
-		return nil
+func mapACPCorePolicy(pol *types.Policy) policy {
+	resources := make(map[string]*resource)
+	for _, coreResource := range pol.Resources {
+		resource := mapACPCoreResource(coreResource)
+		resources[resource.Name] = resource
 	}
 
-	return &localACPResourceAdapter{
-		resource: resource,
+	return policy{
+		ID:        pol.Id,
+		Resources: resources,
+	}
+}
+
+func mapACPCoreResource(policy *types.Resource) *resource {
+	perms := make(map[string]*permission)
+	for _, corePermission := range policy.Permissions {
+		perm := mapACPCorePermission(corePermission)
+		perms[perm.Name] = perm
+	}
+
+	return &resource{
+		Name:        policy.Name,
+		Permissions: perms,
+	}
+}
+
+func mapACPCorePermission(perm *types.Permission) *permission {
+	return &permission{
+		Name:       perm.Name,
+		Expression: perm.Expression,
 	}
 }
 
@@ -90,8 +93,7 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 			return NewErrInitializationOfACPFailed(err, "Local", "in-memory")
 		}
 	} else { // Use peristent storage.
-		//acpStorePath := l.pathToStore.Value() + "/" + embedded.DefaultDataDir
-		acpStorePath := l.pathToStore.Value() + "/" + "localacp"
+		acpStorePath := l.pathToStore.Value() + "/" + localACPStoreName
 		manager, err = runtime.NewRuntimeManager(
 			runtime.WithPersistentKV(acpStorePath),
 		)
@@ -125,7 +127,7 @@ func (l *ACPLocal) AddPolicy(
 
 	principal, err := auth.NewDIDPrincipal(did)
 	if err != nil {
-		return "", err // TODO wrap
+		return "", newErrInvalidActorID(err, creatorID)
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
@@ -152,8 +154,8 @@ func (l *ACPLocal) AddPolicy(
 func (l *ACPLocal) Policy(
 	ctx context.Context,
 	policyID string,
-) (immutable.Option[Policy], error) {
-	none := immutable.None[Policy]()
+) (immutable.Option[policy], error) {
+	none := immutable.None[policy]()
 
 	request := types.GetPolicyRequest{Id: policyID}
 	response, err := l.engine.GetPolicy(ctx, &request)
@@ -165,10 +167,8 @@ func (l *ACPLocal) Policy(
 		return none, err
 	}
 
-	adapter := &localACPPolicyAdapter{
-		policy: response.Policy,
-	}
-	return immutable.Some[Policy](adapter), nil
+	policy := mapACPCorePolicy(response.Policy)
+	return immutable.Some(policy), nil
 }
 
 func (l *ACPLocal) RegisterObject(
@@ -187,7 +187,7 @@ func (l *ACPLocal) RegisterObject(
 
 	principal, err := auth.NewDIDPrincipal(did)
 	if err != nil {
-		return RegistrationResult_NoOp, err // TODO wrap
+		return RegistrationResult_NoOp, newErrInvalidActorID(err, actorID)
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)
@@ -288,7 +288,7 @@ func genDIDFromSourceHubAddr(addr string) (string, error) {
 	copy(seed, []byte(addr))
 	did, _, err := did.ProduceDIDFromSeed(seed)
 	if err != nil {
-		return "", err // TODO WRAP
+		return "", err
 	}
 	return did, nil
 }

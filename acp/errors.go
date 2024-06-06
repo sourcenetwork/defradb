@@ -35,6 +35,8 @@ const (
 
 	errExprOfRequiredPermMustStartWithRelation = "expr of required permission must start with required relation"
 	errExprOfRequiredPermHasInvalidChar        = "expr of required permission has invalid character after relation"
+
+	errInvalidActorID = "invalid actor ID"
 )
 
 var (
@@ -203,5 +205,16 @@ func newErrExprOfRequiredPermissionHasInvalidChar(
 		errors.NewKV("Permission", permission),
 		errors.NewKV("Relation", relation),
 		errors.NewKV("Character", string(char)),
+	)
+}
+
+func newErrInvalidActorID(
+	inner error,
+	id string,
+) error {
+	return errors.Wrap(
+		errInvalidActorID,
+		inner,
+		errors.NewKV("ActorID", id),
 	)
 }

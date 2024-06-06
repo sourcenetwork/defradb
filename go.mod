@@ -38,7 +38,7 @@ require (
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multicodec v0.9.0
 	github.com/multiformats/go-multihash v0.2.3
-	github.com/sourcenetwork/acp_core v0.0.0-20240605141327-c271935f5039
+	github.com/sourcenetwork/acp_core v0.0.0-20240606173608-90d3d1672952
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
 	github.com/sourcenetwork/corelog v0.0.7
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.13
@@ -286,9 +286,3 @@ require (
 	lukechampine.com/blake3 v1.3.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/sourcenetwork/sourcehub => ../hub4/sourcehub
-
-replace github.com/sourcenetwork/zanzi => ../zanzi
-
-replace github.com/sourcenetwork/acp_core => ../acp-playground/acp_core

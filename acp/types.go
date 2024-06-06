@@ -1,3 +1,13 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package acp
 
 // RegistrationResult is an enum type which indicates the result of a RegisterObject call to SourceHub / ACP Core
@@ -13,19 +23,33 @@ const (
 	RegistrationResult_Unarchived RegistrationResult = 2
 )
 
-// Policy defines the minimum set of methods required in order to verify whether it meets DPI requirements
-type Policy interface {
-	GetResourceByName(name string) Resource
+// policy is a data container carrying the necessary data
+// to verify whether a policy meets DPI requirements
+type policy struct {
+	ID        string
+	Resources map[string]*resource
 }
 
-// Resource defines the minimum set of methods required in order to verify whether
-// a Policy's Resource meets DPI requirements
-type Resource interface {
-	GetPermissionByName(name string) Permission
+// GetResourceByName returns a Resource with the given name or nil
+func (p *policy) GetResourceByName(name string) *resource {
+	return p.Resources[name]
 }
 
-// Permission defines the minimum set of methods required in order to verify whether
-// a Resource's Permission meets DPI requirements
-type Permission interface {
-	GetExpression() string
+// resource is a data container carrying the necessary data
+// to verify whether it meets DPI requirements.
+type resource struct {
+	Name        string
+	Permissions map[string]*permission
+}
+
+// GetPermissionByName returns a permission with the given name or nil
+func (r *resource) GetPermissionByName(name string) *permission {
+	return r.Permissions[name]
+}
+
+// permission is a data container carrying the necessary data
+// to verify whether it meets DPI requirements.
+type permission struct {
+	Name       string
+	Expression string
 }

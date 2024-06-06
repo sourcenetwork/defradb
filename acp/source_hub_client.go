@@ -47,7 +47,7 @@ type sourceHubClient interface {
 	Policy(
 		ctx context.Context,
 		policyID string,
-	) (immutable.Option[Policy], error)
+	) (immutable.Option[policy], error)
 
 	// RegisterObject registers the object to have access control.
 	// No error is returned upon successful registering of an object.
@@ -187,7 +187,7 @@ func (a *sourceHubBridge) ValidateResourceExistsOnValidDPI(
 		// TODO-ACP: Better validation, once sourcehub implements meta-policies.
 		// Issue: https://github.com/sourcenetwork/defradb/issues/2359
 		if err := validateDPIExpressionOfRequiredPermission(
-			permissionResponse.GetExpression(),
+			permissionResponse.Expression,
 			requiredPermission,
 		); err != nil {
 			return err
