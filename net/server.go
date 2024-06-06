@@ -246,13 +246,13 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 	bp.wg.Wait()
 	if s.peer.db.Events().DAGMerges.HasValue() {
-		mergeCompleteChan := make(chan struct{})
+		wg := &sync.WaitGroup{}
 		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
-			Cid:               cid,
-			SchemaRoot:        string(req.Body.SchemaRoot),
-			MergeCompleteChan: mergeCompleteChan,
+			Cid:        cid,
+			SchemaRoot: string(req.Body.SchemaRoot),
+			Wg:         wg,
 		})
-		<-mergeCompleteChan
+		wg.Wait()
 	}
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already

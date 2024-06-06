@@ -11,6 +11,8 @@
 package events
 
 import (
+	"sync"
+
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/immutable"
@@ -25,7 +27,7 @@ type DAGMerge struct {
 	Cid cid.Cid
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
 	SchemaRoot string
-	// MergeCompleteChan is a channel that will be closed when the merge is complete
+	// Wg is a wait group that can be used to synchronize the merge,
 	// allowing the caller to optionnaly block until the merge is complete.
-	MergeCompleteChan chan struct{}
+	Wg *sync.WaitGroup
 }

@@ -61,8 +61,8 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error {
 	defer func() {
 		// Notify the caller that the merge is complete.
-		if dagMerge.MergeCompleteChan != nil {
-			close(dagMerge.MergeCompleteChan)
+		if dagMerge.Wg != nil {
+			dagMerge.Wg.Done()
 		}
 	}()
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
@@ -174,6 +174,11 @@ func (mp *mergeProcessor) loadComposites(
 	blockCid cid.Cid,
 	mt mergeTarget,
 ) error {
+	if _, ok := mt.heads[blockCid]; ok {
+		// We've already processed this block.
+		return nil
+	}
+
 	nd, err := mp.ls.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
 	if err != nil {
 		return err
@@ -184,11 +189,9 @@ func (mp *mergeProcessor) loadComposites(
 		return err
 	}
 
-	if _, ok := mt.heads[blockCid]; ok {
-		// We've already processed this block.
-		return nil
-	}
-
+	// In the simplest case, the new block or its children will link to the current head/heads (merge target)
+	// of the composite DAG. However, the new block and its children might have branched off from an older block.
+	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.composites.PushFront(block)
 		for _, link := range block.Links {
@@ -203,18 +206,20 @@ func (mp *mergeProcessor) loadComposites(
 		newMT := newMergeTarget()
 		for _, b := range mt.heads {
 			for _, link := range b.Links {
-				nd, err := mp.ls.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
-				if err != nil {
-					return err
-				}
+				if link.Name == core.HEAD {
+					nd, err := mp.ls.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+					if err != nil {
+						return err
+					}
 
-				childBlock, err := coreblock.GetFromNode(nd)
-				if err != nil {
-					return err
-				}
+					childBlock, err := coreblock.GetFromNode(nd)
+					if err != nil {
+						return err
+					}
 
-				newMT.heads[link.Cid] = childBlock
-				newMT.headHeight = childBlock.Delta.GetPriority()
+					newMT.heads[link.Cid] = childBlock
+					newMT.headHeight = childBlock.Delta.GetPriority()
+				}
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
