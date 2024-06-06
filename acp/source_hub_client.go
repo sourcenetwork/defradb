@@ -162,8 +162,8 @@ func (a *sourceHubBridge) ValidateResourceExistsOnValidDPI(
 	policy := maybePolicy.Value()
 
 	// So far we validated that the policy exists, now lets validate that resource exists.
-	resourceResponse := policy.GetResourceByName(resourceName)
-	if resourceResponse == nil {
+	resourceResponse, ok := policy.Resources[resourceName]
+	if !ok {
 		return newErrResourceDoesNotExistOnTargetPolicy(resourceName, policyID)
 	}
 
@@ -171,8 +171,8 @@ func (a *sourceHubBridge) ValidateResourceExistsOnValidDPI(
 	// resource with the matching name, validate that all required permissions
 	// for DPI actually exist on the target resource.
 	for _, requiredPermission := range dpiRequiredPermissions {
-		permissionResponse := resourceResponse.GetPermissionByName(requiredPermission)
-		if permissionResponse == nil {
+		permissionResponse, ok := resourceResponse.Permissions[requiredPermission]
+		if !ok {
 			return newErrResourceIsMissingRequiredPermission(
 				resourceName,
 				requiredPermission,

@@ -30,21 +30,11 @@ type policy struct {
 	Resources map[string]*resource
 }
 
-// GetResourceByName returns a Resource with the given name or nil
-func (p *policy) GetResourceByName(name string) *resource {
-	return p.Resources[name]
-}
-
 // resource is a data container carrying the necessary data
 // to verify whether it meets DPI requirements.
 type resource struct {
 	Name        string
 	Permissions map[string]*permission
-}
-
-// GetPermissionByName returns a permission with the given name or nil
-func (r *resource) GetPermissionByName(name string) *permission {
-	return r.Permissions[name]
 }
 
 // permission is a data container carrying the necessary data
