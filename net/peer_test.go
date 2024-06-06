@@ -358,6 +358,7 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
 	defer n.Close()
 
 	policy := `
+        name: test
         description: a policy
         actor:
           name: actor
@@ -383,7 +384,7 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "7bef56a54eae563eafdc48c57cf37075351498ebb5a200f59cf9b8c6f8149606", policyID)
+	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -415,6 +416,7 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
 	defer n.Close()
 
 	policy := `
+        name: test
         description: a policy
         actor:
           name: actor
@@ -440,7 +442,7 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "7bef56a54eae563eafdc48c57cf37075351498ebb5a200f59cf9b8c6f8149606", policyID)
+	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -780,6 +782,7 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	defer n.Close()
 
 	policy := `
+        name: test
         description: a policy
         actor:
           name: actor
@@ -805,7 +808,7 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "7bef56a54eae563eafdc48c57cf37075351498ebb5a200f59cf9b8c6f8149606", policyID)
+	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
