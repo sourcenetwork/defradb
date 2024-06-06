@@ -45,7 +45,11 @@ type localACPResourceAdapter struct {
 }
 
 func (a *localACPResourceAdapter) GetPermissionByName(name string) Permission {
-	return a.resource.GetPermissionByName(name)
+	perm := a.resource.GetPermissionByName(name)
+	if perm == nil {
+		return nil
+	}
+	return perm
 }
 
 type localACPPolicyAdapter struct {

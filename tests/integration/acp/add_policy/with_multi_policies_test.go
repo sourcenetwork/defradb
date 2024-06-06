@@ -135,7 +135,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
 				Identity: actor1Identity,
 
 				Policy: `
-                    name: test
+                    name: test2
                     description: another policy
 
                     actor:
@@ -163,7 +163,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                               - actor
                 `,
 
-				ExpectedPolicyID: "7bcb558ef8dac6b744a11ea144a61a756ea38475554097ac04612037c36ffe52",
+				ExpectedPolicyID: "757c772e9c4418de530ecd72cbc56dfc4e0c22aa2f3b2d219afa7663b2f0af00",
 			},
 		},
 	}
