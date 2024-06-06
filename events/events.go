@@ -10,7 +10,11 @@
 
 package events
 
-import "github.com/ipfs/go-cid"
+import (
+	"github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/event"
+	"github.com/libp2p/go-libp2p/core/peer"
+)
 
 const (
 	// WildCardEventName is the alias used to subscribe to all events.
@@ -19,7 +23,30 @@ const (
 	UpdateEventName = "db:update"
 	// ResultsEventName is the name of the database results event.
 	ResultsEventName = "db:results"
+	// PushLogEventName is the name of the network pushlog event.
+	PushLogEventName = "net:pushlog"
+	// PubSubEventName is the name of the network pubsub event.
+	PubSubEventName = "net:pubsub"
+	// PeerEventName is the name of the network peer event.
+	PeerEventName = "net:peer"
 )
+
+// PeerEvent is an event that is published when
+// a peer connection has changed status.
+type PeerEvent = event.EvtPeerConnectednessChanged
+
+// PushLogEvent is an event that is published when
+// a pushlog message has been received from a remote peer.
+type PushLogEvent struct {
+	ByPeer   peer.ID
+	FromPeer peer.ID
+}
+
+// PubSubEvent is an event that is published when
+// a pubsub message has been received from a remote peer.
+type PubSubEvent struct {
+	Peer peer.ID
+}
 
 // UpdateEvent represents a new DAG node added to the append-only composite MerkleCRDT Clock graph
 // of a document.

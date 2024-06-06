@@ -18,7 +18,6 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -31,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -51,9 +51,6 @@ type server struct {
 	mu     sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
-
-	pubSubEmitter  event.Emitter
-	pushLogEmitter event.Emitter
 
 	// docQueue is used to track which documents are currently being processed.
 	// This is used to prevent multiple concurrent processing of the same document and
@@ -121,16 +118,6 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 				i++
 			}
 		}
-	}
-
-	var err error
-	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
-	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
-	}
-	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
 	}
 
 	return s, nil
@@ -207,21 +194,14 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	s.docQueue.add(docID.String())
 	defer func() {
 		s.docQueue.done(docID.String())
-		if s.pushLogEmitter != nil {
-			byPeer, err := libpeer.Decode(req.Body.Creator)
-			if err != nil {
-				log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
-			}
-			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-				FromPeer: pid,
-				ByPeer:   byPeer,
-			})
-			if err != nil {
-				// logging instead of returning an error because the event bus should
-				// not break the PushLog execution.
-				log.InfoContext(ctx, "could not emit push log event", corelog.String("Error", err.Error()))
-			}
+		byPeer, err := libpeer.Decode(req.Body.Creator)
+		if err != nil {
+			log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
 		}
+		s.db.Events().Publish(events.PushLogEventName, events.PushLogEvent{
+			FromPeer: pid,
+			ByPeer:   byPeer,
+		})
 	}()
 
 	// make sure were not processing twice
@@ -511,15 +491,9 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		corelog.String("Topic", topic),
 		corelog.String("Message", string(msg)),
 	)
-
-	if s.pubSubEmitter != nil {
-		err := s.pubSubEmitter.Emit(EvtPubSub{
-			Peer: from,
-		})
-		if err != nil {
-			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
-		}
-	}
+	s.db.Events().Publish(events.PubSubEventName, events.PubSubEvent{
+		Peer: from,
+	})
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.

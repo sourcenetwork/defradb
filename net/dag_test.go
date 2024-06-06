@@ -16,9 +16,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/event"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -137,14 +141,24 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	db1, n1 := newTestNode(ctx, t)
 	db2, n2 := newTestNode(ctx, t)
 
+	sub1 := db1.Events().Subscribe(5, events.PeerEventName)
+	defer db1.Events().Unsubscribe(sub1)
+
+	sub2 := db2.Events().Subscribe(5, events.PeerEventName)
+	defer db2.Events().Unsubscribe(sub2)
+
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	require.NoError(t, err)
 	n2.Bootstrap(addrs)
 
-	err = n1.WaitForPeerConnectionEvent(n2.PeerID())
-	require.NoError(t, err)
-	err = n2.WaitForPeerConnectionEvent(n1.PeerID())
-	require.NoError(t, err)
+	event1 := <-sub1.Value()
+	assert.Equal(t, network.Connected, event1.(event.EvtPeerConnectednessChanged).Connectedness)
+	assert.Equal(t, n2.PeerID(), event1.(event.EvtPeerConnectednessChanged).Peer)
+
+	event2 := <-sub2.Value()
+	assert.Equal(t, network.Connected, event2.(event.EvtPeerConnectednessChanged).Connectedness)
+	assert.Equal(t, n1.PeerID(), event2.(event.EvtPeerConnectednessChanged).Peer)
+
 	done := make(chan struct{})
 	go func() {
 		n2.sendJobWorker()

@@ -201,19 +201,6 @@ func (p *Peer) Close() {
 		}
 	}
 	stopGRPCServer(p.ctx, p.p2pRPC)
-	// stopGRPCServer(p.tcpRPC)
-
-	// close event emitters
-	if p.server.pubSubEmitter != nil {
-		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close pubsub event emitter", corelog.Any("Error", err.Error()))
-		}
-	}
-	if p.server.pushLogEmitter != nil {
-		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close push log event emitter", corelog.Any("Error", err.Error()))
-		}
-	}
 
 	if p.updateSub != nil {
 		p.db.Events().Unsubscribe(p.updateSub)
@@ -516,15 +503,6 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	case <-stopped:
 		timer.Stop()
 	}
-}
-
-type EvtReceivedPushLog struct {
-	ByPeer   peer.ID
-	FromPeer peer.ID
-}
-
-type EvtPubSub struct {
-	Peer peer.ID
 }
 
 // rollbackAddPubSubTopics removes the given topics from the pubsub system.
