@@ -34,12 +34,13 @@ type ACPLocal struct {
 }
 
 var _ sourceHubClient = (*ACPLocal)(nil)
-
 var _ Policy = (*localACPPolicyAdapter)(nil)
 var _ Resource = (*localACPResourceAdapter)(nil)
 var _ Permission = (*types.Permission)(nil)
+
 var errGeneratingDIDFromNonAccAddr = errors.New("cannot generate did if address is not prefixed")
 
+// localACPResourceAdapter wraps an acp_core Resource and implements acp's pkg Resource interface
 type localACPResourceAdapter struct {
 	resource *types.Resource
 }
@@ -52,6 +53,7 @@ func (a *localACPResourceAdapter) GetPermissionByName(name string) Permission {
 	return perm
 }
 
+// localACPPolicyAdapter wraps an acp_core Policy and implements acp's pkg Policy interface
 type localACPPolicyAdapter struct {
 	policy *types.Policy
 }
