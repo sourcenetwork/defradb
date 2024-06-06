@@ -32,19 +32,19 @@ func TestQueryOneToOne(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				//books
-				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 					`{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
 				},
 				//authors
-				1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				1: { // bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
 					`{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 					}`,
 				},
 			},
@@ -73,19 +73,19 @@ func TestQueryOneToOne(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				//books
-				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 					`{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
 				},
 				//authors
-				1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				1: { // bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
 					`{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 					}`,
 				},
 			},
@@ -108,119 +108,161 @@ func TestQueryOneToOne(t *testing.T) {
 }
 
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, multiple records",
-		Request: `query {
-			Book {
-				name
-				author {
-					name
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
-					"name": "Painted House",
-					"rating": 4.9
-				}`,
-				// "bae-ad4ad79c-278d-55cd-a9e3-85f3bc9a0947"
-				`{
-					"name": "Go Guide for Rust developers",
-					"rating": 5.0
-				}`,
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: Book @primary
+					}
+				`,
 			},
-			//authors
-			1: {
-				// "bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6"
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
-				// "bae-756c2bf0-4767-57fd-b12b-393915feae68",
-				`{
-					"name": "Andrew Lone",
-					"age": 30,
-					"verified": true,
-					"published_id": "bae-ad4ad79c-278d-55cd-a9e3-85f3bc9a0947"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Go Guide for Rust developers",
-				"author": map[string]any{
-					"name": "Andrew Lone",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"rating": 4.9,
 				},
 			},
-			{
-				"name": "Painted House",
-				"author": map[string]any{
-					"name": "John Grisham",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":   "Go Guide for Rust developers",
+					"rating": 5.0,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Andrew Lone",
+					"age":          30,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Go Guide for Rust developers",
+						"author": map[string]any{
+							"name": "Andrew Lone",
+						},
+					},
+					{
+						"name": "Painted House",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one-to-one relation secondary direction",
-		Request: `query {
-			Author {
-				name
-				published {
-					name
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				`{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House"
 				}`,
-				// "bae-c2f3f08b-53f2-5b53-9a9f-da1eee096321"
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord"
 				}`,
 			},
-			//authors
-			1: {
-				`{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"published_id": "bae-c2f3f08b-53f2-5b53-9a9f-da1eee096321"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"published": map[string]any{
-					"name": "Painted House",
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			{
-				"name": "Cornelia Funke",
-				"published": map[string]any{
-					"name": "Theif Lord",
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Cornelia Funke",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						published {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Cornelia Funke",
+						"published": map[string]any{
+							"name": "Theif Lord",
+						},
+					},
+					{
+						"name": "John Grisham",
+						"published": map[string]any{
+							"name": "Painted House",
+						},
+					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToOneWithNilChild(t *testing.T) {
@@ -301,7 +343,6 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
@@ -309,10 +350,10 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -324,7 +365,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name":         "John Grisham",
-						"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76",
+						"published_id": "bae-514f04b1-b218-5b8c-89ee-538f150a32b5",
 					},
 				},
 			},
@@ -352,7 +393,6 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
@@ -360,10 +400,10 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -375,7 +415,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name":      "Painted House",
-						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
 					},
 				},
 			},

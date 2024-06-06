@@ -55,7 +55,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
 				Unique:       true,
 				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-cae3deac-d371-5a1f-93b4-ede69042f79b",
+					"bae-c20024f0-bd72-56c2-85d5-865d3aa270b7",
 					errors.NewKV("name", "John"), errors.NewKV("age", 21),
 				).Error(),
 			},
@@ -100,7 +100,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 						"email": "another@gmail.com"
 					}`,
 				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-13254430-7e9e-52e2-9861-9a7ec7a75c8d",
+					"bae-4da27b71-f735-59f6-b6b8-ea0fa181e3e3",
 					errors.NewKV("name", "John"), errors.NewKV("age", 21)).Error(),
 			},
 		},

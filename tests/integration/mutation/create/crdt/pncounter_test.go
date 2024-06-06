@@ -44,7 +44,7 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-a688789e-d8a6-57a7-be09-22e005ab79e0",
+						"_docID": "bae-bc5464e4-26a6-5307-b516-aada0abeb089",
 						"name":   "John",
 						"points": int64(10),
 					},

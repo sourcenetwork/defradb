@@ -44,16 +44,16 @@ func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", limit: 2) {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", limit: 2) {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreial53rqep7uoheucc3rzvhs6dbhydnkbqe4w2bhd3hsybub4u3h6m",
+						"cid": "bafyreicoci4ah2uft5giiyl2lfg4jgcegwbvt3mbllnqnmfh3oy24usxsy",
 					},
 					{
-						"cid": "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid": "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 					},
 				},
 			},

@@ -36,7 +36,6 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-d82dbe47-9df1-5e33-bd87-f92e9c378161
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -45,10 +44,10 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-d82dbe47-9df1-5e33-bd87-f92e9c378161"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -63,7 +62,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name":      "Painted House",
-						"author_id": "bae-9d67a886-64e3-520b-8cd5-1ca7b098fabe",
+						"author_id": "bae-1a0405fa-e17d-5b0f-8fe2-eb966938df1c",
 						"author": map[string]any{
 							"name": "John Grisham",
 						},

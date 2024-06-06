@@ -22,7 +22,7 @@ import (
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToOneNoChild(t *testing.T) {
-	unknownID := "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+	unknownID := "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
@@ -61,7 +61,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne(t *testing.T) {
-	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+	bookID := "bae-dafb74e9-2bf1-5f12-aea9-967814592bad"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation",
@@ -133,7 +133,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
-	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	authorID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the secondary side",
@@ -204,8 +204,8 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
+	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
+	bookID := "bae-dfce6a1a-27fa-5dde-bea7-44df2dffac1a"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from single side (wrong)",
@@ -250,8 +250,8 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2ID := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
+	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
+	author2ID := "bae-a34d8759-e549-5083-8ba6-e04038c41caa"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
@@ -296,7 +296,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 }
 
 func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
 	invalidLenSubID := "35953ca-518d-9e6b-9ce6cd00eff5"
 	invalidAuthorID := "bae-" + invalidLenSubID
 
@@ -337,7 +337,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 }
 
 func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
 	invalidAuthorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
 
 	test := testUtils.TestCase{
@@ -377,8 +377,8 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2ID := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
+	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
+	author2ID := "bae-a34d8759-e549-5083-8ba6-e04038c41caa"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side, with a wrong field.",

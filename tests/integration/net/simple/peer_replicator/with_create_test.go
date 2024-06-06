@@ -63,10 +63,10 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": int64(21),
+						"Age": int64(3000),
 					},
 					{
-						"Age": int64(3000),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -92,10 +92,10 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": int64(21),
+						"Age": int64(3000),
 					},
 					{
-						"Age": int64(3000),
+						"Age": int64(21),
 					},
 				},
 			},

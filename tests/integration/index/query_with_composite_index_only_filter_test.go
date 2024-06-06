@@ -909,8 +909,8 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 				Request: reqWithName,
 				Results: []map[string]any{
 					{"about": "bob3"},
-					{"about": "bob1"},
 					{"about": "bob2"},
+					{"about": "bob1"},
 					{"about": "bob4"},
 				},
 			},
@@ -922,8 +922,8 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 				Request: reqWithNameAge,
 				Results: []map[string]any{
 					{"about": "bob3"},
-					{"about": "bob1"},
 					{"about": "bob2"},
+					{"about": "bob1"},
 				},
 			},
 			testUtils.Request{
@@ -933,8 +933,8 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			testUtils.Request{
 				Request: reqWithNameAgeNumChildren,
 				Results: []map[string]any{
-					{"about": "bob1"},
 					{"about": "bob2"},
+					{"about": "bob1"},
 				},
 			},
 			testUtils.Request{

@@ -159,11 +159,8 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Articles
-			create3ArticleDocuments(),
-
-			// Authors
 			create2AuthorDocuments(),
+			create3ArticleDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -220,11 +217,8 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Articles
-			create3ArticleDocuments(),
-
-			// Authors
 			create2AuthorDocuments(),
+			create3ArticleDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -285,11 +279,8 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Articles
-			create3ArticleDocuments(),
-
-			// Authors
 			create2AuthorDocuments(),
+			create3ArticleDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {

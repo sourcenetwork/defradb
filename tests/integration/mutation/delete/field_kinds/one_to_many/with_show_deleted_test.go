@@ -11,12 +11,8 @@
 package one_to_many
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,32 +30,6 @@ type Author {
 `
 
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
-	colDefMap, err := testUtils.ParseSDL(schemas)
-	require.NoError(t, err)
-
-	jsonString1 := `{
-		"name": "John",
-		"age": 30
-	}`
-	doc1, err := client.NewDocFromJSON([]byte(jsonString1), colDefMap["Author"])
-	require.NoError(t, err)
-
-	jsonString2 := fmt.Sprintf(`{
-		"name": "John and the philosopher are stoned",
-		"rating": 9.9,
-		"author_id": "%s"
-	}`, doc1.ID())
-	doc2, err := client.NewDocFromJSON([]byte(jsonString2), colDefMap["Book"])
-	require.NoError(t, err)
-
-	jsonString3 := fmt.Sprintf(`{
-		"name": "John has a chamber of secrets",
-		"rating": 9.9,
-		"author_id": "%s"
-	}`, doc1.ID())
-	// doc3, err := client.NewDocFromJSON([]byte(jsonString1))
-	// require.NoError(t, err)
-
 	test := testUtils.TestCase{
 		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
@@ -68,25 +38,36 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          jsonString1,
+				Doc: `{
+					"name": "John",
+					"age": 30
+				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          jsonString2,
+				DocMap: map[string]any{
+					"name":      "John and the philosopher are stoned",
+					"rating":    9.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          jsonString3,
+				DocMap: map[string]any{
+					"name":      "John has a chamber of secrets",
+					"rating":    9.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
-				Request: fmt.Sprintf(`mutation {
-					delete_Book(docID: "%s") {
+				Request: `mutation {
+					delete_Book(docID: "bae-b5c56d8f-b2f5-57f9-b371-4e9e04903e91") {
 							_docID
 						}
-					}`, doc2.ID()),
+					}`,
 				Results: []map[string]any{
 					{
-						"_docID": doc2.ID().String(),
+						"_docID": "bae-b5c56d8f-b2f5-57f9-b371-4e9e04903e91",
 					},
 				},
 			},
@@ -110,13 +91,13 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 						"age":      int64(30),
 						"published": []map[string]any{
 							{
-								"_deleted": true,
-								"name":     "John and the philosopher are stoned",
+								"_deleted": false,
+								"name":     "John has a chamber of secrets",
 								"rating":   9.9,
 							},
 							{
-								"_deleted": false,
-								"name":     "John has a chamber of secrets",
+								"_deleted": true,
+								"name":     "John and the philosopher are stoned",
 								"rating":   9.9,
 							},
 						},

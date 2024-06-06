@@ -36,7 +36,7 @@ func TestQuerySimple(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"_docID": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+				"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
 				"Name":   "John",
 				"Age":    int64(21),
 			},

@@ -361,10 +361,10 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": int64(21),
+						"Age": int64(22),
 					},
 					{
-						"Age": int64(22),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -421,10 +421,10 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": int64(21),
+						"Age": int64(22),
 					},
 					{
-						"Age": int64(22),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -487,7 +487,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
 						"age":    int64(21),
 						"name":   "John",
 						"_version": []map[string]any{
@@ -549,7 +549,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
 						"_version": []map[string]any{
 							{
 								"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",

@@ -17,205 +17,248 @@ import (
 )
 
 func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "1-N-M Query to ensure joins are linked properly.",
-		Request: `query {
-			Author {
-				_docID
-				name
-				book {
-					_docID
-					name
-					publisher {
-						_docID
-						name
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						book: [Book]
 					}
-				}
-			}
-		}`,
 
-		Docs: map[int][]string{
-			// Authors
-			0: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3, Has written 5 books
-				`{
+					type Book {
+						name: String
+						rating: Float
+						author: Author
+						publisher: [Publisher]
+					}
+
+					type Publisher {
+						name: String
+						address: String
+						yearOpened: Int
+						book: Book
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 Book
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
-				// Has written no Book
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Not a Writer",
 					"age": 6,
 					"verified": false
 				}`,
 			},
-
-			// Books
-			1: {
-				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
-				`{
-					"name": "The Rooster Bar",
-					"rating": 4,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				// "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf", Has 1 Publisher
-				`{
-					"name": "Theif Lord",
-					"rating": 4.8,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				// "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca", Has no Publisher.
-				`{
-					"name": "The Associate",
-					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				// "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d", Has 1 Publisher
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				// "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a", Has 1 Publisher
-				`{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				// "bae-7ba73251-c935-5f44-ac04-d2061149cc14", Has 2 Publishers
-				`{
-					"name": "Sooley",
-					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-			},
-
-			// Publishers
-			2: {
-				`{
-					"name": "Only Publisher of The Rooster Bar",
-					"address": "1 Rooster Ave., Waterloo, Ontario",
-					"yearOpened": 2022,
-					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
-			    }`,
-				`{
-					"name": "Only Publisher of Theif Lord",
-					"address": "1 Theif Lord, Waterloo, Ontario",
-					"yearOpened": 2020,
-					"book_id": "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf"
-			    }`,
-				`{
-					"name": "Only Publisher of Painted House",
-					"address": "600 Madison Ave., New York, New York",
-					"yearOpened": 1995,
-					"book_id": "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
-			    }`,
-				`{
-					"name": "Only Publisher of A Time for Mercy",
-					"address": "123 Andrew Street, Flin Flon, Manitoba",
-					"yearOpened": 2013,
-					"book_id": "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a"
-			    }`,
-				`{
-					"name": "First of Two Publishers of Sooley",
-					"address": "11 Sooley Ave., Waterloo, Ontario",
-					"yearOpened": 1999,
-					"book_id": "bae-7ba73251-c935-5f44-ac04-d2061149cc14"
-			    }`,
-				`{
-					"name": "Second of Two Publishers of Sooley",
-					"address": "22 Sooley Ave., Waterloo, Ontario",
-					"yearOpened": 2000,
-					"book_id": "bae-7ba73251-c935-5f44-ac04-d2061149cc14"
-			    }`,
-			},
-		},
-
-		Results: []map[string]any{
-			{
-				"name":   "John Grisham",
-				"_docID": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-				"book": []map[string]any{
-
-					{
-						"_docID":    "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca",
-						"name":      "The Associate",
-						"publisher": []map[string]any{},
-					},
-
-					{
-						"_docID": "bae-7ba73251-c935-5f44-ac04-d2061149cc14",
-						"name":   "Sooley",
-						"publisher": []map[string]any{
-							{
-								"_docID": "bae-cecb7841-fb4c-5403-a6d7-3654694dd073",
-								"name":   "First of Two Publishers of Sooley",
-							},
-							{
-								"_docID": "bae-d7e35ac3-dcf3-5537-91dd-3d27e378ba5d",
-								"name":   "Second of Two Publishers of Sooley",
-							},
-						},
-					},
-
-					{
-						"_docID": "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf",
-						"name":   "Theif Lord",
-						"publisher": []map[string]any{
-							{
-								"_docID": "bae-1a3ca715-3f3c-5934-9133-d7b489d57f88",
-								"name":   "Only Publisher of Theif Lord",
-							},
-						},
-					},
-
-					{
-						"_docID": "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d",
-						"name":   "Painted House",
-						"publisher": []map[string]any{
-							{
-								"_docID": "bae-6412f5ff-a69a-5472-8647-18bf2b247697",
-								"name":   "Only Publisher of Painted House",
-							},
-						},
-					},
-					{
-						"_docID": "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a",
-						"name":   "A Time for Mercy",
-						"publisher": []map[string]any{
-							{
-								"_docID": "bae-2f83fa75-241f-517d-9b47-3715feee43c1",
-								"name":   "Only Publisher of A Time for Mercy",
-							},
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "The Rooster Bar",
+					"rating":    4,
+					"author_id": testUtils.NewDocIndex(0, 1),
 				},
 			},
-
-			{
-				"_docID": "bae-7ba214a4-5ac8-5878-b221-dae6c285ef41",
-				"book":   []map[string]any{},
-				"name":   "Not a Writer",
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
-
-			{
-				"name":   "Cornelia Funke",
-				"_docID": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-				"book": []map[string]any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "The Associate",
+					"rating":    4.2,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Sooley",
+					"rating":    3.2,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":       "Only Publisher of The Rooster Bar",
+					"address":    "1 Rooster Ave., Waterloo, Ontario",
+					"yearOpened": 2022,
+					"book_id":    testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":       "Only Publisher of Theif Lord",
+					"address":    "1 Theif Lord, Waterloo, Ontario",
+					"yearOpened": 2020,
+					"book_id":    testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":       "Only Publisher of Painted House",
+					"address":    "600 Madison Ave., New York, New York",
+					"yearOpened": 1995,
+					"book_id":    testUtils.NewDocIndex(1, 3),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":       "Only Publisher of A Time for Mercy",
+					"address":    "123 Andrew Street, Flin Flon, Manitoba",
+					"yearOpened": 2013,
+					"book_id":    testUtils.NewDocIndex(1, 4),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":       "First of Two Publishers of Sooley",
+					"address":    "11 Sooley Ave., Waterloo, Ontario",
+					"yearOpened": 1999,
+					"book_id":    testUtils.NewDocIndex(1, 5),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":       "Second of Two Publishers of Sooley",
+					"address":    "22 Sooley Ave., Waterloo, Ontario",
+					"yearOpened": 2000,
+					"book_id":    testUtils.NewDocIndex(1, 5),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						_docID
+						name
+						book {
+							_docID
+							name
+							publisher {
+								_docID
+								name
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"_docID": "bae-080d7580-a791-541e-90bd-49bf69f858e1",
-						"name":   "The Rooster Bar",
-						"publisher": []map[string]any{
+						"_docID": "bae-4819f8a1-b519-5b46-ae39-4fdda8558e4f",
+						"book":   []map[string]any{},
+						"name":   "Not a Writer",
+					},
+					{
+						"name":   "Cornelia Funke",
+						"_docID": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace",
+						"book": []map[string]any{
 							{
-								"_docID": "bae-a5836991-96a3-5147-83be-3374a8b62e6c",
-								"name":   "Only Publisher of The Rooster Bar",
+								"_docID": "bae-4dbc2bbc-0652-5412-8063-486499f1c341",
+								"name":   "The Rooster Bar",
+								"publisher": []map[string]any{
+									{
+										"_docID": "bae-8a8cbab7-65db-5955-b618-b82f44761cee",
+										"name":   "Only Publisher of The Rooster Bar",
+									},
+								},
+							},
+						},
+					},
+					{
+						"name":   "John Grisham",
+						"_docID": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+						"book": []map[string]any{
+							{
+								"_docID": "bae-13164fd9-60fd-5c32-9cb5-8bff3ef8ea53",
+								"name":   "Theif Lord",
+								"publisher": []map[string]any{
+									{
+										"_docID": "bae-0107f5cc-c25a-5295-8439-2b08a286af83",
+										"name":   "Only Publisher of Theif Lord",
+									},
+								},
+							},
+							{
+								"_docID":    "bae-1ccf3043-d760-543e-be1b-6691fa6aa7a8",
+								"name":      "The Associate",
+								"publisher": []map[string]any{},
+							},
+							{
+								"_docID": "bae-5366ba09-54e8-5381-8169-a770aa9282ae",
+								"name":   "Painted House",
+								"publisher": []map[string]any{
+									{
+										"_docID": "bae-35f1e55a-c51b-53d7-9b28-9beb904a1343",
+										"name":   "Only Publisher of Painted House",
+									},
+								},
+							},
+							{
+								"_docID": "bae-96c9de0f-2903-5589-9604-b42882afde8c",
+								"name":   "A Time for Mercy",
+								"publisher": []map[string]any{
+									{
+										"_docID": "bae-37451579-7e50-541d-8a3c-849b290ea416",
+										"name":   "Only Publisher of A Time for Mercy",
+									},
+								},
+							},
+							{
+								"_docID": "bae-f52abfc3-9026-5713-9622-2d3458a386e0",
+								"name":   "Sooley",
+								"publisher": []map[string]any{
+									{
+										"_docID": "bae-c46b7771-843e-51ac-92be-d145aa2cfc07",
+										"name":   "Second of Two Publishers of Sooley",
+									},
+									{
+										"_docID": "bae-fc233f9c-f117-59de-be2b-60e4f6f0a898",
+										"name":   "First of Two Publishers of Sooley",
+									},
+								},
 							},
 						},
 					},
@@ -224,5 +267,5 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

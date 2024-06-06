@@ -48,16 +48,16 @@ func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
+					delete_User(docIDs: ["bae-959725a4-17cb-5e04-8908-98bc78fd06dd", "bae-3eed37ed-5c7b-53ff-b125-d04fb173f6c0"]) {
 						AliasID: _docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"AliasID": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+						"AliasID": "bae-3eed37ed-5c7b-53ff-b125-d04fb173f6c0",
 					},
 					{
-						"AliasID": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+						"AliasID": "bae-959725a4-17cb-5e04-8908-98bc78fd06dd",
 					},
 				},
 			},

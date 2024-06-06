@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-const johnDocID = "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7"
+const johnDocID = "bae-774fbeea-813b-52c8-82b0-d08515a075d7"
 
 func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{

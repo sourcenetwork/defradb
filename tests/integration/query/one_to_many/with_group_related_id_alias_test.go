@@ -17,140 +17,173 @@ import (
 )
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
+	test := testUtils.TestCase{
 		Description: "One-to-many query with groupBy on related field alias (from many side).",
-
-		Request: `query {
-			Book(groupBy: [author]) {
-				author_id
-				_group {
-					name
-					rating
-					author {
-						name
-						age
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
 					}
-				}
-			}
-		}`,
 
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "The Client",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "Candide",
-					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Zadig",
-					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
-				}`,
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: [Book]
+					}
+				`,
 			},
-			//authors
-			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Simon Pelloutier",
 					"age": 327,
 					"verified": true
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				"_group": []map[string]any{
-					{
-						"name":   "Candide",
-						"rating": 4.95,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-					{
-						"name":   "Zadig",
-						"rating": 4.91,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-				"_group": []map[string]any{
-					{
-						"name":   "The Client",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
-				"_group": []map[string]any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "The Client",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Candide",
+					"rating":    4.95,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Zadig",
+					"rating":    4.91,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+					"rating":    2,
+					"author_id": testUtils.NewDocIndex(1, 2),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author]) {
+						author_id
+						_group {
+							name
+							rating
+							author {
+								name
+								age
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-						"rating": 2.0,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Simon Pelloutier",
+						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+						"_group": []map[string]any{
+							{
+								"name":   "The Client",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+						},
+					},
+					{
+						"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+						"_group": []map[string]any{
+							{
+								"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+								"rating": 2.0,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Simon Pelloutier",
+								},
+							},
+						},
+					},
+					{
+						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+						"_group": []map[string]any{
+							{
+								"name":   "Candide",
+								"rating": 4.95,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
+							{
+								"name":   "Zadig",
+								"rating": 4.91,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
 						},
 					},
 				},
@@ -158,156 +191,189 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
+	test := testUtils.TestCase{
 		Description: "One-to-many query with groupBy on related field alias (from many side).",
-
-		Request: `query {
-			Book(groupBy: [author]) {
-				author {
-					_docID
-					name
-				}
-				_group {
-					name
-					rating
-					author {
-						name
-						age
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
 					}
-				}
-			}
-		}`,
 
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "The Client",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "Candide",
-					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Zadig",
-					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
-				}`,
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: [Book]
+					}
+				`,
 			},
-			//authors
-			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Simon Pelloutier",
 					"age": 327,
 					"verified": true
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"author": map[string]any{
-					"name":   "Voltaire",
-					"_docID": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				},
-				"_group": []map[string]any{
-					{
-						"name":   "Candide",
-						"rating": 4.95,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-					{
-						"name":   "Zadig",
-						"rating": 4.91,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author": map[string]any{
-					"name":   "John Grisham",
-					"_docID": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-				},
-				"_group": []map[string]any{
-					{
-						"name":   "The Client",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author": map[string]any{
-					"name":   "Simon Pelloutier",
-					"_docID": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "The Client",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
-				"_group": []map[string]any{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Candide",
+					"rating":    4.95,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Zadig",
+					"rating":    4.91,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+					"rating":    2,
+					"author_id": testUtils.NewDocIndex(1, 2),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author]) {
+						author {
+							_docID
+							name
+						}
+						_group {
+							name
+							rating
+							author {
+								name
+								age
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-						"rating": 2.0,
 						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Simon Pelloutier",
+							"name":   "John Grisham",
+							"_docID": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+						},
+						"_group": []map[string]any{
+							{
+								"name":   "The Client",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+						},
+					},
+					{
+						"author": map[string]any{
+							"name":   "Simon Pelloutier",
+							"_docID": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+						},
+						"_group": []map[string]any{
+							{
+								"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+								"rating": 2.0,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Simon Pelloutier",
+								},
+							},
+						},
+					},
+					{
+						"author": map[string]any{
+							"name":   "Voltaire",
+							"_docID": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+						},
+						"_group": []map[string]any{
+							{
+								"name":   "Candide",
+								"rating": 4.95,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
+							{
+								"name":   "Zadig",
+								"rating": 4.91,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
 						},
 					},
 				},
@@ -315,144 +381,177 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
+	test := testUtils.TestCase{
 		Description: "One-to-many query with groupBy on related field alias, with id selection & related selection (from many side).",
-
-		Request: `query {
-			Book(groupBy: [author]) {
-				author_id
-				_group {
-					name
-					rating
-					author {
-						name
-						age
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
 					}
-				}
-			}
-		}`,
 
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "The Client",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "Candide",
-					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Zadig",
-					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
-				}`,
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: [Book]
+					}
+				`,
 			},
-			//authors
-			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Simon Pelloutier",
 					"age": 327,
 					"verified": true
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				"_group": []map[string]any{
-					{
-						"name":   "Candide",
-						"rating": 4.95,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-					{
-						"name":   "Zadig",
-						"rating": 4.91,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-				"_group": []map[string]any{
-					{
-						"name":   "The Client",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
-				"_group": []map[string]any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "The Client",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Candide",
+					"rating":    4.95,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Zadig",
+					"rating":    4.91,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+					"rating":    2,
+					"author_id": testUtils.NewDocIndex(1, 2),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author]) {
+						author_id
+						_group {
+							name
+							rating
+							author {
+								name
+								age
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-						"rating": 2.0,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Simon Pelloutier",
+						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+						"_group": []map[string]any{
+							{
+								"name":   "The Client",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+						},
+					},
+					{
+						"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+						"_group": []map[string]any{
+							{
+								"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+								"rating": 2.0,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Simon Pelloutier",
+								},
+							},
+						},
+					},
+					{
+						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+						"_group": []map[string]any{
+							{
+								"name":   "Candide",
+								"rating": 4.95,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
+							{
+								"name":   "Zadig",
+								"rating": 4.91,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
 						},
 					},
 				},
@@ -460,160 +559,193 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
+	test := testUtils.TestCase{
 		Description: "One-to-many query with groupBy on related field alias, with id selection & related selection (from many side).",
-
-		Request: `query {
-			Book(groupBy: [author]) {
-				author_id
-				author {
-					_docID
-					name
-				}
-				_group {
-					name
-					rating
-					author {
-						name
-						age
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
 					}
-				}
-			}
-		}`,
 
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "The Client",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "Candide",
-					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Zadig",
-					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
-				}`,
-				`{
-					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
-				}`,
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: [Book]
+					}
+				`,
 			},
-			//authors
-			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Simon Pelloutier",
 					"age": 327,
 					"verified": true
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				"author": map[string]any{
-					"name":   "Voltaire",
-					"_docID": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				},
-				"_group": []map[string]any{
-					{
-						"name":   "Candide",
-						"rating": 4.95,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-					{
-						"name":   "Zadig",
-						"rating": 4.91,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-				"author": map[string]any{
-					"name":   "John Grisham",
-					"_docID": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-				},
-				"_group": []map[string]any{
-					{
-						"name":   "The Client",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"author": map[string]any{
-							"age":  int64(65),
-							"name": "John Grisham",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			{
-				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
-				"author": map[string]any{
-					"name":   "Simon Pelloutier",
-					"_docID": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "The Client",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
-				"_group": []map[string]any{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Candide",
+					"rating":    4.95,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Zadig",
+					"rating":    4.91,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+					"rating":    2,
+					"author_id": testUtils.NewDocIndex(1, 2),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author]) {
+						author_id
+						author {
+							_docID
+							name
+						}
+						_group {
+							name
+							rating
+							author {
+								name
+								age
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-						"rating": 2.0,
+						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Simon Pelloutier",
+							"name":   "John Grisham",
+							"_docID": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+						},
+						"_group": []map[string]any{
+							{
+								"name":   "The Client",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+								"author": map[string]any{
+									"age":  int64(65),
+									"name": "John Grisham",
+								},
+							},
+						},
+					},
+					{
+						"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+						"author": map[string]any{
+							"name":   "Simon Pelloutier",
+							"_docID": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+						},
+						"_group": []map[string]any{
+							{
+								"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+								"rating": 2.0,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Simon Pelloutier",
+								},
+							},
+						},
+					},
+					{
+						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+						"author": map[string]any{
+							"name":   "Voltaire",
+							"_docID": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+						},
+						"_group": []map[string]any{
+							{
+								"name":   "Candide",
+								"rating": 4.95,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
+							{
+								"name":   "Zadig",
+								"rating": 4.91,
+								"author": map[string]any{
+									"age":  int64(327),
+									"name": "Voltaire",
+								},
+							},
 						},
 					},
 				},
@@ -621,7 +753,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t *testing.T) {
@@ -636,53 +768,53 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t 
 		}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,
@@ -710,53 +842,53 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 		}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,

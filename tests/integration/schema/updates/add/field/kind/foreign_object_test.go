@@ -11,7 +11,6 @@
 package kind
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -122,8 +121,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 }
 
 func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
-	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
-
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object, valid, functional",
 		Actions: []any{
@@ -146,36 +143,15 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
-				Request: `mutation {
-						create_Users(input: {name: "John"}) {
-							_docID
-						}
-					}`,
-				Results: []map[string]any{
-					{
-						"_docID": key1,
-					},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
 				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(`mutation {
-						create_Users(input: {name: "Keenan", foo: "%s"}) {
-							name
-							foo {
-								name
-							}
-						}
-					}`,
-					key1,
-				),
-				Results: []map[string]any{
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
-							"name": "John",
-						},
-					},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Keenan",
+					"foo":  testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -189,14 +165,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
+						"name": "John",
+						"foo":  nil,
+					},
+					{
 						"name": "Keenan",
 						"foo": map[string]any{
 							"name": "John",
 						},
-					},
-					{
-						"name": "John",
-						"foo":  nil,
 					},
 				},
 			},

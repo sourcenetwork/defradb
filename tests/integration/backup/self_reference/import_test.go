@@ -25,13 +25,13 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				ImportContent: `{
 					"User":[
 						{
-							"_docID":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d",
+							"_docID":"bae-f4def2b3-2fe8-5e3b-838e-b9d9f8aca102",
 							"age":31,
-							"boss_id":"bae-e933420a-988a-56f8-8952-6c245aebd519",
+							"boss_id":"bae-a2162ff0-3257-50f1-ba2f-39c299921220",
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519",
+							"_docID":"bae-a2162ff0-3257-50f1-ba2f-39c299921220",
 							"age":30,
 							"name":"John"
 						}
@@ -50,14 +50,14 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
+						"name": "John",
+						"boss": nil,
+					},
+					{
 						"name": "Bob",
 						"boss": map[string]any{
 							"name": "John",
 						},
-					},
-					{
-						"name": "John",
-						"boss": nil,
 					},
 				},
 			},
@@ -71,10 +71,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_docID":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
-		`"_docIDNew":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"_docID":"bae-20631b3d-1498-51f1-be29-5c0effbfa646",` +
+		`"_docIDNew":"bae-20631b3d-1498-51f1-be29-5c0effbfa646",` +
 		`"age":31,` +
-		`"boss_id":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"boss_id":"bae-20631b3d-1498-51f1-be29-5c0effbfa646",` +
 		`"name":"Bob"` +
 		`}` +
 		`]` +
@@ -98,7 +98,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"boss_id": "bae-0648f44e-74e8-593b-a662-3310ec278927"
+					"boss_id": "bae-20631b3d-1498-51f1-be29-5c0effbfa646"
 				}`,
 			},
 			testUtils.BackupExport{
@@ -162,8 +162,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 					"Book":[
 						{
 							"name":"John and the sourcerers' stone",
-							"author":"bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
-							"reviewedBy":"bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							"author":"bae-da91935a-9176-57ea-ba68-afe05781da16",
+							"reviewedBy":"bae-da91935a-9176-57ea-ba68-afe05781da16"
 						}
 					]
 				}`,
@@ -221,8 +221,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					"Book":[
 						{
 							"name":"John and the sourcerers' stone",
-							"author":"bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
-							"reviewedBy":"bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							"author":"bae-da91935a-9176-57ea-ba68-afe05781da16",
+							"reviewedBy":"bae-da91935a-9176-57ea-ba68-afe05781da16"
 						}
 					],
 					"Author":[
@@ -269,18 +269,18 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 	expectedExportData := `{` +
 		`"Author":[` +
 		`{` +
-		`"_docID":"bae-d760e445-22ef-5956-9947-26de226891f6",` +
-		`"_docIDNew":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8",` +
-		`"book_id":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
+		`"_docID":"bae-069af8c0-9728-5dde-84ff-ab2dd836f165",` +
+		`"_docIDNew":"bae-f2e84aeb-decc-5e40-94ff-e365f0ed0f4b",` +
+		`"book_id":"bae-006376a9-5ceb-5bd0-bfed-6ff5afd3eb93",` +
 		`"name":"John"` +
 		`}` +
 		`],` +
 		`"Book":[` +
 		`{` +
-		`"_docID":"bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4",` +
+		`"_docID":"bae-2b931633-22bf-576f-b788-d8098b213e5a",` +
 		`"_docIDNew":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
 		`"name":"John and the sourcerers' stone",` +
-		`"reviewedBy_id":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8"` +
+		`"reviewedBy_id":"bae-069af8c0-9728-5dde-84ff-ab2dd836f165"` +
 		`}` +
 		`]` +
 		`}`
@@ -308,7 +308,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			testUtils.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
-				// bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4
+				// bae-2b931633-22bf-576f-b788-d8098b213e5a
 				Doc: `{
 					"name": "John and the sourcerers' stone"
 				}`,
@@ -318,7 +318,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"book": "bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4"
+					"book": "bae-2b931633-22bf-576f-b788-d8098b213e5a"
 				}`,
 			},
 			testUtils.UpdateDoc{
@@ -326,7 +326,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{
-					"reviewedBy_id": "bae-d760e445-22ef-5956-9947-26de226891f6"
+					"reviewedBy_id": "bae-069af8c0-9728-5dde-84ff-ab2dd836f165"
 				}`,
 			},
 			/*

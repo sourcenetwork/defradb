@@ -727,8 +727,8 @@ func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t 
 						}
 					}`,
 				Results: []map[string]any{
-					{"name": "Bob"},
 					{"name": "Alice"},
+					{"name": "Bob"},
 				},
 			},
 		},

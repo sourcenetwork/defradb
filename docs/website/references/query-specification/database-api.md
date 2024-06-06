@@ -106,7 +106,7 @@ Commits queries also work with aggregates, grouping, limit, offset, order, docke
 There is __typename introspection keyword that works on all queries that does not appear to be documented anywhere, for example:
 
 ```graphql 
-commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+commits(dockey: "bae-d4303725-7db9-53d2-b324-f3ee44020e52") {
     cid
     __typename
 }
