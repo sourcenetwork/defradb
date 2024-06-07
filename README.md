@@ -41,9 +41,6 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 
 DISCLAIMER: At this early stage, DefraDB does not offer data encryption, and the default configuration exposes the database to the network. The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, but please do not use it for production purposes until it has been thoroughly tested and developed.
 
-## TEST
-Test This Change
-
 ## Install
 
 Install `defradb` by [downloading an executable](https://github.com/sourcenetwork/defradb/releases) or building it locally using the [Go toolchain](https://golang.org/):
