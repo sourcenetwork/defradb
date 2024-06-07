@@ -55,6 +55,12 @@ var (
 	ErrNoPolicyArgs                = errors.New(errNoPolicyArgs)
 	ErrPolicyIDMustNotBeEmpty      = errors.New(errPolicyIDMustNotBeEmpty)
 	ErrResourceNameMustNotBeEmpty  = errors.New(errResourceNameMustNotBeEmpty)
+
+	// errGeneratingDIDFromNonAccAddr is meant as a way to ensure the FIXME problems are addressed
+	// once the Identity is refactored from SourceHub accounts to JWS.
+	// As such, this error is private because it shouldn't be asserted against outside this package.
+	// That is, users and callers must not rely on this error type.
+	errGeneratingDIDFromNonAccAddr = errors.New("cannot generate did if address is not prefixed")
 )
 
 func NewErrInitializationOfACPFailed(

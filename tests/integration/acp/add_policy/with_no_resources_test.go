@@ -72,8 +72,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Eventhough empty resources make no sense from a DefraDB (DPI) perspective,
-// it is still a valid sourcehub policy for now.
+// A Policy can have no resources (incompatible with DPI) but it needs a name.
 func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 	test := testUtils.TestCase{
 

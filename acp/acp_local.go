@@ -37,8 +37,6 @@ type ACPLocal struct {
 
 var _ sourceHubClient = (*ACPLocal)(nil)
 
-var errGeneratingDIDFromNonAccAddr = errors.New("cannot generate did if address is not prefixed")
-
 func mapACPCorePolicy(pol *types.Policy) policy {
 	resources := make(map[string]*resource)
 	for _, coreResource := range pol.Resources {
@@ -83,29 +81,25 @@ func (l *ACPLocal) Init(ctx context.Context, path string) {
 func (l *ACPLocal) Start(ctx context.Context) error {
 	var manager runtime.RuntimeManager
 	var err error
+	var opts []runtime.Opt
+	var storeLocation string
 
 	if !l.pathToStore.HasValue() { // Use a non-persistent, i.e. in memory store.
-		manager, err = runtime.NewRuntimeManager(
-			runtime.WithMemKV(),
-		)
-
-		if err != nil {
-			return NewErrInitializationOfACPFailed(err, "Local", "in-memory")
-		}
+		storeLocation = "in-memory"
+		opts = append(opts, runtime.WithMemKV())
 	} else { // Use peristent storage.
-		acpStorePath := l.pathToStore.Value() + "/" + localACPStoreName
-		manager, err = runtime.NewRuntimeManager(
-			runtime.WithPersistentKV(acpStorePath),
-		)
-
-		if err != nil {
-			return NewErrInitializationOfACPFailed(err, "Local", l.pathToStore.Value())
-		}
+		storeLocation = l.pathToStore.Value()
+		acpStorePath := storeLocation + "/" + localACPStoreName
+		opts = append(opts, runtime.WithPersistentKV(acpStorePath))
 	}
 
-	engine := engine.NewACPEngine(manager)
-	l.engine = engine
+	manager, err = runtime.NewRuntimeManager(opts...)
+	if err != nil {
+		return NewErrInitializationOfACPFailed(err, "Local", storeLocation)
+	}
+
 	l.manager = manager
+	l.engine = engine.NewACPEngine(manager)
 	return nil
 }
 
