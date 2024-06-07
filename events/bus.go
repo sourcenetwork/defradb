@@ -14,8 +14,37 @@ import (
 	"sync"
 )
 
-// Bus is an event bus used to publish and subscribe to internal
-// subsystem messages.
+// Message contains event info.
+type Message struct {
+	// Name is the name of the event this message was generated from.
+	Name string
+	// Data contains optional event information.
+	Data any
+}
+
+// NewMessage returns a new message with the given name and optional data.
+func NewMessage(name string, data any) Message {
+	return Message{name, data}
+}
+
+// Subscription is a read-only event stream.
+type Subscription struct {
+	id     int
+	value  chan Message
+	events []string
+}
+
+// Message returns the next event value from the subscription.
+func (s *Subscription) Message() <-chan Message {
+	return s.value
+}
+
+// Events returns the names of all subscribed events.
+func (s *Subscription) Events() []string {
+	return s.events
+}
+
+// Bus is used to publish and subscribe to events.
 type Bus struct {
 	subId  int
 	subs   map[int]*Subscription
@@ -32,24 +61,21 @@ func NewBus() *Bus {
 }
 
 // Publish publishes the given event to all subscribers.
-//
-// This method will never block if the subscribers buffer is full.
-func (b *Bus) Publish(event string, value any) {
+func (b *Bus) Publish(msg Message) {
 	b.mutex.RLock()
 	defer b.mutex.RUnlock()
 
 	subscribers := make(map[int]any)
-	// publish to event subscribers
-	for id := range b.events[event] {
+	for id := range b.events[msg.Name] {
 		subscribers[id] = struct{}{}
 	}
-	// also publish to wildcard recipients
 	for id := range b.events[WildCardEventName] {
 		subscribers[id] = struct{}{}
 	}
+
 	for id := range subscribers {
 		select {
-		case b.subs[id].value <- value:
+		case b.subs[id].value <- msg:
 			// published event
 		default:
 			// channel full
@@ -58,28 +84,25 @@ func (b *Bus) Publish(event string, value any) {
 }
 
 // Subscribe returns a new channel that will receive all of the subscribed events.
-//
-// The size of the buffer should be appropriate for the consumer or events will be dropped.
 func (b *Bus) Subscribe(size int, events ...string) *Subscription {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
 	sub := &Subscription{
 		id:     b.subId,
-		value:  make(chan any, size),
+		value:  make(chan Message, size),
 		events: events,
 	}
 
-	b.subId++
-	b.subs[sub.id] = sub
-
-	// add sub to all events
 	for _, event := range events {
 		if _, ok := b.events[event]; !ok {
 			b.events[event] = make(map[int]any)
 		}
 		b.events[event][sub.id] = struct{}{}
 	}
+
+	b.subId++
+	b.subs[sub.id] = sub
 	return sub
 }
 
@@ -88,29 +111,27 @@ func (b *Bus) Unsubscribe(sub *Subscription) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	// delete sub from all events
+	if _, ok := b.subs[sub.id]; !ok {
+		return // not subscribed
+	}
 	for _, event := range sub.events {
 		delete(b.events[event], sub.id)
 	}
-	// only close channel once
-	if _, ok := b.subs[sub.id]; ok {
-		close(sub.value)
-	}
+
 	delete(b.subs, sub.id)
+	close(sub.value)
 }
 
 // Close closes the event bus by unsubscribing all subscribers.
 func (b *Bus) Close() {
 	var subs []*Subscription
 
-	// get list of all subs
 	b.mutex.RLock()
 	for _, sub := range b.subs {
 		subs = append(subs, sub)
 	}
 	b.mutex.RUnlock()
 
-	// unsubscribe all subs
 	for _, sub := range subs {
 		b.Unsubscribe(sub)
 	}

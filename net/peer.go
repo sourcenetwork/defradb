@@ -221,11 +221,11 @@ func (p *Peer) Close() {
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
 	for {
-		value, isOpen := <-p.updateSub.Value()
+		msg, isOpen := <-p.updateSub.Message()
 		if !isOpen {
 			return
 		}
-		update, ok := value.(events.UpdateEvent)
+		update, ok := msg.Data.(events.UpdateEvent)
 		if !ok {
 			continue // ignore invalid value
 		}

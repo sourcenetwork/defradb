@@ -160,13 +160,7 @@ func NewNode(
 		}
 	}
 
-	// slice of events to subscribe to
-	subEvents := []any{
-		&event.EvtPeerConnectednessChanged{},
-		&events.PubSubEvent{},
-		&events.PushLogEvent{},
-	}
-	sub, err := h.EventBus().Subscribe(subEvents)
+	sub, err := h.EventBus().Subscribe(&event.EvtPeerConnectednessChanged{})
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
@@ -189,16 +183,7 @@ func NewNode(
 	// publish subscribed events to the event bus
 	go func() {
 		for val := range sub.Out() {
-			switch t := val.(type) {
-			case event.EvtPeerConnectednessChanged:
-				db.Events().Publish(events.PeerEventName, events.PeerEvent(t))
-
-			case events.PubSubEvent:
-				db.Events().Publish(events.PubSubEventName, t)
-
-			case events.PushLogEvent:
-				db.Events().Publish(events.PushLogEventName, t)
-			}
+			db.Events().Publish(events.NewMessage(events.ConnectEventName, val))
 		}
 	}()
 

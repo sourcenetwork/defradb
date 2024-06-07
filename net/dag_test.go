@@ -141,23 +141,23 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	db1, n1 := newTestNode(ctx, t)
 	db2, n2 := newTestNode(ctx, t)
 
-	sub1 := db1.Events().Subscribe(5, events.PeerEventName)
+	sub1 := db1.Events().Subscribe(5, events.ConnectEventName)
 	defer db1.Events().Unsubscribe(sub1)
 
-	sub2 := db2.Events().Subscribe(5, events.PeerEventName)
+	sub2 := db2.Events().Subscribe(5, events.ConnectEventName)
 	defer db2.Events().Unsubscribe(sub2)
 
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	require.NoError(t, err)
 	n2.Bootstrap(addrs)
 
-	event1 := <-sub1.Value()
-	assert.Equal(t, network.Connected, event1.(event.EvtPeerConnectednessChanged).Connectedness)
-	assert.Equal(t, n2.PeerID(), event1.(event.EvtPeerConnectednessChanged).Peer)
+	msg1 := <-sub1.Message()
+	assert.Equal(t, network.Connected, msg1.Data.(event.EvtPeerConnectednessChanged).Connectedness)
+	assert.Equal(t, n2.PeerID(), msg1.Data.(event.EvtPeerConnectednessChanged).Peer)
 
-	event2 := <-sub2.Value()
-	assert.Equal(t, network.Connected, event2.(event.EvtPeerConnectednessChanged).Connectedness)
-	assert.Equal(t, n1.PeerID(), event2.(event.EvtPeerConnectednessChanged).Peer)
+	msg2 := <-sub2.Message()
+	assert.Equal(t, network.Connected, msg2.Data.(event.EvtPeerConnectednessChanged).Connectedness)
+	assert.Equal(t, n1.PeerID(), msg2.Data.(event.EvtPeerConnectednessChanged).Peer)
 
 	done := make(chan struct{})
 	go func() {

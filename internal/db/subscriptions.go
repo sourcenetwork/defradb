@@ -31,11 +31,12 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
 	}
-	sub := db.events.Subscribe(5, events.UpdateEventName)
+	// subscribe to the subscription event bus so we don't block the system bus
+	sub := db.subEventBus.Subscribe(requestSubBufferSize, events.UpdateEventName)
 	resCh := make(chan client.GQLResult)
 	go func() {
 		defer func() {
-			db.events.Unsubscribe(sub)
+			db.sysEventBus.Unsubscribe(sub)
 			close(resCh)
 		}()
 
@@ -45,11 +46,11 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			select {
 			case <-ctx.Done():
 				return // context cancelled
-			case val, ok := <-sub.Value():
+			case val, ok := <-sub.Message():
 				if !ok {
 					return // channel closed
 				}
-				evt, ok = val.(events.UpdateEvent)
+				evt, ok = val.Data.(events.UpdateEvent)
 				if !ok {
 					continue // invalid event value
 				}

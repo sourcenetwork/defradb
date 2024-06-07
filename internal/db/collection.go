@@ -1802,7 +1802,7 @@ func (c *collection) save(
 		IsCreate:   isCreate,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(events.UpdateEventName, updateEvent)
+		c.db.sysEventBus.Publish(events.NewMessage(events.UpdateEventName, updateEvent))
 	})
 
 	txn.OnSuccess(func() {

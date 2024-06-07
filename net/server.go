@@ -198,10 +198,11 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if err != nil {
 			log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
 		}
-		s.db.Events().Publish(events.PushLogEventName, events.PushLogEvent{
+		msg := events.NewMessage(events.PushLogEventName, events.PushLogEvent{
 			FromPeer: pid,
 			ByPeer:   byPeer,
 		})
+		s.db.Events().Publish(msg)
 	}()
 
 	// make sure were not processing twice
@@ -491,9 +492,10 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		corelog.String("Topic", topic),
 		corelog.String("Message", string(msg)),
 	)
-	s.db.Events().Publish(events.PubSubEventName, events.PubSubEvent{
+	evt := events.NewMessage(events.PubSubEventName, events.PubSubEvent{
 		Peer: from,
 	})
+	s.db.Events().Publish(evt)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.

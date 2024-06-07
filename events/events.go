@@ -27,13 +27,13 @@ const (
 	PushLogEventName = "net:pushlog"
 	// PubSubEventName is the name of the network pubsub event.
 	PubSubEventName = "net:pubsub"
-	// PeerEventName is the name of the network peer event.
-	PeerEventName = "net:peer"
+	// ConnectEventName is the name of the network connect event.
+	ConnectEventName = "net:connect"
 )
 
-// PeerEvent is an event that is published when
+// ConnectEvent is an event that is published when
 // a peer connection has changed status.
-type PeerEvent = event.EvtPeerConnectednessChanged
+type ConnectEvent = event.EvtPeerConnectednessChanged
 
 // PushLogEvent is an event that is published when
 // a pushlog message has been received from a remote peer.

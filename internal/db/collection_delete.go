@@ -174,7 +174,7 @@ func (c *collection) applyDelete(
 		Block:      b,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(events.UpdateEventName, updateEvent)
+		c.db.sysEventBus.Publish(events.NewMessage(events.UpdateEventName, updateEvent))
 	})
 
 	return nil

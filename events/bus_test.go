@@ -10,19 +10,25 @@
 
 package events
 
-// Subscription is a read-only event stream.
-type Subscription struct {
-	id     int
-	value  chan any
-	events []string
-}
+import (
+	"testing"
 
-// Value returns the next event value from the subscription.
-func (s *Subscription) Value() <-chan any {
-	return s.value
-}
+	"github.com/stretchr/testify/assert"
+)
 
-// Events returns the names of all subscribed events.
-func (s *Subscription) Events() []string {
-	return s.events
+func TestBusPublish(t *testing.T) {
+	bus := NewBus()
+	defer bus.Close()
+
+	sub1 := bus.Subscribe(1, "test")
+	sub2 := bus.Subscribe(1, WildCardEventName)
+
+	msg := NewMessage("test", "hello")
+	bus.Publish(msg)
+
+	event1 := <-sub1.Message()
+	assert.Equal(t, msg, event1)
+
+	event2 := <-sub2.Message()
+	assert.Equal(t, msg, event2)
 }

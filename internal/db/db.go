@@ -43,6 +43,15 @@ var (
 	_ client.Collection = (*collection)(nil)
 )
 
+const (
+	// forwardSubBufferSize controls the size of the channel used to
+	// forward events from the system bus to the subscription bus
+	forwardSubBufferSize = 10
+	// requestSubBufferSize controls the size of the channel used to
+	// send events to request subscriptions
+	requestSubBufferSize = 5
+)
+
 // DB is the main interface for interacting with the
 // DefraDB storage system.
 type db struct {
@@ -51,7 +60,11 @@ type db struct {
 	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
-	events *events.Bus
+	// sysEventBus is used to send and receive system events
+	sysEventBus *events.Bus
+
+	// subEventBus is used to send and receive request subscription events
+	subEventBus *events.Bus
 
 	parser core.Parser
 
@@ -102,7 +115,8 @@ func newDB(
 		lensRegistry: lens,
 		parser:       parser,
 		options:      options,
-		events:       events.NewBus(),
+		sysEventBus:  events.NewBus(),
+		subEventBus:  events.NewBus(),
 	}
 
 	// apply options
@@ -185,6 +199,15 @@ func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
+	// forward system bus events to the subscriber bus
+	// to ensure we never block the system bus for user subscriptions
+	go func() {
+		sub := db.sysEventBus.Subscribe(forwardSubBufferSize, events.WildCardEventName)
+		for msg := range sub.Message() {
+			db.subEventBus.Publish(msg)
+		}
+	}()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -239,7 +262,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 // Events returns the events Channel.
 func (db *db) Events() *events.Bus {
-	return db.events
+	return db.sysEventBus
 }
 
 // MaxRetries returns the maximum number of retries per transaction.
@@ -260,7 +283,9 @@ func (db *db) PrintDump(ctx context.Context) error {
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
-	db.events.Close()
+
+	db.subEventBus.Close()
+	db.sysEventBus.Close()
 
 	err := db.rootstore.Close()
 	if err != nil {
