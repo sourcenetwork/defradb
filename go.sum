@@ -814,8 +814,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:Udh
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/acp_core v0.0.0-20240606201535-6beaf03be39c h1:IqUj7rCvJFWVKvEb4Ee97Z3CH3U4lwo1+Uf/LgDr/TI=
-github.com/sourcenetwork/acp_core v0.0.0-20240606201535-6beaf03be39c/go.mod h1:BgsqEZnl8yR/SoTN7ZYN/PpGg8bvCSCYY/Y2DxyUAzA=
+github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2 h1:2aengjyUwOeF/R6bY0Bvl8DHxd8aA5rqC72s777zCGw=
+github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2/go.mod h1:vCb2fA1jj1eIyneHT+noM5g10oEuE3UzxDgBzeZZH1Q=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276 h1:TpQDDPfucDgCNH0NVqVUk6SSq6T6G8p9HIocmwZh9Tg=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276/go.mod h1:lxiZTDBw0vheFMqSwX2OvB6RTDI1+/UtVCSU4rpThFM=
 github.com/sourcenetwork/corelog v0.0.7 h1:vztssVAUDcsYN5VUOW3PKYhLprHfzoc8UbKewQuD1qw=
