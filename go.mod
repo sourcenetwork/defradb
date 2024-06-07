@@ -3,8 +3,8 @@ module github.com/sourcenetwork/defradb
 go 1.21.3
 
 require (
-	github.com/bits-and-blooms/bitset v1.13.0
 	github.com/bxcodec/faker v2.0.1+incompatible
+	github.com/bits-and-blooms/bitset v1.13.0
 	github.com/cosmos/cosmos-sdk v0.50.6
 	github.com/cosmos/gogoproto v1.4.12
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
