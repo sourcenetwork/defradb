@@ -658,7 +658,7 @@ func setStartingNodes(
 		s.nodes = append(s.nodes, c)
 		s.dbPaths = append(s.dbPaths, path)
 
-		sub := c.Events().Subscribe(100, events.PushLogEventName)
+		sub := c.Events().Subscribe(100, events.MergeCompleteEventName)
 		s.eventSubs = append(s.eventSubs, sub)
 	}
 }
@@ -829,7 +829,7 @@ func configureNode(
 	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
 
-	sub := c.Events().Subscribe(100, events.PushLogEventName)
+	sub := c.Events().Subscribe(100, events.MergeCompleteEventName)
 	s.eventSubs = append(s.eventSubs, sub)
 }
 

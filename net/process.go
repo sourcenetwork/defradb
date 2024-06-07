@@ -64,7 +64,7 @@ func (bp *blockProcessor) processRemoteBlock(
 	// Initiate a sync of the block's children
 	bp.wg.Add(1)
 	bp.handleChildBlocks(ctx, block)
-
+	bp.wg.Wait()
 	return nil
 }
 

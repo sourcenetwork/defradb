@@ -184,20 +184,20 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
+	byPeer, err := libpeer.Decode(req.Body.Creator)
+	if err != nil {
+		return nil, err
+	}
 
 	s.docQueue.add(docID.String())
-	defer func() {
-		s.docQueue.done(docID.String())
-		byPeer, err := libpeer.Decode(req.Body.Creator)
-		if err != nil {
-			log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
-		}
-		msg := events.NewMessage(events.PushLogEventName, events.PushLogEvent{
-			FromPeer: pid,
-			ByPeer:   byPeer,
-		})
-		s.peer.db.Events().Publish(msg)
-	}()
+	defer s.docQueue.done(docID.String())
+
+	evt := events.MergeEvent{
+		ByPeer:     byPeer,
+		FromPeer:   pid,
+		Cid:        cid,
+		SchemaRoot: string(req.Body.SchemaRoot),
+	}
 
 	// check if we already have this block
 	exists, err := s.peer.db.Blockstore().Has(ctx, cid)
@@ -205,6 +205,8 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, NewErrCheckingForExistingBlock(err, cid.String())
 	}
 	if exists {
+		// the integration tests expect every push log to emit a merge complete event
+		s.peer.db.Events().Publish(events.NewMessage(events.MergeCompleteEventName, evt))
 		return &pb.PushLogReply{}, nil
 	}
 
@@ -224,17 +226,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			corelog.Any("CID", cid),
 		)
 	}
-	bp.wg.Wait()
-
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	evt := events.NewMessage(events.MergeEventName, events.MergeEvent{
-		Cid:        cid,
-		SchemaRoot: string(req.Body.SchemaRoot),
-		Wg:         wg,
-	})
-	s.peer.db.Events().Publish(evt)
-	wg.Wait()
+	s.peer.db.Events().Publish(events.NewMessage(events.MergeRequestEventName, evt))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// suscribe to the collection.

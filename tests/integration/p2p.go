@@ -271,13 +271,13 @@ func setupPeerWaitSync(
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				msg, ok := <-sourceSub.Message()
 				if ok {
-					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
 				}
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 				msg, ok := <-targetSub.Message()
 				if ok {
-					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
 				}
 			}
 			nodeSynced <- struct{}{}
@@ -415,13 +415,13 @@ func setupReplicatorWaitSync(
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				msg, ok := <-sourceSub.Message()
 				if ok {
-					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
 				}
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 				msg, ok := <-targetSub.Message()
 				if ok {
-					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
 				}
 			}
 			nodeSynced <- struct{}{}
