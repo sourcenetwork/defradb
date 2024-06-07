@@ -80,7 +80,7 @@ func NewNode(
 	ctx context.Context,
 	db client.DB,
 	opts ...NodeOpt,
-) (*Node, error) {
+) (node *Node, err error) {
 	options := DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
@@ -103,10 +103,14 @@ func NewNode(
 	fin := finalizer.NewFinalizer()
 
 	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if node == nil {
+			cancel()
+		}
+	}()
 
 	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 	fin.Add(peerstore)
@@ -115,7 +119,6 @@ func NewNode(
 		// generate an ephemeral private key
 		key, err := crypto.GenerateEd25519()
 		if err != nil {
-			cancel()
 			return nil, fin.Cleanup(err)
 		}
 		options.PrivateKey = key
@@ -124,7 +127,6 @@ func NewNode(
 	// unmarshal the private key bytes
 	privateKey, err := libp2pCrypto.UnmarshalEd25519PrivateKey(options.PrivateKey)
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 
@@ -155,7 +157,6 @@ func NewNode(
 
 	h, err := libp2p.New(libp2pOpts...)
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 	log.InfoContext(
@@ -174,7 +175,6 @@ func NewNode(
 			pubsub.WithFloodPublish(true),
 		)
 		if err != nil {
-			cancel()
 			return nil, fin.Cleanup(err)
 		}
 	}
@@ -188,7 +188,6 @@ func NewNode(
 		options.GRPCDialOptions,
 	)
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 

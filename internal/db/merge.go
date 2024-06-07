@@ -118,7 +118,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 				}
 				ctx = SetContextTxn(ctx, txn)
 				mp.txn = txn
-				mp.ls.SetReadStorage(txn.DAGstore().AsIPLDStorage())
+				mp.lsys.SetReadStorage(txn.DAGstore().AsIPLDStorage())
 				// Reset the CRDTs to avoid reusing the old transaction.
 				mp.mCRDTs = make(map[string]merklecrdt.MerkleCRDT)
 				continue
@@ -133,7 +133,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 
 type mergeProcessor struct {
 	txn        datastore.Txn
-	ls         linking.LinkSystem
+	lsys       linking.LinkSystem
 	mCRDTs     map[string]merklecrdt.MerkleCRDT
 	col        *collection
 	dsKey      core.DataStoreKey
@@ -142,13 +142,13 @@ type mergeProcessor struct {
 
 func (db *db) newMergeProcessor(
 	txn datastore.Txn,
-	ls linking.LinkSystem,
+	lsys linking.LinkSystem,
 	col *collection,
 	dsKey core.DataStoreKey,
 ) (*mergeProcessor, error) {
 	return &mergeProcessor{
 		txn:        txn,
-		ls:         ls,
+		lsys:       lsys,
 		mCRDTs:     make(map[string]merklecrdt.MerkleCRDT),
 		col:        col,
 		dsKey:      dsKey,
@@ -179,7 +179,7 @@ func (mp *mergeProcessor) loadComposites(
 		return nil
 	}
 
-	nd, err := mp.ls.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
+	nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (mp *mergeProcessor) loadComposites(
 		for _, b := range mt.heads {
 			for _, link := range b.Links {
 				if link.Name == core.HEAD {
-					nd, err := mp.ls.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+					nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
 					if err != nil {
 						return err
 					}
@@ -269,7 +269,7 @@ func (mp *mergeProcessor) processBlock(
 			continue
 		}
 
-		nd, err := mp.ls.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+		nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
 		if err != nil {
 			return err
 		}

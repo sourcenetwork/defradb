@@ -32,7 +32,7 @@ func newMemoryDB(ctx context.Context) (*db, error) {
 
 func newDefraMemoryDB(ctx context.Context) (*db, error) {
 	rootstore := memory.NewDatastore(ctx)
-	return newDB(ctx, rootstore, acp.NoACP)
+	return newDB(ctx, rootstore, acp.NoACP, nil)
 }
 
 func TestNewDB(t *testing.T) {
