@@ -247,6 +247,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	bp.wg.Wait()
 	if s.peer.db.Events().DAGMerges.HasValue() {
 		wg := &sync.WaitGroup{}
+		wg.Add(1)
 		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
 			Cid:        cid,
 			SchemaRoot: string(req.Body.SchemaRoot),
