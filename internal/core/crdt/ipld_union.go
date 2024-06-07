@@ -16,8 +16,7 @@ import "github.com/sourcenetwork/defradb/internal/core"
 type CRDT struct {
 	LWWRegDelta       *LWWRegDelta
 	CompositeDAGDelta *CompositeDAGDelta
-	CounterDeltaInt   *CounterDelta[int64]
-	CounterDeltaFloat *CounterDelta[float64]
+	CounterDelta      *CounterDelta
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the CRDT.
@@ -28,8 +27,7 @@ func (c CRDT) IPLDSchemaBytes() []byte {
 	type CRDT union {
 		| LWWRegDelta "lww"
 		| CompositeDAGDelta "composite"
-		| CounterDeltaInt "counterInt"
-		| CounterDeltaFloat "counterFloat"
+		| CounterDelta "counter"
 	} representation keyed`)
 }
 
@@ -40,10 +38,8 @@ func (c CRDT) GetDelta() core.Delta {
 		return c.LWWRegDelta
 	case c.CompositeDAGDelta != nil:
 		return c.CompositeDAGDelta
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt
+	case c.CounterDelta != nil:
+		return c.CounterDelta
 	}
 	return nil
 }
@@ -55,10 +51,8 @@ func (c CRDT) GetPriority() uint64 {
 		return c.LWWRegDelta.GetPriority()
 	case c.CompositeDAGDelta != nil:
 		return c.CompositeDAGDelta.GetPriority()
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.GetPriority()
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.GetPriority()
+	case c.CounterDelta != nil:
+		return c.CounterDelta.GetPriority()
 	}
 	return 0
 }
@@ -70,10 +64,8 @@ func (c CRDT) GetFieldName() string {
 		return c.LWWRegDelta.FieldName
 	case c.CompositeDAGDelta != nil:
 		return c.CompositeDAGDelta.FieldName
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.FieldName
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.FieldName
+	case c.CounterDelta != nil:
+		return c.CounterDelta.FieldName
 	}
 	return ""
 }
@@ -85,10 +77,8 @@ func (c CRDT) GetDocID() []byte {
 		return c.LWWRegDelta.DocID
 	case c.CompositeDAGDelta != nil:
 		return c.CompositeDAGDelta.DocID
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.DocID
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.DocID
+	case c.CounterDelta != nil:
+		return c.CounterDelta.DocID
 	}
 	return nil
 }
@@ -100,10 +90,8 @@ func (c CRDT) GetSchemaVersionID() string {
 		return c.LWWRegDelta.SchemaVersionID
 	case c.CompositeDAGDelta != nil:
 		return c.CompositeDAGDelta.SchemaVersionID
-	case c.CounterDeltaFloat != nil:
-		return c.CounterDeltaFloat.SchemaVersionID
-	case c.CounterDeltaInt != nil:
-		return c.CounterDeltaInt.SchemaVersionID
+	case c.CounterDelta != nil:
+		return c.CounterDelta.SchemaVersionID
 	}
 	return ""
 }
