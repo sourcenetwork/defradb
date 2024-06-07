@@ -35,8 +35,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-
 	"github.com/multiformats/go-multiaddr"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
 
@@ -59,8 +59,9 @@ type Node struct {
 
 	*Peer
 
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx      context.Context
+	cancel   context.CancelFunc
+	dhtClose func() error
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into libp2p.
@@ -68,7 +69,7 @@ func NewNode(
 	ctx context.Context,
 	db client.DB,
 	opts ...NodeOpt,
-) (*Node, error) {
+) (node *Node, err error) {
 	options := DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
@@ -89,6 +90,13 @@ func NewNode(
 	}
 
 	fin := finalizer.NewFinalizer()
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if node == nil {
+			cancel()
+		}
+	}()
 
 	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
 	if err != nil {
@@ -160,12 +168,6 @@ func NewNode(
 		}
 	}
 
-	sub, err := h.EventBus().Subscribe(&event.EvtPeerConnectednessChanged{})
-	if err != nil {
-		return nil, fin.Cleanup(err)
-	}
-
-	ctx, cancel := context.WithCancel(ctx)
 	peer, err := NewPeer(
 		ctx,
 		db,
@@ -176,10 +178,13 @@ func NewNode(
 		options.GRPCDialOptions,
 	)
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 
+	sub, err := h.EventBus().Subscribe(&event.EvtPeerConnectednessChanged{})
+	if err != nil {
+		return nil, fin.Cleanup(err)
+	}
 	// publish subscribed events to the event bus
 	go func() {
 		for val := range sub.Out() {
@@ -188,10 +193,11 @@ func NewNode(
 	}()
 
 	return &Node{
-		Peer:   peer,
-		DB:     db,
-		ctx:    ctx,
-		cancel: cancel,
+		Peer:     peer,
+		DB:       db,
+		ctx:      ctx,
+		cancel:   cancel,
+		dhtClose: ddht.Close,
 	}, nil
 }
 
@@ -263,6 +269,12 @@ func (n Node) Close() {
 	}
 	if n.Peer != nil {
 		n.Peer.Close()
+	}
+	if n.dhtClose != nil {
+		err := n.dhtClose()
+		if err != nil {
+			log.ErrorContextE(n.ctx, "Failed to close DHT", err)
+		}
 	}
 	n.DB.Close()
 }

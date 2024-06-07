@@ -129,14 +129,17 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
-	cid, err := createCID(doc)
+	headCID, err := getHead(ctx, n1.db, doc.ID())
+	require.NoError(t, err)
+
+	b, err := n1.db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	err = n1.server.pushLog(ctx, events.UpdateEvent{
 		DocID:      doc.ID().String(),
-		Cid:        cid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      emptyBlock(),
+		Block:      b,
 	}, n2.PeerInfo().ID)
 	require.NoError(t, err)
 }

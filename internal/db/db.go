@@ -50,6 +50,9 @@ const (
 	// requestSubBufferSize controls the size of the channel used to
 	// send events to request subscriptions
 	requestSubBufferSize = 5
+	// mergeSubBufferSize controls the size of the channel used to
+	// handle merge events
+	mergeSubBufferSize = 10
 )
 
 // DB is the main interface for interacting with the
@@ -132,7 +135,6 @@ func newDB(
 	if err != nil {
 		return nil, err
 	}
-
 	return db, nil
 }
 
@@ -198,6 +200,9 @@ func (db *db) AddPolicy(
 func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
+
+	// start merge process
+	go db.handleMerges(ctx)
 
 	// forward system bus events to the subscriber bus
 	// to ensure we never block the system bus for user subscriptions

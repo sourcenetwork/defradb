@@ -97,7 +97,7 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 		Data:            value,
 		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
-		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
+		SchemaVersionID: reg.schemaVersionKey.SchemaVersionID,
 	}
 }
 

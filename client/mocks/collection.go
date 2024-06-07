@@ -68,49 +68,6 @@ func (_c *Collection_Create_Call) RunAndReturn(run func(context.Context, *client
 	return _c
 }
 
-// CreateDocIndex provides a mock function with given fields: _a0, _a1
-func (_m *Collection) CreateDocIndex(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Collection_CreateDocIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateDocIndex'
-type Collection_CreateDocIndex_Call struct {
-	*mock.Call
-}
-
-// CreateDocIndex is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) CreateDocIndex(_a0 interface{}, _a1 interface{}) *Collection_CreateDocIndex_Call {
-	return &Collection_CreateDocIndex_Call{Call: _e.mock.On("CreateDocIndex", _a0, _a1)}
-}
-
-func (_c *Collection_CreateDocIndex_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_CreateDocIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
-	})
-	return _c
-}
-
-func (_c *Collection_CreateDocIndex_Call) Return(_a0 error) *Collection_CreateDocIndex_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Collection_CreateDocIndex_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_CreateDocIndex_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CreateIndex provides a mock function with given fields: _a0, _a1
 func (_m *Collection) CreateIndex(_a0 context.Context, _a1 client.IndexDescription) (client.IndexDescription, error) {
 	ret := _m.Called(_a0, _a1)
@@ -297,49 +254,6 @@ func (_c *Collection_Delete_Call) Return(_a0 bool, _a1 error) *Collection_Delete
 }
 
 func (_c *Collection_Delete_Call) RunAndReturn(run func(context.Context, client.DocID) (bool, error)) *Collection_Delete_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeleteDocIndex provides a mock function with given fields: _a0, _a1
-func (_m *Collection) DeleteDocIndex(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Collection_DeleteDocIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDocIndex'
-type Collection_DeleteDocIndex_Call struct {
-	*mock.Call
-}
-
-// DeleteDocIndex is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) DeleteDocIndex(_a0 interface{}, _a1 interface{}) *Collection_DeleteDocIndex_Call {
-	return &Collection_DeleteDocIndex_Call{Call: _e.mock.On("DeleteDocIndex", _a0, _a1)}
-}
-
-func (_c *Collection_DeleteDocIndex_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_DeleteDocIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
-	})
-	return _c
-}
-
-func (_c *Collection_DeleteDocIndex_Call) Return(_a0 error) *Collection_DeleteDocIndex_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Collection_DeleteDocIndex_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_DeleteDocIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -946,50 +860,6 @@ func (_c *Collection_Update_Call) Return(_a0 error) *Collection_Update_Call {
 }
 
 func (_c *Collection_Update_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateDocIndex provides a mock function with given fields: ctx, oldDoc, newDoc
-func (_m *Collection) UpdateDocIndex(ctx context.Context, oldDoc *client.Document, newDoc *client.Document) error {
-	ret := _m.Called(ctx, oldDoc, newDoc)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document, *client.Document) error); ok {
-		r0 = rf(ctx, oldDoc, newDoc)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Collection_UpdateDocIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDocIndex'
-type Collection_UpdateDocIndex_Call struct {
-	*mock.Call
-}
-
-// UpdateDocIndex is a helper method to define mock.On call
-//   - ctx context.Context
-//   - oldDoc *client.Document
-//   - newDoc *client.Document
-func (_e *Collection_Expecter) UpdateDocIndex(ctx interface{}, oldDoc interface{}, newDoc interface{}) *Collection_UpdateDocIndex_Call {
-	return &Collection_UpdateDocIndex_Call{Call: _e.mock.On("UpdateDocIndex", ctx, oldDoc, newDoc)}
-}
-
-func (_c *Collection_UpdateDocIndex_Call) Run(run func(ctx context.Context, oldDoc *client.Document, newDoc *client.Document)) *Collection_UpdateDocIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document), args[2].(*client.Document))
-	})
-	return _c
-}
-
-func (_c *Collection_UpdateDocIndex_Call) Return(_a0 error) *Collection_UpdateDocIndex_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Collection_UpdateDocIndex_Call) RunAndReturn(run func(context.Context, *client.Document, *client.Document) error) *Collection_UpdateDocIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }

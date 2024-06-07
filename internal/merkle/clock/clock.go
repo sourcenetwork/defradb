@@ -125,7 +125,7 @@ func (mc *MerkleClock) ProcessBlock(
 	// check if we have any HEAD links
 	hasHeads := false
 	for _, l := range block.Links {
-		if l.Name == "_head" {
+		if l.Name == core.HEAD {
 			hasHeads = true
 			break
 		}

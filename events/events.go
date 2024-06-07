@@ -11,6 +11,8 @@
 package events
 
 import (
+	"sync"
+
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -19,6 +21,8 @@ import (
 const (
 	// WildCardEventName is the alias used to subscribe to all events.
 	WildCardEventName = "*"
+	// MergeEventName is the name of the databse merge event.
+	MergeEventName = "db:merge"
 	// UpdateEventName is the name of the database update event.
 	UpdateEventName = "db:update"
 	// ResultsEventName is the name of the database results event.
@@ -68,4 +72,17 @@ type UpdateEvent struct {
 
 	// IsCreate is true if this update is the creation of a new document.
 	IsCreate bool
+}
+
+// MergeEvent is a notification that a merge can be performed up to the provided CID.
+type MergeEvent struct {
+	// Cid is the id of the composite commit that formed this update in the DAG.
+	Cid cid.Cid
+
+	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
+	SchemaRoot string
+
+	// Wg is a wait group that can be used to synchronize the merge,
+	// allowing the caller to optionnaly block until the merge is complete.
+	Wg *sync.WaitGroup
 }

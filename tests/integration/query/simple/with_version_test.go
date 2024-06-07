@@ -66,7 +66,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
+func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded commits query within object query with schema version id",
 		Request: `query {

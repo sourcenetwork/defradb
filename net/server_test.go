@@ -32,8 +32,8 @@ import (
 
 func TestNewServerSimple(t *testing.T) {
 	ctx := context.Background()
-	db, n := newTestNode(ctx, t)
-	_, err := newServer(n.Peer, db)
+	_, n := newTestNode(ctx, t)
+	_, err := newServer(n.Peer)
 	require.NoError(t, err)
 }
 
@@ -42,7 +42,7 @@ func TestNewServerWithDBClosed(t *testing.T) {
 	db, n := newTestNode(ctx, t)
 	db.Close()
 
-	_, err := newServer(n.Peer, db)
+	_, err := newServer(n.Peer)
 	require.ErrorIs(t, err, memory.ErrClosed)
 }
 
@@ -60,7 +60,8 @@ func TestNewServerWithGetAllCollectionError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 	mDB := mockDBColError{db}
-	_, err := newServer(n.Peer, &mDB)
+	n.Peer.db = &mDB
+	_, err := newServer(n.Peer)
 	require.ErrorIs(t, err, mockError)
 }
 
@@ -80,7 +81,7 @@ func TestNewServerWithCollectionSubscribed(t *testing.T) {
 	err = n.AddP2PCollections(ctx, []string{col.SchemaRoot()})
 	require.NoError(t, err)
 
-	_, err = newServer(n.Peer, db)
+	_, err = newServer(n.Peer)
 	require.NoError(t, err)
 }
 
@@ -118,8 +119,8 @@ func TestNewServerWithGetAllDocIDsError(t *testing.T) {
 	require.NoError(t, err)
 
 	mDB := mockDBDocIDsError{db}
-
-	_, err = newServer(n.Peer, &mDB)
+	n.Peer.db = &mDB
+	_, err = newServer(n.Peer)
 	require.ErrorIs(t, err, mockError)
 }
 
@@ -145,7 +146,7 @@ func TestNewServerWithAddTopicError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	_, err = newServer(n.Peer, db)
+	_, err = newServer(n.Peer)
 	require.ErrorContains(t, err, "topic already exists")
 }
 
@@ -190,7 +191,7 @@ func TestNewServerWithEmitterError(t *testing.T) {
 
 	n.Peer.host = &mockHost{n.Peer.host}
 
-	_, err = newServer(n.Peer, db)
+	_, err = newServer(n.Peer)
 	require.NoError(t, err)
 }
 
