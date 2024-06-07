@@ -15,29 +15,29 @@ DefraDB is a user-centric database that prioritizes data ownership, personal pri
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
+
 ## Table of Contents
 
-- [Install](#install)
-- [Key Management](#key-management)
-- [Start](#start)
-- [Configuration](#configuration)
-- [External port binding](#external-port-binding)
-- [Add a schema type](#add-a-schema-type)
-- [Create a document instance](#create-a-document-instance)
-- [Query documents](#query-documents)
-- [Obtain document commits](#obtain-document-commits)
-- [DefraDB Query Language (DQL)](#defradb-query-language-dql)
-- [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
-  - [Pubsub example](#pubsub-example)
-  - [Collection subscription example](#collection-subscription-example)
-  - [Replicator example](#replicator-example)
-- [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
-- [Access Control System](#access-control-system)
-- [Supporting CORS](#supporting-cors)
-- [Backing up and restoring](#backing-up-and-restoring)
-- [Community](#community)
-- [Licensing](#licensing)
-- [Contributors](#contributors)
+<!--ts-->
+   * [Install](#install)
+   * [Key Management](#key-management)
+   * [Start](#start)
+   * [Configuration](#configuration)
+   * [External port binding](#external-port-binding)
+   * [Add a schema type](#add-a-schema-type)
+   * [Create a document](#create-a-document)
+   * [Query documents](#query-documents)
+   * [Obtain document commits](#obtain-document-commits)
+   * [DefraDB Query Language (DQL)](#defradb-query-language-dql)
+   * [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
+   * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
+   * [Access Control System](#access-control-system)
+   * [Supporting CORS](#supporting-cors)
+   * [Backing up and restoring](#backing-up-and-restoring)
+   * [Community](#community)
+   * [Licensing](#licensing)
+   * [Contributors](#contributors)
+<!--te-->
 
 DISCLAIMER: At this early stage, DefraDB does not offer data encryption, and the default configuration exposes the database to the network. The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, but please do not use it for production purposes until it has been thoroughly tested and developed.
 
