@@ -14,6 +14,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/fxamacker/cbor/v2"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/stretchr/testify/require"
@@ -22,292 +24,256 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
 const userSchema = `
 type User {
 	name: String
 	age: Int
-	email: String
-	points: Int
 }
 `
 
-func TestMerge_NoError(t *testing.T) {
-	// Test that a merge can be performed up to the provided CID.
+func TestMerge_SingleBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
-	// Setup the "local" database
-	localDB, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = localDB.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	localCol, err := localDB.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	docMap := map[string]any{
-		"name": "Alice",
-		"age":  30,
-	}
-	doc, err := client.NewDocFromMap(docMap, localCol.Definition())
+	db, err := newDefraMemoryDB(ctx)
 	require.NoError(t, err)
 
-	err = localCol.Create(ctx, doc)
+	_, err = db.AddSchema(ctx, userSchema)
 	require.NoError(t, err)
 
-	// Setup the "remote" database
-	remoteDB, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = remoteDB.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	remoteCol, err := remoteDB.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	doc, err = client.NewDocFromMap(docMap, localCol.Definition())
-	require.NoError(t, err)
-	err = remoteCol.Create(ctx, doc)
+	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	// Add a few changes to the remote node
-	err = doc.Set("points", 100)
-	require.NoError(t, err)
-	err = remoteCol.Update(ctx, doc)
-	require.NoError(t, err)
-
-	// Sync the remote blocks to the local node
-	err = syncAndMerge(ctx, remoteDB, localDB, remoteCol, localCol, doc.ID().String())
-	require.NoError(t, err)
-
-	// verify the local node has the same data as the remote node
-	localDoc, err := localCol.Get(ctx, doc.ID(), false)
-	require.NoError(t, err)
-	localDocString, err := localDoc.String()
-	require.NoError(t, err)
-	remoteDoc, err := remoteCol.Get(ctx, doc.ID(), false)
-	require.NoError(t, err)
-	remoteDocString, err := remoteDoc.String()
-	require.NoError(t, err)
-	require.Equal(t, remoteDocString, localDocString)
-}
-
-func TestMerge_DelayedSync_NoError(t *testing.T) {
-	// Test that a merge can be performed up to the provided CID.
-	ctx := context.Background()
-
-	// Setup the "local" database
-	localDB, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = localDB.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	localCol, err := localDB.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	docMap := map[string]any{
-		"name": "Alice",
-		"age":  30,
-	}
-	doc, err := client.NewDocFromMap(docMap, localCol.Definition())
-	require.NoError(t, err)
-
-	err = localCol.Create(ctx, doc)
-	require.NoError(t, err)
-
-	// Setup the "remote" database
-	remoteDB, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = remoteDB.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	remoteCol, err := remoteDB.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	doc, err = client.NewDocFromMap(docMap, localCol.Definition())
-	require.NoError(t, err)
-	err = remoteCol.Create(ctx, doc)
-	require.NoError(t, err)
-
-	// Add a few changes to the remote node
-	err = doc.Set("points", 100)
-	require.NoError(t, err)
-	err = remoteCol.Update(ctx, doc)
-	require.NoError(t, err)
-
-	err = doc.Set("age", 31)
-	require.NoError(t, err)
-	err = remoteCol.Update(ctx, doc)
-	require.NoError(t, err)
-
-	err = doc.Set("email", "alice@yahoo.com")
-	require.NoError(t, err)
-	err = remoteCol.Update(ctx, doc)
-	require.NoError(t, err)
-
-	// Sync the remote blocks to the local node
-	err = syncAndMerge(ctx, remoteDB, localDB, remoteCol, localCol, doc.ID().String())
-	require.NoError(t, err)
-
-	// verify the local node has the same data as the remote node
-	localDoc, err := localCol.Get(ctx, doc.ID(), false)
-	require.NoError(t, err)
-	localDocString, err := localDoc.String()
-	require.NoError(t, err)
-	remoteDoc, err := remoteCol.Get(ctx, doc.ID(), false)
-	require.NoError(t, err)
-	remoteDocString, err := remoteDoc.String()
-	require.NoError(t, err)
-	require.Equal(t, remoteDocString, localDocString)
-}
-
-func TestMerge_DelayedSyncTwoBranches_NoError(t *testing.T) {
-	// Test that a merge can be performed up to the provided CID.
-	ctx := context.Background()
-
-	// Setup the "local" database
-	localDB, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = localDB.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	localCol, err := localDB.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	docMap := map[string]interface{}{
-		"name": "Alice",
-		"age":  30,
-	}
-	doc, err := client.NewDocFromMap(docMap, localCol.Definition())
-	require.NoError(t, err)
-
-	err = localCol.Create(ctx, doc)
-	require.NoError(t, err)
-
-	// Setup the "remote" database
-	remoteDB1, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = remoteDB1.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	remoteCol1, err := remoteDB1.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	doc, err = client.NewDocFromMap(docMap, remoteCol1.Definition())
-	require.NoError(t, err)
-	err = remoteCol1.Create(ctx, doc)
-	require.NoError(t, err)
-
-	// Setup the second "remote" database
-	remoteDB2, err := newDefraMemoryDB(ctx)
-	require.NoError(t, err)
-	_, err = remoteDB2.AddSchema(ctx, userSchema)
-	require.NoError(t, err)
-	remoteCol2, err := remoteDB2.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	doc2, err := client.NewDocFromMap(docMap, remoteCol2.Definition())
-	require.NoError(t, err)
-	err = remoteCol2.Create(ctx, doc2)
-	require.NoError(t, err)
-
-	// Add a few changes to the remote nodes creating two branches
-	err = doc.Set("points", 200)
-	require.NoError(t, err)
-	err = remoteCol1.Update(ctx, doc)
-	require.NoError(t, err)
-
-	err = doc2.Set("points", 100)
-	require.NoError(t, err)
-	err = remoteCol2.Update(ctx, doc2)
-	require.NoError(t, err)
-
-	err = doc.Set("age", 31)
-	require.NoError(t, err)
-	err = remoteCol1.Update(ctx, doc)
-	require.NoError(t, err)
-
-	err = doc2.Set("age", 32)
-	require.NoError(t, err)
-	err = remoteCol2.Update(ctx, doc2)
-	require.NoError(t, err)
-
-	err = doc.Set("email", "alice@yahoo.com")
-	require.NoError(t, err)
-	err = remoteCol1.Update(ctx, doc)
-	require.NoError(t, err)
-
-	err = doc2.Set("email", "alice-in-wonderland@yahoo.com")
-	require.NoError(t, err)
-	err = remoteCol2.Update(ctx, doc2)
-	require.NoError(t, err)
-
-	// Sync the remote blocks to the local node
-	err = syncAndMerge(ctx, remoteDB2, remoteDB1, remoteCol2, remoteCol1, doc.ID().String())
-	require.NoError(t, err)
-	err = syncAndMerge(ctx, remoteDB1, localDB, remoteCol1, localCol, doc.ID().String())
-	require.NoError(t, err)
-
-	// verify the local node has the same data as the remote node
-	localDoc, err := localCol.Get(ctx, doc.ID(), false)
-	require.NoError(t, err)
-	localDocString, err := localDoc.String()
-	require.NoError(t, err)
-	remoteDoc1, err := remoteCol1.Get(ctx, doc.ID(), false)
-	require.NoError(t, err)
-	remoteDocString1, err := remoteDoc1.String()
-	require.NoError(t, err)
-	require.Equal(t, remoteDocString1, localDocString)
-}
-
-func syncAndMerge(ctx context.Context, from, to *db, fromCol, toCol client.Collection, docID string) error {
-	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(fromCol.Description(), docID)
-	headset := clock.NewHeadSet(
-		from.multistore.Headstore(),
-		dsKey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
-	)
-
-	cids, _, err := headset.List(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, cid := range cids {
-		blockBytes, err := from.multistore.DAGstore().AsIPLDStorage().Get(ctx, cid.KeyString())
-		if err != nil {
-			return err
-		}
-		block, err := coreblock.GetFromBytes(blockBytes)
-		if err != nil {
-			return err
-		}
-		err = syncDAG(ctx, from, to, block)
-		if err != nil {
-			return err
-		}
-		err = to.executeMerge(ctx, events.DAGMerge{
-			Cid:        cid,
-			SchemaRoot: toCol.SchemaRoot(),
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func syncDAG(ctx context.Context, from, to *db, block *coreblock.Block) error {
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(to.multistore.DAGstore().AsIPLDStorage())
-	_, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
-	if err != nil {
-		return err
+	lsys.SetWriteStorage(db.multistore.DAGstore().AsIPLDStorage())
+
+	initialDocState := map[string]any{
+		"name": "John",
+	}
+	d, docID := newDagBuilder(col, initialDocState)
+	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
+	require.NoError(t, err)
+	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
+	require.NoError(t, err)
+
+	err = db.executeMerge(ctx, events.DAGMerge{
+		Cid:        compInfo2.link.Cid,
+		SchemaRoot: col.SchemaRoot(),
+	})
+	require.NoError(t, err)
+
+	// Verify the document was created with the expected values
+	doc, err := col.Get(ctx, docID, false)
+	require.NoError(t, err)
+	docMap, err := doc.ToMap()
+	require.NoError(t, err)
+
+	expectedDocMap := map[string]any{
+		"_docID": docID.String(),
+		"name":   "Johny",
 	}
 
-	for _, link := range block.Links {
-		lsys := cidlink.DefaultLinkSystem()
-		lsys.SetReadStorage(from.multistore.DAGstore().AsIPLDStorage())
-		nd, err := lsys.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.SchemaPrototype)
-		if err != nil {
-			return err
-		}
-		block, err := coreblock.GetFromNode(nd)
-		if err != nil {
-			return err
-		}
-		err = syncDAG(ctx, from, to, block)
-		if err != nil {
-			return err
-		}
+	require.Equal(t, expectedDocMap, docMap)
+}
+
+func TestMerge_DualBranch_NoError(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newDefraMemoryDB(ctx)
+	require.NoError(t, err)
+
+	_, err = db.AddSchema(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(db.multistore.DAGstore().AsIPLDStorage())
+
+	initialDocState := map[string]any{
+		"name": "John",
 	}
-	return nil
+	d, docID := newDagBuilder(col, initialDocState)
+	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
+	require.NoError(t, err)
+	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
+	require.NoError(t, err)
+
+	err = db.executeMerge(ctx, events.DAGMerge{
+		Cid:        compInfo2.link.Cid,
+		SchemaRoot: col.SchemaRoot(),
+	})
+	require.NoError(t, err)
+
+	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"age": 30}, compInfo)
+	require.NoError(t, err)
+
+	err = db.executeMerge(ctx, events.DAGMerge{
+		Cid:        compInfo3.link.Cid,
+		SchemaRoot: col.SchemaRoot(),
+	})
+	require.NoError(t, err)
+
+	// Verify the document was created with the expected values
+	doc, err := col.Get(ctx, docID, false)
+	require.NoError(t, err)
+	docMap, err := doc.ToMap()
+	require.NoError(t, err)
+
+	expectedDocMap := map[string]any{
+		"_docID": docID.String(),
+		"age":    int64(30),
+		"name":   "Johny",
+	}
+
+	require.Equal(t, expectedDocMap, docMap)
+}
+
+func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newDefraMemoryDB(ctx)
+	require.NoError(t, err)
+
+	_, err = db.AddSchema(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(db.multistore.DAGstore().AsIPLDStorage())
+
+	initialDocState := map[string]any{
+		"name": "John",
+	}
+	d, _ := newDagBuilder(col, initialDocState)
+	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
+	require.NoError(t, err)
+	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
+	require.NoError(t, err)
+
+	err = db.executeMerge(ctx, events.DAGMerge{
+		Cid:        compInfo2.link.Cid,
+		SchemaRoot: col.SchemaRoot(),
+	})
+	require.NoError(t, err)
+
+	someUnknownBlock := coreblock.Block{Delta: crdt.CRDT{CompositeDAGDelta: &crdt.CompositeDAGDelta{Status: 1}}}
+	someUnknownLink, err := coreblock.GetLinkFromNode(someUnknownBlock.GenerateNode())
+	require.NoError(t, err)
+
+	compInfoUnkown := compositeInfo{
+		link:   someUnknownLink,
+		height: 2,
+	}
+
+	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfoUnkown)
+	require.NoError(t, err)
+
+	err = db.executeMerge(ctx, events.DAGMerge{
+		Cid:        compInfo3.link.Cid,
+		SchemaRoot: col.SchemaRoot(),
+	})
+	require.ErrorContains(t, err, "could not find bafyreichk7jctbxhrodk5au3r4c4iqm627d4fi2cii2beseu4h6caoiwla")
+}
+
+type dagBuilder struct {
+	fieldsHeight map[string]uint64
+	docID        []byte
+	col          client.Collection
+}
+
+func newDagBuilder(col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
+	doc, err := client.NewDocFromMap(
+		initalDocState,
+		col.Definition(),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return &dagBuilder{
+		fieldsHeight: make(map[string]uint64),
+		docID:        []byte(doc.ID().String()),
+		col:          col,
+	}, doc.ID()
+}
+
+type compositeInfo struct {
+	link   cidlink.Link
+	height uint64
+}
+
+func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields map[string]any, from compositeInfo) (compositeInfo, error) {
+	links := []coreblock.DAGLink{}
+	newPriority := from.height + 1
+	if from.link.ByteLen() != 0 {
+		links = append(links, coreblock.DAGLink{
+			Name: core.HEAD,
+			Link: from.link,
+		})
+	}
+	for field, val := range fields {
+		d.fieldsHeight[field]++
+		// Generate new Block and save to lsys
+		fieldBlock := coreblock.Block{
+			Delta: crdt.CRDT{
+				LWWRegDelta: &crdt.LWWRegDelta{
+					DocID:           d.docID,
+					FieldName:       field,
+					Priority:        d.fieldsHeight[field],
+					SchemaVersionID: d.col.Schema().VersionID,
+					Data:            encodeValue(val),
+				},
+			},
+		}
+		fieldBlockLink, err := lsys.Store(ipld.LinkContext{}, coreblock.GetLinkPrototype(), fieldBlock.GenerateNode())
+		if err != nil {
+			return compositeInfo{}, err
+		}
+		links = append(links, coreblock.DAGLink{
+			Name: field,
+			Link: fieldBlockLink.(cidlink.Link),
+		})
+	}
+
+	compositeBlock := coreblock.Block{
+		Delta: crdt.CRDT{
+			CompositeDAGDelta: &crdt.CompositeDAGDelta{
+				DocID:           d.docID,
+				FieldName:       "",
+				Priority:        newPriority,
+				SchemaVersionID: d.col.Schema().VersionID,
+				Status:          1,
+			},
+		},
+		Links: links,
+	}
+
+	compositeBlockLink, err := lsys.Store(ipld.LinkContext{}, coreblock.GetLinkPrototype(), compositeBlock.GenerateNode())
+	if err != nil {
+		return compositeInfo{}, err
+	}
+
+	return compositeInfo{
+		link:   compositeBlockLink.(cidlink.Link),
+		height: newPriority,
+	}, nil
+}
+
+func encodeValue(val any) []byte {
+	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	if err != nil {
+		// safe to panic here as this is a test
+		panic(err)
+	}
+	b, err := em.Marshal(val)
+	if err != nil {
+		// safe to panic here as this is a test
+		panic(err)
+	}
+	return b
 }
