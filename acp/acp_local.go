@@ -113,7 +113,8 @@ func (l *ACPLocal) AddPolicy(
 	policy string,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	// FIXME remove once Identity is refactored
+	// FIXME remove once Identity is refactored.
+	// See genDIDFromSourceHubAddr docs and issue ###### for context
 	did, err := genDIDFromSourceHubAddr(creatorID)
 	if err != nil {
 		return "", err
@@ -174,6 +175,7 @@ func (l *ACPLocal) RegisterObject(
 	creationTime *protoTypes.Timestamp,
 ) (RegistrationResult, error) {
 	// FIXME remove once Identity is refactored
+	// See genDIDFromSourceHubAddr docs and issue ###### for context
 	did, err := genDIDFromSourceHubAddr(actorID)
 	if err != nil {
 		return RegistrationResult_NoOp, err
@@ -234,6 +236,7 @@ func (l *ACPLocal) VerifyAccessRequest(
 	docID string,
 ) (bool, error) {
 	// FIXME remove once Identity is refactored
+	// See genDIDFromSourceHubAddr docs and issue ###### for context
 	did, err := genDIDFromSourceHubAddr(actorID)
 	if err != nil {
 		return false, err
