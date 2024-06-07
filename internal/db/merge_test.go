@@ -132,6 +132,8 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
+// This test is not something we can reproduce in with integration tests.
+// Until we introduce partial dag syncs to integration tests, this should not be removed.
 func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	ctx := context.Background()
 
@@ -150,7 +152,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, _ := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -179,6 +181,19 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 		SchemaRoot: col.SchemaRoot(),
 	})
 	require.ErrorContains(t, err, "could not find bafyreichk7jctbxhrodk5au3r4c4iqm627d4fi2cii2beseu4h6caoiwla")
+
+	// Verify the document was created with the expected values
+	doc, err := col.Get(ctx, docID, false)
+	require.NoError(t, err)
+	docMap, err := doc.ToMap()
+	require.NoError(t, err)
+
+	expectedDocMap := map[string]any{
+		"_docID": docID.String(),
+		"name":   "Johny",
+	}
+
+	require.Equal(t, expectedDocMap, docMap)
 }
 
 type dagBuilder struct {
