@@ -11,8 +11,8 @@
 package identity
 
 import (
-	cosmosSecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/cyware/ssi-sdk/crypto"
+	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 )
@@ -26,17 +26,18 @@ type Identity struct {
 	PublicKey *secp256k1.PublicKey
 	// PrivateKey is the actor's private key.
 	PrivateKey *secp256k1.PrivateKey
-	// Address is the actor's unique address.
+	// DID is the actor's unique identifier.
 	//
-	// The address is derived from the actor's public key.
-	Address string
+	// The address is derived from the actor's public key,
+	// using the did:key method
+	DID string
 }
 
 // FromPrivateKey returns a new identity using the given private key.
 func FromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity] {
 	pubKey := privateKey.PubKey()
 	return immutable.Some(Identity{
-		Address:    AddressFromPublicKey(pubKey),
+		DID:        DIDFromPublicKey(pubKey),
 		PublicKey:  pubKey,
 		PrivateKey: privateKey,
 	})
@@ -45,14 +46,20 @@ func FromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity]
 // FromPublicKey returns a new identity using the given public key.
 func FromPublicKey(publicKey *secp256k1.PublicKey) immutable.Option[Identity] {
 	return immutable.Some(Identity{
-		Address:   AddressFromPublicKey(publicKey),
+		DID:       DIDFromPublicKey(publicKey),
 		PublicKey: publicKey,
 	})
 }
 
-// AddressFromPublicKey returns the unique address of the given public key.
-func AddressFromPublicKey(publicKey *secp256k1.PublicKey) string {
-	pub := cosmosSecp256k1.PubKey{Key: publicKey.SerializeCompressed()}
-	// conversion from well known types should never cause a panic
-	return types.MustBech32ifyAddressBytes("source", pub.Address().Bytes())
+// DIDFromPublicKey returns the unique address of the given public key.
+func DIDFromPublicKey(publicKey *secp256k1.PublicKey) string {
+	bytes := publicKey.SerializeUncompressed()
+	did, err := key.CreateDIDKey(crypto.SECP256k1, bytes)
+	// because we are generating a did from a a supported and fixed key type,
+	// this operation is infallible
+	if err != nil {
+		panic(err)
+	}
+
+	return did.String()
 }

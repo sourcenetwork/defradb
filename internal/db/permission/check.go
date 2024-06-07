@@ -78,7 +78,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 	hasAccess, err := acpSystem.CheckDocAccess(
 		ctx,
 		permission,
-		identity.Value().Address,
+		identity.Value().DID,
 		policyID,
 		resourceName,
 		docID,

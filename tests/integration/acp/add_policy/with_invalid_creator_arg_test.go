@@ -31,7 +31,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
+				Identity: immutable.Some(acpIdentity.Identity{DID: "invalid"}),
 
 				Policy: `
                     name: a policy
@@ -75,7 +75,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
+				Identity: immutable.Some(acpIdentity.Identity{DID: "invalid"}),
 
 				Policy: "",
 
