@@ -347,10 +347,14 @@ func (d *Datastore) executePurge(ctx context.Context) {
 }
 
 func (d *Datastore) handleContextDone(ctx context.Context) {
-	<-ctx.Done()
-	// It is safe to ignore the error since the only error that could occur is if the
-	// datastore is already closed, in which case the purpose of the `Close` call is already covered.
-	_ = d.Close()
+	select {
+	case <-d.closing:
+		return
+	case <-ctx.Done():
+		// It is safe to ignore the error since the only error that could occur is if the
+		// datastore is already closed, in which case the purpose of the `Close` call is already covered.
+		_ = d.Close()
+	}
 }
 
 // commit commits the given transaction to the datastore.

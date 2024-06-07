@@ -49,4 +49,7 @@ func New[T any](commandBufferSize int, eventBufferSize int) Channel[T] {
 type Events struct {
 	// Updates publishes an `Update` for each document written to in the database.
 	Updates UpdateChannel
+
+	// DAGMerges publishes a `DAGMerge` for each completed DAG sync process over P2P.
+	DAGMerges DAGMergeChannel
 }

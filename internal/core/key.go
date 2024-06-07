@@ -136,7 +136,7 @@ var _ Key = (*CollectionNameKey)(nil)
 //
 // This key should be removed in https://github.com/sourcenetwork/defradb/issues/1085
 type CollectionSchemaVersionKey struct {
-	SchemaVersionId string
+	SchemaVersionID string
 	CollectionID    uint32
 }
 
@@ -296,7 +296,7 @@ func NewCollectionNameKey(name string) CollectionNameKey {
 
 func NewCollectionSchemaVersionKey(schemaVersionId string, collectionID uint32) CollectionSchemaVersionKey {
 	return CollectionSchemaVersionKey{
-		SchemaVersionId: schemaVersionId,
+		SchemaVersionID: schemaVersionId,
 		CollectionID:    collectionID,
 	}
 }
@@ -309,7 +309,7 @@ func NewCollectionSchemaVersionKeyFromString(key string) (CollectionSchemaVersio
 	}
 
 	return CollectionSchemaVersionKey{
-		SchemaVersionId: elements[len(elements)-2],
+		SchemaVersionID: elements[len(elements)-2],
 		CollectionID:    uint32(colID),
 	}, nil
 }
@@ -591,8 +591,8 @@ func (k CollectionNameKey) ToDS() ds.Key {
 func (k CollectionSchemaVersionKey) ToString() string {
 	result := COLLECTION_SCHEMA_VERSION
 
-	if k.SchemaVersionId != "" {
-		result = result + "/" + k.SchemaVersionId
+	if k.SchemaVersionID != "" {
+		result = result + "/" + k.SchemaVersionID
 	}
 
 	if k.CollectionID != 0 {

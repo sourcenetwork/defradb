@@ -105,6 +105,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 func setupDatabase(s *state) (client.DB, string, error) {
 	opts := []node.Option{
 		db.WithUpdateEvents(),
+		db.WithDAGMergeEvents(),
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.DB].

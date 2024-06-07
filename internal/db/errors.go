@@ -93,6 +93,7 @@ const (
 	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
 	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
 	errRelationMissingField                     string = "relation missing field"
+	errNoTransactionInContext                   string = "no transaction in context"
 )
 
 var (
@@ -126,6 +127,7 @@ var (
 	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
 	ErrRelationMissingField                     = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                = errors.New("relation can only have a single field set as primary")
+	ErrNoTransactionInContext                   = errors.New(errNoTransactionInContext)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

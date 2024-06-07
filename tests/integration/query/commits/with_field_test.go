@@ -110,7 +110,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.T) {
+func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field id",
 		Actions: []any{

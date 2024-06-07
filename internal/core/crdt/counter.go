@@ -141,7 +141,7 @@ func (c Counter[T]) Increment(ctx context.Context, value T) (*CounterDelta[T], e
 		DocID:           []byte(c.key.DocID),
 		FieldName:       c.fieldName,
 		Data:            value,
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
+		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
 		Nonce:           nonce,
 	}, nil
 }

@@ -413,15 +413,3 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	}
 	return indexes, nil
 }
-
-func (c *Collection) CreateDocIndex(context.Context, *client.Document) error {
-	return ErrMethodIsNotImplemented
-}
-
-func (c *Collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	return ErrMethodIsNotImplemented
-}
-
-func (c *Collection) DeleteDocIndex(context.Context, *client.Document) error {
-	return ErrMethodIsNotImplemented
-}

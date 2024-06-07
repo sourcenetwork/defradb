@@ -19,13 +19,14 @@ import (
 )
 
 const (
-	errPushLog                 = "failed to push log"
-	errFailedToGetDocID        = "failed to get DocID from broadcast message"
-	errPublishingToDocIDTopic  = "can't publish log %s for docID %s"
-	errPublishingToSchemaTopic = "can't publish log %s for schema %s"
-	errReplicatorExists        = "replicator already exists for %s with peerID %s"
-	errReplicatorDocID         = "failed to get docID for replicator %s with peerID %s"
-	errReplicatorCollections   = "failed to get collections for replicator"
+	errPushLog                  = "failed to push log"
+	errFailedToGetDocID         = "failed to get DocID from broadcast message"
+	errPublishingToDocIDTopic   = "can't publish log %s for docID %s"
+	errPublishingToSchemaTopic  = "can't publish log %s for schema %s"
+	errReplicatorExists         = "replicator already exists for %s with peerID %s"
+	errReplicatorDocID          = "failed to get docID for replicator %s with peerID %s"
+	errReplicatorCollections    = "failed to get collections for replicator"
+	errCheckingForExistingBlock = "failed to check for existing block"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	ErrNilDB                        = errors.New("database object can't be nil")
 	ErrNilUpdateChannel             = errors.New("tried to subscribe to update channel, but update channel is nil")
 	ErrSelfTargetForReplicator      = errors.New("can't target ourselves as a replicator")
+	ErrCheckingForExistingBlock     = errors.New(errCheckingForExistingBlock)
 )
 
 func NewErrPushLog(inner error, kv ...errors.KV) error {
@@ -66,4 +68,8 @@ func NewErrReplicatorDocID(inner error, collection string, peerID peer.ID, kv ..
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errReplicatorCollections, inner, kv...)
+}
+
+func NewErrCheckingForExistingBlock(inner error, cid string) error {
+	return errors.Wrap(errCheckingForExistingBlock, inner, errors.NewKV("cid", cid))
 }
