@@ -25,6 +25,7 @@ func TestColDescrUpdateRemovePolicy_Errors(t *testing.T) {
 				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
