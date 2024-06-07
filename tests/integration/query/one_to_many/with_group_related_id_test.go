@@ -16,7 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TODO: Don't return grouped field if not selected. [https://github.com/sourcenetwork/defradb/issues/1582].
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many query with groupBy on related id (from many side).",
@@ -301,7 +300,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 	executeTestCase(t, test)
 }
 
-// TODO: Don't return grouped field if not selected. [https://github.com/sourcenetwork/defradb/issues/1582].
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many query with groupBy on related id (from single side).",
