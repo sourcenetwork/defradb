@@ -55,7 +55,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
                 `,
 
-				ExpectedError: "cannot generate did if address is not prefixed",
+				ExpectedError: "invalid actor ID",
 			},
 		},
 	}

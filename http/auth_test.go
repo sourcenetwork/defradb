@@ -63,7 +63,7 @@ func TestVerifyAuthToken(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := acpIdentity.FromPublicKey(privKey.PubKey())
-	assert.Equal(t, expected.Value().Address, actual.Value().DID)
+	assert.Equal(t, expected.Value().DID, actual.Value().DID)
 }
 
 func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {

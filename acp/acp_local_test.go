@@ -17,8 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var identity1 = "source1d476r2znvsjr6asr54mltayhq7e0r859j86kt6"
-var identity2 = "source19djduggm345yf2dn0y0jqqgkr5q0pt234dkyvd"
+var identity1 = "did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn"
+var identity2 = "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F"
+var invalidIdentity = "did:something"
 
 var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 var validPolicy string = `
@@ -652,4 +653,47 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 
 	errClose = localACP.Close()
 	require.Nil(t, errClose)
+}
+
+func Test_LocalACP_InMemory_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	policyID, err := localACP.AddPolicy(
+		ctx,
+		invalidIdentity,
+		validPolicy,
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.Empty(t, policyID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_InMemory_RegisterObject_InvalidCreatorIDReturnsError(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	err = localACP.RegisterDocObject(
+		ctx,
+		invalidIdentity,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
 }

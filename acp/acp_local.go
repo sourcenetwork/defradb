@@ -12,13 +12,10 @@ package acp
 
 import (
 	"context"
-	"crypto/ed25519"
 	"errors"
-	"strings"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/acp_core/pkg/auth"
-	"github.com/sourcenetwork/acp_core/pkg/did"
 	"github.com/sourcenetwork/acp_core/pkg/engine"
 	"github.com/sourcenetwork/acp_core/pkg/runtime"
 	"github.com/sourcenetwork/acp_core/pkg/types"
@@ -113,14 +110,7 @@ func (l *ACPLocal) AddPolicy(
 	policy string,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	// FIXME remove once Identity is refactored.
-	// See genDIDFromSourceHubAddr docs and issue ###### for context
-	did, err := genDIDFromSourceHubAddr(creatorID)
-	if err != nil {
-		return "", err
-	}
-
-	principal, err := auth.NewDIDPrincipal(did)
+	principal, err := auth.NewDIDPrincipal(creatorID)
 	if err != nil {
 		return "", newErrInvalidActorID(err, creatorID)
 	}
@@ -174,14 +164,7 @@ func (l *ACPLocal) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) (RegistrationResult, error) {
-	// FIXME remove once Identity is refactored
-	// See genDIDFromSourceHubAddr docs and issue ###### for context
-	did, err := genDIDFromSourceHubAddr(actorID)
-	if err != nil {
-		return RegistrationResult_NoOp, err
-	}
-
-	principal, err := auth.NewDIDPrincipal(did)
+	principal, err := auth.NewDIDPrincipal(actorID)
 	if err != nil {
 		return RegistrationResult_NoOp, newErrInvalidActorID(err, actorID)
 	}
@@ -235,12 +218,6 @@ func (l *ACPLocal) VerifyAccessRequest(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	// FIXME remove once Identity is refactored
-	// See genDIDFromSourceHubAddr docs and issue ###### for context
-	did, err := genDIDFromSourceHubAddr(actorID)
-	if err != nil {
-		return false, err
-	}
 	req := types.VerifyAccessRequestRequest{
 		PolicyId: policyID,
 		AccessRequest: &types.AccessRequest{
@@ -251,7 +228,7 @@ func (l *ACPLocal) VerifyAccessRequest(
 				},
 			},
 			Actor: &types.Actor{
-				Id: did,
+				Id: actorID,
 			},
 		},
 	}
@@ -262,30 +239,4 @@ func (l *ACPLocal) VerifyAccessRequest(
 	}
 
 	return resp.Valid, nil
-}
-
-// genDIDFromSourceHubAddr uses an account addr as a seed to produce a key pair
-// and consequently generate a DID.
-//
-// NOTE: This is by no means a *safe* practice, however it's "okay" for two reasons:
-//  1. It's a temporary workaround which will be invalidated once the new identity system
-//     is in place (ie. Identity is a DID as opposed to a SourceHub Addr)
-//  2. In Local ACP, the the temporary keys used to generate the DID aren't effectively
-//     used for any cryptographic operations.
-//
-// This method will produce an error if `addr` does not begin with "source".
-// The error will ensure that the tests break after the identity system is refactored,
-// which will be a sign that this method can be deleted entirely
-func genDIDFromSourceHubAddr(addr string) (string, error) {
-	if !strings.HasPrefix(addr, "source") {
-		return "", errGeneratingDIDFromNonAccAddr
-	}
-
-	seed := make([]byte, ed25519.SeedSize)
-	copy(seed, []byte(addr))
-	did, _, err := did.ProduceDIDFromSeed(seed)
-	if err != nil {
-		return "", err
-	}
-	return did, nil
 }
