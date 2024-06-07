@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
@@ -210,6 +211,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	docIDs := []client.DocID{}
 	nodes := []*net.Node{}
+	subs := []*events.Subscription{}
 
 	for i, cfg := range test.NodeConfig {
 		log.InfoContext(ctx, fmt.Sprintf("Setting up node %d", i))
@@ -239,26 +241,12 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			docIDs = d
 		}
 		nodes = append(nodes, n)
+		subs = append(subs, n.Events().Subscribe(100, events.PushLogEventName))
 	}
 
 	//////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////
 	// PubSub related test logic
-
-	// wait for peers to connect to each other
-	if len(test.NodePeers) > 0 {
-		for i, n := range nodes {
-			for j, p := range nodes {
-				if i == j {
-					continue
-				}
-				log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
-				err := n.WaitForPubSubEvent(p.PeerID())
-				require.NoError(t, err)
-				log.InfoContext(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
-			}
-		}
-	}
 
 	// update and sync peers
 	for n, updateMap := range test.Updates {
@@ -279,13 +267,14 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				require.NoError(t, err)
 
 				// wait for peers to sync
-				for n2, p := range nodes {
+				for n2 := range nodes {
 					if n2 == n {
 						continue
 					}
 					log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerInfo().ID)
-					require.NoError(t, err)
+					msg, ok := <-subs[n2].Message()
+					require.True(t, ok)
+					assert.Equal(t, nodes[n].PeerID(), msg.Data.(events.PushLogEvent).ByPeer)
 					log.InfoContext(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
 			}
@@ -348,8 +337,9 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			}
 			for _, rep := range reps {
 				log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
-				err := nodes[rep].WaitForPushLogByPeerEvent(nodes[n].PeerID())
-				require.NoError(t, err)
+				msg, ok := <-subs[rep].Message()
+				require.True(t, ok)
+				assert.Equal(t, nodes[n].PeerID(), msg.Data.(events.PushLogEvent).ByPeer)
 				log.InfoContext(ctx, fmt.Sprintf("Node %d synced", rep))
 
 				for docID, results := range test.ReplicatorResult[rep] {

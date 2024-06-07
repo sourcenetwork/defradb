@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 
@@ -154,6 +155,9 @@ func connectPeers(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
+	sourceSub := s.eventSubs[cfg.SourceNodeID]
+	targetSub := s.eventSubs[cfg.TargetNodeID]
+
 	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
 	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
@@ -162,7 +166,7 @@ func connectPeers(
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
-	setupPeerWaitSync(s, 0, cfg, sourceNode, targetNode)
+	setupPeerWaitSync(s, 0, cfg, sourceNode, targetNode, sourceSub, targetSub)
 }
 
 func setupPeerWaitSync(
@@ -171,6 +175,8 @@ func setupPeerWaitSync(
 	cfg ConnectPeers,
 	sourceNode clients.Client,
 	targetNode clients.Client,
+	sourceSub *events.Subscription,
+	targetSub *events.Subscription,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -263,12 +269,16 @@ func setupPeerWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
-				require.NoError(s.t, err)
+				msg, ok := <-sourceSub.Message()
+				if ok {
+					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+				}
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
-				require.NoError(s.t, err)
+				msg, ok := <-targetSub.Message()
+				if ok {
+					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+				}
 			}
 			nodeSynced <- struct{}{}
 		}
@@ -310,6 +320,9 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
+	sourceSub := s.eventSubs[cfg.SourceNodeID]
+	targetSub := s.eventSubs[cfg.TargetNodeID]
+
 	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
@@ -317,7 +330,7 @@ func configureReplicator(
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
 	if err == nil {
-		setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
+		setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode, sourceSub, targetSub)
 	}
 }
 
@@ -340,6 +353,8 @@ func setupReplicatorWaitSync(
 	cfg ConfigureReplicator,
 	sourceNode clients.Client,
 	targetNode clients.Client,
+	sourceSub *events.Subscription,
+	targetSub *events.Subscription,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -398,12 +413,16 @@ func setupReplicatorWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
-				require.NoError(s.t, err)
+				msg, ok := <-sourceSub.Message()
+				if ok {
+					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+				}
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
-				require.NoError(s.t, err)
+				msg, ok := <-targetSub.Message()
+				if ok {
+					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.PushLogEvent).ByPeer)
+				}
 			}
 			nodeSynced <- struct{}{}
 		}

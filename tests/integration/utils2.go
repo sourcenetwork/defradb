@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
@@ -656,6 +657,9 @@ func setStartingNodes(
 
 		s.nodes = append(s.nodes, c)
 		s.dbPaths = append(s.dbPaths, path)
+
+		sub := c.Events().Subscribe(100, events.PushLogEventName)
+		s.eventSubs = append(s.eventSubs, sub)
 	}
 }
 
@@ -729,13 +733,25 @@ actionLoop:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
 			setupPeerWaitSync(
-				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
+				s,
+				waitGroupStartIndex,
+				action,
+				s.nodes[action.SourceNodeID],
+				s.nodes[action.TargetNodeID],
+				s.eventSubs[action.SourceNodeID],
+				s.eventSubs[action.TargetNodeID],
 			)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
 			setupReplicatorWaitSync(
-				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
+				s,
+				waitGroupStartIndex,
+				action,
+				s.nodes[action.SourceNodeID],
+				s.nodes[action.TargetNodeID],
+				s.eventSubs[action.SourceNodeID],
+				s.eventSubs[action.TargetNodeID],
 			)
 		}
 	}
@@ -812,6 +828,9 @@ func configureNode(
 
 	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
+
+	sub := c.Events().Subscribe(100, events.PushLogEventName)
+	s.eventSubs = append(s.eventSubs, sub)
 }
 
 func refreshDocuments(

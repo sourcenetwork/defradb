@@ -540,11 +540,3 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
 	w.node.Bootstrap(addrs)
 }
-
-func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogByPeerEvent(id)
-}
-
-func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogFromPeerEvent(id)
-}

@@ -87,8 +87,8 @@ func ExecuteRequestTestCase(
 	go func() {
 		for {
 			select {
-			case value := <-eventsSub.Value():
-				update, ok := value.(events.UpdateEvent)
+			case value := <-eventsSub.Message():
+				update, ok := value.Data.(events.UpdateEvent)
 				if !ok {
 					continue // ignore invaid value
 				}
