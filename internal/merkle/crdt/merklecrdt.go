@@ -88,24 +88,14 @@ func InstanceWithStore(
 			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
-		switch kind {
-		case client.FieldKind_NILLABLE_INT:
-			return NewMerkleCounter[int64](
-				store,
-				schemaVersionKey,
-				key,
-				fieldName,
-				cType == client.PN_COUNTER,
-			), nil
-		case client.FieldKind_NILLABLE_FLOAT:
-			return NewMerkleCounter[float64](
-				store,
-				schemaVersionKey,
-				key,
-				fieldName,
-				cType == client.PN_COUNTER,
-			), nil
-		}
+		return NewMerkleCounter(
+			store,
+			schemaVersionKey,
+			key,
+			fieldName,
+			cType == client.PN_COUNTER,
+			kind.(client.ScalarKind),
+		), nil
 	case client.COMPOSITE:
 		return NewMerkleCompositeDAG(
 			store,
