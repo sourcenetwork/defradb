@@ -54,7 +54,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"Name": "Gulistan",
-					"Author_id": "bae-cf278a29-5680-565d-9c7f-4c46d3700cf0"
+					"Author_id": "bae-6a4c24c0-7b0b-5f51-a274-132d7ca90499"
 				}`,
 			},
 			testUtils.WaitForSync{},

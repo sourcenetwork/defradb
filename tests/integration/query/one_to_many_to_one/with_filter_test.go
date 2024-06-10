@@ -24,7 +24,6 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 			// Authors
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3, Has written 5 books
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -33,7 +32,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 Book
+				// Has written 1 Book
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -52,49 +51,49 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
-				Doc: `{
-					"name": "The Rooster Bar",
-					"rating": 4,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
+				// Has 1 Publisher
+				DocMap: map[string]any{
+					"name":      "The Rooster Bar",
+					"rating":    4,
+					"author_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf", Has 1 Publisher
-				Doc: `{
-					"name": "Theif Lord",
-					"rating": 4.8,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
+				// Has 1 Publisher
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca", Has no Publisher.
-				Doc: `{
-					"name": "The Associate",
-					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
+				// Has no Publisher.
+				DocMap: map[string]any{
+					"name":      "The Associate",
+					"rating":    4.2,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			// Publishers
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Only Publisher of The Rooster Bar",
-					"address": "1 Rooster Ave., Waterloo, Ontario",
+				DocMap: map[string]any{
+					"name":       "Only Publisher of The Rooster Bar",
+					"address":    "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
-			    }`,
+					"book_id":    testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Only Publisher of Theif Lord",
-					"address": "1 Theif Lord, Waterloo, Ontario",
+				DocMap: map[string]any{
+					"name":       "Only Publisher of Theif Lord",
+					"address":    "1 Theif Lord, Waterloo, Ontario",
 					"yearOpened": 2020,
-					"book_id": "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf"
-			    }`,
+					"book_id":    testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -142,16 +141,16 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 				}`,
 				Results: []map[string]any{
 					{
+						"name": "Not a Writer",
+						"s1":   0.0,
+						"s2":   0.0,
+					},
+					{
 						"name": "John Grisham",
 						// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
 						"s1": 4.5,
 						// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
 						"s2": 4.8,
-					},
-					{
-						"name": "Not a Writer",
-						"s1":   0.0,
-						"s2":   0.0,
 					},
 					{
 						"name": "Cornelia Funke",
@@ -184,6 +183,11 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 				}`,
 				Results: []map[string]any{
 					{
+						"name":      "Not a Writer",
+						"s1":        0.0,
+						"books2020": []map[string]any{},
+					},
+					{
 						"name": "John Grisham",
 						"s1":   4.5,
 						"books2020": []map[string]any{
@@ -191,11 +195,6 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 								"name": "Theif Lord",
 							},
 						},
-					},
-					{
-						"name":      "Not a Writer",
-						"s1":        0.0,
-						"books2020": []map[string]any{},
 					},
 					{
 						"name": "Cornelia Funke",
@@ -236,14 +235,14 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 					{
 						"book": []map[string]any{
 							{
-								"name":      "The Associate",
-								"publisher": nil,
+								"name": "A Time for Mercy",
+								"publisher": map[string]any{
+									"yearOpened": int64(2013),
+								},
 							},
 							{
-								"name": "Sooley",
-								"publisher": map[string]any{
-									"yearOpened": int64(1999),
-								},
+								"name":      "The Associate",
+								"publisher": nil,
 							},
 							{
 								"name": "Theif Lord",
@@ -258,9 +257,9 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 								},
 							},
 							{
-								"name": "A Time for Mercy",
+								"name": "Sooley",
 								"publisher": map[string]any{
-									"yearOpened": int64(2013),
+									"yearOpened": int64(1999),
 								},
 							},
 						},
@@ -293,7 +292,6 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
 				Doc: `{
 					"name": "John Tolkien",
 					"age": 70,
@@ -302,21 +300,20 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-2c116b72-21f1-5c87-9148-f69f0c0c087e
-				Doc: `{
-					"name": "The Lord of the Rings",
-					"rating": 5.0,
-					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
-				}`,
+				DocMap: map[string]any{
+					"name":      "The Lord of the Rings",
+					"rating":    5.0,
+					"author_id": testUtils.NewDocIndex(0, 3),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Allen & Unwin",
-					"address": "1 Allen Ave., Sydney, Australia",
+				DocMap: map[string]any{
+					"name":       "Allen & Unwin",
+					"address":    "1 Allen Ave., Sydney, Australia",
 					"yearOpened": 1954,
-					"book_id": "bae-2c116b72-21f1-5c87-9148-f69f0c0c087e"
-			    }`,
+					"book_id":    testUtils.NewDocIndex(1, 6),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

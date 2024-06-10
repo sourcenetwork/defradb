@@ -76,10 +76,10 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name":	"Shahnameh",
-					"author": "bae-db3c6923-c6a4-5386-8301-b20a5454bf1d"
-				}`,
+				DocMap: map[string]any{
+					"name":   "Shahnameh",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `

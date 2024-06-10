@@ -33,7 +33,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-d7546ac1-c133-5853-b866-9b9f926fe7e5
+				// bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e
 				Doc: `{
 					"name": "Shahzad"
 				}`,
@@ -69,7 +69,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5") {
+					Users (docID: "bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e") {
 						name
 						verified
 					}
@@ -114,37 +114,37 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			// and we want to make sure that lenses are being correctly returned
 			// to the pool for reuse after.
 			testUtils.CreateDoc{
-				// bae-d7546ac1-c133-5853-b866-9b9f926fe7e5
+				// bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-92393ad0-07b6-5753-8dbb-19c9c41374ed
+				// bae-3a7df128-bfa9-559a-a9c5-96f2bf6d1038
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-403d7337-f73e-5c81-8719-e853938c8985
+				// bae-5622129c-b893-5768-a3f4-8f745db4cc04
 				Doc: `{
 					"name": "Chris"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad
+				// bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-3f1174ba-d9bc-5a6a-b0bc-8f19581f199d
+				// bae-38a4ebb2-583a-5b6e-8e90-a6fe9e13be06
 				Doc: `{
 					"name": "Islam"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-0698bda7-2c69-5028-a26a-0a1c491b793b
+				// bae-4d2c0f6e-af73-54d9-ac8a-a419077ea1e5
 				Doc: `{
 					"name": "Dave"
 				}`,
@@ -175,7 +175,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5") {
+					Users (docID: "bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e") {
 						name
 						verified
 					}
@@ -189,7 +189,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-92393ad0-07b6-5753-8dbb-19c9c41374ed") {
+					Users (docID: "bae-3a7df128-bfa9-559a-a9c5-96f2bf6d1038") {
 						name
 						verified
 					}
@@ -203,7 +203,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-403d7337-f73e-5c81-8719-e853938c8985") {
+					Users (docID: "bae-5622129c-b893-5768-a3f4-8f745db4cc04") {
 						name
 						verified
 					}
@@ -217,7 +217,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad") {
+					Users (docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc") {
 						name
 						verified
 					}
@@ -231,7 +231,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-3f1174ba-d9bc-5a6a-b0bc-8f19581f199d") {
+					Users (docID: "bae-38a4ebb2-583a-5b6e-8e90-a6fe9e13be06") {
 						name
 						verified
 					}
@@ -245,7 +245,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-0698bda7-2c69-5028-a26a-0a1c491b793b") {
+					Users (docID: "bae-4d2c0f6e-af73-54d9-ac8a-a419077ea1e5") {
 						name
 						verified
 					}

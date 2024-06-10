@@ -56,19 +56,19 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid": "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 					},
 					{
-						"cid": "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid": "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 					},
 					{
-						"cid": "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid": "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 					},
 				},
 			},
@@ -92,7 +92,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
 							cid
 							links {
 								cid
@@ -102,22 +102,22 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":   "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":   "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"links": []map[string]any{},
 					},
 					{
-						"cid":   "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":   "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"links": []map[string]any{},
 					},
 					{
-						"cid": "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid": "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"links": []map[string]any{
 							{
-								"cid":  "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+								"cid":  "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 								"name": "name",
 							},
 							{
-								"cid":  "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+								"cid":  "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 								"name": "age",
 							},
 						},
@@ -151,30 +151,30 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
 							cid
 							height
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid":    "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":    "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":    "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid":    "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid":    "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"height": int64(1),
 					},
 				},
@@ -209,7 +209,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
 							cid
 							links {
 								cid
@@ -219,44 +219,44 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid": "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"links": []map[string]any{
 							{
-								"cid":  "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+								"cid":  "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 								"name": "_head",
 							},
 						},
 					},
 					{
-						"cid":   "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":   "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"links": []map[string]any{},
 					},
 					{
-						"cid":   "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":   "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"links": []map[string]any{},
 					},
 					{
-						"cid": "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid": "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"links": []map[string]any{
 							{
-								"cid":  "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+								"cid":  "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 								"name": "_head",
 							},
 							{
-								"cid":  "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+								"cid":  "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 								"name": "age",
 							},
 						},
 					},
 					{
-						"cid": "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid": "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"links": []map[string]any{
 							{
-								"cid":  "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+								"cid":  "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 								"name": "name",
 							},
 							{
-								"cid":  "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+								"cid":  "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 								"name": "age",
 							},
 						},

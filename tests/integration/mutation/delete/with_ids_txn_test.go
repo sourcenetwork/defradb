@@ -43,20 +43,20 @@ func TestMutationDeletion_WithIDsAndTxn(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					delete_User(docIDs: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+					delete_User(docIDs: ["bae-959725a4-17cb-5e04-8908-98bc78fd06dd"]) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+						"_docID": "bae-959725a4-17cb-5e04-8908-98bc78fd06dd",
 					},
 				},
 			},
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `query {
-					User(docIDs: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+					User(docIDs: ["bae-959725a4-17cb-5e04-8908-98bc78fd06dd"]) {
 						_docID
 					}
 				}`,

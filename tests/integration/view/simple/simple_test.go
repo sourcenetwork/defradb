@@ -103,10 +103,10 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 						}`,
 				Results: []map[string]any{
 					{
-						"name": "Fred",
+						"name": "John",
 					},
 					{
-						"name": "John",
+						"name": "Fred",
 					},
 				},
 			},

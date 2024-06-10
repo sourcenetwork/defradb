@@ -11,7 +11,6 @@
 package one_to_one
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -33,7 +32,7 @@ func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
@@ -52,7 +51,7 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_Creat
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 			},
 			testUtils.Request{
@@ -80,7 +79,7 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationSecondarySide_Err
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
-					"author": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"author": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 				ExpectedError: "document not found or not authorized to access",
 			},
@@ -90,8 +89,6 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationSecondarySide_Err
 }
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySide(t *testing.T) {
-	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-
 	test := testUtils.TestCase{
 		Description: "One to one create mutation with an alias relation.",
 		Actions: []any{
@@ -103,13 +100,10 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "John Grisham",
-						"published": "%s"
-					}`,
-					bookID,
-				),
+				DocMap: map[string]any{
+					"name":      "John Grisham",
+					"published": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -154,8 +148,6 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 }
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondarySide(t *testing.T) {
-	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-
 	test := testUtils.TestCase{
 		Description: "One to one create mutation from secondary side with alias relation.",
 		Actions: []any{
@@ -167,13 +159,10 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondaryS
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

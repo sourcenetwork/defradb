@@ -37,30 +37,30 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", order: {height: DESC}) {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid":    "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid":    "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":    "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":    "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid":    "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"height": int64(1),
 					},
 				},
@@ -92,30 +92,30 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", order: {height: ASC}) {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":    "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":    "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid":    "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid":    "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid":    "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"height": int64(2),
 					},
 				},
@@ -147,31 +147,31 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", order: {cid: DESC}) {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {cid: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid":    "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid":    "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"height": int64(2),
+					},
+					{
+						"cid":    "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
+						"height": int64(1),
 					},
 				},
 			},
@@ -202,31 +202,31 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", order: {cid: ASC}) {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {cid: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid":    "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid":    "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"height": int64(2),
-					},
-					{
-						"cid":    "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
-						"height": int64(1),
 					},
 				},
 			},
@@ -271,46 +271,46 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						 commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", order: {height: ASC}) {
+						 commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: ASC}) {
 							 cid
 							 height
 						 }
 					 }`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":    "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":    "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid":    "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafyreictnkwvit6jp4mwhai3xp75nvtacxpq6zgbbjm55ylae3t6qshrze",
+						"cid":    "bafyreigurfgpfvcm4uzqxjf4ur3xegxbebn6yoogjrvyaw6x7d2ji6igim",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreif3pvxatyqbmwllb7mcxvs734fgfmdkavbu6ambhay37w6vxjzkx4",
+						"cid":    "bafyreif632ewkphjjwxcthemgbkgtm25faw22mvw7eienu5gnazrao33ba",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafyreial53rqep7uoheucc3rzvhs6dbhydnkbqe4w2bhd3hsybub4u3h6m",
+						"cid":    "bafyreicoci4ah2uft5giiyl2lfg4jgcegwbvt3mbllnqnmfh3oy24usxsy",
 						"height": int64(3),
 					},
 					{
-						"cid":    "bafyreifyknutg2lsajcsqrfegr65t5h5s743jkp3bfuzphx4nmqztfwmga",
+						"cid":    "bafyreichbcwfiwampbb2w2stlrk5yryu5ao4ubz2utybv5fc6qioj3qhu4",
 						"height": int64(3),
 					},
 					{
-						"cid":    "bafyreiarqxac3gnfrfj3j6fukof375kp56i6jcvgmpfytenczsilx4xkey",
+						"cid":    "bafyreiefwtmw7gtwjmvhapfpq2gmi6j772a6zx5uyyrys6ft4za4oljwfm",
 						"height": int64(4),
 					},
 					{
-						"cid":    "bafyreihazmfdrwrk3udgnnkuxipcg7cjmzndfazif3t2vxyrq36qwfkrt4",
+						"cid":    "bafyreidde6teqyfjruflxo3yy25rayu7yrxg54siqvloxzqt7o32g2wicy",
 						"height": int64(4),
 					},
 				},

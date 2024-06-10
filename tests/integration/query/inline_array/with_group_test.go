@@ -86,6 +86,14 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
+				"favouriteIntegers": []int64{1, 2, 3},
+				"_group": []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			{
 				"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 				"_group": []map[string]any{
 					{
@@ -94,14 +102,6 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 					{
 
 						"name": "Shahzad",
-					},
-				},
-			},
-			{
-				"favouriteIntegers": []int64{1, 2, 3},
-				"_group": []map[string]any{
-					{
-						"name": "John",
 					},
 				},
 			},

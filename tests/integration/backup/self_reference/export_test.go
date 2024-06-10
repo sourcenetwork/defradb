@@ -26,13 +26,13 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-a2162ff0-3257-50f1-ba2f-39c299921220"}`,
 			},
 			testUtils.BackupExport{
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},
-				ExpectedContent: `{"User":[{"_docID":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d","_docIDNew":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d","age":31,"boss_id":"bae-e933420a-988a-56f8-8952-6c245aebd519","name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-a2162ff0-3257-50f1-ba2f-39c299921220","_docIDNew":"bae-a2162ff0-3257-50f1-ba2f-39c299921220","age":30,"name":"John"},{"_docID":"bae-f4def2b3-2fe8-5e3b-838e-b9d9f8aca102","_docIDNew":"bae-f4def2b3-2fe8-5e3b-838e-b9d9f8aca102","age":31,"boss_id":"bae-a2162ff0-3257-50f1-ba2f-39c299921220","name":"Bob"}]}`,
 			},
 		},
 	}
@@ -49,7 +49,7 @@ func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-a2162ff0-3257-50f1-ba2f-39c299921220"}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
@@ -57,7 +57,7 @@ func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d","_docIDNew":"bae-067fd15e-32a1-5681-8f41-c423f563e21b","age":31,"boss_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-a2162ff0-3257-50f1-ba2f-39c299921220","_docIDNew":"bae-99fbc678-167f-5325-bdf1-79fa76039125","age":31,"name":"John"},{"_docID":"bae-f4def2b3-2fe8-5e3b-838e-b9d9f8aca102","_docIDNew":"bae-98531af8-dda5-5993-b140-1495fa8f1576","age":31,"boss_id":"bae-99fbc678-167f-5325-bdf1-79fa76039125","name":"Bob"}]}`,
 			},
 		},
 	}

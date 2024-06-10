@@ -25,11 +25,8 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Books
-			create3BookDocuments(),
-
-			// Authors
 			create2AuthorDocuments(),
+			create3BookDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {

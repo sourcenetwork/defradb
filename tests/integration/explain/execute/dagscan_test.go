@@ -30,7 +30,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					commits (docID: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138") {
+					commits (docID: "bae-dcdbc1dc-8428-592d-ad9d-ca0f1430e1bf") {
 						links {
 							cid
 						}
@@ -75,7 +75,7 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					latestCommits(docID: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138") {
+					latestCommits(docID: "bae-dcdbc1dc-8428-592d-ad9d-ca0f1430e1bf") {
 						cid
 						links {
 							cid

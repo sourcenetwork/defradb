@@ -34,13 +34,13 @@ func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"], filter: {}) {
+					delete_User(docIDs: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"], filter: {}) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
+						"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
 					},
 				},
 			},

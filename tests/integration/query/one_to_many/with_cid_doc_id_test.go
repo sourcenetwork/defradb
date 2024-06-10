@@ -24,7 +24,7 @@ import (
 // 		Request: `query {
 // 					Book (
 // 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
-// 							docID: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+// 							docID: "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 // 						) {
 // 						name
 // 						author {
@@ -34,15 +34,15 @@ import (
 // 				}`,
 // 		Docs: map[int][]string{
 // 			//books
-// 			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+// 			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 // 				`{
 // 					"name": "Painted House",
 // 					"rating": 4.9,
-// 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+// 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 // 				}`,
 // 			},
 // 			//authors
-// 			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+// 			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 // 				`{
 // 					"name": "John Grisham",
 // 					"age": 65,
@@ -85,16 +85,16 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -104,8 +104,8 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicj6hg76f5hveo5ykaw6kmldtujbmamzyasje6a3gxrro7nlplhba"
-							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
+							cid: "bafyreiauqb3yovbcofeysjckmex5xdzd6ilvspvypk7cqooguimi6kac5e"
+							docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 						) {
 						name
 						author {
@@ -154,16 +154,16 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -179,8 +179,8 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicj6hg76f5hveo5ykaw6kmldtujbmamzyasje6a3gxrro7nlplhba",
-							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
+							cid: "bafyreiauqb3yovbcofeysjckmex5xdzd6ilvspvypk7cqooguimi6kac5e",
+							docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 						) {
 						name
 						author {
@@ -227,16 +227,16 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -252,8 +252,8 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreicj6hg76f5hveo5ykaw6kmldtujbmamzyasje6a3gxrro7nlplhba",
-						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
+						cid: "bafyreiauqb3yovbcofeysjckmex5xdzd6ilvspvypk7cqooguimi6kac5e",
+						docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 					) {
 						name
 						rating
@@ -300,16 +300,16 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -325,8 +325,8 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreibom3twkrprkfljn4hh6hyenpzofdwhl2qfrnfa4eljikpyexnn2q",
-						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
+						cid: "bafyreifc646gthndgspdnkftmeaiowwangpfbtm7bpngosfsd72oul5a3u",
+						docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 					) {
 						name
 						rating

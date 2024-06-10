@@ -85,13 +85,13 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
+				"Age": int64(55),
+			},
+			{
 				"Age": int64(32),
 			},
 			{
 				"Age": int64(19),
-			},
-			{
-				"Age": int64(55),
 			},
 		},
 	}
@@ -129,13 +129,13 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
+				"CreatedAt": testUtils.MustParseTime("2011-07-23T03:46:56-05:00"),
+			},
+			{
 				"CreatedAt": testUtils.MustParseTime("2013-07-23T03:46:56-05:00"),
 			},
 			{
 				"CreatedAt": testUtils.MustParseTime("2012-07-23T03:46:56-05:00"),
-			},
-			{
-				"CreatedAt": testUtils.MustParseTime("2011-07-23T03:46:56-05:00"),
 			},
 		},
 	}
@@ -176,6 +176,14 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
+				"Age": int64(55),
+				"_group": []map[string]any{
+					{
+						"Name": "Carlo",
+					},
+				},
+			},
+			{
 				"Age": int64(32),
 				"_group": []map[string]any{
 					{
@@ -191,14 +199,6 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 				"_group": []map[string]any{
 					{
 						"Name": "Alice",
-					},
-				},
-			},
-			{
-				"Age": int64(55),
-				"_group": []map[string]any{
-					{
-						"Name": "Carlo",
 					},
 				},
 			},
@@ -241,10 +241,10 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Alice",
+				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": int64(19),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -252,18 +252,18 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": int64(32),
+						"Age": int64(25),
 					},
 					{
-						"Age": int64(25),
+						"Age": int64(32),
 					},
 				},
 			},
 			{
-				"Name": "Carlo",
+				"Name": "Alice",
 				"_group": []map[string]any{
 					{
-						"Age": int64(55),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -306,10 +306,10 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Alice",
+				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": int64(19),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -317,18 +317,18 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": int64(32),
+						"Age": int64(25),
 					},
 					{
-						"Age": int64(25),
+						"Age": int64(32),
 					},
 				},
 			},
 			{
-				"Name": "Carlo",
+				"Name": "Alice",
 				"_group": []map[string]any{
 					{
-						"Age": int64(55),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -407,19 +407,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 				},
 			},
 			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(19),
-							},
-						},
-					},
-				},
-			},
-			{
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
@@ -427,6 +414,19 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 						"_group": []map[string]any{
 							{
 								"Age": int64(55),
+							},
+						},
+					},
+				},
+			},
+			{
+				"Name": "Alice",
+				"_group": []map[string]any{
+					{
+						"Verified": false,
+						"_group": []map[string]any{
+							{
+								"Age": int64(19),
 							},
 						},
 					},
@@ -502,20 +502,20 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 				},
 			},
 			{
-				"Name":     "Alice",
-				"Verified": false,
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
-					},
-				},
-			},
-			{
 				"Name":     "Carlo",
 				"Verified": true,
 				"_group": []map[string]any{
 					{
 						"Age": int64(55),
+					},
+				},
+			},
+			{
+				"Name":     "Alice",
+				"Verified": false,
+				"_group": []map[string]any{
+					{
+						"Age": int64(19),
 					},
 				},
 			},
@@ -589,20 +589,20 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 				},
 			},
 			{
-				"Name":     "Alice",
-				"Verified": false,
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
-					},
-				},
-			},
-			{
 				"Name":     "Carlo",
 				"Verified": true,
 				"_group": []map[string]any{
 					{
 						"Age": int64(55),
+					},
+				},
+			},
+			{
+				"Name":     "Alice",
+				"Verified": false,
+				"_group": []map[string]any{
+					{
+						"Age": int64(19),
 					},
 				},
 			},
@@ -677,10 +677,10 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 				"Age": nil,
 				"_group": []map[string]any{
 					{
-						"Name": "Bob",
+						"Name": "Alice",
 					},
 					{
-						"Name": "Alice",
+						"Name": "Bob",
 					},
 				},
 			},

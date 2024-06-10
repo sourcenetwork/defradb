@@ -29,7 +29,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-cc36febf-4029-52b3-a876-c99c6293f588
+				// bae-0289c22a-aec7-5b59-adfc-60968698fcdf
 				Doc: `{
 					"name": "John",
 					"points": 42.1
@@ -42,7 +42,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-3ac659d1-521a-5eba-a833-5c58b151ca72
+				// bae-fcc8673d-25f9-5f24-a529-4bc997035278
 				Doc: `{
 					"name": "Fred",
 					"points": 33
@@ -51,7 +51,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					update_Users(
-						docIDs: ["bae-cc36febf-4029-52b3-a876-c99c6293f588", "bae-3ac659d1-521a-5eba-a833-5c58b151ca72"],
+						docIDs: ["bae-0289c22a-aec7-5b59-adfc-60968698fcdf", "bae-fcc8673d-25f9-5f24-a529-4bc997035278"],
 						input: {points: 59}
 					) {
 						name
@@ -60,11 +60,11 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name":   "Fred",
+						"name":   "John",
 						"points": float64(59),
 					},
 					{
-						"name":   "John",
+						"name":   "Fred",
 						"points": float64(59),
 					},
 				},

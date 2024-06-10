@@ -53,7 +53,6 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 					}
 				`,
 			},
-			// bae-f3db7a4d-3db1-5d57-9996-32c3fdff99d3
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -62,10 +61,10 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name":	"Right hand 1",
-					"holding_id": "bae-f3db7a4d-3db1-5d57-9996-32c3fdff99d3"
-				}`,
+				DocMap: map[string]any{
+					"name":       "Right hand 1",
+					"holding_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `

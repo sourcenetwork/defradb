@@ -47,16 +47,16 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
+				"Name": "John",
+				"Age":  int64(21),
+			},
+			{
 				"Name": "Bob",
 				"Age":  int64(32),
 			},
 			{
 				"Name": "Alice",
 				"Age":  int64(19),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
 			},
 		},
 	}
@@ -135,12 +135,12 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
 				"Name": "John",
 				"Age":  int64(21),
+			},
+			{
+				"Name": "Bob",
+				"Age":  int64(32),
 			},
 		},
 	}
@@ -218,20 +218,20 @@ func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
-				"Name": "Alice",
-				"Age":  int64(19),
-			},
-			{
 				"Name": "John",
 				"Age":  int64(21),
 			},
 			{
+				"Name": "Bob",
+				"Age":  int64(32),
+			},
+			{
 				"Name": "Carlo",
 				"Age":  int64(55),
+			},
+			{
+				"Name": "Alice",
+				"Age":  int64(19),
 			},
 		},
 	}

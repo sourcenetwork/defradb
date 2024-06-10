@@ -49,6 +49,14 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 		},
 		Results: []map[string]any{
 			{
+				"Name": "Carlo",
+				"_group": []map[string]any{
+					{
+						"Age": int64(55),
+					},
+				},
+			},
+			{
 				"Name": "Alice",
 				"_group": []map[string]any{
 					{
@@ -64,14 +72,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 					},
 					{
 						"Age": int64(32),
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
 					},
 				},
 			},
@@ -114,14 +114,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
-					},
-				},
-			},
-			{
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
@@ -137,6 +129,14 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 					},
 					{
 						"Age": int64(25),
+					},
+				},
+			},
+			{
+				"Name": "Alice",
+				"_group": []map[string]any{
+					{
+						"Age": int64(19),
 					},
 				},
 			},
