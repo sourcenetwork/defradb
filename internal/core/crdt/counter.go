@@ -187,6 +187,13 @@ func (c Counter) incrementValue(
 	return c.setPriority(ctx, c.key, priority)
 }
 
+func (c Counter) CType() client.CType {
+	if c.AllowDecrement {
+		return client.PN_COUNTER
+	}
+	return client.P_COUNTER
+}
+
 func validateAndIncrement[T Incrementable](
 	ctx context.Context,
 	store datastore.DSReaderWriter,
@@ -210,13 +217,6 @@ func validateAndIncrement[T Incrementable](
 
 	newValue := curValue + value
 	return cbor.Marshal(newValue)
-}
-
-func (c Counter) CType() client.CType {
-	if c.AllowDecrement {
-		return client.PN_COUNTER
-	}
-	return client.P_COUNTER
 }
 
 func getCurrentValue[T Incrementable](
