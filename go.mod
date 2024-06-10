@@ -49,7 +49,7 @@ require (
 	github.com/tidwall/btree v1.7.0
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
-	github.com/zalando/go-keyring v0.2.4
+	github.com/zalando/go-keyring v0.2.5
 	go.opentelemetry.io/otel/metric v1.27.0
 	go.opentelemetry.io/otel/sdk/metric v1.27.0
 	go.uber.org/zap v1.27.0
