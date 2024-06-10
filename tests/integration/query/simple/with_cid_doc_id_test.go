@@ -324,7 +324,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreicsx7flfz4b6iwfmwgrnrnd2klxrbg6yojuffh4ia3lrrqcph5q7a",
+						cid: "bafyreienkinjn7cvsonvhs4tslqvmmcnezuu4aif57jn75cyp6i3vdvkpm",
 						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
 					) {
 						name
@@ -376,7 +376,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreidwtowbnmdfshq3dptfdggzswtdftyh5374ohfcmqki4ad2wd4m64",
+						cid: "bafyreiceodj32fyhq3v7ryk6mmcjanwx3zr7ajl2k47w4setngmyx7nc3e",
 						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
 					) {
 						name
@@ -423,7 +423,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreifngcu76fxe3dtjee556hwymfjgsm3sqhxned4cykit5lcsyy3ope",
+						cid: "bafyreieypgt2mq43g4ute2hkzombdqw5v6wctleyxyy6vdkzitrfje636i",
 						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
 					) {
 						name
@@ -470,7 +470,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreigih3wl4ycq5lktczydbecvcvlmdsy5jzarx2l6hcqdcrqkoranny",
+						cid: "bafyreigb3ujvnxie7kwl53w4chiq6cjcyuhranchseo5gmx5i6vfje67da",
 						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
 					) {
 						name
