@@ -112,22 +112,22 @@ func (t *txn) Commit(ctx context.Context) error {
 		asyncFns = t.successAsyncFns
 	}
 
-	for _, fn := range fns {
-		fn()
-	}
 	for _, fn := range asyncFns {
 		go fn()
+	}
+	for _, fn := range fns {
+		fn()
 	}
 	return err
 }
 
 func (t *txn) Discard(ctx context.Context) {
 	t.t.Discard(ctx)
-	for _, fn := range t.discardFns {
-		fn()
-	}
 	for _, fn := range t.discardAsyncFns {
 		go fn()
+	}
+	for _, fn := range t.discardFns {
+		fn()
 	}
 }
 
