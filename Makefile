@@ -32,6 +32,44 @@ else ifeq ($(OS_GENERAL),Windows)
 	OS_PACKAGE_MANAGER := choco
 endif
 
+# Directory where binaries will be placed
+BIN_DIR := ./libs
+
+# Set the library file name based on the operating system
+ifeq ($(OS_GENERAL),Linux)
+    LIB_EXT := .so
+endif
+ifeq ($(OS_GENERAL),Darwin)
+    LIB_EXT := .dylib
+endif
+ifeq ($(OS_GENERAL),Windows)
+    LIB_EXT := .dll
+endif
+
+RUST_REPO_URL := git@github.com:sourcenetwork/defradb-rs.git
+#RUST_REPO_URL := https://github.com/sourcenetwork/defradb-rs.git
+RUST_REPO_BRANCH := main
+RUST_DIR := ./build/defradb-rs
+
+# Initialize the Rust library by checking out the repository and compiling the library.
+.PHONY: init
+init_rust: checkout_rust compile_rust
+
+# Checkout the Rust repository if it doesn't exist, otherwise pull the latest changes.
+.PHONY: checkout_rust
+checkout_rust: $(BIN_DIR)
+	@if [ -d "$(RUST_DIR)" ]; then \
+		cd $(RUST_DIR) && git pull; \
+	else \
+		git clone --branch $(RUST_REPO_BRANCH) $(RUST_REPO_URL) $(RUST_DIR); \
+	fi
+
+# Compile the Rust library and copy it to the libs directory.
+.PHONY: compile_rust
+compile_rust: $(BIN_DIR)
+	cargo build --release --manifest-path=$(RUST_DIR)/Cargo.toml
+	cp $(RUST_DIR)/target/release/libabi$(LIB_EXT) $(BIN_DIR)/libabi$(LIB_EXT)
+
 # Provide info from git to the version package using linker flags.
 ifeq (, $(shell which git))
 $(error "No git in $(PATH), version information won't be included")
@@ -95,7 +133,7 @@ endif
 # 	- make build
 # 	- make build path="path/to/defradb-binary"
 .PHONY: build
-build:
+build: init_rust
 ifeq ($(path),)
 	@go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
 else
@@ -205,7 +243,7 @@ tidy:
 	go mod tidy -go=1.21.3
 
 .PHONY: clean
-clean:
+clean: clean\:rust
 	go clean cmd/defradb/main.go
 	rm -f build/defradb
 
@@ -217,6 +255,11 @@ clean\:test:
 clean\:coverage:
 	rm -rf $(COVERAGE_DIRECTORY) 
 	rm -f $(COVERAGE_FILE)
+
+.PHONY: clean\:rust
+clean\:rust:
+	cargo clean --manifest-path=${RUST_DIR}/Cargo.toml
+	rm -f $(BIN_DIR)/*$(LIB_EXT)
 
 # Example: `make tls-certs path="~/.defradb/certs"`
 .PHONY: tls-certs

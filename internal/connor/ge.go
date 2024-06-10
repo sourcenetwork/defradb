@@ -11,8 +11,7 @@ import (
 // value is strictly larger than or equal to another.
 func ge(condition, data any) (bool, error) {
 	if condition == nil {
-		// Everything is greater than or equal to nil
-		return true, nil
+		return false, nil
 	}
 
 	switch c := condition.(type) {

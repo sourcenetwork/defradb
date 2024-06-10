@@ -148,11 +148,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

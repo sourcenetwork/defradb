@@ -127,14 +127,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-			},
-			{
-				"Name": "John",
-			},
-		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

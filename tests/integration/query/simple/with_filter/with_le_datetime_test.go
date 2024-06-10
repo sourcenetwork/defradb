@@ -101,11 +101,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-			},
-		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

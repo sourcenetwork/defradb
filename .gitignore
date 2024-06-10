@@ -58,3 +58,8 @@ crash.log
 
 # Ignore .zip files, such as Lambda Function code slugs.
 **.zip
+
+# Ignore compiled dynamic libraries.
+libs/*.so
+libs/*.dylib
+libs/*.dll

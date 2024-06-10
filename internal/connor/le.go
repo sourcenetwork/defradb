@@ -11,8 +11,7 @@ import (
 // value is strictly less than another.
 func le(condition, data any) (bool, error) {
 	if condition == nil {
-		// Only nil is less than or equal to nil
-		return data == nil, nil
+		return false, nil
 	}
 
 	switch c := condition.(type) {

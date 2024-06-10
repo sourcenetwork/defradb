@@ -16,6 +16,7 @@ import (
 
 const (
 	errUnknownOperator string = "unknown operator"
+	errEmptyObject     string = "can not use empty object"
 )
 
 // Errors returnable from this package.
@@ -24,8 +25,13 @@ const (
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
 	ErrUnknownOperator = errors.New(errUnknownOperator)
+	ErrEmptyObject     = errors.New(errEmptyObject)
 )
 
 func NewErrUnknownOperator(operator string) error {
 	return errors.New(errUnknownOperator, errors.NewKV("Operator", operator))
+}
+
+func NewErrEmptyObject() error {
+	return errors.New(errEmptyObject)
 }
