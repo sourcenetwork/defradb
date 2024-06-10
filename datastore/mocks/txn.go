@@ -300,6 +300,39 @@ func (_c *Txn_OnDiscard_Call) RunAndReturn(run func(func())) *Txn_OnDiscard_Call
 	return _c
 }
 
+// OnDiscardAsync provides a mock function with given fields: fn
+func (_m *Txn) OnDiscardAsync(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnDiscardAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnDiscardAsync'
+type Txn_OnDiscardAsync_Call struct {
+	*mock.Call
+}
+
+// OnDiscardAsync is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnDiscardAsync(fn interface{}) *Txn_OnDiscardAsync_Call {
+	return &Txn_OnDiscardAsync_Call{Call: _e.mock.On("OnDiscardAsync", fn)}
+}
+
+func (_c *Txn_OnDiscardAsync_Call) Run(run func(fn func())) *Txn_OnDiscardAsync_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnDiscardAsync_Call) Return() *Txn_OnDiscardAsync_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnDiscardAsync_Call) RunAndReturn(run func(func())) *Txn_OnDiscardAsync_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // OnError provides a mock function with given fields: fn
 func (_m *Txn) OnError(fn func()) {
 	_m.Called(fn)
@@ -333,6 +366,39 @@ func (_c *Txn_OnError_Call) RunAndReturn(run func(func())) *Txn_OnError_Call {
 	return _c
 }
 
+// OnErrorAsync provides a mock function with given fields: fn
+func (_m *Txn) OnErrorAsync(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnErrorAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnErrorAsync'
+type Txn_OnErrorAsync_Call struct {
+	*mock.Call
+}
+
+// OnErrorAsync is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnErrorAsync(fn interface{}) *Txn_OnErrorAsync_Call {
+	return &Txn_OnErrorAsync_Call{Call: _e.mock.On("OnErrorAsync", fn)}
+}
+
+func (_c *Txn_OnErrorAsync_Call) Run(run func(fn func())) *Txn_OnErrorAsync_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnErrorAsync_Call) Return() *Txn_OnErrorAsync_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnErrorAsync_Call) RunAndReturn(run func(func())) *Txn_OnErrorAsync_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // OnSuccess provides a mock function with given fields: fn
 func (_m *Txn) OnSuccess(fn func()) {
 	_m.Called(fn)
@@ -362,6 +428,39 @@ func (_c *Txn_OnSuccess_Call) Return() *Txn_OnSuccess_Call {
 }
 
 func (_c *Txn_OnSuccess_Call) RunAndReturn(run func(func())) *Txn_OnSuccess_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// OnSuccessAsync provides a mock function with given fields: fn
+func (_m *Txn) OnSuccessAsync(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnSuccessAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnSuccessAsync'
+type Txn_OnSuccessAsync_Call struct {
+	*mock.Call
+}
+
+// OnSuccessAsync is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnSuccessAsync(fn interface{}) *Txn_OnSuccessAsync_Call {
+	return &Txn_OnSuccessAsync_Call{Call: _e.mock.On("OnSuccessAsync", fn)}
+}
+
+func (_c *Txn_OnSuccessAsync_Call) Run(run func(fn func())) *Txn_OnSuccessAsync_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnSuccessAsync_Call) Return() *Txn_OnSuccessAsync_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccessAsync_Call {
 	_c.Call.Return(run)
 	return _c
 }

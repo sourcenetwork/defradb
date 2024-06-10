@@ -12,6 +12,7 @@ package datastore
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -57,8 +58,6 @@ func TestOnSuccess(t *testing.T) {
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
-	txn.OnSuccess(nil)
-
 	text := "Source"
 	txn.OnSuccess(func() {
 		text += " Inc"
@@ -69,7 +68,7 @@ func TestOnSuccess(t *testing.T) {
 	require.Equal(t, text, "Source Inc")
 }
 
-func TestOnError(t *testing.T) {
+func TestOnSuccessAsync(t *testing.T) {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -78,7 +77,25 @@ func TestOnError(t *testing.T) {
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
-	txn.OnError(nil)
+	var wg sync.WaitGroup
+	txn.OnSuccessAsync(func() {
+		wg.Done()
+	})
+
+	wg.Add(1)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
+	wg.Wait()
+}
+
+func TestOnError(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
 
 	text := "Source"
 	txn.OnError(func() {
@@ -92,6 +109,68 @@ func TestOnError(t *testing.T) {
 	require.ErrorIs(t, err, badgerds.ErrClosed)
 
 	require.Equal(t, text, "Source Inc")
+}
+
+func TestOnErrorAsync(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	txn.OnErrorAsync(func() {
+		wg.Done()
+	})
+
+	rootstore.Close()
+	require.NoError(t, err)
+
+	wg.Add(1)
+	err = txn.Commit(ctx)
+	require.ErrorIs(t, err, badgerds.ErrClosed)
+	wg.Wait()
+}
+
+func TestOnDiscard(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
+
+	text := "Source"
+	txn.OnDiscard(func() {
+		text += " Inc"
+	})
+	txn.Discard(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, text, "Source Inc")
+}
+
+func TestOnDiscardAsync(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	txn.OnDiscardAsync(func() {
+		wg.Done()
+	})
+
+	wg.Add(1)
+	txn.Discard(ctx)
+	require.NoError(t, err)
+	wg.Wait()
 }
 
 func TestShimTxnStoreSync(t *testing.T) {

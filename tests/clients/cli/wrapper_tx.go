@@ -55,6 +55,18 @@ func (w *Transaction) OnDiscard(fn func()) {
 	w.tx.OnDiscard(fn)
 }
 
+func (w *Transaction) OnSuccessAsync(fn func()) {
+	w.tx.OnSuccessAsync(fn)
+}
+
+func (w *Transaction) OnErrorAsync(fn func()) {
+	w.tx.OnErrorAsync(fn)
+}
+
+func (w *Transaction) OnDiscardAsync(fn func()) {
+	w.tx.OnDiscardAsync(fn)
+}
+
 func (w *Transaction) Rootstore() datastore.DSReaderWriter {
 	return w.tx.Rootstore()
 }

@@ -43,105 +43,116 @@ type Txn interface {
 
 	// OnDiscard registers a function to be called when the transaction is discarded.
 	OnDiscard(fn func())
+
+	// OnSuccessAsync registers a function to be called asynchronously when the transaction is committed.
+	OnSuccessAsync(fn func())
+
+	// OnErrorAsync registers a function to be called asynchronously when the transaction is rolled back.
+	OnErrorAsync(fn func())
+
+	// OnDiscardAsync registers a function to be called asynchronously when the transaction is discarded.
+	OnDiscardAsync(fn func())
 }
 
 type txn struct {
-	t ds.Txn
 	MultiStore
-
+	t  ds.Txn
 	id uint64
 
 	successFns []func()
 	errorFns   []func()
 	discardFns []func()
+
+	successAsyncFns []func()
+	errorAsyncFns   []func()
+	discardAsyncFns []func()
 }
 
 var _ Txn = (*txn)(nil)
 
+func newTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (ds.Txn, error) {
+	// check if our datastore natively supports iterable transaction, transactions or batching
+	switch t := rootstore.(type) {
+	case iterable.IterableTxnDatastore:
+		return t.NewIterableTransaction(ctx, readonly)
+
+	default:
+		return rootstore.NewTransaction(ctx, readonly)
+	}
+}
+
 // NewTxnFrom returns a new Txn from the rootstore.
 func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
-	// check if our datastore natively supports iterable transaction, transactions or batching
-	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
-		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-		multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
-		return &txn{
-			rootTxn,
-			multistore,
-			id,
-			[]func(){},
-			[]func(){},
-			[]func(){},
-		}, nil
-	}
-
-	rootTxn, err := rootstore.NewTransaction(ctx, readonly)
+	rootTxn, err := newTxnFrom(ctx, rootstore, readonly)
 	if err != nil {
 		return nil, err
 	}
-
 	multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
 	return &txn{
-		rootTxn,
-		multistore,
-		id,
-		[]func(){},
-		[]func(){},
-		[]func(){},
+		t:          rootTxn,
+		MultiStore: multistore,
+		id:         id,
 	}, nil
 }
 
-// ID returns the unique immutable identifier for this transaction.
 func (t *txn) ID() uint64 {
 	return t.id
 }
 
-// Commit finalizes a transaction, attempting to commit it to the Datastore.
 func (t *txn) Commit(ctx context.Context) error {
-	if err := t.t.Commit(ctx); err != nil {
-		runFns(t.errorFns)
-		return err
+	var fns []func()
+	var asyncFns []func()
+
+	err := t.t.Commit(ctx)
+	if err != nil {
+		fns = t.errorFns
+		asyncFns = t.errorAsyncFns
+	} else {
+		fns = t.successFns
+		asyncFns = t.successAsyncFns
 	}
-	runFns(t.successFns)
-	return nil
-}
 
-// Discard throws away changes recorded in a transaction without committing.
-func (t *txn) Discard(ctx context.Context) {
-	t.t.Discard(ctx)
-	runFns(t.discardFns)
-}
-
-// OnSuccess registers a function to be called when the transaction is committed.
-func (txn *txn) OnSuccess(fn func()) {
-	if fn == nil {
-		return
+	for _, fn := range asyncFns {
+		go fn()
 	}
-	txn.successFns = append(txn.successFns, fn)
-}
-
-// OnError registers a function to be called when the transaction is rolled back.
-func (txn *txn) OnError(fn func()) {
-	if fn == nil {
-		return
-	}
-	txn.errorFns = append(txn.errorFns, fn)
-}
-
-// OnDiscard registers a function to be called when the transaction is discarded.
-func (txn *txn) OnDiscard(fn func()) {
-	if fn == nil {
-		return
-	}
-	txn.discardFns = append(txn.discardFns, fn)
-}
-
-func runFns(fns []func()) {
 	for _, fn := range fns {
 		fn()
 	}
+	return err
+}
+
+func (t *txn) Discard(ctx context.Context) {
+	t.t.Discard(ctx)
+	for _, fn := range t.discardAsyncFns {
+		go fn()
+	}
+	for _, fn := range t.discardFns {
+		fn()
+	}
+}
+
+func (t *txn) OnSuccess(fn func()) {
+	t.successFns = append(t.successFns, fn)
+}
+
+func (t *txn) OnError(fn func()) {
+	t.errorFns = append(t.errorFns, fn)
+}
+
+func (t *txn) OnDiscard(fn func()) {
+	t.discardFns = append(t.discardFns, fn)
+}
+
+func (t *txn) OnSuccessAsync(fn func()) {
+	t.successAsyncFns = append(t.successAsyncFns, fn)
+}
+
+func (t *txn) OnErrorAsync(fn func()) {
+	t.errorAsyncFns = append(t.errorAsyncFns, fn)
+}
+
+func (t *txn) OnDiscardAsync(fn func()) {
+	t.discardAsyncFns = append(t.discardAsyncFns, fn)
 }
 
 // Shim to make ds.Txn support ds.Datastore.
