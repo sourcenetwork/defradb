@@ -697,3 +697,52 @@ func Test_LocalACP_InMemory_RegisterObject_InvalidCreatorIDReturnsError(t *testi
 	err = localACP.Close()
 	require.NoError(t, err)
 }
+
+func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	policyID, err := localACP.AddPolicy(
+		ctx,
+		invalidIdentity,
+		validPolicy,
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.Empty(t, policyID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	err = localACP.RegisterDocObject(
+		ctx,
+		invalidIdentity,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}

@@ -106,13 +106,13 @@ func (l *ACPLocal) Close() error {
 
 func (l *ACPLocal) AddPolicy(
 	ctx context.Context,
-	creatorID string,
+	actorID string,
 	policy string,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	principal, err := auth.NewDIDPrincipal(creatorID)
+	principal, err := auth.NewDIDPrincipal(actorID)
 	if err != nil {
-		return "", newErrInvalidActorID(err, creatorID)
+		return "", newErrInvalidActorID(err, actorID)
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
