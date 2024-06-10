@@ -13,18 +13,15 @@ package db
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -429,99 +426,6 @@ func validateUpdateSchemaFields(
 		}
 	}
 	return hasChanged, nil
-}
-
-func (db *db) patchCollection(
-	ctx context.Context,
-	patchString string,
-) error {
-	patch, err := jsonpatch.DecodePatch([]byte(patchString))
-	if err != nil {
-		return err
-	}
-	txn := mustGetContextTxn(ctx)
-	cols, err := description.GetCollections(ctx, txn)
-	if err != nil {
-		return err
-	}
-
-	existingColsByID := map[uint32]client.CollectionDescription{}
-	for _, col := range cols {
-		existingColsByID[col.ID] = col
-	}
-
-	existingDescriptionJson, err := json.Marshal(existingColsByID)
-	if err != nil {
-		return err
-	}
-
-	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
-	if err != nil {
-		return err
-	}
-
-	var newColsByID map[uint32]client.CollectionDescription
-	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&newColsByID)
-	if err != nil {
-		return err
-	}
-
-	err = db.validateCollectionChanges(existingColsByID, newColsByID)
-	if err != nil {
-		return err
-	}
-
-	for _, col := range newColsByID {
-		_, err := description.SaveCollection(ctx, txn, col)
-		if err != nil {
-			return err
-		}
-
-		existingCol, ok := existingColsByID[col.ID]
-		if ok {
-			// Clear any existing migrations in the registry, using this semi-hacky way
-			// to avoid adding more functions to a public interface that we wish to remove.
-
-			for _, src := range existingCol.CollectionSources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
-					if err != nil {
-						return err
-					}
-				}
-			}
-			for _, src := range existingCol.QuerySources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
-
-		for _, src := range col.CollectionSources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		for _, src := range col.QuerySources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return db.loadSchema(ctx)
 }
 
 var patchCollectionValidators = []func(

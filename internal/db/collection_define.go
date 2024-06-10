@@ -12,6 +12,11 @@ package db
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
+
+	jsonpatch "github.com/evanphx/json-patch/v5"
+	"github.com/lens-vm/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -126,4 +131,97 @@ func (db *db) createCollection(
 	}
 
 	return db.getCollectionByID(ctx, desc.ID)
+}
+
+func (db *db) patchCollection(
+	ctx context.Context,
+	patchString string,
+) error {
+	patch, err := jsonpatch.DecodePatch([]byte(patchString))
+	if err != nil {
+		return err
+	}
+	txn := mustGetContextTxn(ctx)
+	cols, err := description.GetCollections(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	existingColsByID := map[uint32]client.CollectionDescription{}
+	for _, col := range cols {
+		existingColsByID[col.ID] = col
+	}
+
+	existingDescriptionJson, err := json.Marshal(existingColsByID)
+	if err != nil {
+		return err
+	}
+
+	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
+	if err != nil {
+		return err
+	}
+
+	var newColsByID map[uint32]client.CollectionDescription
+	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&newColsByID)
+	if err != nil {
+		return err
+	}
+
+	err = db.validateCollectionChanges(existingColsByID, newColsByID)
+	if err != nil {
+		return err
+	}
+
+	for _, col := range newColsByID {
+		_, err := description.SaveCollection(ctx, txn, col)
+		if err != nil {
+			return err
+		}
+
+		existingCol, ok := existingColsByID[col.ID]
+		if ok {
+			// Clear any existing migrations in the registry, using this semi-hacky way
+			// to avoid adding more functions to a public interface that we wish to remove.
+
+			for _, src := range existingCol.CollectionSources() {
+				if src.Transform.HasValue() {
+					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					if err != nil {
+						return err
+					}
+				}
+			}
+			for _, src := range existingCol.QuerySources() {
+				if src.Transform.HasValue() {
+					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		for _, src := range col.CollectionSources() {
+			if src.Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		for _, src := range col.QuerySources() {
+			if src.Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return db.loadSchema(ctx)
 }
