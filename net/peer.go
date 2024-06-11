@@ -144,7 +144,11 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		p.updateSub = p.db.Events().Subscribe(100, event.UpdateEventName)
+		sub, err := p.db.Events().Subscribe(event.UpdateEventName)
+		if err != nil {
+			return err
+		}
+		p.updateSub = sub
 		log.InfoContext(p.ctx, "Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
 	}

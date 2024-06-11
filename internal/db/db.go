@@ -18,7 +18,6 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -45,21 +44,10 @@ var (
 )
 
 const (
-	// forwardBufferSize controls the size of the channel used to
-	// forward events from the system bus to the subscription bus
-	forwardBufferSize = 100
-	// subscriptionBufferSize controls the size of the channel used to
-	// send events to request subscriptions
-	subscriptionBufferSize = 10
-	// mergeBufferSize controls the size of the channel used to
-	// handle merge events
-	mergeBufferSize = 100
-	// sysBusTimeout is the duration to wait before discarding
-	// messages on the sysBus
-	sysBusTimeout = 5 * time.Minute
-	// subBusTimeout is the duration to wait before discarding
-	// messages on the subBus
-	subBusTimeout = 1 * time.Minute
+	// commandBufferSize is the size of the channel buffer used to handle events.
+	commandBufferSize = 100
+	// eventBufferSize is the size of the channel buffer used to subscribe to events.
+	eventBufferSize = 100
 )
 
 // DB is the main interface for interacting with the
@@ -70,11 +58,7 @@ type db struct {
 	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
-	// sysBus is used to send and receive system events
-	sysBus *event.Bus
-
-	// subBus is used to send and receive request subscription events
-	subBus *event.Bus
+	events *event.Bus
 
 	parser core.Parser
 
@@ -125,8 +109,7 @@ func newDB(
 		lensRegistry: lens,
 		parser:       parser,
 		options:      options,
-		sysBus:       event.NewBus(sysBusTimeout),
-		subBus:       event.NewBus(subBusTimeout),
+		events:       event.NewBus(commandBufferSize, eventBufferSize),
 	}
 
 	// apply options
@@ -142,6 +125,13 @@ func newDB(
 	if err != nil {
 		return nil, err
 	}
+
+	sub, err := db.events.Subscribe(event.MergeRequestEventName)
+	if err != nil {
+		return nil, err
+	}
+	go db.handleMerges(ctx, sub)
+
 	return db, nil
 }
 
@@ -208,18 +198,6 @@ func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
-	// start merge process
-	go db.handleMerges(ctx)
-
-	// forward system bus events to the subscriber bus
-	// to ensure we never block the system bus for user subscriptions
-	go func() {
-		sub := db.sysBus.Subscribe(forwardBufferSize, event.WildCardEventName)
-		for msg := range sub.Message() {
-			db.subBus.Publish(msg)
-		}
-	}()
-
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -274,7 +252,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 // Events returns the events Channel.
 func (db *db) Events() *event.Bus {
-	return db.sysBus
+	return db.events
 }
 
 // MaxRetries returns the maximum number of retries per transaction.
@@ -296,8 +274,7 @@ func (db *db) PrintDump(ctx context.Context) error {
 func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
 
-	db.subBus.Close()
-	db.sysBus.Close()
+	db.events.Close()
 
 	err := db.rootstore.Close()
 	if err != nil {

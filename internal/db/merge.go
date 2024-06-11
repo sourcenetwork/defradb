@@ -33,10 +33,7 @@ import (
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
-func (db *db) handleMerges(ctx context.Context) {
-	sub := db.sysBus.Subscribe(mergeBufferSize, event.MergeRequestEventName)
-	defer db.sysBus.Unsubscribe(sub)
-
+func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -67,7 +64,7 @@ func (db *db) handleMerges(ctx context.Context) {
 
 func (db *db) executeMerge(ctx context.Context, dagMerge event.MergeEvent) error {
 	// send a complete event so we can track merges in the integration tests
-	defer db.sysBus.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
+	defer db.events.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

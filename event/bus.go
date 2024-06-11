@@ -11,9 +11,16 @@
 package event
 
 import (
-	"sync"
-	"time"
+	"sync/atomic"
 )
+
+type subscribeCommand *Subscription
+
+type unsubscribeCommand *Subscription
+
+type publishCommand Message
+
+type closeCommand struct{}
 
 // Message contains event info.
 type Message struct {
@@ -30,7 +37,7 @@ func NewMessage(name string, data any) Message {
 
 // Subscription is a read-only event stream.
 type Subscription struct {
-	id     int
+	id     uint64
 	value  chan Message
 	events []string
 }
@@ -48,98 +55,125 @@ func (s *Subscription) Events() []string {
 // Bus is used to broadcast events to subscribers.
 type Bus struct {
 	// subID is incremented for each subscriber and used to set subscriber ids.
-	subID int
+	subID atomic.Uint64
 	// subs is a mapping of subscriber ids to subscriptions.
-	subs map[int]*Subscription
+	subs map[uint64]*Subscription
 	// events is a mapping of event names to subscriber ids.
-	events map[string]map[int]struct{}
-	// mutex is used to lock reads and writes to the subs and events maps.
-	mutex sync.RWMutex
-	// timeout is the amount of time to wait for a blocking channel before a message is discarded.
-	timeout time.Duration
+	events map[string]map[uint64]struct{}
+	// commandChannel manages all commands sent to this simpleChannel.
+	//
+	// It is important that all stuff gets sent through this single channel to ensure
+	// that the order of operations is preserved.
+	//
+	// WARNING: This does mean that non-event commands can block the database if the buffer
+	// size is breached (e.g. if many subscribe commands occupy the buffer).
+	commandChannel  chan any
+	eventBufferSize int
+	hasClosedChan   chan struct{}
+	isClosed        atomic.Bool
 }
 
-// NewBus returns a new event bus.
-func NewBus(timeout time.Duration) *Bus {
-	return &Bus{
-		timeout: timeout,
-		subs:    make(map[int]*Subscription),
-		events:  make(map[string]map[int]struct{}),
+// NewBus creates a new event bus with the given commandBufferSize and
+// eventBufferSize.
+//
+// Should the buffers be filled subsequent calls to functions on this object may start to block.
+func NewBus(commandBufferSize int, eventBufferSize int) *Bus {
+	bus := Bus{
+		subs:            make(map[uint64]*Subscription),
+		events:          make(map[string]map[uint64]struct{}),
+		commandChannel:  make(chan any, commandBufferSize),
+		hasClosedChan:   make(chan struct{}),
+		eventBufferSize: eventBufferSize,
 	}
+	go bus.handleChannel()
+	return &bus
 }
 
 // Publish publishes the given event message to all subscribers.
 func (b *Bus) Publish(msg Message) {
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
-
-	subscribers := make(map[int]struct{})
-	for id := range b.events[msg.Name] {
-		subscribers[id] = struct{}{}
+	if b.isClosed.Load() {
+		return
 	}
-	for id := range b.events[WildCardEventName] {
-		subscribers[id] = struct{}{}
-	}
-
-	for id := range subscribers {
-		select {
-		case b.subs[id].value <- msg:
-			// published message
-		case <-time.After(b.timeout):
-			// discarded message
-		}
-	}
+	b.commandChannel <- publishCommand(msg)
 }
 
 // Subscribe returns a new channel that will receive all of the subscribed events.
-func (b *Bus) Subscribe(size int, events ...string) *Subscription {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+func (b *Bus) Subscribe(events ...string) (*Subscription, error) {
+	if b.isClosed.Load() {
+		return nil, ErrSubscribedToClosedChan
+	}
 
 	sub := &Subscription{
-		id:     b.subID,
-		value:  make(chan Message, size),
+		id:     b.subID.Add(1),
+		value:  make(chan Message, b.eventBufferSize),
 		events: events,
 	}
 
-	for _, event := range events {
-		if _, ok := b.events[event]; !ok {
-			b.events[event] = make(map[int]struct{})
-		}
-		b.events[event][sub.id] = struct{}{}
-	}
-
-	b.subID++
-	b.subs[sub.id] = sub
-	return sub
+	b.commandChannel <- subscribeCommand(sub)
+	return sub, nil
 }
 
 // Unsubscribe unsubscribes from all events and closes the event channel of the given subscription.
 func (b *Bus) Unsubscribe(sub *Subscription) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-
-	if _, ok := b.subs[sub.id]; !ok {
-		return // not subscribed
+	if b.isClosed.Load() {
+		return
 	}
-	for _, event := range sub.events {
-		delete(b.events[event], sub.id)
-	}
-
-	delete(b.subs, sub.id)
-	close(sub.value)
+	b.commandChannel <- unsubscribeCommand(sub)
 }
 
 // Close closes the event bus by unsubscribing all subscribers.
 func (b *Bus) Close() {
-	b.mutex.RLock()
-	subs := make([]*Subscription, 0, len(b.subs))
-	for _, sub := range b.subs {
-		subs = append(subs, sub)
+	if b.isClosed.Load() {
+		return
 	}
-	b.mutex.RUnlock()
+	b.isClosed.Store(true)
+	b.commandChannel <- closeCommand{}
 
-	for _, sub := range subs {
-		b.Unsubscribe(sub)
+	// Wait for the close command to be handled, in order, before returning
+	<-b.hasClosedChan
+}
+
+func (b *Bus) handleChannel() {
+	for cmd := range b.commandChannel {
+		switch t := cmd.(type) {
+		case closeCommand:
+			for _, subscriber := range b.subs {
+				close(subscriber.value)
+			}
+			close(b.commandChannel)
+			close(b.hasClosedChan)
+			return
+
+		case subscribeCommand:
+			for _, event := range t.events {
+				if _, ok := b.events[event]; !ok {
+					b.events[event] = make(map[uint64]struct{})
+				}
+				b.events[event][t.id] = struct{}{}
+			}
+			b.subs[t.id] = t
+
+		case unsubscribeCommand:
+			if _, ok := b.subs[t.id]; !ok {
+				continue // not subscribed
+			}
+			for _, event := range t.events {
+				delete(b.events[event], t.id)
+			}
+			delete(b.subs, t.id)
+			close(t.value)
+
+		case publishCommand:
+			subscribers := make(map[uint64]struct{})
+			for id := range b.events[t.Name] {
+				subscribers[id] = struct{}{}
+			}
+			for id := range b.events[WildCardEventName] {
+				subscribers[id] = struct{}{}
+			}
+			for id := range subscribers {
+				b.subs[id].value <- Message(t)
+			}
+		}
 	}
 }

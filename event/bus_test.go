@@ -11,74 +11,137 @@
 package event
 
 import (
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBusSubscribeThenPublish(t *testing.T) {
-	bus := NewBus(100 * time.Millisecond)
+func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
-	sub1 := bus.Subscribe(1, "test")
-	sub2 := bus.Subscribe(1, WildCardEventName, "test")
-
-	assert.ElementsMatch(t, sub1.Events(), []string{"test"})
-	assert.ElementsMatch(t, sub2.Events(), []string{WildCardEventName, "test"})
-
-	msg := NewMessage("test", "hello")
-	go bus.Publish(msg)
-
-	event := <-sub1.Message()
-	assert.Equal(t, msg, event)
-
-	event = <-sub2.Message()
-	assert.Equal(t, msg, event)
-
-	select {
-	case <-sub2.Message():
-		t.Fatalf("subscriber should not recieve duplicate message")
-	case <-time.After(150 * time.Millisecond):
-		// wait for publish timeout + skew
-	}
-}
-
-func TestBusPublishThenSubscribe(t *testing.T) {
-	bus := NewBus(100 * time.Millisecond)
-	defer bus.Close()
-
-	msg := NewMessage("test", "hello")
+	msg := NewMessage("test", 1)
 	bus.Publish(msg)
 
-	sub := bus.Subscribe(1, "test")
-	select {
-	case <-sub.Message():
-		t.Fatalf("subscriber should not recieve message")
-	case <-time.After(150 * time.Millisecond):
-		// wait for publish timeout + skew
-	}
+	// just assert that we reach this line, for the sake of having an assert
+	assert.True(t, true)
 }
 
-func TestBusSubscribeThenUnsubscribeThenPublish(t *testing.T) {
-	bus := NewBus(100 * time.Millisecond)
+func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
-	sub := bus.Subscribe(1, "test")
+	sub, err := bus.Subscribe("test")
+	assert.Nil(t, err)
+
+	bus.Close()
+
+	<-sub.Message()
+
+	// just assert that we reach this line, for the sake of having an assert
+	assert.True(t, true)
+}
+
+func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
+	bus := NewBus(0, 0)
+	defer bus.Close()
+
+	msg1 := NewMessage("test", 1)
+	msg2 := NewMessage("test", 2)
+
+	sub1, err := bus.Subscribe("test")
+	assert.Nil(t, err)
+
+	sub2, err := bus.Subscribe("test")
+	assert.Nil(t, err)
+
+	// ordering of publish is not deterministic
+	// so capture each in a go routine
+	var wg sync.WaitGroup
+	var event1 Message
+	var event2 Message
+
+	go func() {
+		event1 = <-sub1.Message()
+		wg.Done()
+	}()
+
+	go func() {
+		event2 = <-sub2.Message()
+		wg.Done()
+	}()
+
+	wg.Add(2)
+	bus.Publish(msg1)
+	wg.Wait()
+
+	assert.Equal(t, msg1, event1)
+	assert.Equal(t, msg1, event2)
+
+	go func() {
+		event1 = <-sub1.Message()
+		wg.Done()
+	}()
+
+	go func() {
+		event2 = <-sub2.Message()
+		wg.Done()
+	}()
+
+	wg.Add(2)
+	bus.Publish(msg2)
+	wg.Wait()
+
+	assert.Equal(t, msg2, event1)
+	assert.Equal(t, msg2, event2)
+}
+
+func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
+	bus := NewBus(0, 2)
+	defer bus.Close()
+
+	msg1 := NewMessage("test", 1)
+	msg2 := NewMessage("test", 2)
+
+	sub1, err := bus.Subscribe("test")
+	assert.Nil(t, err)
+	sub2, err := bus.Subscribe("test")
+	assert.Nil(t, err)
+
+	// both inputs are added first before read, using the internal chan buffer
+	bus.Publish(msg1)
+	bus.Publish(msg2)
+
+	output1Ch1 := <-sub1.Message()
+	output1Ch2 := <-sub2.Message()
+
+	output2Ch1 := <-sub1.Message()
+	output2Ch2 := <-sub2.Message()
+
+	assert.Equal(t, msg1, output1Ch1)
+	assert.Equal(t, msg1, output1Ch2)
+
+	assert.Equal(t, msg2, output2Ch1)
+	assert.Equal(t, msg2, output2Ch2)
+}
+
+func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
+	bus := NewBus(0, 0)
+	defer bus.Close()
+
+	sub, err := bus.Subscribe("test")
+	assert.Nil(t, err)
 	bus.Unsubscribe(sub)
 
-	msg := NewMessage("test", "hello")
+	msg := NewMessage("test", 1)
 	bus.Publish(msg)
 
-	_, ok := <-sub.Message()
-	assert.False(t, ok, "channel should be closed")
-}
+	// tiny delay to try and make sure the internal logic would have had time
+	// to do its thing with the pushed item.
+	time.Sleep(5 * time.Millisecond)
 
-func TestBusUnsubscribeTwice(t *testing.T) {
-	bus := NewBus(100 * time.Millisecond)
-	defer bus.Close()
-
-	sub := bus.Subscribe(1, "test")
-	bus.Unsubscribe(sub)
-	bus.Unsubscribe(sub)
+	// closing the channel will result in reads yielding the default value
+	assert.Equal(t, Message{}, <-sub.Message())
 }
