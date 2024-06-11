@@ -713,6 +713,11 @@ func restartNodes(
 		c, err := setupClient(s, n)
 		require.NoError(s.t, err)
 		s.nodes[i] = c
+
+		// subscribe to merge complete events
+		sub, err := c.Events().Subscribe(event.MergeCompleteEventName)
+		require.NoError(s.t, err)
+		s.eventSubs[i] = sub
 	}
 
 	// The index of the action after the last wait action before the current restart action.
