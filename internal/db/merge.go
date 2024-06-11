@@ -34,8 +34,8 @@ import (
 )
 
 func (db *db) handleMerges(ctx context.Context) {
-	sub := db.sysEventBus.Subscribe(mergeSubBufferSize, event.MergeRequestEventName)
-	defer db.sysEventBus.Unsubscribe(sub)
+	sub := db.sysBus.Subscribe(mergeBufferSize, event.MergeRequestEventName)
+	defer db.sysBus.Unsubscribe(sub)
 
 	for {
 		select {
@@ -67,7 +67,7 @@ func (db *db) handleMerges(ctx context.Context) {
 
 func (db *db) executeMerge(ctx context.Context, dagMerge event.MergeEvent) error {
 	// send a complete event so we can track merges in the integration tests
-	defer db.sysEventBus.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
+	defer db.sysBus.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

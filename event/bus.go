@@ -12,6 +12,7 @@ package event
 
 import (
 	"sync"
+	"time"
 )
 
 // Message contains event info.
@@ -44,28 +45,35 @@ func (s *Subscription) Events() []string {
 	return s.events
 }
 
-// Bus is used to publish and subscribe to events.
+// Bus is used to broadcast events to subscribers.
 type Bus struct {
-	subId  int
-	subs   map[int]*Subscription
-	events map[string]map[int]any
-	mutex  sync.RWMutex
+	// subID is incremented for each subscriber and used to set subscriber ids.
+	subID int
+	// subs is a mapping of subscriber ids to subscriptions.
+	subs map[int]*Subscription
+	// events is a mapping of event names to subscriber ids.
+	events map[string]map[int]struct{}
+	// mutex is used to lock reads and writes to the subs and events maps.
+	mutex sync.RWMutex
+	// timeout is the amount of time to wait for a blocking channel before a message is discarded.
+	timeout time.Duration
 }
 
 // NewBus returns a new event bus.
-func NewBus() *Bus {
+func NewBus(timeout time.Duration) *Bus {
 	return &Bus{
-		subs:   make(map[int]*Subscription),
-		events: make(map[string]map[int]any),
+		timeout: timeout,
+		subs:    make(map[int]*Subscription),
+		events:  make(map[string]map[int]struct{}),
 	}
 }
 
-// Publish publishes the given event to all subscribers.
+// Publish publishes the given event message to all subscribers.
 func (b *Bus) Publish(msg Message) {
 	b.mutex.RLock()
 	defer b.mutex.RUnlock()
 
-	subscribers := make(map[int]any)
+	subscribers := make(map[int]struct{})
 	for id := range b.events[msg.Name] {
 		subscribers[id] = struct{}{}
 	}
@@ -76,9 +84,9 @@ func (b *Bus) Publish(msg Message) {
 	for id := range subscribers {
 		select {
 		case b.subs[id].value <- msg:
-			// published event
-		default:
-			// channel full
+			// published message
+		case <-time.After(b.timeout):
+			// discarded message
 		}
 	}
 }
@@ -89,19 +97,19 @@ func (b *Bus) Subscribe(size int, events ...string) *Subscription {
 	defer b.mutex.Unlock()
 
 	sub := &Subscription{
-		id:     b.subId,
+		id:     b.subID,
 		value:  make(chan Message, size),
 		events: events,
 	}
 
 	for _, event := range events {
 		if _, ok := b.events[event]; !ok {
-			b.events[event] = make(map[int]any)
+			b.events[event] = make(map[int]struct{})
 		}
 		b.events[event][sub.id] = struct{}{}
 	}
 
-	b.subId++
+	b.subID++
 	b.subs[sub.id] = sub
 	return sub
 }
@@ -124,9 +132,8 @@ func (b *Bus) Unsubscribe(sub *Subscription) {
 
 // Close closes the event bus by unsubscribing all subscribers.
 func (b *Bus) Close() {
-	var subs []*Subscription
-
 	b.mutex.RLock()
+	subs := make([]*Subscription, 0, len(b.subs))
 	for _, sub := range b.subs {
 		subs = append(subs, sub)
 	}

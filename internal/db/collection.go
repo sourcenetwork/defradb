@@ -684,8 +684,8 @@ func (c *collection) save(
 		Block:      headNode,
 		IsCreate:   isCreate,
 	}
-	txn.OnSuccess(func() {
-		c.db.sysEventBus.Publish(event.NewMessage(event.UpdateEventName, updateEvent))
+	txn.OnSuccessAsync(func() {
+		c.db.sysBus.Publish(event.NewMessage(event.UpdateEventName, updateEvent))
 	})
 
 	txn.OnSuccess(func() {

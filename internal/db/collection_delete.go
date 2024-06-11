@@ -173,8 +173,8 @@ func (c *collection) applyDelete(
 		SchemaRoot: c.Schema().Root,
 		Block:      b,
 	}
-	txn.OnSuccess(func() {
-		c.db.sysEventBus.Publish(event.NewMessage(event.UpdateEventName, updateEvent))
+	txn.OnSuccessAsync(func() {
+		c.db.sysBus.Publish(event.NewMessage(event.UpdateEventName, updateEvent))
 	})
 
 	return nil

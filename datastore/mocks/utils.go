@@ -68,6 +68,7 @@ func prepareDAGStore(t *testing.T) *DAGStore {
 func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	txn := NewTxn(t)
 	txn.EXPECT().OnSuccess(mock.Anything).Maybe()
+	txn.EXPECT().OnSuccessAsync(mock.Anything).Maybe()
 
 	result := &MultiStoreTxn{
 		Txn:             txn,
