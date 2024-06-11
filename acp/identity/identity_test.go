@@ -31,18 +31,47 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 }
 
 func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
+	execTestWithMockecProducer(
+		func() {
+			pubKey := &secp256k1.PublicKey{}
+			did, err := DIDFromPublicKey(pubKey)
+
+			require.Empty(t, did)
+			require.ErrorIs(t, err, ErrDIDCreation)
+		},
+	)
+}
+
+func Test_FromPublicKey_ProducerFailureCausesError(t *testing.T) {
+	execTestWithMockecProducer(
+		func() {
+			pubKey := &secp256k1.PublicKey{}
+			identity, err := FromPublicKey(pubKey)
+
+			require.Equal(t, None, identity)
+			require.ErrorIs(t, err, ErrDIDCreation)
+		},
+	)
+}
+
+func Test_FromPrivateKey_ProducerFailureCausesError(t *testing.T) {
+	execTestWithMockecProducer(
+		func() {
+			key := &secp256k1.PrivateKey{}
+			identity, err := FromPrivateKey(key)
+
+			require.Equal(t, None, identity)
+			require.ErrorIs(t, err, ErrDIDCreation)
+		},
+	)
+}
+
+func execTestWithMockecProducer(test func()) {
 	// pre: replace the producer function
 	didProducer = func(kt crypto.KeyType, publicKey []byte) (*key.DIDKey, error) {
 		return nil, fmt.Errorf("some did generation error")
 	}
-
-	pubKey := &secp256k1.PublicKey{}
-
-	did, err := DIDFromPublicKey(pubKey)
-
-	require.Empty(t, did)
-	require.ErrorIs(t, err, ErrDIDCreation)
-
+	test()
 	// post: restore producer function
 	didProducer = key.CreateDIDKey
 }
