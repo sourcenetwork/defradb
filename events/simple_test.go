@@ -109,8 +109,8 @@ func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
 	assert.Equal(t, 0, <-ch)
 }
 func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan2(t *testing.T) {
-	c := NewSimpleChannel[Update](10000000, 5)
-	for i := 0; i < 1000; i++ {
+	c := NewSimpleChannel[Update](1000000, 5)
+	for i := 0; i < 100; i++ {
 		sub, err := c.Subscribe()
 		if err != nil {
 			panic(err)
@@ -118,7 +118,7 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan2(t *testing
 		defer c.Unsubscribe(sub)
 		go handleChannelMessages(sub)
 	}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		c.Publish(
 			Update{
 				DocID: "test",
@@ -129,6 +129,6 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan2(t *testing
 func handleChannelMessages(sub Subscription[Update]) {
 	for msg := range sub {
 		_ = msg
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1 * time.Millisecond)
 	}
 }
