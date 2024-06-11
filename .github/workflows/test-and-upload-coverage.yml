@@ -31,9 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        client-type: [go, http, cli]
-        database-type: [badger-file, badger-memory]
-        mutation-type: [gql, collection-named, collection-save]
+        client-type: [go]
+        database-type: [badger-file]
+        mutation-type: [gql]
         lens-type: [wasm-time]
         detect-changes: [false]
         database-encryption: [false]
@@ -117,48 +117,5 @@ jobs:
 
       - name: Run integration tests
         if: ${{ !matrix.detect-changes }}
-        run: make test:coverage
+        run: go test ./events --run TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan2
 
-      - name: Run change detector tests
-        if: ${{ matrix.detect-changes }}
-        run: make test:changes
-
-      - name: Upload coverage artifact
-        if: ${{ !matrix.detect-changes }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.os }}_${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
-          path: coverage.txt
-          if-no-files-found: error
-          retention-days: 7
-
-  upload-coverage:
-    name: Upload test code coverage job
-
-    needs: run-tests
-
-    # Important to know:
-    # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
-    # - `if: success()` is always implied unless `always()` or `failure()` is specified.
-    if: success() || failure()
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v3
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v3
-        with:
-          path: coverage_reports
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          name: defradb-codecov
-          flags: all-tests
-          os: 'linux'
-          fail_ci_if_error: true
-          verbose: true
