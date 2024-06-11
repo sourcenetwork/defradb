@@ -378,7 +378,8 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
 	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	identity := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
 
 	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
@@ -436,7 +437,8 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
 	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	identity := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
 
 	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
@@ -802,7 +804,8 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	identity := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
 
 	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
