@@ -28,47 +28,47 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -93,7 +93,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 			},
 			{
 				"name": "John Grisham",
-				"_sum": 20.799999999999997,
+				"_sum": 20.8,
 			},
 			{
 				"name": "Not a Writer",
@@ -117,47 +117,47 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -182,7 +182,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 			},
 			{
 				"name": "John Grisham",
-				"_sum": 20.799999999999997,
+				"_sum": 20.8,
 			},
 			{
 				"name": "Cornelia Funke",
@@ -207,47 +207,47 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -277,14 +277,14 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				"sum2": 0.0,
 			},
 			{
-				"name": "John Grisham",
-				"sum1": 20.799999999999997,
-				"sum2": 4.9 + 4.5,
-			},
-			{
 				"name": "Cornelia Funke",
 				"sum1": 4.8,
 				"sum2": 4.8,
+			},
+			{
+				"name": "John Grisham",
+				"sum1": 20.8,
+				"sum2": 4.9 + 4.5,
 			},
 		},
 	}
@@ -305,47 +305,47 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -375,14 +375,14 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				"sum2": 0.0,
 			},
 			{
-				"name": "John Grisham",
-				"sum1": 20.799999999999997,
-				"sum2": 4.0 + 3.2,
-			},
-			{
 				"name": "Cornelia Funke",
 				"sum1": 4.8,
 				"sum2": 4.8,
+			},
+			{
+				"name": "John Grisham",
+				"sum1": 20.8,
+				"sum2": 4.0 + 3.2,
 			},
 		},
 	}
@@ -404,47 +404,47 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -472,6 +472,14 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				"LimitOrderFields": []map[string]any{},
 			},
 			{
+				"LimitOrderSum": 4.8,
+				"LimitOrderFields": []map[string]any{
+					{
+						"name": "Theif Lord",
+					},
+				},
+			},
+			{
 				"LimitOrderSum": 3.2 + 4.0,
 				"LimitOrderFields": []map[string]any{
 					{
@@ -479,14 +487,6 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 					},
 					{
 						"name": "The Rooster Bar",
-					},
-				},
-			},
-			{
-				"LimitOrderSum": 4.8,
-				"LimitOrderFields": []map[string]any{
-					{
-						"name": "Theif Lord",
 					},
 				},
 			},
@@ -510,47 +510,47 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -578,6 +578,14 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				"LimitOrderFields": []map[string]any{},
 			},
 			{
+				"LimitOrderSum": 4.8,
+				"LimitOrderFields": []map[string]any{
+					{
+						"name": "Theif Lord",
+					},
+				},
+			},
+			{
 				"LimitOrderSum": 4.9 + 4.5,
 				"LimitOrderFields": []map[string]any{
 					{
@@ -585,14 +593,6 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 					},
 					{
 						"name": "A Time for Mercy",
-					},
-				},
-			},
-			{
-				"LimitOrderSum": 4.8,
-				"LimitOrderFields": []map[string]any{
-					{
-						"name": "Theif Lord",
 					},
 				},
 			},

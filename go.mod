@@ -49,7 +49,7 @@ require (
 	github.com/tidwall/btree v1.7.0
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
-	github.com/zalando/go-keyring v0.2.4
+	github.com/zalando/go-keyring v0.2.5
 	go.opentelemetry.io/otel/metric v1.27.0
 	go.opentelemetry.io/otel/sdk/metric v1.27.0
 	go.uber.org/zap v1.27.0
@@ -61,10 +61,19 @@ require (
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1 // indirect
+	cosmossdk.io/api v0.7.5 // indirect
+	cosmossdk.io/collections v0.4.0 // indirect
+	cosmossdk.io/core v0.11.0 // indirect
+	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/errors v1.0.1 // indirect
 	cosmossdk.io/log v1.3.1 // indirect
 	cosmossdk.io/math v1.3.0 // indirect
 	cosmossdk.io/store v1.1.0 // indirect
+	cosmossdk.io/x/tx v0.13.3 // indirect
+	filippo.io/edwards25519 v1.0.0 // indirect
+	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
+	github.com/99designs/keyring v1.2.1 // indirect
+	github.com/DataDog/datadog-go v3.2.0+incompatible // indirect
 	github.com/DataDog/zstd v1.5.5 // indirect
 	github.com/Jorropo/jsync v1.0.1 // indirect
 	github.com/NathanBaulch/protoc-gen-cobra v1.2.1 // indirect
@@ -83,6 +92,7 @@ require (
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/cometbft/cometbft v0.38.7 // indirect
+	github.com/cometbft/cometbft-db v0.9.1 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cosmos/cosmos-db v1.0.2 // indirect

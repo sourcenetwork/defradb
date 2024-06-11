@@ -40,7 +40,7 @@ func init() {
 		&crdt.CRDT{},
 		&crdt.LWWRegDelta{},
 		&crdt.CompositeDAGDelta{},
-		&crdt.CounterDelta[int64]{}, // Only need to call one of the CounterDelta types.
+		&crdt.CounterDelta{},
 	)
 }
 
@@ -149,10 +149,8 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 		crdtDelta = crdt.CRDT{LWWRegDelta: delta}
 	case *crdt.CompositeDAGDelta:
 		crdtDelta = crdt.CRDT{CompositeDAGDelta: delta}
-	case *crdt.CounterDelta[int64]:
-		crdtDelta = crdt.CRDT{CounterDeltaInt: delta}
-	case *crdt.CounterDelta[float64]:
-		crdtDelta = crdt.CRDT{CounterDeltaFloat: delta}
+	case *crdt.CounterDelta:
+		crdtDelta = crdt.CRDT{CounterDelta: delta}
 	}
 
 	return &Block{

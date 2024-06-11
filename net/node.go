@@ -36,8 +36,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-
 	"github.com/multiformats/go-multiaddr"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
 
@@ -70,8 +70,9 @@ type Node struct {
 	// receives an event when a pushLog request has been processed.
 	pushLogEvent chan EvtReceivedPushLog
 
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx      context.Context
+	cancel   context.CancelFunc
+	dhtClose func() error
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into libp2p.
@@ -79,7 +80,7 @@ func NewNode(
 	ctx context.Context,
 	db client.DB,
 	opts ...NodeOpt,
-) (*Node, error) {
+) (node *Node, err error) {
 	options := DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
@@ -100,6 +101,13 @@ func NewNode(
 	}
 
 	fin := finalizer.NewFinalizer()
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if node == nil {
+			cancel()
+		}
+	}()
 
 	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
 	if err != nil {
@@ -170,9 +178,6 @@ func NewNode(
 			return nil, fin.Cleanup(err)
 		}
 	}
-
-	ctx, cancel := context.WithCancel(ctx)
-
 	peer, err := NewPeer(
 		ctx,
 		db,
@@ -183,7 +188,6 @@ func NewNode(
 		options.GRPCDialOptions,
 	)
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 
@@ -201,6 +205,7 @@ func NewNode(
 		DB:           db,
 		ctx:          ctx,
 		cancel:       cancel,
+		dhtClose:     ddht.Close,
 	}
 
 	n.subscribeToPeerConnectionEvents()
@@ -268,12 +273,28 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 		return
 	}
 	go func() {
-		for e := range sub.Out() {
+		for {
 			select {
-			case n.peerEvent <- e.(event.EvtPeerConnectednessChanged):
-			default:
-				<-n.peerEvent
-				n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+			case <-n.ctx.Done():
+				err := sub.Close()
+				if err != nil {
+					log.ErrorContextE(
+						n.ctx,
+						"Failed to close peer connectedness changed event subscription",
+						err,
+					)
+				}
+				return
+			case e, ok := <-sub.Out():
+				if !ok {
+					return
+				}
+				select {
+				case n.peerEvent <- e.(event.EvtPeerConnectednessChanged):
+				default:
+					<-n.peerEvent
+					n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+				}
 			}
 		}
 	}()
@@ -290,12 +311,28 @@ func (n *Node) subscribeToPubSubEvents() {
 		return
 	}
 	go func() {
-		for e := range sub.Out() {
+		for {
 			select {
-			case n.pubSubEvent <- e.(EvtPubSub):
-			default:
-				<-n.pubSubEvent
-				n.pubSubEvent <- e.(EvtPubSub)
+			case <-n.ctx.Done():
+				err := sub.Close()
+				if err != nil {
+					log.ErrorContextE(
+						n.ctx,
+						"Failed to close pubsub event subscription",
+						err,
+					)
+				}
+				return
+			case e, ok := <-sub.Out():
+				if !ok {
+					return
+				}
+				select {
+				case n.pubSubEvent <- e.(EvtPubSub):
+				default:
+					<-n.pubSubEvent
+					n.pubSubEvent <- e.(EvtPubSub)
+				}
 			}
 		}
 	}()
@@ -312,12 +349,28 @@ func (n *Node) subscribeToPushLogEvents() {
 		return
 	}
 	go func() {
-		for e := range sub.Out() {
+		for {
 			select {
-			case n.pushLogEvent <- e.(EvtReceivedPushLog):
-			default:
-				<-n.pushLogEvent
-				n.pushLogEvent <- e.(EvtReceivedPushLog)
+			case <-n.ctx.Done():
+				err := sub.Close()
+				if err != nil {
+					log.ErrorContextE(
+						n.ctx,
+						"Failed to close push log event subscription",
+						err,
+					)
+				}
+				return
+			case e, ok := <-sub.Out():
+				if !ok {
+					return
+				}
+				select {
+				case n.pushLogEvent <- e.(EvtReceivedPushLog):
+				default:
+					<-n.pushLogEvent
+					n.pushLogEvent <- e.(EvtReceivedPushLog)
+				}
 			}
 		}
 	}()
@@ -427,6 +480,12 @@ func (n Node) Close() {
 	}
 	if n.Peer != nil {
 		n.Peer.Close()
+	}
+	if n.dhtClose != nil {
+		err := n.dhtClose()
+		if err != nil {
+			log.ErrorContextE(n.ctx, "Failed to close DHT", err)
+		}
 	}
 	n.DB.Close()
 }

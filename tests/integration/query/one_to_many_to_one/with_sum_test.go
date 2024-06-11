@@ -24,7 +24,6 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			// Authors
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-0c100ad0-1511-5f37-984d-66fa8534b06f, Has written 5 books
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -34,7 +33,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 Book
+				// Has written 1 Book
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -44,49 +43,49 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
-				Doc: `{
-					"name": "The Rooster Bar",
-					"rating": 4,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
+				// Has 1 Publisher
+				DocMap: map[string]any{
+					"name":      "The Rooster Bar",
+					"rating":    4,
+					"author_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-afdd1769-b056-5bb1-b743-116a347b4b87", Has 1 Publisher
-				Doc: `{
-					"name": "Theif Lord",
-					"rating": 4.8,
-					"author_id": "bae-0c100ad0-1511-5f37-984d-66fa8534b06f"
-				}`,
+				// Has 1 Publisher
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-fbba03cf-c77c-5850-a6a4-0d9992d489e1", Has no Publisher.
-				Doc: `{
-					"name": "The Associate",
-					"rating": 4.2,
-					"author_id": "bae-0c100ad0-1511-5f37-984d-66fa8534b06f"
-				}`,
+				// Has no Publisher.
+				DocMap: map[string]any{
+					"name":      "The Associate",
+					"rating":    4.2,
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			// Publishers
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Only Publisher of The Rooster Bar",
-					"address": "1 Rooster Ave., Waterloo, Ontario",
+				DocMap: map[string]any{
+					"name":       "Only Publisher of The Rooster Bar",
+					"address":    "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
-			    }`,
+					"book_id":    testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Only Publisher of Theif Lord",
-					"address": "1 Theif Lord, Waterloo, Ontario",
+				DocMap: map[string]any{
+					"name":       "Only Publisher of Theif Lord",
+					"address":    "1 Theif Lord, Waterloo, Ontario",
 					"yearOpened": 2020,
-					"book_id": "bae-afdd1769-b056-5bb1-b743-116a347b4b87"
-			    }`,
+					"book_id":    testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

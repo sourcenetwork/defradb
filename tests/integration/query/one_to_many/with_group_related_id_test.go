@@ -16,7 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TODO: Don't return grouped field if not selected. [https://github.com/sourcenetwork/defradb/issues/1582].
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many query with groupBy on related id (from many side).",
@@ -35,53 +34,53 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 			}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,
@@ -91,28 +90,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 		},
 		Results: []map[string]any{
 			{
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				"_group": []map[string]any{
-					{
-						"name":   "Candide",
-						"rating": 4.95,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-					{
-						"name":   "Zadig",
-						"rating": 4.91,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-				},
-			},
-			{
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 				"_group": []map[string]any{
 					{
 						"name":   "The Client",
@@ -141,7 +119,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				},
 			},
 			{
-				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+				"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
 				"_group": []map[string]any{
 					{
 						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -149,6 +127,27 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 						"author": map[string]any{
 							"age":  int64(327),
 							"name": "Simon Pelloutier",
+						},
+					},
+				},
+			},
+			{
+				"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+				"_group": []map[string]any{
+					{
+						"name":   "Candide",
+						"rating": 4.95,
+						"author": map[string]any{
+							"age":  int64(327),
+							"name": "Voltaire",
+						},
+					},
+					{
+						"name":   "Zadig",
+						"rating": 4.91,
+						"author": map[string]any{
+							"age":  int64(327),
+							"name": "Voltaire",
 						},
 					},
 				},
@@ -177,53 +176,53 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 			}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,
@@ -233,28 +232,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 		},
 		Results: []map[string]any{
 			{
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-				"_group": []map[string]any{
-					{
-						"name":   "Candide",
-						"rating": 4.95,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-					{
-						"name":   "Zadig",
-						"rating": 4.91,
-						"author": map[string]any{
-							"age":  int64(327),
-							"name": "Voltaire",
-						},
-					},
-				},
-			},
-			{
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 				"_group": []map[string]any{
 					{
 						"name":   "The Client",
@@ -283,7 +261,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				},
 			},
 			{
-				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+				"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
 				"_group": []map[string]any{
 					{
 						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -295,13 +273,33 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 					},
 				},
 			},
+			{
+				"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+				"_group": []map[string]any{
+					{
+						"name":   "Candide",
+						"rating": 4.95,
+						"author": map[string]any{
+							"age":  int64(327),
+							"name": "Voltaire",
+						},
+					},
+					{
+						"name":   "Zadig",
+						"rating": 4.91,
+						"author": map[string]any{
+							"age":  int64(327),
+							"name": "Voltaire",
+						},
+					},
+				},
+			},
 		},
 	}
 
 	executeTestCase(t, test)
 }
 
-// TODO: Don't return grouped field if not selected. [https://github.com/sourcenetwork/defradb/issues/1582].
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many query with groupBy on related id (from single side).",
@@ -318,53 +316,53 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 		}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,
@@ -396,53 +394,53 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 		}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,

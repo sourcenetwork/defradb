@@ -17,8 +17,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
-	initialSchemaVersionId := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	updatedSchemaVersionId := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
+	initialSchemaVersionID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	updatedSchemaVersionID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with update after schema update, version join",
@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 						"name": "John",
 						"_version": []map[string]any{
 							{
-								"schemaVersionId": initialSchemaVersionId,
+								"schemaVersionId": initialSchemaVersionID,
 							},
 						},
 					},
@@ -89,11 +89,11 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 						"_version": []map[string]any{
 							{
 								// Update commit
-								"schemaVersionId": updatedSchemaVersionId,
+								"schemaVersionId": updatedSchemaVersionID,
 							},
 							{
 								// Create commit
-								"schemaVersionId": initialSchemaVersionId,
+								"schemaVersionId": initialSchemaVersionID,
 							},
 						},
 					},
@@ -105,8 +105,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 }
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
-	initialSchemaVersionId := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	updatedSchemaVersionId := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
+	initialSchemaVersionID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	updatedSchemaVersionID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with update after schema update, commits query",
@@ -147,11 +147,11 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 				Results: []map[string]any{
 					{
 						// Update commit
-						"schemaVersionId": updatedSchemaVersionId,
+						"schemaVersionId": updatedSchemaVersionID,
 					},
 					{
 						// Create commit
-						"schemaVersionId": initialSchemaVersionId,
+						"schemaVersionId": initialSchemaVersionID,
 					},
 				},
 			},

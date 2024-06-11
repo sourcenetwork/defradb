@@ -16,185 +16,117 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "One-to-many relation query from one side",
-			Request: `query {
-						Book {
-							name
-							rating
-							author {
-								name
-							}
-							reviewedBy {
-								name
-								age
-							}
-						}
-					}`,
-			Docs: map[int][]string{
-				//books
-				0: {
-					`{
-						"name": "Painted House",
-						"rating": 4.9,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-					`{
-						"name": "A Time for Mercy",
-						"rating": 4.5,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-					`{
-						"name": "Theif Lord",
-						"rating": 4.8,
-						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-				},
-				//authors
-				1: {
-					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					`{
-						"name": "John Grisham",
-						"age": 65,
-						"verified": true
-					}`,
-					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					`{
-						"name": "Cornelia Funke",
-						"age": 62,
-						"verified": false
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"name":   "Painted House",
-					"rating": 4.9,
-					"author": map[string]any{
-						"name": "John Grisham",
-					},
-					"reviewedBy": map[string]any{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-					},
-				},
-				{
-					"name":   "Theif Lord",
-					"rating": 4.8,
-					"author": map[string]any{
-						"name": "Cornelia Funke",
-					},
-					"reviewedBy": map[string]any{
-						"name": "John Grisham",
-						"age":  int64(65),
-					},
-				},
-				{
-					"name":   "A Time for Mercy",
-					"rating": 4.5,
-					"author": map[string]any{
-						"name": "John Grisham",
-					},
-					"reviewedBy": map[string]any{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-					},
-				},
-			},
-		},
-		{
-			Description: "One-to-many relation query from many side",
-			Request: `query {
-				Author {
-					name
-					age
-					written {
-						name
+func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from one side",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author @relation(name: "written_books")
+						reviewedBy: Author @relation(name: "reviewed_books")
 					}
-					reviewed {
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						written: [Book] @relation(name: "written_books")
+						reviewed: [Book] @relation(name: "reviewed_books")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Painted House",
+					"rating":        4.9,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "A Time for Mercy",
+					"rating":        4.5,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Theif Lord",
+					"rating":        4.8,
+					"author_id":     testUtils.NewDocIndex(1, 1),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
 						name
 						rating
+						author {
+							name
+						}
+						reviewedBy {
+							name
+							age
+						}
 					}
-				}
-			}`,
-			Docs: map[int][]string{
-				//books
-				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-					`{
-						"name": "Painted House",
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
 						"rating": 4.9,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-					`{
-						"name": "A Time for Mercy",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+						"reviewedBy": map[string]any{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+						},
+					},
+					{
+						"name":   "A Time for Mercy",
 						"rating": 4.5,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-					`{
-						"name": "Theif Lord",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+						"reviewedBy": map[string]any{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+						},
+					},
+					{
+						"name":   "Theif Lord",
 						"rating": 4.8,
-						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-				},
-				//authors
-				1: {
-					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					`{
-						"name": "John Grisham",
-						"age": 65,
-						"verified": true
-					}`,
-					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					`{
-						"name": "Cornelia Funke",
-						"age": 62,
-						"verified": false
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"name": "John Grisham",
-					"age":  int64(65),
-					"reviewed": []map[string]any{
-						{
-							"name":   "Theif Lord",
-							"rating": 4.8,
+						"author": map[string]any{
+							"name": "Cornelia Funke",
 						},
-					},
-					"written": []map[string]any{
-						{
-							"name": "Painted House",
-						},
-						{
-							"name": "A Time for Mercy",
-						},
-					},
-				},
-				{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
-					"reviewed": []map[string]any{
-						{
-							"name":   "Painted House",
-							"rating": 4.9,
-						},
-						{
-							"name":   "A Time for Mercy",
-							"rating": 4.5,
-						},
-					},
-					"written": []map[string]any{
-						{
-							"name": "Theif Lord",
+						"reviewedBy": map[string]any{
+							"name": "John Grisham",
+							"age":  int64(65),
 						},
 					},
 				},
@@ -202,247 +134,445 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from many side",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author @relation(name: "written_books")
+						reviewedBy: Author @relation(name: "reviewed_books")
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						written: [Book] @relation(name: "written_books")
+						reviewed: [Book] @relation(name: "reviewed_books")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Painted House",
+					"rating":        4.9,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "A Time for Mercy",
+					"rating":        4.5,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Theif Lord",
+					"rating":        4.8,
+					"author_id":     testUtils.NewDocIndex(1, 1),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						age
+						written {
+							name
+						}
+						reviewed {
+							name
+							rating
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Cornelia Funke",
+						"age":  int64(62),
+						"reviewed": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+							},
+						},
+						"written": []map[string]any{
+							{
+								"name": "Theif Lord",
+							},
+						},
+					},
+					{
+						"name": "John Grisham",
+						"age":  int64(65),
+						"reviewed": []map[string]any{
+							{
+								"name":   "Theif Lord",
+								"rating": 4.8,
+							},
+						},
+						"written": []map[string]any{
+							{
+								"name": "Painted House",
+							},
+							{
+								"name": "A Time for Mercy",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
+
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "One-to-many relation query from one side",
-			Request: `query {
-						Book {
-							name
-							rating
-							author {
-								name
-							}
-							reviewedBy {
-								name
-								age
-							}
-							price {
-								currency
-								value
-							}
-						}
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from one side",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						price: Price
+						author: Author @relation(name: "written_books")
+						reviewedBy: Author @relation(name: "reviewed_books")
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						written: [Book] @relation(name: "written_books")
+						reviewed: [Book] @relation(name: "reviewed_books")
+					}
+
+					type Price {
+						currency: String
+						value: Float
+						books: [Book]
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+						"currency": "GBP",
+						"value": 12.99
 					}`,
-			Docs: map[int][]string{
-				//books
-				0: {
-					`{
-						"name": "Painted House",
-						"rating": 4.9,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+						"currency": "SEK",
+						"value": 129
 					}`,
-					`{
-						"name": "A Time for Mercy",
-						"rating": 4.5,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"price_id": "bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d"
-					}`,
-					`{
-						"name": "Theif Lord",
-						"rating": 4.8,
-						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
-					}`,
-				},
-				//authors
-				1: {
-					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
 					}`,
-				},
-				2: {
-					// bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd
-					`{
-						"currency": "GBP",
-						"value": 12.99
-					}`,
-					// bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d
-					`{
-						"currency": "SEK",
-						"value": 129
-					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Painted House",
+					"rating":        4.9,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"price_id":      testUtils.NewDocIndex(2, 0),
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":   "Theif Lord",
-					"rating": 4.8,
-					"author": map[string]any{
-						"name": "Cornelia Funke",
-					},
-					"reviewedBy": map[string]any{
-						"name": "John Grisham",
-						"age":  int64(65),
-					},
-					"price": map[string]any{
-						"currency": "GBP",
-						"value":    12.99,
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "A Time for Mercy",
+					"rating":        4.5,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"price_id":      testUtils.NewDocIndex(2, 1),
 				},
-				{
-					"name":   "A Time for Mercy",
-					"rating": 4.5,
-					"author": map[string]any{
-						"name": "John Grisham",
-					},
-					"reviewedBy": map[string]any{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-					},
-					"price": map[string]any{
-						"currency": "SEK",
-						"value":    float64(129),
-					},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Theif Lord",
+					"rating":        4.8,
+					"author_id":     testUtils.NewDocIndex(1, 1),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"price_id":      testUtils.NewDocIndex(2, 0),
 				},
-				{
-					"name":   "Painted House",
-					"rating": 4.9,
-					"author": map[string]any{
-						"name": "John Grisham",
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						rating
+						author {
+							name
+						}
+						reviewedBy {
+							name
+							age
+						}
+						price {
+							currency
+							value
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+						"reviewedBy": map[string]any{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+						},
+						"price": map[string]any{
+							"currency": "GBP",
+							"value":    12.99,
+						},
 					},
-					"reviewedBy": map[string]any{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
+					{
+						"name":   "A Time for Mercy",
+						"rating": 4.5,
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+						"reviewedBy": map[string]any{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+						},
+						"price": map[string]any{
+							"currency": "SEK",
+							"value":    float64(129),
+						},
 					},
-					"price": map[string]any{
-						"currency": "GBP",
-						"value":    12.99,
+					{
+						"name":   "Theif Lord",
+						"rating": 4.8,
+						"author": map[string]any{
+							"name": "Cornelia Funke",
+						},
+						"reviewedBy": map[string]any{
+							"name": "John Grisham",
+							"age":  int64(65),
+						},
+						"price": map[string]any{
+							"currency": "GBP",
+							"value":    12.99,
+						},
 					},
 				},
 			},
 		},
-		{
-			Description: "One-to-many relation query from many side",
-			Request: `query {
-				Author {
-					name
-					age
-					written {
-						name
-						price {
-							value
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from many side",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+						type Book {
+							name: String
+							rating: Float
+							price: Price
+							author: Author @relation(name: "written_books")
+							reviewedBy: Author @relation(name: "reviewed_books")
 						}
-					}
-					reviewed {
-						name
-						rating
-					}
-				}
-			}`,
-			Docs: map[int][]string{
-				//books
-				0: {
-					`{
-						"name": "Painted House",
-						"rating": 4.9,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
+	
+						type Author {
+							name: String
+							age: Int
+							verified: Boolean
+							written: [Book] @relation(name: "written_books")
+							reviewed: [Book] @relation(name: "reviewed_books")
+						}
+
+						type Price {
+							currency: String
+							value: Float
+							books: [Book]
+						}
+					`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+						"currency": "GBP",
+						"value": 12.99
 					}`,
-					`{
-						"name": "A Time for Mercy",
-						"rating": 4.5,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"price_id": "bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d"
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+						"currency": "SEK",
+						"value": 129
 					}`,
-					`{
-						"name": "Theif Lord",
-						"rating": 4.8,
-						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
-					}`,
-				},
-				//authors
-				1: {
-					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
 					}`,
-				},
-				2: {
-					// bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd
-					`{
-						"currency": "GBP",
-						"value": 12.99
-					}`,
-					// bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d
-					`{
-						"currency": "SEK",
-						"value": 129
-					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Painted House",
+					"rating":        4.9,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"price_id":      testUtils.NewDocIndex(2, 0),
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name": "John Grisham",
-					"age":  int64(65),
-					"reviewed": []map[string]any{
-						{
-							"name":   "Theif Lord",
-							"rating": 4.8,
-						},
-					},
-					"written": []map[string]any{
-						{
-							"name": "A Time for Mercy",
-							"price": map[string]any{
-								"value": float64(129),
-							},
-						},
-						{
-							"name": "Painted House",
-							"price": map[string]any{
-								"value": 12.99,
-							},
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "A Time for Mercy",
+					"rating":        4.5,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"price_id":      testUtils.NewDocIndex(2, 1),
 				},
-				{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
-					"reviewed": []map[string]any{
-						{
-							"name":   "A Time for Mercy",
-							"rating": 4.5,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Theif Lord",
+					"rating":        4.8,
+					"author_id":     testUtils.NewDocIndex(1, 1),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"price_id":      testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						age
+						written {
+							name
+							price {
+								value
+							}
+						}
+						reviewed {
+							name
+							rating
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Cornelia Funke",
+						"age":  int64(62),
+						"reviewed": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+							},
 						},
-						{
-							"name":   "Painted House",
-							"rating": 4.9,
+						"written": []map[string]any{
+							{
+								"name": "Theif Lord",
+								"price": map[string]any{
+									"value": 12.99,
+								},
+							},
 						},
 					},
-					"written": []map[string]any{
-						{
-							"name": "Theif Lord",
-							"price": map[string]any{
-								"value": 12.99,
+					{
+						"name": "John Grisham",
+						"age":  int64(65),
+						"reviewed": []map[string]any{
+							{
+								"name":   "Theif Lord",
+								"rating": 4.8,
+							},
+						},
+						"written": []map[string]any{
+							{
+								"name": "Painted House",
+								"price": map[string]any{
+									"value": 12.99,
+								},
+							},
+							{
+								"name": "A Time for Mercy",
+								"price": map[string]any{
+									"value": float64(129),
+								},
 							},
 						},
 					},
@@ -451,7 +581,5 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	testUtils.ExecuteTestCase(t, test)
 }

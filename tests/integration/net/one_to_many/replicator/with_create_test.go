@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package peer_replicator_test
+package replicator
 
 import (
 	"testing"
@@ -18,84 +18,62 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PPeerReplicatorWithCreate(t *testing.T) {
+// TestP2FullPReplicator tests document syncing between a node and a replicator.
+func TestP2POneToManyReplicator(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type Author {
 						Name: String
-						Age: Int
+						Books: [Book]
+					}
+					type Book {
+						Name: String
+						Author: Author
 					}
 				`,
 			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
 			testUtils.ConfigureReplicator{
-				SourceNodeID: 0,
-				TargetNodeID: 2,
-			},
-			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
+				// Create Saadi on the first node
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
 				Doc: `{
-					"Name": "Shahzad",
-					"Age": 3000
+					"Name": "Saadi"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				// Create Gulistan on the first node
+				CollectionID: 1,
+				Doc: `{
+					"Name": "Gulistan",
+					"Author_id": "bae-6a4c24c0-7b0b-5f51-a274-132d7ca90499"
 				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				NodeID: immutable.Some(0),
+				// Both Saadi and Gulistan should be synced to all nodes and linked correctly
 				Request: `query {
-					Users {
-						Age
+					Book {
+						Name
+						Author {
+							Name
+						}
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": int64(21),
-					},
-					{
-						"Age": int64(3000),
-					},
-				},
-			},
-			testUtils.Request{
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						Age
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
-					},
-				},
-			},
-			testUtils.Request{
-				NodeID: immutable.Some(2),
-				Request: `query {
-					Users {
-						Age
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
-					},
-					{
-						"Age": int64(3000),
+						"Name": "Gulistan",
+						"Author": map[string]any{
+							"Name": "Saadi",
+						},
 					},
 				},
 			},

@@ -22,18 +22,15 @@ import (
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
-	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/events"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/db"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -45,7 +42,6 @@ import (
 type server struct {
 	peer *Peer
 	opts []grpc.DialOption
-	db   client.DB
 
 	topics map[string]pubsubTopic
 	mu     sync.Mutex
@@ -72,12 +68,11 @@ type pubsubTopic struct {
 
 // newServer creates a new network server that handle/directs RPC requests to the
 // underlying DB instance.
-func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) {
+func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s := &server{
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]pubsubTopic),
-		db:     db,
 		docQueue: &docQueue{
 			docs: make(map[string]chan struct{}),
 		},
@@ -97,7 +92,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		}
 
 		// Get all DocIDs across all collections in the DB
-		cols, err := s.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
+		cols, err := s.peer.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -224,157 +219,52 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	// make sure were not processing twice
-	if canVisit := s.peer.queuedChildren.Visit(cid); !canVisit {
-		return &pb.PushLogReply{}, nil
-	}
-	defer s.peer.queuedChildren.Remove(cid)
-
 	// check if we already have this block
-	exists, err := s.db.Blockstore().Has(ctx, cid)
+	exists, err := s.peer.db.Blockstore().Has(ctx, cid)
 	if err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("failed to check for existing block %s", cid), err)
+		return nil, NewErrCheckingForExistingBlock(err, cid.String())
 	}
 	if exists {
 		return &pb.PushLogReply{}, nil
 	}
 
-	dsKey := core.DataStoreKeyFromDocID(docID)
-
-	var txnErr error
-	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
-		// To prevent a potential deadlock on DAG sync if an error occures mid process, we handle
-		// each process on a single transaction.
-		txn, err := s.db.NewConcurrentTxn(ctx, false)
-		if err != nil {
-			return nil, err
-		}
-		defer txn.Discard(ctx)
-
-		// use a transaction for all operations
-		ctx = db.SetContextTxn(ctx, txn)
-
-		// Currently a schema is the best way we have to link a push log request to a collection,
-		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		col, err := s.getActiveCollection(ctx, s.db, string(req.Body.SchemaRoot))
-		if err != nil {
-			return nil, err
-		}
-
-		// Create a new DAG service with the current transaction
-		dagSyncer := s.peer.newDAGSyncerTxn(txn)
-
-		// handleComposite
-		block, err := coreblock.GetFromBytes(req.Body.Log.Block)
-		if err != nil {
-			return nil, errors.Wrap("failed to decode block", err)
-		}
-
-		var wg sync.WaitGroup
-		bp := newBlockProcessor(s.peer, txn, col, dsKey, dagSyncer)
-		err = bp.processRemoteBlock(ctx, &wg, block)
-		if err != nil {
-			log.ErrorContextE(
-				ctx,
-				"Failed to process remote block",
-				err,
-				corelog.String("DocID", dsKey.DocID),
-				corelog.Any("CID", cid),
-			)
-		}
-		wg.Wait()
-		bp.mergeBlocks(ctx)
-
-		err = s.syncIndexedDocs(ctx, col, docID)
-		if err != nil {
-			return nil, err
-		}
-
-		// dagWorkers specific to the DocID will have been spawned within handleChildBlocks.
-		// Once we are done with the dag syncing process, we can get rid of those workers.
-		if s.peer.closeJob != nil {
-			s.peer.closeJob <- dsKey.DocID
-		}
-
-		if txnErr = txn.Commit(ctx); txnErr != nil {
-			if errors.Is(txnErr, badger.ErrTxnConflict) {
-				continue
-			}
-			return &pb.PushLogReply{}, txnErr
-		}
-
-		// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-		// suscribe to the collection.
-		if !s.hasPubSubTopic(col.SchemaRoot()) {
-			err = s.addPubSubTopic(dsKey.DocID, true)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return &pb.PushLogReply{}, nil
-	}
-
-	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
-}
-
-func (*server) getActiveCollection(
-	ctx context.Context,
-	store client.Store,
-	schemaRoot string,
-) (client.Collection, error) {
-	cols, err := store.GetCollections(
-		ctx,
-		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(schemaRoot),
-		},
-	)
+	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
 	if err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
+		return nil, err
 	}
-	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
+
+	bp := newBlockProcessor(ctx, s.peer)
+	err = bp.processRemoteBlock(ctx, block)
+	if err != nil {
+		log.ErrorContextE(
+			ctx,
+			"Failed to process remote block",
+			err,
+			corelog.String("DocID", docID.String()),
+			corelog.Any("CID", cid),
+		)
 	}
-	var col client.Collection
-	for _, c := range cols {
-		if col != nil && col.Name().HasValue() && !c.Name().HasValue() {
-			continue
+	bp.wg.Wait()
+	if s.peer.db.Events().DAGMerges.HasValue() {
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
+			Cid:        cid,
+			SchemaRoot: string(req.Body.SchemaRoot),
+			Wg:         wg,
+		})
+		wg.Wait()
+	}
+
+	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
+	// suscribe to the collection.
+	if !s.hasPubSubTopic(string(req.Body.SchemaRoot)) {
+		err = s.addPubSubTopic(docID.String(), true)
+		if err != nil {
+			return nil, err
 		}
-		col = c
 	}
-	return col, nil
-}
-
-func (s *server) syncIndexedDocs(
-	ctx context.Context,
-	col client.Collection,
-	docID client.DocID,
-) error {
-	// remove transaction from old context
-	oldCtx := db.SetContextTxn(ctx, nil)
-
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
-	// Resolve while handling acp <> secondary indexes.
-	oldDoc, err := col.Get(oldCtx, docID, false)
-	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isNewDoc && err != nil {
-		return err
-	}
-
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
-	// Resolve while handling acp <> secondary indexes.
-	doc, err := col.Get(ctx, docID, false)
-	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isDeletedDoc && err != nil {
-		return err
-	}
-
-	if isDeletedDoc {
-		return col.DeleteDocIndex(oldCtx, oldDoc)
-	} else if isNewDoc {
-		return col.CreateDocIndex(ctx, doc)
-	} else {
-		return col.UpdateDocIndex(ctx, oldDoc, doc)
-	}
+	return &pb.PushLogReply{}, nil
 }
 
 // GetHeadLog receives a get head log request

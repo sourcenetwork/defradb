@@ -8,9 +8,12 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-# This workflow checks that all CLI documentation is up to date.
-# If the documentation is not up to date then this action will fail.
-name: Check CLI Documentation Workflow
+# This workflow checks that go mod tidy command we have set for the specific
+# go version is not broken, for example `go mod tidy -go=1.21.3`. This
+# can cause some head scratching at times, so better catch this in the PR.
+#
+# Inaddition to that also checks that we are currently in a `tidy` state.
+name: Check Tidy Workflow
 
 on:
   pull_request:
@@ -26,12 +29,13 @@ on:
       - develop
 
 jobs:
-  check-cli-documentation:
-    name: Check cli documentation job
+  check-tidy:
+    name: Check mod tidy job
 
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout code into the directory
         uses: actions/checkout@v3
 
@@ -41,12 +45,15 @@ jobs:
           go-version: "1.21"
           check-latest: true
 
-      - name: Try generating cli documentation
-        run: make docs:cli
+      # This checks mod tidy is not broken.
+      - name: Check mod tidy
+        run: make tidy
 
+      # This checks mod tidy is up to date.
       - name: Check no new changes exist
         uses: tj-actions/verify-changed-files@v20
         with:
           fail-if-changed: true
           files: |
-             docs/website/references/cli
+             go.mod
+             go.sum

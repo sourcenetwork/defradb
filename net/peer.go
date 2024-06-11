@@ -21,8 +21,6 @@ import (
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
 	exchange "github.com/ipfs/boxo/exchange"
-	dagsyncer "github.com/ipfs/boxo/fetcher"
-	dagsyncerbs "github.com/ipfs/boxo/fetcher/impl/blockservice"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	gostream "github.com/libp2p/go-libp2p-gostream"
@@ -44,10 +42,6 @@ import (
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
-var (
-	numWorkers = 5
-)
-
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
@@ -63,20 +57,11 @@ type Peer struct {
 	server *server
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
-	// Used to close the dagWorker pool for a given document.
-	// The string represents a docID.
-	closeJob chan string
-	sendJobs chan *dagJob
-
-	// outstanding log request currently being processed
-	queuedChildren *cidSafeSet
-
 	// replicators is a map from collectionName => peerId
 	replicators map[string]map[peer.ID]struct{}
 	mu          sync.Mutex
 
 	// peer DAG service
-	dagsyncerbs.FetcherConfig
 	exch  exchange.Interface
 	bserv blockservice.BlockService
 
@@ -100,20 +85,17 @@ func NewPeer(
 
 	ctx, cancel := context.WithCancel(ctx)
 	p := &Peer{
-		host:           h,
-		dht:            dht,
-		ps:             ps,
-		db:             db,
-		p2pRPC:         grpc.NewServer(serverOptions...),
-		ctx:            ctx,
-		cancel:         cancel,
-		closeJob:       make(chan string),
-		sendJobs:       make(chan *dagJob),
-		replicators:    make(map[string]map[peer.ID]struct{}),
-		queuedChildren: newCidSafeSet(),
+		host:        h,
+		dht:         dht,
+		ps:          ps,
+		db:          db,
+		p2pRPC:      grpc.NewServer(serverOptions...),
+		ctx:         ctx,
+		cancel:      cancel,
+		replicators: make(map[string]map[peer.ID]struct{}),
 	}
 	var err error
-	p.server, err = newServer(p, db, dialOptions...)
+	p.server, err = newServer(p, dialOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +106,6 @@ func NewPeer(
 	}
 
 	p.setupBlockService()
-	p.setupDAGService()
 
 	return p, nil
 }
@@ -189,9 +170,6 @@ func (p *Peer) Start() error {
 			log.ErrorContextE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
-
-	// start sendJobWorker
-	go p.sendJobWorker()
 
 	return nil
 }
@@ -494,17 +472,6 @@ func (p *Peer) setupBlockService() {
 	bswap := bitswap.New(p.ctx, bswapnet, p.db.Blockstore())
 	p.bserv = blockservice.New(p.db.Blockstore(), bswap)
 	p.exch = bswap
-}
-
-func (p *Peer) setupDAGService() {
-	p.FetcherConfig = dagsyncerbs.NewFetcherConfig(p.bserv)
-}
-
-func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) dagsyncer.Fetcher {
-	return p.FetcherWithSession(
-		p.ctx,
-		blockservice.NewSession(p.ctx, blockservice.New(txn.DAGstore(), p.exch)),
-	)
 }
 
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {

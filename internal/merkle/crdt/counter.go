@@ -22,37 +22,42 @@ import (
 )
 
 // MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.
-type MerkleCounter[T crdt.Incrementable] struct {
+type MerkleCounter struct {
 	*baseMerkleCRDT
 
-	reg crdt.Counter[T]
+	reg crdt.Counter
 }
 
 // NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
-func NewMerkleCounter[T crdt.Incrementable](
+func NewMerkleCounter(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
-) *MerkleCounter[T] {
-	register := crdt.NewCounter[T](store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement)
+	kind client.ScalarKind,
+) *MerkleCounter {
+	register := crdt.NewCounter(store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement, kind)
 	clk := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), register)
 	base := &baseMerkleCRDT{clock: clk, crdt: register}
-	return &MerkleCounter[T]{
+	return &MerkleCounter{
 		baseMerkleCRDT: base,
 		reg:            register,
 	}
 }
 
 // Save the value of the  Counter to the DAG.
-func (mc *MerkleCounter[T]) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
+func (mc *MerkleCounter) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
 	}
-	delta, err := mc.reg.Increment(ctx, value.Value().(T))
+	bytes, err := value.Bytes()
+	if err != nil {
+		return cidlink.Link{}, nil, err
+	}
+	delta, err := mc.reg.Increment(ctx, bytes)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}

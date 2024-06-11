@@ -36,13 +36,13 @@ func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 					},
 					{
-						"docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 					},
 					{
-						"docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 					},
 				},
 			},

@@ -23,7 +23,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 					Author {
 						name
 						published (
-								docIDs: ["bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d", "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca"]
+								docIDs: ["bae-5366ba09-54e8-5381-8169-a770aa9282ae", "bae-1ccf3043-d760-543e-be1b-6691fa6aa7a8"]
 							) {
 							name
 						}
@@ -32,31 +32,31 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 		Docs: map[int][]string{
 			//books
 			0: {
-				// bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d
+				// bae-5366ba09-54e8-5381-8169-a770aa9282ae
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				// bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca
+				// bae-1ccf3043-d760-543e-be1b-6691fa6aa7a8
 				`{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Firm",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,

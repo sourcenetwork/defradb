@@ -71,6 +71,18 @@ func (c *Transaction) OnDiscard(fn func()) {
 	panic("client side transaction")
 }
 
+func (c *Transaction) OnSuccessAsync(fn func()) {
+	panic("client side transaction")
+}
+
+func (c *Transaction) OnErrorAsync(fn func()) {
+	panic("client side transaction")
+}
+
+func (c *Transaction) OnDiscardAsync(fn func()) {
+	panic("client side transaction")
+}
+
 func (c *Transaction) Rootstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }

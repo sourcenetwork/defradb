@@ -124,14 +124,14 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
-					},
-					{
 						"_deleted": true,
 						"Name":     "John",
 						"Age":      int64(43),
+					},
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      int64(74),
 					},
 				},
 			},
@@ -196,14 +196,14 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				}`,
 				Results: []map[string]any{
 					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
-					},
-					{
 						"_deleted": true,
 						"Name":     "John",
 						"Age":      int64(60),
+					},
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      int64(74),
 					},
 				},
 			},
@@ -277,14 +277,14 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				}`,
 				Results: []map[string]any{
 					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
-					},
-					{
 						"_deleted": true,
 						"Name":     "John",
 						"Age":      int64(62),
+					},
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      int64(74),
 					},
 				},
 			},
@@ -368,14 +368,14 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				}`,
 				Results: []map[string]any{
 					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
-					},
-					{
 						"_deleted": true,
 						"Name":     "John",
 						"Age":      int64(62),
+					},
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      int64(74),
 					},
 				},
 			},
@@ -393,13 +393,13 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				Results: []map[string]any{
 					{
 						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+						"Name":     "John",
+						"Age":      int64(66),
 					},
 					{
 						"_deleted": false,
-						"Name":     "John",
-						"Age":      int64(66),
+						"Name":     "Andy",
+						"Age":      int64(74),
 					},
 				},
 			},

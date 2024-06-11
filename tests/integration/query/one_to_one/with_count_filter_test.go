@@ -25,7 +25,6 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -33,7 +32,6 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
@@ -41,7 +39,6 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-1c890922-ddf9-5820-a888-c7f977848934
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.5
@@ -49,7 +46,6 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation
 				Doc: `{
 					"name": "Yet Another Book",
 					"rating": 3.0
@@ -57,40 +53,39 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Some Writer",
-					"age": 45,
-					"verified": false,
-					"published_id": "bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Writer",
+					"age":          45,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Some Other Writer",
-					"age": 35,
-					"verified": false,
-					"published_id": "bae-1c890922-ddf9-5820-a888-c7f977848934"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Other Writer",
+					"age":          35,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 2),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Yet Another Writer",
-					"age": 30,
-					"verified": false,
-					"published_id": "TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Yet Another Writer",
+					"age":          30,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 3),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

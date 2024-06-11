@@ -71,10 +71,10 @@ func TestQuerySimpleWithIntNotEqualsNilFilterBlock(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Bob",
+				"Name": "John",
 			},
 			{
-				"Name": "John",
+				"Name": "Bob",
 			},
 		},
 	}

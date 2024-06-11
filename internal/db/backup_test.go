@@ -80,7 +80,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedMap := map[string]any{}
-	data := []byte(`{"Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_docIDNew":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`)
+	data := []byte(`{"Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"},{"_docID":"bae-f8a0f1e4-129e-50ab-98ed-1aa110810fb2","_docIDNew":"bae-f8a0f1e4-129e-50ab-98ed-1aa110810fb2","age":40,"name":"Bob"}]}`)
 	err = json.Unmarshal(data, &expectedMap)
 	require.NoError(t, err)
 	require.EqualValues(t, expectedMap, fileMap)
@@ -145,7 +145,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedMap := map[string]any{}
-	data := []byte(`{"Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_docIDNew":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`)
+	data := []byte(`{"Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"},{"_docID":"bae-f8a0f1e4-129e-50ab-98ed-1aa110810fb2","_docIDNew":"bae-f8a0f1e4-129e-50ab-98ed-1aa110810fb2","age":40,"name":"Bob"}]}`)
 	err = json.Unmarshal(data, &expectedMap)
 	require.NoError(t, err)
 	require.EqualValues(t, expectedMap, fileMap)
@@ -210,7 +210,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedMap := map[string]any{}
-	data := []byte(`{"Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}]}`)
+	data := []byte(`{"Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}]}`)
 	err = json.Unmarshal(data, &expectedMap)
 	require.NoError(t, err)
 	require.EqualValues(t, expectedMap, fileMap)
@@ -252,10 +252,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	col2, err := db.GetCollectionByName(ctx, "Book")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`), col2.Definition())
+	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-7fca96a2-5f01-5558-a81f-09b47587f26d"}`), col2.Definition())
 	require.NoError(t, err)
 
-	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`), col2.Definition())
+	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-7fca96a2-5f01-5558-a81f-09b47587f26d"}`), col2.Definition())
 	require.NoError(t, err)
 
 	err = col2.Create(ctx, doc3)
@@ -287,7 +287,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedMap := map[string]any{}
-	data := []byte(`{"Book":[{"_docID":"bae-4399f189-138d-5d49-9e25-82e78463677b","_docIDNew":"bae-78a40f28-a4b8-5dca-be44-392b0f96d0ff","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"Game of chains"},{"_docID":"bae-5cf2fec3-d8ed-50d5-8286-39109853d2da","_docIDNew":"bae-edeade01-2d21-5d6d-aadf-efc5a5279de5","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"John and the sourcerers' stone"}],"User":[{"_docID":"bae-0648f44e-74e8-593b-a662-3310ec278927","_docIDNew":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`)
+	data := []byte(`{"Book":[{"_docID":"bae-45c92e9c-4d31-5e96-8bd7-3d532734e117", "_docIDNew":"bae-3ca9a4c3-6240-5e86-a00f-9590d2f2ecf3", "author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f", "name":"John and the sourcerers' stone"}, {"_docID":"bae-8fc3d148-869b-5629-ae22-5423c73f709b", "_docIDNew":"bae-33c136bd-4375-54a0-81ff-54ca560c7bb8", "author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f", "name":"Game of chains"}], "User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d", "_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f", "age":31, "name":"John"}, {"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f", "_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f", "age":31, "name":"Bob"}]}`)
 	err = json.Unmarshal(data, &expectedMap)
 	require.NoError(t, err)
 	require.EqualValues(t, expectedMap, fileMap)
@@ -345,7 +345,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`{"Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_docIDNew":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`),
+		[]byte(`{"Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":40,"name":"Bob"},{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`),
 		0664,
 	)
 	require.NoError(t, err)
@@ -360,7 +360,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedMap := map[string]any{}
-	data := []byte(`{"Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}]}`)
+	data := []byte(`{"Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}]}`)
 	err = json.Unmarshal(data, &expectedMap)
 	require.NoError(t, err)
 	require.EqualValues(t, expectedMap, fileMap)
@@ -393,7 +393,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`{"Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_docIDNew":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`),
+		[]byte(`{"Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":40,"name":"Bob"},{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`),
 		0664,
 	)
 	require.NoError(t, err)
@@ -412,7 +412,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	col1, err := db.getCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	key1, err := client.NewDocIDFromString("bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f")
+	key1, err := client.NewDocIDFromString("bae-41e1a410-df86-5846-939e-4470a8d8cb0c")
 	require.NoError(t, err)
 	_, err = col1.Get(ctx, key1, false)
 	require.NoError(t, err)
@@ -420,12 +420,12 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	col2, err := db.getCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	key2, err := client.NewDocIDFromString("bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df")
+	key2, err := client.NewDocIDFromString("bae-7fca96a2-5f01-5558-a81f-09b47587f26d")
 	require.NoError(t, err)
 	_, err = col2.Get(ctx, key2, false)
 	require.NoError(t, err)
 
-	key3, err := client.NewDocIDFromString("bae-e933420a-988a-56f8-8952-6c245aebd519")
+	key3, err := client.NewDocIDFromString("bae-7fca96a2-5f01-5558-a81f-09b47587f26d")
 	require.NoError(t, err)
 	_, err = col2.Get(ctx, key3, false)
 	require.NoError(t, err)
@@ -456,7 +456,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`["Address":[{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_docIDNew":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]]`),
+		[]byte(`["Address":[{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":40,"name":"Bob"},{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]]`),
 		0664,
 	)
 	require.NoError(t, err)
@@ -492,7 +492,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`{"Address":{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}}`),
+		[]byte(`{"Address":{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}}`),
 		0664,
 	)
 	require.NoError(t, err)
@@ -528,7 +528,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`{"Address":{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}}`),
+		[]byte(`{"Address":{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}}`),
 		0664,
 	)
 	require.NoError(t, err)
@@ -565,7 +565,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`{"Addresses":{"_docID":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_docIDNew":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}}`),
+		[]byte(`{"Addresses":{"_docID":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","_docIDNew":"bae-41e1a410-df86-5846-939e-4470a8d8cb0c","city":"Toronto","street":"101 Maple St"}}`),
 		0664,
 	)
 	require.NoError(t, err)

@@ -30,7 +30,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
+				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
 				Doc: `
 					{
 						"name":	"John",

@@ -1037,8 +1037,8 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
 					{"name": "Bob", "age": nil, "email": "bob1@gmail.com"},
+					{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
 				},
 			},
 			testUtils.Request{
@@ -1135,8 +1135,8 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						}
 					}`,
 				Results: []map[string]any{
-					{"about": "nil_nil_2"},
 					{"about": "bob_nil"},
+					{"about": "nil_nil_2"},
 					{"about": "nil_nil_1"},
 				},
 			},
@@ -1269,10 +1269,10 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						}
 					}`,
 				Results: []map[string]any{
-					{"about": "bob_nil -> nil_nil"},
-					{"about": "nil_nil -> bob_nil"},
 					{"about": "bob_22 -> bob_nil"},
 					{"about": "nil_22 -> bob_nil"},
+					{"about": "bob_nil -> nil_nil"},
+					{"about": "nil_nil -> bob_nil"},
 				},
 			},
 		},

@@ -19,7 +19,13 @@ import (
 func TestWithUpdateEvents(t *testing.T) {
 	d := &db{}
 	WithUpdateEvents()(d)
-	assert.NotNil(t, d.events)
+	assert.NotNil(t, d.events.Updates)
+}
+
+func TestWithDAGMergeEvents(t *testing.T) {
+	d := &db{}
+	WithDAGMergeEvents()(d)
+	assert.NotNil(t, d.events.DAGMerges)
 }
 
 func TestWithMaxRetries(t *testing.T) {

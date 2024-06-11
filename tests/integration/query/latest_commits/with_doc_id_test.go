@@ -20,7 +20,7 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID",
 		Request: `query {
-					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
 						cid
 						links {
 							cid
@@ -38,14 +38,14 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+				"cid": "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 				"links": []map[string]any{
 					{
-						"cid":  "bafyreidcls23tu7qwp4siw3avyb42eukovpxg6dqifqruvy5wyc6b2ovvq",
+						"cid":  "bafyreidksmyoo6txzmcygby6quhdkzymlqoaxpg75ehlxjdneotjzbih6y",
 						"name": "name",
 					},
 					{
-						"cid":  "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid":  "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 						"name": "age",
 					},
 				},
@@ -56,11 +56,11 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryLatestCommitsWithDocIDWithSchemaVersionIdField(t *testing.T) {
+func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID and schema versiion id field",
 		Request: `query {
-					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
 						cid
 						schemaVersionId
 					}
@@ -75,7 +75,7 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIdField(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":             "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+				"cid":             "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 				"schemaVersionId": "bafkreicprhqxzlw3akyssz2v6pifwfueavp7jq2yj3dghapi3qcq6achs4",
 			},
 		},

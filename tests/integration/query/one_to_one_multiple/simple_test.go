@@ -41,47 +41,43 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
 				Doc: `{
 					"name": "Old Publisher"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
 				Doc: `{
 					"name": "New Publisher"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b6ea52b8-a5a5-5127-b9c0-5df4243457a3
 				Doc: `{
 					"name": "Cornelia Funke"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Painted House",
-					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d",
-					"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Painted House",
+					"publisher_id": testUtils.NewDocIndex(0, 0),
+					"author_id":    testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Theif Lord",
-					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5",
-					"author_id": "bae-b6ea52b8-a5a5-5127-b9c0-5df4243457a3"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Theif Lord",
+					"publisher_id": testUtils.NewDocIndex(0, 1),
+					"author_id":    testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -147,47 +143,43 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
 				Doc: `{
 					"name": "Old Publisher"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
 				Doc: `{
 					"name": "New Publisher"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b6ea52b8-a5a5-5127-b9c0-5df4243457a3
 				Doc: `{
 					"name": "Cornelia Funke"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Painted House",
-					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d",
-					"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Painted House",
+					"publisher_id": testUtils.NewDocIndex(0, 0),
+					"author_id":    testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Theif Lord",
-					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5",
-					"author_id": "bae-b6ea52b8-a5a5-5127-b9c0-5df4243457a3"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Theif Lord",
+					"publisher_id": testUtils.NewDocIndex(0, 1),
+					"author_id":    testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -203,21 +195,21 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "Painted House",
-						"publisher": map[string]any{
-							"name": "Old Publisher",
-						},
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
-					{
 						"name": "Theif Lord",
 						"publisher": map[string]any{
 							"name": "New Publisher",
 						},
 						"author": map[string]any{
 							"name": "Cornelia Funke",
+						},
+					},
+					{
+						"name": "Painted House",
+						"publisher": map[string]any{
+							"name": "Old Publisher",
+						},
+						"author": map[string]any{
+							"name": "John Grisham",
 						},
 					},
 				},
@@ -253,47 +245,43 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
 				Doc: `{
 					"name": "Old Publisher"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
 				Doc: `{
 					"name": "New Publisher"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b6ea52b8-a5a5-5127-b9c0-5df4243457a3
 				Doc: `{
 					"name": "Cornelia Funke"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Painted House",
-					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d",
-					"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Painted House",
+					"publisher_id": testUtils.NewDocIndex(0, 0),
+					"author_id":    testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				Doc: `{
-					"name": "Theif Lord",
-					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5",
-					"author_id": "bae-b6ea52b8-a5a5-5127-b9c0-5df4243457a3"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Theif Lord",
+					"publisher_id": testUtils.NewDocIndex(0, 1),
+					"author_id":    testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

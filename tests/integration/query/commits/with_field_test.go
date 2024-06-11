@@ -66,7 +66,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid": "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 					},
 				},
 			},
@@ -98,7 +98,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid": "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 					},
 				},
 			},
@@ -110,7 +110,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.T) {
+func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
@@ -131,7 +131,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid":             "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 						"schemaVersionId": "bafkreicprhqxzlw3akyssz2v6pifwfueavp7jq2yj3dghapi3qcq6achs4",
 					},
 				},

@@ -21,7 +21,7 @@ func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (by docID arg)",
 			Request: `query {
-						Users(docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						Users(docID: "bae-d4303725-7db9-53d2-b324-f3ee44020e52") {
 							Name
 							Age
 						}
@@ -62,7 +62,7 @@ func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (by docID arg), partial results",
 			Request: `query {
-						Users(docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						Users(docID: "bae-d4303725-7db9-53d2-b324-f3ee44020e52") {
 							Name
 							Age
 						}

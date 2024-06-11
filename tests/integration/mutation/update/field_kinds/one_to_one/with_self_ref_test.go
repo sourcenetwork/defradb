@@ -18,7 +18,7 @@ import (
 )
 
 func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
-	user1ID := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+	user1ID := "bae-ec56fb02-88fb-5113-b4d8-1b9be5f2217b"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation, self referencing from primary",
@@ -104,7 +104,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
-	user1ID := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+	user1ID := "bae-12a7f594-f02e-53b7-81c4-aba27b2e7ea7"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation, self referencing from secondary",
@@ -150,14 +150,14 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
+						"name": "John",
+						"boss": nil,
+					},
+					{
 						"name": "Fred",
 						"boss": map[string]any{
 							"name": "John",
 						},
-					},
-					{
-						"name": "John",
-						"boss": nil,
 					},
 				},
 			},
@@ -173,14 +173,14 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"name":      "Fred",
-						"underling": nil,
-					},
-					{
 						"name": "John",
 						"underling": map[string]any{
 							"name": "Fred",
 						},
+					},
+					{
+						"name":      "Fred",
+						"underling": nil,
 					},
 				},
 			},
