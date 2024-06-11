@@ -17,6 +17,15 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+// didProducer is a concrete function which
+// produces a did from a given key type and pub key bytes
+//
+// Currently the did production operation is
+// infalliable, but in order to assure the correct error
+// is being returned, this pkg private variable
+// can be used in tests to locally mock the producer function
+var didProducer = key.CreateDIDKey
+
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
 
@@ -34,32 +43,38 @@ type Identity struct {
 }
 
 // FromPrivateKey returns a new identity using the given private key.
-func FromPrivateKey(privateKey *secp256k1.PrivateKey) immutable.Option[Identity] {
+func FromPrivateKey(privateKey *secp256k1.PrivateKey) (immutable.Option[Identity], error) {
 	pubKey := privateKey.PubKey()
+	did, err := DIDFromPublicKey(pubKey)
+	if err != nil {
+		return None, err
+	}
+
 	return immutable.Some(Identity{
-		DID:        DIDFromPublicKey(pubKey),
+		DID:        did,
 		PublicKey:  pubKey,
 		PrivateKey: privateKey,
-	})
+	}), nil
 }
 
 // FromPublicKey returns a new identity using the given public key.
-func FromPublicKey(publicKey *secp256k1.PublicKey) immutable.Option[Identity] {
+func FromPublicKey(publicKey *secp256k1.PublicKey) (immutable.Option[Identity], error) {
+	did, err := DIDFromPublicKey(publicKey)
+	if err != nil {
+		return None, err
+	}
 	return immutable.Some(Identity{
-		DID:       DIDFromPublicKey(publicKey),
+		DID:       did,
 		PublicKey: publicKey,
-	})
+	}), nil
 }
 
 // DIDFromPublicKey returns the unique address of the given public key.
-func DIDFromPublicKey(publicKey *secp256k1.PublicKey) string {
+func DIDFromPublicKey(publicKey *secp256k1.PublicKey) (string, error) {
 	bytes := publicKey.SerializeUncompressed()
-	did, err := key.CreateDIDKey(crypto.SECP256k1, bytes)
-	// because we are generating a did from a a supported and fixed key type,
-	// this operation is infallible
+	did, err := didProducer(crypto.SECP256k1, bytes)
 	if err != nil {
-		panic(err)
+		return "", NewErrDIDCreation(err, "secp256k1", bytes)
 	}
-
-	return did.String()
+	return did.String(), nil
 }
