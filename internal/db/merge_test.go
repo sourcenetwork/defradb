@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -58,7 +58,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, events.MergeEvent{
+	err = db.executeMerge(ctx, event.MergeEvent{
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -102,7 +102,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, events.MergeEvent{
+	err = db.executeMerge(ctx, event.MergeEvent{
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -111,7 +111,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"age": 30}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, events.MergeEvent{
+	err = db.executeMerge(ctx, event.MergeEvent{
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -158,7 +158,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, events.MergeEvent{
+	err = db.executeMerge(ctx, event.MergeEvent{
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -176,7 +176,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfoUnkown)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, events.MergeEvent{
+	err = db.executeMerge(ctx, event.MergeEvent{
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})

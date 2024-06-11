@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
@@ -64,10 +64,10 @@ type db struct {
 	multistore datastore.MultiStore
 
 	// sysEventBus is used to send and receive system events
-	sysEventBus *events.Bus
+	sysEventBus *event.Bus
 
 	// subEventBus is used to send and receive request subscription events
-	subEventBus *events.Bus
+	subEventBus *event.Bus
 
 	parser core.Parser
 
@@ -118,8 +118,8 @@ func newDB(
 		lensRegistry: lens,
 		parser:       parser,
 		options:      options,
-		sysEventBus:  events.NewBus(),
-		subEventBus:  events.NewBus(),
+		sysEventBus:  event.NewBus(),
+		subEventBus:  event.NewBus(),
 	}
 
 	// apply options
@@ -207,7 +207,7 @@ func (db *db) initialize(ctx context.Context) error {
 	// forward system bus events to the subscriber bus
 	// to ensure we never block the system bus for user subscriptions
 	go func() {
-		sub := db.sysEventBus.Subscribe(forwardSubBufferSize, events.WildCardEventName)
+		sub := db.sysEventBus.Subscribe(forwardSubBufferSize, event.WildCardEventName)
 		for msg := range sub.Message() {
 			db.subEventBus.Publish(msg)
 		}
@@ -266,7 +266,7 @@ func (db *db) initialize(ctx context.Context) error {
 }
 
 // Events returns the events Channel.
-func (db *db) Events() *events.Bus {
+func (db *db) Events() *event.Bus {
 	return db.sysEventBus
 }
 

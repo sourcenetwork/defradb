@@ -22,7 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/net"
 )
@@ -221,7 +221,7 @@ func (w *Wrapper) Close() {
 	w.node.Close()
 }
 
-func (w *Wrapper) Events() *events.Bus {
+func (w *Wrapper) Events() *event.Bus {
 	return w.node.Events()
 }
 

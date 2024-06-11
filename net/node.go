@@ -47,7 +47,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/events"
+	event1 "github.com/sourcenetwork/defradb/event"
 )
 
 var _ client.P2P = (*Node)(nil)
@@ -188,7 +188,7 @@ func NewNode(
 	// publish subscribed events to the event bus
 	go func() {
 		for val := range sub.Out() {
-			db.Events().Publish(events.NewMessage(events.ConnectEventName, val))
+			db.Events().Publish(event1.NewMessage(event1.ConnectEventName, val))
 		}
 	}()
 

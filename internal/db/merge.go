@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -34,7 +34,7 @@ import (
 )
 
 func (db *db) handleMerges(ctx context.Context) {
-	sub := db.sysEventBus.Subscribe(mergeSubBufferSize, events.MergeRequestEventName)
+	sub := db.sysEventBus.Subscribe(mergeSubBufferSize, event.MergeRequestEventName)
 	defer db.sysEventBus.Unsubscribe(sub)
 
 	for {
@@ -45,7 +45,7 @@ func (db *db) handleMerges(ctx context.Context) {
 			if !ok {
 				return
 			}
-			merge, ok := msg.Data.(events.MergeEvent)
+			merge, ok := msg.Data.(event.MergeEvent)
 			if !ok {
 				continue
 			}
@@ -65,9 +65,9 @@ func (db *db) handleMerges(ctx context.Context) {
 	}
 }
 
-func (db *db) executeMerge(ctx context.Context, dagMerge events.MergeEvent) error {
+func (db *db) executeMerge(ctx context.Context, dagMerge event.MergeEvent) error {
 	// send a complete event so we can track merges in the integration tests
-	defer db.sysEventBus.Publish(events.NewMessage(events.MergeCompleteEventName, dagMerge))
+	defer db.sysEventBus.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

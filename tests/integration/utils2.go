@@ -32,7 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
@@ -658,7 +658,7 @@ func setStartingNodes(
 		s.nodes = append(s.nodes, c)
 		s.dbPaths = append(s.dbPaths, path)
 
-		sub := c.Events().Subscribe(100, events.MergeCompleteEventName)
+		sub := c.Events().Subscribe(100, event.MergeCompleteEventName)
 		s.eventSubs = append(s.eventSubs, sub)
 	}
 }
@@ -829,7 +829,7 @@ func configureNode(
 	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
 
-	sub := c.Events().Subscribe(100, events.MergeCompleteEventName)
+	sub := c.Events().Subscribe(100, event.MergeCompleteEventName)
 	s.eventSubs = append(s.eventSubs, sub)
 }
 

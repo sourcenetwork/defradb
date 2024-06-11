@@ -9,7 +9,7 @@ import (
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
-	events "github.com/sourcenetwork/defradb/events"
+	events "github.com/sourcenetwork/defradb/event"
 
 	go_datastore "github.com/ipfs/go-datastore"
 

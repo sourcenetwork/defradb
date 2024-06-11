@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 
@@ -175,8 +175,8 @@ func setupPeerWaitSync(
 	cfg ConnectPeers,
 	sourceNode clients.Client,
 	targetNode clients.Client,
-	sourceSub *events.Subscription,
-	targetSub *events.Subscription,
+	sourceSub *event.Subscription,
+	targetSub *event.Subscription,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -271,13 +271,13 @@ func setupPeerWaitSync(
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				msg, ok := <-sourceSub.Message()
 				if ok {
-					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
+					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.MergeEvent).ByPeer)
 				}
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 				msg, ok := <-targetSub.Message()
 				if ok {
-					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
+					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.MergeEvent).ByPeer)
 				}
 			}
 			nodeSynced <- struct{}{}
@@ -353,8 +353,8 @@ func setupReplicatorWaitSync(
 	cfg ConfigureReplicator,
 	sourceNode clients.Client,
 	targetNode clients.Client,
-	sourceSub *events.Subscription,
-	targetSub *events.Subscription,
+	sourceSub *event.Subscription,
+	targetSub *event.Subscription,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -415,13 +415,13 @@ func setupReplicatorWaitSync(
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				msg, ok := <-sourceSub.Message()
 				if ok {
-					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
+					assert.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.MergeEvent).ByPeer)
 				}
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 				msg, ok := <-targetSub.Message()
 				if ok {
-					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(events.MergeEvent).ByPeer)
+					assert.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.MergeEvent).ByPeer)
 				}
 			}
 			nodeSynced <- struct{}{}

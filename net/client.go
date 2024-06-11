@@ -19,7 +19,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -31,7 +31,7 @@ var (
 
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
-func (s *server) pushLog(ctx context.Context, evt events.UpdateEvent, pid peer.ID) error {
+func (s *server) pushLog(ctx context.Context, evt event.UpdateEvent, pid peer.ID) error {
 	body := &pb.PushLogRequest_Body{
 		DocID:      []byte(evt.DocID),
 		Cid:        evt.Cid.Bytes(),

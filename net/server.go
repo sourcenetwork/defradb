@@ -28,7 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -192,7 +192,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	s.docQueue.add(docID.String())
 	defer s.docQueue.done(docID.String())
 
-	evt := events.MergeEvent{
+	evt := event.MergeEvent{
 		ByPeer:     byPeer,
 		FromPeer:   pid,
 		Cid:        cid,
@@ -206,7 +206,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 	if exists {
 		// the integration tests expect every push log to emit a merge complete event
-		s.peer.db.Events().Publish(events.NewMessage(events.MergeCompleteEventName, evt))
+		s.peer.db.Events().Publish(event.NewMessage(event.MergeCompleteEventName, evt))
 		return &pb.PushLogReply{}, nil
 	}
 
@@ -226,7 +226,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			corelog.Any("CID", cid),
 		)
 	}
-	s.peer.db.Events().Publish(events.NewMessage(events.MergeRequestEventName, evt))
+	s.peer.db.Events().Publish(event.NewMessage(event.MergeRequestEventName, evt))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// suscribe to the collection.
@@ -373,7 +373,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		corelog.String("Topic", topic),
 		corelog.String("Message", string(msg)),
 	)
-	evt := events.NewMessage(events.PubSubEventName, events.PubSubEvent{
+	evt := event.NewMessage(event.PubSubEventName, event.PubSubEvent{
 		Peer: from,
 	})
 	s.peer.db.Events().Publish(evt)

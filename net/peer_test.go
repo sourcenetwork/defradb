@@ -32,7 +32,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -888,7 +888,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n.handleDocCreateLog(events.UpdateEvent{
+	err = n.handleDocCreateLog(event.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -902,7 +902,7 @@ func TestHandleDocCreateLog_WithInvalidDocID_NoError(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	err := n.handleDocCreateLog(events.UpdateEvent{
+	err := n.handleDocCreateLog(event.UpdateEvent{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
@@ -931,7 +931,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocCreateLog(events.UpdateEvent{
+	err = n.handleDocCreateLog(event.UpdateEvent{
 		DocID:      doc.ID().String(),
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -964,7 +964,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(events.UpdateEvent{
+	err = n.handleDocUpdateLog(event.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -978,7 +978,7 @@ func TestHandleDoUpdateLog_WithInvalidDocID_NoError(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	err := n.handleDocUpdateLog(events.UpdateEvent{
+	err := n.handleDocUpdateLog(event.UpdateEvent{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
@@ -1013,7 +1013,7 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(events.UpdateEvent{
+	err = n.handleDocUpdateLog(event.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -1051,7 +1051,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), col.SchemaRoot(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(events.UpdateEvent{
+	err = n.handleDocUpdateLog(event.UpdateEvent{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
