@@ -90,7 +90,7 @@ func ExecuteRequestTestCase(
 			case value := <-eventsSub.Message():
 				update, ok := value.Data.(event.UpdateEvent)
 				if !ok {
-					continue // ignore invaid value
+					continue // ignore invalid value
 				}
 
 				if indexOfNextExpectedUpdate >= len(testCase.ExpectedUpdates) {

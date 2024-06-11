@@ -47,19 +47,19 @@ var (
 const (
 	// forwardBufferSize controls the size of the channel used to
 	// forward events from the system bus to the subscription bus
-	forwardBufferSize = 10
+	forwardBufferSize = 100
 	// subscriptionBufferSize controls the size of the channel used to
 	// send events to request subscriptions
-	subscriptionBufferSize = 5
+	subscriptionBufferSize = 10
 	// mergeBufferSize controls the size of the channel used to
 	// handle merge events
-	mergeBufferSize = 10
+	mergeBufferSize = 100
 	// sysBusTimeout is the duration to wait before discarding
 	// messages on the sysBus
 	sysBusTimeout = 5 * time.Minute
 	// subBusTimeout is the duration to wait before discarding
 	// messages on the subBus
-	subBusTimeout = 30 * time.Second
+	subBusTimeout = 1 * time.Minute
 )
 
 // DB is the main interface for interacting with the

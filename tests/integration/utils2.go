@@ -732,27 +732,11 @@ actionLoop:
 		case ConnectPeers:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			setupPeerWaitSync(
-				s,
-				waitGroupStartIndex,
-				action,
-				s.nodes[action.SourceNodeID],
-				s.nodes[action.TargetNodeID],
-				s.eventSubs[action.SourceNodeID],
-				s.eventSubs[action.TargetNodeID],
-			)
+			setupPeerWaitSync(s, waitGroupStartIndex, action)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			setupReplicatorWaitSync(
-				s,
-				waitGroupStartIndex,
-				action,
-				s.nodes[action.SourceNodeID],
-				s.nodes[action.TargetNodeID],
-				s.eventSubs[action.SourceNodeID],
-				s.eventSubs[action.TargetNodeID],
-			)
+			setupReplicatorWaitSync(s, waitGroupStartIndex, action)
 		}
 	}
 
