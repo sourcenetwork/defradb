@@ -26,12 +26,12 @@ func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 			create2AddressDocuments(),
 			testUtils.Request{
 				Request: `mutation  {
-					delete_ContactAddress(docIDs: ["bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"]) {
+					delete_ContactAddress(docIDs: ["bae-49f715e7-7f01-5509-a213-ed98cb81583f"]) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
-					{"_docID": "bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"},
+					{"_docID": "bae-49f715e7-7f01-5509-a213-ed98cb81583f"},
 				},
 			},
 			testUtils.ExplainRequest{

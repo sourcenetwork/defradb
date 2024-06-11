@@ -11,7 +11,6 @@
 package one_to_one
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -33,7 +32,7 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
@@ -52,7 +51,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 			},
 			testUtils.Request{
@@ -80,7 +79,7 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
-					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"author_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 				ExpectedError: "document not found or not authorized to access",
 			},
@@ -90,8 +89,6 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 }
 
 func TestMutationCreateOneToOne(t *testing.T) {
-	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-
 	test := testUtils.TestCase{
 		Description: "One to one create mutation",
 		Actions: []any{
@@ -103,13 +100,10 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "John Grisham",
-						"published_id": "%s"
-					}`,
-					bookID,
-				),
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `
@@ -156,8 +150,6 @@ func TestMutationCreateOneToOne(t *testing.T) {
 }
 
 func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
-	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-
 	test := testUtils.TestCase{
 		Description: "One to one create mutation from secondary side",
 		Actions: []any{
@@ -169,13 +161,10 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `
@@ -222,8 +211,6 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 }
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
-	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, errors due to link already existing, primary side",
 		Actions: []any{
@@ -235,21 +222,17 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: fmt.Sprintf(`{
-						"name": "John Grisham",
-						"published_id": "%s"
-					}`,
-					bookID,
-				),
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: fmt.Sprintf(`{
-						"name": "Saadi Shirazi",
-						"published_id": "%s"
-					}`,
-					bookID,
-				),
+				DocMap: map[string]any{
+					"name":         "Saadi Shirazi",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 				ExpectedError: "target document is already linked to another document.",
 			},
 		},
@@ -259,8 +242,6 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 }
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondary(t *testing.T) {
-	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, errors due to link already existing, secondary side",
 		Actions: []any{
@@ -272,21 +253,17 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondar
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(`{
-						"name": "Golestan",
-						"author_id": "%s"
-					}`,
-					authorID,
-				),
+				DocMap: map[string]any{
+					"name":      "Golestan",
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
 				ExpectedError: "target document is already linked to another document.",
 			},
 		},

@@ -33,7 +33,7 @@ type Incrementable interface {
 }
 
 // CounterDelta is a single delta operation for a Counter
-type CounterDelta[T Incrementable] struct {
+type CounterDelta struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
@@ -44,69 +44,60 @@ type CounterDelta[T Incrementable] struct {
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	SchemaVersionID string
-	Data            T
+	Data            []byte
 }
 
-var _ core.Delta = (*CounterDelta[float64])(nil)
-var _ core.Delta = (*CounterDelta[int64])(nil)
+var _ core.Delta = (*CounterDelta)(nil)
 
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
-// This needs to match the [CounterDelta[T]] struct or [coreblock.mustSetSchema] will panic on init.
-func (delta *CounterDelta[T]) IPLDSchemaBytes() []byte {
+// This needs to match the [CounterDelta] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta *CounterDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
-	type CounterDeltaFloat struct {
+	type CounterDelta struct {
 		docID     		Bytes
 		fieldName 		String
 		priority  		Int
 		nonce 			Int
 		schemaVersionID String
-		data            Float
-	}
-	
-	type CounterDeltaInt struct {
-		docID     		Bytes
-		fieldName 		String
-		priority  		Int
-		nonce 			Int
-		schemaVersionID String
-		data            Int
+		data            Bytes
 	}`)
 }
 
 // GetPriority gets the current priority for this delta.
-func (delta *CounterDelta[T]) GetPriority() uint64 {
+func (delta *CounterDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *CounterDelta[T]) SetPriority(prio uint64) {
+func (delta *CounterDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
 // Counter, is a simple CRDT type that allows increment/decrement
 // of an Int and Float data types that ensures convergence.
-type Counter[T Incrementable] struct {
+type Counter struct {
 	baseCRDT
 	AllowDecrement bool
+	Kind           client.ScalarKind
 }
 
-var _ core.ReplicatedData = (*Counter[float64])(nil)
-var _ core.ReplicatedData = (*Counter[int64])(nil)
+var _ core.ReplicatedData = (*Counter)(nil)
 
 // NewCounter returns a new instance of the Counter with the given ID.
-func NewCounter[T Incrementable](
+func NewCounter(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
-) Counter[T] {
-	return Counter[T]{newBaseCRDT(store, key, schemaVersionKey, fieldName), allowDecrement}
+	kind client.ScalarKind,
+) Counter {
+	return Counter{newBaseCRDT(store, key, schemaVersionKey, fieldName), allowDecrement, kind}
 }
 
 // Value gets the current counter value
-func (c Counter[T]) Value(ctx context.Context) ([]byte, error) {
+func (c Counter) Value(ctx context.Context) ([]byte, error) {
 	valueK := c.key.WithValueFlag()
 	buf, err := c.store.Get(ctx, valueK.ToDS())
 	if err != nil {
@@ -120,7 +111,7 @@ func (c Counter[T]) Value(ctx context.Context) ([]byte, error) {
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (c Counter[T]) Increment(ctx context.Context, value T) (*CounterDelta[T], error) {
+func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, error) {
 	// To ensure that the dag block is unique, we add a random number to the delta.
 	// This is done only on update (if the doc doesn't already exist) to ensure that the
 	// initial dag block of a document can be reproducible.
@@ -137,7 +128,7 @@ func (c Counter[T]) Increment(ctx context.Context, value T) (*CounterDelta[T], e
 		nonce = r.Int64()
 	}
 
-	return &CounterDelta[T]{
+	return &CounterDelta{
 		DocID:           []byte(c.key.DocID),
 		FieldName:       c.fieldName,
 		Data:            value,
@@ -148,8 +139,8 @@ func (c Counter[T]) Increment(ctx context.Context, value T) (*CounterDelta[T], e
 
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
-func (c Counter[T]) Merge(ctx context.Context, delta core.Delta) error {
-	d, ok := delta.(*CounterDelta[T])
+func (c Counter) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
@@ -157,10 +148,11 @@ func (c Counter[T]) Merge(ctx context.Context, delta core.Delta) error {
 	return c.incrementValue(ctx, d.Data, d.GetPriority())
 }
 
-func (c Counter[T]) incrementValue(ctx context.Context, value T, priority uint64) error {
-	if !c.AllowDecrement && value < 0 {
-		return NewErrNegativeValue(value)
-	}
+func (c Counter) incrementValue(
+	ctx context.Context,
+	valueAsBytes []byte,
+	priority uint64,
+) error {
 	key := c.key.WithValueFlag()
 	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
@@ -170,18 +162,24 @@ func (c Counter[T]) incrementValue(ctx context.Context, value T, priority uint64
 		key = key.WithDeletedFlag()
 	}
 
-	curValue, err := c.getCurrentValue(ctx, key)
-	if err != nil {
-		return err
+	var resultAsBytes []byte
+
+	switch c.Kind {
+	case client.FieldKind_NILLABLE_INT:
+		resultAsBytes, err = validateAndIncrement[int64](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		if err != nil {
+			return err
+		}
+	case client.FieldKind_NILLABLE_FLOAT:
+		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		if err != nil {
+			return err
+		}
+	default:
+		return NewErrUnsupportedCounterType(c.Kind)
 	}
 
-	newValue := curValue + value
-	b, err := cbor.Marshal(newValue)
-	if err != nil {
-		return err
-	}
-
-	err = c.store.Put(ctx, key.ToDS(), b)
+	err = c.store.Put(ctx, key.ToDS(), resultAsBytes)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}
@@ -189,8 +187,44 @@ func (c Counter[T]) incrementValue(ctx context.Context, value T, priority uint64
 	return c.setPriority(ctx, c.key, priority)
 }
 
-func (c Counter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) (T, error) {
-	curValue, err := c.store.Get(ctx, key.ToDS())
+func (c Counter) CType() client.CType {
+	if c.AllowDecrement {
+		return client.PN_COUNTER
+	}
+	return client.P_COUNTER
+}
+
+func validateAndIncrement[T Incrementable](
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key core.DataStoreKey,
+	valueAsBytes []byte,
+	allowDecrement bool,
+) ([]byte, error) {
+	value, err := getNumericFromBytes[T](valueAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowDecrement && value < 0 {
+		return nil, NewErrNegativeValue(value)
+	}
+
+	curValue, err := getCurrentValue[T](ctx, store, key)
+	if err != nil {
+		return nil, err
+	}
+
+	newValue := curValue + value
+	return cbor.Marshal(newValue)
+}
+
+func getCurrentValue[T Incrementable](
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key core.DataStoreKey,
+) (T, error) {
+	curValue, err := store.Get(ctx, key.ToDS())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
 			return 0, nil
@@ -199,13 +233,6 @@ func (c Counter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) 
 	}
 
 	return getNumericFromBytes[T](curValue)
-}
-
-func (c Counter[T]) CType() client.CType {
-	if c.AllowDecrement {
-		return client.PN_COUNTER
-	}
-	return client.P_COUNTER
 }
 
 func getNumericFromBytes[T Incrementable](b []byte) (T, error) {

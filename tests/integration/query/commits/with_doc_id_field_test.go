@@ -30,7 +30,7 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "not a field") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "not a field") {
 							cid
 						}
 					}`,
@@ -56,7 +56,7 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "999999") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "999999") {
 							cid
 						}
 					}`,
@@ -84,7 +84,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "Age") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "Age") {
 							cid
 						}
 					}`,
@@ -112,13 +112,13 @@ func TestQueryCommitsWithDocIDAndFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "1") {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreih5awhipv4pk7truqm3pyyhle7xersbiyzyyacud6c3f7urzutpui",
+						"cid": "bafyreietqxguz3xlady4gfaqnbeamwsnrwfkufykkpprxej7a77ba7siay",
 					},
 				},
 			},
@@ -144,13 +144,13 @@ func TestQueryCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "C") {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafyreid7n6a673spwjwl3ogtuqmrba4i4ntjqvsu4l3spqe6qutdtnqwlq",
+						"cid": "bafyreichxrfyhajs7rzp3wh5f2zrmt3zkjqan5dmxoy4qno5ozy7omzfpq",
 					},
 				},
 			},

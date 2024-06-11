@@ -21,7 +21,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (single ID by docIDs arg)",
 			Request: `query {
-						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+						Users(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
 							Name
 							Age
 						}
@@ -62,7 +62,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (duplicate ID by docIDs arg), partial results",
 			Request: `query {
-						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+						Users(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
 							Name
 							Age
 						}
@@ -89,7 +89,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (multiple ID by docIDs arg), partial results",
 			Request: `query {
-						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
+						Users(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-428c6d76-3491-520b-ad1f-a218f4dad787"]) {
 							Name
 							Age
 						}

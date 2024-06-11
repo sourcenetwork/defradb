@@ -194,8 +194,8 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 				Request: req2,
 				Results: []map[string]any{
 					{"name": "Shahzad"},
-					{"name": "Fred"},
 					{"name": "John"},
+					{"name": "Fred"},
 				},
 			},
 			testUtils.Request{
@@ -261,9 +261,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			testUtils.Request{
 				Request: req2,
 				Results: []map[string]any{
+					{"name": "Shahzad"},
 					{"name": "John"},
 					{"name": "Fred"},
-					{"name": "Shahzad"},
 				},
 			},
 			testUtils.Request{
@@ -332,9 +332,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			testUtils.Request{
 				Request: req2,
 				Results: []map[string]any{
+					{"name": "Shahzad"},
 					{"name": "John"},
 					{"name": "Fred"},
-					{"name": "Shahzad"},
 				},
 			},
 			testUtils.Request{
@@ -427,27 +427,27 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "Sony",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "The Proclaimers",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Running Man",
+				DocMap: map[string]any{
+					"model":        "Running Man",
 					"manufacturer": "Braveworld Productions",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -467,11 +467,11 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 						"devices": []map[string]any{
 							{
 								"model":        "Walkman",
-								"manufacturer": "Sony",
+								"manufacturer": "The Proclaimers",
 							},
 							{
 								"model":        "Walkman",
-								"manufacturer": "The Proclaimers",
+								"manufacturer": "Sony",
 							},
 							// The filter is on User, so all devices belonging to it will be returned
 							{
@@ -525,27 +525,27 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "Sony",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "The Proclaimers",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Running Man",
+				DocMap: map[string]any{
+					"model":        "Running Man",
 					"manufacturer": "Braveworld Productions",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: req,
@@ -555,11 +555,11 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 						"devices": []map[string]any{
 							{
 								"model":        "Walkman",
-								"manufacturer": "Sony",
+								"manufacturer": "The Proclaimers",
 							},
 							{
 								"model":        "Walkman",
-								"manufacturer": "The Proclaimers",
+								"manufacturer": "Sony",
 							},
 							{
 								"model":        "Running Man",
@@ -670,12 +670,6 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 					{
 						"model": "Playstation 5",
 						"owner": map[string]any{
-							"name": "Islam",
-						},
-					},
-					{
-						"model": "Playstation 5",
-						"owner": map[string]any{
 							"name": "Addo",
 						},
 					},
@@ -683,6 +677,12 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 						"model": "iPhone 10",
 						"owner": map[string]any{
 							"name": "Addo",
+						},
+					},
+					{
+						"model": "Playstation 5",
+						"owner": map[string]any{
+							"name": "Islam",
 						},
 					},
 				},
@@ -732,9 +732,9 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"model": "iPhone 13"},
-					{"model": "iPad Mini"},
 					{"model": "MacBook Pro"},
+					{"model": "iPad Mini"},
+					{"model": "iPhone 13"},
 				},
 			},
 			testUtils.Request{
@@ -783,19 +783,19 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "Sony",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"iPhone",
+				DocMap: map[string]any{
+					"model":        "iPhone",
 					"manufacturer": "Apple",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -814,8 +814,8 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"model": "iPhone"},
 					{"model": "Walkman"},
+					{"model": "iPhone"},
 				},
 			},
 			testUtils.Request{
@@ -867,7 +867,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 				Doc: `{
 					"model":	"Walkman",
 					"manufacturer": "Sony",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+					"owner": "bae-5622129c-b893-5768-a3f4-8f745db4cc04"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -875,7 +875,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 				Doc: `{
 					"model":	"iPhone",
 					"manufacturer": "Apple",
-					"owner": "bae-403d7337-f73e-5c81-8719-e853938c8985"
+					"owner": "bae-5622129c-b893-5768-a3f4-8f745db4cc04"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -895,8 +895,8 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"model": "Running Man"},
 					{"model": "PlayStation 5"},
+					{"model": "Running Man"},
 				},
 			},
 			testUtils.Request{

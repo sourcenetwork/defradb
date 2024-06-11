@@ -47,7 +47,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+			// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
 			Doc: `{
 				"name": "John Grisham",
 				"age": 65,
@@ -66,29 +66,29 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 1,
-			Doc: `{
-				"name": "Painted House",
-				"rating": 4.9,
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-			}`,
+			DocMap: map[string]any{
+				"name":      "Painted House",
+				"rating":    4.9,
+				"author_id": testUtils.NewDocIndex(0, 0),
+			},
 		},
 		testUtils.CreateDoc{
 			Identity:     acpUtils.Actor1Identity,
 			CollectionID: 1,
-			Doc: `{
-				"name": "A Time for Mercy",
-				"rating": 4.5,
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-			}`,
+			DocMap: map[string]any{
+				"name":      "A Time for Mercy",
+				"rating":    4.5,
+				"author_id": testUtils.NewDocIndex(0, 0),
+			},
 		},
 		testUtils.CreateDoc{
 			Identity:     acpUtils.Actor1Identity,
 			CollectionID: 1,
-			Doc: `{
-				"name": "Theif Lord",
-				"rating": 4.8,
-				"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-			}`,
+			DocMap: map[string]any{
+				"name":      "Theif Lord",
+				"rating":    4.8,
+				"author_id": testUtils.NewDocIndex(0, 1),
+			},
 		},
 	}
 }

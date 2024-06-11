@@ -46,15 +46,15 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
+						"cid": "bafyreiamhlxewin3mgbr6dh3mrbwzvjfngfbwif2qdpjvaldzciivojaiu",
 						"links": []map[string]any{
 							{
-								"cid":  "bafyreibhdfmodhqycxtw33ffdceh2wlxqlwcwbyowvs2lrlvimph7ekg2u",
-								"name": "Name",
+								"cid":  "bafyreibmearhvd62tofeoxhhodzwkz446ehjybll22fyb4tgmnvx2kwfma",
+								"name": "Age",
 							},
 							{
-								"cid":  "bafyreigrxupxvzvjfx6wblmpc6fgekapr7nxlmokvi4gmz6ojmzmbrnapa",
-								"name": "Age",
+								"cid":  "bafyreid45hs4k3kxxl5t6glfn5ohd6pebjbdhyvtrjmino6g3l2dqdzwiq",
+								"name": "Name",
 							},
 						},
 					},
@@ -101,7 +101,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 }
 
 func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
-	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
 	test := testUtils.RequestTestCase{
 		Description: "Embedded commits query within object query with document ID",
@@ -171,23 +171,23 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
+						"cid": "bafyreiamhlxewin3mgbr6dh3mrbwzvjfngfbwif2qdpjvaldzciivojaiu",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafyreibhdfmodhqycxtw33ffdceh2wlxqlwcwbyowvs2lrlvimph7ekg2u",
-								"name": "Name",
+								"cid":  "bafyreibmearhvd62tofeoxhhodzwkz446ehjybll22fyb4tgmnvx2kwfma",
+								"name": "Age",
 							},
 							{
-								"cid":  "bafyreigrxupxvzvjfx6wblmpc6fgekapr7nxlmokvi4gmz6ojmzmbrnapa",
-								"name": "Age",
+								"cid":  "bafyreid45hs4k3kxxl5t6glfn5ohd6pebjbdhyvtrjmino6g3l2dqdzwiq",
+								"name": "Name",
 							},
 						},
 						"L2": []map[string]any{
 							{
-								"name": "Name",
+								"name": "Age",
 							},
 							{
-								"name": "Age",
+								"name": "Name",
 							},
 						},
 					},
@@ -200,7 +200,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 }
 
 func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
-	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
 	test := testUtils.TestCase{
 		Description: "Embedded commits query within object query with document ID",
@@ -242,21 +242,21 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 						"_docID": docID,
 						"_version": []map[string]any{
 							{
-								"cid":          "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
+								"cid":          "bafyreiamhlxewin3mgbr6dh3mrbwzvjfngfbwif2qdpjvaldzciivojaiu",
 								"collectionID": int64(1),
 								"delta":        nil,
-								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"docID":        "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
 								"fieldId":      "C",
 								"fieldName":    nil,
 								"height":       int64(1),
 								"links": []map[string]any{
 									{
-										"cid":  "bafyreibhdfmodhqycxtw33ffdceh2wlxqlwcwbyowvs2lrlvimph7ekg2u",
-										"name": "Name",
+										"cid":  "bafyreibmearhvd62tofeoxhhodzwkz446ehjybll22fyb4tgmnvx2kwfma",
+										"name": "Age",
 									},
 									{
-										"cid":  "bafyreigrxupxvzvjfx6wblmpc6fgekapr7nxlmokvi4gmz6ojmzmbrnapa",
-										"name": "Age",
+										"cid":  "bafyreid45hs4k3kxxl5t6glfn5ohd6pebjbdhyvtrjmino6g3l2dqdzwiq",
+										"name": "Name",
 									},
 								},
 								"schemaVersionId": "bafkreigqmcqzkbg3elpe24vfza4rjle2r6cxu7ihzvg56aov57crhaebry",
@@ -272,7 +272,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 }
 
 func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
-	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
 	test := testUtils.TestCase{
 		Description: "Embedded commits query within object query with document ID",
@@ -321,41 +321,41 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 						"_docID": docID,
 						"_version": []map[string]any{
 							{
-								"cid":          "bafyreibbn2vjovh65xe5v2bqxqxkb6sek5xkbnouhryya6enesbhzfplvm",
+								"cid":          "bafyreiewiyarxxkzmgss6g35i4h2uiyzoe6kbnmtwaxv4cab6xefnjlzka",
 								"collectionID": int64(1),
 								"delta":        nil,
-								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"docID":        docID,
 								"fieldId":      "C",
 								"fieldName":    nil,
 								"height":       int64(2),
 								"links": []map[string]any{
 									{
-										"cid":  "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
+										"cid":  "bafyreiamhlxewin3mgbr6dh3mrbwzvjfngfbwif2qdpjvaldzciivojaiu",
 										"name": "_head",
 									},
 									{
-										"cid":  "bafyreifycx5aqjhdlmzaf3bqb6ieomfxrzercas3hxnqcwz2jb25mkrzxi",
+										"cid":  "bafyreiejccdc662jvyhia2ee57dvuuzsrsrhbx3hoenojtasofxtix3k7y",
 										"name": "Age",
 									},
 								},
 								"schemaVersionId": "bafkreigqmcqzkbg3elpe24vfza4rjle2r6cxu7ihzvg56aov57crhaebry",
 							},
 							{
-								"cid":          "bafyreidmbagmnhwb3qr5qctclsylkzgrwpbmiuxirtfbdf3fuzxbibljfi",
+								"cid":          "bafyreiamhlxewin3mgbr6dh3mrbwzvjfngfbwif2qdpjvaldzciivojaiu",
 								"collectionID": int64(1),
 								"delta":        nil,
-								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"docID":        docID,
 								"fieldId":      "C",
 								"fieldName":    nil,
 								"height":       int64(1),
 								"links": []map[string]any{
 									{
-										"cid":  "bafyreibhdfmodhqycxtw33ffdceh2wlxqlwcwbyowvs2lrlvimph7ekg2u",
-										"name": "Name",
+										"cid":  "bafyreibmearhvd62tofeoxhhodzwkz446ehjybll22fyb4tgmnvx2kwfma",
+										"name": "Age",
 									},
 									{
-										"cid":  "bafyreigrxupxvzvjfx6wblmpc6fgekapr7nxlmokvi4gmz6ojmzmbrnapa",
-										"name": "Age",
+										"cid":  "bafyreid45hs4k3kxxl5t6glfn5ohd6pebjbdhyvtrjmino6g3l2dqdzwiq",
+										"name": "Name",
 									},
 								},
 								"schemaVersionId": "bafkreigqmcqzkbg3elpe24vfza4rjle2r6cxu7ihzvg56aov57crhaebry",

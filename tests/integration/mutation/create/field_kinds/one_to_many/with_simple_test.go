@@ -31,7 +31,7 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{
 					"notName": "Painted House",
-					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"author_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
@@ -54,7 +54,7 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 				ExpectedError: "The given field does not exist. Name: published_id",
 			},
@@ -73,7 +73,7 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
-					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"author_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 			},
 			testUtils.Request{

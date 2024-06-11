@@ -93,8 +93,8 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifvrmwmlwtglxe3afki36spu6d5qs6vvza57kxs4giyi53r5vbbnu",
-							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							cid: "bafyreicceacb554vtciciumodqmz6vmnfvr6uod2hfhnwujmfqx5pgq3fi",
+							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
 					}
@@ -135,8 +135,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifvrmwmlwtglxe3afki36spu6d5qs6vvza57kxs4giyi53r5vbbnu",
-							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							cid: "bafyreicceacb554vtciciumodqmz6vmnfvr6uod2hfhnwujmfqx5pgq3fi",
+							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
 					}
@@ -177,8 +177,8 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreihyutx64yvxcfeglc2kax3l4kxrp5mae4p7txrxyiszqybs54h3zq",
-							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							cid: "bafyreic3z3mjat7i7nm52jwprew7f7dimyob7uzgcuoypmdqekrhknnwba",
+							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
 					}
@@ -224,8 +224,8 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreihyutx64yvxcfeglc2kax3l4kxrp5mae4p7txrxyiszqybs54h3zq",
-							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							cid: "bafyreic3z3mjat7i7nm52jwprew7f7dimyob7uzgcuoypmdqekrhknnwba",
+							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
 					}
@@ -266,8 +266,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifvrmwmlwtglxe3afki36spu6d5qs6vvza57kxs4giyi53r5vbbnu",
-							docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+							cid: "bafyreicceacb554vtciciumodqmz6vmnfvr6uod2hfhnwujmfqx5pgq3fi",
+							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
 						_version {
@@ -324,8 +324,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreifgpewgsde3mpq5upokcngfcehdujokqultxlez3cnskhxfde3dw4",
-						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+						cid: "bafyreienkinjn7cvsonvhs4tslqvmmcnezuu4aif57jn75cyp6i3vdvkpm",
+						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
 					) {
 						name
 						points
@@ -376,8 +376,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreic7ds5alv2e7hxdbz3st5tj3vt4rvwydz6sap4wraudl3kzy6y27e",
-						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+						cid: "bafyreiceodj32fyhq3v7ryk6mmcjanwx3zr7ajl2k47w4setngmyx7nc3e",
+						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
 					) {
 						name
 						points
@@ -423,8 +423,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreih2vkwfws7vksed465gq736gi5nfxmajlxxemc64nkcendkddtqym",
-						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+						cid: "bafyreieypgt2mq43g4ute2hkzombdqw5v6wctleyxyy6vdkzitrfje636i",
+						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
 					) {
 						name
 						points
@@ -470,8 +470,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihafx27q435dg6mpbfvdsav47oeq65zkeie3eykjbvuhlwtk5ttwm",
-						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+						cid: "bafyreigb3ujvnxie7kwl53w4chiq6cjcyuhranchseo5gmx5i6vfje67da",
+						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
 					) {
 						name
 						points

@@ -24,8 +24,7 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
-
-			// Books
+			create2AuthorDocuments(),
 			create3BookDocuments(),
 
 			testUtils.ExplainRequest{
@@ -74,11 +73,8 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Articles
-			create3ArticleDocuments(),
-
-			// Authors
 			create2AuthorDocuments(),
+			create3ArticleDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -112,8 +108,8 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 											},
 											"subTypeScanNode": dataMap{
 												"iterations":   uint64(2),
-												"docFetches":   uint64(4),
-												"fieldFetches": uint64(6),
+												"docFetches":   uint64(3),
+												"fieldFetches": uint64(5),
 												"indexFetches": uint64(0),
 											},
 										},

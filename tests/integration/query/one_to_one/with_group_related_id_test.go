@@ -35,33 +35,29 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
-				Doc: `{
-					"name": "Andrew Lone",
-					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -74,7 +70,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author_id": "bae-077b5e8d-5a86-5ae7-a321-ac7e423bb260",
 						"_group": []map[string]any{
 							{
 								"name": "Painted House",
@@ -82,7 +78,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 						},
 					},
 					{
-						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author_id": "bae-cfee1ed9-ede8-5b80-a6fa-78c727a076ac",
 						"_group": []map[string]any{
 							{
 								"name": "Go Guide for Rust developers",
@@ -116,33 +112,29 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
-				Doc: `{
-					"name": "Andrew Lone",
-					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Andrew Lone",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -152,10 +144,10 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 				}`,
 				Results: []map[string]any{
 					{
-						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
 					},
 					{
-						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
 					},
 				},
 			},
@@ -184,33 +176,29 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
-				Doc: `{
-					"name": "Andrew Lone",
-					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Andrew Lone",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -223,15 +211,15 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 				}`,
 				Results: []map[string]any{
 					{
-						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
 						"author": map[string]any{
-							"name": "John Grisham",
+							"name": "Andrew Lone",
 						},
 					},
 					{
-						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
 						"author": map[string]any{
-							"name": "Andrew Lone",
+							"name": "John Grisham",
 						},
 					},
 				},
@@ -261,33 +249,29 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
-				Doc: `{
-					"name": "Andrew Lone",
-					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -300,18 +284,18 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author_id": "bae-bb4d6e89-e8b4-5eec-bfeb-6f7aa4840950",
 						"_group": []map[string]any{
 							{
-								"name": "Painted House",
+								"name": "Go Guide for Rust developers",
 							},
 						},
 					},
 					{
-						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
 						"_group": []map[string]any{
 							{
-								"name": "Go Guide for Rust developers",
+								"name": "Painted House",
 							},
 						},
 					},
@@ -342,33 +326,29 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
-				Doc: `{
-					"name": "John Grisham",
-					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
-				Doc: `{
-					"name": "Andrew Lone",
-					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Andrew Lone",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -384,24 +364,24 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 				}`,
 				Results: []map[string]any{
 					{
-						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"_group": []map[string]any{
-							{
-								"name": "Painted House",
-							},
-						},
-					},
-					{
-						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
 						"author": map[string]any{
 							"name": "Andrew Lone",
 						},
 						"_group": []map[string]any{
 							{
 								"name": "Go Guide for Rust developers",
+							},
+						},
+					},
+					{
+						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+						"_group": []map[string]any{
+							{
+								"name": "Painted House",
 							},
 						},
 					},

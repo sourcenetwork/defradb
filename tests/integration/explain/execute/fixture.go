@@ -20,28 +20,27 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{
 		{
 			CollectionID: 0,
-			Doc: `{
-
-					"name": "After Guantánamo, Another Injustice",
-					"pages": 100,
-					"author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
-				}`,
+			DocMap: map[string]any{
+				"name":      "After Guantánamo, Another Injustice",
+				"pages":     100,
+				"author_id": testUtils.NewDocIndex(2, 0),
+			},
 		},
 		{
 			CollectionID: 0,
-			Doc: `{
-					"name": "To my dear readers",
-					"pages": 200,
-					"author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12"
-				}`,
+			DocMap: map[string]any{
+				"name":      "To my dear readers",
+				"pages":     200,
+				"author_id": testUtils.NewDocIndex(2, 1),
+			},
 		},
 		{
 			CollectionID: 0,
-			Doc: `{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"pages": 300,
-					"author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12"
-				}`,
+			DocMap: map[string]any{
+				"name":      "Twinklestar's Favourite Xmas Cookie",
+				"pages":     300,
+				"author_id": testUtils.NewDocIndex(2, 1),
+			},
 		},
 	}
 }
@@ -50,29 +49,29 @@ func create3BookDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{
 		{
 			CollectionID: 1,
-			Doc: `{
-					"name": "Painted House",
-					"pages": 78,
-					"chapterPages": [1, 22, 33, 44, 55, 66],
-					"author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
-				}`,
+			DocMap: map[string]any{
+				"name":         "Painted House",
+				"pages":        78,
+				"chapterPages": []int64{1, 22, 33, 44, 55, 66},
+				"author_id":    testUtils.NewDocIndex(2, 0),
+			},
 		},
 		{
 			CollectionID: 1,
-			Doc: `{
-					"name": "A Time for Mercy",
-					"pages": 333,
-					"chapterPages": [0, 22, 101, 321],
-					"author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
-				}`,
+			DocMap: map[string]any{
+				"name":         "A Time for Mercy",
+				"pages":        333,
+				"chapterPages": []int64{0, 22, 101, 321},
+				"author_id":    testUtils.NewDocIndex(2, 0),
+			},
 		},
 		{
 			CollectionID: 1,
-			Doc: `{
-					"name": "Theif Lord",
-					"pages": 20,
-					"author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12"
-				}`,
+			DocMap: map[string]any{
+				"name":      "Theif Lord",
+				"pages":     20,
+				"author_id": testUtils.NewDocIndex(2, 1),
+			},
 		},
 	}
 }
@@ -86,7 +85,7 @@ func create2AuthorDocuments() []testUtils.CreateDoc {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"contact_id": "bae-4db5359b-7dbe-5778-b96f-d71d1e6d0871"
+					"contact_id": "bae-819c9c03-9d49-5fd5-aaee-0dc5a70bbe44"
 				}`,
 		},
 		{
@@ -96,7 +95,7 @@ func create2AuthorDocuments() []testUtils.CreateDoc {
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"contact_id": "bae-1f19fc5d-de4d-59a5-bbde-492be1757d65"
+					"contact_id": "bae-9bf0272a-c521-5bef-a7ba-642e8be6e433"
 				}`,
 		},
 	}
@@ -107,21 +106,21 @@ func create2AuthorContactDocuments() []testUtils.CreateDoc {
 		{
 			CollectionID: 3,
 			// "author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
-			// _docID: "bae-4db5359b-7dbe-5778-b96f-d71d1e6d0871"
+			// _docID: "bae-819c9c03-9d49-5fd5-aaee-0dc5a70bbe44"
 			Doc: `{
 					"cell": "5197212301",
 					"email": "john_grisham@example.com",
-					"address_id": "bae-c8448e47-6cd1-571f-90bd-364acb80da7b"
+					"address_id": "bae-14f20db7-3654-58de-9156-596ef2cfd790"
 				}`,
 		},
 		{
 			CollectionID: 3,
 			// "author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12",
-			// _docID: "bae-1f19fc5d-de4d-59a5-bbde-492be1757d65"
+			// _docID: "bae-9bf0272a-c521-5bef-a7ba-642e8be6e433"
 			Doc: `{
 					"cell": "5197212302",
 					"email": "cornelia_funke@example.com",
-					"address_id": "bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"
+					"address_id": "bae-49f715e7-7f01-5509-a213-ed98cb81583f"
 				}`,
 		},
 	}
@@ -131,8 +130,7 @@ func create2AddressDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{
 		{
 			CollectionID: 4,
-			// "contact_id": "bae-4db5359b-7dbe-5778-b96f-d71d1e6d0871"
-			// _docID: bae-c8448e47-6cd1-571f-90bd-364acb80da7b
+			// _docID: bae-14f20db7-3654-58de-9156-596ef2cfd790
 			Doc: `{
 					"city": "Waterloo",
 					"country": "Canada"
@@ -140,8 +138,7 @@ func create2AddressDocuments() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 4,
-			// "contact_id": ""bae-1f19fc5d-de4d-59a5-bbde-492be1757d65""
-			// _docID: bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692
+			// _docID: bae-49f715e7-7f01-5509-a213-ed98cb81583f
 			Doc: `{
 					"city": "Brampton",
 					"country": "Canada"

@@ -23,7 +23,7 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 					Author {
 						name
 						published (
-								docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
+								docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 							) {
 							name
 						}
@@ -31,20 +31,20 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d
+			0: { // bae-5366ba09-54e8-5381-8169-a770aa9282ae
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,

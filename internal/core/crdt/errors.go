@@ -11,13 +11,15 @@
 package crdt
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errFailedToGetPriority string = "failed to get priority"
-	errFailedToStoreValue  string = "failed to store value"
-	errNegativeValue       string = "value cannot be negative"
+	errFailedToGetPriority    string = "failed to get priority"
+	errFailedToStoreValue     string = "failed to store value"
+	errNegativeValue          string = "value cannot be negative"
+	errUnsupportedCounterType string = "unsupported counter type. Valid types are int64 and float64"
 )
 
 // Errors returnable from this package.
@@ -31,7 +33,8 @@ var (
 	ErrEncodingPriority    = errors.New("error encoding priority")
 	ErrDecodingPriority    = errors.New("error decoding priority")
 	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
-	ErrMismatchedMergeType = errors.New("given type to merge does not match source")
+	ErrMismatchedMergeType    = errors.New("given type to merge does not match source")
+	ErrUnsupportedCounterType = errors.New(errUnsupportedCounterType)
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.
@@ -46,4 +49,8 @@ func NewErrFailedToStoreValue(inner error) error {
 
 func NewErrNegativeValue[T Incrementable](value T) error {
 	return errors.New(errNegativeValue, errors.NewKV("Value", value))
+}
+
+func NewErrUnsupportedCounterType(valueType client.ScalarKind) error {
+	return errors.New(errUnsupportedCounterType, errors.NewKV("Type", valueType))
 }
