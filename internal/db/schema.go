@@ -44,19 +44,14 @@ func (db *db) addSchema(
 		return nil, err
 	}
 
-	returnDescriptions := make([]client.CollectionDescription, len(newDefinitions))
-	for i, definition := range newDefinitions {
-		// Only accept the schema if policy description is valid, otherwise reject the schema.
-		err := db.validateCollectionDefinitionPolicyDesc(ctx, definition.Description.Policy)
-		if err != nil {
-			return nil, err
-		}
+	returnDefinitions, err := db.createCollections(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
 
-		col, err := db.createCollection(ctx, definition, newDefinitions)
-		if err != nil {
-			return nil, err
-		}
-		returnDescriptions[i] = col.Description()
+	returnDescriptions := make([]client.CollectionDescription, len(returnDefinitions))
+	for i, def := range returnDefinitions {
+		returnDescriptions[i] = def.Description
 	}
 
 	err = db.loadSchema(ctx)

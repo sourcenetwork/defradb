@@ -68,30 +68,41 @@ func (db *db) addView(
 		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
 
-	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
-	for i, definition := range newDefinitions {
-		if !definition.Description.Name.HasValue() {
-			schema, err := description.CreateSchemaVersion(ctx, txn, definition.Schema)
-			if err != nil {
-				return nil, err
-			}
-			returnDescriptions[i] = client.CollectionDefinition{
-				// `Collection` is left as default for embedded types
-				Schema: schema,
-			}
-		} else {
-			col, err := db.createCollection(ctx, definition, newDefinitions)
-			if err != nil {
-				return nil, err
-			}
-			returnDescriptions[i] = col.Definition()
+	returnDescriptions := make([]client.CollectionDefinition, 0, len(newDefinitions))
+	collectionDefinitions := []client.CollectionDefinition{}
+	schemaOnlyDefinitions := []client.SchemaDescription{}
 
-			for _, source := range col.Description().QuerySources() {
-				if source.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, col.ID(), source.Transform.Value())
-					if err != nil {
-						return nil, err
-					}
+	for _, definition := range newDefinitions {
+		if definition.Description.Name.HasValue() {
+			collectionDefinitions = append(collectionDefinitions, definition)
+		} else {
+			schemaOnlyDefinitions = append(schemaOnlyDefinitions, definition.Schema)
+		}
+	}
+
+	for _, schema := range schemaOnlyDefinitions {
+		schema, err := description.CreateSchemaVersion(ctx, txn, schema)
+		if err != nil {
+			return nil, err
+		}
+		returnDescriptions = append(returnDescriptions, client.CollectionDefinition{
+			// `Collection` is left as default for embedded types
+			Schema: schema,
+		})
+	}
+
+	returnColDescriptions, err := db.createCollections(ctx, collectionDefinitions)
+	if err != nil {
+		return nil, err
+	}
+	returnDescriptions = append(returnDescriptions, returnColDescriptions...)
+
+	for _, definition := range returnColDescriptions {
+		for _, source := range definition.Description.QuerySources() {
+			if source.Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())
+				if err != nil {
+					return nil, err
 				}
 			}
 		}
