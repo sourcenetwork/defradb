@@ -51,8 +51,8 @@ func (db *db) validateCollectionChanges(
 	oldColsByID map[uint32]client.CollectionDescription,
 	newColsByID map[uint32]client.CollectionDescription,
 ) error {
-	for _, validators := range patchCollectionValidators {
-		err := validators(oldColsByID, newColsByID)
+	for _, validator := range patchCollectionValidators {
+		err := validator(oldColsByID, newColsByID)
 		if err != nil {
 			return err
 		}
@@ -65,8 +65,8 @@ func (db *db) validateNewCollection(
 	def client.CollectionDefinition,
 	defsByName map[string]client.CollectionDefinition,
 ) error {
-	for _, validators := range newCollectionValidators {
-		err := validators(def, defsByName)
+	for _, validator := range newCollectionValidators {
+		err := validator(def, defsByName)
 		if err != nil {
 			return err
 		}
