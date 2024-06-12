@@ -360,15 +360,15 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 }
 
 // Events provides a mock function with given fields:
-func (_m *DB) Events() *event.Bus {
+func (_m *DB) Events() event.Bus {
 	ret := _m.Called()
 
-	var r0 *event.Bus
-	if rf, ok := ret.Get(0).(func() *event.Bus); ok {
+	var r0 event.Bus
+	if rf, ok := ret.Get(0).(func() event.Bus); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*event.Bus)
+			r0 = ret.Get(0).(event.Bus)
 		}
 	}
 
@@ -392,12 +392,12 @@ func (_c *DB_Events_Call) Run(run func()) *DB_Events_Call {
 	return _c
 }
 
-func (_c *DB_Events_Call) Return(_a0 *event.Bus) *DB_Events_Call {
+func (_c *DB_Events_Call) Return(_a0 event.Bus) *DB_Events_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Events_Call) RunAndReturn(run func() *event.Bus) *DB_Events_Call {
+func (_c *DB_Events_Call) RunAndReturn(run func() event.Bus) *DB_Events_Call {
 	_c.Call.Return(run)
 	return _c
 }
