@@ -515,6 +515,7 @@ func waitForMerge(
 			// wait for message or unsubscribe
 			msg, ok := <-sourceSub.Message()
 			if ok {
+				// ensure the message is sent from the target node
 				require.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.Merge).ByPeer)
 			}
 		}
@@ -522,6 +523,7 @@ func waitForMerge(
 			// wait for message or unsubscribe
 			msg, ok := <-targetSub.Message()
 			if ok {
+				// ensure the message is sent from the source node
 				require.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.Merge).ByPeer)
 			}
 		}
