@@ -89,7 +89,7 @@ func ExecuteRequestTestCase(
 		for {
 			select {
 			case value := <-eventsSub.Message():
-				update, ok := value.Data.(event.UpdateEvent)
+				update, ok := value.Data.(event.Update)
 				if !ok {
 					continue // ignore invalid value
 				}

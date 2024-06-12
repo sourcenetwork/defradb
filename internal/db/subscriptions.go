@@ -45,7 +45,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 		// listen for events and send to the result channel
 		for {
-			var evt event.UpdateEvent
+			var evt event.Update
 			select {
 			case <-ctx.Done():
 				return // context cancelled
@@ -53,7 +53,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				if !ok {
 					return // channel closed
 				}
-				evt, ok = val.Data.(event.UpdateEvent)
+				evt, ok = val.Data.(event.Update)
 				if !ok {
 					continue // invalid event value
 				}

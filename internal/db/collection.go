@@ -677,7 +677,7 @@ func (c *collection) save(
 	}
 
 	// publish an update event when the txn succeeds
-	updateEvent := event.UpdateEvent{
+	updateEvent := event.Update{
 		DocID:      doc.ID().String(),
 		Cid:        link.Cid,
 		SchemaRoot: c.Schema().Root,

@@ -207,7 +207,7 @@ func (p *Peer) handleBroadcastLoop() {
 		if !isOpen {
 			return
 		}
-		update, ok := msg.Data.(event.UpdateEvent)
+		update, ok := msg.Data.(event.Update)
 		if !ok {
 			continue // ignore invalid value
 		}
@@ -299,7 +299,7 @@ func (p *Peer) pushToReplicator(
 				continue
 			}
 
-			evt := event.UpdateEvent{
+			evt := event.Update{
 				DocID:      docIDResult.ID.String(),
 				Cid:        c,
 				SchemaRoot: collection.SchemaRoot(),
@@ -366,7 +366,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 	return colMap, nil
 }
 
-func (p *Peer) handleDocCreateLog(evt event.UpdateEvent) error {
+func (p *Peer) handleDocCreateLog(evt event.Update) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -384,7 +384,7 @@ func (p *Peer) handleDocCreateLog(evt event.UpdateEvent) error {
 	return nil
 }
 
-func (p *Peer) handleDocUpdateLog(evt event.UpdateEvent) error {
+func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -417,7 +417,7 @@ func (p *Peer) handleDocUpdateLog(evt event.UpdateEvent) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(lg event.UpdateEvent) {
+func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
 	for _, peer := range p.ps.ListPeers(lg.DocID) {

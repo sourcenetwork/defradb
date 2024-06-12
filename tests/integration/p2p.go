@@ -515,14 +515,14 @@ func waitForMerge(
 			// wait for message or unsubscribe
 			msg, ok := <-sourceSub.Message()
 			if ok {
-				require.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.MergeEvent).ByPeer)
+				require.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.Merge).ByPeer)
 			}
 		}
 		for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 			// wait for message or unsubscribe
 			msg, ok := <-targetSub.Message()
 			if ok {
-				require.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.MergeEvent).ByPeer)
+				require.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.Merge).ByPeer)
 			}
 		}
 		nodeSynced <- struct{}{}

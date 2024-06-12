@@ -126,7 +126,7 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeRequestEventName)
+	sub, err := db.events.Subscribe(event.MergeEventName)
 	if err != nil {
 		return nil, err
 	}

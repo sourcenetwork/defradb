@@ -19,35 +19,34 @@ import (
 const (
 	// WildCardEventName is the alias used to subscribe to all events.
 	WildCardEventName = "*"
+	// MergeEventName is the name of the net merge request event.
+	MergeEventName = "merge"
 	// MergeCompleteEventName is the name of the database merge complete event.
-	MergeCompleteEventName = "db:merge-complete"
+	MergeCompleteEventName = "merge-complete"
 	// UpdateEventName is the name of the database update event.
-	UpdateEventName = "db:update"
-	// ResultsEventName is the name of the database results event.
-	ResultsEventName = "db:results"
-	// MergeRequestEventName is the name of the net merge request event.
-	MergeRequestEventName = "net:merge"
+	UpdateEventName = "update"
 	// PubSubEventName is the name of the network pubsub event.
-	PubSubEventName = "net:pubsub"
-	// ConnectEventName is the name of the network connect event.
-	ConnectEventName = "net:connect"
+	PubSubEventName = "pubsub"
+	// PeerEventName is the name of the network connect event.
+	PeerEventName = "peer"
 )
 
-// ConnectEvent is an event that is published when
+// Peer is an event that is published when
 // a peer connection has changed status.
-type ConnectEvent = event.EvtPeerConnectednessChanged
+type Peer = event.EvtPeerConnectednessChanged
 
-// PubSubEvent is an event that is published when
+// PubSub is an event that is published when
 // a pubsub message has been received from a remote peer.
-type PubSubEvent struct {
+type PubSub struct {
+	// Peer is the id of the peer that published the message.
 	Peer peer.ID
 }
 
-// UpdateEvent represents a new DAG node added to the append-only composite MerkleCRDT Clock graph
+// Update represents a new DAG node added to the append-only composite MerkleCRDT Clock graph
 // of a document.
 //
 // It must only contain public elements not protected by ACP.
-type UpdateEvent struct {
+type Update struct {
 	// DocID is the unique immutable identifier of the document that was updated.
 	DocID string
 
@@ -65,8 +64,8 @@ type UpdateEvent struct {
 	IsCreate bool
 }
 
-// MergeEvent is a notification that a merge can be performed up to the provided CID.
-type MergeEvent struct {
+// Merge is a notification that a merge can be performed up to the provided CID.
+type Merge struct {
 	// ByPeer is the id of the peer that created the push log request.
 	ByPeer peer.ID
 

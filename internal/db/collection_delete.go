@@ -167,7 +167,7 @@ func (c *collection) applyDelete(
 	}
 
 	// publish an update event if the txn succeeds
-	updateEvent := event.UpdateEvent{
+	updateEvent := event.Update{
 		DocID:      primaryKey.DocID,
 		Cid:        link.Cid,
 		SchemaRoot: c.Schema().Root,

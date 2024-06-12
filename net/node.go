@@ -188,7 +188,7 @@ func NewNode(
 	// publish subscribed events to the event bus
 	go func() {
 		for val := range sub.Out() {
-			db.Events().Publish(event1.NewMessage(event1.ConnectEventName, val))
+			db.Events().Publish(event1.NewMessage(event1.PeerEventName, val))
 		}
 	}()
 

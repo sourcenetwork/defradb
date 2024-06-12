@@ -42,7 +42,7 @@ func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 			if !ok {
 				return
 			}
-			merge, ok := msg.Data.(event.MergeEvent)
+			merge, ok := msg.Data.(event.Merge)
 			if !ok {
 				continue
 			}
@@ -62,7 +62,7 @@ func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 	}
 }
 
-func (db *db) executeMerge(ctx context.Context, dagMerge event.MergeEvent) error {
+func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	// send a complete event so we can track merges in the integration tests
 	defer db.events.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
 
