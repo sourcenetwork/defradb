@@ -31,7 +31,7 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
 	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/event"
+	libp2pEvent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
@@ -47,7 +47,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	event1 "github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/event"
 )
 
 var _ client.P2P = (*Node)(nil)
@@ -181,14 +181,14 @@ func NewNode(
 		return nil, fin.Cleanup(err)
 	}
 
-	sub, err := h.EventBus().Subscribe(&event.EvtPeerConnectednessChanged{})
+	sub, err := h.EventBus().Subscribe(&libp2pEvent.EvtPeerConnectednessChanged{})
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
 	// publish subscribed events to the event bus
 	go func() {
 		for val := range sub.Out() {
-			db.Events().Publish(event1.NewMessage(event1.PeerName, val))
+			db.Events().Publish(event.NewMessage(event.PeerName, val))
 		}
 	}()
 

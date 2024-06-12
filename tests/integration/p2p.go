@@ -501,14 +501,11 @@ func waitForMerge(
 	targetToSourceEvents []int,
 	nodeSynced chan struct{},
 ) {
-	sourceNode := s.nodes[sourceNodeID]
-	targetNode := s.nodes[targetNodeID]
-
 	sourceSub := s.eventSubs[sourceNodeID]
 	targetSub := s.eventSubs[targetNodeID]
 
-	sourcePeerInfo := sourceNode.PeerInfo()
-	targetPeerInfo := targetNode.PeerInfo()
+	sourcePeerInfo := s.nodeAddresses[sourceNodeID]
+	targetPeerInfo := s.nodeAddresses[targetNodeID]
 
 	for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 		for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
