@@ -19,7 +19,7 @@ import (
 )
 
 func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
-	bus := NewBus(0, 0)
+	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
 	msg := NewMessage("test", 1)
@@ -30,7 +30,7 @@ func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
 }
 
 func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
-	bus := NewBus(0, 0)
+	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")
@@ -45,7 +45,7 @@ func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
 }
 
 func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
-	bus := NewBus(0, 0)
+	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
 	msg1 := NewMessage("test", 1)
@@ -99,7 +99,7 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 }
 
 func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
-	bus := NewBus(0, 2)
+	bus := NewBufferedBus(0, 2)
 	defer bus.Close()
 
 	msg1 := NewMessage("test", 1)
@@ -128,7 +128,7 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 }
 
 func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
-	bus := NewBus(0, 0)
+	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")

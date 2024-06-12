@@ -10,17 +10,25 @@
 
 package event
 
-import (
-	"sync/atomic"
-)
+// Bus is an event bus used to broadcasts messages to subscribers.
+type Bus interface {
+	// Subscribe subscribes to the Channel, returning a channel by which events can
+	// be read from, or an error should one occur (e.g. if this object is closed).
+	//
+	// This function is non-blocking unless the subscription-buffer is full.
+	Subscribe(events ...string) (*Subscription, error)
 
-type subscribeCommand *Subscription
+	// Unsubscribe unsubscribes from the Channel, closing the provided channel.
+	//
+	// Will do nothing if this object is already closed.
+	Unsubscribe(sub *Subscription)
 
-type unsubscribeCommand *Subscription
+	// Publish pushes the given item into this channel. Non-blocking.
+	Publish(msg Message)
 
-type publishCommand Message
-
-type closeCommand struct{}
+	// Close closes this Channel, and any owned or subscribing channels.
+	Close()
+}
 
 // Message contains event info.
 type Message struct {
@@ -50,129 +58,4 @@ func (s *Subscription) Message() <-chan Message {
 // Events returns the names of all subscribed events.
 func (s *Subscription) Events() []string {
 	return s.events
-}
-
-// Bus is used to broadcast events to subscribers.
-type Bus struct {
-	// subID is incremented for each subscriber and used to set subscriber ids.
-	subID atomic.Uint64
-	// subs is a mapping of subscriber ids to subscriptions.
-	subs map[uint64]*Subscription
-	// events is a mapping of event names to subscriber ids.
-	events map[string]map[uint64]struct{}
-	// commandChannel manages all commands sent to this simpleChannel.
-	//
-	// It is important that all stuff gets sent through this single channel to ensure
-	// that the order of operations is preserved.
-	//
-	// WARNING: This does mean that non-event commands can block the database if the buffer
-	// size is breached (e.g. if many subscribe commands occupy the buffer).
-	commandChannel  chan any
-	eventBufferSize int
-	hasClosedChan   chan struct{}
-	isClosed        atomic.Bool
-}
-
-// NewBus creates a new event bus with the given commandBufferSize and
-// eventBufferSize.
-//
-// Should the buffers be filled subsequent calls to functions on this object may start to block.
-func NewBus(commandBufferSize int, eventBufferSize int) *Bus {
-	bus := Bus{
-		subs:            make(map[uint64]*Subscription),
-		events:          make(map[string]map[uint64]struct{}),
-		commandChannel:  make(chan any, commandBufferSize),
-		hasClosedChan:   make(chan struct{}),
-		eventBufferSize: eventBufferSize,
-	}
-	go bus.handleChannel()
-	return &bus
-}
-
-// Publish publishes the given event message to all subscribers.
-func (b *Bus) Publish(msg Message) {
-	if b.isClosed.Load() {
-		return
-	}
-	b.commandChannel <- publishCommand(msg)
-}
-
-// Subscribe returns a new channel that will receive all of the subscribed events.
-func (b *Bus) Subscribe(events ...string) (*Subscription, error) {
-	if b.isClosed.Load() {
-		return nil, ErrSubscribedToClosedChan
-	}
-
-	sub := &Subscription{
-		id:     b.subID.Add(1),
-		value:  make(chan Message, b.eventBufferSize),
-		events: events,
-	}
-
-	b.commandChannel <- subscribeCommand(sub)
-	return sub, nil
-}
-
-// Unsubscribe unsubscribes from all events and closes the event channel of the given subscription.
-func (b *Bus) Unsubscribe(sub *Subscription) {
-	if b.isClosed.Load() {
-		return
-	}
-	b.commandChannel <- unsubscribeCommand(sub)
-}
-
-// Close closes the event bus by unsubscribing all subscribers.
-func (b *Bus) Close() {
-	if b.isClosed.Load() {
-		return
-	}
-	b.isClosed.Store(true)
-	b.commandChannel <- closeCommand{}
-
-	// Wait for the close command to be handled, in order, before returning
-	<-b.hasClosedChan
-}
-
-func (b *Bus) handleChannel() {
-	for cmd := range b.commandChannel {
-		switch t := cmd.(type) {
-		case closeCommand:
-			for _, subscriber := range b.subs {
-				close(subscriber.value)
-			}
-			close(b.commandChannel)
-			close(b.hasClosedChan)
-			return
-
-		case subscribeCommand:
-			for _, event := range t.events {
-				if _, ok := b.events[event]; !ok {
-					b.events[event] = make(map[uint64]struct{})
-				}
-				b.events[event][t.id] = struct{}{}
-			}
-			b.subs[t.id] = t
-
-		case unsubscribeCommand:
-			if _, ok := b.subs[t.id]; !ok {
-				continue // not subscribed
-			}
-			for _, event := range t.events {
-				delete(b.events[event], t.id)
-			}
-			delete(b.subs, t.id)
-			close(t.value)
-
-		case publishCommand:
-			for id := range b.events[WildCardEventName] {
-				b.subs[id].value <- Message(t)
-			}
-			for id := range b.events[t.Name] {
-				if _, ok := b.events[WildCardEventName][id]; ok {
-					continue
-				}
-				b.subs[id].value <- Message(t)
-			}
-		}
-	}
 }
