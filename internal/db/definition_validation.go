@@ -14,8 +14,6 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -111,6 +109,7 @@ var globalValidators = []definitionValidator{
 	validateRelationPointsToValidKind,
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
+	validateCollectionDefinitionPolicyDesc,
 }
 
 var updateValidators = append(
@@ -587,31 +586,41 @@ oldLoop:
 //
 // Ensures that the information within the policy definition makes sense,
 // this function might also make relevant remote calls using the acp system.
-func (db *db) validateCollectionDefinitionPolicyDesc(
+func validateCollectionDefinitionPolicyDesc(
 	ctx context.Context,
-	policyDesc immutable.Option[client.PolicyDescription],
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	if !policyDesc.HasValue() {
-		// No policy validation needed, whether acp exists or not doesn't matter.
-		return nil
+	for _, newCol := range newState.collections {
+		if !newCol.Policy.HasValue() {
+			// No policy validation needed, whether acp exists or not doesn't matter.
+			continue
+		}
+
+		// If there is a policy specified, but the database does not have
+		// acp enabled/available return an error, database must have an acp available
+		// to enable access control (inorder to adhere to the policy specified).
+		if !db.acp.HasValue() {
+			return ErrCanNotHavePolicyWithoutACP
+		}
+
+		// If we have the policy specified on the collection, and acp is available/enabled,
+		// then using the acp system we need to ensure the policy id specified
+		// actually exists as a policy, and the resource name exists on that policy
+		// and that the resource is a valid DPI.
+		err := db.acp.Value().ValidateResourceExistsOnValidDPI(
+			ctx,
+			newCol.Policy.Value().ID,
+			newCol.Policy.Value().ResourceName,
+		)
+
+		if err != nil {
+			return err
+		}
 	}
 
-	// If there is a policy specified, but the database does not have
-	// acp enabled/available return an error, database must have an acp available
-	// to enable access control (inorder to adhere to the policy specified).
-	if !db.acp.HasValue() {
-		return ErrCanNotHavePolicyWithoutACP
-	}
-
-	// If we have the policy specified on the collection, and acp is available/enabled,
-	// then using the acp system we need to ensure the policy id specified
-	// actually exists as a policy, and the resource name exists on that policy
-	// and that the resource is a valid DPI.
-	return db.acp.Value().ValidateResourceExistsOnValidDPI(
-		ctx,
-		policyDesc.Value().ID,
-		policyDesc.Value().ResourceName,
-	)
+	return nil
 }
 
 // validateUpdateSchema validates that the given schema description is a valid update.

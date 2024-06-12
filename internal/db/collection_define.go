@@ -62,12 +62,6 @@ func (db *db) createCollections(
 	}
 
 	for _, def := range newDefinitions {
-		// Only accept the schema if policy description is valid, otherwise reject the schema.
-		err := db.validateCollectionDefinitionPolicyDesc(ctx, def.Description.Policy)
-		if err != nil {
-			return nil, err
-		}
-
 		schema := def.Schema
 		desc := def.Description
 		txn := mustGetContextTxn(ctx)
