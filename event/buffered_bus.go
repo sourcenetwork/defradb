@@ -22,6 +22,9 @@ type publishCommand Message
 
 type closeCommand struct{}
 
+// bufferedBus must implement the Bus interface
+var _ (Bus) = (*bufferedBus)(nil)
+
 // bufferedBus is a bus that uses a buffered channel to manage subscribers and publish messages.
 type bufferedBus struct {
 	// subID is incremented for each subscriber and used to set subscriber ids.
@@ -29,7 +32,7 @@ type bufferedBus struct {
 	// subs is a mapping of subscriber ids to subscriptions.
 	subs map[uint64]*Subscription
 	// events is a mapping of event names to subscriber ids.
-	events map[string]map[uint64]struct{}
+	events map[Name]map[uint64]struct{}
 	// commandChannel manages all commands sent to this simpleChannel.
 	//
 	// It is important that all stuff gets sent through this single channel to ensure
@@ -47,10 +50,10 @@ type bufferedBus struct {
 // eventBufferSize.
 //
 // Should the buffers be filled, subsequent calls on this bus will block.
-func NewBufferedBus(commandBufferSize int, eventBufferSize int) Bus {
+func NewBufferedBus(commandBufferSize int, eventBufferSize int) *bufferedBus {
 	bus := bufferedBus{
 		subs:            make(map[uint64]*Subscription),
-		events:          make(map[string]map[uint64]struct{}),
+		events:          make(map[Name]map[uint64]struct{}),
 		commandChannel:  make(chan any, commandBufferSize),
 		hasClosedChan:   make(chan struct{}),
 		eventBufferSize: eventBufferSize,
@@ -66,7 +69,7 @@ func (b *bufferedBus) Publish(msg Message) {
 	b.commandChannel <- publishCommand(msg)
 }
 
-func (b *bufferedBus) Subscribe(events ...string) (*Subscription, error) {
+func (b *bufferedBus) Subscribe(events ...Name) (*Subscription, error) {
 	if b.isClosed.Load() {
 		return nil, ErrSubscribedToClosedChan
 	}
@@ -127,11 +130,11 @@ func (b *bufferedBus) handleChannel() {
 			close(t.value)
 
 		case publishCommand:
-			for id := range b.events[WildCardEventName] {
+			for id := range b.events[WildCardName] {
 				b.subs[id].value <- Message(t)
 			}
 			for id := range b.events[t.Name] {
-				if _, ok := b.events[WildCardEventName][id]; ok {
+				if _, ok := b.events[WildCardName][id]; ok {
 					continue
 				}
 				b.subs[id].value <- Message(t)

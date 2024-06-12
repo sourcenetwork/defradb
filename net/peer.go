@@ -144,7 +144,7 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		sub, err := p.db.Events().Subscribe(event.UpdateEventName)
+		sub, err := p.db.Events().Subscribe(event.UpdateName)
 		if err != nil {
 			return err
 		}

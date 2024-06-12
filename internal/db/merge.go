@@ -64,7 +64,7 @@ func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 
 func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	// send a complete event so we can track merges in the integration tests
-	defer db.events.Publish(event.NewMessage(event.MergeCompleteEventName, dagMerge))
+	defer db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

@@ -685,7 +685,7 @@ func (c *collection) save(
 		IsCreate:   isCreate,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(event.NewMessage(event.UpdateEventName, updateEvent))
+		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	})
 
 	txn.OnSuccess(func() {

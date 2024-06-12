@@ -16,7 +16,7 @@ type Bus interface {
 	// be read from, or an error should one occur (e.g. if this object is closed).
 	//
 	// This function is non-blocking unless the subscription-buffer is full.
-	Subscribe(events ...string) (*Subscription, error)
+	Subscribe(events ...Name) (*Subscription, error)
 
 	// Unsubscribe unsubscribes from the Channel, closing the provided channel.
 	//
@@ -33,13 +33,14 @@ type Bus interface {
 // Message contains event info.
 type Message struct {
 	// Name is the name of the event this message was generated from.
-	Name string
+	Name Name
+
 	// Data contains optional event information.
 	Data any
 }
 
 // NewMessage returns a new message with the given name and optional data.
-func NewMessage(name string, data any) Message {
+func NewMessage(name Name, data any) Message {
 	return Message{name, data}
 }
 
@@ -47,7 +48,7 @@ func NewMessage(name string, data any) Message {
 type Subscription struct {
 	id     uint64
 	value  chan Message
-	events []string
+	events []Name
 }
 
 // Message returns the next event value from the subscription.
@@ -56,6 +57,6 @@ func (s *Subscription) Message() <-chan Message {
 }
 
 // Events returns the names of all subscribed events.
-func (s *Subscription) Events() []string {
+func (s *Subscription) Events() []Name {
 	return s.events
 }

@@ -81,7 +81,7 @@ func ExecuteRequestTestCase(
 	testRoutineClosedChan := make(chan struct{})
 	closeTestRoutineChan := make(chan struct{})
 
-	eventsSub, err := db.Events().Subscribe(event.UpdateEventName)
+	eventsSub, err := db.Events().Subscribe(event.UpdateName)
 	require.NoError(t, err)
 
 	indexOfNextExpectedUpdate := 0

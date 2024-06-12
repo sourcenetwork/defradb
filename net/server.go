@@ -206,7 +206,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 	if exists {
 		// the integration tests expect every push log to emit a merge complete event
-		s.peer.db.Events().Publish(event.NewMessage(event.MergeCompleteEventName, evt))
+		s.peer.db.Events().Publish(event.NewMessage(event.MergeCompleteName, evt))
 		return &pb.PushLogReply{}, nil
 	}
 
@@ -226,7 +226,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			corelog.Any("CID", cid),
 		)
 	}
-	s.peer.db.Events().Publish(event.NewMessage(event.MergeEventName, evt))
+	s.peer.db.Events().Publish(event.NewMessage(event.MergeName, evt))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// suscribe to the collection.
@@ -373,7 +373,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		corelog.String("Topic", topic),
 		corelog.String("Message", string(msg)),
 	)
-	evt := event.NewMessage(event.PubSubEventName, event.PubSub{
+	evt := event.NewMessage(event.PubSubName, event.PubSub{
 		Peer: from,
 	})
 	s.peer.db.Events().Publish(evt)

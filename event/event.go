@@ -16,19 +16,22 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// Name identifies an event
+type Name string
+
 const (
-	// WildCardEventName is the alias used to subscribe to all events.
-	WildCardEventName = "*"
-	// MergeEventName is the name of the net merge request event.
-	MergeEventName = "merge"
-	// MergeCompleteEventName is the name of the database merge complete event.
-	MergeCompleteEventName = "merge-complete"
-	// UpdateEventName is the name of the database update event.
-	UpdateEventName = "update"
-	// PubSubEventName is the name of the network pubsub event.
-	PubSubEventName = "pubsub"
-	// PeerEventName is the name of the network connect event.
-	PeerEventName = "peer"
+	// WildCardName is the alias used to subscribe to all events.
+	WildCardName = Name("*")
+	// MergeName is the name of the net merge request event.
+	MergeName = Name("merge")
+	// MergeCompleteName is the name of the database merge complete event.
+	MergeCompleteName = Name("merge-complete")
+	// UpdateName is the name of the database update event.
+	UpdateName = Name("update")
+	// PubSubName is the name of the network pubsub event.
+	PubSubName = Name("pubsub")
+	// PeerName is the name of the network connect event.
+	PeerName = Name("peer")
 )
 
 // Peer is an event that is published when
