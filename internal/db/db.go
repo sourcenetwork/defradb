@@ -66,6 +66,8 @@ type db struct {
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
+	
+	isEncrypted bool
 
 	// The options used to init the database
 	options []Option

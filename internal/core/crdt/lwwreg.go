@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister
@@ -111,7 +112,17 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
 		return ErrMismatchedMergeType
 	}
 
-	return reg.setValue(ctx, d.Data, d.GetPriority())
+	data := d.Data
+
+	if cipher, ok := encryption.TryGetContextDocEnc(ctx); ok {
+		var err error
+		data, err = cipher.Decrypt(string(d.DocID), 0, data)
+		if err != nil {
+			return err
+		}
+	}
+
+	return reg.setValue(ctx, data, d.GetPriority())
 }
 
 func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {

@@ -28,3 +28,10 @@ func WithMaxRetries(num int) Option {
 		db.maxTxnRetries = immutable.Some(num)
 	}
 }
+
+// WithDocEncryption enables document encryption.
+func WithEnableDocEncryption(enable bool) Option {
+	return func(db *db) {
+		db.isEncrypted = enable
+	}
+}

@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
@@ -47,14 +48,22 @@ func NewMerkleLWWRegister(
 
 // Save the value of the register to the DAG.
 func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*client.FieldValue)
+	value, ok := data.(*Field)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
 	}
-	bytes, err := value.Bytes()
+	bytes, err := value.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
+
+	if cipher, ok := encryption.TryGetContextDocEnc(ctx); ok {
+		bytes, err = cipher.Encrypt(value.DocID, 0, bytes)
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+	}
+
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(bytes)
