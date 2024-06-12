@@ -129,7 +129,7 @@ func (db *db) createCollections(
 			}
 		}
 
-		err = db.validateNewCollection(def, definitionsByName)
+		err = db.validateNewCollection(ctx, definitionsByName)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +195,7 @@ func (db *db) patchCollection(
 		return err
 	}
 
-	err = db.validateCollectionChanges(existingColsByID, newColsByID)
+	err = db.validateCollectionChanges(ctx, cols, newColsByID)
 	if err != nil {
 		return err
 	}

@@ -20,12 +20,78 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-var patchCollectionValidators = []func(
-	map[uint32]client.CollectionDescription,
-	map[uint32]client.CollectionDescription,
-) error{
-	validateCollectionNameUnique,
-	validateSingleVersionActive,
+// definitionState holds collection and schema descriptions in easily accessible
+// sets.
+//
+// It is read only and will not and should not be mutated.
+type definitionState struct {
+	collections     []client.CollectionDescription
+	collectionsByID map[uint32]client.CollectionDescription
+	schemaByID      map[string]client.SchemaDescription
+
+	definitionsByName map[string]client.CollectionDefinition
+}
+
+// newDefinitionState creates a new definitionState object given the provided
+// descriptions.
+func newDefinitionState(
+	collections []client.CollectionDescription,
+	schemasByID map[string]client.SchemaDescription,
+) *definitionState {
+	collectionsByID := map[uint32]client.CollectionDescription{}
+	definitionsByName := map[string]client.CollectionDefinition{}
+	schemaVersionsAdded := map[string]struct{}{}
+
+	for _, col := range collections {
+		if len(col.Fields) == 0 {
+			continue
+		}
+
+		schema := schemasByID[col.SchemaVersionID]
+		definition := client.CollectionDefinition{
+			Description: col,
+			Schema:      schema,
+		}
+
+		definitionsByName[definition.GetName()] = definition
+		schemaVersionsAdded[schema.VersionID] = struct{}{}
+		collectionsByID[col.ID] = col
+	}
+
+	for _, schema := range schemasByID {
+		if _, ok := schemaVersionsAdded[schema.VersionID]; ok {
+			continue
+		}
+
+		definitionsByName[schema.Name] = client.CollectionDefinition{
+			Schema: schema,
+		}
+	}
+
+	return &definitionState{
+		collections:       collections,
+		collectionsByID:   collectionsByID,
+		schemaByID:        schemasByID,
+		definitionsByName: definitionsByName,
+	}
+}
+
+// definitionValidator aliases the signature that all schema and collection
+// validation functions should follow.
+type definitionValidator = func(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error
+
+// createOnlyValidators are executed on the creation of new descriptions only
+// they will not be executed for updates to existing records.
+var createOnlyValidators = []definitionValidator{}
+
+// createOnlyValidators are executed on the update of existing descriptions only
+// they will not be executed for new records.
+var updateOnlyValidators = []definitionValidator{
 	validateSourcesNotRedefined,
 	validateIndexesNotModified,
 	validateFieldsNotModified,
@@ -36,23 +102,42 @@ var patchCollectionValidators = []func(
 	validateRootIDNotMutated,
 	validateSchemaVersionIDNotMutated,
 	validateCollectionNotRemoved,
+	validateSingleVersionActive,
 }
 
-var newCollectionValidators = []func(
-	client.CollectionDefinition,
-	map[string]client.CollectionDefinition,
-) error{
-	validateSecondaryFieldsPairUp,
+// globalValidators are run on create and update of records.
+var globalValidators = []definitionValidator{
+	validateCollectionNameUnique,
 	validateRelationPointsToValidKind,
+	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
 }
 
+var updateValidators = append(
+	append([]definitionValidator{}, updateOnlyValidators...),
+	globalValidators...,
+)
+
+var createValidators = append(
+	append([]definitionValidator{}, createOnlyValidators...),
+	globalValidators...,
+)
+
 func (db *db) validateCollectionChanges(
-	oldColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	oldCols []client.CollectionDescription,
 	newColsByID map[uint32]client.CollectionDescription,
 ) error {
-	for _, validator := range patchCollectionValidators {
-		err := validator(oldColsByID, newColsByID)
+	newCols := make([]client.CollectionDescription, 0, len(newColsByID))
+	for _, col := range newColsByID {
+		newCols = append(newCols, col)
+	}
+
+	newState := newDefinitionState(newCols, map[string]client.SchemaDescription{})
+	oldState := newDefinitionState(oldCols, map[string]client.SchemaDescription{})
+
+	for _, validator := range updateValidators {
+		err := validator(ctx, db, newState, oldState)
 		if err != nil {
 			return err
 		}
@@ -62,11 +147,24 @@ func (db *db) validateCollectionChanges(
 }
 
 func (db *db) validateNewCollection(
-	def client.CollectionDefinition,
-	defsByName map[string]client.CollectionDefinition,
+	ctx context.Context,
+	newDefsByName map[string]client.CollectionDefinition,
 ) error {
-	for _, validator := range newCollectionValidators {
-		err := validator(def, defsByName)
+	collections := []client.CollectionDescription{}
+	schemasByID := map[string]client.SchemaDescription{}
+
+	for _, def := range newDefsByName {
+		if len(def.Description.Fields) != 0 {
+			collections = append(collections, def.Description)
+		}
+
+		schemasByID[def.Schema.VersionID] = def.Schema
+	}
+
+	newState := newDefinitionState(collections, schemasByID)
+
+	for _, validator := range createValidators {
+		err := validator(ctx, db, newState, &definitionState{})
 		if err != nil {
 			return err
 		}
@@ -76,22 +174,26 @@ func (db *db) validateNewCollection(
 }
 
 func validateRelationPointsToValidKind(
-	def client.CollectionDefinition,
-	defsByName map[string]client.CollectionDefinition,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, field := range def.Description.Fields {
-		if !field.Kind.HasValue() {
-			continue
-		}
+	for _, newCollection := range newState.collections {
+		for _, field := range newCollection.Fields {
+			if !field.Kind.HasValue() {
+				continue
+			}
 
-		if !field.Kind.Value().IsObject() {
-			continue
-		}
+			if !field.Kind.Value().IsObject() {
+				continue
+			}
 
-		underlying := field.Kind.Value().Underlying()
-		_, ok := defsByName[underlying]
-		if !ok {
-			return NewErrFieldKindNotFound(field.Name, underlying)
+			underlying := field.Kind.Value().Underlying()
+			_, ok := newState.definitionsByName[underlying]
+			if !ok {
+				return NewErrFieldKindNotFound(field.Name, underlying)
+			}
 		}
 	}
 
@@ -99,51 +201,65 @@ func validateRelationPointsToValidKind(
 }
 
 func validateSecondaryFieldsPairUp(
-	def client.CollectionDefinition,
-	defsByName map[string]client.CollectionDefinition,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, field := range def.Description.Fields {
-		if !field.Kind.HasValue() {
-			continue
-		}
-
-		if !field.Kind.Value().IsObject() {
-			continue
-		}
-
-		if !field.RelationName.HasValue() {
-			continue
-		}
-
-		_, hasSchemaField := def.Schema.GetFieldByName(field.Name)
-		if hasSchemaField {
-			continue
-		}
-
-		underlying := field.Kind.Value().Underlying()
-		otherDef, ok := defsByName[underlying]
+	for _, newCollection := range newState.collections {
+		schema, ok := newState.schemaByID[newCollection.SchemaVersionID]
 		if !ok {
 			continue
 		}
 
-		if len(otherDef.Description.Fields) == 0 {
-			// Views/embedded objects do not require both sides of the relation to be defined.
-			continue
+		definition := client.CollectionDefinition{
+			Description: newCollection,
+			Schema:      schema,
 		}
 
-		otherField, ok := otherDef.Description.GetFieldByRelation(
-			field.RelationName.Value(),
-			def.GetName(),
-			field.Name,
-		)
-		if !ok {
-			return NewErrRelationMissingField(underlying, field.RelationName.Value())
-		}
+		for _, field := range newCollection.Fields {
+			if !field.Kind.HasValue() {
+				continue
+			}
 
-		_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
-		if !ok {
-			// This secondary is paired with another secondary, which is invalid
-			return NewErrRelationMissingField(underlying, field.RelationName.Value())
+			if !field.Kind.Value().IsObject() {
+				continue
+			}
+
+			if !field.RelationName.HasValue() {
+				continue
+			}
+
+			_, hasSchemaField := schema.GetFieldByName(field.Name)
+			if hasSchemaField {
+				continue
+			}
+
+			underlying := field.Kind.Value().Underlying()
+			otherDef, ok := newState.definitionsByName[underlying]
+			if !ok {
+				continue
+			}
+
+			if len(otherDef.Description.Fields) == 0 {
+				// Views/embedded objects do not require both sides of the relation to be defined.
+				continue
+			}
+
+			otherField, ok := otherDef.Description.GetFieldByRelation(
+				field.RelationName.Value(),
+				definition.GetName(),
+				field.Name,
+			)
+			if !ok {
+				return NewErrRelationMissingField(underlying, field.RelationName.Value())
+			}
+
+			_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
+			if !ok {
+				// This secondary is paired with another secondary, which is invalid
+				return NewErrRelationMissingField(underlying, field.RelationName.Value())
+			}
 		}
 	}
 
@@ -151,48 +267,57 @@ func validateSecondaryFieldsPairUp(
 }
 
 func validateSingleSidePrimary(
-	def client.CollectionDefinition,
-	defsByName map[string]client.CollectionDefinition,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, field := range def.Description.Fields {
-		if !field.Kind.HasValue() {
-			continue
-		}
-
-		if !field.Kind.Value().IsObject() {
-			continue
-		}
-
-		if !field.RelationName.HasValue() {
-			continue
-		}
-
-		_, hasSchemaField := def.Schema.GetFieldByName(field.Name)
-		if !hasSchemaField {
-			// This is a secondary field and thus passes this rule
-			continue
-		}
-
-		underlying := field.Kind.Value().Underlying()
-		otherDef, ok := defsByName[underlying]
+	for _, newCollection := range newState.collections {
+		schema, ok := newState.schemaByID[newCollection.SchemaVersionID]
 		if !ok {
 			continue
 		}
 
-		otherField, ok := otherDef.Description.GetFieldByRelation(
-			field.RelationName.Value(),
-			def.GetName(),
-			field.Name,
-		)
-		if !ok {
-			// This must be a one-sided relation, in which case it passes this rule
-			continue
+		definition := client.CollectionDefinition{
+			Description: newCollection,
+			Schema:      schema,
 		}
 
-		_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
-		if ok {
-			// This primary is paired with another primary, which is invalid
-			return ErrMultipleRelationPrimaries
+		for _, field := range definition.GetFields() {
+			if !field.Kind.IsObject() {
+				continue
+			}
+
+			if field.RelationName == "" {
+				continue
+			}
+
+			if !field.IsPrimaryRelation {
+				// This is a secondary field and thus passes this rule
+				continue
+			}
+
+			underlying := field.Kind.Underlying()
+			otherDef, ok := newState.definitionsByName[underlying]
+			if !ok {
+				continue
+			}
+
+			otherField, ok := otherDef.Description.GetFieldByRelation(
+				field.RelationName,
+				definition.GetName(),
+				field.Name,
+			)
+			if !ok {
+				// This must be a one-sided relation, in which case it passes this rule
+				continue
+			}
+
+			_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
+			if ok {
+				// This primary is paired with another primary, which is invalid
+				return ErrMultipleRelationPrimaries
+			}
 		}
 	}
 
@@ -200,11 +325,13 @@ func validateSingleSidePrimary(
 }
 
 func validateCollectionNameUnique(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
 	names := map[string]struct{}{}
-	for _, col := range newColsByID {
+	for _, col := range newState.collections {
 		if !col.Name.HasValue() {
 			continue
 		}
@@ -219,11 +346,13 @@ func validateCollectionNameUnique(
 }
 
 func validateSingleVersionActive(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
 	rootsWithActiveCol := map[uint32]struct{}{}
-	for _, col := range newColsByID {
+	for _, col := range newState.collections {
 		if !col.Name.HasValue() {
 			continue
 		}
@@ -243,11 +372,13 @@ func validateSingleVersionActive(
 // Currently new sources cannot be added, existing cannot be removed, and CollectionSources
 // cannot be redirected to other collections.
 func validateSourcesNotRedefined(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		oldCol, ok := oldColsByID[newCol.ID]
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.ID]
 		if !ok {
 			continue
 		}
@@ -281,11 +412,13 @@ func validateSourcesNotRedefined(
 }
 
 func validateIndexesNotModified(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		oldCol, ok := oldColsByID[newCol.ID]
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.ID]
 		if !ok {
 			continue
 		}
@@ -300,11 +433,13 @@ func validateIndexesNotModified(
 }
 
 func validateFieldsNotModified(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		oldCol, ok := oldColsByID[newCol.ID]
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.ID]
 		if !ok {
 			continue
 		}
@@ -319,11 +454,13 @@ func validateFieldsNotModified(
 }
 
 func validatePolicyNotModified(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		oldCol, ok := oldColsByID[newCol.ID]
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.ID]
 		if !ok {
 			continue
 		}
@@ -338,10 +475,12 @@ func validatePolicyNotModified(
 }
 
 func validateIDNotZero(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
+	for _, newCol := range newState.collections {
 		if newCol.ID == 0 {
 			return ErrCollectionIDCannotBeZero
 		}
@@ -351,11 +490,13 @@ func validateIDNotZero(
 }
 
 func validateIDUnique(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
 	colIds := map[uint32]struct{}{}
-	for _, newCol := range newColsByID {
+	for _, newCol := range newState.collections {
 		if _, ok := colIds[newCol.ID]; ok {
 			return NewErrCollectionIDAlreadyExists(newCol.ID)
 		}
@@ -366,11 +507,13 @@ func validateIDUnique(
 }
 
 func validateIDExists(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		if _, ok := oldColsByID[newCol.ID]; !ok {
+	for _, newCol := range newState.collections {
+		if _, ok := oldState.collectionsByID[newCol.ID]; !ok {
 			return NewErrAddCollectionIDWithPatch(newCol.ID)
 		}
 	}
@@ -379,11 +522,13 @@ func validateIDExists(
 }
 
 func validateRootIDNotMutated(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		oldCol, ok := oldColsByID[newCol.ID]
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.ID]
 		if !ok {
 			continue
 		}
@@ -397,11 +542,13 @@ func validateRootIDNotMutated(
 }
 
 func validateSchemaVersionIDNotMutated(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
-	for _, newCol := range newColsByID {
-		oldCol, ok := oldColsByID[newCol.ID]
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.ID]
 		if !ok {
 			continue
 		}
@@ -415,12 +562,14 @@ func validateSchemaVersionIDNotMutated(
 }
 
 func validateCollectionNotRemoved(
-	oldColsByID map[uint32]client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
 ) error {
 oldLoop:
-	for _, oldCol := range oldColsByID {
-		for _, newCol := range newColsByID {
+	for _, oldCol := range oldState.collections {
+		for _, newCol := range newState.collectionsByID {
 			// It is not enough to just match by the map index, in case the index does not pair
 			// up with the ID (this can happen if a user moves the collection within the map)
 			if newCol.ID == oldCol.ID {
