@@ -33,7 +33,7 @@ type bufferedBus struct {
 	subs map[uint64]*Subscription
 	// events is a mapping of event names to subscriber ids.
 	events map[Name]map[uint64]struct{}
-	// commandChannel manages all commands sent to this simpleChannel.
+	// commandChannel manages all commands sent to the bufferedBus.
 	//
 	// It is important that all stuff gets sent through this single channel to ensure
 	// that the order of operations is preserved.
@@ -90,10 +90,9 @@ func (b *bufferedBus) Unsubscribe(sub *Subscription) {
 }
 
 func (b *bufferedBus) Close() {
-	if b.isClosed.Load() {
+	if !b.isClosed.CompareAndSwap(false, true) {
 		return
 	}
-	b.isClosed.Store(true)
 	b.commandChannel <- closeCommand{}
 	// Wait for the close command to be handled, in order, before returning
 	<-b.hasClosedChan
