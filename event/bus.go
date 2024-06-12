@@ -164,14 +164,13 @@ func (b *Bus) handleChannel() {
 			close(t.value)
 
 		case publishCommand:
-			subscribers := make(map[uint64]struct{})
-			for id := range b.events[t.Name] {
-				subscribers[id] = struct{}{}
-			}
 			for id := range b.events[WildCardEventName] {
-				subscribers[id] = struct{}{}
+				b.subs[id].value <- Message(t)
 			}
-			for id := range subscribers {
+			for id := range b.events[t.Name] {
+				if _, ok := b.events[WildCardEventName][id]; ok {
+					continue
+				}
 				b.subs[id].value <- Message(t)
 			}
 		}
