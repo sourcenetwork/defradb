@@ -116,7 +116,7 @@ func setContextDB(cmd *cobra.Command) error {
 // setContextConfig sets teh config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
-	cfg, err := loadConfig(rootdir)
+	cfg, err := loadConfig(rootdir, cmd.Flags())
 	if err != nil {
 		return err
 	}
