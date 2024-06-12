@@ -45,7 +45,7 @@ var (
 
 const (
 	// commandBufferSize is the size of the channel buffer used to handle events.
-	commandBufferSize = 100
+	commandBufferSize = 100_000
 	// eventBufferSize is the size of the channel buffer used to subscribe to events.
 	eventBufferSize = 100
 )
