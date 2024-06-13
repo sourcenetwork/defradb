@@ -192,13 +192,15 @@ func NewNode(
 		}
 	}()
 
-	return &Node{
+	node = &Node{
 		Peer:     peer,
 		DB:       db,
 		ctx:      ctx,
 		cancel:   cancel,
 		dhtClose: ddht.Close,
-	}, nil
+	}
+
+	return
 }
 
 // Bootstrap connects to the given peers.
