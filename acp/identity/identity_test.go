@@ -14,11 +14,25 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cyware/ssi-sdk/crypto"
-	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 )
+
+var _ didProvider = (*mockedDIDProvider)(nil)
+
+// mockedDIDProvider implemented didProvider but always fails
+type mockedDIDProvider struct{}
+
+func (p *mockedDIDProvider) DIDFromSecp256k1(key *secp256k1.PublicKey) (string, error) {
+	return "", fmt.Errorf("some did generation error")
+}
+
+// newFailableIdentityProvider returns an identityProvider that always fails
+func newFailableIdentityProvider() identityProvider {
+	return identityProvider{
+		didProv: &mockedDIDProvider{},
+	}
+}
 
 func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	pubKey := &secp256k1.PublicKey{}
@@ -31,47 +45,27 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 }
 
 func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
-	execTestWithMockedProducer(
-		func() {
-			pubKey := &secp256k1.PublicKey{}
-			did, err := DIDFromPublicKey(pubKey)
+	pubKey := &secp256k1.PublicKey{}
+	did, err := DIDFromPublicKey(pubKey)
 
-			require.Empty(t, did)
-			require.ErrorIs(t, err, ErrDIDCreation)
-		},
-	)
+	require.Empty(t, did)
+	require.ErrorIs(t, err, ErrDIDCreation)
 }
 
 func Test_FromPublicKey_ProducerFailureCausesError(t *testing.T) {
-	execTestWithMockedProducer(
-		func() {
-			pubKey := &secp256k1.PublicKey{}
-			identity, err := FromPublicKey(pubKey)
+	pubKey := &secp256k1.PublicKey{}
+	provider := newFailableIdentityProvider()
+	identity, err := provider.FromPublicKey(pubKey)
 
-			require.Equal(t, None, identity)
-			require.ErrorIs(t, err, ErrDIDCreation)
-		},
-	)
+	require.Equal(t, None, identity)
+	require.ErrorIs(t, err, ErrDIDCreation)
 }
 
 func Test_FromPrivateKey_ProducerFailureCausesError(t *testing.T) {
-	execTestWithMockedProducer(
-		func() {
-			key := &secp256k1.PrivateKey{}
-			identity, err := FromPrivateKey(key)
+	key := &secp256k1.PrivateKey{}
+	provider := newFailableIdentityProvider()
+	identity, err := provider.FromPrivateKey(key)
 
-			require.Equal(t, None, identity)
-			require.ErrorIs(t, err, ErrDIDCreation)
-		},
-	)
-}
-
-func execTestWithMockedProducer(test func()) {
-	// pre: replace the producer function
-	didProducer = func(kt crypto.KeyType, publicKey []byte) (*key.DIDKey, error) {
-		return nil, fmt.Errorf("some did generation error")
-	}
-	test()
-	// post: restore producer function
-	didProducer = key.CreateDIDKey
+	require.Equal(t, None, identity)
+	require.ErrorIs(t, err, ErrDIDCreation)
 }
