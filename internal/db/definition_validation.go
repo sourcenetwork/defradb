@@ -108,6 +108,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateCollectionNotRemoved,
 	validateSingleVersionActive,
 	validateSchemaFieldNotDeleted,
+	validateFieldNotMutated,
 	validateFieldNotMoved,
 }
 
@@ -720,7 +721,7 @@ func validateUpdateSchemaFields(
 
 	newFieldNames := map[string]struct{}{}
 	for _, proposedField := range proposedDesc.Fields {
-		existingField, fieldAlreadyExists := existingFieldsByName[proposedField.Name]
+		_, fieldAlreadyExists := existingFieldsByName[proposedField.Name]
 
 		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
@@ -749,10 +750,6 @@ func validateUpdateSchemaFields(
 
 		if _, isDuplicate := newFieldNames[proposedField.Name]; isDuplicate {
 			return false, NewErrDuplicateField(proposedField.Name)
-		}
-
-		if fieldAlreadyExists && proposedField != existingField {
-			return false, NewErrCannotMutateField(proposedField.Name)
 		}
 
 		newFieldNames[proposedField.Name] = struct{}{}
@@ -839,6 +836,31 @@ func validateFieldNotMoved(
 		for newIndex, newField := range newSchema.Fields {
 			if existingIndex, exists := oldFieldIndexesByName[newField.Name]; exists && newIndex != existingIndex {
 				return NewErrCannotMoveField(newField.Name, newIndex, existingIndex)
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateFieldNotMutated(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, oldSchema := range oldState.schemaByName {
+		oldFieldsByName := map[string]client.SchemaFieldDescription{}
+		for _, field := range oldSchema.Fields {
+			oldFieldsByName[field.Name] = field
+		}
+
+		newSchema := newState.schemaByName[oldSchema.Name]
+
+		for _, newField := range newSchema.Fields {
+			oldField, exists := oldFieldsByName[newField.Name]
+			if exists && oldField != newField {
+				return NewErrCannotMutateField(newField.Name)
 			}
 		}
 	}
