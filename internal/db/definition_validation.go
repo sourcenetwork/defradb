@@ -119,6 +119,7 @@ var globalValidators = []definitionValidator{
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
 	validateCollectionDefinitionPolicyDesc,
+	validateSecondaryNotOnSchema,
 	validateTypeSupported,
 	validateTypeAndKindCompatible,
 	validateFieldNotDuplicated,
@@ -745,10 +746,6 @@ func validateUpdateSchemaFields(
 			}
 		}
 
-		if proposedField.Kind.IsObjectArray() {
-			return false, NewErrSecondaryFieldOnSchema(proposedField.Name)
-		}
-
 		newFieldNames[proposedField.Name] = struct{}{}
 	}
 
@@ -879,6 +876,23 @@ func validateFieldNotDuplicated(
 				return NewErrDuplicateField(field.Name)
 			}
 			fieldNames[field.Name] = struct{}{}
+		}
+	}
+
+	return nil
+}
+
+func validateSecondaryNotOnSchema(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, newSchema := range newState.schemaByName {
+		for _, newField := range newSchema.Fields {
+			if newField.Kind.IsObjectArray() {
+				return NewErrSecondaryFieldOnSchema(newField.Name)
+			}
 		}
 	}
 
