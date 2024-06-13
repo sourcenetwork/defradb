@@ -25,7 +25,9 @@ import (
 type definitionState struct {
 	collections     []client.CollectionDescription
 	collectionsByID map[uint32]client.CollectionDescription
-	schemaByID      map[string]client.SchemaDescription
+
+	schemaByID   map[string]client.SchemaDescription
+	schemaByName map[string]client.SchemaDescription
 
 	definitionsByName map[string]client.CollectionDefinition
 }
@@ -38,6 +40,7 @@ func newDefinitionState(
 ) *definitionState {
 	collectionsByID := map[uint32]client.CollectionDescription{}
 	definitionsByName := map[string]client.CollectionDefinition{}
+	schemaByName := map[string]client.SchemaDescription{}
 	schemaVersionsAdded := map[string]struct{}{}
 
 	for _, col := range collections {
@@ -57,6 +60,8 @@ func newDefinitionState(
 	}
 
 	for _, schema := range schemasByID {
+		schemaByName[schema.Name] = schema
+
 		if _, ok := schemaVersionsAdded[schema.VersionID]; ok {
 			continue
 		}
@@ -70,6 +75,7 @@ func newDefinitionState(
 		collections:       collections,
 		collectionsByID:   collectionsByID,
 		schemaByID:        schemasByID,
+		schemaByName:      schemaByName,
 		definitionsByName: definitionsByName,
 	}
 }
@@ -101,6 +107,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateSchemaVersionIDNotMutated,
 	validateCollectionNotRemoved,
 	validateSingleVersionActive,
+	validateSchemaFieldNotDeleted,
 }
 
 // globalValidators are run on create and update of records.
@@ -164,6 +171,33 @@ func (db *db) validateNewCollection(
 
 	for _, validator := range createValidators {
 		err := validator(ctx, db, newState, &definitionState{})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (db *db) validateSchemaUpdate(
+	ctx context.Context,
+	newSchemaByName map[string]client.SchemaDescription,
+	oldSchemaByName map[string]client.SchemaDescription,
+) error {
+	newSchemaByID := make(map[string]client.SchemaDescription, len(newSchemaByName))
+	oldSchemaByID := make(map[string]client.SchemaDescription, len(oldSchemaByName))
+	for _, schema := range newSchemaByName {
+		newSchemaByID[schema.VersionID] = schema
+	}
+	for _, schema := range oldSchemaByName {
+		oldSchemaByID[schema.VersionID] = schema
+	}
+
+	newState := newDefinitionState([]client.CollectionDescription{}, newSchemaByID)
+	oldState := newDefinitionState([]client.CollectionDescription{}, oldSchemaByID)
+
+	for _, validator := range updateValidators {
+		err := validator(ctx, db, newState, oldState)
 		if err != nil {
 			return err
 		}
@@ -734,10 +768,32 @@ func validateUpdateSchemaFields(
 		newFieldNames[proposedField.Name] = struct{}{}
 	}
 
-	for _, field := range existingDesc.Fields {
-		if _, stillExists := newFieldNames[field.Name]; !stillExists {
-			return false, NewErrCannotDeleteField(field.Name)
+	return hasChanged, nil
+}
+
+func validateSchemaFieldNotDeleted(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, newSchema := range newState.schemaByName {
+		oldSchema := oldState.schemaByName[newSchema.Name]
+
+		for _, oldField := range oldSchema.Fields {
+			stillExists := false
+			for _, newField := range newSchema.Fields {
+				if newField.Name == oldField.Name {
+					stillExists = true
+					break
+				}
+			}
+
+			if !stillExists {
+				return NewErrCannotDeleteField(oldField.Name)
+			}
 		}
 	}
-	return hasChanged, nil
+
+	return nil
 }

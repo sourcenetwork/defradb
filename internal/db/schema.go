@@ -344,6 +344,10 @@ func (db *db) updateSchema(
 	if err != nil {
 		return err
 	}
+	err = db.validateSchemaUpdate(ctx, proposedDescriptionsByName, existingSchemaByName)
+	if err != nil {
+		return err
+	}
 
 	if !hasChanged {
 		return nil
