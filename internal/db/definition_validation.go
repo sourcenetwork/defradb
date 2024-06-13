@@ -704,12 +704,6 @@ func (db *db) validateUpdateSchema(
 		)
 	}
 
-	if proposedDesc.Name != existingDesc.Name {
-		// There is actually little reason to not support this atm besides controlling the surface area
-		// of the new feature.  Changing this should not break anything, but it should be tested first.
-		return false, NewErrCannotModifySchemaName(existingDesc.Name, proposedDesc.Name)
-	}
-
 	if proposedDesc.VersionID != "" && proposedDesc.VersionID != existingDesc.VersionID {
 		// If users specify this it will be overwritten, an error is preferred to quietly ignoring it.
 		return false, ErrCannotSetVersionID
