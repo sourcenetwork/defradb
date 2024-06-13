@@ -13,6 +13,7 @@ package db
 import (
 	"container/list"
 	"context"
+	"sync"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -34,6 +35,7 @@ import (
 )
 
 func (db *db) handleMerges(ctx context.Context, merges events.Subscription[events.DAGMerge]) {
+	queue := newMergeQueue()
 	for {
 		select {
 		case <-ctx.Done():
@@ -43,15 +45,23 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 				return
 			}
 			go func() {
-				err := db.executeMerge(ctx, merge)
-				if err != nil {
-					log.ErrorContextE(
-						ctx,
-						"Failed to execute merge",
-						err,
-						corelog.String("CID", merge.Cid.String()),
-						corelog.String("Error", err.Error()),
-					)
+				// ensure only one merge per docID
+				queue.add(merge.DocID)
+				defer queue.done(merge.DocID)
+
+				// retry merge up to max txn retries
+				for i := 0; i < db.MaxTxnRetries(); i++ {
+					err := db.executeMerge(ctx, merge)
+					if errors.Is(err, badger.ErrTxnConflict) {
+						continue // retry merge
+					}
+					if err != nil {
+						log.ErrorContextE(ctx, "Failed to execute merge", err, corelog.Any("Merge", merge))
+					}
+					if merge.Wg != nil {
+						merge.Wg.Done()
+					}
+					break // merge completed
 				}
 			}()
 		}
@@ -59,12 +69,6 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 }
 
 func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error {
-	defer func() {
-		// Notify the caller that the merge is complete.
-		if dagMerge.Wg != nil {
-			dagMerge.Wg.Done()
-		}
-	}()
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -100,35 +104,57 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 		return err
 	}
 
-	for retry := 0; retry < db.MaxTxnRetries(); retry++ {
-		err := mp.mergeComposites(ctx)
-		if err != nil {
-			return err
-		}
-		err = syncIndexedDoc(ctx, docID, col)
-		if err != nil {
-			return err
-		}
-		err = txn.Commit(ctx)
-		if err != nil {
-			if errors.Is(err, badger.ErrTxnConflict) {
-				txn, err = db.NewTxn(ctx, false)
-				if err != nil {
-					return err
-				}
-				ctx = SetContextTxn(ctx, txn)
-				mp.txn = txn
-				mp.lsys.SetReadStorage(txn.DAGstore().AsIPLDStorage())
-				// Reset the CRDTs to avoid reusing the old transaction.
-				mp.mCRDTs = make(map[string]merklecrdt.MerkleCRDT)
-				continue
-			}
-			return err
-		}
-		break
+	err = mp.mergeComposites(ctx)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	err = syncIndexedDoc(ctx, docID, col)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// mergeQueue is synchronization source to ensure that concurrent
+// document merges do not cause transaction conflicts.
+type mergeQueue struct {
+	docs map[string]chan struct{}
+	mu   sync.Mutex
+}
+
+func newMergeQueue() *mergeQueue {
+	return &mergeQueue{
+		docs: make(map[string]chan struct{}),
+	}
+}
+
+// add adds a docID to the queue. If the docID is already in the queue, it will
+// wait for the docID to be removed from the queue. For every add call, done must
+// be called to remove the docID from the queue. Otherwise, subsequent add calls will
+// block forever.
+func (dq *mergeQueue) add(docID string) {
+	dq.mu.Lock()
+	done, ok := dq.docs[docID]
+	if !ok {
+		dq.docs[docID] = make(chan struct{})
+	}
+	dq.mu.Unlock()
+	if ok {
+		<-done
+		dq.add(docID)
+	}
+}
+
+func (dq *mergeQueue) done(docID string) {
+	dq.mu.Lock()
+	defer dq.mu.Unlock()
+	done, ok := dq.docs[docID]
+	if ok {
+		delete(dq.docs, docID)
+		close(done)
+	}
 }
 
 type mergeProcessor struct {

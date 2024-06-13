@@ -14,7 +14,6 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-cid"
-
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -23,6 +22,8 @@ type DAGMergeChannel = immutable.Option[Channel[DAGMerge]]
 
 // DAGMerge is a notification that a merge can be performed up to the provided CID.
 type DAGMerge struct {
+	// DocID is the unique identifier for the document being merged.
+	DocID string
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
@@ -30,4 +31,6 @@ type DAGMerge struct {
 	// Wg is a wait group that can be used to synchronize the merge,
 	// allowing the caller to optionnaly block until the merge is complete.
 	Wg *sync.WaitGroup
+	// RetryCount is the number of times this merge has been retried due to a conflict.
+	RetryCount int
 }

@@ -51,11 +51,6 @@ type server struct {
 	pubSubEmitter  event.Emitter
 	pushLogEmitter event.Emitter
 
-	// docQueue is used to track which documents are currently being processed.
-	// This is used to prevent multiple concurrent processing of the same document and
-	// limit unecessary transaction conflicts.
-	docQueue *docQueue
-
 	pb.UnimplementedServiceServer
 }
 
@@ -73,9 +68,6 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]pubsubTopic),
-		docQueue: &docQueue{
-			docs: make(map[string]chan struct{}),
-		},
 	}
 
 	cred := insecure.NewCredentials()
@@ -152,38 +144,6 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
-type docQueue struct {
-	docs map[string]chan struct{}
-	mu   sync.Mutex
-}
-
-// add adds a docID to the queue. If the docID is already in the queue, it will
-// wait for the docID to be removed from the queue. For every add call, done must
-// be called to remove the docID from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (dq *docQueue) add(docID string) {
-	dq.mu.Lock()
-	done, ok := dq.docs[docID]
-	if !ok {
-		dq.docs[docID] = make(chan struct{})
-	}
-	dq.mu.Unlock()
-	if ok {
-		<-done
-		dq.add(docID)
-	}
-}
-
-func (dq *docQueue) done(docID string) {
-	dq.mu.Lock()
-	defer dq.mu.Unlock()
-	done, ok := dq.docs[docID]
-	if ok {
-		delete(dq.docs, docID)
-		close(done)
-	}
-}
-
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
@@ -199,9 +159,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, err
 	}
 
-	s.docQueue.add(docID.String())
 	defer func() {
-		s.docQueue.done(docID.String())
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
@@ -249,6 +207,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
+			DocID:      docID.String(),
 			Cid:        cid,
 			SchemaRoot: string(req.Body.SchemaRoot),
 			Wg:         wg,

@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipld/go-ipld-prime"
@@ -291,4 +292,26 @@ func encodeValue(val any) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func TestMergeQueue(t *testing.T) {
+	q := newMergeQueue()
+
+	testDocID := "test"
+
+	q.add(testDocID)
+	go q.add(testDocID)
+	// give time for the goroutine to block
+	time.Sleep(10 * time.Millisecond)
+	require.Len(t, q.docs, 1)
+	q.done(testDocID)
+	// give time for the goroutine to add the docID
+	time.Sleep(10 * time.Millisecond)
+	q.mu.Lock()
+	require.Len(t, q.docs, 1)
+	q.mu.Unlock()
+	q.done(testDocID)
+	q.mu.Lock()
+	require.Len(t, q.docs, 0)
+	q.mu.Unlock()
 }
