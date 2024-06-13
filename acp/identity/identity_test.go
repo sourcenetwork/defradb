@@ -14,23 +14,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cyware/ssi-sdk/crypto"
+	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 )
 
-var _ didProvider = (*mockedDIDProvider)(nil)
-
-// mockedDIDProvider implemented didProvider but always fails
-type mockedDIDProvider struct{}
-
-func (p *mockedDIDProvider) DIDFromSecp256k1(key *secp256k1.PublicKey) (string, error) {
-	return "", fmt.Errorf("some did generation error")
+func mockedDIDProducer(crypto.KeyType, []byte) (*key.DIDKey, error) {
+	return nil, fmt.Errorf("some did generation error")
 }
 
 // newFailableIdentityProvider returns an identityProvider that always fails
 func newFailableIdentityProvider() identityProvider {
 	return identityProvider{
-		didProv: &mockedDIDProvider{},
+		producer: mockedDIDProducer,
 	}
 }
 
@@ -46,7 +43,7 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 
 func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
 	pubKey := &secp256k1.PublicKey{}
-	did, err := DIDFromPublicKey(pubKey)
+	did, err := generateDID(pubKey, mockedDIDProducer)
 
 	require.Empty(t, did)
 	require.ErrorIs(t, err, ErrDIDCreation)

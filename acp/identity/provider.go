@@ -17,41 +17,40 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-var _ didProvider = (*defaultDIDProvider)(nil)
+// didProducer produces a did:key from public keys
+type didProducer func(crypto.KeyType, []byte) (*key.DIDKey, error)
 
-// didProvider produces a did:key from public keys
-type didProvider interface {
-	// DIDFromSecp256k1 returns a did:key from a secp256k1 pub key
-	DIDFromSecp256k1(key *secp256k1.PublicKey) (string, error)
-}
+// getDefaultDIDProducer returns the package default didProducer
+func getDefaultDIDProducer() didProducer { return key.CreateDIDKey }
 
-// defaultDIDProvider implements didProvier
-type defaultDIDProvider struct{}
-
-func (p *defaultDIDProvider) DIDFromSecp256k1(pubKey *secp256k1.PublicKey) (string, error) {
+// generateDID receives a public key, a didProduce function and returns a did:key string or an error
+func generateDID(pubKey *secp256k1.PublicKey, producer didProducer) (string, error) {
+	keyType := "secp256k1"
 	bytes := pubKey.SerializeUncompressed()
-	did, err := key.CreateDIDKey(crypto.SECP256k1, bytes)
+	didKey, err := producer(crypto.SECP256k1, bytes)
+
 	if err != nil {
-		return "", NewErrDIDCreation(err, "secp256k1", bytes)
+		return "", NewErrDIDCreation(err, keyType, bytes)
 	}
-	return did.String(), nil
+
+	return didKey.String(), err
 }
 
-// identityProvider wraps a didProvider and constructs Identity from key material
+// identityProvider provides Identity from key material
 type identityProvider struct {
-	didProv didProvider
+	producer didProducer
 }
 
-// newIdentityProvider returns an identityProvider which uses the defaultDIDProvider
+// newIdentityProvider returns an identityProvider which uses the defaultDIDProducer
 func newIdentityProvider() *identityProvider {
 	return &identityProvider{
-		didProv: &defaultDIDProvider{},
+		producer: getDefaultDIDProducer(),
 	}
 }
 
 // FromPublicKey returns a new identity using the given public key.
 func (p *identityProvider) FromPublicKey(publicKey *secp256k1.PublicKey) (immutable.Option[Identity], error) {
-	did, err := p.didProv.DIDFromSecp256k1(publicKey)
+	did, err := generateDID(publicKey, p.producer)
 	if err != nil {
 		return None, err
 	}
@@ -64,7 +63,7 @@ func (p *identityProvider) FromPublicKey(publicKey *secp256k1.PublicKey) (immuta
 // FromPrivateKey returns a new identity using the given private key.
 func (p *identityProvider) FromPrivateKey(privateKey *secp256k1.PrivateKey) (immutable.Option[Identity], error) {
 	pubKey := privateKey.PubKey()
-	did, err := p.didProv.DIDFromSecp256k1(pubKey)
+	did, err := generateDID(pubKey, p.producer)
 	if err != nil {
 		return None, err
 	}
