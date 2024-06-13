@@ -23,7 +23,7 @@ type didProducer func(crypto.KeyType, []byte) (*key.DIDKey, error)
 // getDefaultDIDProducer returns the package default didProducer
 func getDefaultDIDProducer() didProducer { return key.CreateDIDKey }
 
-// generateDID receives a public key, a didProduce function and returns a did:key string or an error
+// generateDID receives a public key, a didProducer function and returns a did:key string or an error
 func generateDID(pubKey *secp256k1.PublicKey, producer didProducer) (string, error) {
 	keyType := "secp256k1"
 	bytes := pubKey.SerializeUncompressed()
