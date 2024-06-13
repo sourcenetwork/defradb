@@ -117,6 +117,7 @@ var globalValidators = []definitionValidator{
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
 	validateCollectionDefinitionPolicyDesc,
+	validateTypeAndKindCompatible,
 }
 
 var updateValidators = append(
@@ -761,10 +762,6 @@ func validateUpdateSchemaFields(
 			return false, client.NewErrInvalidCRDTType(proposedField.Name, proposedField.Typ.String())
 		}
 
-		if !proposedField.Typ.IsCompatibleWith(proposedField.Kind) {
-			return false, client.NewErrCRDTKindMismatch(proposedField.Typ.String(), proposedField.Kind.String())
-		}
-
 		newFieldNames[proposedField.Name] = struct{}{}
 	}
 
@@ -791,6 +788,23 @@ func validateSchemaFieldNotDeleted(
 
 			if !stillExists {
 				return NewErrCannotDeleteField(oldField.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateTypeAndKindCompatible(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, newSchema := range newState.schemaByName {
+		for _, newField := range newSchema.Fields {
+			if !newField.Typ.IsCompatibleWith(newField.Kind) {
+				return client.NewErrCRDTKindMismatch(newField.Typ.String(), newField.Kind.String())
 			}
 		}
 	}
