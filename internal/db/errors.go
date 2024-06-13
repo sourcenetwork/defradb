@@ -24,6 +24,7 @@ const (
 	errAddingP2PCollection                      string = "cannot add collection ID"
 	errRemovingP2PCollection                    string = "cannot remove collection ID"
 	errAddCollectionWithPatch                   string = "adding collections via patch is not supported"
+	errAddSchemaWithPatch                       string = "adding schema via patch is not supported"
 	errCollectionIDDoesntMatch                  string = "CollectionID does not match existing"
 	errSchemaRootDoesntMatch                    string = "SchemaRoot does not match existing"
 	errCannotSetVersionID                       string = "setting the VersionID is not supported"
@@ -223,9 +224,9 @@ func NewErrRemovingP2PCollection(inner error) error {
 	return errors.Wrap(errRemovingP2PCollection, inner)
 }
 
-func NewErrAddCollectionWithPatch(name string) error {
+func NewErrAddSchemaWithPatch(name string) error {
 	return errors.New(
-		errAddCollectionWithPatch,
+		errAddSchemaWithPatch,
 		errors.NewKV("Name", name),
 	)
 }

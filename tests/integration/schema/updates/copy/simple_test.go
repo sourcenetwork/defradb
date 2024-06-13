@@ -38,7 +38,7 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 						{ "op": "replace", "path": "/Book/Name", "value": "Book" }
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported. Name: Book",
+				ExpectedError: "adding schema via patch is not supported. Name: Book",
 			},
 		},
 	}

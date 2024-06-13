@@ -107,6 +107,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateSchemaVersionIDNotMutated,
 	validateCollectionNotRemoved,
 	validateSingleVersionActive,
+	validateSchemaNotAdded,
 	validateSchemaFieldNotDeleted,
 	validateFieldNotMutated,
 	validateFieldNotMoved,
@@ -710,10 +711,7 @@ func (db *db) validateUpdateSchema(
 		return false, ErrSchemaNameEmpty
 	}
 
-	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
-	if !collectionExists {
-		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
-	}
+	existingDesc := existingDescriptionsByName[proposedDesc.Name]
 
 	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
 	if err != nil {
@@ -919,6 +917,21 @@ func validateRelationalFieldIDType(
 					}
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func validateSchemaNotAdded(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, newSchema := range newState.schemaByName {
+		if _, exists := oldState.schemaByName[newSchema.Name]; !exists {
+			return NewErrAddSchemaWithPatch(newSchema.Name)
 		}
 	}
 
