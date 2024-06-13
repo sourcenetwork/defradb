@@ -336,21 +336,16 @@ func (db *db) updateSchema(
 	migration immutable.Option[model.Lens],
 	setAsActiveVersion bool,
 ) error {
-	hasChanged, err := db.validateUpdateSchema(
-		existingSchemaByName,
-		proposedDescriptionsByName,
-		schema,
-	)
-	if err != nil {
-		return err
-	}
-	err = db.validateSchemaUpdate(ctx, proposedDescriptionsByName, existingSchemaByName)
-	if err != nil {
-		return err
+	previousSchema := existingSchemaByName[schema.Name]
+
+	areEqual := areSchemasEqual(schema, previousSchema)
+	if areEqual {
+		return nil
 	}
 
-	if !hasChanged {
-		return nil
+	err := db.validateSchemaUpdate(ctx, proposedDescriptionsByName, existingSchemaByName)
+	if err != nil {
+		return err
 	}
 
 	for _, field := range schema.Fields {
@@ -365,7 +360,6 @@ func (db *db) updateSchema(
 		}
 	}
 
-	previousSchema := existingSchemaByName[schema.Name]
 	previousFieldNames := make(map[string]struct{}, len(previousSchema.Fields))
 	for _, field := range previousSchema.Fields {
 		previousFieldNames[field.Name] = struct{}{}
@@ -528,4 +522,20 @@ func (db *db) updateSchema(
 	}
 
 	return nil
+}
+
+func areSchemasEqual(this client.SchemaDescription, that client.SchemaDescription) bool {
+	if len(this.Fields) != len(that.Fields) {
+		return false
+	}
+
+	for i, thisField := range this.Fields {
+		if thisField != that.Fields[i] {
+			return false
+		}
+	}
+
+	return this.Name == that.Name &&
+		this.Root == that.Root &&
+		this.VersionID == that.VersionID
 }

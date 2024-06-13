@@ -699,51 +699,6 @@ func validateCollectionDefinitionPolicyDesc(
 	return nil
 }
 
-// validateUpdateSchema validates that the given schema description is a valid update.
-//
-// Will return true if the given description differs from the current persisted state of the
-// schema. Will return an error if it fails validation.
-func (db *db) validateUpdateSchema(
-	existingDescriptionsByName map[string]client.SchemaDescription,
-	proposedDescriptionsByName map[string]client.SchemaDescription,
-	proposedDesc client.SchemaDescription,
-) (bool, error) {
-	existingDesc := existingDescriptionsByName[proposedDesc.Name]
-
-	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
-	if err != nil {
-		return hasChangedFields, err
-	}
-
-	return hasChangedFields, err
-}
-
-func validateUpdateSchemaFields(
-	descriptionsByName map[string]client.SchemaDescription,
-	existingDesc client.SchemaDescription,
-	proposedDesc client.SchemaDescription,
-) (bool, error) {
-	hasChanged := false
-	existingFieldsByName := map[string]client.SchemaFieldDescription{}
-	existingFieldIndexesByName := map[string]int{}
-	for i, field := range existingDesc.Fields {
-		existingFieldIndexesByName[field.Name] = i
-		existingFieldsByName[field.Name] = field
-	}
-
-	newFieldNames := map[string]struct{}{}
-	for _, proposedField := range proposedDesc.Fields {
-		_, fieldAlreadyExists := existingFieldsByName[proposedField.Name]
-
-		// If the field is new, then the collection has changed
-		hasChanged = hasChanged || !fieldAlreadyExists
-
-		newFieldNames[proposedField.Name] = struct{}{}
-	}
-
-	return hasChanged, nil
-}
-
 func validateSchemaFieldNotDeleted(
 	ctx context.Context,
 	db *db,

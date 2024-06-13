@@ -48,11 +48,6 @@ func (db *db) createCollections(
 			schemaByName[newDefinition.Schema.Name] = newDefinition.Schema
 		}
 
-		_, err = validateUpdateSchemaFields(schemaByName, client.SchemaDescription{}, schema)
-		if err != nil {
-			return nil, err
-		}
-
 		schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 		if err != nil {
 			return nil, err
