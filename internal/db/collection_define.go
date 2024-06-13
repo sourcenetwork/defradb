@@ -89,10 +89,6 @@ func (db *db) createCollections(
 		for _, newDefinition := range newDefinitions {
 			definitionsByName[newDefinition.GetName()] = newDefinition
 		}
-		err = db.validateNewCollection(def, definitionsByName)
-		if err != nil {
-			return nil, err
-		}
 
 		colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
 		if err != nil {
@@ -131,6 +127,11 @@ func (db *db) createCollections(
 					break
 				}
 			}
+		}
+
+		err = db.validateNewCollection(def, definitionsByName)
+		if err != nil {
+			return nil, err
 		}
 
 		desc, err = description.SaveCollection(ctx, txn, desc)
