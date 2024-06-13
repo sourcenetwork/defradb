@@ -12,9 +12,12 @@ func TryGetContextDocEnc(ctx context.Context) (*DocCipher, bool) {
 	return d, ok
 }
 
-// NewContext returns a new context with the document encryption value set.
-//
-// This will overwrite any previously set transaction value.
-func NewContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, docEncContextKey{}, NewDocCipher())
+func SetDocEncContext(ctx context.Context, encryptionKey string) context.Context {
+	cipher, ok := TryGetContextDocEnc(ctx)
+	if !ok {
+		cipher = NewDocCipher()
+		ctx = context.WithValue(ctx, docEncContextKey{}, cipher)
+	}
+	cipher.setKey(encryptionKey)
+	return ctx
 }

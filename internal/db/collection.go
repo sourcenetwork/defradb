@@ -33,7 +33,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -586,10 +585,6 @@ func (c *collection) save(
 	txn.OnSuccess(func() {
 		doc.Clean()
 	})
-
-	if c.db.isEncrypted {
-		ctx = encryption.NewContext(ctx)
-	}
 
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker

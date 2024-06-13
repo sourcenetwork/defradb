@@ -34,6 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -882,7 +883,8 @@ func refreshDocuments(
 				continue
 			}
 
-			ctx := db.SetContextIdentity(s.ctx, action.Identity)
+			ctx := makeContextForDocCreate(s.ctx, &action)
+
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
 			doc, err = collection.Get(ctx, doc.ID(), false)
@@ -1226,10 +1228,17 @@ func createDocViaColSave(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
 
 	return doc, collections[action.CollectionID].Save(ctx, doc)
+}
+
+func makeContextForDocCreate(ctx context.Context, action *CreateDoc) context.Context {
+	ctx = db.SetContextIdentity(ctx, action.Identity)
+	if action.EncryptionKey.HasValue() {
+		ctx = encryption.SetDocEncContext(ctx, action.EncryptionKey.Value())
+	}
+	return ctx
 }
 
 func createDocViaColCreate(
@@ -1251,8 +1260,7 @@ func createDocViaColCreate(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
 
 	return doc, collections[action.CollectionID].Create(ctx, doc)
 }
@@ -1286,8 +1294,7 @@ func createDocViaGQL(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
 
 	result := node.ExecRequest(
 		ctx,

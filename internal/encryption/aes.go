@@ -3,13 +3,9 @@ package encryption
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"io"
 )
-
-const nonceLength = 12
 
 // EncryptAES encrypts data using AES-GCM with a provided key.
 func EncryptAES(plainText, key []byte) ([]byte, error) {
@@ -18,8 +14,8 @@ func EncryptAES(plainText, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce := make([]byte, nonceLength)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+	nonce, err := generateNonceFunc()
+	if err != nil {
 		return nil, err
 	}
 

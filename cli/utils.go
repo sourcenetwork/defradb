@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/keyring"
 )
 
@@ -49,6 +50,8 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
+	// docEncContextKey is the context key for the document encryption key.
+	docEncContextKey = contextKey("docEnc")
 )
 
 // readPassword reads a user input password without echoing it to the terminal.
@@ -158,6 +161,16 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	ctx := db.SetContextIdentity(cmd.Context(), identity)
 	cmd.SetContext(ctx)
 	return nil
+}
+
+// setContextIdentity sets the identity for the current command context.
+func setContextDocEncryptionKey(cmd *cobra.Command, docEncryptionKey string) {
+	if docEncryptionKey == "" {
+		return
+	}
+	encryption.NewContext(cmd.Context())
+	ctx := context.WithValue(cmd.Context(), docEncContextKey, docEncryptionKey)
+	cmd.SetContext(ctx)
 }
 
 // setContextRootDir sets the rootdir for the current command context.

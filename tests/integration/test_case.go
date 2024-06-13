@@ -230,6 +230,11 @@ type CreateDoc struct {
 	// created document(s) will be owned by this Identity.
 	Identity immutable.Option[acpIdentity.Identity]
 
+	// The encryption key to use for the document encryption. Optional.
+	//
+	// If an EncryptionKey is not provided the document will not be encrypted.
+	EncryptionKey immutable.Option[string]
+
 	// The collection in which this document should be created.
 	CollectionID int
 
