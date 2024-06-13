@@ -46,18 +46,16 @@ func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 			if !ok {
 				continue
 			}
-			go func() {
-				err := db.executeMerge(ctx, merge)
-				if err != nil {
-					log.ErrorContextE(
-						ctx,
-						"Failed to execute merge",
-						err,
-						corelog.String("CID", merge.Cid.String()),
-						corelog.String("Error", err.Error()),
-					)
-				}
-			}()
+			err := db.executeMerge(ctx, merge)
+			if err != nil {
+				log.ErrorContextE(
+					ctx,
+					"Failed to execute merge",
+					err,
+					corelog.String("CID", merge.Cid.String()),
+					corelog.String("Error", err.Error()),
+				)
+			}
 		}
 	}
 }

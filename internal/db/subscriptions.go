@@ -31,7 +31,6 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
 	}
-	// subscribe to the subscription event bus so we don't block the system bus
 	sub, err := db.events.Subscribe(event.UpdateName)
 	if err != nil {
 		return nil, err
