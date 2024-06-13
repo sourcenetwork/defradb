@@ -237,6 +237,20 @@ func validateRelationPointsToValidKind(
 		}
 	}
 
+	for _, schema := range newState.schemaByName {
+		for _, field := range schema.Fields {
+			if !field.Kind.IsObject() {
+				continue
+			}
+
+			underlying := field.Kind.Underlying()
+			_, ok := newState.definitionsByName[underlying]
+			if !ok {
+				return NewErrFieldKindNotFound(field.Name, underlying)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -728,14 +742,6 @@ func validateUpdateSchemaFields(
 
 		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
-
-		if !fieldAlreadyExists && proposedField.Kind.IsObject() {
-			_, relatedDescFound := descriptionsByName[proposedField.Kind.Underlying()]
-
-			if !relatedDescFound {
-				return false, NewErrFieldKindNotFound(proposedField.Name, proposedField.Kind.Underlying())
-			}
-		}
 
 		newFieldNames[proposedField.Name] = struct{}{}
 	}
