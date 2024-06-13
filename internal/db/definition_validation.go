@@ -108,6 +108,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateCollectionNotRemoved,
 	validateSingleVersionActive,
 	validateSchemaFieldNotDeleted,
+	validateFieldNotMoved,
 }
 
 // globalValidators are run on create and update of records.
@@ -718,7 +719,7 @@ func validateUpdateSchemaFields(
 	}
 
 	newFieldNames := map[string]struct{}{}
-	for proposedIndex, proposedField := range proposedDesc.Fields {
+	for _, proposedField := range proposedDesc.Fields {
 		existingField, fieldAlreadyExists := existingFieldsByName[proposedField.Name]
 
 		// If the field is new, then the collection has changed
@@ -752,11 +753,6 @@ func validateUpdateSchemaFields(
 
 		if fieldAlreadyExists && proposedField != existingField {
 			return false, NewErrCannotMutateField(proposedField.Name)
-		}
-
-		if existingIndex := existingFieldIndexesByName[proposedField.Name]; fieldAlreadyExists &&
-			proposedIndex != existingIndex {
-			return false, NewErrCannotMoveField(proposedField.Name, proposedIndex, existingIndex)
 		}
 
 		newFieldNames[proposedField.Name] = struct{}{}
@@ -819,6 +815,30 @@ func validateTypeSupported(
 		for _, newField := range newSchema.Fields {
 			if !newField.Typ.IsSupportedFieldCType() {
 				return client.NewErrInvalidCRDTType(newField.Name, newField.Typ.String())
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateFieldNotMoved(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, oldSchema := range oldState.schemaByName {
+		oldFieldIndexesByName := map[string]int{}
+		for i, field := range oldSchema.Fields {
+			oldFieldIndexesByName[field.Name] = i
+		}
+
+		newSchema := newState.schemaByName[oldSchema.Name]
+
+		for newIndex, newField := range newSchema.Fields {
+			if existingIndex, exists := oldFieldIndexesByName[newField.Name]; exists && newIndex != existingIndex {
+				return NewErrCannotMoveField(newField.Name, newIndex, existingIndex)
 			}
 		}
 	}
