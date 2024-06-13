@@ -366,8 +366,14 @@ func (db *db) updateSchema(
 		}
 	}
 
+	previousSchema := existingSchemaByName[schema.Name]
+	previousFieldNames := make(map[string]struct{}, len(previousSchema.Fields))
+	for _, field := range previousSchema.Fields {
+		previousFieldNames[field.Name] = struct{}{}
+	}
+
 	for i, field := range schema.Fields {
-		if field.Typ == client.NONE_CRDT {
+		if _, existed := previousFieldNames[field.Name]; !existed && field.Typ == client.NONE_CRDT {
 			// If no CRDT Type has been provided, default to LWW_REGISTER.
 			field.Typ = client.LWW_REGISTER
 			schema.Fields[i] = field

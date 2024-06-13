@@ -21,8 +21,8 @@ import (
 
 func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
-	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
+	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema",
@@ -74,7 +74,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
@@ -112,7 +112,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
@@ -170,9 +170,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 
 func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
-	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
-	schemaVersion4ID := "bafkreid4ulxeclzgpzhznge7zdin6docxvklugvr6gt4jxfyanz5i2r2hu"
+	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
+	schemaVersion4ID := "bafkreic2heai3vgufxcxs6bfvil2oyz27w3bzkwoqehjevlnkewq3ffp4e"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with patch on branching schema",
@@ -234,7 +234,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
@@ -308,8 +308,8 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *testing.T) {
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
-	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
+	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches",
@@ -404,9 +404,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPatch(t *testing.T) {
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4"
-	schemaVersion3ID := "bafkreifswbi23wxvq2zpqnoldolsxk2fhtj5t6rs3pidil3j6tybc62q3m"
-	schemaVersion4ID := "bafkreidjuyxhakc5yx7fucunoxijnfjvgqohf4sjoryzf27mqxidh37kne"
+	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
+	schemaVersion4ID := "bafkreifdkkauc4b4rkazmzijiu2nxlikqatxa5zbmjc4sn3wrtlcqqcrt4"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches then patch",
@@ -472,7 +472,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
