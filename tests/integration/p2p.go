@@ -175,7 +175,6 @@ func setupPeerWaitSync(
 
 	nodeCollections := map[int][]int{}
 	waitIndex := 0
-	skipWaitForMerge := true
 	for i := startIndex; i < len(s.testCase.Actions); i++ {
 		switch action := s.testCase.Actions[i].(type) {
 		case SubscribeToCollection:
@@ -248,18 +247,14 @@ func setupPeerWaitSync(
 
 		case WaitForSync:
 			waitIndex += 1
-			skipWaitForMerge = false
 			targetToSourceEvents = append(targetToSourceEvents, 0)
 			sourceToTargetEvents = append(sourceToTargetEvents, 0)
 		}
 	}
 
-	// skip waiting for a merge if we aren't interested in waiting for a sync to complete
-	if !skipWaitForMerge {
-		nodeSynced := make(chan struct{})
-		go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
-		s.syncChans = append(s.syncChans, nodeSynced)
-	}
+	nodeSynced := make(chan struct{})
+	go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
+	s.syncChans = append(s.syncChans, nodeSynced)
 }
 
 // collectionSubscribedTo returns true if the collection on the given node
@@ -328,7 +323,6 @@ func setupReplicatorWaitSync(
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
 	currentDocID := 0
-	skipWaitForMerge := true
 	for i := startIndex; i < len(s.testCase.Actions); i++ {
 		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
@@ -366,18 +360,14 @@ func setupReplicatorWaitSync(
 
 		case WaitForSync:
 			waitIndex += 1
-			skipWaitForMerge = false
 			targetToSourceEvents = append(targetToSourceEvents, 0)
 			sourceToTargetEvents = append(sourceToTargetEvents, 0)
 		}
 	}
 
-	// skip waiting for a merge if we aren't interested in waiting for a sync to complete
-	if !skipWaitForMerge {
-		nodeSynced := make(chan struct{})
-		go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
-		s.syncChans = append(s.syncChans, nodeSynced)
-	}
+	nodeSynced := make(chan struct{})
+	go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
+	s.syncChans = append(s.syncChans, nodeSynced)
 }
 
 // subscribeToCollection sets up a collection subscription on the given node/collection.
@@ -511,14 +501,11 @@ func waitForMerge(
 	targetToSourceEvents []int,
 	nodeSynced chan struct{},
 ) {
-	sourceNode := s.nodes[sourceNodeID]
-	targetNode := s.nodes[targetNodeID]
-
 	sourceSub := s.eventSubs[sourceNodeID]
 	targetSub := s.eventSubs[targetNodeID]
 
-	sourcePeerInfo := sourceNode.PeerInfo()
-	targetPeerInfo := targetNode.PeerInfo()
+	sourcePeerInfo := s.nodeAddresses[sourceNodeID]
+	targetPeerInfo := s.nodeAddresses[targetNodeID]
 
 	for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 		for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
