@@ -31,6 +31,4 @@ type DAGMerge struct {
 	// Wg is a wait group that can be used to synchronize the merge,
 	// allowing the caller to optionnaly block until the merge is complete.
 	Wg *sync.WaitGroup
-	// RetryCount is the number of times this merge has been retried due to a conflict.
-	RetryCount int
 }

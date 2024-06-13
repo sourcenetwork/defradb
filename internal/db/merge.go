@@ -49,19 +49,26 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 				queue.add(merge.DocID)
 				defer queue.done(merge.DocID)
 
+				var err error
 				// retry merge up to max txn retries
 				for i := 0; i < db.MaxTxnRetries(); i++ {
-					err := db.executeMerge(ctx, merge)
+					err = db.executeMerge(ctx, merge)
 					if errors.Is(err, badger.ErrTxnConflict) {
 						continue // retry merge
 					}
-					if err != nil {
-						log.ErrorContextE(ctx, "Failed to execute merge", err, corelog.Any("Merge", merge))
-					}
-					if merge.Wg != nil {
-						merge.Wg.Done()
-					}
-					break // merge completed
+					break // merge success or error
+				}
+
+				if err != nil {
+					log.ErrorContextE(
+						ctx,
+						"Failed to execute merge",
+						err,
+						corelog.Any("Error", err),
+						corelog.Any("Event", merge))
+				}
+				if merge.Wg != nil {
+					merge.Wg.Done()
 				}
 			}()
 		}
