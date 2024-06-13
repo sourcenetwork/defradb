@@ -592,6 +592,17 @@ func validateRootIDNotMutated(
 		}
 	}
 
+	for _, newSchema := range newState.schemaByName {
+		oldSchema := oldState.schemaByName[newSchema.Name]
+		if newSchema.Root != oldSchema.Root {
+			return NewErrSchemaRootDoesntMatch(
+				newSchema.Name,
+				oldSchema.Root,
+				newSchema.Root,
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -702,14 +713,6 @@ func (db *db) validateUpdateSchema(
 	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
 	if !collectionExists {
 		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
-	}
-
-	if proposedDesc.Root != existingDesc.Root {
-		return false, NewErrSchemaRootDoesntMatch(
-			proposedDesc.Name,
-			existingDesc.Root,
-			proposedDesc.Root,
-		)
 	}
 
 	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
