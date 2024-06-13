@@ -119,6 +119,7 @@ var globalValidators = []definitionValidator{
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
 	validateCollectionDefinitionPolicyDesc,
+	validateRelationalFieldIDType,
 	validateSecondaryNotOnSchema,
 	validateTypeSupported,
 	validateTypeAndKindCompatible,
@@ -734,16 +735,6 @@ func validateUpdateSchemaFields(
 			if !relatedDescFound {
 				return false, NewErrFieldKindNotFound(proposedField.Name, proposedField.Kind.Underlying())
 			}
-
-			if proposedField.Kind.IsObject() && !proposedField.Kind.IsArray() {
-				idFieldName := proposedField.Name + request.RelatedObjectID
-				idField, idFieldFound := proposedDesc.GetFieldByName(idFieldName)
-				if idFieldFound {
-					if idField.Kind != client.FieldKind_DocID {
-						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocID, idField.Kind)
-					}
-				}
-			}
 		}
 
 		newFieldNames[proposedField.Name] = struct{}{}
@@ -892,6 +883,35 @@ func validateSecondaryNotOnSchema(
 		for _, newField := range newSchema.Fields {
 			if newField.Kind.IsObjectArray() {
 				return NewErrSecondaryFieldOnSchema(newField.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateRelationalFieldIDType(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, schema := range newState.schemaByName {
+		fieldsByName := map[string]client.SchemaFieldDescription{}
+
+		for _, field := range schema.Fields {
+			fieldsByName[field.Name] = field
+		}
+
+		for _, field := range schema.Fields {
+			if field.Kind.IsObject() && !field.Kind.IsArray() {
+				idFieldName := field.Name + request.RelatedObjectID
+				idField, idFieldFound := fieldsByName[idFieldName]
+				if idFieldFound {
+					if idField.Kind != client.FieldKind_DocID {
+						return NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocID, idField.Kind)
+					}
+				}
 			}
 		}
 	}
