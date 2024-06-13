@@ -120,6 +120,7 @@ var globalValidators = []definitionValidator{
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
 	validateCollectionDefinitionPolicyDesc,
+	validateSchemaNameNotEmpty,
 	validateRelationalFieldIDType,
 	validateSecondaryNotOnSchema,
 	validateTypeSupported,
@@ -707,10 +708,6 @@ func (db *db) validateUpdateSchema(
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	proposedDesc client.SchemaDescription,
 ) (bool, error) {
-	if proposedDesc.Name == "" {
-		return false, ErrSchemaNameEmpty
-	}
-
 	existingDesc := existingDescriptionsByName[proposedDesc.Name]
 
 	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
@@ -932,6 +929,21 @@ func validateSchemaNotAdded(
 	for _, newSchema := range newState.schemaByName {
 		if _, exists := oldState.schemaByName[newSchema.Name]; !exists {
 			return NewErrAddSchemaWithPatch(newSchema.Name)
+		}
+	}
+
+	return nil
+}
+
+func validateSchemaNameNotEmpty(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, schema := range newState.schemaByName {
+		if schema.Name == "" {
+			return ErrSchemaNameEmpty
 		}
 	}
 
