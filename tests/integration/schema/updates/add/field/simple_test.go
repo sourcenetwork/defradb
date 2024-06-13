@@ -362,7 +362,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "duplicate field. Name: name",
+				ExpectedError: "mutating an existing field is not supported. ProposedName: name",
 			},
 		},
 	}

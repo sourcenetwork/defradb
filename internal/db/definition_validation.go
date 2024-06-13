@@ -121,6 +121,7 @@ var globalValidators = []definitionValidator{
 	validateCollectionDefinitionPolicyDesc,
 	validateTypeSupported,
 	validateTypeAndKindCompatible,
+	validateFieldNotDuplicated,
 }
 
 var updateValidators = append(
@@ -748,10 +749,6 @@ func validateUpdateSchemaFields(
 			return false, NewErrSecondaryFieldOnSchema(proposedField.Name)
 		}
 
-		if _, isDuplicate := newFieldNames[proposedField.Name]; isDuplicate {
-			return false, NewErrDuplicateField(proposedField.Name)
-		}
-
 		newFieldNames[proposedField.Name] = struct{}{}
 	}
 
@@ -862,6 +859,26 @@ func validateFieldNotMutated(
 			if exists && oldField != newField {
 				return NewErrCannotMutateField(newField.Name)
 			}
+		}
+	}
+
+	return nil
+}
+
+func validateFieldNotDuplicated(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, schema := range newState.schemaByName {
+		fieldNames := map[string]struct{}{}
+
+		for _, field := range schema.Fields {
+			if _, isDuplicate := fieldNames[field.Name]; isDuplicate {
+				return NewErrDuplicateField(field.Name)
+			}
+			fieldNames[field.Name] = struct{}{}
 		}
 	}
 
