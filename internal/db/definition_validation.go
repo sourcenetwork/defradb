@@ -612,6 +612,14 @@ func validateSchemaVersionIDNotMutated(
 		}
 	}
 
+	for _, newSchema := range newState.schemaByName {
+		oldSchema := oldState.schemaByName[newSchema.Name]
+		if newSchema.VersionID != "" && newSchema.VersionID != oldSchema.VersionID {
+			// If users specify this it will be overwritten, an error is preferred to quietly ignoring it.
+			return ErrCannotSetVersionID
+		}
+	}
+
 	return nil
 }
 
@@ -702,11 +710,6 @@ func (db *db) validateUpdateSchema(
 			existingDesc.Root,
 			proposedDesc.Root,
 		)
-	}
-
-	if proposedDesc.VersionID != "" && proposedDesc.VersionID != existingDesc.VersionID {
-		// If users specify this it will be overwritten, an error is preferred to quietly ignoring it.
-		return false, ErrCannotSetVersionID
 	}
 
 	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
