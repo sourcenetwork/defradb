@@ -17,20 +17,19 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// didProducer produces a did:key from public keys
-type didProducer func(crypto.KeyType, []byte) (*key.DIDKey, error)
+// didProducerFn produces a did:key from public keys
+type didProducerFn func(crypto.KeyType, []byte) (*key.DIDKey, error)
 
 // getDefaultDIDProducer returns the package default didProducer
-func getDefaultDIDProducer() didProducer { return key.CreateDIDKey }
+func getDefaultDIDProducer() didProducerFn { return key.CreateDIDKey }
 
-// generateDID receives a public key, a didProducer function and returns a did:key string or an error
-func generateDID(pubKey *secp256k1.PublicKey, producer didProducer) (string, error) {
-	keyType := "secp256k1"
+// generateDID receives a public key, a didProducerFn and returns a did:key string or an error
+func generateDID(pubKey *secp256k1.PublicKey, producer didProducerFn) (string, error) {
 	bytes := pubKey.SerializeUncompressed()
 	didKey, err := producer(crypto.SECP256k1, bytes)
 
 	if err != nil {
-		return "", NewErrDIDCreation(err, keyType, bytes)
+		return "", NewErrDIDCreation(err, "secp256k1", bytes)
 	}
 
 	return didKey.String(), err
@@ -38,7 +37,7 @@ func generateDID(pubKey *secp256k1.PublicKey, producer didProducer) (string, err
 
 // identityProvider provides Identity from key material
 type identityProvider struct {
-	producer didProducer
+	producer didProducerFn
 }
 
 // newIdentityProvider returns an identityProvider which uses the defaultDIDProducer
