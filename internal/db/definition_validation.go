@@ -117,6 +117,7 @@ var globalValidators = []definitionValidator{
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
 	validateCollectionDefinitionPolicyDesc,
+	validateTypeSupported,
 	validateTypeAndKindCompatible,
 }
 
@@ -758,10 +759,6 @@ func validateUpdateSchemaFields(
 			return false, NewErrCannotMoveField(proposedField.Name, proposedIndex, existingIndex)
 		}
 
-		if !proposedField.Typ.IsSupportedFieldCType() {
-			return false, client.NewErrInvalidCRDTType(proposedField.Name, proposedField.Typ.String())
-		}
-
 		newFieldNames[proposedField.Name] = struct{}{}
 	}
 
@@ -805,6 +802,23 @@ func validateTypeAndKindCompatible(
 		for _, newField := range newSchema.Fields {
 			if !newField.Typ.IsCompatibleWith(newField.Kind) {
 				return client.NewErrCRDTKindMismatch(newField.Typ.String(), newField.Kind.String())
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateTypeSupported(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, newSchema := range newState.schemaByName {
+		for _, newField := range newSchema.Fields {
+			if !newField.Typ.IsSupportedFieldCType() {
+				return client.NewErrInvalidCRDTType(newField.Name, newField.Typ.String())
 			}
 		}
 	}
