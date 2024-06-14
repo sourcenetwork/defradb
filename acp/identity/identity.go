@@ -43,5 +43,6 @@ func FromPublicKey(publicKey *secp256k1.PublicKey) (immutable.Option[Identity], 
 
 // DIDFromPublicKey returns the unique address of the given public key.
 func DIDFromPublicKey(publicKey *secp256k1.PublicKey) (string, error) {
-	return generateDID(publicKey, getDefaultDIDProducer())
+	provider := defaultDIDProvider{}
+	return provider.DIDFromSecp256k1(publicKey)
 }

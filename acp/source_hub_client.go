@@ -91,6 +91,7 @@ type sourceHubBridge struct {
 }
 
 var _ ACP = (*sourceHubBridge)(nil)
+var _ ACP = (*sourceHubBridge)(nil)
 
 func NewLocalACP() ACP {
 	return &sourceHubBridge{
