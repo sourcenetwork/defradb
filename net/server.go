@@ -29,7 +29,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -178,19 +177,10 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	onError := merkledag.OnError(func(c cid.Cid, err error) error {
-		if errors.Is(err, badger.ErrTxnConflict) {
-			return nil // transaction conflicts are fine to ignore
-		}
-		return err
-	})
-	visit := func(c cid.Cid) bool {
-		has, _ := s.peer.db.Blockstore().Has(ctx, c)
-		return !has
-	}
+	// the merkledag must be fetched every time
+	// to ensure we have all of the child blocks
 	dagServ := merkledag.NewDAGService(s.peer.bserv)
-	walkOpts := []merkledag.WalkOption{onError, merkledag.Concurrent()}
-	err = merkledag.Walk(ctx, dagServ.GetLinks, headCID, visit, walkOpts...)
+	err = merkledag.FetchGraph(ctx, headCID, dagServ)
 	if err != nil {
 		return nil, err
 	}
