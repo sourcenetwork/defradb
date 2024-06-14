@@ -65,6 +65,32 @@ var configFlags = map[string]string{
 	"no-keyring":        "keyring.disabled",
 }
 
+// configDefaults contains default values for config entries.
+var configDefaults = map[string]any{
+	"api.address":                       "127.0.0.1:9181",
+	"api.allowed-origins":               []string{},
+	"datastore.badger.path":             "data",
+	"datastore.maxtxnretries":           5,
+	"datastore.store":                   "badger",
+	"datastore.badger.valuelogfilesize": 1 << 30,
+	"net.p2pdisabled":                   false,
+	"net.p2paddresses":                  []string{"/ip4/127.0.0.1/tcp/9171"},
+	"net.peers":                         []string{},
+	"net.pubSubEnabled":                 true,
+	"net.relay":                         false,
+	"keyring.backend":                   "file",
+	"keyring.disabled":                  false,
+	"keyring.namespace":                 "defradb",
+	"keyring.path":                      "keys",
+	"log.caller":                        false,
+	"log.colordisabled":                 false,
+	"log.format":                        "text",
+	"log.level":                         "info",
+	"log.output":                        "stderr",
+	"log.source":                        false,
+	"log.stacktrace":                    false,
+}
+
 // defaultConfig returns a new config with default values.
 func defaultConfig() *viper.Viper {
 	cfg := viper.New()
@@ -76,20 +102,18 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigName("config")
 	cfg.SetConfigType("yaml")
 
-	cfg.SetDefault("datastore.badger.path", "data")
-	cfg.SetDefault("net.pubSubEnabled", true)
-	cfg.SetDefault("net.relay", false)
-	cfg.SetDefault("log.caller", false)
-
+	for key, val := range configDefaults {
+		cfg.SetDefault(key, val)
+	}
 	return cfg
 }
 
 // createConfig writes the default config file if one does not exist.
-func createConfig(rootdir string) error {
+func createConfig(rootdir string, flags *pflag.FlagSet) error {
 	cfg := defaultConfig()
 	cfg.AddConfigPath(rootdir)
 
-	if err := bindConfigFlags(cfg); err != nil {
+	if err := bindConfigFlags(cfg, flags); err != nil {
 		return err
 	}
 	// make sure rootdir exists
@@ -107,7 +131,7 @@ func createConfig(rootdir string) error {
 }
 
 // loadConfig returns a new config with values from the config in the given rootdir.
-func loadConfig(rootdir string) (*viper.Viper, error) {
+func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	cfg := defaultConfig()
 	cfg.AddConfigPath(rootdir)
 
@@ -120,7 +144,7 @@ func loadConfig(rootdir string) (*viper.Viper, error) {
 		return nil, err
 	}
 	// bind cli flags to config keys
-	if err := bindConfigFlags(cfg); err != nil {
+	if err := bindConfigFlags(cfg, flags); err != nil {
 		return nil, err
 	}
 
@@ -149,12 +173,9 @@ func loadConfig(rootdir string) (*viper.Viper, error) {
 }
 
 // bindConfigFlags binds the set of cli flags to config values.
-func bindConfigFlags(cfg *viper.Viper) error {
+func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
 	var errs []error
-	rootFlags.VisitAll(func(f *pflag.Flag) {
-		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
-	})
-	startFlags.VisitAll(func(f *pflag.Flag) {
+	flags.VisitAll(func(f *pflag.Flag) {
 		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
 	})
 	return errors.Join(errs...)

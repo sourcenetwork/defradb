@@ -14,17 +14,20 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateConfig(t *testing.T) {
 	rootdir := t.TempDir()
-	err := createConfig(rootdir)
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	err := createConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	// ensure no errors when config already exists
-	err = createConfig(rootdir)
+	err = createConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "config.yaml"))
@@ -32,7 +35,9 @@ func TestCreateConfig(t *testing.T) {
 
 func TestLoadConfigNotExist(t *testing.T) {
 	rootdir := t.TempDir()
-	cfg, err := loadConfig(rootdir)
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	cfg, err := loadConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.Equal(t, 5, cfg.GetInt("datastore.maxtxnretries"))
