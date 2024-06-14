@@ -16,6 +16,7 @@ import (
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	"github.com/valyala/fastjson"
 )
 
 // sourceHubClient is a private abstraction to allow multiple ACP implementations
@@ -40,6 +41,7 @@ type sourceHubClient interface {
 		ctx context.Context,
 		creatorID string,
 		policy string,
+		marshalType policyMarshalType,
 		creationTime *protoTypes.Timestamp,
 	) (string, error)
 
@@ -116,10 +118,16 @@ func (a *sourceHubBridge) AddPolicy(ctx context.Context, creatorID string, polic
 		return "", ErrPolicyDataMustNotBeEmpty
 	}
 
+	marshalType := policyMarshalType_YAML
+	if isJSON := fastjson.Validate(policy) == nil; isJSON { // Detect JSON format.
+		marshalType = policyMarshalType_JSON
+	}
+
 	policyID, err := a.client.AddPolicy(
 		ctx,
 		creatorID,
 		policy,
+		marshalType,
 		protoTypes.TimestampNow(),
 	)
 

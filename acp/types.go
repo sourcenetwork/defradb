@@ -23,6 +23,15 @@ const (
 	RegistrationResult_Unarchived RegistrationResult = 2
 )
 
+// policyMarshalType represents the format in which a policy
+// is marshaled as
+type policyMarshalType int32
+
+const (
+	policyMarshalType_YAML policyMarshalType = 1
+	policyMarshalType_JSON policyMarshalType = 2
+)
+
 // policy is a data container carrying the necessary data
 // to verify whether a policy meets DPI requirements
 type policy struct {

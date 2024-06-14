@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/acp_core/pkg/runtime"
 	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
-	"github.com/valyala/fastjson"
 )
 
 const localACPStoreName = "local_acp"
@@ -108,6 +107,7 @@ func (l *ACPLocal) AddPolicy(
 	ctx context.Context,
 	creatorID string,
 	policy string,
+	marshalType policyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
 	principal, err := auth.NewDIDPrincipal(creatorID)
@@ -116,19 +116,13 @@ func (l *ACPLocal) AddPolicy(
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
-	marshalType := types.PolicyMarshalingType_SHORT_YAML
-	if isJSON := fastjson.Validate(policy) == nil; isJSON { // Detect JSON format.
-		marshalType = types.PolicyMarshalingType_SHORT_JSON
-	}
-
 	createPolicy := types.CreatePolicyRequest{
 		Policy:       policy,
-		MarshalType:  marshalType,
+		MarshalType:  types.PolicyMarshalingType(marshalType),
 		CreationTime: protoTypes.TimestampNow(),
 	}
 
 	response, err := l.engine.CreatePolicy(ctx, &createPolicy)
-
 	if err != nil {
 		return "", err
 	}
