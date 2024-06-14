@@ -60,6 +60,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -104,6 +105,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -113,6 +115,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -160,6 +163,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -178,6 +182,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})

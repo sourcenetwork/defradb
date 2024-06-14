@@ -20,6 +20,7 @@ import (
 
 	"github.com/ipfs/boxo/ipld/merkledag"
 	cid "github.com/ipfs/go-cid"
+	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -30,14 +31,15 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
-// dagFetchTimeout is the maximum amount of time
+// syncDAGTimeout is the maximum amount of time
 // to wait for a dag to be fetched.
-var dagFetchTimeout = 60 * time.Second
+var syncDAGTimeout = 60 * time.Second
 
 // Server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -182,12 +184,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	fetchCtx, cancel := context.WithTimeout(ctx, dagFetchTimeout)
-	defer cancel()
-	// the merkledag must be fetched every time
-	// to ensure we have all of the child blocks
-	dagServ := merkledag.NewDAGService(s.peer.bserv)
-	err = merkledag.FetchGraph(fetchCtx, headCID, dagServ)
+	err = s.syncDAG(ctx, headCID)
 	if err != nil {
 		return nil, err
 	}
@@ -358,6 +355,33 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
 		}
 	}
+}
+
+// syncDAG ensures that the DAG with the given CID is completely synchronized.
+func (s *server) syncDAG(ctx context.Context, c cid.Cid) error {
+	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
+	defer cancel()
+
+	dserv := merkledag.NewDAGService(s.peer.bserv)
+	var ng format.NodeGetter = merkledag.NewSession(ctx, dserv)
+
+	set := make(map[cid.Cid]struct{})
+	// visit each node only once
+	visit := func(c cid.Cid) bool {
+		_, ok := set[c]
+		set[c] = struct{}{}
+		return !ok
+	}
+	// ignore transaction conflict errors
+	onError := func(c cid.Cid, err error) error {
+		if errors.Is(err, badger.ErrTxnConflict) {
+			return nil
+		}
+		return err
+	}
+
+	opts := []merkledag.WalkOption{merkledag.Concurrent(), merkledag.OnError(onError)}
+	return merkledag.Walk(ctx, merkledag.GetLinksDirect(ng), c, visit, opts...)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
