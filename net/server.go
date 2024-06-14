@@ -358,6 +358,9 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 }
 
 // syncDAG ensures that the DAG with the given CID is completely synchronized.
+//
+// This process will walk the entire DAG until the issue below is resolved.
+// https://github.com/sourcenetwork/defradb/issues/2722
 func (s *server) syncDAG(ctx context.Context, c cid.Cid) error {
 	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
 	defer cancel()
