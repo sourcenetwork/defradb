@@ -10,22 +10,22 @@
 
 package encryption
 
-type DocCipher struct {
+type DocEncryptor struct {
 	encryptionKey string
 }
 
-func NewDocCipher() *DocCipher {
-	return &DocCipher{}
+func newDocEncryptor() *DocEncryptor {
+	return &DocEncryptor{}
 }
 
-func (d *DocCipher) setKey(encryptionKey string) {
+func (d *DocEncryptor) SetKey(encryptionKey string) {
 	d.encryptionKey = encryptionKey
 }
 
-func (d *DocCipher) Encrypt(docID string, fieldID int, plainText []byte) ([]byte, error) {
+func (d *DocEncryptor) Encrypt(docID string, fieldID int, plainText []byte) ([]byte, error) {
 	return EncryptAES(plainText, []byte(d.encryptionKey))
 }
 
-func (d *DocCipher) Decrypt(docID string, fieldID int, cipherText []byte) ([]byte, error) {
+func (d *DocEncryptor) Decrypt(docID string, fieldID int, cipherText []byte) ([]byte, error) {
 	return DecryptAES(cipherText, []byte(d.encryptionKey))
 }

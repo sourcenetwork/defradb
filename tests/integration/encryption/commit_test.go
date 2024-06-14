@@ -20,7 +20,7 @@ import (
 
 const encKey = "examplekey1234567890examplekey12"
 
-func encryptAES(key string, plaintext []byte) []byte {
+func encrypt(key string, plaintext []byte) []byte {
 	val, _ := encryption.EncryptAES(plaintext, []byte(key))
 	return val
 }
@@ -58,7 +58,7 @@ func TestDocEncryption_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 					{
 						"cid":          "bafyreicv422zhiuqefs32wp7glrqsbjpy76hgem4ivagm2ttuli43wluci",
 						"collectionID": int64(1),
-						"delta":        encryptAES(encKey, testUtils.CBORValue(21)),
+						"delta":        encrypt(encKey, testUtils.CBORValue(21)),
 						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 						"fieldId":      "1",
 						"fieldName":    "age",
@@ -68,7 +68,7 @@ func TestDocEncryption_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 					{
 						"cid":          "bafyreie6i4dw5jh6bp2anszqkmuwfslsemzatrflipetljhtpjhjn3zbum",
 						"collectionID": int64(1),
-						"delta":        encryptAES(encKey, testUtils.CBORValue("John")),
+						"delta":        encrypt(encKey, testUtils.CBORValue("John")),
 						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 						"fieldId":      "2",
 						"fieldName":    "name",

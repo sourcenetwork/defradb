@@ -50,8 +50,6 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
-	// docEncContextKey is the context key for the document encryption key.
-	docEncContextKey = contextKey("docEnc")
 )
 
 // readPassword reads a user input password without echoing it to the terminal.
@@ -168,8 +166,7 @@ func setContextDocEncryptionKey(cmd *cobra.Command, docEncryptionKey string) {
 	if docEncryptionKey == "" {
 		return
 	}
-	encryption.NewContext(cmd.Context())
-	ctx := context.WithValue(cmd.Context(), docEncContextKey, docEncryptionKey)
+	ctx := encryption.ContextWithKey(cmd.Context(), docEncryptionKey)
 	cmd.SetContext(ctx)
 }
 

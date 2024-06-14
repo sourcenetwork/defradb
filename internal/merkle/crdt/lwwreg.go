@@ -57,11 +57,9 @@ func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.L
 		return cidlink.Link{}, nil, err
 	}
 
-	if cipher, ok := encryption.TryGetContextDocEnc(ctx); ok {
-		bytes, err = cipher.Encrypt(value.DocID, 0, bytes)
-		if err != nil {
-			return cidlink.Link{}, nil, err
-		}
+	bytes, err = encryption.EncryptDoc(ctx, value.DocID, 0, bytes)
+	if err != nil {
+		return cidlink.Link{}, nil, err
 	}
 
 	// Set() call on underlying LWWRegister CRDT

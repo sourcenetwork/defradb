@@ -1236,7 +1236,7 @@ func createDocViaColSave(
 func makeContextForDocCreate(ctx context.Context, action *CreateDoc) context.Context {
 	ctx = db.SetContextIdentity(ctx, action.Identity)
 	if action.EncryptionKey.HasValue() {
-		ctx = encryption.SetDocEncContext(ctx, action.EncryptionKey.Value())
+		ctx = encryption.ContextWithKey(ctx, action.EncryptionKey.Value())
 	}
 	return ctx
 }

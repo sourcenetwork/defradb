@@ -114,12 +114,10 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
 
 	data := d.Data
 
-	if cipher, ok := encryption.TryGetContextDocEnc(ctx); ok {
-		var err error
-		data, err = cipher.Decrypt(string(d.DocID), 0, data)
-		if err != nil {
-			return err
-		}
+	var err error
+	data, err = encryption.DecryptDoc(ctx, string(d.DocID), 0, data)
+	if err != nil {
+		return err
 	}
 
 	return reg.setValue(ctx, data, d.GetPriority())

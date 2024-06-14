@@ -17,17 +17,43 @@ type docEncContextKey struct{}
 
 // TryGetContextDocEnc returns a document encryption and a bool indicating if
 // it was retrieved from the given context.
-func TryGetContextDocEnc(ctx context.Context) (*DocCipher, bool) {
-	d, ok := ctx.Value(docEncContextKey{}).(*DocCipher)
-	return d, ok
+func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
+	enc, ok := ctx.Value(docEncContextKey{}).(*DocEncryptor)
+	return enc, ok
 }
 
-func SetDocEncContext(ctx context.Context, encryptionKey string) context.Context {
-	cipher, ok := TryGetContextDocEnc(ctx)
+func getContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
+	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
-		cipher = NewDocCipher()
-		ctx = context.WithValue(ctx, docEncContextKey{}, cipher)
+		enc = newDocEncryptor()
+		ctx = context.WithValue(ctx, docEncContextKey{}, enc)
 	}
-	cipher.setKey(encryptionKey)
+	return ctx, enc
+}
+
+func Context(ctx context.Context) context.Context {
+	ctx, _ = getContextWithDocEnc(ctx)
 	return ctx
+}
+
+func ContextWithKey(ctx context.Context, encryptionKey string) context.Context {
+	_, encryptor := getContextWithDocEnc(ctx)
+	encryptor.SetKey(encryptionKey)
+	return context.WithValue(ctx, docEncContextKey{}, encryptor)
+}
+
+func EncryptDoc(ctx context.Context, docID string, fieldID int, plainText []byte) ([]byte, error) {
+	enc, ok := TryGetContextEncryptor(ctx)
+	if !ok {
+		return plainText, nil
+	}
+	return enc.Encrypt(docID, fieldID, plainText)
+}
+
+func DecryptDoc(ctx context.Context, docID string, fieldID int, cipherText []byte) ([]byte, error) {
+	enc, ok := TryGetContextEncryptor(ctx)
+	if !ok {
+		return cipherText, nil
+	}
+	return enc.Decrypt(docID, fieldID, cipherText)
 }
