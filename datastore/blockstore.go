@@ -22,7 +22,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -114,17 +113,19 @@ func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	err = bs.store.Put(ctx, k, block.RawData())
-	if errors.Is(err, badger.ErrTxnConflict) {
-		return nil // ignore conflicts data is immutable
-	}
-	return err
+	return bs.store.Put(ctx, k, block.RawData())
 }
 
 // PutMany stores multiple blocks to the blockstore.
 func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
-		err := bs.Put(ctx, b)
+		k := dshelp.MultihashToDsKey(b.Cid().Hash())
+		exists, err := bs.store.Has(ctx, k)
+		if err == nil && exists {
+			continue
+		}
+
+		err = bs.store.Put(ctx, k, b.RawData())
 		if err != nil {
 			return err
 		}
