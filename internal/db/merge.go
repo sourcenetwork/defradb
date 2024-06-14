@@ -90,7 +90,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 	ls := cidlink.DefaultLinkSystem()
 	ls.SetReadStorage(txn.DAGstore().AsIPLDStorage())
 
-	docID, err := getDocIDFromBlock(ctx, ls, dagMerge.Cid)
+	docID, err := client.NewDocIDFromString(dagMerge.DocID)
 	if err != nil {
 		return err
 	}
@@ -364,18 +364,6 @@ func (mp *mergeProcessor) initCRDTForType(
 
 	mp.mCRDTs[field] = mcrdt
 	return mcrdt, nil
-}
-
-func getDocIDFromBlock(ctx context.Context, ls linking.LinkSystem, cid cid.Cid) (client.DocID, error) {
-	nd, err := ls.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: cid}, coreblock.SchemaPrototype)
-	if err != nil {
-		return client.DocID{}, err
-	}
-	block, err := coreblock.GetFromNode(nd)
-	if err != nil {
-		return client.DocID{}, err
-	}
-	return client.NewDocIDFromString(string(block.Delta.GetDocID()))
 }
 
 func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string) (*collection, error) {
