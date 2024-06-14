@@ -17,7 +17,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/go-cid"
+	"github.com/ipfs/boxo/ipld/merkledag"
+	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -28,9 +29,9 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -150,7 +151,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	cid, err := cid.Cast(req.Body.Cid)
+	headCID, err := cid.Cast(req.Body.Cid)
 	if err != nil {
 		return nil, err
 	}
@@ -177,38 +178,29 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	// check if we already have this block
-	exists, err := s.peer.db.Blockstore().Has(ctx, cid)
-	if err != nil {
-		return nil, NewErrCheckingForExistingBlock(err, cid.String())
+	onError := merkledag.OnError(func(c cid.Cid, err error) error {
+		if errors.Is(err, badger.ErrTxnConflict) {
+			return nil // transaction conflicts are fine to ignore
+		}
+		return err
+	})
+	visit := func(c cid.Cid) bool {
+		has, _ := s.peer.db.Blockstore().Has(ctx, c)
+		return !has
 	}
-	if exists {
-		return &pb.PushLogReply{}, nil
-	}
-
-	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
+	dagServ := merkledag.NewDAGService(s.peer.bserv)
+	walkOpts := []merkledag.WalkOption{onError, merkledag.Concurrent()}
+	err = merkledag.Walk(ctx, dagServ.GetLinks, headCID, visit, walkOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	bp := newBlockProcessor(ctx, s.peer)
-	err = bp.processRemoteBlock(ctx, block)
-	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to process remote block",
-			err,
-			corelog.String("DocID", docID.String()),
-			corelog.Any("CID", cid),
-		)
-	}
-	bp.wg.Wait()
 	if s.peer.db.Events().DAGMerges.HasValue() {
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
 			DocID:      docID.String(),
-			Cid:        cid,
+			Cid:        headCID,
 			SchemaRoot: string(req.Body.SchemaRoot),
 			Wg:         wg,
 		})
