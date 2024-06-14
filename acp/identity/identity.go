@@ -38,12 +38,29 @@ type Identity struct {
 
 // FromPrivateKey returns a new identity using the given private key.
 func FromPrivateKey(privateKey *secp256k1.PrivateKey) (immutable.Option[Identity], error) {
-	return newIdentityProvider().FromPrivateKey(privateKey)
+	pubKey := privateKey.PubKey()
+	did, err := DIDFromPublicKey(pubKey)
+	if err != nil {
+		return None, err
+	}
+
+	return immutable.Some(Identity{
+		DID:        did,
+		PublicKey:  pubKey,
+		PrivateKey: privateKey,
+	}), nil
 }
 
 // FromPublicKey returns a new identity using the given public key.
 func FromPublicKey(publicKey *secp256k1.PublicKey) (immutable.Option[Identity], error) {
-	return newIdentityProvider().FromPublicKey(publicKey)
+	did, err := DIDFromPublicKey(publicKey)
+	if err != nil {
+		return None, err
+	}
+	return immutable.Some(Identity{
+		DID:       did,
+		PublicKey: publicKey,
+	}), nil
 }
 
 // DIDFromPublicKey returns a did:key generated from the the given public key.
