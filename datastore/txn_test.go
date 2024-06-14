@@ -201,8 +201,7 @@ func TestShimTxnStoreClose(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// This test documents https://github.com/sourcenetwork/defradb/issues/2673
-func TestMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
+func TestMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -223,7 +222,7 @@ func TestMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.NoError(t, err)
 }
 
 func TestMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
@@ -284,8 +283,7 @@ func TestMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflic
 	require.ErrorIs(t, err, badger.ErrConflict)
 }
 
-// This test documents https://github.com/sourcenetwork/defradb/issues/2673
-func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -308,9 +306,6 @@ func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConf
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	// We are expecting this to fail because of the conflict but badger does not return an error.
-	// Conflicts in badger only occurs when the value of a key was changed between the time you read and you rewrite it.
-	// require.ErrorIs(t, err, badger.ErrConflict)
 	require.NoError(t, err)
 }
 
@@ -376,8 +371,7 @@ func TestBadgerMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithC
 	require.ErrorIs(t, err, badger.ErrConflict)
 }
 
-// This test documents https://github.com/sourcenetwork/defradb/issues/2673
-func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConflict(t *testing.T) {
+func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("")}
 	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
@@ -400,9 +394,6 @@ func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldErrorWithConfli
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	// We are expecting this to fail because of the conflict but badger does not return an error.
-	// Conflicts in badger only occurs when the value of a key was changed between the time you read and you rewrite it.
-	// require.ErrorIs(t, err, badger.ErrConflict)
 	require.NoError(t, err)
 }
 

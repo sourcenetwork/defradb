@@ -80,6 +80,11 @@ func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
 	if result.key == "" {
 		result = t.ds.get(ctx, key, t.getDSVersion())
 		result.isGet = true
+		if result.key == "" {
+			// If the datastore doesn't have the item, we still need to track it
+			// to check for merge conflicts.
+			result.key = key.String()
+		}
 		t.ops.Set(result)
 	}
 	return result
@@ -97,7 +102,7 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 		return nil, ErrTxnDiscarded
 	}
 	result := t.get(ctx, key)
-	if result.key == "" || result.isDeleted {
+	if result.version == 0 || result.isDeleted {
 		return nil, ds.ErrNotFound
 	}
 	return result.val, nil
@@ -115,7 +120,7 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 		return 0, ErrTxnDiscarded
 	}
 	result := t.get(ctx, key)
-	if result.key == "" || result.isDeleted {
+	if result.version == 0 || result.isDeleted {
 		return 0, ds.ErrNotFound
 	}
 	return len(result.val), nil
@@ -133,7 +138,7 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 		return false, ErrTxnDiscarded
 	}
 	result := t.get(ctx, key)
-	if result.key == "" || result.isDeleted {
+	if result.version == 0 || result.isDeleted {
 		return false, nil
 	}
 	return true, nil
@@ -270,8 +275,14 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 	iter := t.ops.Iter()
 	defer iter.Release()
 	for iter.Next() {
-		expectedItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.getDSVersion())
-		latestItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.ds.getVersion())
+		item := iter.Item()
+		if !item.isGet {
+			// Conflict should only ocure if an item has been updated
+			// after we've read it within the transaction.
+			continue
+		}
+		expectedItem := t.ds.get(ctx, ds.NewKey(item.key), t.getDSVersion())
+		latestItem := t.ds.get(ctx, ds.NewKey(item.key), t.ds.getVersion())
 		if latestItem.version != expectedItem.version {
 			return ErrTxnConflict
 		}
