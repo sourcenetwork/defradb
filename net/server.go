@@ -18,9 +18,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/boxo/ipld/merkledag"
 	cid "github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	basicnode "github.com/ipld/go-ipld-prime/node/basic"
+	"github.com/ipld/go-ipld-prime/schema"
+	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
+	"github.com/ipld/go-ipld-prime/traversal"
+	"github.com/ipld/go-ipld-prime/traversal/selector"
+	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -31,9 +39,9 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -184,7 +192,11 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	err = s.syncDAG(ctx, headCID)
+	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
+	if err != nil {
+		return nil, err
+	}
+	err = s.syncDAG(ctx, block)
 	if err != nil {
 		return nil, err
 	}
@@ -361,30 +373,45 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 //
 // This process will walk the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func (s *server) syncDAG(ctx context.Context, c cid.Cid) error {
+func (s *server) syncDAG(ctx context.Context, block *coreblock.Block) error {
 	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
 	defer cancel()
 
-	dserv := merkledag.NewDAGService(s.peer.bserv)
-	var ng format.NodeGetter = merkledag.NewSession(ctx, dserv)
-
-	set := make(map[cid.Cid]struct{})
-	// visit each node only once
-	visit := func(c cid.Cid) bool {
-		_, ok := set[c]
-		set[c] = struct{}{}
-		return !ok
-	}
-	// ignore transaction conflict errors
-	onError := func(c cid.Cid, err error) error {
-		if errors.Is(err, badger.ErrTxnConflict) {
-			return nil
-		}
+	// Store the block in the DAG store
+	storage := &bsrvadapter.Adapter{Wrapped: s.peer.bserv}
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(storage)
+	lsys.SetReadStorage(storage)
+	_, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	if err != nil {
 		return err
 	}
 
-	opts := []merkledag.WalkOption{merkledag.Concurrent(), merkledag.OnError(onError)}
-	return merkledag.Walk(ctx, merkledag.GetLinksDirect(ng), c, visit, opts...)
+	ssb := builder.NewSelectorSpecBuilder(basicnode.Prototype.Any)
+	matchAllSelector, err := ssb.ExploreRecursive(selector.RecursionLimitNone(), ssb.ExploreUnion(
+		ssb.Matcher(),
+		ssb.ExploreAll(ssb.ExploreRecursiveEdge()),
+	)).Selector()
+	if err != nil {
+		return err
+	}
+
+	prototypeChooser := func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
+		if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
+			return tlnkNd.LinkTargetNodePrototype(), nil
+		}
+		return basicnode.Prototype.Any, nil
+	}
+
+	config := traversal.Config{
+		Ctx:                            ctx,
+		LinkSystem:                     lsys,
+		LinkVisitOnlyOnce:              true,
+		LinkTargetNodePrototypeChooser: prototypeChooser,
+	}
+	return traversal.Progress{Cfg: &config}.WalkMatching(block.GenerateNode(), matchAllSelector, func(p traversal.Progress, n datamodel.Node) error {
+		return nil
+	})
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
