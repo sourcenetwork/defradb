@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ipfs/boxo/ipld/merkledag"
 	cid "github.com/ipfs/go-cid"
@@ -33,6 +34,10 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
+
+// dagFetchTimeout is the maximum amount of time
+// to wait for a dag to be fetched.
+var dagFetchTimeout = 60 * time.Second
 
 // Server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -177,10 +182,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
+	fetchCtx, cancel := context.WithTimeout(ctx, dagFetchTimeout)
+	defer cancel()
 	// the merkledag must be fetched every time
 	// to ensure we have all of the child blocks
 	dagServ := merkledag.NewDAGService(s.peer.bserv)
-	err = merkledag.FetchGraph(ctx, headCID, dagServ)
+	err = merkledag.FetchGraph(fetchCtx, headCID, dagServ)
 	if err != nil {
 		return nil, err
 	}
