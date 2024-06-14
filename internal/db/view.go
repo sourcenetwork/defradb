@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 func (db *db) addView(
@@ -29,8 +28,6 @@ func (db *db) addView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	txn := mustGetContextTxn(ctx)
-
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
@@ -68,36 +65,12 @@ func (db *db) addView(
 		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
 
-	returnDescriptions := make([]client.CollectionDefinition, 0, len(newDefinitions))
-	collectionDefinitions := []client.CollectionDefinition{}
-	schemaOnlyDefinitions := []client.SchemaDescription{}
-
-	for _, definition := range newDefinitions {
-		if definition.Description.Name.HasValue() {
-			collectionDefinitions = append(collectionDefinitions, definition)
-		} else {
-			schemaOnlyDefinitions = append(schemaOnlyDefinitions, definition.Schema)
-		}
-	}
-
-	for _, schema := range schemaOnlyDefinitions {
-		schema, err := description.CreateSchemaVersion(ctx, txn, schema)
-		if err != nil {
-			return nil, err
-		}
-		returnDescriptions = append(returnDescriptions, client.CollectionDefinition{
-			// `Collection` is left as default for embedded types
-			Schema: schema,
-		})
-	}
-
-	returnColDescriptions, err := db.createCollections(ctx, collectionDefinitions)
+	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
 	if err != nil {
 		return nil, err
 	}
-	returnDescriptions = append(returnDescriptions, returnColDescriptions...)
 
-	for _, definition := range returnColDescriptions {
+	for _, definition := range returnDescriptions {
 		for _, source := range definition.Description.QuerySources() {
 			if source.Transform.HasValue() {
 				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())

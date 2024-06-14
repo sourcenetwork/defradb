@@ -56,24 +56,10 @@ func (db *db) createCollections(
 	}
 
 	for _, def := range newDefinitions {
-		desc := def.Description
-
-		if desc.Name.HasValue() {
-			exists, err := description.HasCollectionByName(ctx, txn, desc.Name.Value())
-			if err != nil {
-				return nil, err
-			}
-			if exists {
-				return nil, ErrCollectionAlreadyExists
-			}
-		}
-
-		definitionsByName := map[string]client.CollectionDefinition{}
-		for _, existingDefinition := range existingDefinitions {
-			definitionsByName[existingDefinition.GetName()] = existingDefinition
-		}
-		for _, newDefinition := range newDefinitions {
-			definitionsByName[newDefinition.GetName()] = newDefinition
+		if len(def.Description.Fields) == 0 {
+			// This is a schema-only definition, we should not create a collection for it
+			returnDescriptions = append(returnDescriptions, def)
+			continue
 		}
 
 		colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
@@ -90,6 +76,7 @@ func (db *db) createCollections(
 			return nil, err
 		}
 
+		desc := def.Description
 		desc.ID = uint32(colID)
 		desc.RootID = desc.ID
 
@@ -115,7 +102,11 @@ func (db *db) createCollections(
 			}
 		}
 
-		err = db.validateNewCollection(ctx, definitionsByName)
+		err = db.validateNewCollection(
+			ctx,
+			append(newDefinitions, existingDefinitions...),
+			existingDefinitions,
+		)
 		if err != nil {
 			return nil, err
 		}

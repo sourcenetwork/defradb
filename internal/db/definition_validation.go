@@ -163,23 +163,37 @@ func (db *db) validateCollectionChanges(
 
 func (db *db) validateNewCollection(
 	ctx context.Context,
-	newDefsByName map[string]client.CollectionDefinition,
+	newDefinitions []client.CollectionDefinition,
+	oldDefinitions []client.CollectionDefinition,
 ) error {
-	collections := []client.CollectionDescription{}
-	schemasByID := map[string]client.SchemaDescription{}
+	newCollections := []client.CollectionDescription{}
+	newSchemasByID := map[string]client.SchemaDescription{}
 
-	for _, def := range newDefsByName {
+	for _, def := range newDefinitions {
 		if len(def.Description.Fields) != 0 {
-			collections = append(collections, def.Description)
+			newCollections = append(newCollections, def.Description)
 		}
 
-		schemasByID[def.Schema.VersionID] = def.Schema
+		newSchemasByID[def.Schema.VersionID] = def.Schema
 	}
 
-	newState := newDefinitionState(collections, schemasByID)
+	newState := newDefinitionState(newCollections, newSchemasByID)
+
+	oldCollections := []client.CollectionDescription{}
+	oldSchemasByID := map[string]client.SchemaDescription{}
+
+	for _, def := range oldDefinitions {
+		if len(def.Description.Fields) != 0 {
+			oldCollections = append(oldCollections, def.Description)
+		}
+
+		oldSchemasByID[def.Schema.VersionID] = def.Schema
+	}
+
+	oldState := newDefinitionState(oldCollections, oldSchemasByID)
 
 	for _, validator := range createValidators {
-		err := validator(ctx, db, newState, &definitionState{})
+		err := validator(ctx, db, newState, oldState)
 		if err != nil {
 			return err
 		}
