@@ -11,9 +11,14 @@
 package identity
 
 import (
+	"github.com/cyware/ssi-sdk/crypto"
+	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 )
+
+// didProducer generates a did:key from a public key
+type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
 
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
@@ -41,8 +46,17 @@ func FromPublicKey(publicKey *secp256k1.PublicKey) (immutable.Option[Identity], 
 	return newIdentityProvider().FromPublicKey(publicKey)
 }
 
-// DIDFromPublicKey returns the unique address of the given public key.
+// DIDFromPublicKey returns a did:key generated from the the given public key.
 func DIDFromPublicKey(publicKey *secp256k1.PublicKey) (string, error) {
-	provider := defaultDIDProvider{}
-	return provider.DIDFromSecp256k1(publicKey)
+	return didFromPublicKey(publicKey, key.CreateDIDKey)
+}
+
+// didFromPublicKey produces a did from a secp256k1 key and a producer function
+func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (string, error) {
+	bytes := publicKey.SerializeUncompressed()
+	did, err := producer(crypto.SECP256k1, bytes)
+	if err != nil {
+		return "", NewErrDIDCreation(err, "secp256k1", bytes)
+	}
+	return did.String(), nil
 }

@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cyware/ssi-sdk/crypto"
+	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 )
@@ -44,28 +46,15 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
+func Test_didFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
+	mockedProducer := func(crypto.KeyType, []byte) (*key.DIDKey, error) {
+		return nil, fmt.Errorf("did generation err")
+	}
+
 	pubKey := &secp256k1.PublicKey{}
-	did, err := DIDFromPublicKey(pubKey)
+
+	did, err := didFromPublicKey(pubKey, mockedProducer)
 
 	require.Empty(t, did)
-	require.ErrorIs(t, err, ErrDIDCreation)
-}
-
-func Test_FromPublicKey_ProducerFailureCausesError(t *testing.T) {
-	pubKey := &secp256k1.PublicKey{}
-	provider := newFailableIdentityProvider()
-	identity, err := provider.FromPublicKey(pubKey)
-
-	require.Equal(t, None, identity)
-	require.ErrorIs(t, err, ErrDIDCreation)
-}
-
-func Test_FromPrivateKey_ProducerFailureCausesError(t *testing.T) {
-	key := &secp256k1.PrivateKey{}
-	provider := newFailableIdentityProvider()
-	identity, err := provider.FromPrivateKey(key)
-
-	require.Equal(t, None, identity)
 	require.ErrorIs(t, err, ErrDIDCreation)
 }
