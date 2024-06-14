@@ -16,19 +16,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	cid "github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/linking"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	basicnode "github.com/ipld/go-ipld-prime/node/basic"
-	"github.com/ipld/go-ipld-prime/schema"
-	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
-	"github.com/ipld/go-ipld-prime/traversal"
-	"github.com/ipld/go-ipld-prime/traversal/selector"
-	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -44,10 +33,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
-
-// syncDAGTimeout is the maximum amount of time
-// to wait for a dag to be fetched.
-var syncDAGTimeout = 60 * time.Second
 
 // Server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -173,6 +158,10 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
+	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
+	if err != nil {
+		return nil, err
+	}
 
 	defer func() {
 		if s.pushLogEmitter != nil {
@@ -192,11 +181,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
-	if err != nil {
-		return nil, err
-	}
-	err = s.syncDAG(ctx, block)
+	err = syncDAG(ctx, s.peer.bserv, block)
 	if err != nil {
 		return nil, err
 	}
@@ -367,51 +352,6 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
 		}
 	}
-}
-
-// syncDAG ensures that the DAG with the given CID is completely synchronized.
-//
-// This process will walk the entire DAG until the issue below is resolved.
-// https://github.com/sourcenetwork/defradb/issues/2722
-func (s *server) syncDAG(ctx context.Context, block *coreblock.Block) error {
-	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
-	defer cancel()
-
-	// Store the block in the DAG store
-	storage := &bsrvadapter.Adapter{Wrapped: s.peer.bserv}
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(storage)
-	lsys.SetReadStorage(storage)
-	_, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
-	if err != nil {
-		return err
-	}
-
-	ssb := builder.NewSelectorSpecBuilder(basicnode.Prototype.Any)
-	matchAllSelector, err := ssb.ExploreRecursive(selector.RecursionLimitNone(), ssb.ExploreUnion(
-		ssb.Matcher(),
-		ssb.ExploreAll(ssb.ExploreRecursiveEdge()),
-	)).Selector()
-	if err != nil {
-		return err
-	}
-
-	prototypeChooser := func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
-		if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
-			return tlnkNd.LinkTargetNodePrototype(), nil
-		}
-		return basicnode.Prototype.Any, nil
-	}
-
-	config := traversal.Config{
-		Ctx:                            ctx,
-		LinkSystem:                     lsys,
-		LinkVisitOnlyOnce:              true,
-		LinkTargetNodePrototypeChooser: prototypeChooser,
-	}
-	return traversal.Progress{Cfg: &config}.WalkMatching(block.GenerateNode(), matchAllSelector, func(p traversal.Progress, n datamodel.Node) error {
-		return nil
-	})
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
