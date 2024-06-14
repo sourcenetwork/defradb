@@ -20,22 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ didProvider = (*mockedDIDProvider)(nil)
-
-// mockedDIDProvider implemented didProvider but always fails
-type mockedDIDProvider struct{}
-
-func (p *mockedDIDProvider) DIDFromSecp256k1(key *secp256k1.PublicKey) (string, error) {
-	return "", fmt.Errorf("some did generation error")
-}
-
-// newFailableIdentityProvider returns an identityProvider that always fails
-func newFailableIdentityProvider() identityProvider {
-	return identityProvider{
-		didProv: &mockedDIDProvider{},
-	}
-}
-
 func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	pubKey := &secp256k1.PublicKey{}
 
