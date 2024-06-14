@@ -74,5 +74,4 @@ func (p *identityProvider) FromPrivateKey(privateKey *secp256k1.PrivateKey) (imm
 		PublicKey:  pubKey,
 		PrivateKey: privateKey,
 	}), nil
-
 }
