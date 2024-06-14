@@ -20,7 +20,7 @@ const errDIDCreation = "could not produce did for key"
 
 var ErrDIDCreation = errors.New(errDIDCreation)
 
-func NewErrDIDCreation(inner error, keytype string, pubKey []byte) error {
+func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
 	return errors.Wrap(
 		errDIDCreation,
 		inner,

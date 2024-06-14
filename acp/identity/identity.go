@@ -73,7 +73,7 @@ func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (str
 	bytes := publicKey.SerializeUncompressed()
 	did, err := producer(crypto.SECP256k1, bytes)
 	if err != nil {
-		return "", NewErrDIDCreation(err, "secp256k1", bytes)
+		return "", newErrDIDCreation(err, "secp256k1", bytes)
 	}
 	return did.String(), nil
 }
