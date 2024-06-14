@@ -277,7 +277,7 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 	for iter.Next() {
 		item := iter.Item()
 		if !item.isGet {
-			// Conflict should only ocure if an item has been updated
+			// Conflict should only occur if an item has been updated
 			// after we've read it within the transaction.
 			continue
 		}
