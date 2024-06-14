@@ -55,10 +55,9 @@ func (db *db) createCollections(
 		newDefinitions[i].Schema = schema
 	}
 
-	for _, def := range newDefinitions {
+	for i, def := range newDefinitions {
 		if len(def.Description.Fields) == 0 {
 			// This is a schema-only definition, we should not create a collection for it
-			returnDescriptions = append(returnDescriptions, def)
 			continue
 		}
 
@@ -76,11 +75,10 @@ func (db *db) createCollections(
 			return nil, err
 		}
 
-		desc := def.Description
-		desc.ID = uint32(colID)
-		desc.RootID = desc.ID
+		newDefinitions[i].Description.ID = uint32(colID)
+		newDefinitions[i].Description.RootID = newDefinitions[i].Description.ID
 
-		for _, localField := range desc.Fields {
+		for _, localField := range def.Description.Fields {
 			var fieldID uint64
 			if localField.Name == request.DocIDFieldName {
 				// There is no hard technical requirement for this, we just think it looks nicer
@@ -94,24 +92,38 @@ func (db *db) createCollections(
 				}
 			}
 
-			for i := range desc.Fields {
-				if desc.Fields[i].Name == localField.Name {
-					desc.Fields[i].ID = client.FieldID(fieldID)
+			for j := range def.Description.Fields {
+				if def.Description.Fields[j].Name == localField.Name {
+					newDefinitions[i].Description.Fields[j].ID = client.FieldID(fieldID)
 					break
 				}
 			}
 		}
+	}
 
-		err = db.validateNewCollection(
-			ctx,
-			append(newDefinitions, existingDefinitions...),
-			existingDefinitions,
-		)
-		if err != nil {
-			return nil, err
+	err = db.validateNewCollection(
+		ctx,
+		append(
+			append(
+				[]client.CollectionDefinition{},
+				newDefinitions...,
+			),
+			existingDefinitions...,
+		),
+		existingDefinitions,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, def := range newDefinitions {
+		if len(def.Description.Fields) == 0 {
+			// This is a schema-only definition, we should not create a collection for it
+			returnDescriptions = append(returnDescriptions, def)
+			continue
 		}
 
-		desc, err = description.SaveCollection(ctx, txn, desc)
+		desc, err := description.SaveCollection(ctx, txn, def.Description)
 		if err != nil {
 			return nil, err
 		}
