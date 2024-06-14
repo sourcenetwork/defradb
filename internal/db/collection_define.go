@@ -36,9 +36,9 @@ func (db *db) createCollections(
 		return nil, err
 	}
 
-	for i, def := range newDefinitions {
-		txn := mustGetContextTxn(ctx)
+	txn := mustGetContextTxn(ctx)
 
+	for i, def := range newDefinitions {
 		schemaByName := map[string]client.SchemaDescription{}
 		for _, existingDefinition := range existingDefinitions {
 			schemaByName[existingDefinition.Schema.Name] = existingDefinition.Schema
@@ -57,7 +57,6 @@ func (db *db) createCollections(
 
 	for _, def := range newDefinitions {
 		desc := def.Description
-		txn := mustGetContextTxn(ctx)
 
 		if desc.Name.HasValue() {
 			exists, err := description.HasCollectionByName(ctx, txn, desc.Name.Value())
