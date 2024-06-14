@@ -37,7 +37,6 @@ func (db *db) createCollections(
 	}
 
 	for i, def := range newDefinitions {
-		schema := def.Schema
 		txn := mustGetContextTxn(ctx)
 
 		schemaByName := map[string]client.SchemaDescription{}
@@ -48,7 +47,7 @@ func (db *db) createCollections(
 			schemaByName[newDefinition.Schema.Name] = newDefinition.Schema
 		}
 
-		schema, err = description.CreateSchemaVersion(ctx, txn, schema)
+		schema, err := description.CreateSchemaVersion(ctx, txn, def.Schema)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +56,6 @@ func (db *db) createCollections(
 	}
 
 	for _, def := range newDefinitions {
-		schema := def.Schema
 		desc := def.Description
 		txn := mustGetContextTxn(ctx)
 
@@ -128,7 +126,7 @@ func (db *db) createCollections(
 			return nil, err
 		}
 
-		col := db.newCollection(desc, schema)
+		col := db.newCollection(desc, def.Schema)
 
 		for _, index := range desc.Indexes {
 			if _, err := col.createIndex(ctx, index); err != nil {
