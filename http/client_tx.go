@@ -91,6 +91,10 @@ func (c *Transaction) Datastore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
 
+func (c *Transaction) Encstore() datastore.DSReaderWriter {
+	panic("client side transaction")
+}
+
 func (c *Transaction) Headstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
