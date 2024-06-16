@@ -10,8 +10,11 @@
 
 package encryption
 
+import "github.com/sourcenetwork/defradb/datastore"
+
 type DocEncryptor struct {
 	encryptionKey string
+	store         datastore.DSReaderWriter
 }
 
 func newDocEncryptor() *DocEncryptor {
@@ -20,6 +23,10 @@ func newDocEncryptor() *DocEncryptor {
 
 func (d *DocEncryptor) SetKey(encryptionKey string) {
 	d.encryptionKey = encryptionKey
+}
+
+func (d *DocEncryptor) SetStore(store datastore.DSReaderWriter) {
+	d.store = store
 }
 
 func (d *DocEncryptor) Encrypt(docID string, fieldID int, plainText []byte) ([]byte, error) {

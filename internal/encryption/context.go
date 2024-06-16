@@ -10,7 +10,11 @@
 
 package encryption
 
-import "context"
+import (
+	"context"
+
+	"github.com/sourcenetwork/defradb/datastore"
+)
 
 // docEncContextKey is the key type for document encryption context values.
 type docEncContextKey struct{}
@@ -37,9 +41,15 @@ func Context(ctx context.Context) context.Context {
 }
 
 func ContextWithKey(ctx context.Context, encryptionKey string) context.Context {
-	_, encryptor := getContextWithDocEnc(ctx)
+	ctx, encryptor := getContextWithDocEnc(ctx)
 	encryptor.SetKey(encryptionKey)
-	return context.WithValue(ctx, docEncContextKey{}, encryptor)
+	return ctx
+}
+
+func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
+	ctx, encryptor := getContextWithDocEnc(ctx)
+	encryptor.SetStore(txn.Encstore())
+	return ctx
 }
 
 func EncryptDoc(ctx context.Context, docID string, fieldID int, plainText []byte) ([]byte, error) {

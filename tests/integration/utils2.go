@@ -883,7 +883,11 @@ func refreshDocuments(
 				continue
 			}
 
-			ctx := makeContextForDocCreate(s.ctx, &action)
+			txn := s.txns[0]
+			if action.NodeID.HasValue() {
+				txn = s.txns[action.NodeID.Value()]
+			}
+			ctx := makeContextForDocCreate(s.ctx, &action, txn)
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
@@ -1228,15 +1232,18 @@ func createDocViaColSave(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action, txn)
 
 	return doc, collections[action.CollectionID].Save(ctx, doc)
 }
 
-func makeContextForDocCreate(ctx context.Context, action *CreateDoc) context.Context {
+func makeContextForDocCreate(ctx context.Context, action *CreateDoc, txn datastore.Txn) context.Context {
 	ctx = db.SetContextIdentity(ctx, action.Identity)
 	if action.EncryptionKey.HasValue() {
 		ctx = encryption.ContextWithKey(ctx, action.EncryptionKey.Value())
+	}
+	if txn != nil {
+		ctx = encryption.ContextWithStore(ctx, txn)
 	}
 	return ctx
 }
@@ -1260,7 +1267,7 @@ func createDocViaColCreate(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action, txn)
 
 	return doc, collections[action.CollectionID].Create(ctx, doc)
 }
@@ -1294,7 +1301,7 @@ func createDocViaGQL(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action, txn)
 
 	result := node.ExecRequest(
 		ctx,

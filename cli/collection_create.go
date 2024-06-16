@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 func MakeCollectionCreateCommand() *cobra.Command {
@@ -79,9 +80,8 @@ Example: create from stdin:
 				return cmd.Usage()
 			}
 
-			if encryptionKey != "" {
-				setContextDocEncryptionKey(cmd, encryptionKey)
-			}
+			txn, _ := db.TryGetContextTxn(cmd.Context())
+			setContextDocEncryptionKey(cmd, encryptionKey, txn)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())

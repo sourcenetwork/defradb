@@ -25,6 +25,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
@@ -162,11 +163,14 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 }
 
 // setContextIdentity sets the identity for the current command context.
-func setContextDocEncryptionKey(cmd *cobra.Command, docEncryptionKey string) {
+func setContextDocEncryptionKey(cmd *cobra.Command, docEncryptionKey string, txn datastore.Txn) {
 	if docEncryptionKey == "" {
 		return
 	}
 	ctx := encryption.ContextWithKey(cmd.Context(), docEncryptionKey)
+	if txn != nil {
+		ctx = encryption.ContextWithStore(ctx, txn)
+	}
 	cmd.SetContext(ctx)
 }
 
