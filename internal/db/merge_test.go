@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipld/go-ipld-prime"
@@ -59,6 +60,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -103,6 +105,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -112,6 +115,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -159,6 +163,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -177,6 +182,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, events.DAGMerge{
+		DocID:      docID.String(),
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -291,4 +297,26 @@ func encodeValue(val any) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func TestMergeQueue(t *testing.T) {
+	q := newMergeQueue()
+
+	testDocID := "test"
+
+	q.add(testDocID)
+	go q.add(testDocID)
+	// give time for the goroutine to block
+	time.Sleep(10 * time.Millisecond)
+	require.Len(t, q.docs, 1)
+	q.done(testDocID)
+	// give time for the goroutine to add the docID
+	time.Sleep(10 * time.Millisecond)
+	q.mutex.Lock()
+	require.Len(t, q.docs, 1)
+	q.mutex.Unlock()
+	q.done(testDocID)
+	q.mutex.Lock()
+	require.Len(t, q.docs, 0)
+	q.mutex.Unlock()
 }
