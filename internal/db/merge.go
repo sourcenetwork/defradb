@@ -13,6 +13,7 @@ package db
 import (
 	"container/list"
 	"context"
+	"sync"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -34,6 +35,7 @@ import (
 )
 
 func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
+	queue := newMergeQueue()
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,24 +48,38 @@ func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 			if !ok {
 				continue
 			}
-			err := db.executeMerge(ctx, merge)
-			if err != nil {
-				log.ErrorContextE(
-					ctx,
-					"Failed to execute merge",
-					err,
-					corelog.String("CID", merge.Cid.String()),
-					corelog.String("Error", err.Error()),
-				)
-			}
+			go func() {
+				// ensure only one merge per docID
+				queue.add(merge.DocID)
+				defer queue.done(merge.DocID)
+
+				// retry the merge process if a conflict occurs
+				//
+				// conficts occur when a user updates a document
+				// while a merge is in progress.
+				var err error
+				for i := 0; i < db.MaxTxnRetries(); i++ {
+					err = db.executeMerge(ctx, merge)
+					if errors.Is(err, badger.ErrTxnConflict) {
+						continue // retry merge
+					}
+					break // merge success or error
+				}
+
+				if err != nil {
+					log.ErrorContextE(
+						ctx,
+						"Failed to execute merge",
+						err,
+						corelog.Any("Error", err),
+						corelog.Any("Event", merge))
+				}
+			}()
 		}
 	}
 }
 
 func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
-	// send a complete event so we can track merges in the integration tests
-	defer db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
-
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -78,7 +94,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	ls := cidlink.DefaultLinkSystem()
 	ls.SetReadStorage(txn.DAGstore().AsIPLDStorage())
 
-	docID, err := getDocIDFromBlock(ctx, ls, dagMerge.Cid)
+	docID, err := client.NewDocIDFromString(dagMerge.DocID)
 	if err != nil {
 		return err
 	}
@@ -99,35 +115,64 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	for retry := 0; retry < db.MaxTxnRetries(); retry++ {
-		err := mp.mergeComposites(ctx)
-		if err != nil {
-			return err
-		}
-		err = syncIndexedDoc(ctx, docID, col)
-		if err != nil {
-			return err
-		}
-		err = txn.Commit(ctx)
-		if err != nil {
-			if errors.Is(err, badger.ErrTxnConflict) {
-				txn, err = db.NewTxn(ctx, false)
-				if err != nil {
-					return err
-				}
-				ctx = SetContextTxn(ctx, txn)
-				mp.txn = txn
-				mp.lsys.SetReadStorage(txn.DAGstore().AsIPLDStorage())
-				// Reset the CRDTs to avoid reusing the old transaction.
-				mp.mCRDTs = make(map[string]merklecrdt.MerkleCRDT)
-				continue
-			}
-			return err
-		}
-		break
+	err = mp.mergeComposites(ctx)
+	if err != nil {
+		return err
 	}
 
+	err = syncIndexedDoc(ctx, docID, col)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	// send a complete event so we can track merges in the integration tests
+	db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
 	return nil
+}
+
+// mergeQueue is synchronization source to ensure that concurrent
+// document merges do not cause transaction conflicts.
+type mergeQueue struct {
+	docs  map[string]chan struct{}
+	mutex sync.Mutex
+}
+
+func newMergeQueue() *mergeQueue {
+	return &mergeQueue{
+		docs: make(map[string]chan struct{}),
+	}
+}
+
+// add adds a docID to the queue. If the docID is already in the queue, it will
+// wait for the docID to be removed from the queue. For every add call, done must
+// be called to remove the docID from the queue. Otherwise, subsequent add calls will
+// block forever.
+func (m *mergeQueue) add(docID string) {
+	m.mutex.Lock()
+	done, ok := m.docs[docID]
+	if !ok {
+		m.docs[docID] = make(chan struct{})
+	}
+	m.mutex.Unlock()
+	if ok {
+		<-done
+		m.add(docID)
+	}
+}
+
+func (m *mergeQueue) done(docID string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	done, ok := m.docs[docID]
+	if ok {
+		delete(m.docs, docID)
+		close(done)
+	}
 }
 
 type mergeProcessor struct {
@@ -330,18 +375,6 @@ func (mp *mergeProcessor) initCRDTForType(
 
 	mp.mCRDTs[field] = mcrdt
 	return mcrdt, nil
-}
-
-func getDocIDFromBlock(ctx context.Context, ls linking.LinkSystem, cid cid.Cid) (client.DocID, error) {
-	nd, err := ls.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: cid}, coreblock.SchemaPrototype)
-	if err != nil {
-		return client.DocID{}, err
-	}
-	block, err := coreblock.GetFromNode(nd)
-	if err != nil {
-		return client.DocID{}, err
-	}
-	return client.NewDocIDFromString(string(block.Delta.GetDocID()))
 }
 
 func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string) (*collection, error) {

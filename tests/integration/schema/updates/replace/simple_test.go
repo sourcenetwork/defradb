@@ -44,7 +44,7 @@ func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 				// WARNING: An error is still expected if/when we allow the adding of collections, as this also
 				// implies that the "Users" collection is to be deleted.  Only once we support the adding *and*
 				// removal of collections should this not error.
-				ExpectedError: "adding collections via patch is not supported. Name: Book",
+				ExpectedError: "adding schema via patch is not supported. Name: Book",
 			},
 		},
 	}

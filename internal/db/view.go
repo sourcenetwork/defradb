@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 func (db *db) addView(
@@ -29,8 +28,6 @@ func (db *db) addView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	txn := mustGetContextTxn(ctx)
-
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
@@ -68,30 +65,17 @@ func (db *db) addView(
 		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
 
-	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
-	for i, definition := range newDefinitions {
-		if !definition.Description.Name.HasValue() {
-			schema, err := description.CreateSchemaVersion(ctx, txn, definition.Schema)
-			if err != nil {
-				return nil, err
-			}
-			returnDescriptions[i] = client.CollectionDefinition{
-				// `Collection` is left as default for embedded types
-				Schema: schema,
-			}
-		} else {
-			col, err := db.createCollection(ctx, definition, newDefinitions)
-			if err != nil {
-				return nil, err
-			}
-			returnDescriptions[i] = col.Definition()
+	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
 
-			for _, source := range col.Description().QuerySources() {
-				if source.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, col.ID(), source.Transform.Value())
-					if err != nil {
-						return nil, err
-					}
+	for _, definition := range returnDescriptions {
+		for _, source := range definition.Description.QuerySources() {
+			if source.Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())
+				if err != nil {
+					return nil, err
 				}
 			}
 		}

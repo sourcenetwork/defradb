@@ -69,6 +69,9 @@ type Update struct {
 
 // Merge is a notification that a merge can be performed up to the provided CID.
 type Merge struct {
+	// DocID is the unique immutable identifier of the document that was updated.
+	DocID string
+
 	// ByPeer is the id of the peer that created the push log request.
 	ByPeer peer.ID
 

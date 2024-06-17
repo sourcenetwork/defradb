@@ -30,7 +30,9 @@ func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
 						owner: User
 					}
 				`,
-				ExpectedError: "relation missing field. Object: Dog, RelationName: dog_user",
+				// This error is dependent upon the order in which definitions are validated, so
+				// we only assert that the error is the correct type, and do not check the key-values
+				ExpectedError: "relation missing field",
 			},
 		},
 	}

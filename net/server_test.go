@@ -13,7 +13,6 @@ package net
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/query"
@@ -225,30 +224,6 @@ func TestGetHeadLog(t *testing.T) {
 	r, err := n.server.GetHeadLog(ctx, &net_pb.GetHeadLogRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
-}
-
-func TestDocQueue(t *testing.T) {
-	q := docQueue{
-		docs: make(map[string]chan struct{}),
-	}
-
-	testDocID := "test"
-
-	q.add(testDocID)
-	go q.add(testDocID)
-	// give time for the goroutine to block
-	time.Sleep(10 * time.Millisecond)
-	require.Len(t, q.docs, 1)
-	q.done(testDocID)
-	// give time for the goroutine to add the docID
-	time.Sleep(10 * time.Millisecond)
-	q.mu.Lock()
-	require.Len(t, q.docs, 1)
-	q.mu.Unlock()
-	q.done(testDocID)
-	q.mu.Lock()
-	require.Len(t, q.docs, 0)
-	q.mu.Unlock()
 }
 
 func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {

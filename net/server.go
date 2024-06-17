@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/go-cid"
+	cid "github.com/ipfs/go-cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -47,11 +47,6 @@ type server struct {
 
 	conns map[libpeer.ID]*grpc.ClientConn
 
-	// docQueue is used to track which documents are currently being processed.
-	// This is used to prevent multiple concurrent processing of the same document and
-	// limit unecessary transaction conflicts.
-	docQueue *docQueue
-
 	pb.UnimplementedServiceServer
 }
 
@@ -69,9 +64,6 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]pubsubTopic),
-		docQueue: &docQueue{
-			docs: make(map[string]chan struct{}),
-		},
 	}
 
 	cred := insecure.NewCredentials()
@@ -138,45 +130,13 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
-type docQueue struct {
-	docs map[string]chan struct{}
-	mu   sync.Mutex
-}
-
-// add adds a docID to the queue. If the docID is already in the queue, it will
-// wait for the docID to be removed from the queue. For every add call, done must
-// be called to remove the docID from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (dq *docQueue) add(docID string) {
-	dq.mu.Lock()
-	done, ok := dq.docs[docID]
-	if !ok {
-		dq.docs[docID] = make(chan struct{})
-	}
-	dq.mu.Unlock()
-	if ok {
-		<-done
-		dq.add(docID)
-	}
-}
-
-func (dq *docQueue) done(docID string) {
-	dq.mu.Lock()
-	defer dq.mu.Unlock()
-	done, ok := dq.docs[docID]
-	if ok {
-		delete(dq.docs, docID)
-		close(done)
-	}
-}
-
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	cid, err := cid.Cast(req.Body.Cid)
+	headCID, err := cid.Cast(req.Body.Cid)
 	if err != nil {
 		return nil, err
 	}
@@ -188,45 +148,22 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-
-	s.docQueue.add(docID.String())
-	defer s.docQueue.done(docID.String())
-
-	evt := event.Merge{
-		ByPeer:     byPeer,
-		FromPeer:   pid,
-		Cid:        cid,
-		SchemaRoot: string(req.Body.SchemaRoot),
-	}
-
-	// check if we already have this block
-	exists, err := s.peer.db.Blockstore().Has(ctx, cid)
-	if err != nil {
-		return nil, NewErrCheckingForExistingBlock(err, cid.String())
-	}
-	if exists {
-		// the integration tests expect every push log to emit a merge complete event
-		s.peer.db.Events().Publish(event.NewMessage(event.MergeCompleteName, evt))
-		return &pb.PushLogReply{}, nil
-	}
-
 	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
 	if err != nil {
 		return nil, err
 	}
-
-	bp := newBlockProcessor(ctx, s.peer)
-	err = bp.processRemoteBlock(ctx, block)
+	err = syncDAG(ctx, s.peer.bserv, block)
 	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to process remote block",
-			err,
-			corelog.String("DocID", docID.String()),
-			corelog.Any("CID", cid),
-		)
+		return nil, err
 	}
-	s.peer.db.Events().Publish(event.NewMessage(event.MergeName, evt))
+
+	s.peer.db.Events().Publish(event.NewMessage(event.MergeName, event.Merge{
+		DocID:      docID.String(),
+		ByPeer:     byPeer,
+		FromPeer:   pid,
+		Cid:        headCID,
+		SchemaRoot: string(req.Body.SchemaRoot),
+	}))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// suscribe to the collection.
