@@ -10,18 +10,27 @@
 
 package encryption
 
-import "github.com/sourcenetwork/defradb/datastore"
+import (
+	"context"
+	"errors"
+
+	ds "github.com/ipfs/go-datastore"
+
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
+)
 
 type DocEncryptor struct {
-	encryptionKey string
+	encryptionKey []byte
+	ctx           context.Context
 	store         datastore.DSReaderWriter
 }
 
-func newDocEncryptor() *DocEncryptor {
-	return &DocEncryptor{}
+func newDocEncryptor(ctx context.Context) *DocEncryptor {
+	return &DocEncryptor{ctx: ctx}
 }
 
-func (d *DocEncryptor) SetKey(encryptionKey string) {
+func (d *DocEncryptor) SetKey(encryptionKey []byte) {
 	d.encryptionKey = encryptionKey
 }
 
@@ -29,10 +38,47 @@ func (d *DocEncryptor) SetStore(store datastore.DSReaderWriter) {
 	d.store = store
 }
 
-func (d *DocEncryptor) Encrypt(docID string, fieldID int, plainText []byte) ([]byte, error) {
-	return EncryptAES(plainText, []byte(d.encryptionKey))
+func (d *DocEncryptor) Encrypt(docID string, fieldID uint32, plainText []byte) ([]byte, error) {
+	encryptionKey, storeKey, err := d.fetchEncryptionKey(docID, fieldID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(encryptionKey) == 0 {
+		if len(d.encryptionKey) == 0 {
+			return plainText, nil
+		}
+		if d.store != nil {
+			err = d.store.Put(d.ctx, storeKey.ToDS(), d.encryptionKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+		encryptionKey = d.encryptionKey
+	}
+	return EncryptAES(plainText, encryptionKey)
 }
 
-func (d *DocEncryptor) Decrypt(docID string, fieldID int, cipherText []byte) ([]byte, error) {
-	return DecryptAES(cipherText, []byte(d.encryptionKey))
+func (d *DocEncryptor) Decrypt(docID string, fieldID uint32, cipherText []byte) ([]byte, error) {
+	encKey, _, err := d.fetchEncryptionKey(docID, fieldID)
+	if err != nil {
+		return nil, err
+	}
+	if len(encKey) == 0 {
+		return cipherText, nil
+	}
+	return DecryptAES(cipherText, encKey)
+}
+
+func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldID uint32) ([]byte, core.EncStoreDocKey, error) {
+	storeKey := core.NewEncStoreDocKey(docID, fieldID)
+	if d.store == nil {
+		return nil, core.EncStoreDocKey{}, nil
+	}
+	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
+	isNotFound := errors.Is(err, ds.ErrNotFound)
+	if err != nil && !isNotFound {
+		return nil, core.EncStoreDocKey{}, err
+	}
+	return encryptionKey, storeKey, nil
 }

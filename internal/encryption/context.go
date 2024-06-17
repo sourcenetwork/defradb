@@ -29,7 +29,7 @@ func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
 func getContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
-		enc = newDocEncryptor()
+		enc = newDocEncryptor(ctx)
 		ctx = context.WithValue(ctx, docEncContextKey{}, enc)
 	}
 	return ctx, enc
@@ -40,7 +40,7 @@ func Context(ctx context.Context) context.Context {
 	return ctx
 }
 
-func ContextWithKey(ctx context.Context, encryptionKey string) context.Context {
+func ContextWithKey(ctx context.Context, encryptionKey []byte) context.Context {
 	ctx, encryptor := getContextWithDocEnc(ctx)
 	encryptor.SetKey(encryptionKey)
 	return ctx
@@ -52,7 +52,7 @@ func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
 	return ctx
 }
 
-func EncryptDoc(ctx context.Context, docID string, fieldID int, plainText []byte) ([]byte, error) {
+func EncryptDoc(ctx context.Context, docID string, fieldID uint32, plainText []byte) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return plainText, nil
@@ -60,7 +60,7 @@ func EncryptDoc(ctx context.Context, docID string, fieldID int, plainText []byte
 	return enc.Encrypt(docID, fieldID, plainText)
 }
 
-func DecryptDoc(ctx context.Context, docID string, fieldID int, cipherText []byte) ([]byte, error) {
+func DecryptDoc(ctx context.Context, docID string, fieldID uint32, cipherText []byte) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return cipherText, nil

@@ -167,7 +167,7 @@ func setContextDocEncryptionKey(cmd *cobra.Command, docEncryptionKey string, txn
 	if docEncryptionKey == "" {
 		return
 	}
-	ctx := encryption.ContextWithKey(cmd.Context(), docEncryptionKey)
+	ctx := encryption.ContextWithKey(cmd.Context(), []byte(docEncryptionKey))
 	if txn != nil {
 		ctx = encryption.ContextWithStore(ctx, txn)
 	}

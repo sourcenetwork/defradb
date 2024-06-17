@@ -657,7 +657,7 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			link, _, err := merkleCRDT.Save(ctx, &merklecrdt.Field{FieldValue: val})
+			link, _, err := merkleCRDT.Save(ctx, &merklecrdt.Field{DocID: primaryKey.DocID, FieldValue: val})
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -905,7 +905,7 @@ func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) core.DataStore
 }
 
 func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
-	fieldId, hasField := c.tryGetFieldID(fieldName)
+	fieldID, hasField := c.tryGetFieldID(fieldName)
 	if !hasField {
 		return core.DataStoreKey{}, false
 	}
@@ -913,7 +913,7 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 	return core.DataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            primaryKey.DocID,
-		FieldId:          strconv.FormatUint(uint64(fieldId), 10),
+		FieldID:          strconv.FormatUint(uint64(fieldID), 10),
 	}, true
 }
 

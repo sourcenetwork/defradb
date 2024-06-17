@@ -102,3 +102,106 @@ func TestDocEncryption_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestDocEncryption_UponUpdate_ShouldEncryptedCommitDelta(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+				EncryptionKey: immutable.Some(encKey),
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits(fieldId: "1") {
+							delta
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"delta": encrypt(encKey, testUtils.CBORValue(22)),
+					},
+					{
+						"delta": encrypt(encKey, testUtils.CBORValue(21)),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptedOnlyRelevantDocs(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				// bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+				EncryptionKey: immutable.Some(encKey),
+			},
+			testUtils.CreateDoc{
+				// bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6
+				Doc: `{
+						"name":	"Islam",
+						"age":	33
+					}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"age": 22
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 1,
+				Doc: `{
+					"age": 34
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits(fieldId: "1") {
+							delta
+							docID
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"delta": encrypt(encKey, testUtils.CBORValue(22)),
+						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+					},
+					{
+						"delta": encrypt(encKey, testUtils.CBORValue(21)),
+						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+					},
+					{
+						"delta": testUtils.CBORValue(34),
+						"docID": "bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6",
+					},
+					{
+						"delta": testUtils.CBORValue(33),
+						"docID": "bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
