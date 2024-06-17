@@ -11,6 +11,7 @@
 package event
 
 import (
+	"sync"
 	"sync/atomic"
 )
 
@@ -43,7 +44,8 @@ type bufferedBus struct {
 	commandChannel  chan any
 	eventBufferSize int
 	hasClosedChan   chan struct{}
-	isClosed        atomic.Bool
+	isClosed        bool
+	mutex           sync.RWMutex
 }
 
 // NewBufferedBus creates a new event bus with the given commandBufferSize and
@@ -63,14 +65,20 @@ func NewBufferedBus(commandBufferSize int, eventBufferSize int) *bufferedBus {
 }
 
 func (b *bufferedBus) Publish(msg Message) {
-	if b.isClosed.Load() {
+	b.mutex.RLock()
+	defer b.mutex.RUnlock()
+
+	if b.isClosed {
 		return
 	}
 	b.commandChannel <- publishCommand(msg)
 }
 
 func (b *bufferedBus) Subscribe(events ...Name) (*Subscription, error) {
-	if b.isClosed.Load() {
+	b.mutex.RLock()
+	defer b.mutex.RUnlock()
+
+	if b.isClosed {
 		return nil, ErrSubscribedToClosedChan
 	}
 	sub := &Subscription{
@@ -83,16 +91,23 @@ func (b *bufferedBus) Subscribe(events ...Name) (*Subscription, error) {
 }
 
 func (b *bufferedBus) Unsubscribe(sub *Subscription) {
-	if b.isClosed.Load() {
+	b.mutex.RLock()
+	defer b.mutex.RUnlock()
+
+	if b.isClosed {
 		return
 	}
 	b.commandChannel <- unsubscribeCommand(sub)
 }
 
 func (b *bufferedBus) Close() {
-	if !b.isClosed.CompareAndSwap(false, true) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	if b.isClosed {
 		return
 	}
+	b.isClosed = true
 	b.commandChannel <- closeCommand{}
 	// Wait for the close command to be handled, in order, before returning
 	<-b.hasClosedChan
