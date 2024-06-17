@@ -64,6 +64,7 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 		return err
 	}
 
+	// prototypeChooser returns the node prototype to use when traversing
 	prototypeChooser := func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
 		if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
 			return tlnkNd.LinkTargetNodePrototype(), nil
@@ -75,7 +76,7 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 	// any errors encountered during preload are ignored
 	preloader := func(pctx preload.PreloadContext, l preload.Link) {
 		lctx := linking.LinkContext{Ctx: pctx.Ctx}
-		lsys.Load(lctx, l.Link, coreblock.SchemaPrototype) //nolint:errcheck
+		lsys.Load(lctx, l.Link, basicnode.Prototype.Any) //nolint:errcheck
 	}
 	config := traversal.Config{
 		Ctx:                            ctx,
