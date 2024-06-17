@@ -34,7 +34,7 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "SchemaRoot does not match existing. Name: ",
 			},
 		},
 	}
@@ -118,7 +118,7 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "SchemaRoot does not match existing. Name: ",
 			},
 		},
 	}
