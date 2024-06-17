@@ -50,7 +50,7 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafkreicdkt3m6mgwuoix7qyijvwxwtj3dlre4a4c6mdnqbucbndwuxjsvi",
-					DestinationSchemaVersionID: "bafkreibpaw4dxy6bvmuoyegm7bwxyi24nubozmukemwiour4v62kz5ffuu",
+					DestinationSchemaVersionID: "bafkreigijxrkfpadmnkpagokjdy6zpwtryad32m6nkgsqrd452kjlfp46e",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -66,8 +66,8 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreibpaw4dxy6bvmuoyegm7bwxyi24nubozmukemwiour4v62kz5ffuu",
-					DestinationSchemaVersionID: "bafkreickm4zodm2muw5qcctmssht63g57u7kxujqyoax4zb5c42zs4pdh4",
+					SourceSchemaVersionID:      "bafkreigijxrkfpadmnkpagokjdy6zpwtryad32m6nkgsqrd452kjlfp46e",
+					DestinationSchemaVersionID: "bafkreibtmdbc3nbdt74xdwvfrez53fxwyz6nh4b6ppwsrxiqpj5zpwgole",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

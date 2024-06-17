@@ -53,7 +53,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -159,7 +159,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreib5jaawobqqiu6frzacerlj55pxxxuql3igqj4ldmg2pgilke4bty",
+					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

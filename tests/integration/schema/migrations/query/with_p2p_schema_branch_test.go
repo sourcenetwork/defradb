@@ -47,7 +47,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce",
-					DestinationSchemaVersionID: "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm",
+					DestinationSchemaVersionID: "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

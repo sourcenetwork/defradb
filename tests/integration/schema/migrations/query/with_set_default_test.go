@@ -22,7 +22,7 @@ import (
 )
 
 func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *testing.T) {
-	schemaVersionID2 := "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm"
+	schemaVersionID2 := "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -84,7 +84,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 
 func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t *testing.T) {
 	schemaVersionID1 := "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce"
-	schemaVersionID2 := "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm"
+	schemaVersionID2 := "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -159,7 +159,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 
 func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt_ClearsMigrations(t *testing.T) {
 	schemaVersionID1 := "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce"
-	schemaVersionID2 := "bafkreidrbhf54zckhmchzw2ngbobfqtkt7sm6ihbliu2wtxesehz5g4xwm"
+	schemaVersionID2 := "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
