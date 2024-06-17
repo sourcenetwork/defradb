@@ -45,7 +45,8 @@ type bufferedBus struct {
 	eventBufferSize int
 	hasClosedChan   chan struct{}
 	isClosed        bool
-	mutex           sync.RWMutex
+	// closeMutex is only locked when the bus is closing.
+	closeMutex sync.RWMutex
 }
 
 // NewBufferedBus creates a new event bus with the given commandBufferSize and
@@ -65,8 +66,8 @@ func NewBufferedBus(commandBufferSize int, eventBufferSize int) *bufferedBus {
 }
 
 func (b *bufferedBus) Publish(msg Message) {
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
+	b.closeMutex.RLock()
+	defer b.closeMutex.RUnlock()
 
 	if b.isClosed {
 		return
@@ -75,8 +76,8 @@ func (b *bufferedBus) Publish(msg Message) {
 }
 
 func (b *bufferedBus) Subscribe(events ...Name) (*Subscription, error) {
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
+	b.closeMutex.RLock()
+	defer b.closeMutex.RUnlock()
 
 	if b.isClosed {
 		return nil, ErrSubscribedToClosedChan
@@ -91,8 +92,8 @@ func (b *bufferedBus) Subscribe(events ...Name) (*Subscription, error) {
 }
 
 func (b *bufferedBus) Unsubscribe(sub *Subscription) {
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
+	b.closeMutex.RLock()
+	defer b.closeMutex.RUnlock()
 
 	if b.isClosed {
 		return
@@ -101,8 +102,8 @@ func (b *bufferedBus) Unsubscribe(sub *Subscription) {
 }
 
 func (b *bufferedBus) Close() {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+	b.closeMutex.Lock()
+	defer b.closeMutex.Unlock()
 
 	if b.isClosed {
 		return
