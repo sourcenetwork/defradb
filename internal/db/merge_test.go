@@ -312,11 +312,11 @@ func TestMergeQueue(t *testing.T) {
 	q.done(testDocID)
 	// give time for the goroutine to add the docID
 	time.Sleep(10 * time.Millisecond)
-	q.mu.Lock()
+	q.mutex.Lock()
 	require.Len(t, q.docs, 1)
-	q.mu.Unlock()
+	q.mutex.Unlock()
 	q.done(testDocID)
-	q.mu.Lock()
+	q.mutex.Lock()
 	require.Len(t, q.docs, 0)
-	q.mu.Unlock()
+	q.mutex.Unlock()
 }

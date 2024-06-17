@@ -49,8 +49,11 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 				queue.add(merge.DocID)
 				defer queue.done(merge.DocID)
 
+				// retry the merge process if a conflict occurs
+				//
+				// conficts occur when a user updates a document
+				// while a merge is in progress.
 				var err error
-				// retry merge up to max txn retries
 				for i := 0; i < db.MaxTxnRetries(); i++ {
 					err = db.executeMerge(ctx, merge)
 					if errors.Is(err, badger.ErrTxnConflict) {
@@ -127,8 +130,8 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 // mergeQueue is synchronization source to ensure that concurrent
 // document merges do not cause transaction conflicts.
 type mergeQueue struct {
-	docs map[string]chan struct{}
-	mu   sync.Mutex
+	docs  map[string]chan struct{}
+	mutex sync.Mutex
 }
 
 func newMergeQueue() *mergeQueue {
@@ -141,25 +144,25 @@ func newMergeQueue() *mergeQueue {
 // wait for the docID to be removed from the queue. For every add call, done must
 // be called to remove the docID from the queue. Otherwise, subsequent add calls will
 // block forever.
-func (dq *mergeQueue) add(docID string) {
-	dq.mu.Lock()
-	done, ok := dq.docs[docID]
+func (m *mergeQueue) add(docID string) {
+	m.mutex.Lock()
+	done, ok := m.docs[docID]
 	if !ok {
-		dq.docs[docID] = make(chan struct{})
+		m.docs[docID] = make(chan struct{})
 	}
-	dq.mu.Unlock()
+	m.mutex.Unlock()
 	if ok {
 		<-done
-		dq.add(docID)
+		m.add(docID)
 	}
 }
 
-func (dq *mergeQueue) done(docID string) {
-	dq.mu.Lock()
-	defer dq.mu.Unlock()
-	done, ok := dq.docs[docID]
+func (m *mergeQueue) done(docID string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	done, ok := m.docs[docID]
 	if ok {
-		delete(dq.docs, docID)
+		delete(m.docs, docID)
 		close(done)
 	}
 }

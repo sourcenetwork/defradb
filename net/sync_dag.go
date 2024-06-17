@@ -19,6 +19,7 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/linking/preload"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
@@ -33,9 +34,10 @@ import (
 // to wait for a dag to be fetched.
 var syncDAGTimeout = 60 * time.Second
 
-// syncDAG ensures that the DAG with the given CID is completely synchronized.
+// syncDAG synchronizes the DAG starting with the given block
+// using the blockservice to fetch remote blocks.
 //
-// This process will walk the entire DAG until the issue below is resolved.
+// This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
 func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *coreblock.Block) error {
 	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
@@ -68,11 +70,19 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 		}
 		return basicnode.Prototype.Any, nil
 	}
+	// preloader is used to asynchronously load blocks before traversing
+	//
+	// any errors encountered during preload are ignored
+	preloader := func(pctx preload.PreloadContext, l preload.Link) {
+		lctx := linking.LinkContext{Ctx: pctx.Ctx}
+		lsys.Load(lctx, l.Link, coreblock.SchemaPrototype) //nolint:errcheck
+	}
 	config := traversal.Config{
 		Ctx:                            ctx,
 		LinkSystem:                     lsys,
 		LinkVisitOnlyOnce:              true,
 		LinkTargetNodePrototypeChooser: prototypeChooser,
+		Preloader:                      preloader,
 	}
 	visit := func(p traversal.Progress, n datamodel.Node) error {
 		return nil
