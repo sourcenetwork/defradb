@@ -13,8 +13,9 @@ package encryption
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocEncryptionPeer_IfPeerHasNoKey_ShouldNotFetch(t *testing.T) {
