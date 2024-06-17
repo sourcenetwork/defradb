@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
+func TestBufferedBusPushIsNotBlockedWithoutSubscribers(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -29,7 +29,7 @@ func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
+func TestBufferedBusSubscribersAreNotBlockedAfterClose(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -44,7 +44,39 @@ func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
+func TestBufferedBusUnsubscribeTwice(t *testing.T) {
+	bus := NewBufferedBus(0, 0)
+	defer bus.Close()
+
+	sub, err := bus.Subscribe(WildCardName)
+	assert.NoError(t, err)
+
+	bus.Unsubscribe(sub)
+	bus.Unsubscribe(sub)
+}
+
+func TestBufferedBusWildCardDeduplicates(t *testing.T) {
+	bus := NewBufferedBus(0, 0)
+	defer bus.Close()
+
+	sub, err := bus.Subscribe("test", WildCardName)
+	assert.NoError(t, err)
+
+	msg := NewMessage("test", 1)
+	bus.Publish(msg)
+
+	evt := <-sub.Message()
+	assert.Equal(t, evt, msg)
+
+	select {
+	case <-sub.Message():
+		t.Errorf("should not receive duplicate message")
+	case <-time.After(1 * time.Second):
+		// message is deduplicated
+	}
+}
+
+func TestBufferedBusEachSubscribersRecievesEachItem(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -98,7 +130,7 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 	assert.Equal(t, msg2, event2)
 }
 
-func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
+func TestBufferedBusEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
 	bus := NewBufferedBus(0, 2)
 	defer bus.Close()
 
@@ -127,7 +159,7 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 	assert.Equal(t, msg2, output2Ch2)
 }
 
-func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
+func TestBufferedBusSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
