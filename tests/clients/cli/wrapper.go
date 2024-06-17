@@ -525,7 +525,7 @@ func (w *Wrapper) Close() {
 	w.node.Close()
 }
 
-func (w *Wrapper) Events() event.Bus {
+func (w *Wrapper) Events() *event.Bus {
 	return w.node.Events()
 }
 

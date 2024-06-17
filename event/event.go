@@ -84,3 +84,29 @@ type Merge struct {
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
 	SchemaRoot string
 }
+
+// Message contains event info.
+type Message struct {
+	// Name is the name of the event this message was generated from.
+	Name Name
+
+	// Data contains optional event information.
+	Data any
+}
+
+// NewMessage returns a new message with the given name and optional data.
+func NewMessage(name Name, data any) Message {
+	return Message{name, data}
+}
+
+// Subscription is a read-only event stream.
+type Subscription struct {
+	id     uint64
+	value  chan Message
+	events []Name
+}
+
+// Message returns the next event value from the subscription.
+func (s *Subscription) Message() <-chan Message {
+	return s.value
+}

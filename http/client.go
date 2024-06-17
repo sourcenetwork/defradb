@@ -451,7 +451,7 @@ func (c *Client) Headstore() ds.Read {
 	panic("client side database")
 }
 
-func (c *Client) Events() event.Bus {
+func (c *Client) Events() *event.Bus {
 	panic("client side database")
 }
 

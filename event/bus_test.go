@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBufferedBus_PushIsNotBlockedWithoutSubscribers_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 0)
+func TestBus_PushIsNotBlockedWithoutSubscribers_Succeed(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
 	msg := NewMessage("test", 1)
@@ -29,8 +29,8 @@ func TestBufferedBus_PushIsNotBlockedWithoutSubscribers_Succeed(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestBufferedBus_SubscribersAreNotBlockedAfterClose_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 0)
+func TestBus_SubscribersAreNotBlockedAfterClose_Succeed(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")
@@ -44,8 +44,8 @@ func TestBufferedBus_SubscribersAreNotBlockedAfterClose_Succeed(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestBufferedBus_UnsubscribeTwice_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 0)
+func TestBus_UnsubscribeTwice_Succeed(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe(WildCardName)
@@ -55,8 +55,8 @@ func TestBufferedBus_UnsubscribeTwice_Succeed(t *testing.T) {
 	bus.Unsubscribe(sub)
 }
 
-func TestBufferedBus_WildCardDeduplicates_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 0)
+func TestBus_WildCardDeduplicates_Succeed(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test", WildCardName)
@@ -76,8 +76,8 @@ func TestBufferedBus_WildCardDeduplicates_Succeed(t *testing.T) {
 	}
 }
 
-func TestBufferedBus_EachSubscribersRecievesEachItem_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 0)
+func TestBus_EachSubscribersRecievesEachItem_Succeed(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
 	msg1 := NewMessage("test", 1)
@@ -130,8 +130,8 @@ func TestBufferedBus_EachSubscribersRecievesEachItem_Succeed(t *testing.T) {
 	assert.Equal(t, msg2, event2)
 }
 
-func TestBufferedBus_EachSubscribersRecievesEachItemGivenBufferedEventChan_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 2)
+func TestBus_EachSubscribersRecievesEachItemGivenBufferedEventChan_Succeed(t *testing.T) {
+	bus := NewBus(0, 2)
 	defer bus.Close()
 
 	msg1 := NewMessage("test", 1)
@@ -159,8 +159,8 @@ func TestBufferedBus_EachSubscribersRecievesEachItemGivenBufferedEventChan_Succe
 	assert.Equal(t, msg2, output2Ch2)
 }
 
-func TestBufferedBus_SubscribersDontRecieveItemsAfterUnsubscribing_Succeed(t *testing.T) {
-	bus := NewBufferedBus(0, 0)
+func TestBus_SubscribersDontRecieveItemsAfterUnsubscribing_Succeed(t *testing.T) {
+	bus := NewBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")

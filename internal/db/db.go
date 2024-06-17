@@ -58,7 +58,7 @@ type db struct {
 	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
-	events event.Bus
+	events *event.Bus
 
 	parser core.Parser
 
@@ -109,7 +109,7 @@ func newDB(
 		lensRegistry: lens,
 		parser:       parser,
 		options:      options,
-		events:       event.NewBufferedBus(commandBufferSize, eventBufferSize),
+		events:       event.NewBus(commandBufferSize, eventBufferSize),
 	}
 
 	// apply options
@@ -251,7 +251,7 @@ func (db *db) initialize(ctx context.Context) error {
 }
 
 // Events returns the events Channel.
-func (db *db) Events() event.Bus {
+func (db *db) Events() *event.Bus {
 	return db.events
 }
 
