@@ -17,42 +17,48 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
+func TestDocEncryptionPeer_IfPeerHasNoKey_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-                    type Users {
-                        name: String
-                        age: Int
-                    }
-                `},
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
 			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
 				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
+					"name": "John",
+					"age": 21
+				}`,
 				EncryptionKey: immutable.Some(encKey),
 			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
-				Request: `
-                    query {
-                        Users {
-                            _docID
-                            name
-                            age
-                        }
-                    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-						"name":   "John",
-						"age":    int64(21),
-					},
-				},
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						age
+					}
+				}`,
+				Results: []map[string]any{},
 			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
