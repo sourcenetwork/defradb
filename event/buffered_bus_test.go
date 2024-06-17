@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBufferedBusPushIsNotBlockedWithoutSubscribers(t *testing.T) {
+func TestBufferedBus_PushIsNotBlockedWithoutSubscribers_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -29,12 +29,12 @@ func TestBufferedBusPushIsNotBlockedWithoutSubscribers(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestBufferedBusSubscribersAreNotBlockedAfterClose(t *testing.T) {
+func TestBufferedBus_SubscribersAreNotBlockedAfterClose_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	bus.Close()
 
@@ -44,7 +44,7 @@ func TestBufferedBusSubscribersAreNotBlockedAfterClose(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestBufferedBusUnsubscribeTwice(t *testing.T) {
+func TestBufferedBus_UnsubscribeTwice_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -55,7 +55,7 @@ func TestBufferedBusUnsubscribeTwice(t *testing.T) {
 	bus.Unsubscribe(sub)
 }
 
-func TestBufferedBusWildCardDeduplicates(t *testing.T) {
+func TestBufferedBus_WildCardDeduplicates_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -71,12 +71,12 @@ func TestBufferedBusWildCardDeduplicates(t *testing.T) {
 	select {
 	case <-sub.Message():
 		t.Errorf("should not receive duplicate message")
-	case <-time.After(1 * time.Second):
+	case <-time.After(100 * time.Millisecond):
 		// message is deduplicated
 	}
 }
 
-func TestBufferedBusEachSubscribersRecievesEachItem(t *testing.T) {
+func TestBufferedBus_EachSubscribersRecievesEachItem_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
@@ -84,10 +84,10 @@ func TestBufferedBusEachSubscribersRecievesEachItem(t *testing.T) {
 	msg2 := NewMessage("test", 2)
 
 	sub1, err := bus.Subscribe("test")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	sub2, err := bus.Subscribe("test")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	// ordering of publish is not deterministic
 	// so capture each in a go routine
@@ -130,7 +130,7 @@ func TestBufferedBusEachSubscribersRecievesEachItem(t *testing.T) {
 	assert.Equal(t, msg2, event2)
 }
 
-func TestBufferedBusEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
+func TestBufferedBus_EachSubscribersRecievesEachItemGivenBufferedEventChan_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 2)
 	defer bus.Close()
 
@@ -138,9 +138,9 @@ func TestBufferedBusEachSubscribersRecievesEachItemGivenBufferedEventChan(t *tes
 	msg2 := NewMessage("test", 2)
 
 	sub1, err := bus.Subscribe("test")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	sub2, err := bus.Subscribe("test")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	// both inputs are added first before read, using the internal chan buffer
 	bus.Publish(msg1)
@@ -159,12 +159,12 @@ func TestBufferedBusEachSubscribersRecievesEachItemGivenBufferedEventChan(t *tes
 	assert.Equal(t, msg2, output2Ch2)
 }
 
-func TestBufferedBusSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
+func TestBufferedBus_SubscribersDontRecieveItemsAfterUnsubscribing_Succeed(t *testing.T) {
 	bus := NewBufferedBus(0, 0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	bus.Unsubscribe(sub)
 
 	msg := NewMessage("test", 1)
