@@ -24,9 +24,9 @@ const (
 	errAddingP2PCollection                      string = "cannot add collection ID"
 	errRemovingP2PCollection                    string = "cannot remove collection ID"
 	errAddCollectionWithPatch                   string = "adding collections via patch is not supported"
+	errAddSchemaWithPatch                       string = "adding schema via patch is not supported"
 	errCollectionIDDoesntMatch                  string = "CollectionID does not match existing"
 	errSchemaRootDoesntMatch                    string = "SchemaRoot does not match existing"
-	errCannotModifySchemaName                   string = "modifying the schema name is not supported"
 	errCannotSetVersionID                       string = "setting the VersionID is not supported"
 	errRelationalFieldInvalidRelationType       string = "invalid RelationType"
 	errRelationalFieldMissingIDField            string = "missing id field for relation object field"
@@ -224,9 +224,9 @@ func NewErrRemovingP2PCollection(inner error) error {
 	return errors.Wrap(errRemovingP2PCollection, inner)
 }
 
-func NewErrAddCollectionWithPatch(name string) error {
+func NewErrAddSchemaWithPatch(name string) error {
 	return errors.New(
-		errAddCollectionWithPatch,
+		errAddSchemaWithPatch,
 		errors.NewKV("Name", name),
 	)
 }
@@ -253,14 +253,6 @@ func NewErrSchemaRootDoesntMatch(name, existingRoot, proposedRoot string) error 
 		errors.NewKV("Name", name),
 		errors.NewKV("ExistingRoot", existingRoot),
 		errors.NewKV("ProposedRoot", proposedRoot),
-	)
-}
-
-func NewErrCannotModifySchemaName(existingName, proposedName string) error {
-	return errors.New(
-		errCannotModifySchemaName,
-		errors.NewKV("ExistingName", existingName),
-		errors.NewKV("ProposedName", proposedName),
 	)
 }
 

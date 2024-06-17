@@ -99,7 +99,7 @@ func TestColDescrUpdateReplaceName_GivenInactiveCollectionWithSameName_Errors(t 
 						{ "op": "replace", "path": "/2/Name", "value": "Users" }
 					]
 				`,
-				ExpectedError: "collection already exists. Name: Users",
+				ExpectedError: "multiple versions of same collection cannot be active. Name: Users, Root: 1",
 			},
 		},
 	}

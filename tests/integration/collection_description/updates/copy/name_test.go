@@ -40,7 +40,7 @@ func TestColDescrUpdateCopyName_Errors(t *testing.T) {
 						{ "op": "copy", "from": "/1/Name", "path": "/2/Name" }
 					]
 				`,
-				ExpectedError: "collection already exists. Name: Users",
+				ExpectedError: "multiple versions of same collection cannot be active. Name: Users, Root: 1",
 			},
 		},
 	}
