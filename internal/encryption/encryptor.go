@@ -12,7 +12,9 @@ package encryption
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
+	"io"
 
 	ds "github.com/ipfs/go-datastore"
 
@@ -20,18 +22,36 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 )
 
+var generateEncryptionKeyFunc = generateEncryptionKey
+
+const keyLength = 32 // 32 bytes for AES-256
+
+// generateEncryptionKey generates a random AES key.
+func generateEncryptionKey() ([]byte, error) {
+	key := make([]byte, keyLength)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		return nil, err
+	}
+	return key, nil
+}
+
+// generateTestEncryptionKey generates a deterministic encryption key for testing.
+func generateTestEncryptionKey() ([]byte, error) {
+	return []byte("examplekey1234567890examplekey12"), nil
+}
+
 type DocEncryptor struct {
-	encryptionKey []byte
-	ctx           context.Context
-	store         datastore.DSReaderWriter
+	shouldGenerateKey bool
+	ctx               context.Context
+	store             datastore.DSReaderWriter
 }
 
 func newDocEncryptor(ctx context.Context) *DocEncryptor {
 	return &DocEncryptor{ctx: ctx}
 }
 
-func (d *DocEncryptor) SetKey(encryptionKey []byte) {
-	d.encryptionKey = encryptionKey
+func (d *DocEncryptor) EnableKeyGeneration() {
+	d.shouldGenerateKey = true
 }
 
 func (d *DocEncryptor) SetStore(store datastore.DSReaderWriter) {
@@ -45,16 +65,21 @@ func (d *DocEncryptor) Encrypt(docID string, fieldID uint32, plainText []byte) (
 	}
 
 	if len(encryptionKey) == 0 {
-		if len(d.encryptionKey) == 0 {
+		if !d.shouldGenerateKey {
 			return plainText, nil
 		}
+
+		encryptionKey, err = generateEncryptionKeyFunc()
+		if err != nil {
+			return nil, err
+		}
+
 		if d.store != nil {
-			err = d.store.Put(d.ctx, storeKey.ToDS(), d.encryptionKey)
+			err = d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
 			if err != nil {
 				return nil, err
 			}
 		}
-		encryptionKey = d.encryptionKey
 	}
 	return EncryptAES(plainText, encryptionKey)
 }
@@ -70,6 +95,8 @@ func (d *DocEncryptor) Decrypt(docID string, fieldID uint32, cipherText []byte) 
 	return DecryptAES(cipherText, encKey)
 }
 
+// fetchEncryptionKey fetches the encryption key for the given docID and fieldID.
+// If the key is not found, it returns an empty key.
 func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldID uint32) ([]byte, core.EncStoreDocKey, error) {
 	storeKey := core.NewEncStoreDocKey(docID, fieldID)
 	if d.store == nil {
@@ -81,4 +108,20 @@ func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldID uint32) ([]byte,
 		return nil, core.EncStoreDocKey{}, err
 	}
 	return encryptionKey, storeKey, nil
+}
+
+func EncryptDoc(ctx context.Context, docID string, fieldID uint32, plainText []byte) ([]byte, error) {
+	enc, ok := TryGetContextEncryptor(ctx)
+	if !ok {
+		return plainText, nil
+	}
+	return enc.Encrypt(docID, fieldID, plainText)
+}
+
+func DecryptDoc(ctx context.Context, docID string, fieldID uint32, cipherText []byte) ([]byte, error) {
+	enc, ok := TryGetContextEncryptor(ctx)
+	if !ok {
+		return cipherText, nil
+	}
+	return enc.Decrypt(docID, fieldID, cipherText)
 }

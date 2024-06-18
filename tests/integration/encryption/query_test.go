@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
@@ -32,7 +31,7 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 						"name":	"John",
 						"age":	21
 					}`,
-				EncryptionKey: immutable.Some(encKey),
+				IsEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `

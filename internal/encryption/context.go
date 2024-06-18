@@ -36,13 +36,8 @@ func getContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) 
 }
 
 func Context(ctx context.Context) context.Context {
-	ctx, _ = getContextWithDocEnc(ctx)
-	return ctx
-}
-
-func ContextWithKey(ctx context.Context, encryptionKey []byte) context.Context {
 	ctx, encryptor := getContextWithDocEnc(ctx)
-	encryptor.SetKey(encryptionKey)
+	encryptor.EnableKeyGeneration()
 	return ctx
 }
 
@@ -50,20 +45,4 @@ func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
 	ctx, encryptor := getContextWithDocEnc(ctx)
 	encryptor.SetStore(txn.Encstore())
 	return ctx
-}
-
-func EncryptDoc(ctx context.Context, docID string, fieldID uint32, plainText []byte) ([]byte, error) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return plainText, nil
-	}
-	return enc.Encrypt(docID, fieldID, plainText)
-}
-
-func DecryptDoc(ctx context.Context, docID string, fieldID uint32, cipherText []byte) ([]byte, error) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return cipherText, nil
-	}
-	return enc.Decrypt(docID, fieldID, cipherText)
 }

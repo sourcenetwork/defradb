@@ -47,5 +47,6 @@ func init() {
 	// If the binary is a test binary, use a deterministic nonce.
 	if strings.HasSuffix(arg, ".test") || strings.Contains(arg, "/defradb/tests/") {
 		generateNonceFunc = generateTestNonce
+		generateEncryptionKeyFunc = generateTestEncryptionKey
 	}
 }

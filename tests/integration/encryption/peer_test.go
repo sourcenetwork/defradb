@@ -45,7 +45,7 @@ func TestDocEncryptionPeer_IfPeerHasNoKey_ShouldNotFetch(t *testing.T) {
 					"name": "John",
 					"age": 21
 				}`,
-				EncryptionKey: immutable.Some(encKey),
+				IsEncrypted: true,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{

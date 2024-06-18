@@ -15,13 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
-const encKey = "examplekey1234567890examplekey12"
-
-func encrypt(key string, plaintext []byte) []byte {
-	val, _ := encryption.EncryptAES(plaintext, []byte(key))
+func encrypt(plaintext []byte) []byte {
+	val, _ := encryption.EncryptAES(plaintext, []byte("examplekey1234567890examplekey12"))
 	return val
 }
 
@@ -34,7 +31,7 @@ func TestDocEncryption_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 						"name":	"John",
 						"age":	21
 					}`,
-				EncryptionKey: immutable.Some(encKey),
+				IsEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -58,7 +55,7 @@ func TestDocEncryption_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 					{
 						"cid":          "bafyreicv422zhiuqefs32wp7glrqsbjpy76hgem4ivagm2ttuli43wluci",
 						"collectionID": int64(1),
-						"delta":        encrypt(encKey, testUtils.CBORValue(21)),
+						"delta":        encrypt(testUtils.CBORValue(21)),
 						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 						"fieldId":      "1",
 						"fieldName":    "age",
@@ -68,7 +65,7 @@ func TestDocEncryption_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 					{
 						"cid":          "bafyreie6i4dw5jh6bp2anszqkmuwfslsemzatrflipetljhtpjhjn3zbum",
 						"collectionID": int64(1),
-						"delta":        encrypt(encKey, testUtils.CBORValue("John")),
+						"delta":        encrypt(testUtils.CBORValue("John")),
 						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 						"fieldId":      "2",
 						"fieldName":    "name",
@@ -111,7 +108,7 @@ func TestDocEncryption_UponUpdate_ShouldEncryptedCommitDelta(t *testing.T) {
 						"name":	"John",
 						"age":	21
 					}`,
-				EncryptionKey: immutable.Some(encKey),
+				IsEncrypted: true,
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
@@ -128,10 +125,10 @@ func TestDocEncryption_UponUpdate_ShouldEncryptedCommitDelta(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"delta": encrypt(encKey, testUtils.CBORValue(22)),
+						"delta": encrypt(testUtils.CBORValue(22)),
 					},
 					{
-						"delta": encrypt(encKey, testUtils.CBORValue(21)),
+						"delta": encrypt(testUtils.CBORValue(21)),
 					},
 				},
 			},
@@ -151,7 +148,7 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptedOnlyRelevantDoc
 						"name":	"John",
 						"age":	21
 					}`,
-				EncryptionKey: immutable.Some(encKey),
+				IsEncrypted: true,
 			},
 			testUtils.CreateDoc{
 				// bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6
@@ -183,11 +180,11 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptedOnlyRelevantDoc
 				`,
 				Results: []map[string]any{
 					{
-						"delta": encrypt(encKey, testUtils.CBORValue(22)),
+						"delta": encrypt(testUtils.CBORValue(22)),
 						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 					},
 					{
-						"delta": encrypt(encKey, testUtils.CBORValue(21)),
+						"delta": encrypt(testUtils.CBORValue(21)),
 						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 					},
 					{

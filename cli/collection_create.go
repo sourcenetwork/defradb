@@ -22,9 +22,9 @@ import (
 
 func MakeCollectionCreateCommand() *cobra.Command {
 	var file string
-	var encryptionKey string
+	var shouldEncrypt bool
 	var cmd = &cobra.Command{
-		Use:   "create [-i --identity] [-e --encryption] <document>",
+		Use:   "create [-i --identity] [-e --encrypt] <document>",
 		Short: "Create a new document.",
 		Long: `Create a new document.
 		
@@ -33,9 +33,9 @@ Options:
         Marks the document as private and set the identity as the owner. The access to the document
 		and permissions are controlled by ACP (Access Control Policy).
 
-	-e, --encryption
-		Encrypts the document with the encryption key. The encryption key is used to encrypt and decrypt 
-		the document using symmetric AES-GCM encryption algorithm.
+	-e, --encrypt
+		Encrypt flag specified if the document needs to be encrypted. If set DefraDB will generate a
+		symmetric key for encryption using AES-GCM.
 
 Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
@@ -81,7 +81,7 @@ Example: create from stdin:
 			}
 
 			txn, _ := db.TryGetContextTxn(cmd.Context())
-			setContextDocEncryptionKey(cmd, encryptionKey, txn)
+			setContextDocEncryptionKey(cmd, shouldEncrypt, txn)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())
@@ -98,7 +98,7 @@ Example: create from stdin:
 			return col.Create(cmd.Context(), doc)
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&encryptionKey, "encryption", "e", "",
+	cmd.PersistentFlags().BoolVarP(&shouldEncrypt, "encrypt", "e", false,
 		"Encryption key used to encrypt/decrypt the document")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	return cmd
