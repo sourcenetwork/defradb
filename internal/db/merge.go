@@ -71,7 +71,6 @@ func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 						ctx,
 						"Failed to execute merge",
 						err,
-						corelog.Any("Error", err),
 						corelog.Any("Event", merge))
 				}
 			}()

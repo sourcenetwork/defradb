@@ -214,7 +214,7 @@ func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 			defer wg.Done()
 			err := n.host.Connect(n.ctx, pinfo)
 			if err != nil {
-				log.InfoContext(n.ctx, "Cannot connect to peer", corelog.Any("Error", err))
+				log.ErrorContextE(n.ctx, "Cannot connect to peer", err)
 				return
 			}
 			log.InfoContext(n.ctx, "Connected", corelog.Any("PeerID", pinfo.ID))

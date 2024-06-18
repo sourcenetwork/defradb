@@ -130,9 +130,7 @@ func (p *Peer) Start() error {
 				log.InfoContext(
 					p.ctx,
 					"Failure while reconnecting to a known peer",
-					corelog.Any("peer", id),
-					corelog.Any("error", err),
-				)
+					corelog.Any("peer", id))
 			}
 		}(id)
 	}
