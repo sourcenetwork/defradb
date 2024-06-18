@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBus_PushIsNotBlockedWithoutSubscribers_Succeed(t *testing.T) {
+func TestBus_IfPublishingWithoutSubscribers_ItShouldNotBlock(t *testing.T) {
 	bus := NewBus(0, 0)
 	defer bus.Close()
 
@@ -29,7 +29,7 @@ func TestBus_PushIsNotBlockedWithoutSubscribers_Succeed(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestBus_SubscribersAreNotBlockedAfterClose_Succeed(t *testing.T) {
+func TestBus_IfClosingAfterSubscribing_ItShouldNotBlock(t *testing.T) {
 	bus := NewBus(0, 0)
 	defer bus.Close()
 
@@ -44,7 +44,7 @@ func TestBus_SubscribersAreNotBlockedAfterClose_Succeed(t *testing.T) {
 	assert.True(t, true)
 }
 
-func TestBus_UnsubscribeTwice_Succeed(t *testing.T) {
+func TestBus_IfSubscriptionIsUnsubscribedTwice_ItShouldNotPanic(t *testing.T) {
 	bus := NewBus(0, 0)
 	defer bus.Close()
 
@@ -55,7 +55,7 @@ func TestBus_UnsubscribeTwice_Succeed(t *testing.T) {
 	bus.Unsubscribe(sub)
 }
 
-func TestBus_WildCardDeduplicates_Succeed(t *testing.T) {
+func TestBus_IfSubscribedToWildCard_ItShouldNotReceiveMessageTwice(t *testing.T) {
 	bus := NewBus(0, 0)
 	defer bus.Close()
 
@@ -76,7 +76,7 @@ func TestBus_WildCardDeduplicates_Succeed(t *testing.T) {
 	}
 }
 
-func TestBus_EachSubscribersRecievesEachItem_Succeed(t *testing.T) {
+func TestBus_IfMultipleSubscriptionsToTheSameEvent_EachSubscriberRecievesEachEvent(t *testing.T) {
 	bus := NewBus(0, 0)
 	defer bus.Close()
 
@@ -130,7 +130,7 @@ func TestBus_EachSubscribersRecievesEachItem_Succeed(t *testing.T) {
 	assert.Equal(t, msg2, event2)
 }
 
-func TestBus_EachSubscribersRecievesEachItemGivenBufferedEventChan_Succeed(t *testing.T) {
+func TestBus_IfMultipleBufferedSubscribersWithMultipleEvents_EachSubscriberRecievesEachItem(t *testing.T) {
 	bus := NewBus(0, 2)
 	defer bus.Close()
 
@@ -159,7 +159,7 @@ func TestBus_EachSubscribersRecievesEachItemGivenBufferedEventChan_Succeed(t *te
 	assert.Equal(t, msg2, output2Ch2)
 }
 
-func TestBus_SubscribersDontRecieveItemsAfterUnsubscribing_Succeed(t *testing.T) {
+func TestBus_IfSubscribedThenUnsubscribe_SubscriptionShouldNotReceiveEvent(t *testing.T) {
 	bus := NewBus(0, 0)
 	defer bus.Close()
 
