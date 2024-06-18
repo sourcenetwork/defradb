@@ -67,7 +67,6 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 						ctx,
 						"Failed to execute merge",
 						err,
-						corelog.Any("Error", err),
 						corelog.Any("Event", merge))
 				}
 				if merge.Wg != nil {

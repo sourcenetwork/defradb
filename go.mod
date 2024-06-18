@@ -38,7 +38,7 @@ require (
 	github.com/multiformats/go-multicodec v0.9.0
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
-	github.com/sourcenetwork/corelog v0.0.7
+	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd
 	github.com/sourcenetwork/immutable v0.3.0
