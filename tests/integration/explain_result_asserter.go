@@ -41,7 +41,7 @@ type ExplainResultAsserter struct {
 	planExecutions immutable.Option[uint64]
 }
 
-func readNumberProp(t *testing.T, val any, prop string) uint64 {
+func readNumberProp(t testing.TB, val any, prop string) uint64 {
 	switch v := val.(type) {
 	case uint64:
 		return v
@@ -55,7 +55,7 @@ func readNumberProp(t *testing.T, val any, prop string) uint64 {
 	return 0
 }
 
-func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
+func (a *ExplainResultAsserter) Assert(t testing.TB, result []dataMap) {
 	require.Len(t, result, 1, "Expected len(result) = 1, got %d", len(result))
 	explainNode, ok := result[0]["explain"].(dataMap)
 	require.True(t, ok, "Expected explain none")
