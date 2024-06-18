@@ -113,11 +113,11 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	var err error
 	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
 	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
+		log.ErrorContextE(s.peer.ctx, "could not create event emitter", err)
 	}
 	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
+		log.ErrorContextE(s.peer.ctx, "could not create event emitter", err)
 	}
 
 	return s, nil
@@ -167,7 +167,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
-				log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
+				log.ErrorContextE(ctx, "could not decode the PeerID of the log creator", err)
 			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
 				FromPeer: pid,
@@ -176,7 +176,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			if err != nil {
 				// logging instead of returning an error because the event bus should
 				// not break the PushLog execution.
-				log.InfoContext(ctx, "could not emit push log event", corelog.String("Error", err.Error()))
+				log.ErrorContextE(ctx, "could not emit push log event", err)
 			}
 		}
 	}()
@@ -349,7 +349,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			Peer: from,
 		})
 		if err != nil {
-			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
+			log.ErrorContextE(s.peer.ctx, "could not emit pubsub event", err)
 		}
 	}
 }
