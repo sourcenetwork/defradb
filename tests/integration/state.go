@@ -27,7 +27,7 @@ type state struct {
 	ctx context.Context
 
 	// The Go Test test state
-	t *testing.T
+	t testing.TB
 
 	// The TestCase currently being executed.
 	testCase TestCase
@@ -88,7 +88,7 @@ type state struct {
 // newState returns a new fresh state for the given testCase.
 func newState(
 	ctx context.Context,
-	t *testing.T,
+	t testing.TB,
 	testCase TestCase,
 	dbt DatabaseType,
 	clientType ClientType,

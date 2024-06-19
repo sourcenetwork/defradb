@@ -28,7 +28,7 @@ type AnyOf []any
 // assertResultsAnyOf asserts that actual result is equal to at least one of the expected results.
 //
 // The comparison is relaxed when using client types other than goClientType.
-func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
+func assertResultsAnyOf(t testing.TB, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
 	switch client {
 	case HTTPClientType, CLIClientType:
 		if !areResultsAnyOf(expected, actual) {
@@ -42,7 +42,7 @@ func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual 
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.
-func assertResultsEqual(t *testing.T, client ClientType, expected any, actual any, msgAndArgs ...any) {
+func assertResultsEqual(t testing.TB, client ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
 	case HTTPClientType, CLIClientType:
 		if !areResultsEqual(expected, actual) {

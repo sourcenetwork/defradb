@@ -375,7 +375,7 @@ func trimSubNodes(graph any) any {
 
 // trimExplainAttributes trims away all keys that aren't plan nodes within the explain graph.
 func trimExplainAttributes(
-	t *testing.T,
+	t testing.TB,
 	description string,
 	actualResult any,
 ) map[string]any {
@@ -411,7 +411,7 @@ func trimExplainAttributes(
 
 // trimExplainAttributesArray is a helper that runs trimExplainAttributes for each item in an array.
 func trimExplainAttributesArray[T any](
-	t *testing.T,
+	t testing.TB,
 	description string,
 	actualResult []T,
 ) []map[string]any {
