@@ -16,6 +16,7 @@ import (
 )
 
 const employeeCompanyPolicy = `
+name: test
 description: A Valid DefraDB Policy Interface (DPI)
 
 actor:
@@ -58,13 +59,13 @@ func getSetupEmployeeCompanyActions() []any {
 		testUtils.AddPolicy{
 			Identity:         acpUtils.Actor1Identity,
 			Policy:           employeeCompanyPolicy,
-			ExpectedPolicyID: "6f11799717723307077147736fddccd8a7b5e68d2ec22e2155f0186e0c43a2e2",
+			ExpectedPolicyID: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 		},
 
 		testUtils.SchemaUpdate{
 			Schema: `
 					type Employee @policy(
-						id: "6f11799717723307077147736fddccd8a7b5e68d2ec22e2155f0186e0c43a2e2",
+						id: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 						resource: "employees"
 					) {
 						name: String
@@ -73,7 +74,7 @@ func getSetupEmployeeCompanyActions() []any {
 					}
 
 					type Company @policy(
-						id: "6f11799717723307077147736fddccd8a7b5e68d2ec22e2155f0186e0c43a2e2",
+						id: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 						resource: "companies"
 					) {
 						name: String

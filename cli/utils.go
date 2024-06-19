@@ -150,7 +150,12 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	ctx := db.SetContextIdentity(cmd.Context(), acpIdentity.FromPrivateKey(privKey))
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	if err != nil {
+		return err
+	}
+
+	ctx := db.SetContextIdentity(cmd.Context(), identity)
 	cmd.SetContext(ctx)
 	return nil
 }

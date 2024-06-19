@@ -12,20 +12,59 @@ package acp
 
 import (
 	"context"
+	"errors"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
+	"github.com/sourcenetwork/acp_core/pkg/auth"
+	"github.com/sourcenetwork/acp_core/pkg/engine"
+	"github.com/sourcenetwork/acp_core/pkg/runtime"
+	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/x/acp/embedded"
-	"github.com/sourcenetwork/sourcehub/x/acp/types"
 )
+
+const localACPStoreName = "local_acp"
 
 // ACPLocal represents a local acp implementation that makes no remote calls.
 type ACPLocal struct {
 	pathToStore immutable.Option[string]
-	localACP    *embedded.LocalACP
+	engine      types.ACPEngineServer
+	manager     runtime.RuntimeManager
 }
 
 var _ sourceHubClient = (*ACPLocal)(nil)
+
+func mapACPCorePolicy(pol *types.Policy) policy {
+	resources := make(map[string]*resource)
+	for _, coreResource := range pol.Resources {
+		resource := mapACPCoreResource(coreResource)
+		resources[resource.Name] = resource
+	}
+
+	return policy{
+		ID:        pol.Id,
+		Resources: resources,
+	}
+}
+
+func mapACPCoreResource(policy *types.Resource) *resource {
+	perms := make(map[string]*permission)
+	for _, corePermission := range policy.Permissions {
+		perm := mapACPCorePermission(corePermission)
+		perms[perm.Name] = perm
+	}
+
+	return &resource{
+		Name:        policy.Name,
+		Permissions: perms,
+	}
+}
+
+func mapACPCorePermission(perm *types.Permission) *permission {
+	return &permission{
+		Name:       perm.Name,
+		Expression: perm.Expression,
+	}
+}
 
 func (l *ACPLocal) Init(ctx context.Context, path string) {
 	if path == "" {
@@ -36,73 +75,79 @@ func (l *ACPLocal) Init(ctx context.Context, path string) {
 }
 
 func (l *ACPLocal) Start(ctx context.Context) error {
-	var localACP embedded.LocalACP
+	var manager runtime.RuntimeManager
 	var err error
+	var opts []runtime.Opt
+	var storeLocation string
 
 	if !l.pathToStore.HasValue() { // Use a non-persistent, i.e. in memory store.
-		localACP, err = embedded.NewLocalACP(
-			embedded.WithInMemStore(),
-		)
-
-		if err != nil {
-			return NewErrInitializationOfACPFailed(err, "Local", "in-memory")
-		}
+		storeLocation = "in-memory"
+		opts = append(opts, runtime.WithMemKV())
 	} else { // Use peristent storage.
-		acpStorePath := l.pathToStore.Value() + "/" + embedded.DefaultDataDir
-		localACP, err = embedded.NewLocalACP(
-			embedded.WithPersistentStorage(acpStorePath),
-		)
-		if err != nil {
-			return NewErrInitializationOfACPFailed(err, "Local", l.pathToStore.Value())
-		}
+		storeLocation = l.pathToStore.Value()
+		acpStorePath := storeLocation + "/" + localACPStoreName
+		opts = append(opts, runtime.WithPersistentKV(acpStorePath))
 	}
 
-	l.localACP = &localACP
+	manager, err = runtime.NewRuntimeManager(opts...)
+	if err != nil {
+		return NewErrInitializationOfACPFailed(err, "Local", storeLocation)
+	}
+
+	l.manager = manager
+	l.engine = engine.NewACPEngine(manager)
 	return nil
 }
 
 func (l *ACPLocal) Close() error {
-	return l.localACP.Close()
+	return l.manager.Terminate()
 }
 
 func (l *ACPLocal) AddPolicy(
 	ctx context.Context,
 	creatorID string,
 	policy string,
-	policyMarshalType types.PolicyMarshalingType,
+	marshalType policyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	createPolicy := types.MsgCreatePolicy{
-		Creator:      creatorID,
+	principal, err := auth.NewDIDPrincipal(creatorID)
+	if err != nil {
+		return "", newErrInvalidActorID(err, creatorID)
+	}
+	ctx = auth.InjectPrincipal(ctx, principal)
+
+	createPolicy := types.CreatePolicyRequest{
 		Policy:       policy,
-		MarshalType:  policyMarshalType,
+		MarshalType:  types.PolicyMarshalingType(marshalType),
 		CreationTime: protoTypes.TimestampNow(),
 	}
 
-	createPolicyResponse, err := l.localACP.GetMsgService().CreatePolicy(
-		l.localACP.GetCtx(),
-		&createPolicy,
-	)
+	response, err := l.engine.CreatePolicy(ctx, &createPolicy)
 	if err != nil {
 		return "", err
 	}
 
-	return createPolicyResponse.Policy.Id, nil
+	return response.Policy.Id, nil
 }
 
 func (l *ACPLocal) Policy(
 	ctx context.Context,
 	policyID string,
-) (*types.Policy, error) {
-	queryPolicyResponse, err := l.localACP.GetQueryService().Policy(
-		l.localACP.GetCtx(),
-		&types.QueryPolicyRequest{Id: policyID},
-	)
+) (immutable.Option[policy], error) {
+	none := immutable.None[policy]()
+
+	request := types.GetPolicyRequest{Id: policyID}
+	response, err := l.engine.GetPolicy(ctx, &request)
+
 	if err != nil {
-		return nil, err
+		if errors.Is(err, types.ErrPolicyNotFound) {
+			return none, nil
+		}
+		return none, err
 	}
 
-	return queryPolicyResponse.Policy, nil
+	policy := mapACPCorePolicy(response.Policy)
+	return immutable.Some(policy), nil
 }
 
 func (l *ACPLocal) RegisterObject(
@@ -112,21 +157,27 @@ func (l *ACPLocal) RegisterObject(
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
-) (types.RegistrationResult, error) {
-	registerDocResponse, err := l.localACP.GetMsgService().RegisterObject(
-		l.localACP.GetCtx(),
-		&types.MsgRegisterObject{
-			Creator:      actorID,
-			PolicyId:     policyID,
-			Object:       types.NewObject(resourceName, objectID),
-			CreationTime: creationTime,
-		},
-	)
+) (RegistrationResult, error) {
+	principal, err := auth.NewDIDPrincipal(actorID)
 	if err != nil {
-		return types.RegistrationResult(0), err
+		return RegistrationResult_NoOp, newErrInvalidActorID(err, actorID)
 	}
 
-	return registerDocResponse.Result, nil
+	ctx = auth.InjectPrincipal(ctx, principal)
+	req := types.RegisterObjectRequest{
+		PolicyId:     policyID,
+		Object:       types.NewObject(resourceName, objectID),
+		CreationTime: creationTime,
+	}
+
+	registerDocResponse, err := l.engine.RegisterObject(ctx, &req)
+
+	if err != nil {
+		return RegistrationResult_NoOp, err
+	}
+
+	result := RegistrationResult(registerDocResponse.Result)
+	return result, nil
 }
 
 func (l *ACPLocal) ObjectOwner(
@@ -134,14 +185,23 @@ func (l *ACPLocal) ObjectOwner(
 	policyID string,
 	resourceName string,
 	objectID string,
-) (*types.QueryObjectOwnerResponse, error) {
-	return l.localACP.GetQueryService().ObjectOwner(
-		l.localACP.GetCtx(),
-		&types.QueryObjectOwnerRequest{
-			PolicyId: policyID,
-			Object:   types.NewObject(resourceName, objectID),
-		},
-	)
+) (immutable.Option[string], error) {
+	none := immutable.None[string]()
+
+	req := types.GetObjectRegistrationRequest{
+		PolicyId: policyID,
+		Object:   types.NewObject(resourceName, objectID),
+	}
+	result, err := l.engine.GetObjectRegistration(ctx, &req)
+	if err != nil {
+		return none, err
+	}
+
+	if result.IsRegistered {
+		return immutable.Some(result.OwnerId), nil
+	}
+
+	return none, nil
 }
 
 func (l *ACPLocal) VerifyAccessRequest(
@@ -152,26 +212,25 @@ func (l *ACPLocal) VerifyAccessRequest(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	checkDocResponse, err := l.localACP.GetQueryService().VerifyAccessRequest(
-		l.localACP.GetCtx(),
-		&types.QueryVerifyAccessRequestRequest{
-			PolicyId: policyID,
-			AccessRequest: &types.AccessRequest{
-				Operations: []*types.Operation{
-					{
-						Object:     types.NewObject(resourceName, docID),
-						Permission: permission.String(),
-					},
-				},
-				Actor: &types.Actor{
-					Id: actorID,
+	req := types.VerifyAccessRequestRequest{
+		PolicyId: policyID,
+		AccessRequest: &types.AccessRequest{
+			Operations: []*types.Operation{
+				{
+					Object:     types.NewObject(resourceName, docID),
+					Permission: permission.String(),
 				},
 			},
+			Actor: &types.Actor{
+				Id: actorID,
+			},
 		},
-	)
+	}
+	resp, err := l.engine.VerifyAccessRequest(ctx, &req)
+
 	if err != nil {
 		return false, err
 	}
 
-	return checkDocResponse.Valid, nil
+	return resp.Valid, nil
 }

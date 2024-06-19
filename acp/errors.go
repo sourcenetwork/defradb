@@ -35,6 +35,8 @@ const (
 
 	errExprOfRequiredPermMustStartWithRelation = "expr of required permission must start with required relation"
 	errExprOfRequiredPermHasInvalidChar        = "expr of required permission has invalid character after relation"
+
+	errInvalidActorID = "invalid actor ID"
 )
 
 var (
@@ -53,6 +55,7 @@ var (
 	ErrNoPolicyArgs                = errors.New(errNoPolicyArgs)
 	ErrPolicyIDMustNotBeEmpty      = errors.New(errPolicyIDMustNotBeEmpty)
 	ErrResourceNameMustNotBeEmpty  = errors.New(errResourceNameMustNotBeEmpty)
+	ErrInvalidActorID              = errors.New(errInvalidActorID)
 )
 
 func NewErrInitializationOfACPFailed(
@@ -203,5 +206,16 @@ func newErrExprOfRequiredPermissionHasInvalidChar(
 		errors.NewKV("Permission", permission),
 		errors.NewKV("Relation", relation),
 		errors.NewKV("Character", string(char)),
+	)
+}
+
+func newErrInvalidActorID(
+	inner error,
+	id string,
+) error {
+	return errors.Wrap(
+		errInvalidActorID,
+		inner,
+		errors.NewKV("ActorID", id),
 	)
 }

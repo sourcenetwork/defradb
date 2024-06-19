@@ -48,6 +48,7 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 				Identity: immutable.None[acpIdentity.Identity](),
 
 				Policy: `
+                    name: test
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:

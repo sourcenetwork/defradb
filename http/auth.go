@@ -93,7 +93,7 @@ func verifyAuthToken(data []byte, audience string) (immutable.Option[acpIdentity
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}
-	return acpIdentity.FromPublicKey(pubKey), nil
+	return acpIdentity.FromPublicKey(pubKey)
 }
 
 // AuthMiddleware authenticates an actor and sets their identity for all subsequent actions.

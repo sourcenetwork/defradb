@@ -31,5 +31,9 @@ func MustParseIdentity(privateKeyHex string) immutable.Option[acpIdentity.Identi
 		panic(err)
 	}
 	privateKey := secp256k1.PrivKeyFromBytes(privateKeyBytes)
-	return acpIdentity.FromPrivateKey(privateKey)
+	identity, err := acpIdentity.FromPrivateKey(privateKey)
+	if err != nil {
+		panic(err)
+	}
+	return identity
 }

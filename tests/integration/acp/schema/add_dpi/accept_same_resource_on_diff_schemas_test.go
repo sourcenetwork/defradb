@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testing.T) {
-	policyIDOfValidDPI := "d5b240c738dba7fe7d8ae55acf257d8e4010c9d8b78e0b1f0bd26741b1ec5663"
+	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 	sharedSameResourceName := "users"
 
 	test := testUtils.TestCase{
@@ -33,6 +33,7 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:
