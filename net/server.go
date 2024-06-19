@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/go-cid"
+	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -51,11 +51,6 @@ type server struct {
 	pubSubEmitter  event.Emitter
 	pushLogEmitter event.Emitter
 
-	// docQueue is used to track which documents are currently being processed.
-	// This is used to prevent multiple concurrent processing of the same document and
-	// limit unecessary transaction conflicts.
-	docQueue *docQueue
-
 	pb.UnimplementedServiceServer
 }
 
@@ -73,9 +68,6 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]pubsubTopic),
-		docQueue: &docQueue{
-			docs: make(map[string]chan struct{}),
-		},
 	}
 
 	cred := insecure.NewCredentials()
@@ -121,11 +113,11 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	var err error
 	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
 	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
+		log.ErrorContextE(s.peer.ctx, "could not create event emitter", err)
 	}
 	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
+		log.ErrorContextE(s.peer.ctx, "could not create event emitter", err)
 	}
 
 	return s, nil
@@ -152,45 +144,13 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
-type docQueue struct {
-	docs map[string]chan struct{}
-	mu   sync.Mutex
-}
-
-// add adds a docID to the queue. If the docID is already in the queue, it will
-// wait for the docID to be removed from the queue. For every add call, done must
-// be called to remove the docID from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (dq *docQueue) add(docID string) {
-	dq.mu.Lock()
-	done, ok := dq.docs[docID]
-	if !ok {
-		dq.docs[docID] = make(chan struct{})
-	}
-	dq.mu.Unlock()
-	if ok {
-		<-done
-		dq.add(docID)
-	}
-}
-
-func (dq *docQueue) done(docID string) {
-	dq.mu.Lock()
-	defer dq.mu.Unlock()
-	done, ok := dq.docs[docID]
-	if ok {
-		delete(dq.docs, docID)
-		close(done)
-	}
-}
-
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	cid, err := cid.Cast(req.Body.Cid)
+	headCID, err := cid.Cast(req.Body.Cid)
 	if err != nil {
 		return nil, err
 	}
@@ -198,14 +158,16 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
+	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
+	if err != nil {
+		return nil, err
+	}
 
-	s.docQueue.add(docID.String())
 	defer func() {
-		s.docQueue.done(docID.String())
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
-				log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
+				log.ErrorContextE(ctx, "could not decode the PeerID of the log creator", err)
 			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
 				FromPeer: pid,
@@ -214,42 +176,22 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			if err != nil {
 				// logging instead of returning an error because the event bus should
 				// not break the PushLog execution.
-				log.InfoContext(ctx, "could not emit push log event", corelog.String("Error", err.Error()))
+				log.ErrorContextE(ctx, "could not emit push log event", err)
 			}
 		}
 	}()
 
-	// check if we already have this block
-	exists, err := s.peer.db.Blockstore().Has(ctx, cid)
-	if err != nil {
-		return nil, NewErrCheckingForExistingBlock(err, cid.String())
-	}
-	if exists {
-		return &pb.PushLogReply{}, nil
-	}
-
-	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
+	err = syncDAG(ctx, s.peer.bserv, block)
 	if err != nil {
 		return nil, err
 	}
 
-	bp := newBlockProcessor(ctx, s.peer)
-	err = bp.processRemoteBlock(ctx, block)
-	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to process remote block",
-			err,
-			corelog.String("DocID", docID.String()),
-			corelog.Any("CID", cid),
-		)
-	}
-	bp.wg.Wait()
 	if s.peer.db.Events().DAGMerges.HasValue() {
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
-			Cid:        cid,
+			DocID:      docID.String(),
+			Cid:        headCID,
 			SchemaRoot: string(req.Body.SchemaRoot),
 			Wg:         wg,
 		})
@@ -407,7 +349,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			Peer: from,
 		})
 		if err != nil {
-			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
+			log.ErrorContextE(s.peer.ctx, "could not emit pubsub event", err)
 		}
 	}
 }

@@ -10,7 +10,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fxamacker/cbor/v2 v2.6.0
-	github.com/getkin/kin-openapi v0.124.0
+	github.com/getkin/kin-openapi v0.125.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
@@ -24,6 +24,7 @@ require (
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipld/go-ipld-prime v0.21.0
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20240322071758-198d7dba8fb8
+	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/jbenet/goprocess v0.1.4
 	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
 	github.com/lestrrat-go/jwx/v2 v2.0.21
@@ -38,11 +39,13 @@ require (
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
-	github.com/sourcenetwork/corelog v0.0.7
+	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/spf13/cobra v1.8.0
+	github.com/sourcenetwork/sourcehub v0.2.1-0.20240305165631-9b75b1000724
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -89,6 +92,8 @@ require (
 	github.com/cosmos/iavl v1.1.2 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.13.3 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
 	github.com/danieljoos/wincred v1.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

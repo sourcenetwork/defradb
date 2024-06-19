@@ -130,9 +130,7 @@ func (p *Peer) Start() error {
 				log.InfoContext(
 					p.ctx,
 					"Failure while reconnecting to a known peer",
-					corelog.Any("peer", id),
-					corelog.Any("error", err),
-				)
+					corelog.Any("peer", id))
 			}
 		}(id)
 	}
@@ -193,12 +191,12 @@ func (p *Peer) Close() {
 	// close event emitters
 	if p.server.pubSubEmitter != nil {
 		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close pubsub event emitter", corelog.Any("Error", err.Error()))
+			log.ErrorContextE(p.ctx, "Could not close pubsub event emitter", err)
 		}
 	}
 	if p.server.pushLogEmitter != nil {
 		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close push log event emitter", corelog.Any("Error", err.Error()))
+			log.ErrorContextE(p.ctx, "Could not close push log event emitter", err)
 		}
 	}
 

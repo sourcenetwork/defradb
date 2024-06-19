@@ -129,7 +129,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.SetActiveSchemaVersion{
-				SchemaVersionID: "bafkreibz4g6rkxanzn6ro74ezmbwoe5hvcguwvi34judrk2kfuqqtk5ak4",
+				SchemaVersionID: "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe",
 			},
 			testUtils.Request{
 				Request: `query {

@@ -1130,7 +1130,7 @@ func TestTxnWithConflict(t *testing.T) {
 	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
-func TestTxnWithConflictAfterDelete(t *testing.T) {
+func TestTxnWithNoConflictAfterDelete(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx, t)
 	defer func() {
@@ -1144,9 +1144,6 @@ func TestTxnWithConflictAfterDelete(t *testing.T) {
 	tx2, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
 
-	_, err = tx.GetSize(ctx, testKey2)
-	require.NoError(t, err)
-
 	err = tx.Put(ctx, testKey2, testValue3)
 	require.NoError(t, err)
 
@@ -1157,7 +1154,7 @@ func TestTxnWithConflictAfterDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Commit(ctx)
-	require.ErrorIs(t, err, ErrTxnConflict)
+	require.NoError(t, err)
 }
 
 func TestTxnWithNoConflictAfterGet(t *testing.T) {
