@@ -43,8 +43,6 @@ require (
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd
 	github.com/sourcenetwork/immutable v0.3.0
-	github.com/spf13/cobra v1.8.0
-	github.com/sourcenetwork/sourcehub v0.2.1-0.20240305165631-9b75b1000724
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -91,8 +89,6 @@ require (
 	github.com/cosmos/cosmos-db v1.0.2 // indirect
 	github.com/cosmos/iavl v1.1.2 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.13.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
 	github.com/danieljoos/wincred v1.2.0 // indirect
