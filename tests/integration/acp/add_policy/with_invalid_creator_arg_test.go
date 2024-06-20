@@ -31,9 +31,10 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
+				Identity: immutable.Some(acpIdentity.Identity{DID: "invalid"}),
 
 				Policy: `
+                    name: a policy
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:
@@ -54,13 +55,12 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
                 `,
 
-				ExpectedError: "policy creator can not be empty",
+				ExpectedError: "invalid actor ID",
 			},
 		},
 	}
 
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2357
-	testUtils.AssertPanic(t, func() { testUtils.ExecuteTestCase(t, test) })
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T) {
@@ -75,7 +75,7 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T)
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(acpIdentity.Identity{Address: "invalid"}),
+				Identity: immutable.Some(acpIdentity.Identity{DID: "invalid"}),
 
 				Policy: "",
 

@@ -134,7 +134,7 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 // Will also attempt to detect incompatible changes in the persisted data if
 // configured to do so (the CI will do so, but disabled by default as it is slow).
 func ExecuteTestCase(
-	t *testing.T,
+	t testing.TB,
 	testCase TestCase,
 ) {
 	flattenActions(&testCase)
@@ -182,7 +182,7 @@ func ExecuteTestCase(
 
 func executeTestCase(
 	ctx context.Context,
-	t *testing.T,
+	t testing.TB,
 	collectionNames []string,
 	testCase TestCase,
 	dbt DatabaseType,
@@ -579,7 +579,7 @@ func flattenActions(testCase *TestCase) {
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
 // they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
-func getActionRange(t *testing.T, testCase TestCase) (int, int) {
+func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
 
@@ -934,7 +934,7 @@ func getIndexes(
 func assertIndexesListsEqual(
 	expectedIndexes []client.IndexDescription,
 	actualIndexes []client.IndexDescription,
-	t *testing.T,
+	t testing.TB,
 	testDescription string,
 ) {
 	toNames := func(indexes []client.IndexDescription) []string {
@@ -963,7 +963,7 @@ func assertIndexesListsEqual(
 }
 
 func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
-	t *testing.T,
+	t testing.TB,
 	testDescription string,
 ) {
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, testDescription)
@@ -1774,7 +1774,7 @@ func executeSubscriptionRequest(
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
-func AssertError(t *testing.T, description string, err error, expectedError string) bool {
+func AssertError(t testing.TB, description string, err error, expectedError string) bool {
 	if err == nil {
 		return false
 	}
@@ -1795,7 +1795,7 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
 func AssertErrors(
-	t *testing.T,
+	t testing.TB,
 	description string,
 	errs []error,
 	expectedError string,
@@ -1895,7 +1895,7 @@ func assertRequestResults(
 	return false
 }
 
-func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {
+func assertExpectedErrorRaised(t testing.TB, description string, expectedError string, wasRaised bool) {
 	if expectedError != "" && !wasRaised {
 		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
@@ -1981,7 +1981,7 @@ func assertClientIntrospectionResults(
 
 // Asserts that the `actual` contains the given `contains` value according to the logic
 // described on the [RequestTestCase.ContainsData] property.
-func assertContains(t *testing.T, contains map[string]any, actual map[string]any) {
+func assertContains(t testing.TB, contains map[string]any, actual map[string]any) {
 	for k, expected := range contains {
 		innerActual := actual[k]
 		if innerExpected, innerIsMap := expected.(map[string]any); innerIsMap {
@@ -2012,7 +2012,7 @@ func assertContains(t *testing.T, contains map[string]any, actual map[string]any
 	}
 }
 
-func assertBackupContent(t *testing.T, expectedContent, filepath string) {
+func assertBackupContent(t testing.TB, expectedContent, filepath string) {
 	b, err := os.ReadFile(filepath)
 	assert.NoError(t, err)
 	assert.Equal(
@@ -2024,7 +2024,7 @@ func assertBackupContent(t *testing.T, expectedContent, filepath string) {
 
 // skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
 // and the active mutation type is not contained within that value set.
-func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutable.Option[[]MutationType]) {
+func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutable.Option[[]MutationType]) {
 	if supportedMutationTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedMutationType := range supportedMutationTypes.Value() {
@@ -2045,7 +2045,7 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 // If supportedClientTypes is none no filtering will take place and the input client set will be returned.
 // If the resultant filtered set is empty the test will be skipped.
 func skipIfClientTypeUnsupported(
-	t *testing.T,
+	t testing.TB,
 	clients []ClientType,
 	supportedClientTypes immutable.Option[[]ClientType],
 ) []ClientType {
@@ -2072,7 +2072,7 @@ func skipIfClientTypeUnsupported(
 
 // skipIfNetworkTest skips the current test if the given actions
 // contain network actions and skipNetworkTests is true.
-func skipIfNetworkTest(t *testing.T, actions []any) {
+func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {

@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "aa664afaf8dff947ba85f4d464662d595af6c1e2466bd11fd6b82ea95b547ea3"
+	policyIDOfValidDPI := "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262"
 
 	test := testUtils.TestCase{
 
@@ -31,6 +31,7 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:
@@ -113,7 +114,7 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "aa664afaf8dff947ba85f4d464662d595af6c1e2466bd11fd6b82ea95b547ea3"
+	policyIDOfValidDPI := "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262"
 
 	test := testUtils.TestCase{
 
@@ -126,6 +127,7 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 
 				Policy: `
 					{
+					  "name": "test",
 					  "description": "a basic policy that satisfies minimum DPI requirements",
 					  "resources": {
 					    "users": {

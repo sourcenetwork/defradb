@@ -76,7 +76,7 @@ func DatabaseDir(t testing.TB) string {
 }
 
 // PreTestChecks skips any test that can't be run by the change detector.
-func PreTestChecks(t *testing.T, collectionNames []string) {
+func PreTestChecks(t testing.TB, collectionNames []string) {
 	if !Enabled {
 		return
 	}

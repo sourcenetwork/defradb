@@ -26,6 +26,7 @@ func TestACP_AddPolicy_ExtraRelations_ValidPolicyID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     actor:
@@ -51,7 +52,7 @@ func TestACP_AddPolicy_ExtraRelations_ValidPolicyID(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedPolicyID: "922636974ecbc3c335143e45917832f219dfe4a168a523e7314616b94e7f9ebc",
+				ExpectedPolicyID: "bdfe4d449b8a42b1daf247e37b5a62ee139ff5b79fa15a970d5d7ae32c08d1e5",
 			},
 		},
 	}
@@ -69,6 +70,7 @@ func TestACP_AddPolicy_ExtraDuplicateRelations_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     actor:

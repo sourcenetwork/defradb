@@ -15,10 +15,8 @@ import (
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/sourcehub/x/acp/types"
+	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // sourceHubClient is a private abstraction to allow multiple ACP implementations
@@ -43,7 +41,7 @@ type sourceHubClient interface {
 		ctx context.Context,
 		creatorID string,
 		policy string,
-		policyMarshalingType types.PolicyMarshalingType,
+		marshalType policyMarshalType,
 		creationTime *protoTypes.Timestamp,
 	) (string, error)
 
@@ -51,7 +49,7 @@ type sourceHubClient interface {
 	Policy(
 		ctx context.Context,
 		policyID string,
-	) (*types.Policy, error)
+	) (immutable.Option[policy], error)
 
 	// RegisterObject registers the object to have access control.
 	// No error is returned upon successful registering of an object.
@@ -62,7 +60,7 @@ type sourceHubClient interface {
 		resourceName string,
 		objectID string,
 		creationTime *protoTypes.Timestamp,
-	) (types.RegistrationResult, error)
+	) (RegistrationResult, error)
 
 	// ObjectOwner returns the owner of the object of the given objectID.
 	ObjectOwner(
@@ -70,7 +68,7 @@ type sourceHubClient interface {
 		policyID string,
 		resourceName string,
 		objectID string,
-	) (*types.QueryObjectOwnerResponse, error)
+	) (immutable.Option[string], error)
 
 	// VerifyAccessRequest returns true if the check was successfull and the request has access to the object. If
 	// the check was successful but the request does not have access to the object, then returns false.
@@ -120,17 +118,16 @@ func (a *sourceHubBridge) AddPolicy(ctx context.Context, creatorID string, polic
 		return "", ErrPolicyDataMustNotBeEmpty
 	}
 
-	// Assume policy is in YAML format by default.
-	policyMarshalType := types.PolicyMarshalingType_SHORT_YAML
+	marshalType := policyMarshalType_YAML
 	if isJSON := fastjson.Validate(policy) == nil; isJSON { // Detect JSON format.
-		policyMarshalType = types.PolicyMarshalingType_SHORT_JSON
+		marshalType = policyMarshalType_JSON
 	}
 
 	policyID, err := a.client.AddPolicy(
 		ctx,
 		creatorID,
 		policy,
-		policyMarshalType,
+		marshalType,
 		protoTypes.TimestampNow(),
 	)
 
@@ -160,19 +157,20 @@ func (a *sourceHubBridge) ValidateResourceExistsOnValidDPI(
 		return ErrResourceNameMustNotBeEmpty
 	}
 
-	policy, err := a.client.Policy(ctx, policyID)
+	maybePolicy, err := a.client.Policy(ctx, policyID)
 
 	if err != nil {
-		if errors.Is(err, types.ErrPolicyNotFound) {
-			return newErrPolicyDoesNotExistWithACP(err, policyID)
-		} else {
-			return newErrPolicyValidationFailedWithACP(err, policyID)
-		}
+		return newErrPolicyValidationFailedWithACP(err, policyID)
+	}
+	if !maybePolicy.HasValue() {
+		return newErrPolicyDoesNotExistWithACP(err, policyID)
 	}
 
+	policy := maybePolicy.Value()
+
 	// So far we validated that the policy exists, now lets validate that resource exists.
-	resourceResponse := policy.GetResourceByName(resourceName)
-	if resourceResponse == nil {
+	resourceResponse, ok := policy.Resources[resourceName]
+	if !ok {
 		return newErrResourceDoesNotExistOnTargetPolicy(resourceName, policyID)
 	}
 
@@ -180,8 +178,8 @@ func (a *sourceHubBridge) ValidateResourceExistsOnValidDPI(
 	// resource with the matching name, validate that all required permissions
 	// for DPI actually exist on the target resource.
 	for _, requiredPermission := range dpiRequiredPermissions {
-		permissionResponse := resourceResponse.GetPermissionByName(requiredPermission)
-		if permissionResponse == nil {
+		permissionResponse, ok := resourceResponse.Permissions[requiredPermission]
+		if !ok {
 			return newErrResourceIsMissingRequiredPermission(
 				resourceName,
 				requiredPermission,
@@ -227,10 +225,10 @@ func (a *sourceHubBridge) RegisterDocObject(
 	}
 
 	switch registerDocResult {
-	case types.RegistrationResult_NoOp:
+	case RegistrationResult_NoOp:
 		return ErrObjectDidNotRegister
 
-	case types.RegistrationResult_Registered:
+	case RegistrationResult_Registered:
 		log.InfoContext(
 			ctx,
 			"Document registered with local acp",
@@ -241,7 +239,7 @@ func (a *sourceHubBridge) RegisterDocObject(
 		)
 		return nil
 
-	case types.RegistrationResult_Unarchived:
+	case RegistrationResult_Unarchived:
 		log.InfoContext(
 			ctx,
 			"Document re-registered (unarchived object) with local acp",
@@ -262,7 +260,7 @@ func (a *sourceHubBridge) IsDocRegistered(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	queryObjectOwnerResponse, err := a.client.ObjectOwner(
+	maybeActor, err := a.client.ObjectOwner(
 		ctx,
 		policyID,
 		resourceName,
@@ -272,7 +270,7 @@ func (a *sourceHubBridge) IsDocRegistered(
 		return false, NewErrFailedToCheckIfDocIsRegisteredWithACP(err, "Local", policyID, resourceName, docID)
 	}
 
-	return queryObjectOwnerResponse.IsRegistered, nil
+	return maybeActor.HasValue(), nil
 }
 
 func (a *sourceHubBridge) CheckDocAccess(

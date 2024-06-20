@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema(t *testing.T) {
-	policyIDOfPartiallyValidDPI := "bfda7dc76b4719a32ff2ef6691646501d14fb139518ff6c05d4be1825b9128ed"
+	policyIDOfPartiallyValidDPI := "d0093bc2d984f42a498dff029df5c931bae5f8cb79b24d36243ab9b84547023d"
 
 	test := testUtils.TestCase{
 
@@ -32,6 +32,7 @@ func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Partially Valid Defra Policy Interface (DPI)
 
                     actor:
