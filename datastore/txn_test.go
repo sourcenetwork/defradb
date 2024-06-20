@@ -475,7 +475,6 @@ func TestMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *test
 	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
 	require.NoError(t, err)
 
-	// Commit txn2 first to create a conflict
 	err = txn2.Commit(ctx)
 	require.NoError(t, err)
 
@@ -507,7 +506,6 @@ func TestBadgerMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t
 	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
 	require.NoError(t, err)
 
-	// Commit txn2 first to create a conflict
 	err = txn2.Commit(ctx)
 	require.NoError(t, err)
 
@@ -539,7 +537,6 @@ func TestBadgerFileStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *
 	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
 	require.NoError(t, err)
 
-	// Commit txn2 first to create a conflict
 	err = txn2.Commit(ctx)
 	require.NoError(t, err)
 
