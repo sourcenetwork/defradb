@@ -179,13 +179,17 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 	iter := t.ds.values.Iter()
 	iterOps := t.ops.Iter()
 	iterOpsHasValue := iterOps.Next()
+	dsVersion := t.getDSVersion()
 	// iterate over the underlying store and ensure that ops with keys smaller than or equal to
 	// the key of the underlying store are added with priority.
 	for iter.Next() {
 		// fast forward to last inserted version
 		item := iter.Item()
+		if item.version > dsVersion {
+			continue
+		}
 		for iter.Next() {
-			if item.key == iter.Item().key {
+			if item.key == iter.Item().key && iter.Item().version <= dsVersion {
 				item = iter.Item()
 				continue
 			}

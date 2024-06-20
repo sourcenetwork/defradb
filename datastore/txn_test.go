@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
 	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
 
@@ -457,4 +458,95 @@ func TestBadgerFileStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithCon
 
 	err = txn1.Commit(ctx)
 	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
+	require.NoError(t, err)
+
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	qResults, err := txn1.Query(ctx, query.Query{})
+	require.NoError(t, err)
+
+	docs := [][]byte{}
+	for r := range qResults.Next() {
+		docs = append(docs, r.Entry.Value)
+	}
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
+	txn1.Discard(ctx)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
+	require.NoError(t, err)
+
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	qResults, err := txn1.Query(ctx, query.Query{})
+	require.NoError(t, err)
+
+	docs := [][]byte{}
+	for r := range qResults.Next() {
+		docs = append(docs, r.Entry.Value)
+	}
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
+	txn1.Discard(ctx)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
+	require.NoError(t, err)
+
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	qResults, err := txn1.Query(ctx, query.Query{})
+	require.NoError(t, err)
+
+	docs := [][]byte{}
+	for r := range qResults.Next() {
+		docs = append(docs, r.Entry.Value)
+	}
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
+	txn1.Discard(ctx)
 }
