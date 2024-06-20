@@ -486,8 +486,7 @@ func TestMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *test
 	for r := range qResults.Next() {
 		docs = append(docs, r.Entry.Value)
 	}
-	// This is wrong. The new put should not be visible.
-	require.Equal(t, [][]byte{[]byte("value"), []byte("other-value")}, docs)
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
 	txn1.Discard(ctx)
 }
 

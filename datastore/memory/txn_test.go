@@ -661,7 +661,7 @@ func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
 
-	err = s.Put(ctx, testKey4, testValue4)
+	err = tx.Put(ctx, testKey4, testValue4)
 	require.NoError(t, err)
 
 	results, err := tx.Query(ctx, dsq.Query{})
