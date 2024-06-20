@@ -337,18 +337,3 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	}
 	return pid, nil
 }
-
-// KEEPING AS REFERENCE
-//
-// logFromProto returns a thread log from a proto log.
-// func logFromProto(l *pb.Log) thread.LogInfo {
-// 	return thread.LogInfo{
-// 		ID:     l.ID.ID,
-// 		PubKey: l.PubKey.PubKey,
-// 		Addrs:  addrsFromProto(l.Addrs),
-// 		Head: thread.Head{
-// 			ID:      l.Head.Cid,
-// 			Counter: l.Counter,
-// 		},
-// 	}
-// }

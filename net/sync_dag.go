@@ -43,7 +43,10 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
 	defer cancel()
 
+	// use a session to make remote fetches more efficient
+	ctx = blockservice.ContextWithSession(ctx, bserv)
 	store := &bsrvadapter.Adapter{Wrapped: bserv}
+
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(store)
 	lsys.SetReadStorage(store)
