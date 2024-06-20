@@ -14,10 +14,14 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/immutable"
 )
 
 // docEncContextKey is the key type for document encryption context values.
 type docEncContextKey struct{}
+
+// configContextKey is the key type for encryption context values.
+type configContextKey struct{}
 
 // TryGetContextDocEnc returns a document encryption and a bool indicating if
 // it was retrieved from the given context.
@@ -45,4 +49,18 @@ func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
 	ctx, encryptor := getContextWithDocEnc(ctx)
 	encryptor.SetStore(txn.Encstore())
 	return ctx
+}
+
+// GetContextConfig returns the doc encryption config from the given context.
+func GetContextConfig(ctx context.Context) immutable.Option[DocEncConfig] {
+	encConfig, ok := ctx.Value(configContextKey{}).(DocEncConfig)
+	if ok {
+		return immutable.Some(encConfig)
+	}
+	return immutable.None[DocEncConfig]()
+}
+
+// SetContextConfig returns a new context with the encryption value set.
+func SetContextConfig(ctx context.Context, encConfig DocEncConfig) context.Context {
+	return context.WithValue(ctx, configContextKey{}, encConfig)
 }

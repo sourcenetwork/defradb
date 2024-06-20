@@ -19,6 +19,19 @@ type CRDT struct {
 	CounterDelta      *CounterDelta
 }
 
+// NewCRDT returns a new CRDT.
+func NewCRDT(delta core.Delta) CRDT {
+	switch d := delta.(type) {
+	case *LWWRegDelta:
+		return CRDT{LWWRegDelta: d}
+	case *CompositeDAGDelta:
+		return CRDT{CompositeDAGDelta: d}
+	case *CounterDelta:
+		return CRDT{CounterDelta: d}
+	}
+	return CRDT{}
+}
+
 // IPLDSchemaBytes returns the IPLD schema representation for the CRDT.
 //
 // This needs to match the [CRDT] struct or [mustSetSchema] will panic on init.
@@ -96,6 +109,39 @@ func (c CRDT) GetSchemaVersionID() string {
 	return ""
 }
 
+// Clone returns a clone of the CRDT.
+func (c CRDT) Clone() CRDT {
+	var cloned CRDT
+	switch {
+	case c.LWWRegDelta != nil:
+		cloned.LWWRegDelta = &LWWRegDelta{
+			DocID:           c.LWWRegDelta.DocID,
+			FieldName:       c.LWWRegDelta.FieldName,
+			Priority:        c.LWWRegDelta.Priority,
+			SchemaVersionID: c.LWWRegDelta.SchemaVersionID,
+			Data:            c.LWWRegDelta.Data,
+		}
+	case c.CompositeDAGDelta != nil:
+		cloned.CompositeDAGDelta = &CompositeDAGDelta{
+			DocID:           c.CompositeDAGDelta.DocID,
+			FieldName:       c.CompositeDAGDelta.FieldName,
+			Priority:        c.CompositeDAGDelta.Priority,
+			SchemaVersionID: c.CompositeDAGDelta.SchemaVersionID,
+			Status:          c.CompositeDAGDelta.Status,
+		}
+	case c.CounterDelta != nil:
+		cloned.CounterDelta = &CounterDelta{
+			DocID:           c.CounterDelta.DocID,
+			FieldName:       c.CounterDelta.FieldName,
+			Priority:        c.CounterDelta.Priority,
+			SchemaVersionID: c.CounterDelta.SchemaVersionID,
+			Nonce:           c.CounterDelta.Nonce,
+			Data:            c.CounterDelta.Data,
+		}
+	}
+	return cloned
+}
+
 // GetStatus returns the status of the delta.
 //
 // Currently only implemented for CompositeDAGDelta.
@@ -114,6 +160,15 @@ func (c CRDT) GetData() []byte {
 		return c.LWWRegDelta.Data
 	}
 	return nil
+}
+
+// SetData sets the data of the delta.
+//
+// Currently only implemented for LWWRegDelta.
+func (c CRDT) SetData(data []byte) {
+	if c.LWWRegDelta != nil {
+		c.LWWRegDelta.Data = data
+	}
 }
 
 // IsComposite returns true if the CRDT is a composite CRDT.

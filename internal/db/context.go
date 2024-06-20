@@ -89,9 +89,6 @@ func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 	return context.WithValue(ctx, txnContextKey{}, txn)
 }
 
-// TryGetContextTxn returns an identity and a bool indicating if the
-// identity was retrieved from the given context.
-
 // GetContextIdentity returns the identity from the given context.
 //
 // If an identity does not exist `NoIdentity` is returned.

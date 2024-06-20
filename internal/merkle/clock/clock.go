@@ -16,6 +16,7 @@ package clock
 import (
 	"context"
 
+	cid "github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var (
@@ -86,7 +88,22 @@ func (mc *MerkleClock) AddDelta(
 	block := coreblock.New(delta, links, heads...)
 
 	// Write the new block to the dag store.
-	link, err := mc.putBlock(ctx, block)
+	isEncrypted, err := mc.checkIfBlockEncryptionEnabled(ctx, heads)
+	if err != nil {
+		return cidlink.Link{}, nil, err
+	}
+
+	var dagBlock *coreblock.Block
+	if isEncrypted {
+		dagBlock, err = encryptBlock(ctx, block)
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+	} else {
+		dagBlock = block
+	}
+
+	link, err := mc.putBlock(ctx, dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -107,6 +124,44 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	return link, b, err
+}
+
+func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
+	ctx context.Context,
+	heads []cid.Cid,
+) (bool, error) {
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		return true, nil
+	}
+
+	for _, headCid := range heads {
+		bytes, err := mc.dagstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
+		if err != nil {
+			return false, NewErrCouldNotFindBlock(headCid, err)
+		}
+		prevBlock, err := coreblock.GetFromBytes(bytes)
+		if err != nil {
+			return false, err
+		}
+		if prevBlock.IsEncrypted != nil && *prevBlock.IsEncrypted {
+			return true, nil
+		}
+		// could do block.EncryptDelta(encKey)
+	}
+
+	return false, nil
+}
+
+func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
+	clonedCRDT := block.Delta.Clone()
+	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()), 0, clonedCRDT.GetData())
+	if err != nil {
+		return nil, err
+	}
+	clonedCRDT.SetData(bytes)
+	isEncrypted := true
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, IsEncrypted: &isEncrypted}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.

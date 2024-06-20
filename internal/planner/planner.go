@@ -528,7 +528,7 @@ func walkAndFindPlanType[T planNode](planNode planNode) (T, bool) {
 
 // executeRequest executes the plan graph that represents the request that was made.
 func (p *Planner) executeRequest(
-	ctx context.Context,
+	_ context.Context,
 	planNode planNode,
 ) ([]map[string]any, error) {
 	if err := planNode.Start(); err != nil {

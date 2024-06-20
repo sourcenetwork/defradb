@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
@@ -53,11 +52,6 @@ func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.L
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
 	}
 	bytes, err := value.FieldValue.Bytes()
-	if err != nil {
-		return cidlink.Link{}, nil, err
-	}
-
-	bytes, err = encryption.EncryptDoc(ctx, value.DocID, 0, bytes)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}

@@ -90,7 +90,7 @@ func (d *DocEncryptor) Decrypt(docID string, fieldID uint32, cipherText []byte) 
 		return nil, err
 	}
 	if len(encKey) == 0 {
-		return cipherText, nil
+		return nil, nil
 	}
 	return DecryptAES(cipherText, encKey)
 }
@@ -113,7 +113,7 @@ func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldID uint32) ([]byte,
 func EncryptDoc(ctx context.Context, docID string, fieldID uint32, plainText []byte) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
-		return plainText, nil
+		return nil, nil
 	}
 	return enc.Encrypt(docID, fieldID, plainText)
 }
@@ -121,7 +121,7 @@ func EncryptDoc(ctx context.Context, docID string, fieldID uint32, plainText []b
 func DecryptDoc(ctx context.Context, docID string, fieldID uint32, cipherText []byte) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
-		return cipherText, nil
+		return nil, nil
 	}
 	return enc.Decrypt(docID, fieldID, cipherText)
 }
