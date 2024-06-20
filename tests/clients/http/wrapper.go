@@ -22,7 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/net"
 )
@@ -221,7 +221,7 @@ func (w *Wrapper) Close() {
 	w.node.Close()
 }
 
-func (w *Wrapper) Events() events.Events {
+func (w *Wrapper) Events() *event.Bus {
 	return w.node.Events()
 }
 
@@ -235,12 +235,4 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
 	w.node.Bootstrap(addrs)
-}
-
-func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogByPeerEvent(id)
-}
-
-func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogFromPeerEvent(id)
 }

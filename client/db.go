@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 )
 
 type CollectionName = string
@@ -75,7 +75,7 @@ type DB interface {
 	//
 	// It may be used to monitor database events - a new event will be yielded for each mutation.
 	// Note: it does not copy the queue, just the reference to it.
-	Events() events.Events
+	Events() *event.Bus
 
 	// MaxTxnRetries returns the number of retries that this DefraDB instance has been configured to
 	// make in the event of a transaction conflict in certain scenarios.

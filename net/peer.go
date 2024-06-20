@@ -35,7 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -47,8 +47,8 @@ import (
 type Peer struct {
 	//config??
 
-	db            client.DB
-	updateChannel chan events.Update
+	db        client.DB
+	updateSub *event.Subscription
 
 	host host.Host
 	dht  routing.Routing
@@ -142,16 +142,11 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		if !p.db.Events().Updates.HasValue() {
-			return ErrNilUpdateChannel
-		}
-
-		updateChannel, err := p.db.Events().Updates.Value().Subscribe()
+		sub, err := p.db.Events().Subscribe(event.UpdateName)
 		if err != nil {
 			return err
 		}
-		p.updateChannel = updateChannel
-
+		p.updateSub = sub
 		log.InfoContext(p.ctx, "Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
 	}
@@ -186,22 +181,9 @@ func (p *Peer) Close() {
 		}
 	}
 	stopGRPCServer(p.ctx, p.p2pRPC)
-	// stopGRPCServer(p.tcpRPC)
 
-	// close event emitters
-	if p.server.pubSubEmitter != nil {
-		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.ErrorContextE(p.ctx, "Could not close pubsub event emitter", err)
-		}
-	}
-	if p.server.pushLogEmitter != nil {
-		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.ErrorContextE(p.ctx, "Could not close push log event emitter", err)
-		}
-	}
-
-	if p.db.Events().Updates.HasValue() {
-		p.db.Events().Updates.Value().Unsubscribe(p.updateChannel)
+	if p.updateSub != nil {
+		p.db.Events().Unsubscribe(p.updateSub)
 	}
 
 	if err := p.bserv.Close(); err != nil {
@@ -219,9 +201,13 @@ func (p *Peer) Close() {
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
 	for {
-		update, isOpen := <-p.updateChannel
+		msg, isOpen := <-p.updateSub.Message()
 		if !isOpen {
 			return
+		}
+		update, ok := msg.Data.(event.Update)
+		if !ok {
+			continue // ignore invalid value
 		}
 
 		var err error
@@ -311,7 +297,7 @@ func (p *Peer) pushToReplicator(
 				continue
 			}
 
-			evt := events.Update{
+			evt := event.Update{
 				DocID:      docIDResult.ID.String(),
 				Cid:        c,
 				SchemaRoot: collection.SchemaRoot(),
@@ -378,7 +364,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 	return colMap, nil
 }
 
-func (p *Peer) handleDocCreateLog(evt events.Update) error {
+func (p *Peer) handleDocCreateLog(evt event.Update) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -396,7 +382,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) handleDocUpdateLog(evt events.Update) error {
+func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -429,7 +415,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(lg events.Update) {
+func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
 	for _, peer := range p.ps.ListPeers(lg.DocID) {
@@ -486,15 +472,6 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	case <-stopped:
 		timer.Stop()
 	}
-}
-
-type EvtReceivedPushLog struct {
-	ByPeer   peer.ID
-	FromPeer peer.ID
-}
-
-type EvtPubSub struct {
-	Peer peer.ID
 }
 
 // rollbackAddPubSubTopics removes the given topics from the pubsub system.

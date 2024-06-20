@@ -9,7 +9,7 @@ import (
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
-	events "github.com/sourcenetwork/defradb/events"
+	event "github.com/sourcenetwork/defradb/event"
 
 	go_datastore "github.com/ipfs/go-datastore"
 
@@ -360,14 +360,16 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 }
 
 // Events provides a mock function with given fields:
-func (_m *DB) Events() events.Events {
+func (_m *DB) Events() *event.Bus {
 	ret := _m.Called()
 
-	var r0 events.Events
-	if rf, ok := ret.Get(0).(func() events.Events); ok {
+	var r0 *event.Bus
+	if rf, ok := ret.Get(0).(func() *event.Bus); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(events.Events)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*event.Bus)
+		}
 	}
 
 	return r0
@@ -390,12 +392,12 @@ func (_c *DB_Events_Call) Run(run func()) *DB_Events_Call {
 	return _c
 }
 
-func (_c *DB_Events_Call) Return(_a0 events.Events) *DB_Events_Call {
+func (_c *DB_Events_Call) Return(_a0 *event.Bus) *DB_Events_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Events_Call) RunAndReturn(run func() events.Events) *DB_Events_Call {
+func (_c *DB_Events_Call) RunAndReturn(run func() *event.Bus) *DB_Events_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
@@ -43,6 +43,13 @@ var (
 	_ client.Collection = (*collection)(nil)
 )
 
+const (
+	// commandBufferSize is the size of the channel buffer used to handle events.
+	commandBufferSize = 100_000
+	// eventBufferSize is the size of the channel buffer used to subscribe to events.
+	eventBufferSize = 100
+)
+
 // DB is the main interface for interacting with the
 // DefraDB storage system.
 type db struct {
@@ -51,7 +58,7 @@ type db struct {
 	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
-	events events.Events
+	events *event.Bus
 
 	parser core.Parser
 
@@ -102,6 +109,7 @@ func newDB(
 		lensRegistry: lens,
 		parser:       parser,
 		options:      options,
+		events:       event.NewBus(commandBufferSize, eventBufferSize),
 	}
 
 	// apply options
@@ -118,13 +126,11 @@ func newDB(
 		return nil, err
 	}
 
-	if db.events.DAGMerges.HasValue() {
-		merges, err := db.events.DAGMerges.Value().Subscribe()
-		if err != nil {
-			return nil, err
-		}
-		go db.handleMerges(ctx, merges)
+	sub, err := db.events.Subscribe(event.MergeName)
+	if err != nil {
+		return nil, err
 	}
+	go db.handleMerges(ctx, sub)
 
 	return db, nil
 }
@@ -245,7 +251,7 @@ func (db *db) initialize(ctx context.Context) error {
 }
 
 // Events returns the events Channel.
-func (db *db) Events() events.Events {
+func (db *db) Events() *event.Bus {
 	return db.events
 }
 
@@ -267,12 +273,8 @@ func (db *db) PrintDump(ctx context.Context) error {
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
-	if db.events.Updates.HasValue() {
-		db.events.Updates.Value().Close()
-	}
-	if db.events.DAGMerges.HasValue() {
-		db.events.DAGMerges.Value().Close()
-	}
+
+	db.events.Close()
 
 	err := db.rootstore.Close()
 	if err != nil {

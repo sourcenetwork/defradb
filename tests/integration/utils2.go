@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
@@ -707,6 +708,11 @@ func restartNodes(
 		c, err := setupClient(s, n)
 		require.NoError(s.t, err)
 		s.nodes[i] = c
+
+		// subscribe to merge complete events
+		sub, err := c.Events().Subscribe(event.MergeCompleteName)
+		require.NoError(s.t, err)
+		s.eventSubs[i] = sub
 	}
 
 	// The index of the action after the last wait action before the current restart action.
@@ -728,15 +734,11 @@ actionLoop:
 		case ConnectPeers:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			setupPeerWaitSync(
-				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
-			)
+			setupPeerWaitSync(s, waitGroupStartIndex, action)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			setupReplicatorWaitSync(
-				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
-			)
+			setupReplicatorWaitSync(s, waitGroupStartIndex, action)
 		}
 	}
 
@@ -812,6 +814,11 @@ func configureNode(
 
 	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
+
+	// subscribe to merge complete events
+	sub, err := c.Events().Subscribe(event.MergeCompleteName)
+	require.NoError(s.t, err)
+	s.eventSubs = append(s.eventSubs, sub)
 }
 
 func refreshDocuments(

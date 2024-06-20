@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -34,15 +34,19 @@ import (
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
-func (db *db) handleMerges(ctx context.Context, merges events.Subscription[events.DAGMerge]) {
+func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
 	queue := newMergeQueue()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case merge, ok := <-merges:
+		case msg, ok := <-sub.Message():
 			if !ok {
 				return
+			}
+			merge, ok := msg.Data.(event.Merge)
+			if !ok {
+				continue
 			}
 			go func() {
 				// ensure only one merge per docID
@@ -69,15 +73,12 @@ func (db *db) handleMerges(ctx context.Context, merges events.Subscription[event
 						err,
 						corelog.Any("Event", merge))
 				}
-				if merge.Wg != nil {
-					merge.Wg.Done()
-				}
 			}()
 		}
 	}
 }
 
-func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error {
+func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -123,7 +124,14 @@ func (db *db) executeMerge(ctx context.Context, dagMerge events.DAGMerge) error 
 		return err
 	}
 
-	return txn.Commit(ctx)
+	err = txn.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	// send a complete event so we can track merges in the integration tests
+	db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
+	return nil
 }
 
 // mergeQueue is synchronization source to ensure that concurrent

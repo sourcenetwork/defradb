@@ -18,7 +18,6 @@ import (
 	"sync"
 
 	cid "github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -29,7 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -47,9 +46,6 @@ type server struct {
 	mu     sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
-
-	pubSubEmitter  event.Emitter
-	pushLogEmitter event.Emitter
 
 	pb.UnimplementedServiceServer
 }
@@ -110,16 +106,6 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 		}
 	}
 
-	var err error
-	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
-	if err != nil {
-		log.ErrorContextE(s.peer.ctx, "could not create event emitter", err)
-	}
-	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	if err != nil {
-		log.ErrorContextE(s.peer.ctx, "could not create event emitter", err)
-	}
-
 	return s, nil
 }
 
@@ -158,45 +144,26 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
+	byPeer, err := libpeer.Decode(req.Body.Creator)
+	if err != nil {
+		return nil, err
+	}
 	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
 	if err != nil {
 		return nil, err
 	}
-
-	defer func() {
-		if s.pushLogEmitter != nil {
-			byPeer, err := libpeer.Decode(req.Body.Creator)
-			if err != nil {
-				log.ErrorContextE(ctx, "could not decode the PeerID of the log creator", err)
-			}
-			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-				FromPeer: pid,
-				ByPeer:   byPeer,
-			})
-			if err != nil {
-				// logging instead of returning an error because the event bus should
-				// not break the PushLog execution.
-				log.ErrorContextE(ctx, "could not emit push log event", err)
-			}
-		}
-	}()
-
 	err = syncDAG(ctx, s.peer.bserv, block)
 	if err != nil {
 		return nil, err
 	}
 
-	if s.peer.db.Events().DAGMerges.HasValue() {
-		wg := &sync.WaitGroup{}
-		wg.Add(1)
-		s.peer.db.Events().DAGMerges.Value().Publish(events.DAGMerge{
-			DocID:      docID.String(),
-			Cid:        headCID,
-			SchemaRoot: string(req.Body.SchemaRoot),
-			Wg:         wg,
-		})
-		wg.Wait()
-	}
+	s.peer.db.Events().Publish(event.NewMessage(event.MergeName, event.Merge{
+		DocID:      docID.String(),
+		ByPeer:     byPeer,
+		FromPeer:   pid,
+		Cid:        headCID,
+		SchemaRoot: string(req.Body.SchemaRoot),
+	}))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// suscribe to the collection.
@@ -343,15 +310,10 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		corelog.String("Topic", topic),
 		corelog.String("Message", string(msg)),
 	)
-
-	if s.pubSubEmitter != nil {
-		err := s.pubSubEmitter.Emit(EvtPubSub{
-			Peer: from,
-		})
-		if err != nil {
-			log.ErrorContextE(s.peer.ctx, "could not emit pubsub event", err)
-		}
-	}
+	evt := event.NewMessage(event.PubSubName, event.PubSub{
+		Peer: from,
+	})
+	s.peer.db.Events().Publish(evt)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
@@ -375,18 +337,3 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	}
 	return pid, nil
 }
-
-// KEEPING AS REFERENCE
-//
-// logFromProto returns a thread log from a proto log.
-// func logFromProto(l *pb.Log) thread.LogInfo {
-// 	return thread.LogInfo{
-// 		ID:     l.ID.ID,
-// 		PubKey: l.PubKey.PubKey,
-// 		Addrs:  addrsFromProto(l.Addrs),
-// 		Head: thread.Head{
-// 			ID:      l.Head.Cid,
-// 			Counter: l.Counter,
-// 		},
-// 	}
-// }

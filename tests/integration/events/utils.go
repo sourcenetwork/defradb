@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -79,14 +80,20 @@ func ExecuteRequestTestCase(
 
 	testRoutineClosedChan := make(chan struct{})
 	closeTestRoutineChan := make(chan struct{})
-	eventsChan, err := db.Events().Updates.Value().Subscribe()
+
+	eventsSub, err := db.Events().Subscribe(event.UpdateName)
 	require.NoError(t, err)
 
 	indexOfNextExpectedUpdate := 0
 	go func() {
 		for {
 			select {
-			case update := <-eventsChan:
+			case value := <-eventsSub.Message():
+				update, ok := value.Data.(event.Update)
+				if !ok {
+					continue // ignore invalid value
+				}
+
 				if indexOfNextExpectedUpdate >= len(testCase.ExpectedUpdates) {
 					assert.Fail(t, "More events recieved than were expected", update)
 					testRoutineClosedChan <- struct{}{}

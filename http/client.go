@@ -28,7 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 )
 
 var _ client.DB = (*Client)(nil)
@@ -451,7 +451,7 @@ func (c *Client) Headstore() ds.Read {
 	panic("client side database")
 }
 
-func (c *Client) Events() events.Events {
+func (c *Client) Events() *event.Bus {
 	panic("client side database")
 }
 

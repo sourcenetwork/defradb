@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/defradb/tests/clients"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -162,21 +162,16 @@ func connectPeers(
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
-	setupPeerWaitSync(s, 0, cfg, sourceNode, targetNode)
+	setupPeerWaitSync(s, 0, cfg)
 }
 
 func setupPeerWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode clients.Client,
-	targetNode clients.Client,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
-
-	sourcePeerInfo := sourceNode.PeerInfo()
-	targetPeerInfo := targetNode.PeerInfo()
 
 	nodeCollections := map[int][]int{}
 	waitIndex := 0
@@ -258,24 +253,7 @@ func setupPeerWaitSync(
 	}
 
 	nodeSynced := make(chan struct{})
-	ready := make(chan struct{})
-	go func(ready chan struct{}) {
-		ready <- struct{}{}
-		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
-			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
-				require.NoError(s.t, err)
-			}
-			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
-				require.NoError(s.t, err)
-			}
-			nodeSynced <- struct{}{}
-		}
-	}(ready)
-	// Ensure that the wait routine is ready to receive events before we continue.
-	<-ready
-
+	go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
 	s.syncChans = append(s.syncChans, nodeSynced)
 }
 
@@ -317,7 +295,7 @@ func configureReplicator(
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
 	if err == nil {
-		setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
+		setupReplicatorWaitSync(s, 0, cfg)
 	}
 }
 
@@ -338,14 +316,9 @@ func setupReplicatorWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode clients.Client,
-	targetNode clients.Client,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
-
-	sourcePeerInfo := sourceNode.PeerInfo()
-	targetPeerInfo := targetNode.PeerInfo()
 
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
@@ -393,24 +366,7 @@ func setupReplicatorWaitSync(
 	}
 
 	nodeSynced := make(chan struct{})
-	ready := make(chan struct{})
-	go func(ready chan struct{}) {
-		ready <- struct{}{}
-		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
-			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
-				require.NoError(s.t, err)
-			}
-			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
-				require.NoError(s.t, err)
-			}
-			nodeSynced <- struct{}{}
-		}
-	}(ready)
-	// Ensure that the wait routine is ready to receive events before we continue.
-	<-ready
-
+	go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
 	s.syncChans = append(s.syncChans, nodeSynced)
 }
 
@@ -529,6 +485,46 @@ func waitForSync(
 				s.testCase.Description,
 			)
 		}
+	}
+}
+
+// waitForMerge waits for the source and target nodes to synchronize their state
+// by listening to merge events sent from the network subsystem on the event bus.
+//
+// sourceToTargetEvents and targetToSourceEvents are slices containing the number
+// of expected merge events to be received after each test action has executed.
+func waitForMerge(
+	s *state,
+	sourceNodeID int,
+	targetNodeID int,
+	sourceToTargetEvents []int,
+	targetToSourceEvents []int,
+	nodeSynced chan struct{},
+) {
+	sourceSub := s.eventSubs[sourceNodeID]
+	targetSub := s.eventSubs[targetNodeID]
+
+	sourcePeerInfo := s.nodeAddresses[sourceNodeID]
+	targetPeerInfo := s.nodeAddresses[targetNodeID]
+
+	for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
+		for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
+			// wait for message or unsubscribe
+			msg, ok := <-sourceSub.Message()
+			if ok {
+				// ensure the message is sent from the target node
+				require.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.Merge).ByPeer)
+			}
+		}
+		for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
+			// wait for message or unsubscribe
+			msg, ok := <-targetSub.Message()
+			if ok {
+				// ensure the message is sent from the source node
+				require.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.Merge).ByPeer)
+			}
+		}
+		nodeSynced <- struct{}{}
 	}
 }
 
