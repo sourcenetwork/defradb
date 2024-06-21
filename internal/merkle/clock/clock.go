@@ -36,9 +36,8 @@ var (
 type MerkleClock struct {
 	headstore  datastore.DSReaderWriter
 	blockstore datastore.Blockstore
-	// dagSyncer
-	headset *heads
-	crdt    core.ReplicatedData
+	headset    *heads
+	crdt       core.ReplicatedData
 }
 
 // NewMerkleClock returns a new MerkleClock.
@@ -118,7 +117,7 @@ func (mc *MerkleClock) AddDelta(
 		return cidlink.Link{}, nil, err
 	}
 
-	b, err := block.Marshal()
+	b, err := dagBlock.Marshal()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -136,7 +135,7 @@ func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 	}
 
 	for _, headCid := range heads {
-		bytes, err := mc.dagstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
+		bytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
 			return false, NewErrCouldNotFindBlock(headCid, err)
 		}
