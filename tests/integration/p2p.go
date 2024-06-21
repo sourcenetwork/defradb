@@ -235,7 +235,9 @@ func subscribeToCollection(
 			// all previous documents should be merged on the subscriber node
 			if collectionIndex < len(s.documents) {
 				for _, doc := range s.documents[collectionIndex] {
-					s.expectedDocHeads[action.NodeID][doc.ID().String()] = doc.Head()
+					for nodeID := range s.nodeConnections[action.NodeID] {
+						s.expectedDocHeads[action.NodeID][doc.ID().String()] = s.actualDocHeads[nodeID][doc.ID().String()]
+					}
 				}
 			}
 			s.nodePeerCollections[collectionIndex][action.NodeID] = struct{}{}
