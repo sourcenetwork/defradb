@@ -43,12 +43,12 @@ type DB interface {
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 
 	// Root returns the underlying root store, within which all data managed by DefraDB is held.
-	Root() datastore.RootStore
+	Root() datastore.Rootstore
 
 	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	//
 	// It sits within the rootstore returned by [Root].
-	Blockstore() datastore.DAGStore
+	Blockstore() datastore.Blockstore
 
 	// Peerstore returns the peerstore where known host information is stored.
 	//

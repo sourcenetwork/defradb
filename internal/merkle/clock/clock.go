@@ -32,8 +32,8 @@ var (
 
 // MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
 type MerkleClock struct {
-	headstore datastore.DSReaderWriter
-	dagstore  datastore.DAGStore
+	headstore  datastore.DSReaderWriter
+	blockstore datastore.Blockstore
 	// dagSyncer
 	headset *heads
 	crdt    core.ReplicatedData
@@ -42,15 +42,15 @@ type MerkleClock struct {
 // NewMerkleClock returns a new MerkleClock.
 func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
-	dagstore datastore.DAGStore,
+	blockstore datastore.Blockstore,
 	namespace core.HeadStoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{
-		headstore: headstore,
-		dagstore:  dagstore,
-		headset:   NewHeadSet(headstore, namespace),
-		crdt:      crdt,
+		headstore:  headstore,
+		blockstore: blockstore,
+		headset:    NewHeadSet(headstore, namespace),
+		crdt:       crdt,
 	}
 }
 
@@ -60,7 +60,7 @@ func (mc *MerkleClock) putBlock(
 ) (cidlink.Link, error) {
 	nd := block.GenerateNode()
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(mc.dagstore.AsIPLDStorage())
+	lsys.SetWriteStorage(mc.blockstore.AsIPLDStorage())
 	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), nd)
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
@@ -155,7 +155,7 @@ func (mc *MerkleClock) ProcessBlock(
 			continue
 		}
 
-		known, err := mc.dagstore.Has(ctx, linkCid)
+		known, err := mc.blockstore.Has(ctx, linkCid)
 		if err != nil {
 			return NewErrCouldNotFindBlock(linkCid, err)
 		}

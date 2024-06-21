@@ -199,11 +199,11 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	return &TxWrapper{server, client}, nil
 }
 
-func (w *Wrapper) Root() datastore.RootStore {
+func (w *Wrapper) Root() datastore.Rootstore {
 	return w.node.Root()
 }
 
-func (w *Wrapper) Blockstore() datastore.DAGStore {
+func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.Blockstore()
 }
 

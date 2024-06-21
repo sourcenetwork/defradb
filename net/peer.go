@@ -288,7 +288,7 @@ func (p *Peer) pushToReplicator(
 		}
 		// loop over heads, get block, make the required logs, and send
 		for _, c := range cids {
-			blk, err := txn.DAGstore().Get(ctx, c)
+			blk, err := txn.Blockstore().Get(ctx, c)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to get block", err,
 					corelog.Any("CID", c),

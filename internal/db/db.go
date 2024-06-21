@@ -55,7 +55,7 @@ const (
 type db struct {
 	glock sync.RWMutex
 
-	rootstore  datastore.RootStore
+	rootstore  datastore.Rootstore
 	multistore datastore.MultiStore
 
 	events *event.Bus
@@ -80,7 +80,7 @@ type db struct {
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
-	rootstore datastore.RootStore,
+	rootstore datastore.Rootstore,
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -90,7 +90,7 @@ func NewDB(
 
 func newDB(
 	ctx context.Context,
-	rootstore datastore.RootStore,
+	rootstore datastore.Rootstore,
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -148,13 +148,13 @@ func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Tx
 }
 
 // Root returns the root datastore.
-func (db *db) Root() datastore.RootStore {
+func (db *db) Root() datastore.Rootstore {
 	return db.rootstore
 }
 
 // Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Blockstore() datastore.DAGStore {
-	return db.multistore.DAGstore()
+func (db *db) Blockstore() datastore.Blockstore {
+	return db.multistore.Blockstore()
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.

@@ -91,7 +91,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	}
 
 	ls := cidlink.DefaultLinkSystem()
-	ls.SetReadStorage(txn.DAGstore().AsIPLDStorage())
+	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
 
 	docID, err := client.NewDocIDFromString(dagMerge.DocID)
 	if err != nil {
@@ -409,7 +409,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.Da
 
 	mt := newMergeTarget()
 	for _, cid := range cids {
-		b, err := txn.DAGstore().Get(ctx, cid)
+		b, err := txn.Blockstore().Get(ctx, cid)
 		if err != nil {
 			return mergeTarget{}, err
 		}
