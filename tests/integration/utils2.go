@@ -718,12 +718,12 @@ func restartNodes(
 		// subscribe to merge complete events
 		mergeCompleteSub, err := c.Events().Subscribe(event.MergeCompleteName)
 		require.NoError(s.t, err)
-		s.nodeMergeCompleteSubs = append(s.nodeMergeCompleteSubs, mergeCompleteSub)
+		s.nodeMergeCompleteSubs[i] = mergeCompleteSub
 
 		// subscribe to update events
 		updateSub, err := c.Events().Subscribe(event.UpdateName)
 		require.NoError(s.t, err)
-		s.nodeUpdateSubs = append(s.nodeUpdateSubs, updateSub)
+		s.nodeUpdateSubs[i] = updateSub
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
