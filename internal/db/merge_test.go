@@ -186,7 +186,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
-	require.ErrorContains(t, err, "could not find bafyreichk7jctbxhrodk5au3r4c4iqm627d4fi2cii2beseu4h6caoiwla")
+	require.ErrorContains(t, err, "could not find bafyreifi4sa4auy4uk6psoljwuzqepgwqzsjk3h6p2xjdtsty7bdjz4uzm")
 
 	// Verify the document was created with the expected values
 	doc, err := col.Get(ctx, docID, false)

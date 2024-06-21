@@ -78,7 +78,7 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 	//
 	// any errors encountered during preload are ignored
 	preloader := func(pctx preload.PreloadContext, l preload.Link) {
-		go lsys.Load(linking.LinkContext{Ctx: pctx.Ctx}, l.Link, basicnode.Prototype.Any) //nolint:errcheck
+		go lsys.Load(linking.LinkContext{Ctx: pctx.Ctx}, l.Link, coreblock.SchemaPrototype) //nolint:errcheck
 	}
 	config := traversal.Config{
 		Ctx:                            ctx,
