@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -50,11 +51,41 @@ type state struct {
 	// These channels will recieve a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
 
-	// These synchronisation channels allow async actions to track their completion.
-	syncChans []chan struct{}
+	// nodeMergeCompleteSubs is a list of all merge complete event subscriptions
+	nodeMergeCompleteSubs []*event.Subscription
 
-	// eventSubs is a list of all event subscriptions
-	eventSubs []*event.Subscription
+	// nodeUpdateSubs is a list of all update event subscriptions
+	nodeUpdateSubs []*event.Subscription
+
+	// nodeConnections contains all connected nodes.
+	//
+	// The index of the slice is the node id. The map key is the connected node id.
+	nodeConnections []map[int]struct{}
+
+	// nodeReplicatorSources contains all active replicators.
+	//
+	// The index of the slice is the source node id. The map key is the target node id.
+	nodeReplicatorSources []map[int]struct{}
+
+	// nodeReplicatorTargets contains all active replicators.
+	//
+	// The index of the slice is the target node id. The map key is the source node id.
+	nodeReplicatorTargets []map[int]struct{}
+
+	// nodePeerCollections contains all active peer collection subscriptions.
+	//
+	// The index of the slice is the collection id. The map key is the node id of the subscriber.
+	nodePeerCollections []map[int]struct{}
+
+	// actualDocHeads contains all document heads that exist on a node.
+	//
+	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
+	actualDocHeads []map[string]cid.Cid
+
+	// expectedDocHeads contains all document heads that are expected to exist on a node.
+	//
+	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
+	expectedDocHeads []map[string]cid.Cid
 
 	// The addresses of any nodes configured.
 	nodeAddresses []peer.AddrInfo
@@ -107,8 +138,13 @@ func newState(
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
-		syncChans:                []chan struct{}{},
-		eventSubs:                []*event.Subscription{},
+		nodeMergeCompleteSubs:    []*event.Subscription{},
+		nodeConnections:          []map[int]struct{}{},
+		nodeReplicatorSources:    []map[int]struct{}{},
+		nodeReplicatorTargets:    []map[int]struct{}{},
+		nodePeerCollections:      []map[int]struct{}{},
+		actualDocHeads:           []map[string]cid.Cid{},
+		expectedDocHeads:         []map[string]cid.Cid{},
 		nodeAddresses:            []peer.AddrInfo{},
 		nodeConfigs:              [][]net.NodeOpt{},
 		nodes:                    []clients.Client{},

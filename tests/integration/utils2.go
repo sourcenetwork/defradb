@@ -22,6 +22,7 @@ import (
 
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -250,7 +251,7 @@ func performAction(
 		configureNode(s, action)
 
 	case Restart:
-		restartNodes(s, actionIndex)
+		restartNodes(s)
 
 	case ConnectPeers:
 		connectPeers(s, action)
@@ -657,12 +658,17 @@ func setStartingNodes(
 
 		s.nodes = append(s.nodes, c)
 		s.dbPaths = append(s.dbPaths, path)
+
+		s.nodeConnections = append(s.nodeConnections, make(map[int]struct{}))
+		s.nodeReplicatorSources = append(s.nodeReplicatorSources, make(map[int]struct{}))
+		s.nodeReplicatorTargets = append(s.nodeReplicatorTargets, make(map[int]struct{}))
+		s.expectedDocHeads = append(s.expectedDocHeads, make(map[string]cid.Cid))
+		s.actualDocHeads = append(s.actualDocHeads, make(map[string]cid.Cid))
 	}
 }
 
 func restartNodes(
 	s *state,
-	actionIndex int,
 ) {
 	if s.dbt == badgerIMType || s.dbt == defraIMType {
 		return
@@ -710,36 +716,14 @@ func restartNodes(
 		s.nodes[i] = c
 
 		// subscribe to merge complete events
-		sub, err := c.Events().Subscribe(event.MergeCompleteName)
+		mergeCompleteSub, err := c.Events().Subscribe(event.MergeCompleteName)
 		require.NoError(s.t, err)
-		s.eventSubs[i] = sub
-	}
+		s.nodeMergeCompleteSubs = append(s.nodeMergeCompleteSubs, mergeCompleteSub)
 
-	// The index of the action after the last wait action before the current restart action.
-	// We wish to resume the wait clock from this point onwards.
-	waitGroupStartIndex := 0
-actionLoop:
-	for i := actionIndex; i >= 0; i-- {
-		switch s.testCase.Actions[i].(type) {
-		case WaitForSync:
-			// +1 as we do not wish to resume from the wait itself, but the next action
-			// following it. This may be the current restart action.
-			waitGroupStartIndex = i + 1
-			break actionLoop
-		}
-	}
-
-	for _, tc := range s.testCase.Actions {
-		switch action := tc.(type) {
-		case ConnectPeers:
-			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
-			time.Sleep(100 * time.Millisecond)
-			setupPeerWaitSync(s, waitGroupStartIndex, action)
-		case ConfigureReplicator:
-			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
-			time.Sleep(100 * time.Millisecond)
-			setupReplicatorWaitSync(s, waitGroupStartIndex, action)
-		}
+		// subscribe to update events
+		updateSub, err := c.Events().Subscribe(event.UpdateName)
+		require.NoError(s.t, err)
+		s.nodeUpdateSubs = append(s.nodeUpdateSubs, updateSub)
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -756,6 +740,10 @@ func refreshCollections(
 	s *state,
 ) {
 	s.collections = make([][]client.Collection, len(s.nodes))
+
+	for i := len(s.nodePeerCollections); i < len(s.collectionNames); i++ {
+		s.nodePeerCollections = append(s.nodePeerCollections, make(map[int]struct{}))
+	}
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
@@ -815,10 +803,21 @@ func configureNode(
 	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
 
+	s.nodeConnections = append(s.nodeConnections, make(map[int]struct{}))
+	s.nodeReplicatorSources = append(s.nodeReplicatorSources, make(map[int]struct{}))
+	s.nodeReplicatorTargets = append(s.nodeReplicatorTargets, make(map[int]struct{}))
+	s.expectedDocHeads = append(s.expectedDocHeads, make(map[string]cid.Cid))
+	s.actualDocHeads = append(s.actualDocHeads, make(map[string]cid.Cid))
+
 	// subscribe to merge complete events
-	sub, err := c.Events().Subscribe(event.MergeCompleteName)
+	mergeCompleteSub, err := c.Events().Subscribe(event.MergeCompleteName)
 	require.NoError(s.t, err)
-	s.eventSubs = append(s.eventSubs, sub)
+	s.nodeMergeCompleteSubs = append(s.nodeMergeCompleteSubs, mergeCompleteSub)
+
+	// subscribe to update events
+	updateSub, err := c.Events().Subscribe(event.UpdateName)
+	require.NoError(s.t, err)
+	s.nodeUpdateSubs = append(s.nodeUpdateSubs, updateSub)
 }
 
 func refreshDocuments(
@@ -1199,6 +1198,10 @@ func createDoc(
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
 	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+
+	if action.ExpectedError == "" {
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+	}
 }
 
 func createDocViaColSave(
@@ -1349,6 +1352,10 @@ func deleteDoc(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" {
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+	}
 }
 
 // updateDoc updates a document using the chosen [mutationType].
@@ -1381,6 +1388,10 @@ func updateDoc(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" {
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+	}
 }
 
 func updateDocViaColSave(
