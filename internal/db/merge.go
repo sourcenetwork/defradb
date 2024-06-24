@@ -227,6 +227,7 @@ func (mp *mergeProcessor) loadComposites(
 func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
+		var onlyHeads bool
 		if block.IsEncrypted != nil && *block.IsEncrypted {
 			onlyHeads = true
 		}
