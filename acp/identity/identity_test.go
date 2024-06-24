@@ -30,7 +30,7 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func Test_didFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
+func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
 	mockedProducer := func(crypto.KeyType, []byte) (*key.DIDKey, error) {
 		return nil, fmt.Errorf("did generation err")
 	}
