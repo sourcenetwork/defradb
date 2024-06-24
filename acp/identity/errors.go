@@ -16,9 +16,15 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-const errDIDCreation = "could not produce did for key"
+const (
+	errDIDCreation                            = "could not produce did for key"
+	errFailedToGenerateIdentityFromPrivateKey = "failed to generate identity from private key"
+)
 
-var ErrDIDCreation = errors.New(errDIDCreation)
+var (
+	ErrDIDCreation                            = errors.New(errDIDCreation)
+	ErrFailedToGenerateIdentityFromPrivateKey = errors.New(errFailedToGenerateIdentityFromPrivateKey)
+)
 
 func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
 	return errors.Wrap(
