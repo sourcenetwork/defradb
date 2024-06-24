@@ -112,6 +112,7 @@ func (mc *MerkleClock) AddDelta(
 		ctx,
 		block,
 		link,
+		false,
 	)
 	if err != nil {
 		return cidlink.Link{}, nil, err
@@ -168,13 +169,24 @@ func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
+	onlyHeads bool,
 ) error {
-	priority := block.Delta.GetPriority()
-
+	if !onlyHeads {
 	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
 	if err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
+	}
+
+	return mc.updateHeads(ctx, block, blockLink)
+}
+
+func (mc *MerkleClock) updateHeads(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+) error {
+	priority := block.Delta.GetPriority()
 
 	// check if we have any HEAD links
 	hasHeads := false
