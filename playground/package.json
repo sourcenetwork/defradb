@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "graphiql": "^3.3.1",
-    "graphql": "^16.8.2",
+    "graphql": "^16.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "swagger-ui-react": "^5.17.14"
