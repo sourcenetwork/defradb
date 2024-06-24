@@ -657,7 +657,7 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			link, _, err := merkleCRDT.Save(ctx, &merklecrdt.Field{DocID: primaryKey.DocID, FieldValue: val})
+			link, _, err := merkleCRDT.Save(ctx, &merklecrdt.DocField{DocID: primaryKey.DocID, FieldValue: val})
 			if err != nil {
 				return cid.Undef, err
 			}

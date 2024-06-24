@@ -111,9 +111,7 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
 		return ErrMismatchedMergeType
 	}
 
-	data := d.Data
-
-	return reg.setValue(ctx, data, d.GetPriority())
+	return reg.setValue(ctx, d.Data, d.GetPriority())
 }
 
 func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {

@@ -49,7 +49,7 @@ func NewMerkleCounter(
 
 // Save the value of the  Counter to the DAG.
 func (mc *MerkleCounter) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*Field)
+	value, ok := data.(*DocField)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
 	}

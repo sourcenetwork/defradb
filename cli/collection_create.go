@@ -81,7 +81,7 @@ Example: create from stdin:
 			}
 
 			txn, _ := db.TryGetContextTxn(cmd.Context())
-			setContextDocEncryptionKey(cmd, shouldEncrypt, txn)
+			setContextDocEncryption(cmd, shouldEncrypt, txn)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())

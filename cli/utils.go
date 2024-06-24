@@ -162,8 +162,8 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	return nil
 }
 
-// setContextIdentity sets the identity for the current command context.
-func setContextDocEncryptionKey(cmd *cobra.Command, shouldEncrypt bool, txn datastore.Txn) {
+// setContextDocEncryption sets doc encryption for the current command context.
+func setContextDocEncryption(cmd *cobra.Command, shouldEncrypt bool, txn datastore.Txn) {
 	if !shouldEncrypt {
 		return
 	}
@@ -171,7 +171,7 @@ func setContextDocEncryptionKey(cmd *cobra.Command, shouldEncrypt bool, txn data
 	if txn != nil {
 		ctx = encryption.ContextWithStore(ctx, txn)
 	}
-	ctx = encryption.SetContextConfig(cmd.Context(), encryption.DocEncConfig{IsEncrypted: true})
+	ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
 	cmd.SetContext(ctx)
 }
 

@@ -47,7 +47,7 @@ func NewMerkleLWWRegister(
 
 // Save the value of the register to the DAG.
 func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*Field)
+	value, ok := data.(*DocField)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
 	}

@@ -30,7 +30,7 @@ func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
 	return enc, ok
 }
 
-func getContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
+func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		enc = newDocEncryptor(ctx)
@@ -39,14 +39,18 @@ func getContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) 
 	return ctx, enc
 }
 
+// Context enables key generation on the doc encryptor in the context.
+// If the doc encryptor is not present, it will be created.
 func Context(ctx context.Context) context.Context {
-	ctx, encryptor := getContextWithDocEnc(ctx)
+	ctx, encryptor := ensureContextWithDocEnc(ctx)
 	encryptor.EnableKeyGeneration()
 	return ctx
 }
 
+// ContextWithStore sets the store on the doc encryptor in the context.
+// If the doc encryptor is not present, it will be created.
 func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
-	ctx, encryptor := getContextWithDocEnc(ctx)
+	ctx, encryptor := ensureContextWithDocEnc(ctx)
 	encryptor.SetStore(txn.Encstore())
 	return ctx
 }
@@ -60,7 +64,7 @@ func GetContextConfig(ctx context.Context) immutable.Option[DocEncConfig] {
 	return immutable.None[DocEncConfig]()
 }
 
-// SetContextConfig returns a new context with the encryption value set.
+// SetContextConfig returns a new context with the doc encryption config set.
 func SetContextConfig(ctx context.Context, encConfig DocEncConfig) context.Context {
 	return context.WithValue(ctx, configContextKey{}, encConfig)
 }
