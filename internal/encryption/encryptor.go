@@ -26,6 +26,8 @@ var generateEncryptionKeyFunc = generateEncryptionKey
 
 const keyLength = 32 // 32 bytes for AES-256
 
+const testEncryptionKey = "examplekey1234567890examplekey12"
+
 // generateEncryptionKey generates a random AES key.
 func generateEncryptionKey() ([]byte, error) {
 	key := make([]byte, keyLength)
@@ -37,7 +39,7 @@ func generateEncryptionKey() ([]byte, error) {
 
 // generateTestEncryptionKey generates a deterministic encryption key for testing.
 func generateTestEncryptionKey() ([]byte, error) {
-	return []byte("examplekey1234567890examplekey12"), nil
+	return []byte(testEncryptionKey), nil
 }
 
 type DocEncryptor struct {
@@ -74,11 +76,9 @@ func (d *DocEncryptor) Encrypt(docID string, fieldID uint32, plainText []byte) (
 			return nil, err
 		}
 
-		if d.store != nil {
-			err = d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
-			if err != nil {
-				return nil, err
-			}
+		err = d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
+		if err != nil {
+			return nil, err
 		}
 	}
 	return EncryptAES(plainText, encryptionKey)
@@ -100,7 +100,7 @@ func (d *DocEncryptor) Decrypt(docID string, fieldID uint32, cipherText []byte) 
 func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldID uint32) ([]byte, core.EncStoreDocKey, error) {
 	storeKey := core.NewEncStoreDocKey(docID, fieldID)
 	if d.store == nil {
-		return nil, core.EncStoreDocKey{}, nil
+		return nil, core.EncStoreDocKey{}, ErrNoStorageProvided
 	}
 	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
 	isNotFound := errors.Is(err, ds.ErrNotFound)
