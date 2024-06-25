@@ -28,15 +28,26 @@ type SchemaManager struct {
 func NewSchemaManager() (*SchemaManager, error) {
 	sm := &SchemaManager{}
 
+	orderEnum := schemaTypes.OrderingEnum()
+	crdtEnum := schemaTypes.CRDTEnum()
+	explainEnum := schemaTypes.ExplainEnum()
+
 	commitLinkObject := schemaTypes.CommitLinkObject()
 	commitObject := schemaTypes.CommitObject(commitLinkObject)
-	commitsOrderArg := schemaTypes.CommitsOrderArg()
+	commitsOrderArg := schemaTypes.CommitsOrderArg(orderEnum)
 
 	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types:      defaultTypes(commitObject, commitLinkObject, commitsOrderArg),
+		Types: defaultTypes(
+			commitObject,
+			commitLinkObject,
+			commitsOrderArg,
+			orderEnum,
+			crdtEnum,
+			explainEnum,
+		),
 		Query:      defaultQueryType(commitObject, commitsOrderArg),
 		Mutation:   defaultMutationType(),
-		Directives: defaultDirectivesType(),
+		Directives: defaultDirectivesType(crdtEnum, explainEnum, orderEnum),
 	})
 	if err != nil {
 		return sm, err
@@ -117,15 +128,19 @@ func defaultMutationType() *gql.Object {
 }
 
 // default directives type.
-func defaultDirectivesType() []*gql.Directive {
+func defaultDirectivesType(
+	crdtEnum *gql.Enum,
+	explainEnum *gql.Enum,
+	orderEnum *gql.Enum,
+) []*gql.Directive {
 	return []*gql.Directive{
-		schemaTypes.CRDTFieldDirective,
-		schemaTypes.ExplainDirective,
-		schemaTypes.PolicyDirective,
-		schemaTypes.IndexDirective,
-		schemaTypes.IndexFieldDirective,
-		schemaTypes.PrimaryDirective,
-		schemaTypes.RelationDirective,
+		schemaTypes.CRDTFieldDirective(crdtEnum),
+		schemaTypes.ExplainDirective(explainEnum),
+		schemaTypes.PolicyDirective(),
+		schemaTypes.IndexDirective(orderEnum),
+		schemaTypes.IndexFieldDirective(orderEnum),
+		schemaTypes.PrimaryDirective(),
+		schemaTypes.RelationDirective(),
 	}
 }
 
@@ -147,6 +162,9 @@ func defaultTypes(
 	commitObject *gql.Object,
 	commitLinkObject *gql.Object,
 	commitsOrderArg *gql.InputObject,
+	orderEnum *gql.Enum,
+	crdtEnum *gql.Enum,
+	explainEnum *gql.Enum,
 ) []gql.Type {
 	return []gql.Type{
 		// Base Scalar types
@@ -164,7 +182,7 @@ func defaultTypes(
 		// Base Query types
 
 		// Sort/Order enum
-		schemaTypes.OrderingEnum,
+		orderEnum,
 
 		// Filter scalar blocks
 		schemaTypes.BooleanOperatorBlock(),
@@ -182,7 +200,7 @@ func defaultTypes(
 		commitLinkObject,
 		commitObject,
 
-		schemaTypes.CRDTEnum,
-		schemaTypes.ExplainEnum,
+		crdtEnum,
+		explainEnum,
 	}
 }

@@ -44,9 +44,9 @@ const (
 	FieldOrderDESC = "DESC"
 )
 
-var (
-	// OrderingEnum is an enum for the Ordering argument.
-	OrderingEnum = gql.NewEnum(gql.EnumConfig{
+// OrderingEnum is an enum for the Ordering argument.
+func OrderingEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
 		Name: "Ordering",
 		Values: gql.EnumValueConfigMap{
 			"ASC": &gql.EnumValueConfig{
@@ -59,8 +59,10 @@ var (
 			},
 		},
 	})
+}
 
-	ExplainEnum = gql.NewEnum(gql.EnumConfig{
+func ExplainEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
 		Name:        "ExplainType",
 		Description: "ExplainType is an enum selecting the type of explanation done by the @explain directive.",
 		Values: gql.EnumValueConfigMap{
@@ -80,13 +82,15 @@ var (
 			},
 		},
 	})
+}
 
-	ExplainDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+func ExplainDirective(explainEnum *gql.Enum) *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        ExplainLabel,
 		Description: "@explain is a directive that can be used to explain the query.",
 		Args: gql.FieldConfigArgument{
 			ExplainArgNameType: &gql.ArgumentConfig{
-				Type: ExplainEnum,
+				Type: explainEnum,
 			},
 		},
 
@@ -97,8 +101,10 @@ var (
 			gql.DirectiveLocationMutation,
 		},
 	})
+}
 
-	PolicyDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+func PolicyDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        PolicySchemaDirectiveLabel,
 		Description: "@policy is a directive that can be used to link a policy on a collection type.",
 		Args: gql.FieldConfigArgument{
@@ -113,8 +119,10 @@ var (
 			gql.DirectiveLocationObject,
 		},
 	})
+}
 
-	IndexDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+func IndexDirective(orderingEnum *gql.Enum) *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
 		Description: "@index is a directive that can be used to create an index on a type.",
 		Args: gql.FieldConfigArgument{
@@ -125,15 +133,17 @@ var (
 				Type: gql.NewList(gql.String),
 			},
 			IndexDirectivePropDirections: &gql.ArgumentConfig{
-				Type: gql.NewList(OrderingEnum),
+				Type: gql.NewList(orderingEnum),
 			},
 		},
 		Locations: []string{
 			gql.DirectiveLocationObject,
 		},
 	})
+}
 
-	IndexFieldDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+func IndexFieldDirective(orderingEnum *gql.Enum) *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
 		Description: "@index is a directive that can be used to create an index on a field.",
 		Args: gql.FieldConfigArgument{
@@ -144,15 +154,17 @@ var (
 				Type: gql.Boolean,
 			},
 			IndexDirectivePropDirection: &gql.ArgumentConfig{
-				Type: OrderingEnum,
+				Type: orderingEnum,
 			},
 		},
 		Locations: []string{
 			gql.DirectiveLocationField,
 		},
 	})
+}
 
-	CRDTEnum = gql.NewEnum(gql.EnumConfig{
+func CRDTEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
 		Name:        "CRDTType",
 		Description: "One of the possible CRDT Types.",
 		Values: gql.EnumValueConfigMap{
@@ -163,51 +175,57 @@ var (
 			client.PN_COUNTER.String(): &gql.EnumValueConfig{
 				Value: client.PN_COUNTER,
 				Description: `Positive-Negative Counter.
-
-WARNING: Incrementing an integer and causing it to overflow the int64 max value
-will cause the value to roll over to the int64 min value. Incremeting a float and
-causing it to overflow the float64 max value will act like a no-op.`,
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incremeting a float and
+	causing it to overflow the float64 max value will act like a no-op.`,
 			},
 			client.P_COUNTER.String(): &gql.EnumValueConfig{
 				Value: client.P_COUNTER,
 				Description: `Positive Counter.
-
-WARNING: Incrementing an integer and causing it to overflow the int64 max value
-will cause the value to roll over to the int64 min value. Incremeting a float and
-causing it to overflow the float64 max value will act like a no-op.`,
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incremeting a float and
+	causing it to overflow the float64 max value will act like a no-op.`,
 			},
 		},
 	})
+}
 
-	// CRDTFieldDirective @crdt is used to define the CRDT type of a field
-	CRDTFieldDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+// CRDTFieldDirective @crdt is used to define the CRDT type of a field
+func CRDTFieldDirective(crdtEnum *gql.Enum) *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        CRDTDirectiveLabel,
 		Description: crdtDirectiveDescription,
 		Args: gql.FieldConfigArgument{
 			CRDTDirectivePropType: &gql.ArgumentConfig{
-				Type: CRDTEnum,
+				Type: crdtEnum,
 			},
 		},
 		Locations: []string{
 			gql.DirectiveLocationField,
 		},
 	})
+}
 
-	// PrimaryDirective @primary is used to indicate the primary
-	// side of a one-to-one relationship.
-	PrimaryDirective = gql.NewDirective(gql.DirectiveConfig{
+// PrimaryDirective @primary is used to indicate the primary
+// side of a one-to-one relationship.
+func PrimaryDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        PrimaryLabel,
 		Description: primaryDirectiveDescription,
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
 		},
 	})
+}
 
-	// RelationDirective @relation is used to explicitly define
-	// the attributes of a relationship, specifically, the name
-	// if you don't want to use the default generated relationship
-	// name.
-	RelationDirective = gql.NewDirective(gql.DirectiveConfig{
+// RelationDirective @relation is used to explicitly define
+// the attributes of a relationship, specifically, the name
+// if you don't want to use the default generated relationship
+// name.
+func RelationDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        RelationLabel,
 		Description: relationDirectiveDescription,
 		Args: gql.FieldConfigArgument{
@@ -220,7 +238,7 @@ causing it to overflow the float64 max value will act like a no-op.`,
 			gql.DirectiveLocationFieldDefinition,
 		},
 	})
-)
+}
 
 func NewArgConfig(t gql.Type, description string) *gql.ArgumentConfig {
 	return &gql.ArgumentConfig{

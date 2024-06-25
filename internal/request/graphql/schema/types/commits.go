@@ -113,7 +113,7 @@ func CommitLinkObject() *gql.Object {
 	})
 }
 
-func CommitsOrderArg() *gql.InputObject {
+func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 	return gql.NewInputObject(
 		gql.InputObjectConfig{
 			Name:        "commitsOrderArg",
@@ -121,19 +121,19 @@ func CommitsOrderArg() *gql.InputObject {
 			Fields: gql.InputObjectConfigFieldMap{
 				"height": &gql.InputObjectFieldConfig{
 					Description: commitHeightFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 				"cid": &gql.InputObjectFieldConfig{
 					Description: commitCIDFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 				request.DocIDArgName: &gql.InputObjectFieldConfig{
 					Description: commitDocIDFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 				"collectionID": &gql.InputObjectFieldConfig{
 					Description: commitCollectionIDFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 			},
 		},
