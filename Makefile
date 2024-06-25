@@ -380,3 +380,11 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
+
+.PHONY: fix
+fix:
+	@$(MAKE) deps
+	@$(MAKE) lint\:fix
+	@$(MAKE) tidy
+	@$(MAKE) mocks
+	@$(MAKE) docs
