@@ -16,22 +16,23 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-var (
-	// Commit represents an individual commit to a MerkleCRDT
-	// type Commit {
-	// 	Height: Int
-	// 	CID: String
-	// 	DocID: String
-	// 	CollectionID: Int
-	// 	SchemaVersionID: String
-	// 	Delta: String
-	// 	Previous: [Commit]
-	//  Links: [Commit]
-	// }
-	//
-	// Any self referential type needs to be initialized
-	// inside the init() func
-	CommitObject = gql.NewObject(gql.ObjectConfig{
+// Commit represents an individual commit to a MerkleCRDT
+//
+//	type Commit {
+//		Height: Int
+//		CID: String
+//		DocID: String
+//		CollectionID: Int
+//		SchemaVersionID: String
+//		Delta: String
+//		Previous: [Commit]
+//	 Links: [Commit]
+//	}
+//
+// Any self referential type needs to be initialized
+// inside the init() func
+func CommitObject(commitLinkObject *gql.Object) *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
 		Name:        request.CommitTypeName,
 		Description: commitDescription,
 		Fields: gql.Fields{
@@ -69,7 +70,7 @@ var (
 			},
 			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
-				Type:        gql.NewList(CommitLinkObject),
+				Type:        gql.NewList(commitLinkObject),
 			},
 			request.CountFieldName: &gql.Field{
 				Description: CountFieldDescription,
@@ -91,10 +92,12 @@ var (
 			},
 		},
 	})
+}
 
-	// CommitLink is a named DAG link between commits.
-	// This is primary used for CompositeDAG CRDTs
-	CommitLinkObject = gql.NewObject(gql.ObjectConfig{
+// CommitLink is a named DAG link between commits.
+// This is primary used for CompositeDAG CRDTs
+func CommitLinkObject() *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
 		Name:        "CommitLink",
 		Description: commitLinksDescription,
 		Fields: gql.Fields{
@@ -108,8 +111,10 @@ var (
 			},
 		},
 	})
+}
 
-	CommitsOrderArg = gql.NewInputObject(
+func CommitsOrderArg() *gql.InputObject {
+	return gql.NewInputObject(
 		gql.InputObjectConfig{
 			Name:        "commitsOrderArg",
 			Description: OrderArgDescription,
@@ -133,15 +138,17 @@ var (
 			},
 		},
 	)
+}
 
-	QueryCommits = &gql.Field{
+func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Field {
+	return &gql.Field{
 		Name:        "commits",
 		Description: commitsQueryDescription,
-		Type:        gql.NewList(CommitObject),
+		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
 			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
-			"order":              NewArgConfig(CommitsOrderArg, OrderArgDescription),
+			"order":              NewArgConfig(commitsOrderArg, OrderArgDescription),
 			"cid":                NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
@@ -187,14 +194,16 @@ var (
 			request.DepthClause:  NewArgConfig(gql.Int, commitDepthArgDescription),
 		},
 	}
+}
 
-	QueryLatestCommits = &gql.Field{
+func QueryLatestCommits(commitObject *gql.Object) *gql.Field {
+	return &gql.Field{
 		Name:        "latestCommits",
 		Description: latestCommitsQueryDescription,
-		Type:        gql.NewList(CommitObject),
+		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
 			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}
-)
+}

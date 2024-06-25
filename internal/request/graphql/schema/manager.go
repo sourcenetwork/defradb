@@ -27,9 +27,14 @@ type SchemaManager struct {
 // with a new default type map
 func NewSchemaManager() (*SchemaManager, error) {
 	sm := &SchemaManager{}
+
+	commitLinkObject := schemaTypes.CommitLinkObject()
+	commitObject := schemaTypes.CommitObject(commitLinkObject)
+	commitsOrderArg := schemaTypes.CommitsOrderArg()
+
 	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types:      defaultTypes(),
-		Query:      defaultQueryType(),
+		Types:      defaultTypes(commitObject, commitLinkObject, commitsOrderArg),
+		Query:      defaultQueryType(commitObject, commitsOrderArg),
 		Mutation:   defaultMutationType(),
 		Directives: defaultDirectivesType(),
 	})
@@ -80,7 +85,10 @@ func (s *SchemaManager) ResolveTypes() error {
 }
 
 // @todo: Use a better default Query type
-func defaultQueryType() *gql.Object {
+func defaultQueryType(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Object {
+	queryCommits := schemaTypes.QueryCommits(commitObject, commitsOrderArg)
+	queryLatestCommits := schemaTypes.QueryLatestCommits(commitObject)
+
 	return gql.NewObject(gql.ObjectConfig{
 		Name: "Query",
 		Fields: gql.Fields{
@@ -90,8 +98,8 @@ func defaultQueryType() *gql.Object {
 			},
 
 			// database API queries
-			schemaTypes.QueryCommits.Name:       schemaTypes.QueryCommits,
-			schemaTypes.QueryLatestCommits.Name: schemaTypes.QueryLatestCommits,
+			queryCommits.Name:       queryCommits,
+			queryLatestCommits.Name: queryLatestCommits,
 		},
 	})
 }
@@ -135,7 +143,11 @@ func inlineArrayTypes() []gql.Type {
 }
 
 // default type map includes all the native scalar types
-func defaultTypes() []gql.Type {
+func defaultTypes(
+	commitObject *gql.Object,
+	commitLinkObject *gql.Object,
+	commitsOrderArg *gql.InputObject,
+) []gql.Type {
 	return []gql.Type{
 		// Base Scalar types
 		gql.Boolean,
@@ -166,9 +178,9 @@ func defaultTypes() []gql.Type {
 		schemaTypes.StringOperatorBlock(),
 		schemaTypes.NotNullstringOperatorBlock(),
 
-		schemaTypes.CommitsOrderArg,
-		schemaTypes.CommitLinkObject,
-		schemaTypes.CommitObject,
+		commitsOrderArg,
+		commitLinkObject,
+		commitObject,
 
 		schemaTypes.CRDTEnum,
 		schemaTypes.ExplainEnum,

@@ -179,7 +179,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 	}
 
-	appendCommitChildGroupField()
+	g.appendCommitChildGroupField()
 
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
@@ -500,7 +500,7 @@ func (g *Generator) buildTypes(
 				// add _version field
 				fields[request.VersionFieldName] = &gql.Field{
 					Description: versionFieldDescription,
-					Type:        gql.NewList(schemaTypes.CommitObject),
+					Type:        gql.NewList(g.manager.schema.TypeMap()[request.CommitTypeName]),
 				}
 
 				// add _deleted field
@@ -987,11 +987,13 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 	})
 }
 
-func appendCommitChildGroupField() {
-	schemaTypes.CommitObject.Fields()[request.GroupFieldName] = &gql.FieldDefinition{
+func (g *Generator) appendCommitChildGroupField() {
+	commitObject := g.manager.schema.TypeMap()[request.CommitTypeName]
+
+	commitObject.(*gql.Object).Fields()[request.GroupFieldName] = &gql.FieldDefinition{
 		Name:        request.GroupFieldName,
 		Description: groupFieldDescription,
-		Type:        gql.NewList(schemaTypes.CommitObject),
+		Type:        gql.NewList(commitObject),
 	}
 }
 
