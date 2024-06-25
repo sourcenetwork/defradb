@@ -33,13 +33,14 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.21"
+          go-version-file: 'go.mod'
           check-latest: true
+          cache: false
 
       - name: Try generating cli documentation
         run: make docs:cli
@@ -58,13 +59,14 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.21"
+          go-version-file: 'go.mod'
           check-latest: true
+          cache: false
 
       - name: Try generating http documentation
         run: make docs:http
@@ -83,13 +85,14 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.21"
+          go-version-file: 'go.mod'
           check-latest: true
+          cache: false
 
       - name: Try generating readme toc
         run: make toc
