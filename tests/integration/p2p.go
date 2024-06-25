@@ -420,7 +420,7 @@ func subscribeToCollection(
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
-	time.Sleep(1 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 }
 
 // unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
