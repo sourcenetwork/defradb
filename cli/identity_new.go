@@ -22,6 +22,12 @@ func MakeIdentityNewCommand() *cobra.Command {
 		Short: "Generate a new identity",
 		Long: `Generate a new identity
 
+The generated identity contains:
+- A secp256k1 private key that is a 256-bit big-endian binary-encoded number,
+padded to a length of 32 bytes in HEX format.
+- A compressed 33-byte secp256k1 public key in HEX format.
+- A "did:key" generated from the public key.
+
 Example: generate a new identity:
   defradb identity new
 
