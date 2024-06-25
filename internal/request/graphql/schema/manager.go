@@ -176,8 +176,8 @@ func defaultTypes(
 		gql.String,
 
 		// Custom Scalar types
-		schemaTypes.BlobScalarType,
-		schemaTypes.JSONScalarType,
+		schemaTypes.BlobScalarType(),
+		schemaTypes.JSONScalarType(),
 
 		// Base Query types
 
