@@ -13,8 +13,9 @@ package encryption
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // docEncContextKey is the key type for document encryption context values.

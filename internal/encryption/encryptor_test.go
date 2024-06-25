@@ -16,10 +16,11 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/datastore/mocks"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/sourcenetwork/defradb/datastore/mocks"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 var testErr = errors.New("test error")
