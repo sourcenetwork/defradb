@@ -435,7 +435,7 @@ func (c *Client) Close() {
 	// do nothing
 }
 
-func (c *Client) Root() datastore.Rootstore {
+func (c *Client) Rootstore() datastore.Rootstore {
 	panic("client side database")
 }
 

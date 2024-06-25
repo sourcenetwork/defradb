@@ -75,7 +75,7 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses(randomMultiaddr),
@@ -91,7 +91,7 @@ func TestNewPeer_NoError(t *testing.T) {
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
-	p, err := NewPeer(ctx, db.Root(), db.Blockstore(), db.Events())
+	p, err := NewPeer(ctx, db.Rootstore(), db.Blockstore(), db.Events())
 	require.NoError(t, err)
 	p.Close()
 }
@@ -126,7 +126,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db1.Root(),
+		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -135,7 +135,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Root(),
+		db2.Rootstore(),
 		db2.Blockstore(),
 		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -167,7 +167,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db1.Root(),
+		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -176,7 +176,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Root(),
+		db2.Rootstore(),
 		db2.Blockstore(),
 		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -475,7 +475,7 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithEnableRelay(true),
@@ -494,7 +494,7 @@ func TestNewPeer_WithDBClosed_NoError(t *testing.T) {
 
 	_, err = NewPeer(
 		context.Background(),
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 	)
@@ -510,7 +510,7 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithEnablePubSub(false),
@@ -529,7 +529,7 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithEnablePubSub(true),
@@ -549,7 +549,7 @@ func TestNodeClose_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 	)
@@ -566,7 +566,7 @@ func TestNewPeer_BootstrapWithNoPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -584,7 +584,7 @@ func TestNewPeer_BootstrapWithOnePeer_NoError(t *testing.T) {
 	defer db.Close()
 	n1, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -593,7 +593,7 @@ func TestNewPeer_BootstrapWithOnePeer_NoError(t *testing.T) {
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -616,7 +616,7 @@ func TestNewPeer_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 
 	n1, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -625,7 +625,7 @@ func TestNewPeer_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
@@ -651,7 +651,7 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Root(),
+		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),

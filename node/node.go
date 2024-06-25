@@ -141,7 +141,7 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 	var peer *net.Peer
 	if !options.disableP2P {
 		// setup net node
-		peer, err = net.NewPeer(ctx, db.Root(), db.Blockstore(), db.Events(), netOpts...)
+		peer, err = net.NewPeer(ctx, db.Rootstore(), db.Blockstore(), db.Events(), netOpts...)
 		if err != nil {
 			return nil, err
 		}
