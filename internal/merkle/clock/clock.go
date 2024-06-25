@@ -147,7 +147,6 @@ func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 		if prevBlock.IsEncrypted != nil && *prevBlock.IsEncrypted {
 			return true, nil
 		}
-		// could do block.EncryptDelta(encKey)
 	}
 
 	return false, nil
@@ -172,10 +171,10 @@ func (mc *MerkleClock) ProcessBlock(
 	onlyHeads bool,
 ) error {
 	if !onlyHeads {
-	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
-	if err != nil {
-		return NewErrMergingDelta(blockLink.Cid, err)
-	}
+		err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
+		if err != nil {
+			return NewErrMergingDelta(blockLink.Cid, err)
+		}
 	}
 
 	return mc.updateHeads(ctx, block, blockLink)

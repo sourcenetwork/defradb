@@ -48,7 +48,7 @@ type MerkleClock interface {
 		links ...coreblock.DAGLink,
 	) (cidlink.Link, []byte, error)
 	// ProcessBlock processes a block and updates the CRDT state.
-	// The bool argument indicates whether only heads need to be updated. It is needed in case 
+	// The bool argument indicates whether only heads need to be updated. It is needed in case
 	// merge should be skipped for example if the block is encrypted.
 	ProcessBlock(context.Context, *coreblock.Block, cidlink.Link, bool) error
 }
