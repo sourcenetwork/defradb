@@ -38,6 +38,10 @@ const (
 	PeerInfoName = Name("peer-info")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
+	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
+	P2PTopicCompletedName = Name("p2p-topic-completed")
+	// ReplicatorCompletedName is the name of the replicator completed event.
+	ReplicatorCompletedName = Name("replicator-completed")
 )
 
 // Peer is an event that is published when

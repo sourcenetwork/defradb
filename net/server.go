@@ -325,6 +325,7 @@ func (s *server) updatePubSubTopics(evt event.P2PTopic) {
 			log.ErrorContextE(s.peer.ctx, "Failed to remove pubsub topic.", err)
 		}
 	}
+	s.peer.bus.Publish(event.NewMessage(event.P2PTopicCompletedName, nil))
 }
 
 func (s *server) updateReplicators(evt event.Replicator) {
@@ -368,4 +369,5 @@ func (s *server) updateReplicators(evt event.Replicator) {
 			}
 		}
 	}
+	s.peer.bus.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 }

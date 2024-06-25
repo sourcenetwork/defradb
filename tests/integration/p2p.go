@@ -288,7 +288,9 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
+	sub, err := sourceNode.Events().Subscribe(event.ReplicatorCompletedName)
+	require.NoError(s.t, err)
+	err = sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
 
@@ -296,6 +298,11 @@ func configureReplicator(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
 	if err == nil {
 		setupReplicatorWaitSync(s, 0, cfg)
+	}
+	for msg := range sub.Message() {
+		if msg.Name == event.ReplicatorCompletedName {
+			break
+		}
 	}
 }
 
@@ -306,10 +313,17 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+	sub, err := sourceNode.Events().Subscribe(event.ReplicatorCompletedName)
+	require.NoError(s.t, err)
+	err = sourceNode.DeleteReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
 	require.NoError(s.t, err)
+	for msg := range sub.Message() {
+		if msg.Name == event.ReplicatorCompletedName {
+			break
+		}
+	}
 }
 
 func setupReplicatorWaitSync(
@@ -390,14 +404,23 @@ func subscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	sub, err := n.Events().Subscribe(event.P2PTopicCompletedName)
+	require.NoError(s.t, err)
+
+	err = n.AddP2PCollections(s.ctx, schemaRoots)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	for msg := range sub.Message() {
+		if msg.Name == event.P2PTopicCompletedName {
+			break
+		}
+	}
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1 * time.Millisecond)
 }
 
 // unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
@@ -420,9 +443,18 @@ func unsubscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	sub, err := n.Events().Subscribe(event.P2PTopicCompletedName)
+	require.NoError(s.t, err)
+
+	err = n.RemoveP2PCollections(s.ctx, schemaRoots)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	for msg := range sub.Message() {
+		if msg.Name == event.P2PTopicCompletedName {
+			break
+		}
+	}
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
