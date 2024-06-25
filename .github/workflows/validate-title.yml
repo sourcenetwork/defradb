@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Ensure the scripts are not broken
         run: make test:scripts
