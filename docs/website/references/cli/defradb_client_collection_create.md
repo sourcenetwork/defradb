@@ -5,6 +5,15 @@ Create a new document.
 ### Synopsis
 
 Create a new document.
+		
+Options:
+    -i, --identity 
+        Marks the document as private and set the identity as the owner. The access to the document
+		and permissions are controlled by ACP (Access Control Policy).
+
+	-e, --encrypt
+		Encrypt flag specified if the document needs to be encrypted. If set DefraDB will generate a
+		symmetric key for encryption using AES-GCM.
 
 Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
@@ -24,12 +33,13 @@ Example: create from stdin:
 		
 
 ```
-defradb client collection create [-i --identity] <document> [flags]
+defradb client collection create [-i --identity] [-e --encrypt] <document> [flags]
 ```
 
 ### Options
 
 ```
+  -e, --encrypt       Encryption key used to encrypt/decrypt the document
   -f, --file string   File containing document(s)
   -h, --help          help for create
 ```
