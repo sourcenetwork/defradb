@@ -17,18 +17,6 @@ import (
 )
 
 var (
-	// Helper only for `commit` below.
-	commitCountFieldArg = gql.NewEnum(gql.EnumConfig{
-		Name:        "commitCountFieldArg",
-		Description: CountFieldDescription,
-		Values: gql.EnumValueConfigMap{
-			"links": &gql.EnumValueConfig{
-				Description: commitLinksDescription,
-				Value:       "links",
-			},
-		},
-	})
-
 	// Commit represents an individual commit to a MerkleCRDT
 	// type Commit {
 	// 	Height: Int
@@ -88,7 +76,16 @@ var (
 				Type:        gql.Int,
 				Args: gql.FieldConfigArgument{
 					request.FieldName: &gql.ArgumentConfig{
-						Type: commitCountFieldArg,
+						Type: gql.NewEnum(gql.EnumConfig{
+							Name:        "commitCountFieldArg",
+							Description: CountFieldDescription,
+							Values: gql.EnumValueConfigMap{
+								"links": &gql.EnumValueConfig{
+									Description: commitLinksDescription,
+									Value:       "links",
+								},
+							},
+						}),
 					},
 				},
 			},
