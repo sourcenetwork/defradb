@@ -26,6 +26,10 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 func (_m *Txn) Commit(ctx context.Context) error {
 	ret := _m.Called(ctx)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Commit")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
 		r0 = rf(ctx)
@@ -67,6 +71,10 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func(context.Context) error) *Txn_Co
 // DAGstore provides a mock function with given fields:
 func (_m *Txn) DAGstore() datastore.DAGStore {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for DAGstore")
+	}
 
 	var r0 datastore.DAGStore
 	if rf, ok := ret.Get(0).(func() datastore.DAGStore); ok {
@@ -110,6 +118,10 @@ func (_c *Txn_DAGstore_Call) RunAndReturn(run func() datastore.DAGStore) *Txn_DA
 // Datastore provides a mock function with given fields:
 func (_m *Txn) Datastore() datastore.DSReaderWriter {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Datastore")
+	}
 
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
@@ -187,6 +199,10 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard
 func (_m *Txn) Headstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Headstore")
+	}
+
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
 		r0 = rf()
@@ -229,6 +245,10 @@ func (_c *Txn_Headstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 // ID provides a mock function with given fields:
 func (_m *Txn) ID() uint64 {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ID")
+	}
 
 	var r0 uint64
 	if rf, ok := ret.Get(0).(func() uint64); ok {
@@ -469,6 +489,10 @@ func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccess
 func (_m *Txn) Peerstore() datastore.DSBatching {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Peerstore")
+	}
+
 	var r0 datastore.DSBatching
 	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
 		r0 = rf()
@@ -512,6 +536,10 @@ func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *Txn
 func (_m *Txn) Rootstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Rootstore")
+	}
+
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
 		r0 = rf()
@@ -554,6 +582,10 @@ func (_c *Txn_Rootstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 // Systemstore provides a mock function with given fields:
 func (_m *Txn) Systemstore() datastore.DSReaderWriter {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Systemstore")
+	}
 
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {

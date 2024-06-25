@@ -31,6 +31,10 @@ func (_m *DSReaderWriter) EXPECT() *DSReaderWriter_Expecter {
 func (_m *DSReaderWriter) Delete(ctx context.Context, key datastore.Key) error {
 	ret := _m.Called(ctx, key)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key) error); ok {
 		r0 = rf(ctx, key)
@@ -73,6 +77,10 @@ func (_c *DSReaderWriter_Delete_Call) RunAndReturn(run func(context.Context, dat
 // Get provides a mock function with given fields: ctx, key
 func (_m *DSReaderWriter) Get(ctx context.Context, key datastore.Key) ([]byte, error) {
 	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
 
 	var r0 []byte
 	var r1 error
@@ -129,6 +137,10 @@ func (_c *DSReaderWriter_Get_Call) RunAndReturn(run func(context.Context, datast
 func (_m *DSReaderWriter) GetIterator(q query.Query) (iterable.Iterator, error) {
 	ret := _m.Called(q)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetIterator")
+	}
+
 	var r0 iterable.Iterator
 	var r1 error
 	if rf, ok := ret.Get(0).(func(query.Query) (iterable.Iterator, error)); ok {
@@ -183,6 +195,10 @@ func (_c *DSReaderWriter_GetIterator_Call) RunAndReturn(run func(query.Query) (i
 func (_m *DSReaderWriter) GetSize(ctx context.Context, key datastore.Key) (int, error) {
 	ret := _m.Called(ctx, key)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetSize")
+	}
+
 	var r0 int
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key) (int, error)); ok {
@@ -235,6 +251,10 @@ func (_c *DSReaderWriter_GetSize_Call) RunAndReturn(run func(context.Context, da
 // Has provides a mock function with given fields: ctx, key
 func (_m *DSReaderWriter) Has(ctx context.Context, key datastore.Key) (bool, error) {
 	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Has")
+	}
 
 	var r0 bool
 	var r1 error
@@ -289,6 +309,10 @@ func (_c *DSReaderWriter_Has_Call) RunAndReturn(run func(context.Context, datast
 func (_m *DSReaderWriter) Put(ctx context.Context, key datastore.Key, value []byte) error {
 	ret := _m.Called(ctx, key, value)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Put")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key, []byte) error); ok {
 		r0 = rf(ctx, key, value)
@@ -332,6 +356,10 @@ func (_c *DSReaderWriter_Put_Call) RunAndReturn(run func(context.Context, datast
 // Query provides a mock function with given fields: ctx, q
 func (_m *DSReaderWriter) Query(ctx context.Context, q query.Query) (query.Results, error) {
 	ret := _m.Called(ctx, q)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Query")
+	}
 
 	var r0 query.Results
 	var r1 error

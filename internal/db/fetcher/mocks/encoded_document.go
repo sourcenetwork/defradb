@@ -25,6 +25,10 @@ func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 func (_m *EncodedDocument) ID() []byte {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for ID")
+	}
+
 	var r0 []byte
 	if rf, ok := ret.Get(0).(func() []byte); ok {
 		r0 = rf()
@@ -67,6 +71,10 @@ func (_c *EncodedDocument_ID_Call) RunAndReturn(run func() []byte) *EncodedDocum
 // Properties provides a mock function with given fields: onlyFilterProps
 func (_m *EncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]interface{}, error) {
 	ret := _m.Called(onlyFilterProps)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Properties")
+	}
 
 	var r0 map[client.FieldDefinition]interface{}
 	var r1 error
@@ -154,6 +162,10 @@ func (_c *EncodedDocument_Reset_Call) RunAndReturn(run func()) *EncodedDocument_
 func (_m *EncodedDocument) SchemaVersionID() string {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for SchemaVersionID")
+	}
+
 	var r0 string
 	if rf, ok := ret.Get(0).(func() string); ok {
 		r0 = rf()
@@ -194,6 +206,10 @@ func (_c *EncodedDocument_SchemaVersionID_Call) RunAndReturn(run func() string) 
 // Status provides a mock function with given fields:
 func (_m *EncodedDocument) Status() client.DocumentStatus {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Status")
+	}
 
 	var r0 client.DocumentStatus
 	if rf, ok := ret.Get(0).(func() client.DocumentStatus); ok {
