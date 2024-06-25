@@ -19,9 +19,12 @@ on:
   push:
 
 permissions:
-  # Allow read access to pull request (Required for the `only-new-issues` option.)
+  # Required for the `only-new-issues` option.
   pull-requests: read
+  # Required for analysis.
   contents: read
+  # Required to annotate code in the PR.
+  checks: write
 
 jobs:
   lint-go:
@@ -33,6 +36,7 @@ jobs:
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
+      # Setting up Go explicitly is required for v3.0.0+ of golangci/golangci-lint-action.
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v5
         with:
@@ -41,7 +45,7 @@ jobs:
           cache: false
 
       - name: Run golangci-lint linter
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
