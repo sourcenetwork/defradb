@@ -178,15 +178,14 @@ func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 }
 
 func (db *db) PeerInfo() peer.AddrInfo {
-	db.peerMutex.RLock()
-	defer db.peerMutex.RUnlock()
-	if db.peerInfo.HasValue() {
-		return db.peerInfo.Value()
+	peerInfo := db.peerInfo.Load()
+	if peerInfo != nil {
+		return peerInfo.(peer.AddrInfo)
 	}
 	return peer.AddrInfo{}
 }
 
-func (db *db) loadP2PCollections(ctx context.Context) error {
+func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
 	schemaRoots, err := db.GetAllP2PCollections(ctx)
 	if err != nil {
 		return err
@@ -195,15 +194,16 @@ func (db *db) loadP2PCollections(ctx context.Context) error {
 		ToAdd: schemaRoots,
 	}))
 
-	colMap := make(map[string]struct{})
-	for _, schemaRoot := range schemaRoots {
-		colMap[schemaRoot] = struct{}{}
-	}
-
 	// Get all DocIDs across all collections in the DB
 	cols, err := db.GetCollections(ctx, client.CollectionFetchOptions{})
 	if err != nil {
 		return err
+	}
+
+	// Index the schema roots for faster lookup.
+	colMap := make(map[string]struct{})
+	for _, schemaRoot := range schemaRoots {
+		colMap[schemaRoot] = struct{}{}
 	}
 
 	for _, col := range cols {

@@ -99,6 +99,7 @@ const (
 	errReplicatorExists                         string = "replicator already exists for %s with peerID %s"
 	errReplicatorDocID                          string = "failed to get docID for replicator"
 	errReplicatorCollections                    string = "failed to get collections for replicator"
+	errReplicatorNotFound                       string = "replicator not found"
 )
 
 var (
@@ -138,6 +139,7 @@ var (
 	ErrReplicatorSomeColsHavePolicy             = errors.New("replicator can not use all collections, as some have policy")
 	ErrSelfTargetForReplicator                  = errors.New("can't target ourselves as a replicator")
 	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
+	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

@@ -21,7 +21,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -78,9 +77,8 @@ type db struct {
 	acp immutable.Option[acp.ACP]
 
 	// The peer ID and network address information for the current node
-	// if network is enabled.
-	peerInfo  immutable.Option[peer.AddrInfo]
-	peerMutex sync.RWMutex
+	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
+	peerInfo atomic.Value
 }
 
 // NewDB creates a new instance of the DB using the given options.

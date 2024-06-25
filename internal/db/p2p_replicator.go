@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -32,21 +33,24 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	}
 	defer txn.Discard(ctx)
 
-	db.peerMutex.RLock()
-	if db.peerInfo.HasValue() && rep.Info.ID == db.peerInfo.Value().ID {
-		db.peerMutex.RUnlock()
-		return ErrSelfTargetForReplicator
-	}
-	db.peerMutex.RUnlock()
 	if err := rep.Info.ID.Validate(); err != nil {
 		return err
+	}
+
+	peerInfo := peer.AddrInfo{}
+	if info := db.peerInfo.Load(); info != nil {
+		peerInfo = info.(peer.AddrInfo)
+	}
+	if rep.Info.ID == peerInfo.ID {
+		return ErrSelfTargetForReplicator
 	}
 
 	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
 	// ctx = db.SetContextIdentity(ctx, identity)
 	ctx = SetContextTxn(ctx, txn)
 
-	oldSchemas := make(map[string]struct{})
+	storedRep := client.Replicator{}
+	storedSchemas := make(map[string]struct{})
 	repKey := core.NewReplicatorKey(rep.Info.ID.String())
 	hasOldRep, err := txn.Systemstore().Has(ctx, repKey.ToDS())
 	if err != nil {
@@ -57,14 +61,15 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		if err != nil {
 			return err
 		}
-		oldRep := client.Replicator{}
-		err = json.Unmarshal(repBytes, &oldRep)
+		err = json.Unmarshal(repBytes, &storedRep)
 		if err != nil {
 			return err
 		}
-		for _, schema := range oldRep.Schemas {
-			oldSchemas[schema] = struct{}{}
+		for _, schema := range storedRep.Schemas {
+			storedSchemas[schema] = struct{}{}
 		}
+	} else {
+		storedRep.Info = rep.Info
 	}
 
 	var collections []client.Collection
@@ -102,19 +107,17 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		collections = allCollections
 	}
 
-	rep.Schemas = nil
-	schemaMap := make(map[string]struct{})
 	addedCols := []client.Collection{}
 	for _, col := range collections {
-		rep.Schemas = append(rep.Schemas, col.SchemaRoot())
-		schemaMap[col.SchemaRoot()] = struct{}{}
-		if _, ok := oldSchemas[col.SchemaRoot()]; !ok {
+		if _, ok := storedSchemas[col.SchemaRoot()]; !ok {
+			storedSchemas[col.SchemaRoot()] = struct{}{}
 			addedCols = append(addedCols, col)
+			storedRep.Schemas = append(storedRep.Schemas, col.SchemaRoot())
 		}
 	}
 
 	// persist replicator to the datastore
-	newRepBytes, err := json.Marshal(rep)
+	newRepBytes, err := json.Marshal(storedRep)
 	if err != nil {
 		return err
 	}
@@ -127,7 +130,7 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	txn.OnSuccess(func() {
 		db.events.Publish(event.NewMessage(event.ReplicatorName, event.Replicator{
 			Info:    rep.Info,
-			Schemas: schemaMap,
+			Schemas: storedSchemas,
 			Docs:    db.getDocsHeads(ctx, addedCols),
 		}))
 	})
@@ -217,25 +220,26 @@ func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error
 	// set transaction for all operations
 	ctx = SetContextTxn(ctx, txn)
 
-	oldSchemas := make(map[string]struct{})
+	storedRep := client.Replicator{}
+	storedSchemas := make(map[string]struct{})
 	repKey := core.NewReplicatorKey(rep.Info.ID.String())
 	hasOldRep, err := txn.Systemstore().Has(ctx, repKey.ToDS())
 	if err != nil {
 		return err
 	}
-	if hasOldRep {
-		repBytes, err := txn.Systemstore().Get(ctx, repKey.ToDS())
-		if err != nil {
-			return err
-		}
-		oldRep := client.Replicator{}
-		err = json.Unmarshal(repBytes, &oldRep)
-		if err != nil {
-			return err
-		}
-		for _, schema := range oldRep.Schemas {
-			oldSchemas[schema] = struct{}{}
-		}
+	if !hasOldRep {
+		return ErrReplicatorNotFound
+	}
+	repBytes, err := txn.Systemstore().Get(ctx, repKey.ToDS())
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(repBytes, &storedRep)
+	if err != nil {
+		return err
+	}
+	for _, schema := range storedRep.Schemas {
+		storedSchemas[schema] = struct{}{}
 	}
 
 	var collections []client.Collection
@@ -255,18 +259,19 @@ func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error
 			return err
 		}
 	} else {
-		oldSchemas = make(map[string]struct{})
+		storedSchemas = make(map[string]struct{})
 	}
 
-	rep.Schemas = nil
 	for _, col := range collections {
-		delete(oldSchemas, col.SchemaRoot())
+		delete(storedSchemas, col.SchemaRoot())
 	}
-	for schema := range oldSchemas {
-		rep.Schemas = append(rep.Schemas, schema)
+	// Update the list of schemas for this replicator prior to persisting.
+	storedRep.Schemas = []string{}
+	for schema := range storedSchemas {
+		storedRep.Schemas = append(storedRep.Schemas, schema)
 	}
 
-	// persist the replicator to the store, deleting it if no schemas remain
+	// Persist the replicator to the store, deleting it if no schemas remain
 	key := core.NewReplicatorKey(rep.Info.ID.String())
 	if len(rep.Schemas) == 0 {
 		err := txn.Systemstore().Delete(ctx, key.ToDS())
@@ -287,7 +292,7 @@ func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error
 	txn.OnSuccess(func() {
 		db.events.Publish(event.NewMessage(event.ReplicatorName, event.Replicator{
 			Info:    rep.Info,
-			Schemas: oldSchemas,
+			Schemas: storedSchemas,
 		}))
 	})
 
@@ -321,7 +326,7 @@ func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 	return reps, nil
 }
 
-func (db *db) loadReplicators(ctx context.Context) error {
+func (db *db) loadAndPublishReplicators(ctx context.Context) error {
 	replicators, err := db.GetAllReplicators(ctx)
 	if err != nil {
 		return err

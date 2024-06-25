@@ -184,6 +184,52 @@ func TestRemoveP2PCollection_WithValidCollectionAndDoc_ShouldSucceed(t *testing.
 	}
 }
 
+func TestLoadP2PCollection_WithValidCollectionsAndDocs_ShouldSucceed(t *testing.T) {
+	ctx := context.Background()
+	db, err := newDefraMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+	sub, err := db.events.Subscribe(event.P2PTopicName)
+	require.NoError(t, err)
+	cols1, err := db.AddSchema(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col1, err := db.GetCollectionByName(ctx, cols1[0].Name.Value())
+	require.NoError(t, err)
+	doc1, err := client.NewDocFromMap(map[string]any{"name": "Alice"}, col1.Definition())
+	require.NoError(t, err)
+	err = col1.Create(ctx, doc1)
+	require.NoError(t, err)
+
+	cols2, err := db.AddSchema(ctx, `type Book { name: String }`)
+	require.NoError(t, err)
+	col2, err := db.GetCollectionByName(ctx, cols2[0].Name.Value())
+	require.NoError(t, err)
+	doc2, err := client.NewDocFromMap(map[string]any{"name": "Some book"}, col2.Definition())
+	require.NoError(t, err)
+	err = col2.Create(ctx, doc2)
+	require.NoError(t, err)
+
+	err = db.AddP2PCollections(ctx, []string{col1.SchemaRoot()})
+	require.NoError(t, err)
+	// Check that the event was published
+	for msg := range sub.Message() {
+		p2pTopic := msg.Data.(event.P2PTopic)
+		require.Equal(t, []string{col1.SchemaRoot()}, p2pTopic.ToAdd)
+		require.Equal(t, []string{doc1.ID().String()}, p2pTopic.ToRemove)
+		break
+	}
+	err = db.loadAndPublishP2PCollections(ctx)
+	require.NoError(t, err)
+	// Check that the event was published
+	msg := <-sub.Message()
+	p2pTopic := msg.Data.(event.P2PTopic)
+	require.Equal(t, []string{col1.SchemaRoot()}, p2pTopic.ToAdd)
+	msg = <-sub.Message()
+	p2pTopic = msg.Data.(event.P2PTopic)
+	require.Equal(t, []string{doc2.ID().String()}, p2pTopic.ToAdd)
+
+}
+
 func TestGetAllP2PCollections_WithMultipleValidCollections_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
 	db, err := newDefraMemoryDB(ctx)
