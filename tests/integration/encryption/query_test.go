@@ -55,3 +55,61 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testing.T) {
+	const docID = "bae-ab8ae7d9-6473-5101-ba02-66b217948d7a"
+
+	const query = `
+		query {
+			Users {
+				_docID
+				name
+				points
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+                    type Users {
+                        name: String
+                        points: Int @crdt(type: "pcounter")
+                    }
+                `},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"points": 5
+					}`,
+				IsEncrypted: true,
+			},
+			testUtils.Request{
+				Request: query,
+				Results: []map[string]any{
+					{
+						"_docID": docID,
+						"name":   "John",
+						"points": 5,
+					},
+				},
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc:   `{ "points": 3 }`,
+			},
+			testUtils.Request{
+				Request: query,
+				Results: []map[string]any{
+					{
+						"_docID": docID,
+						"name":   "John",
+						"points": 8,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

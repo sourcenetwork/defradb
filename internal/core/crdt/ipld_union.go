@@ -153,21 +153,21 @@ func (c CRDT) GetStatus() uint8 {
 }
 
 // GetData returns the data of the delta.
-//
-// Currently only implemented for LWWRegDelta.
 func (c CRDT) GetData() []byte {
 	if c.LWWRegDelta != nil {
 		return c.LWWRegDelta.Data
+	} else if c.CounterDelta != nil {
+		return c.CounterDelta.Data
 	}
 	return nil
 }
 
 // SetData sets the data of the delta.
-//
-// Currently only implemented for LWWRegDelta.
 func (c CRDT) SetData(data []byte) {
 	if c.LWWRegDelta != nil {
 		c.LWWRegDelta.Data = data
+	} else if c.CounterDelta != nil {
+		c.CounterDelta.Data = data
 	}
 }
 
