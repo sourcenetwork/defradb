@@ -11,6 +11,8 @@
 package db
 
 import (
+	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -94,6 +96,9 @@ const (
 	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
 	errRelationMissingField                     string = "relation missing field"
 	errNoTransactionInContext                   string = "no transaction in context"
+	errReplicatorExists                         string = "replicator already exists for %s with peerID %s"
+	errReplicatorDocID                          string = "failed to get docID for replicator"
+	errReplicatorCollections                    string = "failed to get collections for replicator"
 )
 
 var (
@@ -127,7 +132,12 @@ var (
 	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
 	ErrRelationMissingField                     = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                = errors.New("relation can only have a single field set as primary")
+	ErrP2PColHasPolicy                          = errors.New("p2p collection specified has a policy on it")
 	ErrNoTransactionInContext                   = errors.New(errNoTransactionInContext)
+	ErrReplicatorColHasPolicy                   = errors.New("replicator collection specified has a policy on it")
+	ErrReplicatorSomeColsHavePolicy             = errors.New("replicator can not use all collections, as some have policy")
+	ErrSelfTargetForReplicator                  = errors.New("can't target ourselves as a replicator")
+	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -616,4 +626,20 @@ func NewErrRelationMissingField(objectName, relationName string) error {
 		errors.NewKV("Object", objectName),
 		errors.NewKV("RelationName", relationName),
 	)
+}
+
+func NewErrReplicatorExists(collection string, peerID peer.ID) error {
+	return errors.New(
+		errReplicatorExists,
+		errors.NewKV("Collection", collection),
+		errors.NewKV("PeerID", peerID.String()),
+	)
+}
+
+func NewErrReplicatorDocID(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errReplicatorDocID, inner, kv...)
+}
+
+func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errReplicatorCollections, inner, kv...)
 }

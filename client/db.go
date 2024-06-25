@@ -106,6 +106,11 @@ type Store interface {
 	// Backup holds the backup related methods that must be implemented by the database.
 	Backup
 
+	// P2P contains functions related to the P2P system.
+	//
+	// These functions are only useful if there is a configured network peer.
+	P2P
+
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//

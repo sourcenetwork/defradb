@@ -18,8 +18,6 @@ import (
 
 // P2P is a peer connected database implementation.
 type P2P interface {
-	DB
-
 	// PeerInfo returns the p2p host id and listening addresses.
 	PeerInfo() peer.AddrInfo
 

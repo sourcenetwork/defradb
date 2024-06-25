@@ -39,21 +39,24 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	return database
 }
 
-func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
+func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
-	n, err := NewNode(
+	defer db.Close()
+	n, err := NewPeer(
 		context.Background(),
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithEnableRelay(true),
 	)
 	require.NoError(t, err)
-	defer n.Close()
+	n.Close()
 }
 
-func TestNewNode_WithDBClosed_NoError(t *testing.T) {
+func TestNewPeer_WithDBClosed_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 
@@ -61,44 +64,53 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	require.NoError(t, err)
 	db.Close()
 
-	_, err = NewNode(
+	_, err = NewPeer(
 		context.Background(),
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 	)
 	require.ErrorContains(t, err, "datastore closed")
 }
 
-func TestNewNode_NoPubSub_NoError(t *testing.T) {
+func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
-	n, err := NewNode(
+	defer db.Close()
+
+	n, err := NewPeer(
 		context.Background(),
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithEnablePubSub(false),
 	)
 	require.NoError(t, err)
-	defer n.Close()
 	require.Nil(t, n.ps)
+	n.Close()
 }
 
-func TestNewNode_WithEnablePubSub_NoError(t *testing.T) {
+func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
+	defer db.Close()
 
-	n, err := NewNode(
+	n, err := NewPeer(
 		ctx,
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithEnablePubSub(true),
 	)
 
 	require.NoError(t, err)
-	defer n.Close()
 	// overly simple check of validity of pubsub, avoiding the process of creating a PubSub
 	require.NotNil(t, n.ps)
+	n.Close()
 }
 
 func TestNodeClose_NoError(t *testing.T) {
@@ -106,46 +118,56 @@ func TestNodeClose_NoError(t *testing.T) {
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
-	n, err := NewNode(
+	defer db.Close()
+	n, err := NewPeer(
 		context.Background(),
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 	)
 	require.NoError(t, err)
 	n.Close()
 }
 
-func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
+func TestNewPeer_BootstrapWithNoPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
+	defer db.Close()
 
-	n1, err := NewNode(
+	n1, err := NewPeer(
 		ctx,
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
-	defer n1.Close()
 	n1.Bootstrap([]peer.AddrInfo{})
+	n1.Close()
 }
 
-func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
+func TestNewPeer_BootstrapWithOnePeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
-
-	n1, err := NewNode(
+	defer db.Close()
+	n1, err := NewPeer(
 		ctx,
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
-	n2, err := NewNode(
+	n2, err := NewPeer(
 		ctx,
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
@@ -157,22 +179,27 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	n2.Bootstrap(addrs)
 }
 
-func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
+func TestNewPeer_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
+	defer db.Close()
 
-	n1, err := NewNode(
+	n1, err := NewPeer(
 		ctx,
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
-	n2, err := NewNode(
+	n2, err := NewPeer(
 		ctx,
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
@@ -192,13 +219,16 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
-	n, err := NewNode(
+	defer db.Close()
+
+	n, err := NewPeer(
 		context.Background(),
-		db,
+		db.Root(),
+		db.Blockstore(),
+		db.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
-	defer n.Close()
-
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
+	n.Close()
 }

@@ -19,12 +19,10 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -33,50 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
-
-func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
-	queue := newMergeQueue()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case msg, ok := <-sub.Message():
-			if !ok {
-				return
-			}
-			merge, ok := msg.Data.(event.Merge)
-			if !ok {
-				continue
-			}
-			go func() {
-				// ensure only one merge per docID
-				queue.add(merge.DocID)
-				defer queue.done(merge.DocID)
-
-				// retry the merge process if a conflict occurs
-				//
-				// conficts occur when a user updates a document
-				// while a merge is in progress.
-				var err error
-				for i := 0; i < db.MaxTxnRetries(); i++ {
-					err = db.executeMerge(ctx, merge)
-					if errors.Is(err, badger.ErrTxnConflict) {
-						continue // retry merge
-					}
-					break // merge success or error
-				}
-
-				if err != nil {
-					log.ErrorContextE(
-						ctx,
-						"Failed to execute merge",
-						err,
-						corelog.Any("Event", merge))
-				}
-			}()
-		}
-	}
-}
 
 func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)

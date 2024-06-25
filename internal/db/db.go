@@ -21,6 +21,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -75,6 +76,11 @@ type db struct {
 
 	// Contains ACP if it exists
 	acp immutable.Option[acp.ACP]
+
+	// The peer ID and network address information for the current node
+	// if network is enabled.
+	peerInfo  immutable.Option[peer.AddrInfo]
+	peerMutex sync.RWMutex
 }
 
 // NewDB creates a new instance of the DB using the given options.
@@ -126,11 +132,11 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
 	if err != nil {
 		return nil, err
 	}
-	go db.handleMerges(ctx, sub)
+	go db.handleMessages(ctx, sub)
 
 	return db, nil
 }

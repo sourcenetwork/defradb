@@ -23,17 +23,23 @@ import (
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	db1 := FixtureNewMemoryDBWithBroadcaster(t)
 	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	defer db1.Close()
+	defer db2.Close()
 	ctx := context.Background()
-	n1, err := NewNode(
+	n1, err := NewPeer(
 		ctx,
-		db1,
+		db1.Root(),
+		db1.Blockstore(),
+		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
-	n2, err := NewNode(
+	n2, err := NewPeer(
 		ctx,
-		db2,
+		db2.Root(),
+		db2.Blockstore(),
+		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -50,17 +56,23 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	db1 := FixtureNewMemoryDBWithBroadcaster(t)
 	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	defer db1.Close()
+	defer db2.Close()
 	ctx := context.Background()
-	n1, err := NewNode(
+	n1, err := NewPeer(
 		ctx,
-		db1,
+		db1.Root(),
+		db1.Blockstore(),
+		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
-	n2, err := NewNode(
+	n2, err := NewPeer(
 		ctx,
-		db2,
+		db2.Root(),
+		db2.Blockstore(),
+		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -80,17 +92,23 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_ClosingConnectionError(t *testing.T) {
 	db1 := FixtureNewMemoryDBWithBroadcaster(t)
 	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	defer db1.Close()
+	defer db2.Close()
 	ctx := context.Background()
-	n1, err := NewNode(
+	n1, err := NewPeer(
 		ctx,
-		db1,
+		db1.Root(),
+		db1.Blockstore(),
+		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
-	n2, err := NewNode(
+	n2, err := NewPeer(
 		ctx,
-		db2,
+		db2.Root(),
+		db2.Blockstore(),
+		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)

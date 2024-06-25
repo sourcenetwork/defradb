@@ -18,7 +18,9 @@ import (
 	"sync"
 
 	cid "github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
@@ -43,7 +45,9 @@ type server struct {
 	opts []grpc.DialOption
 
 	topics map[string]pubsubTopic
-	mu     sync.Mutex
+	// replicators is a map from collectionName => peerId
+	replicators map[string]map[peer.ID]struct{}
+	mu          sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
 
@@ -61,9 +65,10 @@ type pubsubTopic struct {
 // underlying DB instance.
 func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s := &server{
-		peer:   p,
-		conns:  make(map[libpeer.ID]*grpc.ClientConn),
-		topics: make(map[string]pubsubTopic),
+		peer:        p,
+		conns:       make(map[libpeer.ID]*grpc.ClientConn),
+		topics:      make(map[string]pubsubTopic),
+		replicators: make(map[string]map[peer.ID]struct{}),
 	}
 
 	cred := insecure.NewCredentials()
@@ -73,38 +78,6 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	}
 
 	s.opts = append(defaultOpts, opts...)
-	if s.peer.ps != nil {
-		colMap, err := p.loadP2PCollections(p.ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Get all DocIDs across all collections in the DB
-		cols, err := s.peer.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		i := 0
-		for _, col := range cols {
-			// If we subscribed to the collection, we skip subscribing to the collection's docIDs.
-			if _, ok := colMap[col.SchemaRoot()]; ok {
-				continue
-			}
-			// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
-			docIDChan, err := col.GetAllDocIDs(p.ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			for docID := range docIDChan {
-				if err := s.addPubSubTopic(docID.ID.String(), true); err != nil {
-					return nil, err
-				}
-				i++
-			}
-		}
-	}
 
 	return s, nil
 }
@@ -157,7 +130,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, err
 	}
 
-	s.peer.db.Events().Publish(event.NewMessage(event.MergeName, event.Merge{
+	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:      docID.String(),
 		ByPeer:     byPeer,
 		FromPeer:   pid,
@@ -313,7 +286,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 	evt := event.NewMessage(event.PubSubName, event.PubSub{
 		Peer: from,
 	})
-	s.peer.db.Events().Publish(evt)
+	s.peer.bus.Publish(evt)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
@@ -336,4 +309,63 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 		return "", errors.Wrap("parsing stream PeerID", err)
 	}
 	return pid, nil
+}
+
+func (s *server) updatePubSubTopics(evt event.P2PTopic) {
+	for _, topic := range evt.ToAdd {
+		err := s.addPubSubTopic(topic, true)
+		if err != nil {
+			log.ErrorContextE(s.peer.ctx, "Failed to add pubsub topic.", err)
+		}
+	}
+
+	for _, topic := range evt.ToRemove {
+		err := s.removePubSubTopic(topic)
+		if err != nil {
+			log.ErrorContextE(s.peer.ctx, "Failed to remove pubsub topic.", err)
+		}
+	}
+}
+
+func (s *server) updateReplicators(evt event.Replicator) {
+	isDeleteRep := len(evt.Schemas) == 0
+	// update the cached replicators
+	s.mu.Lock()
+	for schema, peers := range s.replicators {
+		if _, hasSchema := evt.Schemas[schema]; hasSchema {
+			s.replicators[schema][evt.Info.ID] = struct{}{}
+			delete(evt.Schemas, schema)
+		} else {
+			if _, exists := peers[evt.Info.ID]; exists {
+				delete(s.replicators[schema], evt.Info.ID)
+			}
+		}
+	}
+	for schema := range evt.Schemas {
+		if _, exists := s.replicators[schema]; !exists {
+			s.replicators[schema] = make(map[peer.ID]struct{})
+		}
+		s.replicators[schema][evt.Info.ID] = struct{}{}
+	}
+	s.mu.Unlock()
+
+	if isDeleteRep {
+		s.peer.host.Peerstore().ClearAddrs(evt.Info.ID)
+	} else {
+		s.peer.host.Peerstore().AddAddrs(evt.Info.ID, evt.Info.Addrs, peerstore.PermanentAddrTTL)
+	}
+
+	if evt.Docs != nil {
+		for update := range evt.Docs {
+			if err := s.pushLog(s.peer.ctx, update, evt.Info.ID); err != nil {
+				log.ErrorContextE(
+					s.peer.ctx,
+					"Failed to replicate log",
+					err,
+					corelog.Any("CID", update.Cid),
+					corelog.Any("PeerID", evt.Info.ID),
+				)
+			}
+		}
+	}
 }

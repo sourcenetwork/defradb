@@ -77,7 +77,7 @@ func WithPeers(peers ...peer.AddrInfo) NodeOpt {
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
 	DB     client.DB
-	Node   *net.Node
+	Peer   *net.Peer
 	Server *http.Server
 }
 
@@ -138,27 +138,22 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 		return nil, err
 	}
 
-	var node *net.Node
+	var peer *net.Peer
 	if !options.disableP2P {
 		// setup net node
-		node, err = net.NewNode(ctx, db, netOpts...)
+		peer, err = net.NewPeer(ctx, db.Root(), db.Blockstore(), db.Events(), netOpts...)
 		if err != nil {
 			return nil, err
 		}
 		if len(options.peers) > 0 {
-			node.Bootstrap(options.peers)
+			peer.Bootstrap(options.peers)
 		}
 	}
 
 	var server *http.Server
 	if !options.disableAPI {
 		// setup http server
-		var handler *http.Handler
-		if node != nil {
-			handler, err = http.NewHandler(node)
-		} else {
-			handler, err = http.NewHandler(db)
-		}
+		handler, err := http.NewHandler(db)
 		if err != nil {
 			return nil, err
 		}
@@ -170,15 +165,15 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 
 	return &Node{
 		DB:     db,
-		Node:   node,
+		Peer:   peer,
 		Server: server,
 	}, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	if n.Node != nil {
-		if err := n.Node.Start(); err != nil {
+	if n.Peer != nil {
+		if err := n.Peer.Start(); err != nil {
 			return err
 		}
 	}
@@ -203,9 +198,10 @@ func (n *Node) Close(ctx context.Context) error {
 	if n.Server != nil {
 		err = n.Server.Shutdown(ctx)
 	}
-	if n.Node != nil {
-		n.Node.Close()
-	} else {
+	if n.Peer != nil {
+		n.Peer.Close()
+	}
+	if n.DB != nil {
 		n.DB.Close()
 	}
 	return err
