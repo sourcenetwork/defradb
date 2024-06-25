@@ -129,10 +129,16 @@ func NewDefraCommand() *cobra.Command {
 		MakeKeyringExportCommand(),
 	)
 
+	identity := MakeIdentityCommand()
+	identity.AddCommand(
+		MakeIdentityNewCommand(),
+	)
+
 	root := MakeRootCommand()
 	root.AddCommand(
 		client,
 		keyring,
+		identity,
 		MakeStartCommand(),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(),
