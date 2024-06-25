@@ -22,6 +22,53 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 	return &Txn_Expecter{mock: &_m.Mock}
 }
 
+// Blockstore provides a mock function with given fields:
+func (_m *Txn) Blockstore() datastore.Blockstore {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Blockstore")
+	}
+
+	var r0 datastore.Blockstore
+	if rf, ok := ret.Get(0).(func() datastore.Blockstore); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.Blockstore)
+		}
+	}
+
+	return r0
+}
+
+// Txn_Blockstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Blockstore'
+type Txn_Blockstore_Call struct {
+	*mock.Call
+}
+
+// Blockstore is a helper method to define mock.On call
+func (_e *Txn_Expecter) Blockstore() *Txn_Blockstore_Call {
+	return &Txn_Blockstore_Call{Call: _e.mock.On("Blockstore")}
+}
+
+func (_c *Txn_Blockstore_Call) Run(run func()) *Txn_Blockstore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Txn_Blockstore_Call) Return(_a0 datastore.Blockstore) *Txn_Blockstore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Txn_Blockstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_Blockstore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Commit provides a mock function with given fields: ctx
 func (_m *Txn) Commit(ctx context.Context) error {
 	ret := _m.Called(ctx)
@@ -64,53 +111,6 @@ func (_c *Txn_Commit_Call) Return(_a0 error) *Txn_Commit_Call {
 }
 
 func (_c *Txn_Commit_Call) RunAndReturn(run func(context.Context) error) *Txn_Commit_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DAGstore provides a mock function with given fields:
-func (_m *Txn) DAGstore() datastore.DAGStore {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for DAGstore")
-	}
-
-	var r0 datastore.DAGStore
-	if rf, ok := ret.Get(0).(func() datastore.DAGStore); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DAGStore)
-		}
-	}
-
-	return r0
-}
-
-// Txn_DAGstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DAGstore'
-type Txn_DAGstore_Call struct {
-	*mock.Call
-}
-
-// DAGstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) DAGstore() *Txn_DAGstore_Call {
-	return &Txn_DAGstore_Call{Call: _e.mock.On("DAGstore")}
-}
-
-func (_c *Txn_DAGstore_Call) Run(run func()) *Txn_DAGstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_DAGstore_Call) Return(_a0 datastore.DAGStore) *Txn_DAGstore_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Txn_DAGstore_Call) RunAndReturn(run func() datastore.DAGStore) *Txn_DAGstore_Call {
 	_c.Call.Return(run)
 	return _c
 }

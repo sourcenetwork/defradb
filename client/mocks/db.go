@@ -39,6 +39,10 @@ func (_m *DB) EXPECT() *DB_Expecter {
 func (_m *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
 	ret := _m.Called(ctx, collectionIDs)
 
+	if len(ret) == 0 {
+		panic("no return value specified for AddP2PCollections")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
 		r0 = rf(ctx, collectionIDs)
@@ -350,19 +354,19 @@ func (_c *DB_BasicImport_Call) RunAndReturn(run func(context.Context, string) er
 }
 
 // Blockstore provides a mock function with given fields:
-func (_m *DB) Blockstore() datastore.DAGStore {
+func (_m *DB) Blockstore() datastore.Blockstore {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Blockstore")
 	}
 
-	var r0 datastore.DAGStore
-	if rf, ok := ret.Get(0).(func() datastore.DAGStore); ok {
+	var r0 datastore.Blockstore
+	if rf, ok := ret.Get(0).(func() datastore.Blockstore); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DAGStore)
+			r0 = ret.Get(0).(datastore.Blockstore)
 		}
 	}
 
@@ -386,12 +390,12 @@ func (_c *DB_Blockstore_Call) Run(run func()) *DB_Blockstore_Call {
 	return _c
 }
 
-func (_c *DB_Blockstore_Call) Return(_a0 datastore.DAGStore) *DB_Blockstore_Call {
+func (_c *DB_Blockstore_Call) Return(_a0 datastore.Blockstore) *DB_Blockstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.DAGStore) *DB_Blockstore_Call {
+func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_Blockstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -431,6 +435,10 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 // DeleteReplicator provides a mock function with given fields: ctx, rep
 func (_m *DB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	ret := _m.Called(ctx, rep)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteReplicator")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, client.Replicator) error); ok {
@@ -629,6 +637,10 @@ func (_c *DB_GetAllIndexes_Call) RunAndReturn(run func(context.Context) (map[str
 func (_m *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ret := _m.Called(ctx)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllP2PCollections")
+	}
+
 	var r0 []string
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
@@ -682,6 +694,10 @@ func (_c *DB_GetAllP2PCollections_Call) RunAndReturn(run func(context.Context) (
 // GetAllReplicators provides a mock function with given fields: ctx
 func (_m *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllReplicators")
+	}
 
 	var r0 []client.Replicator
 	var r1 error
@@ -1324,6 +1340,10 @@ func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string, im
 func (_m *DB) PeerInfo() peer.AddrInfo {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for PeerInfo")
+	}
+
 	var r0 peer.AddrInfo
 	if rf, ok := ret.Get(0).(func() peer.AddrInfo); ok {
 		r0 = rf()
@@ -1458,6 +1478,10 @@ func (_c *DB_PrintDump_Call) RunAndReturn(run func(context.Context) error) *DB_P
 func (_m *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	ret := _m.Called(ctx, collectionIDs)
 
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveP2PCollections")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
 		r0 = rf(ctx, collectionIDs)
@@ -1497,49 +1521,49 @@ func (_c *DB_RemoveP2PCollections_Call) RunAndReturn(run func(context.Context, [
 	return _c
 }
 
-// Root provides a mock function with given fields:
-func (_m *DB) Root() datastore.RootStore {
+// Rootstore provides a mock function with given fields:
+func (_m *DB) Rootstore() datastore.Rootstore {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for Root")
+		panic("no return value specified for Rootstore")
 	}
 
-	var r0 datastore.RootStore
-	if rf, ok := ret.Get(0).(func() datastore.RootStore); ok {
+	var r0 datastore.Rootstore
+	if rf, ok := ret.Get(0).(func() datastore.Rootstore); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.RootStore)
+			r0 = ret.Get(0).(datastore.Rootstore)
 		}
 	}
 
 	return r0
 }
 
-// DB_Root_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Root'
-type DB_Root_Call struct {
+// DB_Rootstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rootstore'
+type DB_Rootstore_Call struct {
 	*mock.Call
 }
 
-// Root is a helper method to define mock.On call
-func (_e *DB_Expecter) Root() *DB_Root_Call {
-	return &DB_Root_Call{Call: _e.mock.On("Root")}
+// Rootstore is a helper method to define mock.On call
+func (_e *DB_Expecter) Rootstore() *DB_Rootstore_Call {
+	return &DB_Rootstore_Call{Call: _e.mock.On("Rootstore")}
 }
 
-func (_c *DB_Root_Call) Run(run func()) *DB_Root_Call {
+func (_c *DB_Rootstore_Call) Run(run func()) *DB_Rootstore_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *DB_Root_Call) Return(_a0 datastore.RootStore) *DB_Root_Call {
+func (_c *DB_Rootstore_Call) Return(_a0 datastore.Rootstore) *DB_Rootstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Root_Call) RunAndReturn(run func() datastore.RootStore) *DB_Root_Call {
+func (_c *DB_Rootstore_Call) RunAndReturn(run func() datastore.Rootstore) *DB_Rootstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1641,6 +1665,10 @@ func (_c *DB_SetMigration_Call) RunAndReturn(run func(context.Context, client.Le
 // SetReplicator provides a mock function with given fields: ctx, rep
 func (_m *DB) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	ret := _m.Called(ctx, rep)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetReplicator")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, client.Replicator) error); ok {
