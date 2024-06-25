@@ -10,17 +10,22 @@
 
 package identity
 
-import "github.com/sourcenetwork/defradb/crypto"
+import (
+	"encoding/hex"
+
+	"github.com/sourcenetwork/defradb/crypto"
+)
 
 // RawIdentity holds the raw bytes that make up an actor's identity.
 type RawIdentity struct {
-	// An actor's private key.
-	PrivateKey []byte
+	// PrivateKey is a secp256k1 private key that is a 256-bit big-endian
+	// binary-encoded number, padded to a length of 32 bytes in HEX format.
+	PrivateKey string
 
-	// An actor's corresponding public key address.
-	PublicKey []byte
+	// PublicKey is a compressed 33-byte secp256k1 public key in HEX format.
+	PublicKey string
 
-	// An actor's DID. Generated from the public key address.
+	// DID is `did:key` key generated from the public key address.
 	DID string
 }
 
@@ -43,8 +48,8 @@ func Generate() (RawIdentity, error) {
 	newIdentity := maybeNewIdentity.Value()
 
 	return RawIdentity{
-		PrivateKey: newIdentity.PrivateKey.Serialize(),
-		PublicKey:  newIdentity.PublicKey.SerializeUncompressed(),
+		PrivateKey: hex.EncodeToString(newIdentity.PrivateKey.Serialize()),
+		PublicKey:  hex.EncodeToString(newIdentity.PublicKey.SerializeCompressed()),
 		DID:        newIdentity.DID,
 	}, nil
 }
