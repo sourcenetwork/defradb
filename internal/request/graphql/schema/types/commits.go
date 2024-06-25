@@ -134,39 +134,6 @@ var (
 		},
 	)
 
-	commitFields = gql.NewEnum(
-		gql.EnumConfig{
-			Name:        "commitFields",
-			Description: commitFieldsEnumDescription,
-			Values: gql.EnumValueConfigMap{
-				"height": &gql.EnumValueConfig{
-					Value:       "height",
-					Description: commitHeightFieldDescription,
-				},
-				"cid": &gql.EnumValueConfig{
-					Value:       "cid",
-					Description: commitCIDFieldDescription,
-				},
-				request.DocIDArgName: &gql.EnumValueConfig{
-					Value:       request.DocIDArgName,
-					Description: commitDocIDFieldDescription,
-				},
-				"collectionID": &gql.EnumValueConfig{
-					Value:       "collectionID",
-					Description: commitCollectionIDFieldDescription,
-				},
-				"fieldName": &gql.EnumValueConfig{
-					Value:       "fieldName",
-					Description: commitFieldNameFieldDescription,
-				},
-				"fieldId": &gql.EnumValueConfig{
-					Value:       "fieldId",
-					Description: commitFieldIDFieldDescription,
-				},
-			},
-		},
-	)
-
 	QueryCommits = &gql.Field{
 		Name:        "commits",
 		Description: commitsQueryDescription,
@@ -179,7 +146,38 @@ var (
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
-						commitFields,
+						gql.NewEnum(
+							gql.EnumConfig{
+								Name:        "commitFields",
+								Description: commitFieldsEnumDescription,
+								Values: gql.EnumValueConfigMap{
+									"height": &gql.EnumValueConfig{
+										Value:       "height",
+										Description: commitHeightFieldDescription,
+									},
+									"cid": &gql.EnumValueConfig{
+										Value:       "cid",
+										Description: commitCIDFieldDescription,
+									},
+									request.DocIDArgName: &gql.EnumValueConfig{
+										Value:       request.DocIDArgName,
+										Description: commitDocIDFieldDescription,
+									},
+									"collectionID": &gql.EnumValueConfig{
+										Value:       "collectionID",
+										Description: commitCollectionIDFieldDescription,
+									},
+									"fieldName": &gql.EnumValueConfig{
+										Value:       "fieldName",
+										Description: commitFieldNameFieldDescription,
+									},
+									"fieldId": &gql.EnumValueConfig{
+										Value:       "fieldId",
+										Description: commitFieldIDFieldDescription,
+									},
+								},
+							},
+						),
 					),
 				),
 				GroupByArgDescription,
