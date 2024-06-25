@@ -97,10 +97,10 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	return node.DB, err
 }
 
-// setupDatabase returns the database implementation for the current
+// setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupDatabase(s *state) (*node.Node, string, error) {
+func setupNode(s *state) (*node.Node, string, error) {
 	opts := []node.Option{
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped

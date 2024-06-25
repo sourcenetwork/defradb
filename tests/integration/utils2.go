@@ -649,10 +649,10 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := setupDatabase(s)
+		node, path, err := setupNode(s)
 		require.Nil(s.t, err)
 
-		c, err := setupClient(s, db)
+		c, err := setupClient(s, node)
 		require.Nil(s.t, err)
 
 		s.nodes = append(s.nodes, c)
@@ -673,7 +673,7 @@ func restartNodes(
 	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
-		node, _, err := setupDatabase(s)
+		node, _, err := setupNode(s)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
@@ -787,7 +787,7 @@ func configureNode(
 		return
 	}
 
-	node, path, err := setupDatabase(s) //disable change dector, or allow it?
+	node, path, err := setupNode(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	privateKey, err := crypto.GenerateEd25519()

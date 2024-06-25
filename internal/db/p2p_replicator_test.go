@@ -92,12 +92,10 @@ func TestSetReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peer.ID("other"), replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peer.ID("other"), replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
 }
 
 func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testing.T) {
@@ -120,12 +118,10 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema1.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema1.Root: {}}, replicator.Schemas)
 
 	cols2, err := db.AddSchema(ctx, `type Book { name: String }`)
 	require.NoError(t, err)
@@ -136,12 +132,10 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 		Schemas: []string{"Book"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema1.Root: {}, schema2.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg = <-sub.Message()
+	replicator = msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema1.Root: {}, schema2.Root: {}}, replicator.Schemas)
 }
 
 func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
@@ -165,14 +159,12 @@ func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peer.ID("other"), replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{col.SchemaRoot(): {}}, replicator.Schemas)
-		for docEvt := range replicator.Docs {
-			require.Equal(t, doc.ID().String(), docEvt.DocID)
-		}
-		break
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peer.ID("other"), replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{col.SchemaRoot(): {}}, replicator.Schemas)
+	for docEvt := range replicator.Docs {
+		require.Equal(t, doc.ID().String(), docEvt.DocID)
 	}
 }
 
@@ -214,20 +206,16 @@ func TestDeleteReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
 	err = db.DeleteReplicator(ctx, client.Replicator{Info: peer.AddrInfo{ID: peerID}})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{}, replicator.Schemas)
-		break
-	}
+	msg = <-sub.Message()
+	replicator = msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{}, replicator.Schemas)
 }
 
 func TestDeleteReplicator_PartialWithValidCollections_ShouldSucceed(t *testing.T) {
@@ -254,20 +242,17 @@ func TestDeleteReplicator_PartialWithValidCollections_ShouldSucceed(t *testing.T
 		Schemas: []string{"User", "Book"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema1.Root: {}, schema2.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema1.Root: {}, schema2.Root: {}}, replicator.Schemas)
+
 	err = db.DeleteReplicator(ctx, client.Replicator{Info: peer.AddrInfo{ID: peerID}, Schemas: []string{"User"}})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema2.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg = <-sub.Message()
+	replicator = msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema2.Root: {}}, replicator.Schemas)
 }
 
 func TestGetAllReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
@@ -290,12 +275,10 @@ func TestGetAllReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
 
 	reps, err := db.GetAllReplicators(ctx)
 	require.NoError(t, err)
@@ -323,19 +306,15 @@ func TestLoadReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 		Schemas: []string{"User"},
 	})
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg := <-sub.Message()
+	replicator := msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
 
 	err = db.loadAndPublishReplicators(ctx)
 	require.NoError(t, err)
-	for msg := range sub.Message() {
-		replicator := msg.Data.(event.Replicator)
-		require.Equal(t, peerID, replicator.Info.ID)
-		require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
-		break
-	}
+	msg = <-sub.Message()
+	replicator = msg.Data.(event.Replicator)
+	require.Equal(t, peerID, replicator.Info.ID)
+	require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
 }

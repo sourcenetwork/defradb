@@ -227,7 +227,6 @@ func TestLoadP2PCollection_WithValidCollectionsAndDocs_ShouldSucceed(t *testing.
 	msg = <-sub.Message()
 	p2pTopic = msg.Data.(event.P2PTopic)
 	require.Equal(t, []string{doc2.ID().String()}, p2pTopic.ToAdd)
-
 }
 
 func TestGetAllP2PCollections_WithMultipleValidCollections_ShouldSucceed(t *testing.T) {

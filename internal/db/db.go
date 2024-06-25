@@ -151,7 +151,7 @@ func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Tx
 	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
-// Root returns the root datastore.
+// Rootstore returns the root datastore.
 func (db *db) Rootstore() datastore.Rootstore {
 	return db.rootstore
 }
