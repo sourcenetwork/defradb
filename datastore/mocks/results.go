@@ -26,6 +26,10 @@ func (_m *Results) EXPECT() *Results_Expecter {
 func (_m *Results) Close() error {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Close")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
@@ -66,6 +70,10 @@ func (_c *Results_Close_Call) RunAndReturn(run func() error) *Results_Close_Call
 // Next provides a mock function with given fields:
 func (_m *Results) Next() <-chan query.Result {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Next")
+	}
 
 	var r0 <-chan query.Result
 	if rf, ok := ret.Get(0).(func() <-chan query.Result); ok {
@@ -109,6 +117,10 @@ func (_c *Results_Next_Call) RunAndReturn(run func() <-chan query.Result) *Resul
 // NextSync provides a mock function with given fields:
 func (_m *Results) NextSync() (query.Result, bool) {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for NextSync")
+	}
 
 	var r0 query.Result
 	var r1 bool
@@ -161,6 +173,10 @@ func (_c *Results_NextSync_Call) RunAndReturn(run func() (query.Result, bool)) *
 func (_m *Results) Process() goprocess.Process {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Process")
+	}
+
 	var r0 goprocess.Process
 	if rf, ok := ret.Get(0).(func() goprocess.Process); ok {
 		r0 = rf()
@@ -204,6 +220,10 @@ func (_c *Results_Process_Call) RunAndReturn(run func() goprocess.Process) *Resu
 func (_m *Results) Query() query.Query {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Query")
+	}
+
 	var r0 query.Query
 	if rf, ok := ret.Get(0).(func() query.Query); ok {
 		r0 = rf()
@@ -244,6 +264,10 @@ func (_c *Results_Query_Call) RunAndReturn(run func() query.Query) *Results_Quer
 // Rest provides a mock function with given fields:
 func (_m *Results) Rest() ([]query.Entry, error) {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Rest")
+	}
 
 	var r0 []query.Entry
 	var r1 error

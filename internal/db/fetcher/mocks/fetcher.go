@@ -40,6 +40,10 @@ func (_m *Fetcher) EXPECT() *Fetcher_Expecter {
 func (_m *Fetcher) Close() error {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Close")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
@@ -80,6 +84,10 @@ func (_c *Fetcher_Close_Call) RunAndReturn(run func() error) *Fetcher_Close_Call
 // FetchNext provides a mock function with given fields: ctx
 func (_m *Fetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error) {
 	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FetchNext")
+	}
 
 	var r0 fetcher.EncodedDocument
 	var r1 fetcher.ExecInfo
@@ -142,6 +150,10 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetche
 func (_m *Fetcher) Init(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
 	ret := _m.Called(ctx, _a1, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Init")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[acp.ACP], client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
 		r0 = rf(ctx, _a1, txn, _a3, col, fields, filter, docmapper, reverse, showDeleted)
@@ -192,6 +204,10 @@ func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Op
 // Start provides a mock function with given fields: ctx, spans
 func (_m *Fetcher) Start(ctx context.Context, spans core.Spans) error {
 	ret := _m.Called(ctx, spans)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Start")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, core.Spans) error); ok {
