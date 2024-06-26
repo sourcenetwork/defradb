@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -64,6 +65,11 @@ func (c *Collection) Create(
 
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Description().Name.Value())
+
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		args = append(args, "--encrypt")
+	}
 
 	document, err := doc.String()
 	if err != nil {
