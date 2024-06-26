@@ -28,7 +28,17 @@ type configContextKey struct{}
 // it was retrieved from the given context.
 func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
 	enc, ok := ctx.Value(docEncContextKey{}).(*DocEncryptor)
+	if ok {
+		checkKeyGenerationFlag(ctx, enc)
+	}
 	return enc, ok
+}
+
+func checkKeyGenerationFlag(ctx context.Context, enc *DocEncryptor) {
+	encConfig := GetContextConfig(ctx)
+	if encConfig.HasValue() && encConfig.Value().IsEncrypted {
+		enc.EnableKeyGeneration()
+	}
 }
 
 func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
@@ -38,14 +48,6 @@ func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncrypto
 		ctx = context.WithValue(ctx, docEncContextKey{}, enc)
 	}
 	return ctx, enc
-}
-
-// Context enables key generation on the doc encryptor in the context.
-// If the doc encryptor is not present, it will be created.
-func Context(ctx context.Context) context.Context {
-	ctx, encryptor := ensureContextWithDocEnc(ctx)
-	encryptor.EnableKeyGeneration()
-	return ctx
 }
 
 // ContextWithStore sets the store on the doc encryptor in the context.

@@ -24,6 +24,7 @@ import (
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -76,6 +77,11 @@ func (c *Collection) Create(
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(body))
 	if err != nil {
 		return err
+	}
+
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		req.Header.Set(DocEncryptionHeader, "1")
 	}
 
 	_, err = c.http.request(req)
