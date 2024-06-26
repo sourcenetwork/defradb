@@ -181,8 +181,12 @@ func setContextRootDir(cmd *cobra.Command) error {
 // openKeyring opens the keyring for the current environment.
 func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
 	cfg := mustGetContextConfig(cmd)
-	if cfg.Get("keyring.backend") == "system" {
+	backend := cfg.Get("keyring.backend")
+	if backend == "system" {
 		return keyring.OpenSystemKeyring(cfg.GetString("keyring.namespace")), nil
+	}
+	if backend != "file" {
+		log.Info("keyring defaulted to file backend")
 	}
 	path := cfg.GetString("keyring.path")
 	if err := os.MkdirAll(path, 0755); err != nil {
