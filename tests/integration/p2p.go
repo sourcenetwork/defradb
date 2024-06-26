@@ -293,16 +293,14 @@ func configureReplicator(
 	err = sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
+	if err == nil {
+		<-sub.Message()
+	}
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
 	if err == nil {
 		setupReplicatorWaitSync(s, 0, cfg)
-	}
-	for msg := range sub.Message() {
-		if msg.Name == event.ReplicatorCompletedName {
-			break
-		}
 	}
 }
 
@@ -318,12 +316,10 @@ func deleteReplicator(
 	err = sourceNode.DeleteReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
-	require.NoError(s.t, err)
-	for msg := range sub.Message() {
-		if msg.Name == event.ReplicatorCompletedName {
-			break
-		}
+	if err == nil {
+		<-sub.Message()
 	}
+	require.NoError(s.t, err)
 }
 
 func setupReplicatorWaitSync(
@@ -408,14 +404,12 @@ func subscribeToCollection(
 	require.NoError(s.t, err)
 
 	err = n.AddP2PCollections(s.ctx, schemaRoots)
+	if err == nil {
+		<-sub.Message()
+	}
+
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	for msg := range sub.Message() {
-		if msg.Name == event.P2PTopicCompletedName {
-			break
-		}
-	}
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -447,14 +441,12 @@ func unsubscribeToCollection(
 	require.NoError(s.t, err)
 
 	err = n.RemoveP2PCollections(s.ctx, schemaRoots)
+	if err == nil {
+		<-sub.Message()
+	}
+
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	for msg := range sub.Message() {
-		if msg.Name == event.P2PTopicCompletedName {
-			break
-		}
-	}
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
