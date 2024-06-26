@@ -482,7 +482,7 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 			switch arg.Name.Value {
 			case "type":
 				cTypeString := arg.Value.GetValue().(string)
-				cType, validCRDTEnum := types.CRDTEnum.ParseValue(cTypeString).(client.CType)
+				cType, validCRDTEnum := types.CRDTEnum().ParseValue(cTypeString).(client.CType)
 				if !validCRDTEnum {
 					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)
 				}

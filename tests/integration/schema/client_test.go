@@ -38,7 +38,7 @@ func TestIntrospectionExplainTypeDefined(t *testing.T) {
 					"__schema": map[string]any{
 						"types": []any{
 							map[string]any{
-								"description": schemaTypes.ExplainEnum.Description(),
+								"description": schemaTypes.ExplainEnum().Description(),
 								"kind":        "ENUM",
 								"name":        "ExplainType",
 							},
