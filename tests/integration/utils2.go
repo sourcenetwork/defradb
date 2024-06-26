@@ -1234,7 +1234,9 @@ func createDocViaColSave(
 			docs = []*client.Document{doc}
 		}
 	}
-	require.NoError(s.t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
@@ -1277,7 +1279,9 @@ func createDocViaColCreate(
 			docs = []*client.Document{doc}
 		}
 	}
-	require.NoError(s.t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
