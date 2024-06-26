@@ -290,3 +290,70 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncrypted(t *testing.T) {
+	const johnDocID = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"
+	const islamDocID = "bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `[{
+						"name":	"John",
+						"age":	21
+					},
+					{
+						"name":	"Islam",
+						"age":	33
+					}]`,
+				IsEncrypted: true,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							cid
+							delta
+							docID
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"cid":   "bafyreih7ry7ef26xn3lm2rhxusf2rbgyvl535tltrt6ehpwtvdnhlmptiu",
+						"delta": encrypt(testUtils.CBORValue(21)),
+						"docID": johnDocID,
+					},
+					{
+						"cid":   "bafyreifusejlwidaqswasct37eorazlfix6vyyn5af42pmjvktilzj5cty",
+						"delta": encrypt(testUtils.CBORValue("John")),
+						"docID": johnDocID,
+					},
+					{
+						"cid":   "bafyreicvxlfxeqghmc3gy56rp5rzfejnbng4nu77x5e3wjinfydl6wvycq",
+						"delta": nil,
+						"docID": johnDocID,
+					},
+					{
+						"cid":   "bafyreibe24bo67owxewoso3ekinera2bhusguij5qy2ahgyufaq3fbvaxa",
+						"delta": encrypt(testUtils.CBORValue(33)),
+						"docID": islamDocID,
+					},
+					{
+						"cid":   "bafyreie2fddpidgc62fhd2fjrsucq3spgh2mgvto2xwolcdmdhb5pdeok4",
+						"delta": encrypt(testUtils.CBORValue("Islam")),
+						"docID": islamDocID,
+					},
+					{
+						"cid":   "bafyreifulxdkf4m3wmmdxjg43l4mw7uuxl5il27eabklc22nptilrh64sa",
+						"delta": nil,
+						"docID": islamDocID,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

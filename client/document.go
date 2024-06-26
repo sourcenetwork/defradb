@@ -122,7 +122,9 @@ var jsonArrayPattern = regexp.MustCompile(`^\s*\[.*\]\s*$`)
 
 // IsJSONArray returns true if the given byte array is a JSON Array.
 func IsJSONArray(obj []byte) bool {
-	return jsonArrayPattern.Match(obj)
+	var js []interface{}
+	err := json.Unmarshal(obj, &js)
+	return err == nil
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.

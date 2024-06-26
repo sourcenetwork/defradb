@@ -206,3 +206,65 @@ func TestNewFromJSON_WithInvalidJSONFieldValueSimpleString_Error(t *testing.T) {
 	_, err := NewDocFromJSON(objWithJSONField, def)
 	require.ErrorContains(t, err, "invalid JSON payload. Payload: blah")
 }
+
+func TestIsJSONArray(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		expected bool
+	}{
+		{
+			name:     "Valid JSON Array",
+			input:    []byte(`[{"name":"John","age":21},{"name":"Islam","age":33}]`),
+			expected: true,
+		},
+		{
+			name:     "Valid Empty JSON Array",
+			input:    []byte(`[]`),
+			expected: true,
+		},
+		{
+			name:     "Valid JSON Object",
+			input:    []byte(`{"name":"John","age":21}`),
+			expected: false,
+		},
+		{
+			name:     "Invalid JSON String",
+			input:    []byte(`{"name":"John","age":21`),
+			expected: false,
+		},
+		{
+			name:     "Non-JSON String",
+			input:    []byte(`Hello, World!`),
+			expected: false,
+		},
+		{
+			name:     "Array of Primitives",
+			input:    []byte(`[1, 2, 3, 4]`),
+			expected: true,
+		},
+		{
+			name:     "Nested JSON Array",
+			input:    []byte(`[[1, 2], [3, 4]]`),
+			expected: true,
+		},
+		{
+			name: "Valid JSON Array with Whitespace",
+			input: []byte(`
+				[
+					{"name": "John", "age": 21},
+					{"name": "Islam", "age": 33}
+				]`),
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := IsJSONArray(tt.input)
+			if actual != tt.expected {
+				t.Errorf("IsJSONArray(%s) = %v; expected %v", tt.input, actual, tt.expected)
+			}
+		})
+	}
+}

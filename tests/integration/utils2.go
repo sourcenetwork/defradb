@@ -1175,7 +1175,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.DB, []client.Collection) (*client.Document, error)
+	var mutation func(*state, CreateDoc, client.DB, []client.Collection) ([]*client.Document, error)
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1189,7 +1189,7 @@ func createDoc(
 	}
 
 	var expectedErrorRaised bool
-	var doc *client.Document
+	var docs []*client.Document
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
@@ -1197,7 +1197,7 @@ func createDoc(
 			nodeID,
 			func() error {
 				var err error
-				doc, err = mutation(s, action, actionNodes[nodeID], collections)
+				docs, err = mutation(s, action, actionNodes[nodeID], collections)
 				return err
 			},
 		)
@@ -1210,7 +1210,7 @@ func createDoc(
 		// Expand the slice if required, so that the document can be accessed by collection index
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
-	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
 }
 
 func createDocViaColSave(
@@ -1218,23 +1218,35 @@ func createDocViaColSave(
 	action CreateDoc,
 	node client.DB,
 	collections []client.Collection,
-) (*client.Document, error) {
-	var err error
+) ([]*client.Document, error) {
+	var docs []*client.Document
 	var doc *client.Document
+	var err error
 	if action.DocMap != nil {
 		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+		docs = []*client.Document{doc}
 	} else {
-		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+		bytes := []byte(action.Doc)
+		if client.IsJSONArray(bytes) {
+			docs, err = client.NewDocsFromJSON(bytes, collections[action.CollectionID].Definition())
+		} else {
+			doc, err = client.NewDocFromJSON(bytes, collections[action.CollectionID].Definition())
+			docs = []*client.Document{doc}
+		}
 	}
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(s.t, err)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action, txn)
 
-	return doc, collections[action.CollectionID].Save(ctx, doc)
+	for _, doc := range docs {
+		err = collections[action.CollectionID].Save(ctx, doc)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return docs, nil
 }
 
 func makeContextForDocCreate(ctx context.Context, action *CreateDoc, txn datastore.Txn) context.Context {
@@ -1250,23 +1262,34 @@ func createDocViaColCreate(
 	action CreateDoc,
 	node client.DB,
 	collections []client.Collection,
-) (*client.Document, error) {
-	var err error
+) ([]*client.Document, error) {
+	var docs []*client.Document
 	var doc *client.Document
+	var err error
 	if action.DocMap != nil {
 		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+		docs = []*client.Document{doc}
 	} else {
-		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+		if client.IsJSONArray([]byte(action.Doc)) {
+			docs, err = client.NewDocsFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+		} else {
+			doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+			docs = []*client.Document{doc}
+		}
 	}
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(s.t, err)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action, txn)
 
-	return doc, collections[action.CollectionID].Create(ctx, doc)
+	if len(docs) > 1 {
+		err = collections[action.CollectionID].CreateMany(ctx, docs)
+	} else {
+		err = collections[action.CollectionID].Create(ctx, doc)
+	}
+
+	return docs, err
 }
 
 func createDocViaGQL(
@@ -1274,7 +1297,7 @@ func createDocViaGQL(
 	action CreateDoc,
 	node client.DB,
 	collections []client.Collection,
-) (*client.Document, error) {
+) ([]*client.Document, error) {
 	collection := collections[action.CollectionID]
 	var err error
 	var input string
@@ -1313,14 +1336,19 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docIDString := resultantDocs[0]["_docID"].(string)
-	docID, err := client.NewDocIDFromString(docIDString)
-	require.NoError(s.t, err)
+	var docs []*client.Document
+	for _, docMap := range resultantDocs {
+		docIDString := docMap["_docID"].(string)
+		docID, err := client.NewDocIDFromString(docIDString)
+		require.NoError(s.t, err)
 
-	doc, err := collection.Get(ctx, docID, false)
-	require.NoError(s.t, err)
+		doc, err := collection.Get(ctx, docID, false)
+		require.NoError(s.t, err)
 
-	return doc, nil
+		docs = append(docs, doc)
+	}
+
+	return docs, nil
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
