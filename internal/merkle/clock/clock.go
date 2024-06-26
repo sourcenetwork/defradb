@@ -92,15 +92,16 @@ func (mc *MerkleClock) AddDelta(
 		return cidlink.Link{}, nil, err
 	}
 
-	var dagBlock *coreblock.Block
-	if isEncrypted && !block.Delta.IsComposite(){
-		dagBlock, err = encryptBlock(ctx, block)
-		if err != nil {
-			return cidlink.Link{}, nil, err
+	dagBlock := block
+	if isEncrypted {
+		if !block.Delta.IsComposite() {
+			dagBlock, err = encryptBlock(ctx, block)
+			if err != nil {
+				return cidlink.Link{}, nil, err
+			}
+		} else {
+			dagBlock.IsEncrypted = &isEncrypted
 		}
-	} else {
-		dagBlock = block
-		dagBlock.IsEncrypted = &isEncrypted
 	}
 
 	link, err := mc.putBlock(ctx, dagBlock)
