@@ -219,6 +219,8 @@ func NewPeer(
 		cancel:     cancel,
 	}
 
+	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
+
 	p.server, err = newServer(p, options.GRPCDialOptions...)
 	if err != nil {
 		return nil, err
@@ -231,8 +233,6 @@ func NewPeer(
 
 // Start all the internal workers/goroutines/loops that manage the P2P state.
 func (p *Peer) Start() error {
-	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
-
 	// reconnect to known peers
 	var wg sync.WaitGroup
 	for _, id := range p.host.Peerstore().PeersWithAddrs() {
