@@ -18,6 +18,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // AnyOf may be used as `Results` field where the value may
@@ -183,4 +186,39 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 		}
 	}
 	return true
+}
+
+func assertCollectionDescriptions(
+	s *state,
+	expected []client.CollectionDescription,
+	actual []client.CollectionDescription,
+) {
+	require.Equal(s.t, len(expected), len(actual))
+
+	for i, expected := range expected {
+		actual := actual[i]
+		if expected.ID != 0 {
+			require.Equal(s.t, expected.ID, actual.ID)
+		}
+		if expected.RootID != 0 {
+			require.Equal(s.t, expected.RootID, actual.RootID)
+		}
+		if expected.SchemaVersionID != "" {
+			require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
+		}
+
+		require.Equal(s.t, expected.Name, actual.Name)
+
+		if expected.Indexes != nil || len(actual.Indexes) != 0 {
+			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
+			// This is to say each test action from having to bother declaring an empty slice (if there are no indexes)
+			require.Equal(s.t, expected.Indexes, actual.Indexes)
+		}
+
+		if expected.Sources != nil || len(actual.Sources) != 0 {
+			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
+			// This is to say each test action from having to bother declaring an empty slice (if there are no sources)
+			require.Equal(s.t, expected.Sources, actual.Sources)
+		}
+	}
 }
