@@ -13,7 +13,6 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -118,11 +117,9 @@ func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinitio
 	return doc, nil
 }
 
-var jsonArrayPattern = regexp.MustCompile(`^\s*\[.*\]\s*$`)
-
 // IsJSONArray returns true if the given byte array is a JSON Array.
 func IsJSONArray(obj []byte) bool {
-	var js []interface{}
+	var js []any
 	err := json.Unmarshal(obj, &js)
 	return err == nil
 }
