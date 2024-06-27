@@ -12,7 +12,7 @@ Options:
 		and permissions are controlled by ACP (Access Control Policy).
 
 	-e, --encrypt
-		Encrypt flag specified if the document needs to be encrypted. If set DefraDB will generate a
+		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
 		symmetric key for encryption using AES-GCM.
 
 Example: create from string:
@@ -39,7 +39,7 @@ defradb client collection create [-i --identity] [-e --encrypt] <document> [flag
 ### Options
 
 ```
-  -e, --encrypt       Encryption key used to encrypt/decrypt the document
+  -e, --encrypt       Flag to enable encryption of the document
   -f, --file string   File containing document(s)
   -h, --help          help for create
 ```
