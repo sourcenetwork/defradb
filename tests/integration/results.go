@@ -220,5 +220,9 @@ func assertCollectionDescriptions(
 			// This is to say each test action from having to bother declaring an empty slice (if there are no sources)
 			require.Equal(s.t, expected.Sources, actual.Sources)
 		}
+
+		if expected.Fields != nil {
+			require.Equal(s.t, expected.Fields, actual.Fields)
+		}
 	}
 }
