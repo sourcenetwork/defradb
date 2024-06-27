@@ -1000,10 +1000,14 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.AddSchema(s.ctx, action.Schema)
+		results, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if action.ExpectedResults != nil {
+			assertCollectionDescriptions(s, action.ExpectedResults, results)
+		}
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
