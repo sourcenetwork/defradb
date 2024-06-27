@@ -35,7 +35,6 @@ jobs:
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         lens-type: [wasm-time]
-        detect-changes: [false]
         database-encryption: [false]
         include:
           - os: ubuntu-latest
@@ -43,21 +42,18 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            detect-changes: true
             database-encryption: false
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            detect-changes: false
             database-encryption: true
           - os: macos-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            detect-changes: false
             database-encryption: false
 ## TODO: https://github.com/sourcenetwork/defradb/issues/2080
 ## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
@@ -65,21 +61,18 @@ jobs:
 ##          client-type: go
 ##          database-type: badger-memory
 ##          mutation-type: collection-save
-##          detect-changes: false
 ##          database-encryption: false
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wazero
-            detect-changes: false
             database-encryption: false
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasmer
-            detect-changes: false
             database-encryption: false
 
     runs-on: ${{ matrix.os }}
@@ -156,15 +149,9 @@ jobs:
           make deps:test
 
       - name: Run integration tests
-        if: ${{ !matrix.detect-changes }}
         run: make test:coverage
 
-      - name: Run change detector tests
-        if: ${{ matrix.detect-changes }}
-        run: make test:changes
-
       - name: Upload coverage artifact
-        if: ${{ !matrix.detect-changes }}
         uses: actions/upload-artifact@v4
         with:
           # Make sure the name is always unique per job as artifacts are now immutable.
