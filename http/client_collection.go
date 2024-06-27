@@ -120,6 +120,11 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		req.Header.Set(DocEncryptionHeader, "1")
+	}
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
