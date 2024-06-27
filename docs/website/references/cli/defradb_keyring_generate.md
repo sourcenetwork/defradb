@@ -6,6 +6,7 @@ Generate private keys
 
 Generate private keys.
 Randomly generate and store private keys in the keyring.
+By default peer and encryption keys will be generated.
 
 WARNING: This will overwrite existing keys in the keyring.
 
@@ -14,6 +15,9 @@ Example:
 
 Example: with no encryption key
   defradb keyring generate --no-encryption-key
+
+Example: with no peer key
+  defradb keyring generate --no-peer-key
 
 Example: with system keyring
   defradb keyring generate --keyring-backend system
@@ -26,7 +30,8 @@ defradb keyring generate [flags]
 
 ```
   -h, --help                help for generate
-      --no-encryption-key   Skip generating an encryption. Encryption at rest will be disabled
+      --no-encryption-key   Skip generating an encryption key. Encryption at rest will be disabled
+      --no-peer-key         Skip generating a peer key.
 ```
 
 ### Options inherited from parent commands

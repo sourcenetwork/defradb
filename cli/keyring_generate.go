@@ -17,12 +17,14 @@ import (
 )
 
 func MakeKeyringGenerateCommand() *cobra.Command {
-	var noEncryption bool
+	var noEncryptionKey bool
+	var noPeerKey bool
 	var cmd = &cobra.Command{
 		Use:   "generate",
 		Short: "Generate private keys",
 		Long: `Generate private keys.
 Randomly generate and store private keys in the keyring.
+By default peer and encryption keys will be generated.
 
 WARNING: This will overwrite existing keys in the keyring.
 
@@ -32,6 +34,9 @@ Example:
 Example: with no encryption key
   defradb keyring generate --no-encryption-key
 
+Example: with no peer key
+  defradb keyring generate --no-peer-key
+
 Example: with system keyring
   defradb keyring generate --keyring-backend system`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -39,8 +44,7 @@ Example: with system keyring
 			if err != nil {
 				return err
 			}
-			if !noEncryption {
-				// generate optional encryption key
+			if !noEncryptionKey {
 				encryptionKey, err := crypto.GenerateAES256()
 				if err != nil {
 					return err
@@ -49,15 +53,25 @@ Example: with system keyring
 				if err != nil {
 					return err
 				}
+				log.Info("generated encryption key")
 			}
-			peerKey, err := crypto.GenerateEd25519()
-			if err != nil {
-				return err
+			if !noPeerKey {
+				peerKey, err := crypto.GenerateEd25519()
+				if err != nil {
+					return err
+				}
+				err = keyring.Set(peerKeyName, peerKey)
+				if err != nil {
+					return err
+				}
+				log.Info("generated peer key")
 			}
-			return keyring.Set(peerKeyName, peerKey)
+			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&noEncryption, "no-encryption-key", false,
-		"Skip generating an encryption. Encryption at rest will be disabled")
+	cmd.Flags().BoolVar(&noEncryptionKey, "no-encryption-key", false,
+		"Skip generating an encryption key. Encryption at rest will be disabled")
+	cmd.Flags().BoolVar(&noPeerKey, "no-peer-key", false,
+		"Skip generating a peer key.")
 	return cmd
 }
