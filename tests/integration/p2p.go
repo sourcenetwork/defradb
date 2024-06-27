@@ -294,6 +294,7 @@ func configureReplicator(
 		Info: targetNode.PeerInfo(),
 	})
 	if err == nil {
+		// wait for the replicator setup to complete
 		<-sub.Message()
 	}
 
@@ -317,6 +318,7 @@ func deleteReplicator(
 		Info: targetNode.PeerInfo(),
 	})
 	if err == nil {
+		// wait for the replicator setup to complete
 		<-sub.Message()
 	}
 	require.NoError(s.t, err)
@@ -405,6 +407,7 @@ func subscribeToCollection(
 
 	err = n.AddP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
+		// wait for the p2p collection setup to complete
 		<-sub.Message()
 	}
 
@@ -442,6 +445,7 @@ func unsubscribeToCollection(
 
 	err = n.RemoveP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
+		// wait for the p2p collection setup to complete
 		<-sub.Message()
 	}
 
