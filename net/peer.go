@@ -219,8 +219,6 @@ func NewPeer(
 		cancel:     cancel,
 	}
 
-	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
-
 	p.server, err = newServer(p, options.GRPCDialOptions...)
 	if err != nil {
 		return nil, err
@@ -281,6 +279,8 @@ func (p *Peer) Start() error {
 			log.ErrorContextE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
+
+	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
 	return nil
 }

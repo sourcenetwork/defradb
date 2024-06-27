@@ -131,7 +131,7 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		db.events.Publish(event.NewMessage(event.ReplicatorName, event.Replicator{
 			Info:    rep.Info,
 			Schemas: storedSchemas,
-			Docs:    db.getDocsHeads(ctx, addedCols),
+			Docs:    db.getDocsHeads(context.Background(), addedCols),
 		}))
 	})
 
