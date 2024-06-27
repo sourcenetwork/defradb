@@ -34,7 +34,7 @@ Options:
 		and permissions are controlled by ACP (Access Control Policy).
 
 	-e, --encrypt
-		Encrypt flag specified if the document needs to be encrypted. If set DefraDB will generate a
+		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
 		symmetric key for encryption using AES-GCM.
 
 Example: create from string:
@@ -99,7 +99,7 @@ Example: create from stdin:
 		},
 	}
 	cmd.PersistentFlags().BoolVarP(&shouldEncrypt, "encrypt", "e", false,
-		"Encryption key used to encrypt/decrypt the document")
+		"Flag to enable encryption of the document")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	return cmd
 }

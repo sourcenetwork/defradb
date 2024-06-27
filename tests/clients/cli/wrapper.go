@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -398,6 +399,11 @@ func (w *Wrapper) ExecRequest(
 	args = append(args, query)
 
 	result := &client.RequestResult{}
+
+	encCond := encryption.GetContextConfig(ctx)
+	if encCond.HasValue() && encCond.Value().IsEncrypted {
+		args = append(args, "--encrypt")
+	}
 
 	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
