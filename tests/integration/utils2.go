@@ -1880,6 +1880,16 @@ func assertRequestResults(
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
+			case DocIndex:
+				expectedDocID := s.documents[r.CollectionIndex][r.Index].ID().String()
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedDocID,
+					actualValue,
+					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+				)
+
 			default:
 				assertResultsEqual(
 					s.t,
