@@ -676,16 +676,19 @@ func finalizeRelations(
 			}
 
 			if !otherColFieldDescription.HasValue() || otherColFieldDescription.Value().Kind.Value().IsArray() {
-				// Relations only defined on one side of the object are possible, and so if this is one of them
-				// or if the other side is an array, we need to add the field to the schema (is primary side).
-				definition.Schema.Fields = append(
-					definition.Schema.Fields,
-					client.SchemaFieldDescription{
-						Name: field.Name,
-						Kind: field.Kind.Value(),
-						Typ:  cTypeByFieldNameByObjName[definition.Schema.Name][field.Name],
-					},
-				)
+				if _, exists := definition.Schema.GetFieldByName(field.Name); !exists {
+					// Relations only defined on one side of the object are possible, and so if this is one of them
+					// or if the other side is an array, we need to add the field to the schema (is primary side)
+					// if the field has not been explicitly declared by the user.
+					definition.Schema.Fields = append(
+						definition.Schema.Fields,
+						client.SchemaFieldDescription{
+							Name: field.Name,
+							Kind: field.Kind.Value(),
+							Typ:  cTypeByFieldNameByObjName[definition.Schema.Name][field.Name],
+						},
+					)
+				}
 			}
 
 			otherIsEmbedded := len(otherColDefinition.Value().Description.Fields) == 0
