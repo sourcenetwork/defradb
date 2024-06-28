@@ -72,7 +72,7 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> ${GITHUB_ENV}
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
           version: latest
@@ -169,7 +169,7 @@ jobs:
         run: exit 1
 
       - name: Do the release, only if all OS caches were restored
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
           version: latest
