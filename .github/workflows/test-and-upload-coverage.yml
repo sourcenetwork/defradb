@@ -42,26 +42,7 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            database-encryption: false
-          - os: ubuntu-latest
-            client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            lens-type: wasm-time
             database-encryption: true
-          - os: macos-latest
-            client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            lens-type: wasm-time
-            database-encryption: false
-## TODO: https://github.com/sourcenetwork/defradb/issues/2080
-## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
-##        - os: windows-latest
-##          client-type: go
-##          database-type: badger-memory
-##          mutation-type: collection-save
-##          database-encryption: false
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
@@ -74,6 +55,20 @@ jobs:
             mutation-type: collection-save
             lens-type: wasmer
             database-encryption: false
+          - os: macos-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wasm-time
+            database-encryption: false
+## TODO: https://github.com/sourcenetwork/defradb/issues/2080
+## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
+##        - os: windows-latest
+##          client-type: go
+##          database-type: badger-memory
+##          mutation-type: collection-save
+##          lens-type: wasm-time
+##          database-encryption: false
 
     runs-on: ${{ matrix.os }}
 
