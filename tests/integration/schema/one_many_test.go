@@ -83,3 +83,66 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						a: User
+						b: [User]
+					}
+				`,
+				ExpectedError: "relation missing field. Object: User, RelationName: user_user",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						b: User
+						a: [User]
+					}
+				`,
+				ExpectedResults: []client.CollectionDescription{
+					{
+						Name: immutable.Some("User"),
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name:         "a",
+								ID:           1,
+								Kind:         immutable.Some[client.FieldKind](client.ObjectArrayKind("User")),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "b",
+								ID:           2,
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("User")),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "b_id",
+								ID:           3,
+								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
+								RelationName: immutable.Some("user_user"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
