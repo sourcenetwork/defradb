@@ -42,12 +42,6 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            database-encryption: false
-          - os: ubuntu-latest
-            client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            lens-type: wasm-time
             database-encryption: true
           - os: macos-latest
             client-type: go
