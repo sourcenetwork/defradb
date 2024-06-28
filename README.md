@@ -90,7 +90,7 @@ defradb keyring --help
 
 Start a node by executing `defradb start`. Keep the node running while going through the following examples.
 
-Verify the local connection to the node works by executing `defradb client ping` in another terminal.
+Verify the local connection to the node works by executing `defradb client collection describe` in another terminal.
 
 ## Configuration
 
