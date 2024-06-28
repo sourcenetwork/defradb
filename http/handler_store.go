@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 type storeHandler struct{}
@@ -313,12 +312,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx := req.Context()
-	if req.Header.Get(DocEncryptionHeader) == "1" {
-		ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
-	}
-
-	result := store.ExecRequest(ctx, request.Query)
+	result := store.ExecRequest(req.Context(), request.Query)
 
 	if result.Subscription == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})

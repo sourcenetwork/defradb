@@ -79,10 +79,7 @@ func (c *Collection) Create(
 		return err
 	}
 
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
-		req.Header.Set(DocEncryptionHeader, "1")
-	}
+	setDocEncryptionHeaderIfNeeded(ctx, req)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -120,10 +117,7 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
-		req.Header.Set(DocEncryptionHeader, "1")
-	}
+	setDocEncryptionHeaderIfNeeded(ctx, req)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -134,6 +128,13 @@ func (c *Collection) CreateMany(
 		doc.Clean()
 	}
 	return nil
+}
+
+func setDocEncryptionHeaderIfNeeded(ctx context.Context, req *http.Request) {
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		req.Header.Set(DocEncryptionHeader, "1")
+	}
 }
 
 func (c *Collection) Update(

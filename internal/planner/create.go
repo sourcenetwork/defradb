@@ -15,6 +15,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -158,6 +159,10 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 	if parsed.Input != nil {
 		create.input = []map[string]any{parsed.Input}
+	}
+
+	if parsed.Encrypt {
+		p.ctx = encryption.SetContextConfig(p.ctx, encryption.DocEncConfig{IsEncrypted: true})
 	}
 
 	// get collection

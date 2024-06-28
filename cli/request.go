@@ -26,20 +26,10 @@ const (
 
 func MakeRequestCommand() *cobra.Command {
 	var filePath string
-	var shouldEncrypt bool
 	var cmd = &cobra.Command{
 		Use:   "query [-i --identity] [request]",
 		Short: "Send a DefraDB GraphQL query request",
 		Long: `Send a DefraDB GraphQL query request to the database.
-
-Options:
-    -i, --identity 
-        Marks the document as private and set the identity as the owner. The access to the document
-		and permissions are controlled by ACP (Access Control Policy).
-
-	-e, --encrypt
-		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
-		symmetric key for encryption using AES-GCM.
 
 A query request can be sent as a single argument. Example command:
   defradb client query 'query { ... }'
@@ -81,7 +71,6 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			}
 
 			store := mustGetContextStore(cmd)
-			setContextDocEncryption(cmd, shouldEncrypt, nil)
 			result := store.ExecRequest(cmd.Context(), request)
 
 			var errors []string
@@ -100,8 +89,6 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		},
 	}
 
-	cmd.PersistentFlags().BoolVarP(&shouldEncrypt, "encrypt", "e", false,
-		"Flag to enable encryption of the document")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "File containing the query request")
 	return cmd
 }

@@ -1320,15 +1320,20 @@ func createDocViaGQL(
 
 	var docs []*client.Document
 
+	params := paramName + ": " + input
+
+	if action.IsEncrypted {
+		params = params + ", encrypt: true"
+	}
+
 	request := fmt.Sprintf(
 		`mutation {
-			create_%s(%s: %s) {
+			create_%s(%s) {
 				_docID
 			}
 		}`,
 		collection.Name().Value(),
-		paramName,
-		input,
+		params,
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)

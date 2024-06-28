@@ -1061,8 +1061,9 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: createDocumentDescription,
 		Type:        obj,
 		Args: gql.FieldConfigArgument{
-			"input":  schemaTypes.NewArgConfig(mutationInput, "Create field values"),
-			"inputs": schemaTypes.NewArgConfig(mutationInputs, "Create field values"),
+			"input":   schemaTypes.NewArgConfig(mutationInput, "Create field values"),
+			"inputs":  schemaTypes.NewArgConfig(mutationInputs, "Create field values"),
+			"encrypt": schemaTypes.NewArgConfig(gql.Boolean, "Encrypt input document(s)"),
 		},
 	}
 

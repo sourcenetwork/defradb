@@ -32,4 +32,7 @@ type Mutation struct {
 
 	// Inputs is the array of maps of fields and values used for the mutation.
 	Inputs []map[string]any
+
+	// Encrypt is a flag to indicate if the input data should be encrypted.
+	Encrypt bool
 }

@@ -6,15 +6,6 @@ Send a DefraDB GraphQL query request
 
 Send a DefraDB GraphQL query request to the database.
 
-Options:
-    -i, --identity 
-        Marks the document as private and set the identity as the owner. The access to the document
-		and permissions are controlled by ACP (Access Control Policy).
-
-	-e, --encrypt
-		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
-		symmetric key for encryption using AES-GCM.
-
 A query request can be sent as a single argument. Example command:
   defradb client query 'query { ... }'
 
@@ -39,7 +30,6 @@ defradb client query [-i --identity] [request] [flags]
 ### Options
 
 ```
-  -e, --encrypt       Flag to enable encryption of the document
   -f, --file string   File containing the query request
   -h, --help          help for query
 ```

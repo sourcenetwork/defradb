@@ -26,6 +26,8 @@ const (
 	FieldIDName = "fieldId"
 	ShowDeleted = "showDeleted"
 
+	EncryptArgName = "encrypt"
+
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
 	LimitClause   = "limit"
