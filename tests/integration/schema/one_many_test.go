@@ -94,7 +94,34 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 						b: [User]
 					}
 				`,
-				ExpectedError: "relation missing field. Object: User, RelationName: user_user",
+				ExpectedResults: []client.CollectionDescription{
+					{
+						Name: immutable.Some("User"),
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+							},
+							{
+								Name:         "a",
+								ID:           1,
+								Kind:         immutable.Some[client.FieldKind](client.ObjectKind("User")),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "a_id",
+								ID:           2,
+								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "b",
+								ID:           3,
+								Kind:         immutable.Some[client.FieldKind](client.ObjectArrayKind("User")),
+								RelationName: immutable.Some("user_user"),
+							},
+						},
+					},
+				},
 			},
 		},
 	}
