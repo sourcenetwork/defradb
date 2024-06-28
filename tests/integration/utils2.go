@@ -1318,8 +1318,6 @@ func createDocViaGQL(
 	}
 	require.NoError(s.t, err)
 
-	var docs []*client.Document
-
 	params := paramName + ": " + input
 
 	if action.IsEncrypted {
@@ -1353,7 +1351,9 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	for _, docMap := range resultantDocs {
+	docs := make([]*client.Document, len(resultantDocs))
+
+	for i, docMap := range resultantDocs {
 		docIDString := docMap["_docID"].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
 		require.NoError(s.t, err)
@@ -1361,7 +1361,7 @@ func createDocViaGQL(
 		doc, err := collection.Get(ctx, docID, false)
 		require.NoError(s.t, err)
 
-		docs = append(docs, doc)
+		docs[i] = doc
 	}
 
 	return docs, nil

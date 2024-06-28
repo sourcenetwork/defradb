@@ -1039,7 +1039,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 	filterInputName := genTypeName(obj, filterInputNameSuffix)
 	mutationInputName := genTypeName(obj, mutationInputNameSuffix)
-	mutationInputsName := genTypeName(obj, mutationInputsNameSuffix)
 
 	filterInput, ok := g.manager.schema.TypeMap()[filterInputName].(*gql.InputObject)
 	if !ok {
@@ -1051,19 +1050,14 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, NewErrTypeNotFound(mutationInputName)
 	}
 
-	mutationInputs, ok := g.manager.schema.TypeMap()[mutationInputsName]
-	if !ok {
-		return nil, NewErrTypeNotFound(mutationInputsName)
-	}
-
 	create := &gql.Field{
 		Name:        "create_" + obj.Name(),
 		Description: createDocumentDescription,
 		Type:        obj,
 		Args: gql.FieldConfigArgument{
 			"input":   schemaTypes.NewArgConfig(mutationInput, "Create field values"),
-			"inputs":  schemaTypes.NewArgConfig(mutationInputs, "Create field values"),
-			"encrypt": schemaTypes.NewArgConfig(gql.Boolean, "Encrypt input document(s)"),
+			"inputs":  schemaTypes.NewArgConfig(gql.NewList(mutationInput), "Create field values"),
+			"encrypt": schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
 		},
 	}
 
