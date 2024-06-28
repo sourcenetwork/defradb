@@ -26,6 +26,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -48,7 +49,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
                               - actor
                 `,
 
-				ExpectedPolicyID: "d74384d99b6732c3a6e0e47c7b75ea19553f643bcca416380530d8ad4e50e529",
+				ExpectedPolicyID: "2b10641de73790b95452f496a37ad53a8d8a0703803f35f6961457af912947c0",
 			},
 		},
 	}
@@ -67,6 +68,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -89,7 +91,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
                               - actor
                 `,
 
-				ExpectedPolicyID: "f6d5d6d8b0183230fcbdf06cfe14b611f782752d276006ad4622231eeaf60820",
+				ExpectedPolicyID: "b6b305214247a08903e01466a1bfd01516206458d2725506797300b285e63690",
 			},
 		},
 	}

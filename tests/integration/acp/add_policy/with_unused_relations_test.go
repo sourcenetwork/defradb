@@ -26,6 +26,7 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -49,7 +50,7 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "e1bb7702f653d4f9a0595d2d97c209fc0da8f315be007bd19545599eed41ae42",
+				ExpectedPolicyID: "ab1102f656ed1f2b037a3c9586611c701243f2086fa64211bd7baff7271c2030",
 			},
 		},
 	}

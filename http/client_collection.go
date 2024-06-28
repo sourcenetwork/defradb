@@ -311,7 +311,10 @@ func (c *Collection) GetAllDocIDs(
 		return nil, err
 	}
 
-	c.http.setDefaultHeaders(req)
+	err = c.http.setDefaultHeaders(req)
+	if err != nil {
+		return nil, err
+	}
 
 	res, err := c.http.client.Do(req)
 	if err != nil {
@@ -409,16 +412,4 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		return nil, err
 	}
 	return indexes, nil
-}
-
-func (c *Collection) CreateDocIndex(context.Context, *client.Document) error {
-	return ErrMethodIsNotImplemented
-}
-
-func (c *Collection) UpdateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	return ErrMethodIsNotImplemented
-}
-
-func (c *Collection) DeleteDocIndex(context.Context, *client.Document) error {
-	return ErrMethodIsNotImplemented
 }

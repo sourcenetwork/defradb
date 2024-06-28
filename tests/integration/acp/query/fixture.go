@@ -16,6 +16,7 @@ import (
 )
 
 const employeeCompanyPolicy = `
+name: test
 description: A Valid DefraDB Policy Interface (DPI)
 
 actor:
@@ -58,13 +59,13 @@ func getSetupEmployeeCompanyActions() []any {
 		testUtils.AddPolicy{
 			Identity:         acpUtils.Actor1Identity,
 			Policy:           employeeCompanyPolicy,
-			ExpectedPolicyID: "67607eb2a2a873f4a69eb6876323cee7601d8a4d4fedcc18154aaee65cf38e7f",
+			ExpectedPolicyID: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 		},
 
 		testUtils.SchemaUpdate{
 			Schema: `
 					type Employee @policy(
-						id: "67607eb2a2a873f4a69eb6876323cee7601d8a4d4fedcc18154aaee65cf38e7f",
+						id: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 						resource: "employees"
 					) {
 						name: String
@@ -73,7 +74,7 @@ func getSetupEmployeeCompanyActions() []any {
 					}
 
 					type Company @policy(
-						id: "67607eb2a2a873f4a69eb6876323cee7601d8a4d4fedcc18154aaee65cf38e7f",
+						id: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 						resource: "companies"
 					) {
 						name: String
@@ -104,45 +105,37 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			Doc: `
-					{
-						"name": "PubEmp in PubCompany",
-						"salary": 10000,
-						"company": "bae-1ab7ac86-3c68-5abb-b526-803858c9dccf"
-					}
-				`,
+			DocMap: map[string]any{
+				"name":    "PubEmp in PubCompany",
+				"salary":  10000,
+				"company": testUtils.NewDocIndex(1, 0),
+			},
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			Doc: `
-					{
-						"name": "PubEmp in PrivateCompany",
-						"salary": 20000,
-						"company": "bae-4aef4bd6-e2ee-5075-85a5-4d64bbf80bca"
-					}
-				`,
+			DocMap: map[string]any{
+				"name":    "PubEmp in PrivateCompany",
+				"salary":  20000,
+				"company": testUtils.NewDocIndex(1, 1),
+			},
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
 			Identity:     acpUtils.Actor1Identity,
-			Doc: `
-					{
-						"name": "PrivateEmp in PubCompany",
-						"salary": 30000,
-						"company": "bae-1ab7ac86-3c68-5abb-b526-803858c9dccf"
-					}
-				`,
+			DocMap: map[string]any{
+				"name":    "PrivateEmp in PubCompany",
+				"salary":  30000,
+				"company": testUtils.NewDocIndex(1, 0),
+			},
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
 			Identity:     acpUtils.Actor1Identity,
-			Doc: `
-					{
-						"name": "PrivateEmp in PrivateCompany",
-						"salary": 40000,
-						"company": "bae-4aef4bd6-e2ee-5075-85a5-4d64bbf80bca"
-					}
-				`,
+			DocMap: map[string]any{
+				"name":    "PrivateEmp in PrivateCompany",
+				"salary":  40000,
+				"company": testUtils.NewDocIndex(1, 1),
+			},
 		},
 	}
 }

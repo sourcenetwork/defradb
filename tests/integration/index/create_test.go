@@ -13,7 +13,7 @@ package index
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +31,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
+				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
 				Doc: `
 					{
 						"name":	"John",
@@ -73,7 +73,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
+				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
 				Doc: `
 					{
 						"name":	"John",

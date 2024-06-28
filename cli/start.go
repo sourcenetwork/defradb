@@ -14,15 +14,15 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
@@ -39,40 +39,13 @@ func MakeStartCommand() *cobra.Command {
 				return err
 			}
 			rootdir := mustGetContextRootDir(cmd)
-			if err := createConfig(rootdir, cmd.Root().PersistentFlags()); err != nil {
+			if err := createConfig(rootdir, cmd.Flags()); err != nil {
 				return err
 			}
 			return setContextConfig(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
-
-			dbOpts := []db.Option{
-				db.WithUpdateEvents(),
-				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
-				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
-				// we can allow starting of db without acp. Currently that can only be done programmatically.
-				// https://github.com/sourcenetwork/defradb/issues/2271
-				db.WithACPInMemory(),
-			}
-
-			netOpts := []net.NodeOpt{
-				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
-				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
-				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
-			}
-
-			serverOpts := []http.ServerOpt{
-				http.WithAddress(cfg.GetString("api.address")),
-				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
-				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
-				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
-			}
-
-			storeOpts := []node.StoreOpt{
-				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
-			}
 
 			var peers []peer.AddrInfo
 			if val := cfg.GetStringSlice("net.peers"); len(val) > 0 {
@@ -83,31 +56,51 @@ func MakeStartCommand() *cobra.Command {
 				peers = addrs
 			}
 
-			if cfg.GetString("datastore.store") != configStoreMemory {
-				// It would be ideal to not have the key path tied to the datastore.
-				// Running with memory store mode will always generate a random key.
-				// Adding support for an ephemeral mode and moving the key to the
-				// config would solve both of these issues.
-				rootDir := mustGetContextRootDir(cmd)
-				key, err := loadOrGeneratePrivateKey(filepath.Join(rootDir, "data", "key"))
-				if err != nil {
-					return err
-				}
-				netOpts = append(netOpts, net.WithPrivateKey(key))
+			opts := []node.Option{
+				node.WithPath(cfg.GetString("datastore.badger.path")),
+				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
+				node.WithACPType(node.LocalACPType),
+				node.WithPeers(peers...),
+				// db options
+				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				// net node options
+				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
+				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
+				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				// http server options
+				http.WithAddress(cfg.GetString("api.address")),
+				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
+				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
+				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
+				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
+			}
 
+			if cfg.GetString("datastore.store") != configStoreMemory {
+				rootDir := mustGetContextRootDir(cmd)
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				dbOpts = append(dbOpts, db.WithACP(rootDir))
+				opts = append(opts, node.WithACPPath(rootDir))
 			}
 
-			opts := []node.NodeOpt{
-				node.WithPeers(peers...),
-				node.WithStoreOpts(storeOpts...),
-				node.WithDatabaseOpts(dbOpts...),
-				node.WithNetOpts(netOpts...),
-				node.WithServerOpts(serverOpts...),
-				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
+			if !cfg.GetBool("keyring.disabled") {
+				kr, err := openKeyring(cmd)
+				if err != nil {
+					return NewErrKeyringHelp(err)
+				}
+				// load the required peer key
+				peerKey, err := kr.Get(peerKeyName)
+				if err != nil {
+					return NewErrKeyringHelp(err)
+				}
+				opts = append(opts, net.WithPrivateKey(peerKey))
+				// load the optional encryption key
+				encryptionKey, err := kr.Get(encryptionKeyName)
+				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+					return err
+				}
+				opts = append(opts, node.WithEncryptionKey(encryptionKey))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)
@@ -139,6 +132,52 @@ func MakeStartCommand() *cobra.Command {
 			return nil
 		},
 	}
-
+	// set default flag values from config
+	cfg := defaultConfig()
+	cmd.PersistentFlags().StringArray(
+		"peers",
+		cfg.GetStringSlice(configFlags["peers"]),
+		"List of peers to connect to",
+	)
+	cmd.PersistentFlags().Int(
+		"max-txn-retries",
+		cfg.GetInt(configFlags["max-txn-retries"]),
+		"Specify the maximum number of retries per transaction",
+	)
+	cmd.PersistentFlags().String(
+		"store",
+		cfg.GetString(configFlags["store"]),
+		"Specify the datastore to use (supported: badger, memory)",
+	)
+	cmd.PersistentFlags().Int(
+		"valuelogfilesize",
+		cfg.GetInt(configFlags["valuelogfilesize"]),
+		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
+	)
+	cmd.PersistentFlags().StringSlice(
+		"p2paddr",
+		cfg.GetStringSlice(configFlags["p2paddr"]),
+		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
+	)
+	cmd.PersistentFlags().Bool(
+		"no-p2p",
+		cfg.GetBool(configFlags["no-p2p"]),
+		"Disable the peer-to-peer network synchronization system",
+	)
+	cmd.PersistentFlags().StringArray(
+		"allowed-origins",
+		cfg.GetStringSlice(configFlags["allowed-origins"]),
+		"List of origins to allow for CORS requests",
+	)
+	cmd.PersistentFlags().String(
+		"pubkeypath",
+		cfg.GetString(configFlags["pubkeypath"]),
+		"Path to the public key for tls",
+	)
+	cmd.PersistentFlags().String(
+		"privkeypath",
+		cfg.GetString(configFlags["privkeypath"]),
+		"Path to the private key for tls",
+	)
 	return cmd
 }

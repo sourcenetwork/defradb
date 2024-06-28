@@ -28,6 +28,8 @@ type LensRegistry struct {
 	cmd *cliWrapper
 }
 
+func (w *LensRegistry) Init(txnSource client.TxnSource) {}
+
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
 	args := []string{"client", "schema", "migration", "set-registry"}
 

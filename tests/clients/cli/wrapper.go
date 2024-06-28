@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/net"
 )
@@ -411,7 +411,7 @@ func (w *Wrapper) ExecRequest(
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
-		result.Pub = w.execRequestSubscription(buffer)
+		result.Subscription = w.execRequestSubscription(buffer)
 		return result
 	}
 	data, err := io.ReadAll(buffer)
@@ -439,29 +439,24 @@ func (w *Wrapper) ExecRequest(
 	return result
 }
 
-func (w *Wrapper) execRequestSubscription(r io.Reader) *events.Publisher[events.Update] {
-	pubCh := events.New[events.Update](0, 0)
-	pub, err := events.NewPublisher[events.Update](pubCh, 0)
-	if err != nil {
-		return nil
-	}
-
+func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
+	resCh := make(chan client.GQLResult)
 	go func() {
 		dec := json.NewDecoder(r)
+		defer close(resCh)
 
 		for {
 			var response http.GraphQLResponse
 			if err := dec.Decode(&response); err != nil {
 				return
 			}
-			pub.Publish(client.GQLResult{
+			resCh <- client.GQLResult{
 				Errors: response.Errors,
 				Data:   response.Data,
-			})
+			}
 		}
 	}()
-
-	return pub
+	return resCh
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
@@ -512,8 +507,12 @@ func (w *Wrapper) Root() datastore.RootStore {
 	return w.node.Root()
 }
 
-func (w *Wrapper) Blockstore() blockstore.Blockstore {
+func (w *Wrapper) Blockstore() datastore.DAGStore {
 	return w.node.Blockstore()
+}
+
+func (w *Wrapper) Headstore() ds.Read {
+	return w.node.Headstore()
 }
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {
@@ -526,7 +525,7 @@ func (w *Wrapper) Close() {
 	w.node.Close()
 }
 
-func (w *Wrapper) Events() events.Events {
+func (w *Wrapper) Events() *event.Bus {
 	return w.node.Events()
 }
 
@@ -540,12 +539,4 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
 	w.node.Bootstrap(addrs)
-}
-
-func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogByPeerEvent(id)
-}
-
-func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogFromPeerEvent(id)
 }

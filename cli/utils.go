@@ -12,18 +12,27 @@ package cli
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"syscall"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/keyring"
+)
+
+const (
+	peerKeyName       = "peer-key"
+	encryptionKeyName = "encryption-key"
 )
 
 type contextKey string
@@ -41,6 +50,14 @@ var (
 	// in the current transaction context.
 	colContextKey = contextKey("col")
 )
+
+// readPassword reads a user input password without echoing it to the terminal.
+var readPassword = func(cmd *cobra.Command, msg string) ([]byte, error) {
+	cmd.Print(msg)
+	pass, err := term.ReadPassword(int(syscall.Stdin))
+	cmd.Println("")
+	return pass, err
+}
 
 // mustGetContextDB returns the db for the current command context.
 //
@@ -99,8 +116,7 @@ func setContextDB(cmd *cobra.Command) error {
 // setContextConfig sets teh config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
-	flags := cmd.Root().PersistentFlags()
-	cfg, err := loadConfig(rootdir, flags)
+	cfg, err := loadConfig(rootdir, cmd.Flags())
 	if err != nil {
 		return err
 	}
@@ -125,12 +141,21 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 }
 
 // setContextIdentity sets the identity for the current command context.
-func setContextIdentity(cmd *cobra.Command, identity string) error {
-	// TODO-ACP: `https://github.com/sourcenetwork/defradb/issues/2358` do the validation here.
-	if identity == "" {
+func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
+	if privateKeyHex == "" {
 		return nil
 	}
-	ctx := db.SetContextIdentity(cmd.Context(), acpIdentity.New(identity))
+	data, err := hex.DecodeString(privateKeyHex)
+	if err != nil {
+		return err
+	}
+	privKey := secp256k1.PrivKeyFromBytes(data)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	if err != nil {
+		return err
+	}
+
+	ctx := db.SetContextIdentity(cmd.Context(), identity)
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -153,44 +178,24 @@ func setContextRootDir(cmd *cobra.Command) error {
 	return nil
 }
 
-// loadOrGeneratePrivateKey loads the private key from the given path
-// or generates a new key and writes it to a file at the given path.
-func loadOrGeneratePrivateKey(path string) (crypto.PrivKey, error) {
-	key, err := loadPrivateKey(path)
-	if err == nil {
-		return key, nil
+// openKeyring opens the keyring for the current environment.
+func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
+	cfg := mustGetContextConfig(cmd)
+	backend := cfg.Get("keyring.backend")
+	if backend == "system" {
+		return keyring.OpenSystemKeyring(cfg.GetString("keyring.namespace")), nil
 	}
-	if os.IsNotExist(err) {
-		return generatePrivateKey(path)
+	if backend != "file" {
+		log.Info("keyring defaulted to file backend")
 	}
-	return nil, err
-}
-
-// generatePrivateKey generates a new private key and writes it
-// to a file at the given path.
-func generatePrivateKey(path string) (crypto.PrivKey, error) {
-	key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
-	if err != nil {
+	path := cfg.GetString("keyring.path")
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
-	data, err := crypto.MarshalPrivateKey(key)
-	if err != nil {
-		return nil, err
-	}
-	err = os.MkdirAll(filepath.Dir(path), 0755)
-	if err != nil {
-		return nil, err
-	}
-	return key, os.WriteFile(path, data, 0644)
-}
-
-// loadPrivateKey reads the private key from the file at the given path.
-func loadPrivateKey(path string) (crypto.PrivKey, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.UnmarshalPrivateKey(data)
+	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
+		return readPassword(cmd, s)
+	})
+	return keyring.OpenFileKeyring(path, prompt)
 }
 
 func writeJSON(cmd *cobra.Command, out any) error {

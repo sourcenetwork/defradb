@@ -13,8 +13,9 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -32,11 +33,11 @@ func MakeServerDumpCmd() *cobra.Command {
 			storeOpts := []node.StoreOpt{
 				node.WithPath(cfg.GetString("datastore.badger.path")),
 			}
-			rootstore, err := node.NewStore(storeOpts...)
+			rootstore, err := node.NewStore(cmd.Context(), storeOpts...)
 			if err != nil {
 				return err
 			}
-			db, err := db.NewDB(cmd.Context(), rootstore)
+			db, err := db.NewDB(cmd.Context(), rootstore, acp.NoACP, nil)
 			if err != nil {
 				return errors.Wrap("failed to initialize database", err)
 			}

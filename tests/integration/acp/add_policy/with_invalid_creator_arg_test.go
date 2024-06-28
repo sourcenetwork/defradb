@@ -13,19 +13,28 @@ package test_acp_add_policy
 import (
 	"testing"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		// Using an invalid creator is not possible with other client
+		// types since the token authentication will fail
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+			testUtils.GoClientType,
+		}),
 
 		Description: "Test acp, adding policy, with invalid creator, with valid policy, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: "invalid",
+				Identity: immutable.Some(acpIdentity.Identity{DID: "invalid"}),
 
 				Policy: `
+                    name: a policy
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:
@@ -46,23 +55,27 @@ func TestACP_AddPolicy_InvalidCreatorIdentityWithValidPolicy_Error(t *testing.T)
 
                 `,
 
-				ExpectedError: "policy creator can not be empty",
+				ExpectedError: "invalid actor ID",
 			},
 		},
 	}
 
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2357
-	testUtils.AssertPanic(t, func() { testUtils.ExecuteTestCase(t, test) })
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestACP_AddPolicy_InvalidCreatorIdentityWithEmptyPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		// Using an invalid creator is not possible with other client
+		// types since the token authentication will fail
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+			testUtils.GoClientType,
+		}),
 
 		Description: "Test acp, adding policy, with invalid creator, with empty policy, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: "invalid",
+				Identity: immutable.Some(acpIdentity.Identity{DID: "invalid"}),
 
 				Policy: "",
 

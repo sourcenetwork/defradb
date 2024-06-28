@@ -25,7 +25,6 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -33,13 +32,12 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -78,7 +76,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -86,12 +84,12 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 			},
 			testUtils.Request{
@@ -131,7 +129,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -139,12 +137,12 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
 			},
 			testUtils.Request{
@@ -184,7 +182,6 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -192,7 +189,6 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d432bdfb-787d-5a1c-ac29-dc025ab80095
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
@@ -200,23 +196,21 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				Doc: `{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"published_id": "bae-d432bdfb-787d-5a1c-ac29-dc025ab80095"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Cornelia Funke",
+					"age":          62,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -255,7 +249,6 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -263,13 +256,12 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -298,7 +290,6 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -306,7 +297,6 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
@@ -314,7 +304,6 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-500a9445-bd90-580e-9191-d2d0ec1a5cf5
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.0
@@ -322,31 +311,30 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Some Writer",
-					"age": 45,
-					"verified": false,
-					"published_id": "bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Writer",
+					"age":          45,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Some Other Writer",
-					"age": 30,
-					"verified": true,
-					"published_id": "bae-500a9445-bd90-580e-9191-d2d0ec1a5cf5"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Other Writer",
+					"age":          30,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 2),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -378,7 +366,6 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -386,7 +373,6 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
@@ -394,7 +380,6 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-1c890922-ddf9-5820-a888-c7f977848934
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.5
@@ -402,7 +387,6 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation
 				Doc: `{
 					"name": "Yet Another Book",
 					"rating": 3.0
@@ -410,40 +394,39 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Some Writer",
-					"age": 45,
-					"verified": false,
-					"published_id": "bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Writer",
+					"age":          45,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Some Other Writer",
-					"age": 35,
-					"verified": false,
-					"published_id": "bae-1c890922-ddf9-5820-a888-c7f977848934"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Other Writer",
+					"age":          35,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 2),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "Yet Another Writer",
-					"age": 30,
-					"verified": false,
-					"published_id": "TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Yet Another Writer",
+					"age":          30,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 3),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -462,10 +445,10 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "Some Other Book",
+						"name": "Some Book",
 					},
 					{
-						"name": "Some Book",
+						"name": "Some Other Book",
 					},
 				},
 			},
@@ -502,7 +485,6 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -510,7 +492,6 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
@@ -518,7 +499,6 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-66ba0c48-4984-5b44-83dd-edb791a54b7d
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.0
@@ -526,33 +506,30 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6
-				Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-5dac8488-0f75-5ddf-b08b-804b3d33a239
-				Doc: `{
-					"name": "Some Writer",
-					"age": 45,
-					"verified": false,
-					"published_id": "bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Writer",
+					"age":          45,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-8b0c345b-dda7-573c-b5f1-5fa1d70593e1
-				Doc: `{
-					"name": "Some Other Writer",
-					"age": 30,
-					"verified": true,
-					"published_id": "bae-66ba0c48-4984-5b44-83dd-edb791a54b7d"
-				}`,
+				DocMap: map[string]any{
+					"name":         "Some Other Writer",
+					"age":          30,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 2),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -566,12 +543,12 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 				}`,
 				Results: []map[string]any{
 					{
-						"name":   "Some Other Book",
-						"rating": 3.0,
-					},
-					{
 						"name":   "Painted House",
 						"rating": 4.9,
+					},
+					{
+						"name":   "Some Other Book",
+						"rating": 3.0,
 					},
 				},
 			},
@@ -605,12 +582,12 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 				}`,
 				Results: []map[string]any{
 					{
-						"name":   "Some Other Book",
-						"rating": 3.0,
-					},
-					{
 						"name":   "Painted House",
 						"rating": 4.9,
+					},
+					{
+						"name":   "Some Other Book",
+						"rating": 3.0,
 					},
 				},
 			},

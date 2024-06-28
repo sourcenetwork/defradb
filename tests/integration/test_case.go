@@ -16,6 +16,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -79,6 +80,15 @@ type SchemaUpdate struct {
 
 	// The schema update.
 	Schema string
+
+	// Optionally, the expected results.
+	//
+	// Each item will be compared individually, if ID, RootID, SchemaVersionID or Fields on the
+	// expected item are default they will not be compared with the actual.
+	//
+	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
+	// to allow their ommission in most cases).
+	ExpectedResults []client.CollectionDescription
 
 	// Any error expected from the action. Optional.
 	//
@@ -218,19 +228,53 @@ type CreateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
-	Identity string
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The collection in which this document should be created.
 	CollectionID int
 
 	// The document to create, in JSON string format.
+	//
+	// If [DocMap] is provided this value will be ignored.
 	Doc string
+
+	// The document to create, in map format.
+	//
+	// If this is provided [Doc] will be ignored.
+	DocMap map[string]any
 
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+}
+
+// DocIndex represents a relation field value, it allows relation fields to be set without worrying
+// about the specific document id.
+//
+// The test harness will substitute this struct for the document at the given index before
+// performing the host action.
+//
+// The targeted document must have been defined in an action prior to the action that this index
+// is hosted upon.
+type DocIndex struct {
+	// CollectionIndex is the index of the collection holding the document to target.
+	CollectionIndex int
+
+	// Index is the index within the target collection at which the document exists.
+	//
+	// This is dependent on the order in which test [CreateDoc] actions were defined.
+	Index int
+}
+
+// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
+// about the specific document id.
+func NewDocIndex(collectionIndex int, index int) DocIndex {
+	return DocIndex{
+		CollectionIndex: collectionIndex,
+		Index:           index,
+	}
 }
 
 // DeleteDoc will attempt to delete the given document in the given collection
@@ -247,7 +291,7 @@ type DeleteDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
-	Identity string
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -280,7 +324,7 @@ type UpdateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
-	Identity string
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -394,13 +438,13 @@ type GetIndexes struct {
 // assertions.
 type ResultAsserter interface {
 	// Assert will be called with the test and the result of the request.
-	Assert(t *testing.T, result []map[string]any)
+	Assert(t testing.TB, result []map[string]any)
 }
 
 // ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(*testing.T, []map[string]any) (bool, string)
+type ResultAsserterFunc func(testing.TB, []map[string]any) (bool, string)
 
-func (f ResultAsserterFunc) Assert(t *testing.T, result []map[string]any) {
+func (f ResultAsserterFunc) Assert(t testing.TB, result []map[string]any) {
 	f(t, result)
 }
 
@@ -434,7 +478,7 @@ type Request struct {
 	//
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
-	Identity string
+	Identity immutable.Option[acpIdentity.Identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -471,6 +515,24 @@ type GenerateDocs struct {
 }
 
 // CreatePredefinedDocs is an action that will trigger creation of predefined documents.
+// Predefined docs allows specifying a database state with complex schemas that can be used by
+// multiple tests while allowing each test to select a subset of the schemas (collection and
+// collection's fields) to work with.
+// Example:
+//
+//	 gen.DocsList{
+//		ColName: "User",
+//		Docs: []map[string]any{
+//		  {
+//			"name":     "Shahzad",
+//			"devices": []map[string]any{
+//			  {
+//				"model": "iPhone Xs",
+//			  }},
+//		  }},
+//	 }
+//
+// For more information refer to tests/predefined/README.md
 type CreatePredefinedDocs struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//

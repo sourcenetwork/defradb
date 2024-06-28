@@ -17,23 +17,19 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
-	"github.com/libp2p/go-libp2p/core/event"
+	cid "github.com/ipfs/go-cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
-	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -45,20 +41,11 @@ import (
 type server struct {
 	peer *Peer
 	opts []grpc.DialOption
-	db   client.DB
 
 	topics map[string]pubsubTopic
 	mu     sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
-
-	pubSubEmitter  event.Emitter
-	pushLogEmitter event.Emitter
-
-	// docQueue is used to track which documents are currently being processed.
-	// This is used to prevent multiple concurrent processing of the same document and
-	// limit unecessary transaction conflicts.
-	docQueue *docQueue
 
 	pb.UnimplementedServiceServer
 }
@@ -72,15 +59,11 @@ type pubsubTopic struct {
 
 // newServer creates a new network server that handle/directs RPC requests to the
 // underlying DB instance.
-func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) {
+func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s := &server{
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]pubsubTopic),
-		db:     db,
-		docQueue: &docQueue{
-			docs: make(map[string]chan struct{}),
-		},
 	}
 
 	cred := insecure.NewCredentials()
@@ -97,7 +80,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		}
 
 		// Get all DocIDs across all collections in the DB
-		cols, err := s.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
+		cols, err := s.peer.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -121,16 +104,6 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 				i++
 			}
 		}
-	}
-
-	var err error
-	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
-	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
-	}
-	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	if err != nil {
-		log.InfoContext(s.peer.ctx, "could not create event emitter", corelog.String("Error", err.Error()))
 	}
 
 	return s, nil
@@ -157,45 +130,13 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
-type docQueue struct {
-	docs map[string]chan struct{}
-	mu   sync.Mutex
-}
-
-// add adds a docID to the queue. If the docID is already in the queue, it will
-// wait for the docID to be removed from the queue. For every add call, done must
-// be called to remove the docID from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (dq *docQueue) add(docID string) {
-	dq.mu.Lock()
-	done, ok := dq.docs[docID]
-	if !ok {
-		dq.docs[docID] = make(chan struct{})
-	}
-	dq.mu.Unlock()
-	if ok {
-		<-done
-		dq.add(docID)
-	}
-}
-
-func (dq *docQueue) done(docID string) {
-	dq.mu.Lock()
-	defer dq.mu.Unlock()
-	done, ok := dq.docs[docID]
-	if ok {
-		delete(dq.docs, docID)
-		close(done)
-	}
-}
-
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	cid, err := cid.Cast(req.Body.Cid)
+	headCID, err := cid.Cast(req.Body.Cid)
 	if err != nil {
 		return nil, err
 	}
@@ -203,181 +144,36 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-
-	s.docQueue.add(docID.String())
-	defer func() {
-		s.docQueue.done(docID.String())
-		if s.pushLogEmitter != nil {
-			byPeer, err := libpeer.Decode(req.Body.Creator)
-			if err != nil {
-				log.InfoContext(ctx, "could not decode the PeerID of the log creator", corelog.String("Error", err.Error()))
-			}
-			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-				FromPeer: pid,
-				ByPeer:   byPeer,
-			})
-			if err != nil {
-				// logging instead of returning an error because the event bus should
-				// not break the PushLog execution.
-				log.InfoContext(ctx, "could not emit push log event", corelog.String("Error", err.Error()))
-			}
-		}
-	}()
-
-	// make sure were not processing twice
-	if canVisit := s.peer.queuedChildren.Visit(cid); !canVisit {
-		return &pb.PushLogReply{}, nil
-	}
-	defer s.peer.queuedChildren.Remove(cid)
-
-	// check if we already have this block
-	exists, err := s.db.Blockstore().Has(ctx, cid)
+	byPeer, err := libpeer.Decode(req.Body.Creator)
 	if err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("failed to check for existing block %s", cid), err)
+		return nil, err
 	}
-	if exists {
-		return &pb.PushLogReply{}, nil
-	}
-
-	dsKey := core.DataStoreKeyFromDocID(docID)
-
-	var txnErr error
-	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
-		// To prevent a potential deadlock on DAG sync if an error occures mid process, we handle
-		// each process on a single transaction.
-		txn, err := s.db.NewConcurrentTxn(ctx, false)
-		if err != nil {
-			return nil, err
-		}
-		defer txn.Discard(ctx)
-
-		// use a transaction for all operations
-		ctx = db.SetContextTxn(ctx, txn)
-
-		// Currently a schema is the best way we have to link a push log request to a collection,
-		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		col, err := s.getActiveCollection(ctx, s.db, string(req.Body.SchemaRoot))
-		if err != nil {
-			return nil, err
-		}
-
-		// Create a new DAG service with the current transaction
-		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)
-		if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-			getter = sessionMaker.Session(ctx)
-		}
-
-		// handleComposite
-		nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
-		if err != nil {
-			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
-		}
-
-		var wg sync.WaitGroup
-		bp := newBlockProcessor(s.peer, txn, col, dsKey, getter)
-		err = bp.processRemoteBlock(ctx, &wg, nd, true)
-		if err != nil {
-			log.ErrorContextE(
-				ctx,
-				"Failed to process remote block",
-				err,
-				corelog.String("DocID", dsKey.DocID),
-				corelog.Any("CID", cid),
-			)
-		}
-		wg.Wait()
-		bp.mergeBlocks(ctx)
-
-		err = s.syncIndexedDocs(ctx, col, docID)
-		if err != nil {
-			return nil, err
-		}
-
-		// dagWorkers specific to the DocID will have been spawned within handleChildBlocks.
-		// Once we are done with the dag syncing process, we can get rid of those workers.
-		if s.peer.closeJob != nil {
-			s.peer.closeJob <- dsKey.DocID
-		}
-
-		if txnErr = txn.Commit(ctx); txnErr != nil {
-			if errors.Is(txnErr, badger.ErrTxnConflict) {
-				continue
-			}
-			return &pb.PushLogReply{}, txnErr
-		}
-
-		// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-		// suscribe to the collection.
-		if !s.hasPubSubTopic(col.SchemaRoot()) {
-			err = s.addPubSubTopic(dsKey.DocID, true)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return &pb.PushLogReply{}, nil
-	}
-
-	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
-}
-
-func (*server) getActiveCollection(
-	ctx context.Context,
-	store client.Store,
-	schemaRoot string,
-) (client.Collection, error) {
-	cols, err := store.GetCollections(
-		ctx,
-		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(schemaRoot),
-		},
-	)
+	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
 	if err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
+		return nil, err
 	}
-	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
+	err = syncDAG(ctx, s.peer.bserv, block)
+	if err != nil {
+		return nil, err
 	}
-	var col client.Collection
-	for _, c := range cols {
-		if col != nil && col.Name().HasValue() && !c.Name().HasValue() {
-			continue
+
+	s.peer.db.Events().Publish(event.NewMessage(event.MergeName, event.Merge{
+		DocID:      docID.String(),
+		ByPeer:     byPeer,
+		FromPeer:   pid,
+		Cid:        headCID,
+		SchemaRoot: string(req.Body.SchemaRoot),
+	}))
+
+	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
+	// suscribe to the collection.
+	if !s.hasPubSubTopic(string(req.Body.SchemaRoot)) {
+		err = s.addPubSubTopic(docID.String(), true)
+		if err != nil {
+			return nil, err
 		}
-		col = c
 	}
-	return col, nil
-}
-
-func (s *server) syncIndexedDocs(
-	ctx context.Context,
-	col client.Collection,
-	docID client.DocID,
-) error {
-	// remove transaction from old context
-	oldCtx := db.SetContextTxn(ctx, nil)
-
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
-	// Resolve while handling acp <> secondary indexes.
-	oldDoc, err := col.Get(oldCtx, docID, false)
-	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isNewDoc && err != nil {
-		return err
-	}
-
-	//TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365
-	// Resolve while handling acp <> secondary indexes.
-	doc, err := col.Get(ctx, docID, false)
-	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isDeletedDoc && err != nil {
-		return err
-	}
-
-	if isDeletedDoc {
-		return col.DeleteDocIndex(oldCtx, oldDoc)
-	} else if isNewDoc {
-		return col.CreateDocIndex(ctx, doc)
-	} else {
-		return col.UpdateDocIndex(ctx, oldDoc, doc)
-	}
+	return &pb.PushLogReply{}, nil
 }
 
 // GetHeadLog receives a get head log request
@@ -514,15 +310,10 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		corelog.String("Topic", topic),
 		corelog.String("Message", string(msg)),
 	)
-
-	if s.pubSubEmitter != nil {
-		err := s.pubSubEmitter.Emit(EvtPubSub{
-			Peer: from,
-		})
-		if err != nil {
-			log.InfoContext(s.peer.ctx, "could not emit pubsub event", corelog.Any("Error", err.Error()))
-		}
-	}
+	evt := event.NewMessage(event.PubSubName, event.PubSub{
+		Peer: from,
+	})
+	s.peer.db.Events().Publish(evt)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
@@ -546,18 +337,3 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	}
 	return pid, nil
 }
-
-// KEEPING AS REFERENCE
-//
-// logFromProto returns a thread log from a proto log.
-// func logFromProto(l *pb.Log) thread.LogInfo {
-// 	return thread.LogInfo{
-// 		ID:     l.ID.ID,
-// 		PubKey: l.PubKey.PubKey,
-// 		Addrs:  addrsFromProto(l.Addrs),
-// 		Head: thread.Head{
-// 			ID:      l.Head.Cid,
-// 			Counter: l.Counter,
-// 		},
-// 	}
-// }

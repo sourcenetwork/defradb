@@ -22,20 +22,20 @@ import (
 
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/defradb/request/graphql"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -134,7 +134,7 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 // Will also attempt to detect incompatible changes in the persisted data if
 // configured to do so (the CI will do so, but disabled by default as it is slow).
 func ExecuteTestCase(
-	t *testing.T,
+	t testing.TB,
 	testCase TestCase,
 ) {
 	flattenActions(&testCase)
@@ -182,7 +182,7 @@ func ExecuteTestCase(
 
 func executeTestCase(
 	ctx context.Context,
-	t *testing.T,
+	t testing.TB,
 	collectionNames []string,
 	testCase TestCase,
 	dbt DatabaseType,
@@ -195,6 +195,7 @@ func executeTestCase(
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", mutationType),
 		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("badgerEncryption", badgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
 		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
 		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
@@ -578,7 +579,7 @@ func flattenActions(testCase *TestCase) {
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
 // they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
-func getActionRange(t *testing.T, testCase TestCase) (int, int) {
+func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
 
@@ -707,6 +708,11 @@ func restartNodes(
 		c, err := setupClient(s, n)
 		require.NoError(s.t, err)
 		s.nodes[i] = c
+
+		// subscribe to merge complete events
+		sub, err := c.Events().Subscribe(event.MergeCompleteName)
+		require.NoError(s.t, err)
+		s.eventSubs[i] = sub
 	}
 
 	// The index of the action after the last wait action before the current restart action.
@@ -728,15 +734,11 @@ actionLoop:
 		case ConnectPeers:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			setupPeerWaitSync(
-				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
-			)
+			setupPeerWaitSync(s, waitGroupStartIndex, action)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			setupReplicatorWaitSync(
-				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
-			)
+			setupReplicatorWaitSync(s, waitGroupStartIndex, action)
 		}
 	}
 
@@ -788,7 +790,7 @@ func configureNode(
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
-	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+	privateKey, err := crypto.GenerateEd25519()
 	require.NoError(s.t, err)
 
 	nodeOpts := action()
@@ -812,6 +814,11 @@ func configureNode(
 
 	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
+
+	// subscribe to merge complete events
+	sub, err := c.Events().Subscribe(event.MergeCompleteName)
+	require.NoError(s.t, err)
+	s.eventSubs = append(s.eventSubs, sub)
 }
 
 func refreshDocuments(
@@ -850,7 +857,7 @@ func refreshDocuments(
 				continue
 			}
 
-			ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
+			ctx := db.SetContextIdentity(s.ctx, action.Identity)
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
 			doc, err = collection.Get(ctx, doc.ID(), false)
@@ -927,7 +934,7 @@ func getIndexes(
 func assertIndexesListsEqual(
 	expectedIndexes []client.IndexDescription,
 	actualIndexes []client.IndexDescription,
-	t *testing.T,
+	t testing.TB,
 	testDescription string,
 ) {
 	toNames := func(indexes []client.IndexDescription) []string {
@@ -956,7 +963,7 @@ func assertIndexesListsEqual(
 }
 
 func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
-	t *testing.T,
+	t testing.TB,
 	testDescription string,
 ) {
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, testDescription)
@@ -993,10 +1000,14 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.AddSchema(s.ctx, action.Schema)
+		results, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if action.ExpectedResults != nil {
+			assertCollectionDescriptions(s, action.ExpectedResults, results)
+		}
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
@@ -1082,39 +1093,16 @@ func getCollections(
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.SetContextTxn(s.ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
+		resultDescriptions := make([]client.CollectionDescription, len(results))
+		for i, col := range results {
+			resultDescriptions[i] = col.Description()
+		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			require.Equal(s.t, len(action.ExpectedResults), len(results))
-
-			for i, expected := range action.ExpectedResults {
-				actual := results[i].Description()
-				if expected.ID != 0 {
-					require.Equal(s.t, expected.ID, actual.ID)
-				}
-				if expected.RootID != 0 {
-					require.Equal(s.t, expected.RootID, actual.RootID)
-				}
-				if expected.SchemaVersionID != "" {
-					require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
-				}
-
-				require.Equal(s.t, expected.Name, actual.Name)
-
-				if expected.Indexes != nil || len(actual.Indexes) != 0 {
-					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-					// This is to say each test action from having to bother declaring an empty slice (if there are no indexes)
-					require.Equal(s.t, expected.Indexes, actual.Indexes)
-				}
-
-				if expected.Sources != nil || len(actual.Sources) != 0 {
-					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-					// This is to say each test action from having to bother declaring an empty slice (if there are no sources)
-					require.Equal(s.t, expected.Sources, actual.Sources)
-				}
-			}
+			assertCollectionDescriptions(s, action.ExpectedResults, resultDescriptions)
 		}
 	}
 }
@@ -1152,6 +1140,10 @@ func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
+	if action.DocMap != nil {
+		substituteRelations(s, action)
+	}
+
 	var mutation func(*state, CreateDoc, client.P2P, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
@@ -1197,7 +1189,12 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	var doc *client.Document
+	if action.DocMap != nil {
+		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+	} else {
+		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1205,7 +1202,7 @@ func createDocViaColSave(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, action.Identity)
 
 	return doc, collections[action.CollectionID].Save(ctx, doc)
 }
@@ -1217,7 +1214,12 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	var doc *client.Document
+	if action.DocMap != nil {
+		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+	} else {
+		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1225,7 +1227,7 @@ func createDocViaColCreate(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, action.Identity)
 
 	return doc, collections[action.CollectionID].Create(ctx, doc)
 }
@@ -1237,8 +1239,14 @@ func createDocViaGQL(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
+	var err error
+	var input string
 
-	input, err := jsonToGQL(action.Doc)
+	if action.DocMap != nil {
+		input, err = valueToGQL(action.DocMap)
+	} else {
+		input, err = jsonToGQL(action.Doc)
+	}
 	require.NoError(s.t, err)
 
 	request := fmt.Sprintf(
@@ -1254,7 +1262,7 @@ func createDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, action.Identity)
 
 	result := node.ExecRequest(
 		ctx,
@@ -1279,6 +1287,25 @@ func createDocViaGQL(
 	return doc, nil
 }
 
+// substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
+// it will substitute the [DocIndex] for the the corresponding document ID found in the state.
+//
+// If a document at that index is not found it will panic.
+func substituteRelations(
+	s *state,
+	action CreateDoc,
+) {
+	for k, v := range action.DocMap {
+		index, isIndex := v.(DocIndex)
+		if !isIndex {
+			continue
+		}
+
+		doc := s.documents[index.CollectionIndex][index.Index]
+		action.DocMap[k] = doc.ID().String()
+	}
+}
+
 // deleteDoc deletes a document using the collection api and caches it in the
 // given documents slice.
 func deleteDoc(
@@ -1286,7 +1313,7 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
+	ctx := db.SetContextIdentity(s.ctx, action.Identity)
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1344,7 +1371,7 @@ func updateDocViaColSave(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
+	ctx := db.SetContextIdentity(s.ctx, action.Identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1371,7 +1398,7 @@ func updateDocViaColUpdate(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, acpIdentity.New(action.Identity))
+	ctx := db.SetContextIdentity(s.ctx, action.Identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1414,7 +1441,7 @@ func updateDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+	ctx = db.SetContextIdentity(ctx, action.Identity)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1634,7 +1661,7 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		ctx = db.SetContextIdentity(ctx, acpIdentity.New(action.Identity))
+		ctx = db.SetContextIdentity(ctx, action.Identity)
 
 		result := node.ExecRequest(ctx, action.Request)
 
@@ -1679,13 +1706,11 @@ func executeSubscriptionRequest(
 
 			allActionsAreDone := false
 			expectedDataRecieved := len(action.Results) == 0
-			stream := result.Pub.Stream()
 			for {
 				select {
-				case s := <-stream:
-					sResult, _ := s.(client.GQLResult)
-					sData, _ := sResult.Data.([]map[string]any)
-					errs = append(errs, sResult.Errors...)
+				case s := <-result.Subscription:
+					sData, _ := s.Data.([]map[string]any)
+					errs = append(errs, s.Errors...)
 					data = append(data, sData...)
 
 					if len(data) >= len(action.Results) {
@@ -1730,7 +1755,7 @@ func executeSubscriptionRequest(
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
-func AssertError(t *testing.T, description string, err error, expectedError string) bool {
+func AssertError(t testing.TB, description string, err error, expectedError string) bool {
 	if err == nil {
 		return false
 	}
@@ -1751,7 +1776,7 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
 func AssertErrors(
-	t *testing.T,
+	t testing.TB,
 	description string,
 	errs []error,
 	expectedError string,
@@ -1836,6 +1861,16 @@ func assertRequestResults(
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
+			case DocIndex:
+				expectedDocID := s.documents[r.CollectionIndex][r.Index].ID().String()
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedDocID,
+					actualValue,
+					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+				)
+
 			default:
 				assertResultsEqual(
 					s.t,
@@ -1851,7 +1886,7 @@ func assertRequestResults(
 	return false
 }
 
-func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {
+func assertExpectedErrorRaised(t testing.TB, description string, expectedError string, wasRaised bool) {
 	if expectedError != "" && !wasRaised {
 		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
@@ -1937,7 +1972,7 @@ func assertClientIntrospectionResults(
 
 // Asserts that the `actual` contains the given `contains` value according to the logic
 // described on the [RequestTestCase.ContainsData] property.
-func assertContains(t *testing.T, contains map[string]any, actual map[string]any) {
+func assertContains(t testing.TB, contains map[string]any, actual map[string]any) {
 	for k, expected := range contains {
 		innerActual := actual[k]
 		if innerExpected, innerIsMap := expected.(map[string]any); innerIsMap {
@@ -1968,7 +2003,7 @@ func assertContains(t *testing.T, contains map[string]any, actual map[string]any
 	}
 }
 
-func assertBackupContent(t *testing.T, expectedContent, filepath string) {
+func assertBackupContent(t testing.TB, expectedContent, filepath string) {
 	b, err := os.ReadFile(filepath)
 	assert.NoError(t, err)
 	assert.Equal(
@@ -1980,7 +2015,7 @@ func assertBackupContent(t *testing.T, expectedContent, filepath string) {
 
 // skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
 // and the active mutation type is not contained within that value set.
-func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutable.Option[[]MutationType]) {
+func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutable.Option[[]MutationType]) {
 	if supportedMutationTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedMutationType := range supportedMutationTypes.Value() {
@@ -2001,7 +2036,7 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 // If supportedClientTypes is none no filtering will take place and the input client set will be returned.
 // If the resultant filtered set is empty the test will be skipped.
 func skipIfClientTypeUnsupported(
-	t *testing.T,
+	t testing.TB,
 	clients []ClientType,
 	supportedClientTypes immutable.Option[[]ClientType],
 ) []ClientType {
@@ -2028,7 +2063,7 @@ func skipIfClientTypeUnsupported(
 
 // skipIfNetworkTest skips the current test if the given actions
 // contain network actions and skipNetworkTests is true.
-func skipIfNetworkTest(t *testing.T, actions []any) {
+func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {

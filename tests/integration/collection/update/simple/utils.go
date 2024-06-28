@@ -34,6 +34,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	u := c["Users"]
+	u.Schema.Root = "bafkreiclkqkxhq3xu3sz5fqcixykk2qfpva5asj3elcaqyxscax66ok4za"
+	c["Users"] = u
 	colDefMap = c
 }
 

@@ -36,6 +36,11 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
+						"name":                 "Not a Writer",
+						"NewestPublishersBook": []map[string]any{},
+						"OldestPublishersBook": []map[string]any{},
+					},
+					{
 						"name": "John Grisham",
 						"NewestPublishersBook": []map[string]any{
 							{
@@ -47,11 +52,6 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 								"name": "The Associate", // oldest because has no Publisher.
 							},
 						},
-					},
-					{
-						"name":                 "Not a Writer",
-						"NewestPublishersBook": []map[string]any{},
-						"OldestPublishersBook": []map[string]any{},
 					},
 					{
 						"name": "Cornelia Funke",

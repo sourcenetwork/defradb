@@ -34,6 +34,7 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -50,7 +51,7 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "b6edfd9d24a79067a2f5960e1369499ebaf4c5ec6747e2f444f33bf9c3915fcb",
+				ExpectedPolicyID: "db6e4d3efc58f8a7bfe8f35c73c39630f1ad3e6fad7ffeb22563d1284bd176dc",
 			},
 		},
 	}
@@ -68,6 +69,7 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -87,7 +89,7 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "7eb7448daa631cfe33da3a149f5eea716026f54bf23ce1315c594259382c5c57",
+				ExpectedPolicyID: "106a38bfb702608e26feda961d9fffd74141ef34eccc17b3de2c15dd7620da46",
 			},
 		},
 	}
@@ -105,6 +107,7 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -119,7 +122,7 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "b6edfd9d24a79067a2f5960e1369499ebaf4c5ec6747e2f444f33bf9c3915fcb",
+				ExpectedPolicyID: "db6e4d3efc58f8a7bfe8f35c73c39630f1ad3e6fad7ffeb22563d1284bd176dc",
 			},
 		},
 	}
@@ -137,6 +140,7 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -154,7 +158,7 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "7eb7448daa631cfe33da3a149f5eea716026f54bf23ce1315c594259382c5c57",
+				ExpectedPolicyID: "106a38bfb702608e26feda961d9fffd74141ef34eccc17b3de2c15dd7620da46",
 			},
 		},
 	}

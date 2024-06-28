@@ -26,6 +26,10 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 func (_m *Txn) Commit(ctx context.Context) error {
 	ret := _m.Called(ctx)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Commit")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
 		r0 = rf(ctx)
@@ -67,6 +71,10 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func(context.Context) error) *Txn_Co
 // DAGstore provides a mock function with given fields:
 func (_m *Txn) DAGstore() datastore.DAGStore {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for DAGstore")
+	}
 
 	var r0 datastore.DAGStore
 	if rf, ok := ret.Get(0).(func() datastore.DAGStore); ok {
@@ -110,6 +118,10 @@ func (_c *Txn_DAGstore_Call) RunAndReturn(run func() datastore.DAGStore) *Txn_DA
 // Datastore provides a mock function with given fields:
 func (_m *Txn) Datastore() datastore.DSReaderWriter {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Datastore")
+	}
 
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
@@ -187,6 +199,10 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard
 func (_m *Txn) Headstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Headstore")
+	}
+
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
 		r0 = rf()
@@ -229,6 +245,10 @@ func (_c *Txn_Headstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 // ID provides a mock function with given fields:
 func (_m *Txn) ID() uint64 {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ID")
+	}
 
 	var r0 uint64
 	if rf, ok := ret.Get(0).(func() uint64); ok {
@@ -300,6 +320,39 @@ func (_c *Txn_OnDiscard_Call) RunAndReturn(run func(func())) *Txn_OnDiscard_Call
 	return _c
 }
 
+// OnDiscardAsync provides a mock function with given fields: fn
+func (_m *Txn) OnDiscardAsync(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnDiscardAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnDiscardAsync'
+type Txn_OnDiscardAsync_Call struct {
+	*mock.Call
+}
+
+// OnDiscardAsync is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnDiscardAsync(fn interface{}) *Txn_OnDiscardAsync_Call {
+	return &Txn_OnDiscardAsync_Call{Call: _e.mock.On("OnDiscardAsync", fn)}
+}
+
+func (_c *Txn_OnDiscardAsync_Call) Run(run func(fn func())) *Txn_OnDiscardAsync_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnDiscardAsync_Call) Return() *Txn_OnDiscardAsync_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnDiscardAsync_Call) RunAndReturn(run func(func())) *Txn_OnDiscardAsync_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // OnError provides a mock function with given fields: fn
 func (_m *Txn) OnError(fn func()) {
 	_m.Called(fn)
@@ -329,6 +382,39 @@ func (_c *Txn_OnError_Call) Return() *Txn_OnError_Call {
 }
 
 func (_c *Txn_OnError_Call) RunAndReturn(run func(func())) *Txn_OnError_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// OnErrorAsync provides a mock function with given fields: fn
+func (_m *Txn) OnErrorAsync(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnErrorAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnErrorAsync'
+type Txn_OnErrorAsync_Call struct {
+	*mock.Call
+}
+
+// OnErrorAsync is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnErrorAsync(fn interface{}) *Txn_OnErrorAsync_Call {
+	return &Txn_OnErrorAsync_Call{Call: _e.mock.On("OnErrorAsync", fn)}
+}
+
+func (_c *Txn_OnErrorAsync_Call) Run(run func(fn func())) *Txn_OnErrorAsync_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnErrorAsync_Call) Return() *Txn_OnErrorAsync_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnErrorAsync_Call) RunAndReturn(run func(func())) *Txn_OnErrorAsync_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -366,9 +452,46 @@ func (_c *Txn_OnSuccess_Call) RunAndReturn(run func(func())) *Txn_OnSuccess_Call
 	return _c
 }
 
+// OnSuccessAsync provides a mock function with given fields: fn
+func (_m *Txn) OnSuccessAsync(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnSuccessAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnSuccessAsync'
+type Txn_OnSuccessAsync_Call struct {
+	*mock.Call
+}
+
+// OnSuccessAsync is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnSuccessAsync(fn interface{}) *Txn_OnSuccessAsync_Call {
+	return &Txn_OnSuccessAsync_Call{Call: _e.mock.On("OnSuccessAsync", fn)}
+}
+
+func (_c *Txn_OnSuccessAsync_Call) Run(run func(fn func())) *Txn_OnSuccessAsync_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnSuccessAsync_Call) Return() *Txn_OnSuccessAsync_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccessAsync_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Peerstore provides a mock function with given fields:
 func (_m *Txn) Peerstore() datastore.DSBatching {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Peerstore")
+	}
 
 	var r0 datastore.DSBatching
 	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
@@ -413,6 +536,10 @@ func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *Txn
 func (_m *Txn) Rootstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Rootstore")
+	}
+
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
 		r0 = rf()
@@ -455,6 +582,10 @@ func (_c *Txn_Rootstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 // Systemstore provides a mock function with given fields:
 func (_m *Txn) Systemstore() datastore.DSReaderWriter {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Systemstore")
+	}
 
 	var r0 datastore.DSReaderWriter
 	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {

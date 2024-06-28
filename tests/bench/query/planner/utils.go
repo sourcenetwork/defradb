@@ -17,12 +17,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/request/graphql"
-	gqlSchema "github.com/sourcenetwork/defradb/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/planner"
+	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	gqlSchema "github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -143,4 +143,7 @@ func (*dummyTxn) Discard(ctx context.Context)           {}
 func (*dummyTxn) OnSuccess(fn func())                   {}
 func (*dummyTxn) OnError(fn func())                     {}
 func (*dummyTxn) OnDiscard(fn func())                   {}
+func (*dummyTxn) OnSuccessAsync(fn func())              {}
+func (*dummyTxn) OnErrorAsync(fn func())                {}
+func (*dummyTxn) OnDiscardAsync(fn func())              {}
 func (*dummyTxn) ID() uint64                            { return 0 }

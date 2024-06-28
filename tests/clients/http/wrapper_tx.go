@@ -49,6 +49,18 @@ func (w *TxWrapper) OnDiscard(fn func()) {
 	w.server.OnDiscard(fn)
 }
 
+func (w *TxWrapper) OnSuccessAsync(fn func()) {
+	w.server.OnSuccessAsync(fn)
+}
+
+func (w *TxWrapper) OnErrorAsync(fn func()) {
+	w.server.OnErrorAsync(fn)
+}
+
+func (w *TxWrapper) OnDiscardAsync(fn func()) {
+	w.server.OnDiscardAsync(fn)
+}
+
 func (w *TxWrapper) Rootstore() datastore.DSReaderWriter {
 	return w.server.Rootstore()
 }

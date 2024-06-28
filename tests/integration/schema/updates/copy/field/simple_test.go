@@ -34,7 +34,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" }
 					]
 				`,
-				ExpectedError: "duplicate field. Name: email",
+				ExpectedError: "moving fields is not currently supported. Name: email",
 			},
 			testUtils.Request{
 				Request: `query {

@@ -25,11 +25,11 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -37,7 +37,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -45,12 +45,12 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -59,7 +59,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -109,11 +109,11 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -121,7 +121,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -129,12 +129,12 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -143,7 +143,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -177,11 +177,11 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -189,7 +189,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -197,12 +197,12 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -211,7 +211,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -257,11 +257,11 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -269,7 +269,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -277,12 +277,12 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -291,7 +291,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -315,6 +315,17 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
+						"name": "Cornelia Funke",
+						"age":  int64(62),
+						"p1": []map[string]any{
+							{
+								"name":   "Theif Lord",
+								"rating": 4.8,
+							},
+						},
+						"p2": []map[string]any{},
+					},
+					{
 						"name": "John Grisham",
 						"age":  int64(65),
 						"p1": []map[string]any{
@@ -329,17 +340,6 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 								"rating": 4.5,
 							},
 						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-						"p1": []map[string]any{
-							{
-								"name":   "Theif Lord",
-								"rating": 4.8,
-							},
-						},
-						"p2": []map[string]any{},
 					},
 				},
 			},
@@ -361,7 +361,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -369,7 +369,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -377,7 +377,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -385,12 +385,12 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "The Lord of the Rings",
 					"rating": 5.0,
-					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
+					"author_id": "bae-6bf29c1c-7112-5f4f-bfae-1c039479acf6"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -399,7 +399,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -408,7 +408,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
+				// bae-6bf29c1c-7112-5f4f-bfae-1c039479acf6
 				Doc: `{
 					"name": "John Tolkien",
 					"age": 70,
@@ -432,10 +432,10 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John Grisham",
+						"name": "Cornelia Funke",
 					},
 					{
-						"name": "Cornelia Funke",
+						"name": "John Grisham",
 					},
 				},
 			},
@@ -465,40 +465,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Theif Lord",
-					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "The Lord of the Rings",
-					"rating": 5.0,
-					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
-				}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -507,7 +474,6 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -516,12 +482,43 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
 				Doc: `{
 					"name": "John Tolkien",
 					"age": 70,
 					"verified": true
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "The Lord of the Rings",
+					"rating":    5.0,
+					"author_id": testUtils.NewDocIndex(1, 2),
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -540,10 +537,10 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John Grisham",
+						"name": "Cornelia Funke",
 					},
 					{
-						"name": "Cornelia Funke",
+						"name": "John Grisham",
 					},
 				},
 			},

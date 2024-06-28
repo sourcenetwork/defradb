@@ -30,54 +30,54 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,
@@ -88,28 +88,28 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 
 		Results: []map[string]any{
 			{
-				"name":      "Candide",
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-			},
-			{
-				"name":      "Zadig",
-				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
-			},
-			{
 				"name":      "The Client",
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-			},
-			{
-				"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 			},
 			{
 				"name":      "Painted House",
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 			},
 			{
 				"name":      "A Time for Mercy",
-				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+			},
+			{
+				"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+				"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+			},
+			{
+				"name":      "Candide",
+				"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+			},
+			{
+				"name":      "Zadig",
+				"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
 			},
 		},
 	}
@@ -131,54 +131,54 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 				`{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3"
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
 				`{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c"
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
 
 			//authors
 			1: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3
+				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
 				`{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-09d33399-197a-5b98-b135-4398f2b6de4c
+				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
 				`{
 					"name": "Simon Pelloutier",
 					"age": 327,

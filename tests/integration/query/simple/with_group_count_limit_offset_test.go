@@ -97,7 +97,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 						"Name": "Bob",
 					},
 					{
-						"Name": "John",
+						"Name": "Shahzad",
 					},
 				},
 			},

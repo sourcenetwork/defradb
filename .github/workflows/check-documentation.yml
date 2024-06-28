@@ -1,0 +1,105 @@
+# Copyright 2024 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# This workflow checks that all documentation is up to date.
+# If any documentation is not up to date then this action will fail.
+name: Check Documentation Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+jobs:
+  check-cli-documentation:
+    name: Check cli documentation job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
+
+      - name: Try generating cli documentation
+        run: make docs:cli
+
+      - name: Check no new changes exist
+        uses: tj-actions/verify-changed-files@v20
+        with:
+          fail-if-changed: true
+          files: |
+             docs/website/references/cli
+
+  check-http-documentation:
+    name: Check http documentation job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
+
+      - name: Try generating http documentation
+        run: make docs:http
+
+      - name: Check no new changes exist
+        uses: tj-actions/verify-changed-files@v20
+        with:
+          fail-if-changed: true
+          files: |
+             docs/website/references/http
+
+  check-readme-toc:
+    name: Check readme toc job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
+
+      - name: Try generating readme toc
+        run: make toc
+
+      - name: Check no new changes exist
+        uses: tj-actions/verify-changed-files@v20
+        with:
+          fail-if-changed: true
+          files: |
+             README.md

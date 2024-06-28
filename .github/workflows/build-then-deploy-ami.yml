@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Environment version target
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV}
@@ -89,10 +89,10 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Terraform action setup
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.3.7
 

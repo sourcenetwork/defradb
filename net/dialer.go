@@ -15,21 +15,15 @@ package net
 import (
 	"context"
 	gonet "net"
-	"time"
 
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/errors"
+	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	pb "github.com/sourcenetwork/defradb/net/pb"
-)
-
-var (
-	// DialTimeout is the max time duration to wait when dialing a peer.
-	DialTimeout = time.Second * 10
 )
 
 // dial attempts to open a gRPC connection over libp2p to a peer.
@@ -46,9 +40,16 @@ func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
 			return pb.NewServiceClient(conn), nil
 		}
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), DialTimeout)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, peerID.String(), s.opts...)
+	// We need the "passthrough:" in the beginning of the target,
+	// otherwise [grpc.NewClient] will assume (the default) "dns" target.
+	// More information here:
+	// - https://github.com/grpc/grpc-go/blob/master/Documentation/anti-patterns.md#dialing-in-grpc
+	// - https://github.com/grpc/grpc/blob/master/doc/naming.md
+	// - https://github.com/grpc/grpc-go/issues/1786
+	conn, err := grpc.NewClient(
+		"passthrough:"+peerID.String(),
+		s.opts...,
+	)
 	if err != nil {
 		return nil, err
 	}

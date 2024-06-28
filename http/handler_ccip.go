@@ -61,7 +61,7 @@ func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	result := store.ExecRequest(req.Context(), request.Query)
-	if result.Pub != nil {
+	if result.Subscription != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
 		return
 	}

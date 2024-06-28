@@ -30,12 +30,12 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"_docID": "bae-b3ce089b-f543-5984-be9f-ad7d08969f4e",
 						"age":    int64(27),
 						"name":   "John",
 					},
 					{
-						"_docID": "bae-18def051-7f0f-5dc9-8a69-2a5e423f6b55",
+						"_docID": "bae-bc20b854-10b3-5408-b28c-f273ddda9434",
 						"age":    int64(31),
 						"name":   "Addo",
 					},
@@ -78,16 +78,14 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
 					User(filter: {age: {_lt: 30}}) {
-						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":    int64(27),
-						"name":   "John",
+						"age":  int64(27),
+						"name": "John",
 					},
 				},
 			},
@@ -148,16 +146,14 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
 					User(filter: {age: {_lt: 30}}) {
-						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":    int64(27),
-						"name":   "John",
+						"age":  int64(27),
+						"name": "John",
 					},
 				},
 			},
@@ -216,7 +212,6 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
 					User {
-						_docID
 						name
 						age
 						points
@@ -224,7 +219,6 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 						"age":    int64(27),
 						"name":   "John",
 						"points": float64(45),
@@ -274,7 +268,6 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
 					User {
-						_docID
 						name
 						age
 						points
@@ -282,15 +275,13 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":    int64(27),
-						"name":   "John",
+						"age":    int64(31),
+						"name":   "Addo",
 						"points": float64(55),
 					},
 					{
-						"_docID": "bae-76b0f3f5-964c-57c3-b44b-4a91bea70d40",
-						"age":    int64(31),
-						"name":   "Addo",
+						"age":    int64(27),
+						"name":   "John",
 						"points": float64(55),
 					},
 				},
@@ -303,10 +294,10 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John",
+						"name": "Addo",
 					},
 					{
-						"name": "Addo",
+						"name": "John",
 					},
 				},
 			},

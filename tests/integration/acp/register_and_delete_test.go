@@ -31,6 +31,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 				Identity: Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -58,13 +59,13 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String
@@ -124,6 +125,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 				Identity: Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -151,13 +153,13 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String
@@ -218,6 +220,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 				Identity: OwnerIdentity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -245,13 +248,13 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String
@@ -316,6 +319,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 				Identity: OwnerIdentity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -343,13 +347,13 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String
@@ -393,7 +397,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 				`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-1e608f7d-b01e-5dd5-ad4a-9c6cc3005a36",
+						"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
 						"name":   "Shahzad",
 						"age":    int64(28),
 					},
@@ -422,6 +426,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 				Identity: OwnerIdentity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -449,13 +454,13 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String
@@ -501,7 +506,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 				`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-1e608f7d-b01e-5dd5-ad4a-9c6cc3005a36",
+						"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
 						"name":   "Shahzad",
 						"age":    int64(28),
 					},

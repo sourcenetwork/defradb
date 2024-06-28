@@ -8,34 +8,72 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-/*
-Package identity provides defradb identity.
-*/
-
 package identity
 
-import "github.com/sourcenetwork/immutable"
-
-// Identity is the unique identifier for an actor.
-type Identity string
-
-var (
-	// None is an empty identity.
-	None = immutable.None[Identity]()
+import (
+	"github.com/cyware/ssi-sdk/crypto"
+	"github.com/cyware/ssi-sdk/did/key"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/sourcenetwork/immutable"
 )
 
-// New makes a new identity if the input is not empty otherwise, returns None.
-func New(identity string) immutable.Option[Identity] {
-	// TODO-ACP: There will be more validation once sourcehub gets some utilities.
-	// Then a validation function would do the validation, will likely do outside this function.
-	// https://github.com/sourcenetwork/defradb/issues/2358
-	if identity == "" {
-		return None
-	}
-	return immutable.Some(Identity(identity))
+// didProducer generates a did:key from a public key
+type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
+
+// None specifies an anonymous actor.
+var None = immutable.None[Identity]()
+
+// Identity describes a unique actor.
+type Identity struct {
+	// PublicKey is the actor's public key.
+	PublicKey *secp256k1.PublicKey
+	// PrivateKey is the actor's private key.
+	PrivateKey *secp256k1.PrivateKey
+	// DID is the actor's unique identifier.
+	//
+	// The address is derived from the actor's public key,
+	// using the did:key method
+	DID string
 }
 
-// String returns the string representation of the identity.
-func (i Identity) String() string {
-	return string(i)
+// FromPrivateKey returns a new identity using the given private key.
+func FromPrivateKey(privateKey *secp256k1.PrivateKey) (immutable.Option[Identity], error) {
+	pubKey := privateKey.PubKey()
+	did, err := DIDFromPublicKey(pubKey)
+	if err != nil {
+		return None, err
+	}
+
+	return immutable.Some(Identity{
+		DID:        did,
+		PublicKey:  pubKey,
+		PrivateKey: privateKey,
+	}), nil
+}
+
+// FromPublicKey returns a new identity using the given public key.
+func FromPublicKey(publicKey *secp256k1.PublicKey) (immutable.Option[Identity], error) {
+	did, err := DIDFromPublicKey(publicKey)
+	if err != nil {
+		return None, err
+	}
+	return immutable.Some(Identity{
+		DID:       did,
+		PublicKey: publicKey,
+	}), nil
+}
+
+// DIDFromPublicKey returns a did:key generated from the the given public key.
+func DIDFromPublicKey(publicKey *secp256k1.PublicKey) (string, error) {
+	return didFromPublicKey(publicKey, key.CreateDIDKey)
+}
+
+// didFromPublicKey produces a did from a secp256k1 key and a producer function
+func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (string, error) {
+	bytes := publicKey.SerializeUncompressed()
+	did, err := producer(crypto.SECP256k1, bytes)
+	if err != nil {
+		return "", newErrDIDCreation(err, "secp256k1", bytes)
+	}
+	return did.String(), nil
 }

@@ -26,6 +26,7 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -62,7 +63,7 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedPolicyID: "cf082c11fa812dddaa5093f0ccae66c2b5294efe0a2b50ffdcbc0185adf6adf1",
+				ExpectedPolicyID: "a9e1a113ccc2609d7f99a42531017f0fbc9b736640ec8ffc7f09a1e29583ca45",
 			},
 		},
 	}
@@ -80,6 +81,7 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -131,6 +133,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

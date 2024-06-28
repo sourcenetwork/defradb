@@ -12,13 +12,16 @@ package datastore
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
 	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
 func TestNewTxnFrom(t *testing.T) {
@@ -56,8 +59,6 @@ func TestOnSuccess(t *testing.T) {
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
-	txn.OnSuccess(nil)
-
 	text := "Source"
 	txn.OnSuccess(func() {
 		text += " Inc"
@@ -68,7 +69,7 @@ func TestOnSuccess(t *testing.T) {
 	require.Equal(t, text, "Source Inc")
 }
 
-func TestOnError(t *testing.T) {
+func TestOnSuccessAsync(t *testing.T) {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -77,7 +78,25 @@ func TestOnError(t *testing.T) {
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
-	txn.OnError(nil)
+	var wg sync.WaitGroup
+	txn.OnSuccessAsync(func() {
+		wg.Done()
+	})
+
+	wg.Add(1)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
+	wg.Wait()
+}
+
+func TestOnError(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
 
 	text := "Source"
 	txn.OnError(func() {
@@ -91,6 +110,68 @@ func TestOnError(t *testing.T) {
 	require.ErrorIs(t, err, badgerds.ErrClosed)
 
 	require.Equal(t, text, "Source Inc")
+}
+
+func TestOnErrorAsync(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	txn.OnErrorAsync(func() {
+		wg.Done()
+	})
+
+	rootstore.Close()
+	require.NoError(t, err)
+
+	wg.Add(1)
+	err = txn.Commit(ctx)
+	require.ErrorIs(t, err, badgerds.ErrClosed)
+	wg.Wait()
+}
+
+func TestOnDiscard(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
+
+	text := "Source"
+	txn.OnDiscard(func() {
+		text += " Inc"
+	})
+	txn.Discard(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, text, "Source Inc")
+}
+
+func TestOnDiscardAsync(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	txn.OnDiscardAsync(func() {
+		wg.Done()
+	})
+
+	wg.Add(1)
+	txn.Discard(ctx)
+	require.NoError(t, err)
+	wg.Wait()
 }
 
 func TestShimTxnStoreSync(t *testing.T) {
@@ -119,4 +200,353 @@ func TestShimTxnStoreClose(t *testing.T) {
 	shimTxn := ShimTxnStore{txn}
 	err = shimTxn.Close()
 	require.NoError(t, err)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.NoError(t, err)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Get(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Has(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.NoError(t, err)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Get(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Has(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.NoError(t, err)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Get(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	_, err = txn1.Has(ctx, ds.NewKey("key"))
+	require.NoError(t, err)
+
+	err = txn1.Put(ctx, ds.NewKey("other-key"), []byte("value"))
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("key"), []byte("value"))
+	require.NoError(t, err)
+
+	// Commit txn2 first to create a conflict
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	err = txn1.Commit(ctx)
+	require.ErrorIs(t, err, badger.ErrConflict)
+}
+
+func TestMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
+	require.NoError(t, err)
+
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	qResults, err := txn1.Query(ctx, query.Query{})
+	require.NoError(t, err)
+
+	docs := [][]byte{}
+	for r := range qResults.Next() {
+		docs = append(docs, r.Entry.Value)
+	}
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
+	txn1.Discard(ctx)
+}
+
+func TestBadgerMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
+	require.NoError(t, err)
+
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	qResults, err := txn1.Query(ctx, query.Query{})
+	require.NoError(t, err)
+
+	docs := [][]byte{}
+	for r := range qResults.Next() {
+		docs = append(docs, r.Entry.Value)
+	}
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
+	txn1.Discard(ctx)
+}
+
+func TestBadgerFileStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {
+	ctx := context.Background()
+	opts := badgerds.Options{Options: badger.DefaultOptions("")}
+	rootstore, err := badgerds.NewDatastore(t.TempDir(), &opts)
+	require.NoError(t, err)
+
+	rootstore.Put(ctx, ds.NewKey("key"), []byte("value"))
+
+	txn1, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	txn2, err := rootstore.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = txn2.Put(ctx, ds.NewKey("other-key"), []byte("other-value"))
+	require.NoError(t, err)
+
+	err = txn2.Commit(ctx)
+	require.NoError(t, err)
+
+	qResults, err := txn1.Query(ctx, query.Query{})
+	require.NoError(t, err)
+
+	docs := [][]byte{}
+	for r := range qResults.Next() {
+		docs = append(docs, r.Entry.Value)
+	}
+	require.Equal(t, [][]byte{[]byte("value")}, docs)
+	txn1.Discard(ctx)
 }

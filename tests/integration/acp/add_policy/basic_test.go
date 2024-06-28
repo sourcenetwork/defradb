@@ -26,6 +26,7 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:
@@ -46,7 +47,7 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "dfe202ffb4f0fe9b46157c313213a3839e08a6f0a7c3aba55e4724cb49ffde8a",
+				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}
@@ -65,6 +66,7 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 
 				Policy: `
 					{
+					  "name": "test",
 					  "description": "a basic policy that satisfies minimum DPI requirements",
 					  "resources": {
 					    "users": {
@@ -91,7 +93,7 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 					}
                 `,
 
-				ExpectedPolicyID: "dfe202ffb4f0fe9b46157c313213a3839e08a6f0a7c3aba55e4724cb49ffde8a",
+				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}

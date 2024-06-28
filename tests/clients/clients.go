@@ -21,6 +21,4 @@ import (
 type Client interface {
 	client.P2P
 	Bootstrap([]peer.AddrInfo)
-	WaitForPushLogByPeerEvent(peer.ID) error
-	WaitForPushLogFromPeerEvent(peer.ID) error
 }

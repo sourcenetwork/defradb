@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,6 +29,16 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				Schema: `
 					type Users {}
 				`,
+				ExpectedResults: []client.CollectionDescription{
+					{
+						Name: immutable.Some("Users"),
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+							},
+						},
+					},
+				},
 			},
 			testUtils.IntrospectionRequest{
 				Request: `

@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "782ffee730033ff01a3bdb05a3aa130f08c0914887378b0dfee314be6c3a8dd0"
+	policyIDOfInvalidDPI := "017d821ad9a540b639769fab6a58a5bf27591428f7acbf0d1ecf92dbcc4c4ba4"
 
 	test := testUtils.TestCase{
 
@@ -31,6 +31,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionOnDPI_SchemaRejected
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -102,7 +103,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionOnDPI_SchemaRejected
 }
 
 func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionLabelOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "62d2d65d0304cb9a16bb4f07d1f48c7142911f73bc1db6ee54cdd2c6c7949c73"
+	policyIDOfInvalidDPI := "d56ef73738a0dd50fe1763c451ed3a9b774b38c268ed0c510058bb60a1df02de"
 
 	test := testUtils.TestCase{
 
@@ -115,6 +116,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionLabelOnDPI_SchemaRej
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -185,7 +187,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionLabelOnDPI_SchemaRej
 }
 
 func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "f9fe33e8b2ee18a65d16bdc8017fe829ec13b0797330422639cd9dafac7b00f8"
+	policyIDOfInvalidDPI := "75f0320e2d949cd201ce40e556c2e7f615ae5c1039197329fc6ed4bca6c7135d"
 
 	test := testUtils.TestCase{
 
@@ -198,6 +200,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDPI_Sch
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -269,7 +272,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDPI_Sch
 }
 
 func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "08cc6bed6b9695dd47b6bf1e934ff91975db598631a55c26db9ead1393a77588"
+	policyIDOfInvalidDPI := "481cc0091eb0c30eb75e8676db564dadf3166fe617dcd576f34b38e4ef4797eb"
 
 	test := testUtils.TestCase{
 
@@ -282,6 +285,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOn
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -353,7 +357,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOn
 }
 
 func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "fff5c6fc25fbc2a9e5a7251c19b1cb950889281d656e5aeb642ce7c16f181c9b"
+	policyIDOfInvalidDPI := "79095d371699ab7c1aa0d7336645bafea4cd02d15af9c8bacf4d3ef6078488c6"
 
 	test := testUtils.TestCase{
 
@@ -366,6 +370,7 @@ func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDPI_Schem
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:

@@ -38,7 +38,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
 						links {
 							cid
 						}
@@ -64,7 +64,7 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
 						links {
 							cid
 						}
@@ -90,7 +90,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -117,7 +117,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
 						cid
 						links {
 							cid

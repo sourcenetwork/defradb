@@ -13,17 +13,16 @@ package net
 import (
 	"context"
 	"testing"
-	"time"
 
-	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
 	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -35,7 +34,7 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
-	database, err = db.NewDB(ctx, rootstore, db.WithUpdateEvents())
+	database, err = db.NewDB(ctx, rootstore, acp.NoACP, nil)
 	require.NoError(t, err)
 	return database
 }
@@ -43,7 +42,7 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -58,7 +57,7 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	db.Close()
 
@@ -72,7 +71,7 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 func TestNewNode_NoPubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -87,7 +86,7 @@ func TestNewNode_NoPubSub_NoError(t *testing.T) {
 func TestNewNode_WithEnablePubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -105,7 +104,7 @@ func TestNewNode_WithEnablePubSub_NoError(t *testing.T) {
 func TestNodeClose_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -118,7 +117,7 @@ func TestNodeClose_NoError(t *testing.T) {
 func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -134,7 +133,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -161,7 +160,7 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -191,7 +190,7 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	n, err := NewNode(
 		context.Background(),
@@ -202,371 +201,4 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	defer n.Close()
 
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
-}
-
-func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	// the emitter can take 20 events in the channel. This tests what happens whe go over the 20 events.
-	for i := 0; i < 21; i++ {
-		err = emitter.Emit(event.EvtPeerConnectednessChanged{})
-		require.NoError(t, err)
-	}
-}
-
-func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	n.Peer.host = &mockHost{n.Peer.host}
-
-	n.subscribeToPubSubEvents()
-}
-
-func TestPubSubEventEmitter_MultiEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	// the emitter can take 20 events in the channel. This tests what happens whe go over the 20 events.
-	for i := 0; i < 21; i++ {
-		err = emitter.Emit(EvtPubSub{})
-		require.NoError(t, err)
-	}
-}
-
-func TestSubscribeToPushLogEvents_SubscriptionError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	n.Peer.host = &mockHost{n.Peer.host}
-
-	n.subscribeToPushLogEvents()
-}
-
-func TestPushLogEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{})
-	require.NoError(t, err)
-}
-
-func TestPushLogEventEmitter_MultiEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	// the emitter can take 20 events in the channel. This tests what happens whe go over the 20 events.
-	for i := 0; i < 21; i++ {
-		err = emitter.Emit(EvtReceivedPushLog{})
-		require.NoError(t, err)
-	}
-}
-
-func TestWaitForPeerConnectionEvent_WithSamePeer_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	err = emitter.Emit(event.EvtPeerConnectednessChanged{
-		Peer: n.PeerID(),
-	})
-	require.NoError(t, err)
-
-	err = n.WaitForPeerConnectionEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPeerConnectionEvent_WithDifferentPeer_TimeoutError(t *testing.T) {
-	evtWaitTimeout = 100 * time.Microsecond
-	defer func() {
-		evtWaitTimeout = 10 * time.Second
-	}()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	err = emitter.Emit(event.EvtPeerConnectednessChanged{})
-	require.NoError(t, err)
-
-	err = n.WaitForPeerConnectionEvent(n.PeerID())
-	require.ErrorIs(t, err, ErrPeerConnectionWaitTimout)
-}
-
-func TestWaitForPeerConnectionEvent_WithDifferentPeerAndContextClosed_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	err = emitter.Emit(event.EvtPeerConnectednessChanged{})
-	require.NoError(t, err)
-
-	n.cancel()
-
-	err = n.WaitForPeerConnectionEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPubSubEvent_WithSamePeer_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtPubSub{
-		Peer: n.PeerID(),
-	})
-	require.NoError(t, err)
-
-	err = n.WaitForPubSubEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPubSubEvent_WithDifferentPeer_TimeoutError(t *testing.T) {
-	evtWaitTimeout = 100 * time.Microsecond
-	defer func() {
-		evtWaitTimeout = 10 * time.Second
-	}()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtPubSub{})
-	require.NoError(t, err)
-
-	err = n.WaitForPubSubEvent(n.PeerID())
-	require.ErrorIs(t, err, ErrPubSubWaitTimeout)
-}
-
-func TestWaitForPubSubEvent_WithDifferentPeerAndContextClosed_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtPubSub{})
-	require.NoError(t, err)
-
-	n.cancel()
-
-	err = n.WaitForPubSubEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPushLogByPeerEvent_WithSamePeer_NoError(t *testing.T) {
-	ctx := context.Background()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		ctx,
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{
-		ByPeer: n.PeerID(),
-	})
-	require.NoError(t, err)
-
-	err = n.WaitForPushLogByPeerEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPushLogByPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T) {
-	evtWaitTimeout = 100 * time.Microsecond
-	defer func() {
-		evtWaitTimeout = 10 * time.Second
-	}()
-	ctx := context.Background()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		ctx,
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{})
-	require.NoError(t, err)
-
-	err = n.WaitForPushLogByPeerEvent(n.PeerID())
-	require.ErrorIs(t, err, ErrPushLogWaitTimeout)
-}
-
-func TestWaitForPushLogByPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *testing.T) {
-	ctx := context.Background()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		ctx,
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{})
-	require.NoError(t, err)
-
-	n.cancel()
-
-	err = n.WaitForPushLogByPeerEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPushLogFromPeerEvent_WithSamePeer_NoError(t *testing.T) {
-	ctx := context.Background()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		ctx,
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{
-		FromPeer: n.PeerID(),
-	})
-	require.NoError(t, err)
-
-	err = n.WaitForPushLogFromPeerEvent(n.PeerID())
-	require.NoError(t, err)
-}
-
-func TestWaitForPushLogFromPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T) {
-	evtWaitTimeout = 100 * time.Microsecond
-	defer func() {
-		evtWaitTimeout = 10 * time.Second
-	}()
-	ctx := context.Background()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		ctx,
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{})
-	require.NoError(t, err)
-
-	err = n.WaitForPushLogFromPeerEvent(n.PeerID())
-	require.ErrorIs(t, err, ErrPushLogWaitTimeout)
-}
-
-func TestWaitForPushLogFromPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *testing.T) {
-	ctx := context.Background()
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		ctx,
-		db,
-	)
-	require.NoError(t, err)
-	defer n.Close()
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtReceivedPushLog{})
-	require.NoError(t, err)
-
-	n.cancel()
-
-	err = n.WaitForPushLogFromPeerEvent(n.PeerID())
-	require.NoError(t, err)
 }

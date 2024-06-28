@@ -15,8 +15,6 @@ import (
 	"sync"
 
 	ds "github.com/ipfs/go-datastore"
-
-	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 type concurrentTxn struct {
@@ -32,31 +30,16 @@ type concurrentTxn struct {
 
 // NewConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
 func NewConcurrentTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
-	var rootTxn ds.Txn
-	var err error
-
-	// check if our datastore natively supports iterable transaction, transactions or batching
-	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
-		rootTxn, err = iterableTxnStore.NewIterableTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		rootTxn, err = rootstore.NewTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
+	rootTxn, err := newTxnFrom(ctx, rootstore, readonly)
+	if err != nil {
+		return nil, err
 	}
-
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
 	multistore := MultiStoreFrom(rootConcurentTxn)
 	return &txn{
-		rootConcurentTxn,
-		multistore,
-		id,
-		[]func(){},
-		[]func(){},
-		[]func(){},
+		t:          rootConcurentTxn,
+		MultiStore: multistore,
+		id:         id,
 	}, nil
 }
 
@@ -90,7 +73,7 @@ func (t *concurrentTxn) Put(ctx context.Context, key ds.Key, value []byte) error
 
 // Sync executes the transaction.
 func (t *concurrentTxn) Sync(ctx context.Context, prefix ds.Key) error {
-	return t.Txn.Commit(ctx)
+	return t.Commit(ctx)
 }
 
 // Close discards the transaction.

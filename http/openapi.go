@@ -87,6 +87,13 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Value: txnHeaderParam,
 	}
 
+	// add authentication schemes
+	securitySchemes := openapi3.SecuritySchemes{
+		"bearerToken": &openapi3.SecuritySchemeRef{
+			Value: openapi3.NewJWTSecurityScheme(),
+		},
+	}
+
 	return &openapi3.T{
 		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
@@ -105,9 +112,10 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			URL:         "https://docs.source.network",
 		},
 		Components: &openapi3.Components{
-			Schemas:    schemas,
-			Responses:  responses,
-			Parameters: parameters,
+			Schemas:         schemas,
+			Responses:       responses,
+			Parameters:      parameters,
+			SecuritySchemes: securitySchemes,
 		},
 		Tags: openapi3.Tags{
 			&openapi3.Tag{

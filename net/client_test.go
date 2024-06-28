@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 )
 
 var def = client.CollectionDefinition{
@@ -62,12 +62,11 @@ func TestPushlogWithDialFailure(t *testing.T) {
 		grpc.WithCredentialsBundle(nil),
 	)
 
-	err = n.server.pushLog(ctx, events.Update{
+	err = n.server.pushLog(ctx, event.Update{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
-		Block:      &EmptyNode{},
-		Priority:   1,
+		Block:      emptyBlock(),
 	}, peer.ID("some-peer-id"))
 	require.Contains(t, err.Error(), "no transport security set")
 }
@@ -85,12 +84,11 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.server.pushLog(ctx, events.Update{
+	err = n.server.pushLog(ctx, event.Update{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
-		Block:      &EmptyNode{},
-		Priority:   1,
+		Block:      emptyBlock(),
 	}, peer.ID("some-peer-id"))
 	require.Contains(t, err.Error(), "failed to parse peer ID")
 }
@@ -131,15 +129,17 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
-	cid, err := createCID(doc)
+	headCID, err := getHead(ctx, n1.db, doc.ID())
 	require.NoError(t, err)
 
-	err = n1.server.pushLog(ctx, events.Update{
+	b, err := n1.db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	require.NoError(t, err)
+
+	err = n1.server.pushLog(ctx, event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        cid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      &EmptyNode{},
-		Priority:   1,
+		Block:      b,
 	}, n2.PeerInfo().ID)
 	require.NoError(t, err)
 }

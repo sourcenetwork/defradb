@@ -72,7 +72,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 
 func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-	usersSchemaVersion2ID := "bafkreibbsqjeladin2keszmja5kektzgi4eowb6m3oimxssiqge7mmvhva"
+	usersSchemaVersion2ID := "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
 	booksSchemaVersion1ID := "bafkreibiu34zrehpq346pwp5z24qkderm7ibhnpcqalhkivhnf5e2afqoy"
 
 	test := testUtils.TestCase{
@@ -116,7 +116,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
@@ -146,7 +146,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 
 func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-	usersSchemaVersion2ID := "bafkreibbsqjeladin2keszmja5kektzgi4eowb6m3oimxssiqge7mmvhva"
+	usersSchemaVersion2ID := "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -190,7 +190,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
@@ -209,7 +209,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 
 func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-	usersSchemaVersion2ID := "bafkreibbsqjeladin2keszmja5kektzgi4eowb6m3oimxssiqge7mmvhva"
+	usersSchemaVersion2ID := "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -253,7 +253,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",

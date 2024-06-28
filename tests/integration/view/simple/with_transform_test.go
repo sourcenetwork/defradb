@@ -78,10 +78,10 @@ func TestView_SimpleWithTransform(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"fullName": "Fred",
+						"fullName": "John",
 					},
 					{
-						"fullName": "John",
+						"fullName": "Fred",
 					},
 				},
 			},
@@ -159,11 +159,11 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"fullName": "Fred",
+						"fullName": "John",
 						"age":      23,
 					},
 					{
-						"fullName": "John",
+						"fullName": "Fred",
 						"age":      23,
 					},
 				},
@@ -309,10 +309,10 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"name": "Shahzad",
+						"name": "John",
 					},
 					{
-						"name": "John",
+						"name": "Shahzad",
 					},
 				},
 			},

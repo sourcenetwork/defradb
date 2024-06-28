@@ -14,7 +14,7 @@ import (
 	"context"
 	"net/http/httptest"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -22,7 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/net"
 )
@@ -203,8 +203,12 @@ func (w *Wrapper) Root() datastore.RootStore {
 	return w.node.Root()
 }
 
-func (w *Wrapper) Blockstore() blockstore.Blockstore {
+func (w *Wrapper) Blockstore() datastore.DAGStore {
 	return w.node.Blockstore()
+}
+
+func (w *Wrapper) Headstore() ds.Read {
+	return w.node.Headstore()
 }
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {
@@ -217,7 +221,7 @@ func (w *Wrapper) Close() {
 	w.node.Close()
 }
 
-func (w *Wrapper) Events() events.Events {
+func (w *Wrapper) Events() *event.Bus {
 	return w.node.Events()
 }
 
@@ -231,12 +235,4 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
 	w.node.Bootstrap(addrs)
-}
-
-func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogByPeerEvent(id)
-}
-
-func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
-	return w.node.WaitForPushLogFromPeerEvent(id)
 }

@@ -3,14 +3,15 @@
 package mocks
 
 import (
-	blockstore "github.com/ipfs/boxo/blockstore"
-	client "github.com/sourcenetwork/defradb/client"
-
 	context "context"
+
+	client "github.com/sourcenetwork/defradb/client"
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
-	events "github.com/sourcenetwork/defradb/events"
+	event "github.com/sourcenetwork/defradb/event"
+
+	go_datastore "github.com/ipfs/go-datastore"
 
 	immutable "github.com/sourcenetwork/immutable"
 
@@ -35,6 +36,10 @@ func (_m *DB) EXPECT() *DB_Expecter {
 // AddPolicy provides a mock function with given fields: ctx, policy
 func (_m *DB) AddPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
 	ret := _m.Called(ctx, policy)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddPolicy")
+	}
 
 	var r0 client.AddPolicyResult
 	var r1 error
@@ -88,6 +93,10 @@ func (_c *DB_AddPolicy_Call) RunAndReturn(run func(context.Context, string) (cli
 // AddSchema provides a mock function with given fields: _a0, _a1
 func (_m *DB) AddSchema(_a0 context.Context, _a1 string) ([]client.CollectionDescription, error) {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddSchema")
+	}
 
 	var r0 []client.CollectionDescription
 	var r1 error
@@ -143,6 +152,10 @@ func (_c *DB_AddSchema_Call) RunAndReturn(run func(context.Context, string) ([]c
 // AddView provides a mock function with given fields: ctx, gqlQuery, sdl, transform
 func (_m *DB) AddView(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionDefinition, error) {
 	ret := _m.Called(ctx, gqlQuery, sdl, transform)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddView")
+	}
 
 	var r0 []client.CollectionDefinition
 	var r1 error
@@ -201,6 +214,10 @@ func (_c *DB_AddView_Call) RunAndReturn(run func(context.Context, string, string
 func (_m *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
 	ret := _m.Called(ctx, config)
 
+	if len(ret) == 0 {
+		panic("no return value specified for BasicExport")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *client.BackupConfig) error); ok {
 		r0 = rf(ctx, config)
@@ -244,6 +261,10 @@ func (_c *DB_BasicExport_Call) RunAndReturn(run func(context.Context, *client.Ba
 func (_m *DB) BasicImport(ctx context.Context, filepath string) error {
 	ret := _m.Called(ctx, filepath)
 
+	if len(ret) == 0 {
+		panic("no return value specified for BasicImport")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, filepath)
@@ -284,15 +305,19 @@ func (_c *DB_BasicImport_Call) RunAndReturn(run func(context.Context, string) er
 }
 
 // Blockstore provides a mock function with given fields:
-func (_m *DB) Blockstore() blockstore.Blockstore {
+func (_m *DB) Blockstore() datastore.DAGStore {
 	ret := _m.Called()
 
-	var r0 blockstore.Blockstore
-	if rf, ok := ret.Get(0).(func() blockstore.Blockstore); ok {
+	if len(ret) == 0 {
+		panic("no return value specified for Blockstore")
+	}
+
+	var r0 datastore.DAGStore
+	if rf, ok := ret.Get(0).(func() datastore.DAGStore); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(blockstore.Blockstore)
+			r0 = ret.Get(0).(datastore.DAGStore)
 		}
 	}
 
@@ -316,12 +341,12 @@ func (_c *DB_Blockstore_Call) Run(run func()) *DB_Blockstore_Call {
 	return _c
 }
 
-func (_c *DB_Blockstore_Call) Return(_a0 blockstore.Blockstore) *DB_Blockstore_Call {
+func (_c *DB_Blockstore_Call) Return(_a0 datastore.DAGStore) *DB_Blockstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Blockstore_Call) RunAndReturn(run func() blockstore.Blockstore) *DB_Blockstore_Call {
+func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.DAGStore) *DB_Blockstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -359,14 +384,20 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 }
 
 // Events provides a mock function with given fields:
-func (_m *DB) Events() events.Events {
+func (_m *DB) Events() *event.Bus {
 	ret := _m.Called()
 
-	var r0 events.Events
-	if rf, ok := ret.Get(0).(func() events.Events); ok {
+	if len(ret) == 0 {
+		panic("no return value specified for Events")
+	}
+
+	var r0 *event.Bus
+	if rf, ok := ret.Get(0).(func() *event.Bus); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(events.Events)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*event.Bus)
+		}
 	}
 
 	return r0
@@ -389,12 +420,12 @@ func (_c *DB_Events_Call) Run(run func()) *DB_Events_Call {
 	return _c
 }
 
-func (_c *DB_Events_Call) Return(_a0 events.Events) *DB_Events_Call {
+func (_c *DB_Events_Call) Return(_a0 *event.Bus) *DB_Events_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Events_Call) RunAndReturn(run func() events.Events) *DB_Events_Call {
+func (_c *DB_Events_Call) RunAndReturn(run func() *event.Bus) *DB_Events_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -402,6 +433,10 @@ func (_c *DB_Events_Call) RunAndReturn(run func() events.Events) *DB_Events_Call
 // ExecRequest provides a mock function with given fields: ctx, request
 func (_m *DB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
 	ret := _m.Called(ctx, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExecRequest")
+	}
 
 	var r0 *client.RequestResult
 	if rf, ok := ret.Get(0).(func(context.Context, string) *client.RequestResult); ok {
@@ -447,6 +482,10 @@ func (_c *DB_ExecRequest_Call) RunAndReturn(run func(context.Context, string) *c
 // GetAllIndexes provides a mock function with given fields: _a0
 func (_m *DB) GetAllIndexes(_a0 context.Context) (map[string][]client.IndexDescription, error) {
 	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllIndexes")
+	}
 
 	var r0 map[string][]client.IndexDescription
 	var r1 error
@@ -501,6 +540,10 @@ func (_c *DB_GetAllIndexes_Call) RunAndReturn(run func(context.Context) (map[str
 // GetCollectionByName provides a mock function with given fields: _a0, _a1
 func (_m *DB) GetCollectionByName(_a0 context.Context, _a1 string) (client.Collection, error) {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCollectionByName")
+	}
 
 	var r0 client.Collection
 	var r1 error
@@ -557,6 +600,10 @@ func (_c *DB_GetCollectionByName_Call) RunAndReturn(run func(context.Context, st
 func (_m *DB) GetCollections(_a0 context.Context, _a1 client.CollectionFetchOptions) ([]client.Collection, error) {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetCollections")
+	}
+
 	var r0 []client.Collection
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)); ok {
@@ -612,6 +659,10 @@ func (_c *DB_GetCollections_Call) RunAndReturn(run func(context.Context, client.
 func (_m *DB) GetSchemaByVersionID(_a0 context.Context, _a1 string) (client.SchemaDescription, error) {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetSchemaByVersionID")
+	}
+
 	var r0 client.SchemaDescription
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) (client.SchemaDescription, error)); ok {
@@ -665,6 +716,10 @@ func (_c *DB_GetSchemaByVersionID_Call) RunAndReturn(run func(context.Context, s
 func (_m *DB) GetSchemas(_a0 context.Context, _a1 client.SchemaFetchOptions) ([]client.SchemaDescription, error) {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetSchemas")
+	}
+
 	var r0 []client.SchemaDescription
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, client.SchemaFetchOptions) ([]client.SchemaDescription, error)); ok {
@@ -716,9 +771,60 @@ func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context.Context, client.Sche
 	return _c
 }
 
+// Headstore provides a mock function with given fields:
+func (_m *DB) Headstore() go_datastore.Read {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Headstore")
+	}
+
+	var r0 go_datastore.Read
+	if rf, ok := ret.Get(0).(func() go_datastore.Read); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(go_datastore.Read)
+		}
+	}
+
+	return r0
+}
+
+// DB_Headstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Headstore'
+type DB_Headstore_Call struct {
+	*mock.Call
+}
+
+// Headstore is a helper method to define mock.On call
+func (_e *DB_Expecter) Headstore() *DB_Headstore_Call {
+	return &DB_Headstore_Call{Call: _e.mock.On("Headstore")}
+}
+
+func (_c *DB_Headstore_Call) Run(run func()) *DB_Headstore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_Headstore_Call) Return(_a0 go_datastore.Read) *DB_Headstore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_Headstore_Call) RunAndReturn(run func() go_datastore.Read) *DB_Headstore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // LensRegistry provides a mock function with given fields:
 func (_m *DB) LensRegistry() client.LensRegistry {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for LensRegistry")
+	}
 
 	var r0 client.LensRegistry
 	if rf, ok := ret.Get(0).(func() client.LensRegistry); ok {
@@ -763,6 +869,10 @@ func (_c *DB_LensRegistry_Call) RunAndReturn(run func() client.LensRegistry) *DB
 func (_m *DB) MaxTxnRetries() int {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for MaxTxnRetries")
+	}
+
 	var r0 int
 	if rf, ok := ret.Get(0).(func() int); ok {
 		r0 = rf()
@@ -803,6 +913,10 @@ func (_c *DB_MaxTxnRetries_Call) RunAndReturn(run func() int) *DB_MaxTxnRetries_
 // NewConcurrentTxn provides a mock function with given fields: _a0, _a1
 func (_m *DB) NewConcurrentTxn(_a0 context.Context, _a1 bool) (datastore.Txn, error) {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for NewConcurrentTxn")
+	}
 
 	var r0 datastore.Txn
 	var r1 error
@@ -859,6 +973,10 @@ func (_c *DB_NewConcurrentTxn_Call) RunAndReturn(run func(context.Context, bool)
 func (_m *DB) NewTxn(_a0 context.Context, _a1 bool) (datastore.Txn, error) {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for NewTxn")
+	}
+
 	var r0 datastore.Txn
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, bool) (datastore.Txn, error)); ok {
@@ -914,6 +1032,10 @@ func (_c *DB_NewTxn_Call) RunAndReturn(run func(context.Context, bool) (datastor
 func (_m *DB) PatchCollection(_a0 context.Context, _a1 string) error {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for PatchCollection")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(_a0, _a1)
@@ -956,6 +1078,10 @@ func (_c *DB_PatchCollection_Call) RunAndReturn(run func(context.Context, string
 // PatchSchema provides a mock function with given fields: _a0, _a1, _a2, _a3
 func (_m *DB) PatchSchema(_a0 context.Context, _a1 string, _a2 immutable.Option[model.Lens], _a3 bool) error {
 	ret := _m.Called(_a0, _a1, _a2, _a3)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PatchSchema")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, immutable.Option[model.Lens], bool) error); ok {
@@ -1002,6 +1128,10 @@ func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string, im
 func (_m *DB) Peerstore() datastore.DSBatching {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Peerstore")
+	}
+
 	var r0 datastore.DSBatching
 	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
 		r0 = rf()
@@ -1045,6 +1175,10 @@ func (_c *DB_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *DB_P
 func (_m *DB) PrintDump(ctx context.Context) error {
 	ret := _m.Called(ctx)
 
+	if len(ret) == 0 {
+		panic("no return value specified for PrintDump")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
 		r0 = rf(ctx)
@@ -1086,6 +1220,10 @@ func (_c *DB_PrintDump_Call) RunAndReturn(run func(context.Context) error) *DB_P
 // Root provides a mock function with given fields:
 func (_m *DB) Root() datastore.RootStore {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Root")
+	}
 
 	var r0 datastore.RootStore
 	if rf, ok := ret.Get(0).(func() datastore.RootStore); ok {
@@ -1130,6 +1268,10 @@ func (_c *DB_Root_Call) RunAndReturn(run func() datastore.RootStore) *DB_Root_Ca
 func (_m *DB) SetActiveSchemaVersion(_a0 context.Context, _a1 string) error {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for SetActiveSchemaVersion")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(_a0, _a1)
@@ -1172,6 +1314,10 @@ func (_c *DB_SetActiveSchemaVersion_Call) RunAndReturn(run func(context.Context,
 // SetMigration provides a mock function with given fields: _a0, _a1
 func (_m *DB) SetMigration(_a0 context.Context, _a1 client.LensConfig) error {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetMigration")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, client.LensConfig) error); ok {

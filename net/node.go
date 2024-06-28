@@ -30,14 +30,13 @@ import (
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/event"
+	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
+	libp2pEvent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-
 	"github.com/multiformats/go-multiaddr"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
 
@@ -47,9 +46,9 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/event"
 )
-
-var evtWaitTimeout = 10 * time.Second
 
 var _ client.P2P = (*Node)(nil)
 
@@ -60,17 +59,9 @@ type Node struct {
 
 	*Peer
 
-	// receives an event when the status of a peer connection changes.
-	peerEvent chan event.EvtPeerConnectednessChanged
-
-	// receives an event when a pubsub topic is added.
-	pubSubEvent chan EvtPubSub
-
-	// receives an event when a pushLog request has been processed.
-	pushLogEvent chan EvtReceivedPushLog
-
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx      context.Context
+	cancel   context.CancelFunc
+	dhtClose func() error
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into libp2p.
@@ -78,7 +69,7 @@ func NewNode(
 	ctx context.Context,
 	db client.DB,
 	opts ...NodeOpt,
-) (*Node, error) {
+) (node *Node, err error) {
 	options := DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
@@ -100,6 +91,13 @@ func NewNode(
 
 	fin := finalizer.NewFinalizer()
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if node == nil {
+			cancel()
+		}
+	}()
+
 	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
 	if err != nil {
 		return nil, fin.Cleanup(err)
@@ -108,11 +106,17 @@ func NewNode(
 
 	if options.PrivateKey == nil {
 		// generate an ephemeral private key
-		key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+		key, err := crypto.GenerateEd25519()
 		if err != nil {
 			return nil, fin.Cleanup(err)
 		}
 		options.PrivateKey = key
+	}
+
+	// unmarshal the private key bytes
+	privateKey, err := libp2pCrypto.UnmarshalEd25519PrivateKey(options.PrivateKey)
+	if err != nil {
+		return nil, fin.Cleanup(err)
 	}
 
 	var ddht *dualdht.DHT
@@ -120,7 +124,7 @@ func NewNode(
 	libp2pOpts := []libp2p.Option{
 		libp2p.ConnectionManager(connManager),
 		libp2p.DefaultTransports,
-		libp2p.Identity(options.PrivateKey),
+		libp2p.Identity(privateKey),
 		libp2p.ListenAddrs(listenAddresses...),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
@@ -164,8 +168,6 @@ func NewNode(
 		}
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-
 	peer, err := NewPeer(
 		ctx,
 		db,
@@ -176,31 +178,29 @@ func NewNode(
 		options.GRPCDialOptions,
 	)
 	if err != nil {
-		cancel()
 		return nil, fin.Cleanup(err)
 	}
 
-	n := &Node{
-		// WARNING: The current usage of these channels means that consumers of them
-		// (the WaitForFoo funcs) can recieve events that occured before the WaitForFoo
-		// function call.  This is tolerable at the moment as they are only used for
-		// test, but we should resolve this when we can (e.g. via using subscribe-like
-		// mechanics, potentially via use of a ring-buffer based [events.Channel]
-		// implementation): https://github.com/sourcenetwork/defradb/issues/1358.
-		pubSubEvent:  make(chan EvtPubSub, 20),
-		pushLogEvent: make(chan EvtReceivedPushLog, 20),
-		peerEvent:    make(chan event.EvtPeerConnectednessChanged, 20),
-		Peer:         peer,
-		DB:           db,
-		ctx:          ctx,
-		cancel:       cancel,
+	sub, err := h.EventBus().Subscribe(&libp2pEvent.EvtPeerConnectednessChanged{})
+	if err != nil {
+		return nil, fin.Cleanup(err)
+	}
+	// publish subscribed events to the event bus
+	go func() {
+		for val := range sub.Out() {
+			db.Events().Publish(event.NewMessage(event.PeerName, val))
+		}
+	}()
+
+	node = &Node{
+		Peer:     peer,
+		DB:       db,
+		ctx:      ctx,
+		cancel:   cancel,
+		dhtClose: ddht.Close,
 	}
 
-	n.subscribeToPeerConnectionEvents()
-	n.subscribeToPubSubEvents()
-	n.subscribeToPushLogEvents()
-
-	return n, nil
+	return
 }
 
 // Bootstrap connects to the given peers.
@@ -214,7 +214,7 @@ func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 			defer wg.Done()
 			err := n.host.Connect(n.ctx, pinfo)
 			if err != nil {
-				log.InfoContext(n.ctx, "Cannot connect to peer", corelog.Any("Error", err))
+				log.ErrorContextE(n.ctx, "Cannot connect to peer", err)
 				return
 			}
 			log.InfoContext(n.ctx, "Connected", corelog.Any("PeerID", pinfo.ID))
@@ -250,155 +250,6 @@ func (n *Node) PeerInfo() peer.AddrInfo {
 	}
 }
 
-// subscribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
-func (n *Node) subscribeToPeerConnectionEvents() {
-	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
-	if err != nil {
-		log.InfoContext(
-			n.ctx,
-			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
-		)
-		return
-	}
-	go func() {
-		for e := range sub.Out() {
-			select {
-			case n.peerEvent <- e.(event.EvtPeerConnectednessChanged):
-			default:
-				<-n.peerEvent
-				n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
-			}
-		}
-	}()
-}
-
-// subscribeToPubSubEvents subscribes the node to the event bus for a pubsub.
-func (n *Node) subscribeToPubSubEvents() {
-	sub, err := n.host.EventBus().Subscribe(new(EvtPubSub))
-	if err != nil {
-		log.InfoContext(
-			n.ctx,
-			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
-		)
-		return
-	}
-	go func() {
-		for e := range sub.Out() {
-			select {
-			case n.pubSubEvent <- e.(EvtPubSub):
-			default:
-				<-n.pubSubEvent
-				n.pubSubEvent <- e.(EvtPubSub)
-			}
-		}
-	}()
-}
-
-// subscribeToPushLogEvents subscribes the node to the event bus for a push log request completion.
-func (n *Node) subscribeToPushLogEvents() {
-	sub, err := n.host.EventBus().Subscribe(new(EvtReceivedPushLog))
-	if err != nil {
-		log.InfoContext(
-			n.ctx,
-			fmt.Sprintf("failed to subscribe to push log event: %v", err),
-		)
-		return
-	}
-	go func() {
-		for e := range sub.Out() {
-			select {
-			case n.pushLogEvent <- e.(EvtReceivedPushLog):
-			default:
-				<-n.pushLogEvent
-				n.pushLogEvent <- e.(EvtReceivedPushLog)
-			}
-		}
-	}()
-}
-
-// WaitForPeerConnectionEvent listens to the event channel for a connection event from a given peer.
-func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
-	if n.host.Network().Connectedness(id) == network.Connected {
-		return nil
-	}
-	for {
-		select {
-		case evt := <-n.peerEvent:
-			if evt.Peer != id {
-				continue
-			}
-			return nil
-		case <-time.After(evtWaitTimeout):
-			return ErrPeerConnectionWaitTimout
-		case <-n.ctx.Done():
-			return nil
-		}
-	}
-}
-
-// WaitForPubSubEvent listens to the event channel for pub sub event from a given peer.
-func (n *Node) WaitForPubSubEvent(id peer.ID) error {
-	for {
-		select {
-		case evt := <-n.pubSubEvent:
-			if evt.Peer != id {
-				continue
-			}
-			return nil
-		case <-time.After(evtWaitTimeout):
-			return ErrPubSubWaitTimeout
-		case <-n.ctx.Done():
-			return nil
-		}
-	}
-}
-
-// WaitForPushLogByPeerEvent listens to the event channel for a push log event by a given peer.
-//
-// By refers to the log creator. It can be different than the log sender.
-//
-// It will block the calling thread until an event is yielded to an internal channel. This
-// event is not necessarily the next event and is dependent on the number of concurrent callers
-// (each event will only notify a single caller, not all of them).
-func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
-	for {
-		select {
-		case evt := <-n.pushLogEvent:
-			if evt.ByPeer != id {
-				continue
-			}
-			return nil
-		case <-time.After(evtWaitTimeout):
-			return ErrPushLogWaitTimeout
-		case <-n.ctx.Done():
-			return nil
-		}
-	}
-}
-
-// WaitForPushLogFromPeerEvent listens to the event channel for a push log event from a given peer.
-//
-// From refers to the log sender. It can be different that the log creator.
-//
-// It will block the calling thread until an event is yielded to an internal channel. This
-// event is not necessarily the next event and is dependent on the number of concurrent callers
-// (each event will only notify a single caller, not all of them).
-func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
-	for {
-		select {
-		case evt := <-n.pushLogEvent:
-			if evt.FromPeer != id {
-				continue
-			}
-			return nil
-		case <-time.After(evtWaitTimeout):
-			return ErrPushLogWaitTimeout
-		case <-n.ctx.Done():
-			return nil
-		}
-	}
-}
-
 func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, error) {
 	dhtOpts := []dualdht.Option{
 		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
@@ -420,6 +271,12 @@ func (n Node) Close() {
 	}
 	if n.Peer != nil {
 		n.Peer.Close()
+	}
+	if n.dhtClose != nil {
+		err := n.dhtClose()
+		if err != nil {
+			log.ErrorContextE(n.ctx, "Failed to close DHT", err)
+		}
 	}
 	n.DB.Close()
 }

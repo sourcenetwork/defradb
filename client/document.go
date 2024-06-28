@@ -24,7 +24,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -776,6 +776,11 @@ func (doc *Document) GenerateDocID() (DocID, error) {
 	if err != nil {
 		return DocID{}, err
 	}
+
+	// The DocID must take into consideration the schema root, this ensures that
+	// otherwise identical documents created using different schema will have different
+	// document IDs - we do not want cross-schema docID collisions.
+	bytes = append(bytes, []byte(doc.collectionDefinition.Schema.Root)...)
 
 	cid, err := ccid.NewSHA256CidV1(bytes)
 	if err != nil {

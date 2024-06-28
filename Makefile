@@ -158,9 +158,9 @@ deps\:chglog:
 deps\:modules:
 	go mod download
 
-.PHONY: deps\:mock
-deps\:mock:
-	go install github.com/vektra/mockery/v2@v2.32.0
+.PHONY: deps\:mocks
+deps\:mocks:
+	go install github.com/vektra/mockery/v2@v2.43.0
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -173,11 +173,11 @@ deps:
 	$(MAKE) deps:chglog && \
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:test && \
-	$(MAKE) deps:mock
+	$(MAKE) deps:mocks
 
-.PHONY: mock
-mock:
-	@$(MAKE) deps:mock
+.PHONY: mocks
+mocks:
+	@$(MAKE) deps:mocks
 	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: dev\:start
@@ -356,10 +356,17 @@ chglog:
 docs:
 	@$(MAKE) docs\:cli
 	@$(MAKE) docs\:manpages
+	@$(MAKE) docs\:http
+	@$(MAKE) toc
 
 .PHONY: docs\:cli
 docs\:cli:
-	go run cmd/genclidocs/main.go -o docs/cli/
+	rm -f docs/website/references/cli/*.md
+	go run cmd/genclidocs/main.go -o docs/website/references/cli
+
+.PHONY: docs\:http
+docs\:http:
+	go run cmd/genopenapi/main.go | python -m json.tool > docs/website/references/http/openapi.json
 
 .PHONY: docs\:manpages
 docs\:manpages:
@@ -369,3 +376,15 @@ docs\:manpages:
 docs\:godoc:
 	godoc -http=:6060
 	# open http://localhost:6060/pkg/github.com/sourcenetwork/defradb/
+
+.PHONY: toc
+toc:
+	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
+
+.PHONY: fix
+fix:
+	@$(MAKE) deps
+	@$(MAKE) lint\:fix
+	@$(MAKE) tidy
+	@$(MAKE) mocks
+	@$(MAKE) docs

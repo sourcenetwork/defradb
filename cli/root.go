@@ -30,114 +30,72 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 			return setContextConfig(cmd)
 		},
 	}
-
+	// set default flag values from config
+	cfg := defaultConfig()
 	cmd.PersistentFlags().String(
 		"rootdir",
 		"",
 		"Directory for persistent data (default: $HOME/.defradb)",
 	)
-
 	cmd.PersistentFlags().String(
 		"log-level",
-		"info",
+		cfg.GetString(configFlags["log-level"]),
 		"Log level to use. Options are debug, info, error, fatal",
 	)
-
 	cmd.PersistentFlags().String(
 		"log-output",
-		"stderr",
+		cfg.GetString(configFlags["log-output"]),
 		"Log output path. Options are stderr or stdout.",
 	)
-
 	cmd.PersistentFlags().String(
 		"log-format",
-		"text",
+		cfg.GetString(configFlags["log-format"]),
 		"Log format to use. Options are text or json",
 	)
-
 	cmd.PersistentFlags().Bool(
 		"log-stacktrace",
-		false,
+		cfg.GetBool(configFlags["log-stacktrace"]),
 		"Include stacktrace in error and fatal logs",
 	)
-
 	cmd.PersistentFlags().Bool(
 		"log-source",
-		false,
+		cfg.GetBool(configFlags["log-source"]),
 		"Include source location in logs",
 	)
-
 	cmd.PersistentFlags().String(
 		"log-overrides",
-		"",
+		cfg.GetString(configFlags["log-overrides"]),
 		"Logger config overrides. Format <name>,<key>=<val>,...;<name>,...",
 	)
-
 	cmd.PersistentFlags().Bool(
-		"log-no-color",
-		false,
+		"no-log-color",
+		cfg.GetBool(configFlags["no-log-color"]),
 		"Disable colored log output",
 	)
-
 	cmd.PersistentFlags().String(
 		"url",
-		"127.0.0.1:9181",
+		cfg.GetString(configFlags["url"]),
 		"URL of HTTP endpoint to listen on or connect to",
 	)
-
-	cmd.PersistentFlags().StringArray(
-		"peers",
-		[]string{},
-		"List of peers to connect to",
-	)
-
-	cmd.PersistentFlags().Int(
-		"max-txn-retries",
-		5,
-		"Specify the maximum number of retries per transaction",
-	)
-
 	cmd.PersistentFlags().String(
-		"store",
-		"badger",
-		"Specify the datastore to use (supported: badger, memory)",
+		"keyring-namespace",
+		cfg.GetString(configFlags["keyring-namespace"]),
+		"Service name to use when using the system backend",
 	)
-
-	cmd.PersistentFlags().Int(
-		"valuelogfilesize",
-		1<<30,
-		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
+	cmd.PersistentFlags().String(
+		"keyring-backend",
+		cfg.GetString(configFlags["keyring-backend"]),
+		"Keyring backend to use. Options are file or system",
 	)
-
-	cmd.PersistentFlags().StringSlice(
-		"p2paddr",
-		[]string{"/ip4/127.0.0.1/tcp/9171"},
-		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
+	cmd.PersistentFlags().String(
+		"keyring-path",
+		cfg.GetString(configFlags["keyring-path"]),
+		"Path to store encrypted keys when using the file backend",
 	)
-
 	cmd.PersistentFlags().Bool(
-		"no-p2p",
-		false,
-		"Disable the peer-to-peer network synchronization system",
+		"no-keyring",
+		cfg.GetBool(configFlags["no-keyring"]),
+		"Disable the keyring and generate ephemeral keys",
 	)
-
-	cmd.PersistentFlags().StringArray(
-		"allowed-origins",
-		[]string{},
-		"List of origins to allow for CORS requests",
-	)
-
-	cmd.PersistentFlags().String(
-		"pubkeypath",
-		"",
-		"Path to the public key for tls",
-	)
-
-	cmd.PersistentFlags().String(
-		"privkeypath",
-		"",
-		"Path to the private key for tls",
-	)
-
 	return cmd
 }

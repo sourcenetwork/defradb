@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,27 +37,58 @@ var configPaths = []string{
 	"datastore.badger.path",
 	"api.pubkeypath",
 	"api.privkeypath",
+	"keyring.path",
 }
 
-// configFlags is a mapping of config keys to cli flags to bind to.
+// configFlags is a mapping of cli flag names to config keys to bind.
 var configFlags = map[string]string{
-	"log.level":                         "log-level",
-	"log.output":                        "log-output",
-	"log.format":                        "log-format",
-	"log.stacktrace":                    "log-stacktrace",
-	"log.source":                        "log-source",
-	"log.overrides":                     "log-overrides",
-	"log.nocolor":                       "log-no-color",
-	"api.address":                       "url",
-	"datastore.maxtxnretries":           "max-txn-retries",
-	"datastore.store":                   "store",
-	"datastore.badger.valuelogfilesize": "valuelogfilesize",
-	"net.peers":                         "peers",
-	"net.p2paddresses":                  "p2paddr",
-	"net.p2pdisabled":                   "no-p2p",
-	"api.allowed-origins":               "allowed-origins",
-	"api.pubkeypath":                    "pubkeypath",
-	"api.privkeypath":                   "privkeypath",
+	"log-level":         "log.level",
+	"log-output":        "log.output",
+	"log-format":        "log.format",
+	"log-stacktrace":    "log.stacktrace",
+	"log-source":        "log.source",
+	"log-overrides":     "log.overrides",
+	"no-log-color":      "log.colordisabled",
+	"url":               "api.address",
+	"max-txn-retries":   "datastore.maxtxnretries",
+	"store":             "datastore.store",
+	"valuelogfilesize":  "datastore.badger.valuelogfilesize",
+	"peers":             "net.peers",
+	"p2paddr":           "net.p2paddresses",
+	"no-p2p":            "net.p2pdisabled",
+	"allowed-origins":   "api.allowed-origins",
+	"pubkeypath":        "api.pubkeypath",
+	"privkeypath":       "api.privkeypath",
+	"keyring-namespace": "keyring.namespace",
+	"keyring-backend":   "keyring.backend",
+	"keyring-path":      "keyring.path",
+	"no-keyring":        "keyring.disabled",
+}
+
+// configDefaults contains default values for config entries.
+var configDefaults = map[string]any{
+	"api.address":                       "127.0.0.1:9181",
+	"api.allowed-origins":               []string{},
+	"datastore.badger.path":             "data",
+	"datastore.maxtxnretries":           5,
+	"datastore.store":                   "badger",
+	"datastore.badger.valuelogfilesize": 1 << 30,
+	"net.p2pdisabled":                   false,
+	"net.p2paddresses":                  []string{"/ip4/127.0.0.1/tcp/9171"},
+	"net.peers":                         []string{},
+	"net.pubSubEnabled":                 true,
+	"net.relay":                         false,
+	"keyring.backend":                   "file",
+	"keyring.disabled":                  false,
+	"keyring.namespace":                 "defradb",
+	"keyring.path":                      "keys",
+	"log.caller":                        false,
+	"log.colordisabled":                 false,
+	"log.format":                        "text",
+	"log.level":                         "info",
+	"log.output":                        "stderr",
+	"log.source":                        false,
+	"log.stacktrace":                    false,
 }
 
 // defaultConfig returns a new config with default values.
@@ -70,11 +102,9 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigName("config")
 	cfg.SetConfigType("yaml")
 
-	cfg.SetDefault("datastore.badger.path", "data")
-	cfg.SetDefault("net.pubSubEnabled", true)
-	cfg.SetDefault("net.relay", false)
-	cfg.SetDefault("log.caller", false)
-
+	for key, val := range configDefaults {
+		cfg.SetDefault(key, val)
+	}
 	return cfg
 }
 
@@ -126,13 +156,14 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 		}
 	}
 
-	// set default logging config
+	// set logging config
 	corelog.SetConfig(corelog.Config{
 		Level:            cfg.GetString("log.level"),
 		Format:           cfg.GetString("log.format"),
 		Output:           cfg.GetString("log.output"),
 		EnableStackTrace: cfg.GetBool("log.stacktrace"),
 		EnableSource:     cfg.GetBool("log.source"),
+		DisableColor:     cfg.GetBool("log.colordisabled"),
 	})
 
 	// set logging config overrides
@@ -143,11 +174,9 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 
 // bindConfigFlags binds the set of cli flags to config values.
 func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
-	for key, flag := range configFlags {
-		err := cfg.BindPFlag(key, flags.Lookup(flag))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	var errs []error
+	flags.VisitAll(func(f *pflag.Flag) {
+		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
+	})
+	return errors.Join(errs...)
 }

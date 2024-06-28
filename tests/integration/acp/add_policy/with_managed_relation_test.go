@@ -25,6 +25,7 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy with admin relation managing reader relation
 
                     actor:
@@ -52,7 +53,7 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "725caeee6c5043f019e7dc3bb6a627520c235f063e862696c67ac89b5c1fc840",
 			},
 		},
 	}

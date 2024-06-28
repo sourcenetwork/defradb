@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "16e39e650d4cbd5161ae0c572edad6f7e2950c1c4afa37e427af3c8708e68f0f"
+	policyIDOfValidDPI := "c74076630d0b4efd8bfe6fd8ee91256de10598a8a2b7a49dd8ddc9aab3f6973c"
 
 	test := testUtils.TestCase{
 
@@ -32,6 +32,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:
@@ -118,7 +119,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 }
 
 func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "35b6f3db54cfb0f451a4faba77d2c71d8718215caeb5a15a8570dfdba07b694d"
+	policyIDOfValidDPI := "6990d33c4bfddef663a37a0177b28922ae42a3d988987d72c355865a7afbe96f"
 
 	test := testUtils.TestCase{
 
@@ -131,6 +132,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:
@@ -217,7 +219,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 }
 
 func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "7b6266a93bfb6920bf57884f55c3823a5a5147c4ce445a9fc703b7c1e59b2d12"
+	policyIDOfValidDPI := "05719e4bbd78a92c65758f2cb642bd58ad6d122d4aa3b8b2419bd307749f35bc"
 
 	test := testUtils.TestCase{
 
@@ -230,6 +232,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: A Valid Defra Policy Interface (DPI)
 
                     actor:

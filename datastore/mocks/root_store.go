@@ -29,6 +29,10 @@ func (_m *RootStore) EXPECT() *RootStore_Expecter {
 func (_m *RootStore) Batch(ctx context.Context) (datastore.Batch, error) {
 	ret := _m.Called(ctx)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Batch")
+	}
+
 	var r0 datastore.Batch
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context) (datastore.Batch, error)); ok {
@@ -83,6 +87,10 @@ func (_c *RootStore_Batch_Call) RunAndReturn(run func(context.Context) (datastor
 func (_m *RootStore) Close() error {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Close")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
@@ -123,6 +131,10 @@ func (_c *RootStore_Close_Call) RunAndReturn(run func() error) *RootStore_Close_
 // Delete provides a mock function with given fields: ctx, key
 func (_m *RootStore) Delete(ctx context.Context, key datastore.Key) error {
 	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key) error); ok {
@@ -166,6 +178,10 @@ func (_c *RootStore_Delete_Call) RunAndReturn(run func(context.Context, datastor
 // Get provides a mock function with given fields: ctx, key
 func (_m *RootStore) Get(ctx context.Context, key datastore.Key) ([]byte, error) {
 	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
 
 	var r0 []byte
 	var r1 error
@@ -222,6 +238,10 @@ func (_c *RootStore_Get_Call) RunAndReturn(run func(context.Context, datastore.K
 func (_m *RootStore) GetSize(ctx context.Context, key datastore.Key) (int, error) {
 	ret := _m.Called(ctx, key)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetSize")
+	}
+
 	var r0 int
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key) (int, error)); ok {
@@ -275,6 +295,10 @@ func (_c *RootStore_GetSize_Call) RunAndReturn(run func(context.Context, datasto
 func (_m *RootStore) Has(ctx context.Context, key datastore.Key) (bool, error) {
 	ret := _m.Called(ctx, key)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Has")
+	}
+
 	var r0 bool
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key) (bool, error)); ok {
@@ -327,6 +351,10 @@ func (_c *RootStore_Has_Call) RunAndReturn(run func(context.Context, datastore.K
 // NewTransaction provides a mock function with given fields: ctx, readOnly
 func (_m *RootStore) NewTransaction(ctx context.Context, readOnly bool) (datastore.Txn, error) {
 	ret := _m.Called(ctx, readOnly)
+
+	if len(ret) == 0 {
+		panic("no return value specified for NewTransaction")
+	}
 
 	var r0 datastore.Txn
 	var r1 error
@@ -383,6 +411,10 @@ func (_c *RootStore_NewTransaction_Call) RunAndReturn(run func(context.Context, 
 func (_m *RootStore) Put(ctx context.Context, key datastore.Key, value []byte) error {
 	ret := _m.Called(ctx, key, value)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Put")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key, []byte) error); ok {
 		r0 = rf(ctx, key, value)
@@ -426,6 +458,10 @@ func (_c *RootStore_Put_Call) RunAndReturn(run func(context.Context, datastore.K
 // Query provides a mock function with given fields: ctx, q
 func (_m *RootStore) Query(ctx context.Context, q query.Query) (query.Results, error) {
 	ret := _m.Called(ctx, q)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Query")
+	}
 
 	var r0 query.Results
 	var r1 error
@@ -481,6 +517,10 @@ func (_c *RootStore_Query_Call) RunAndReturn(run func(context.Context, query.Que
 // Sync provides a mock function with given fields: ctx, prefix
 func (_m *RootStore) Sync(ctx context.Context, prefix datastore.Key) error {
 	ret := _m.Called(ctx, prefix)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Sync")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, datastore.Key) error); ok {

@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/internal/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 
@@ -59,7 +59,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocID: immutable.Some("bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"),
+				DocID: immutable.Some("bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"),
 			},
 			// No event should be received for Shahzad, as the transaction was discarded.
 		},

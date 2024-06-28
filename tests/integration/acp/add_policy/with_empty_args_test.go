@@ -13,6 +13,9 @@ package test_acp_add_policy
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -42,9 +45,10 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: "",
+				Identity: immutable.None[acpIdentity.Identity](),
 
 				Policy: `
+                    name: test
                     description: a basic policy that satisfies minimum DPI requirements
 
                     actor:
@@ -80,7 +84,7 @@ func TestACP_AddPolicy_EmptyCreatorAndPolicyArgs_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: "",
+				Identity: immutable.None[acpIdentity.Identity](),
 
 				Policy: "",
 

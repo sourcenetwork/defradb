@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/event"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -58,7 +58,7 @@ type ExpectedUpdate struct {
 	// The expected Cid, as a string (results in much more readable errors)
 	Cid        immutable.Option[string]
 	SchemaRoot immutable.Option[string]
-	Priority   immutable.Option[uint64]
+	IsCreate   immutable.Option[bool]
 }
 
 const eventTimeout = 100 * time.Millisecond
@@ -70,7 +70,7 @@ func ExecuteRequestTestCase(
 ) {
 	ctx := context.Background()
 
-	db, err := testUtils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
+	db, err := testUtils.NewBadgerMemoryDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, schema)
@@ -80,14 +80,20 @@ func ExecuteRequestTestCase(
 
 	testRoutineClosedChan := make(chan struct{})
 	closeTestRoutineChan := make(chan struct{})
-	eventsChan, err := db.Events().Updates.Value().Subscribe()
+
+	eventsSub, err := db.Events().Subscribe(event.UpdateName)
 	require.NoError(t, err)
 
 	indexOfNextExpectedUpdate := 0
 	go func() {
 		for {
 			select {
-			case update := <-eventsChan:
+			case value := <-eventsSub.Message():
+				update, ok := value.Data.(event.Update)
+				if !ok {
+					continue // ignore invalid value
+				}
+
 				if indexOfNextExpectedUpdate >= len(testCase.ExpectedUpdates) {
 					assert.Fail(t, "More events recieved than were expected", update)
 					testRoutineClosedChan <- struct{}{}
@@ -97,7 +103,7 @@ func ExecuteRequestTestCase(
 				expectedEvent := testCase.ExpectedUpdates[indexOfNextExpectedUpdate]
 				assertIfExpected(t, expectedEvent.Cid, update.Cid.String())
 				assertIfExpected(t, expectedEvent.DocID, update.DocID)
-				assertIfExpected(t, expectedEvent.Priority, update.Priority)
+				assertIfExpected(t, expectedEvent.IsCreate, update.IsCreate)
 				assertIfExpected(t, expectedEvent.SchemaRoot, update.SchemaRoot)
 
 				indexOfNextExpectedUpdate++

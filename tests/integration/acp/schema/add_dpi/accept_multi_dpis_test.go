@@ -21,6 +21,7 @@ import (
 func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t *testing.T) {
 	const sameResourceNameOnBothDPI string = "users"
 	const validDPIUsedByBoth string = `
+        name: test
         description: A Valid Defra Policy Interface (DPI)
 
         actor:
@@ -43,8 +44,8 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
                   - actor
     `
 
-	const policyIDOfFirstCreatorsDPI string = "4f13c5084c3d0e1e5c5db702fceef84c3b6ab948949ca8e27fcaad3fb8bc39f4"
-	const policyIDOfSecondCreatorsDPI string = "d33aa07a28ea19ed07a5256eb7e7f5600b0e0af13254889a7fce60202c4f6c7e"
+	const policyIDOfFirstCreatorsDPI string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
+	const policyIDOfSecondCreatorsDPI string = "4b9291094984289a8f5557d142db453943549626067eedd8cbd5b64c3bc8a4f3"
 
 	test := testUtils.TestCase{
 

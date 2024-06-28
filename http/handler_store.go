@@ -314,7 +314,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 
 	result := store.ExecRequest(req.Context(), request.Query)
 
-	if result.Pub == nil {
+	if result.Subscription == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})
 		return
 	}
@@ -335,7 +335,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		select {
 		case <-req.Context().Done():
 			return
-		case item, open := <-result.Pub.Stream():
+		case item, open := <-result.Subscription:
 			if !open {
 				return
 			}

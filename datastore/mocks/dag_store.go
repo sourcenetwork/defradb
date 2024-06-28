@@ -8,6 +8,8 @@ import (
 
 	context "context"
 
+	datastore "github.com/sourcenetwork/defradb/datastore"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -27,6 +29,10 @@ func (_m *DAGStore) EXPECT() *DAGStore_Expecter {
 // AllKeysChan provides a mock function with given fields: ctx
 func (_m *DAGStore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AllKeysChan")
+	}
 
 	var r0 <-chan cid.Cid
 	var r1 error
@@ -78,9 +84,60 @@ func (_c *DAGStore_AllKeysChan_Call) RunAndReturn(run func(context.Context) (<-c
 	return _c
 }
 
+// AsIPLDStorage provides a mock function with given fields:
+func (_m *DAGStore) AsIPLDStorage() datastore.IPLDStorage {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for AsIPLDStorage")
+	}
+
+	var r0 datastore.IPLDStorage
+	if rf, ok := ret.Get(0).(func() datastore.IPLDStorage); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.IPLDStorage)
+		}
+	}
+
+	return r0
+}
+
+// DAGStore_AsIPLDStorage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AsIPLDStorage'
+type DAGStore_AsIPLDStorage_Call struct {
+	*mock.Call
+}
+
+// AsIPLDStorage is a helper method to define mock.On call
+func (_e *DAGStore_Expecter) AsIPLDStorage() *DAGStore_AsIPLDStorage_Call {
+	return &DAGStore_AsIPLDStorage_Call{Call: _e.mock.On("AsIPLDStorage")}
+}
+
+func (_c *DAGStore_AsIPLDStorage_Call) Run(run func()) *DAGStore_AsIPLDStorage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DAGStore_AsIPLDStorage_Call) Return(_a0 datastore.IPLDStorage) *DAGStore_AsIPLDStorage_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DAGStore_AsIPLDStorage_Call) RunAndReturn(run func() datastore.IPLDStorage) *DAGStore_AsIPLDStorage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteBlock provides a mock function with given fields: _a0, _a1
 func (_m *DAGStore) DeleteBlock(_a0 context.Context, _a1 cid.Cid) error {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteBlock")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, cid.Cid) error); ok {
@@ -124,6 +181,10 @@ func (_c *DAGStore_DeleteBlock_Call) RunAndReturn(run func(context.Context, cid.
 // Get provides a mock function with given fields: _a0, _a1
 func (_m *DAGStore) Get(_a0 context.Context, _a1 cid.Cid) (blocks.Block, error) {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
 
 	var r0 blocks.Block
 	var r1 error
@@ -180,6 +241,10 @@ func (_c *DAGStore_Get_Call) RunAndReturn(run func(context.Context, cid.Cid) (bl
 func (_m *DAGStore) GetSize(_a0 context.Context, _a1 cid.Cid) (int, error) {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetSize")
+	}
+
 	var r0 int
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, cid.Cid) (int, error)); ok {
@@ -232,6 +297,10 @@ func (_c *DAGStore_GetSize_Call) RunAndReturn(run func(context.Context, cid.Cid)
 // Has provides a mock function with given fields: _a0, _a1
 func (_m *DAGStore) Has(_a0 context.Context, _a1 cid.Cid) (bool, error) {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Has")
+	}
 
 	var r0 bool
 	var r1 error
@@ -319,6 +388,10 @@ func (_c *DAGStore_HashOnRead_Call) RunAndReturn(run func(bool)) *DAGStore_HashO
 func (_m *DAGStore) Put(_a0 context.Context, _a1 blocks.Block) error {
 	ret := _m.Called(_a0, _a1)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Put")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, blocks.Block) error); ok {
 		r0 = rf(_a0, _a1)
@@ -361,6 +434,10 @@ func (_c *DAGStore_Put_Call) RunAndReturn(run func(context.Context, blocks.Block
 // PutMany provides a mock function with given fields: _a0, _a1
 func (_m *DAGStore) PutMany(_a0 context.Context, _a1 []blocks.Block) error {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PutMany")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, []blocks.Block) error); ok {

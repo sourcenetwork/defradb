@@ -15,28 +15,29 @@ DefraDB is a user-centric database that prioritizes data ownership, personal pri
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
+
 ## Table of Contents
 
-- [Install](#install)
-- [Start](#start)
-- [Configuration](#configuration)
-- [External port binding](#external-port-binding)
-- [Add a schema type](#add-a-schema-type)
-- [Create a document instance](#create-a-document-instance)
-- [Query documents](#query-documents)
-- [Obtain document commits](#obtain-document-commits)
-- [DefraDB Query Language (DQL)](#defradb-query-language-dql)
-- [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
-  - [Pubsub example](#pubsub-example)
-  - [Collection subscription example](#collection-subscription-example)
-  - [Replicator example](#replicator-example)
-- [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
-- [Access Control System](#access-control-system)
-- [Supporting CORS](#supporting-cors)
-- [Backing up and restoring](#backing-up-and-restoring)
-- [Community](#community)
-- [Licensing](#licensing)
-- [Contributors](#contributors)
+<!--ts-->
+   * [Install](#install)
+   * [Key Management](#key-management)
+   * [Start](#start)
+   * [Configuration](#configuration)
+   * [External port binding](#external-port-binding)
+   * [Add a schema type](#add-a-schema-type)
+   * [Create a document](#create-a-document)
+   * [Query documents](#query-documents)
+   * [Obtain document commits](#obtain-document-commits)
+   * [DefraDB Query Language (DQL)](#defradb-query-language-dql)
+   * [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
+   * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
+   * [Access Control System](#access-control-system)
+   * [Supporting CORS](#supporting-cors)
+   * [Backing up and restoring](#backing-up-and-restoring)
+   * [Community](#community)
+   * [Licensing](#licensing)
+   * [Contributors](#contributors)
+<!--te-->
 
 DISCLAIMER: At this early stage, DefraDB does not offer data encryption, and the default configuration exposes the database to the network. The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, but please do not use it for production purposes until it has been thoroughly tested and developed.
 
@@ -58,11 +59,38 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://altairgraphql.dev/#download).
 
+## Key Management
+
+DefraDB has a built in keyring that can be used to store private keys securely.
+
+The following keys are loaded from the keyring on start:
+
+- `peer-key` Ed25519 private key (required)
+- `encryption-key` AES-128, AES-192, or AES-256 key (optional)
+
+To randomly generate the required keys, run the following command:
+
+```
+defradb keyring generate
+```
+
+To import externally generated keys, run the following command:
+
+```
+defradb keyring import <name> <private-key-hex>
+```
+
+To learn more about the available options:
+
+```
+defradb keyring --help
+```
+
 ## Start
 
 Start a node by executing `defradb start`. Keep the node running while going through the following examples.
 
-Verify the local connection to the node works by executing `defradb client ping` in another terminal.
+Verify the local connection to the node works by executing `defradb client collection describe` in another terminal.
 
 ## Configuration
 
@@ -451,5 +479,6 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Orpheus Lummis ([@orpheuslummis](https://github.com/orpheuslummis))
 - Fred Carle ([@fredcarle](https://github.com/fredcarle))
 - Islam Aliev ([@islamaliev](https://github.com/islamaliev))
+- Keenan Nemetz ([@nasdf](https://github.com/nasdf))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.

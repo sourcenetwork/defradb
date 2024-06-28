@@ -114,7 +114,6 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 			},
-			// bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -123,17 +122,17 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name":	"To Kill a Mockingbird",
-					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
-				}`,
+				DocMap: map[string]any{
+					"name":      "To Kill a Mockingbird",
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name":	"Go Set a Watchman",
-					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
-				}`,
+				DocMap: map[string]any{
+					"name":      "Go Set a Watchman",
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.Request{
 				Request: `

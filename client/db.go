@@ -13,12 +13,12 @@ package client
 import (
 	"context"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
 )
 
 type CollectionName = string
@@ -48,12 +48,17 @@ type DB interface {
 	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	//
 	// It sits within the rootstore returned by [Root].
-	Blockstore() blockstore.Blockstore
+	Blockstore() datastore.DAGStore
 
 	// Peerstore returns the peerstore where known host information is stored.
 	//
 	// It sits within the rootstore returned by [Root].
 	Peerstore() datastore.DSBatching
+
+	// Headstore returns the headstore where the current heads of the database are stored.
+	//
+	// It is read-only and sits within the rootstore returned by [Root].
+	Headstore() ds.Read
 
 	// Close closes the database instance and releases any resources held.
 	//
@@ -70,7 +75,7 @@ type DB interface {
 	//
 	// It may be used to monitor database events - a new event will be yielded for each mutation.
 	// Note: it does not copy the queue, just the reference to it.
-	Events() events.Events
+	Events() *event.Bus
 
 	// MaxTxnRetries returns the number of retries that this DefraDB instance has been configured to
 	// make in the event of a transaction conflict in certain scenarios.
@@ -260,9 +265,9 @@ type RequestResult struct {
 	// GQL contains the immediate results of the GQL request.
 	GQL GQLResult
 
-	// Pub contains a pointer to an event stream which channels any subscription results
-	// if the request was a GQL subscription.
-	Pub *events.Publisher[events.Update]
+	// Subscription is an optional channel which returns results
+	// from a subscription request.
+	Subscription <-chan GQLResult
 }
 
 // CollectionFetchOptions represents a set of options used for fetching collections.

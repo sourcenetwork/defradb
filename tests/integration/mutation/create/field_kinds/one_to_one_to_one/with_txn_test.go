@@ -24,7 +24,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
+				// "_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
 				Doc: `{
 					"name": "Website",
 					"address": "Manning Publications"
@@ -32,7 +32,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+				// "_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 				Doc: `{
 					"name": "Online",
 					"address": "Manning Early Access Program (MEAP)"
@@ -42,26 +42,26 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
+					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed"}) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-37de3681-1856-5bc9-9fd6-1595647b7d96",
+						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
 					},
 				},
 			},
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523"}) {
+					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-21084f46-b12a-53ab-94dd-04d075b4218c"}) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-60ffc9b4-0e31-5d63-82dc-c5cb007f2985",
+						"_docID": "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
 					},
 				},
 			},
@@ -80,16 +80,16 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
+						"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
 						"name":   "Website",
 						"published": map[string]any{
-							"_docID": "bae-37de3681-1856-5bc9-9fd6-1595647b7d96",
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
 							"name":   "Book By Website",
 						},
 					},
 
 					{
-						"_docID":    "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+						"_docID":    "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 						"name":      "Online",
 						"published": nil,
 					},
@@ -110,16 +110,15 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID":    "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
+						"_docID":    "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
 						"name":      "Website",
 						"published": nil,
 					},
-
 					{
-						"_docID": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+						"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 						"name":   "Online",
 						"published": map[string]any{
-							"_docID": "bae-60ffc9b4-0e31-5d63-82dc-c5cb007f2985",
+							"_docID": "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
 							"name":   "Book By Online",
 						},
 					},
@@ -146,20 +145,19 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-37de3681-1856-5bc9-9fd6-1595647b7d96",
-						"name":   "Book By Website",
-						"publisher": map[string]any{
-							"_docID": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
-							"name":   "Website",
-						},
-					},
-
-					{
-						"_docID": "bae-60ffc9b4-0e31-5d63-82dc-c5cb007f2985",
+						"_docID": "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
 						"name":   "Book By Online",
 						"publisher": map[string]any{
-							"_docID": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+							"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 							"name":   "Online",
+						},
+					},
+					{
+						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+						"name":   "Book By Website",
+						"publisher": map[string]any{
+							"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+							"name":   "Website",
 						},
 					},
 				},
@@ -176,7 +174,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
+				// "_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
 				Doc: `{
 					"name": "Website",
 					"address": "Manning Publications"
@@ -184,7 +182,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+				// "_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 				Doc: `{
 					"name": "Online",
 					"address": "Manning Early Access Program (MEAP)"
@@ -194,26 +192,26 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
+					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed"}) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-37de3681-1856-5bc9-9fd6-1595647b7d96",
+						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
 					},
 				},
 			},
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523"}) {
+					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-21084f46-b12a-53ab-94dd-04d075b4218c"}) {
 						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-60ffc9b4-0e31-5d63-82dc-c5cb007f2985",
+						"_docID": "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
 					},
 				},
 			},
@@ -232,10 +230,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-37de3681-1856-5bc9-9fd6-1595647b7d96",
+						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
 						"name":   "Book By Website",
 						"publisher": map[string]any{
-							"_docID": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
+							"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
 							"name":   "Website",
 						},
 					},
@@ -256,10 +254,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-60ffc9b4-0e31-5d63-82dc-c5cb007f2985",
+						"_docID": "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
 						"name":   "Book By Online",
 						"publisher": map[string]any{
-							"_docID": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+							"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 							"name":   "Online",
 						},
 					},
@@ -286,19 +284,19 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
+						"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
 						"name":   "Website",
 						"published": map[string]any{
-							"_docID": "bae-37de3681-1856-5bc9-9fd6-1595647b7d96",
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
 							"name":   "Book By Website",
 						},
 					},
 
 					{
-						"_docID": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
+						"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
 						"name":   "Online",
 						"published": map[string]any{
-							"_docID": "bae-60ffc9b4-0e31-5d63-82dc-c5cb007f2985",
+							"_docID": "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
 							"name":   "Book By Online",
 						},
 					},

@@ -13,8 +13,9 @@ package net
 import (
 	"context"
 	"testing"
-	"time"
 
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore/query"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -24,13 +25,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 	net_pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 func TestNewServerSimple(t *testing.T) {
 	ctx := context.Background()
-	db, n := newTestNode(ctx, t)
-	_, err := newServer(n.Peer, db)
+	_, n := newTestNode(ctx, t)
+	_, err := newServer(n.Peer)
 	require.NoError(t, err)
 }
 
@@ -39,7 +41,7 @@ func TestNewServerWithDBClosed(t *testing.T) {
 	db, n := newTestNode(ctx, t)
 	db.Close()
 
-	_, err := newServer(n.Peer, db)
+	_, err := newServer(n.Peer)
 	require.ErrorIs(t, err, memory.ErrClosed)
 }
 
@@ -57,7 +59,8 @@ func TestNewServerWithGetAllCollectionError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 	mDB := mockDBColError{db}
-	_, err := newServer(n.Peer, &mDB)
+	n.Peer.db = &mDB
+	_, err := newServer(n.Peer)
 	require.ErrorIs(t, err, mockError)
 }
 
@@ -77,7 +80,7 @@ func TestNewServerWithCollectionSubscribed(t *testing.T) {
 	err = n.AddP2PCollections(ctx, []string{col.SchemaRoot()})
 	require.NoError(t, err)
 
-	_, err = newServer(n.Peer, db)
+	_, err = newServer(n.Peer)
 	require.NoError(t, err)
 }
 
@@ -115,8 +118,8 @@ func TestNewServerWithGetAllDocIDsError(t *testing.T) {
 	require.NoError(t, err)
 
 	mDB := mockDBDocIDsError{db}
-
-	_, err = newServer(n.Peer, &mDB)
+	n.Peer.db = &mDB
+	_, err = newServer(n.Peer)
 	require.ErrorIs(t, err, mockError)
 }
 
@@ -142,7 +145,7 @@ func TestNewServerWithAddTopicError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	_, err = newServer(n.Peer, db)
+	_, err = newServer(n.Peer)
 	require.ErrorContains(t, err, "topic already exists")
 }
 
@@ -187,7 +190,7 @@ func TestNewServerWithEmitterError(t *testing.T) {
 
 	n.Peer.host = &mockHost{n.Peer.host}
 
-	_, err = newServer(n.Peer, db)
+	_, err = newServer(n.Peer)
 	require.NoError(t, err)
 }
 
@@ -223,28 +226,25 @@ func TestGetHeadLog(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestDocQueue(t *testing.T) {
-	q := docQueue{
-		docs: make(map[string]chan struct{}),
+func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
+	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE).ToString()
+	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
+	if err != nil {
+		return cid.Undef, err
+	}
+	entries, err := results.Rest()
+	if err != nil {
+		return cid.Undef, err
 	}
 
-	testDocID := "test"
-
-	q.add(testDocID)
-	go q.add(testDocID)
-	// give time for the goroutine to block
-	time.Sleep(10 * time.Millisecond)
-	require.Len(t, q.docs, 1)
-	q.done(testDocID)
-	// give time for the goroutine to add the docID
-	time.Sleep(10 * time.Millisecond)
-	q.mu.Lock()
-	require.Len(t, q.docs, 1)
-	q.mu.Unlock()
-	q.done(testDocID)
-	q.mu.Lock()
-	require.Len(t, q.docs, 0)
-	q.mu.Unlock()
+	if len(entries) > 0 {
+		hsKey, err := core.NewHeadStoreKey(entries[0].Key)
+		if err != nil {
+			return cid.Undef, err
+		}
+		return hsKey.Cid, nil
+	}
+	return cid.Undef, errors.New("no head found")
 }
 
 func TestPushLog(t *testing.T) {
@@ -265,23 +265,27 @@ func TestPushLog(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
-	cid, err := createCID(doc)
-	require.NoError(t, err)
-
 	ctx = grpcpeer.NewContext(ctx, &grpcpeer.Peer{
 		Addr: addr{n.PeerID()},
 	})
 
-	block := &EmptyNode{}
+	err = col.Create(ctx, doc)
+	require.NoError(t, err)
+
+	headCID, err := getHead(ctx, db, doc.ID())
+	require.NoError(t, err)
+
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	require.NoError(t, err)
 
 	_, err = n.server.PushLog(ctx, &net_pb.PushLogRequest{
 		Body: &net_pb.PushLogRequest_Body{
 			DocID:      []byte(doc.ID().String()),
-			Cid:        cid.Bytes(),
+			Cid:        headCID.Bytes(),
 			SchemaRoot: []byte(col.SchemaRoot()),
 			Creator:    n.PeerID().String(),
 			Log: &net_pb.Document_Log{
-				Block: block.RawData(),
+				Block: b,
 			},
 		},
 	})

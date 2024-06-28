@@ -17,92 +17,118 @@ import (
 )
 
 func TestQueryOneToTwoManyWithOrder(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "One-to-many relation query from one side, order in opposite directions on children",
-			Request: `query {
-						Author {
-							name
-							written (order: {rating: ASC}) {
-								name
-							}
-							reviewed (order: {rating: DESC}){
-								name
-								rating
-							}
-						}
-					}`,
-			Docs: map[int][]string{
-				//books
-				0: {
-					`{
-						"name": "Painted House",
-						"rating": 4.9,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-					`{
-						"name": "A Time for Mercy",
-						"rating": 4.5,
-						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-					`{
-						"name": "Theif Lord",
-						"rating": 4.8,
-						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-				},
-				//authors
-				1: {
-					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					`{
-						"name": "John Grisham",
-						"age": 65,
-						"verified": true
-					}`,
-					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					`{
-						"name": "Cornelia Funke",
-						"age": 62,
-						"verified": false
-					}`,
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from one side, order in opposite directions on children",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author @relation(name: "written_books")
+						reviewedBy: Author @relation(name: "reviewed_books")
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						written: [Book] @relation(name: "written_books")
+						reviewed: [Book] @relation(name: "reviewed_books")
+					}
+				`,
+			},
+
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Painted House",
+					"rating":        4.9,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name": "John Grisham",
-					"reviewed": []map[string]any{
-						{
-							"name":   "Theif Lord",
-							"rating": 4.8,
-						},
-						{
-							"name":   "A Time for Mercy",
-							"rating": 4.5,
-						},
-					},
-					"written": []map[string]any{
-						{
-							"name": "A Time for Mercy",
-						},
-						{
-							"name": "Painted House",
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "A Time for Mercy",
+					"rating":        4.5,
+					"author_id":     testUtils.NewDocIndex(1, 0),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
 				},
-				{
-					"name": "Cornelia Funke",
-					"reviewed": []map[string]any{
-						{
-							"name":   "Painted House",
-							"rating": 4.9,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Theif Lord",
+					"rating":        4.8,
+					"author_id":     testUtils.NewDocIndex(1, 1),
+					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						written (order: {rating: ASC}) {
+							name
+						}
+						reviewed (order: {rating: DESC}){
+							name
+							rating
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Cornelia Funke",
+						"reviewed": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+							},
+						},
+						"written": []map[string]any{
+							{
+								"name": "Theif Lord",
+							},
 						},
 					},
-					"written": []map[string]any{
-						{
-							"name": "Theif Lord",
+					{
+						"name": "John Grisham",
+						"reviewed": []map[string]any{
+							{
+								"name":   "Theif Lord",
+								"rating": 4.8,
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+							},
+						},
+						"written": []map[string]any{
+							{
+								"name": "A Time for Mercy",
+							},
+							{
+								"name": "Painted House",
+							},
 						},
 					},
 				},
@@ -110,7 +136,5 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	testUtils.ExecuteTestCase(t, test)
 }

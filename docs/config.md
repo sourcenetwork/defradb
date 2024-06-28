@@ -89,6 +89,34 @@ Include source location in logs. Defaults to `false`.
 
 Logger config overrides. Format `<name>,<key>=<val>,...;<name>,...`.
 
-## `log.nocolor`
+## `log.colordisabled`
 
 Disable colored log output. Defaults to `false`.
+
+## `keyring.path`
+
+Path to store encrypted key files in. Defaults to `keys`.
+
+## `keyring.disabled`
+
+Disable the keyring and generate ephemeral keys instead. Defaults to `false`.
+
+## `keyring.namespace`
+
+The service name to use when using the system keyring. Defaults to `defradb`.
+
+## `keyring.backend`
+
+Keyring backend to use. Defaults to `file`.
+
+- `file` Stores keys in encrypted files
+- `system` Stores keys in the OS managed keyring
+
+## `lens.runtime`
+
+The LensVM wasm runtime to run lens modules in.
+
+Possible values:
+- `wasm-time` (default): https://github.com/bytecodealliance/wasmtime-go
+- `wasmer` (windows not supported): https://github.com/wasmerio/wasmer-go
+- `wazero`: https://github.com/tetratelabs/wazero

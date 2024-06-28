@@ -11,8 +11,9 @@
 package datastore
 
 import (
-	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/ipld/go-ipld-prime/storage"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -72,6 +73,13 @@ type DSReaderWriter interface {
 // DAGStore proxies the ipld.DAGService under the /core namespace for future-proofing
 type DAGStore interface {
 	blockstore.Blockstore
+	AsIPLDStorage() IPLDStorage
+}
+
+// IPLDStorage provides the methods needed for an IPLD LinkSystem.
+type IPLDStorage interface {
+	storage.ReadableStorage
+	storage.WritableStorage
 }
 
 // DSBatching wraps the Batching interface from go-datastore

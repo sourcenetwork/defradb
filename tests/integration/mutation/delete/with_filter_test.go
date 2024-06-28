@@ -135,13 +135,13 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "Fred",
+						"name": "John",
 					},
 					{
 						"name": "Shahzad",
 					},
 					{
-						"name": "John",
+						"name": "Fred",
 					},
 				},
 			},

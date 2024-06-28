@@ -13,7 +13,7 @@ package schema
 import (
 	"testing"
 
-	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -38,7 +38,7 @@ func TestIntrospectionExplainTypeDefined(t *testing.T) {
 					"__schema": map[string]any{
 						"types": []any{
 							map[string]any{
-								"description": schemaTypes.ExplainEnum.Description(),
+								"description": schemaTypes.ExplainEnum().Description(),
 								"kind":        "ENUM",
 								"name":        "ExplainType",
 							},

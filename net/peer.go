@@ -21,10 +21,8 @@ import (
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
 	exchange "github.com/ipfs/boxo/exchange"
-	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	ipld "github.com/ipfs/go-ipld-format"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -35,17 +33,13 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/core"
+	corenet "github.com/sourcenetwork/defradb/internal/core/net"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
-)
-
-var (
-	numWorkers = 5
 )
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
@@ -53,8 +47,8 @@ var (
 type Peer struct {
 	//config??
 
-	db            client.DB
-	updateChannel chan events.Update
+	db        client.DB
+	updateSub *event.Subscription
 
 	host host.Host
 	dht  routing.Routing
@@ -63,20 +57,11 @@ type Peer struct {
 	server *server
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
-	// Used to close the dagWorker pool for a given document.
-	// The string represents a docID.
-	closeJob chan string
-	sendJobs chan *dagJob
-
-	// outstanding log request currently being processed
-	queuedChildren *cidSafeSet
-
 	// replicators is a map from collectionName => peerId
 	replicators map[string]map[peer.ID]struct{}
 	mu          sync.Mutex
 
 	// peer DAG service
-	ipld.DAGService
 	exch  exchange.Interface
 	bserv blockservice.BlockService
 
@@ -100,20 +85,17 @@ func NewPeer(
 
 	ctx, cancel := context.WithCancel(ctx)
 	p := &Peer{
-		host:           h,
-		dht:            dht,
-		ps:             ps,
-		db:             db,
-		p2pRPC:         grpc.NewServer(serverOptions...),
-		ctx:            ctx,
-		cancel:         cancel,
-		closeJob:       make(chan string),
-		sendJobs:       make(chan *dagJob),
-		replicators:    make(map[string]map[peer.ID]struct{}),
-		queuedChildren: newCidSafeSet(),
+		host:        h,
+		dht:         dht,
+		ps:          ps,
+		db:          db,
+		p2pRPC:      grpc.NewServer(serverOptions...),
+		ctx:         ctx,
+		cancel:      cancel,
+		replicators: make(map[string]map[peer.ID]struct{}),
 	}
 	var err error
-	p.server, err = newServer(p, db, dialOptions...)
+	p.server, err = newServer(p, dialOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +106,6 @@ func NewPeer(
 	}
 
 	p.setupBlockService()
-	p.setupDAGService()
 
 	return p, nil
 }
@@ -149,9 +130,7 @@ func (p *Peer) Start() error {
 				log.InfoContext(
 					p.ctx,
 					"Failure while reconnecting to a known peer",
-					corelog.Any("peer", id),
-					corelog.Any("error", err),
-				)
+					corelog.Any("peer", id))
 			}
 		}(id)
 	}
@@ -163,16 +142,11 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		if !p.db.Events().Updates.HasValue() {
-			return ErrNilUpdateChannel
-		}
-
-		updateChannel, err := p.db.Events().Updates.Value().Subscribe()
+		sub, err := p.db.Events().Subscribe(event.UpdateName)
 		if err != nil {
 			return err
 		}
-		p.updateChannel = updateChannel
-
+		p.updateSub = sub
 		log.InfoContext(p.ctx, "Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
 	}
@@ -189,9 +163,6 @@ func (p *Peer) Start() error {
 			log.ErrorContextE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
-
-	// start sendJobWorker
-	go p.sendJobWorker()
 
 	return nil
 }
@@ -210,22 +181,9 @@ func (p *Peer) Close() {
 		}
 	}
 	stopGRPCServer(p.ctx, p.p2pRPC)
-	// stopGRPCServer(p.tcpRPC)
 
-	// close event emitters
-	if p.server.pubSubEmitter != nil {
-		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close pubsub event emitter", corelog.Any("Error", err.Error()))
-		}
-	}
-	if p.server.pushLogEmitter != nil {
-		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.InfoContext(p.ctx, "Could not close push log event emitter", corelog.Any("Error", err.Error()))
-		}
-	}
-
-	if p.db.Events().Updates.HasValue() {
-		p.db.Events().Updates.Value().Unsubscribe(p.updateChannel)
+	if p.updateSub != nil {
+		p.db.Events().Unsubscribe(p.updateSub)
 	}
 
 	if err := p.bserv.Close(); err != nil {
@@ -243,20 +201,20 @@ func (p *Peer) Close() {
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
 	for {
-		update, isOpen := <-p.updateChannel
+		msg, isOpen := <-p.updateSub.Message()
 		if !isOpen {
 			return
 		}
+		update, ok := msg.Data.(event.Update)
+		if !ok {
+			continue // ignore invalid value
+		}
 
-		// check log priority, 1 is new doc log
-		// 2 is update log
 		var err error
-		if update.Priority == 1 {
+		if update.IsCreate {
 			err = p.handleDocCreateLog(update)
-		} else if update.Priority > 1 {
-			err = p.handleDocUpdateLog(update)
 		} else {
-			log.InfoContext(p.ctx, "Skipping log with invalid priority of 0", corelog.Any("CID", update.Cid))
+			err = p.handleDocUpdateLog(update)
 		}
 
 		if err != nil {
@@ -270,7 +228,7 @@ func (p *Peer) RegisterNewDocument(
 	ctx context.Context,
 	docID client.DocID,
 	c cid.Cid,
-	nd ipld.Node,
+	rawBlock []byte,
 	schemaRoot string,
 ) error {
 	// register topic
@@ -285,17 +243,16 @@ func (p *Peer) RegisterNewDocument(
 	}
 
 	// publish log
-	body := &pb.PushLogRequest_Body{
-		DocID:      []byte(docID.String()),
-		Cid:        c.Bytes(),
-		SchemaRoot: []byte(schemaRoot),
-		Creator:    p.host.ID().String(),
-		Log: &pb.Document_Log{
-			Block: nd.RawData(),
-		},
-	}
 	req := &pb.PushLogRequest{
-		Body: body,
+		Body: &pb.PushLogRequest_Body{
+			DocID:      []byte(docID.String()),
+			Cid:        c.Bytes(),
+			SchemaRoot: []byte(schemaRoot),
+			Creator:    p.host.ID().String(),
+			Log: &pb.Document_Log{
+				Block: rawBlock,
+			},
+		},
 	}
 
 	return p.server.publishLog(p.ctx, schemaRoot, req)
@@ -318,7 +275,7 @@ func (p *Peer) pushToReplicator(
 			txn.Headstore(),
 			docID.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 		)
-		cids, priority, err := headset.List(ctx)
+		cids, _, err := headset.List(ctx)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,
@@ -340,19 +297,11 @@ func (p *Peer) pushToReplicator(
 				continue
 			}
 
-			// @todo: remove encode/decode loop for core.Log data
-			nd, err := dag.DecodeProtobuf(blk.RawData())
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to decode protobuf", err, corelog.Any("CID", c))
-				continue
-			}
-
-			evt := events.Update{
+			evt := event.Update{
 				DocID:      docIDResult.ID.String(),
 				Cid:        c,
 				SchemaRoot: collection.SchemaRoot(),
-				Block:      nd,
-				Priority:   priority,
+				Block:      blk.RawData(),
 			}
 			if err := p.server.pushLog(ctx, evt, pid); err != nil {
 				log.ErrorContextE(
@@ -415,7 +364,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 	return colMap, nil
 }
 
-func (p *Peer) handleDocCreateLog(evt events.Update) error {
+func (p *Peer) handleDocCreateLog(evt event.Update) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -433,7 +382,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) handleDocUpdateLog(evt events.Update) error {
+func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 	docID, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
@@ -445,7 +394,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    p.host.ID().String(),
 		Log: &pb.Document_Log{
-			Block: evt.Block.RawData(),
+			Block: evt.Block,
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -466,7 +415,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(lg events.Update) {
+func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
 	for _, peer := range p.ps.ListPeers(lg.DocID) {
@@ -509,23 +458,6 @@ func (p *Peer) setupBlockService() {
 	p.exch = bswap
 }
 
-func (p *Peer) setupDAGService() {
-	p.DAGService = dag.NewDAGService(p.bserv)
-}
-
-func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) ipld.DAGService {
-	return dag.NewDAGService(blockservice.New(txn.DAGstore(), p.exch))
-}
-
-// Session returns a session-based NodeGetter.
-func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
-	ng := dag.NewSession(ctx, p.DAGService)
-	if ng == p.DAGService {
-		log.InfoContext(ctx, "DAGService does not support sessions")
-	}
-	return ng
-}
-
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	stopped := make(chan struct{})
 	go func() {
@@ -540,15 +472,6 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	case <-stopped:
 		timer.Stop()
 	}
-}
-
-type EvtReceivedPushLog struct {
-	ByPeer   peer.ID
-	FromPeer peer.ID
-}
-
-type EvtPubSub struct {
-	Peer peer.ID
 }
 
 // rollbackAddPubSubTopics removes the given topics from the pubsub system.

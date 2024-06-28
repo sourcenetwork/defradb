@@ -17,22 +17,20 @@ import (
 	"strconv"
 	"testing"
 
-	badger "github.com/sourcenetwork/badger/v4"
-
 	"github.com/sourcenetwork/defradb/client"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
 type DatabaseType string
 
 const (
-	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
-	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
-	inMemoryEnvName       = "DEFRA_IN_MEMORY"
+	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName   = "DEFRA_BADGER_FILE_PATH"
+	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
+	inMemoryEnvName         = "DEFRA_IN_MEMORY"
 )
 
 const (
@@ -42,10 +40,12 @@ const (
 )
 
 var (
-	badgerInMemory bool
-	badgerFile     bool
-	inMemoryStore  bool
-	databaseDir    string
+	badgerInMemory   bool
+	badgerFile       bool
+	inMemoryStore    bool
+	databaseDir      string
+	badgerEncryption bool
+	encryptionKey    []byte
 )
 
 func init() {
@@ -54,6 +54,7 @@ func init() {
 	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
 	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
 
 	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.
@@ -68,90 +69,94 @@ func init() {
 	}
 }
 
-func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	opts := badgerds.Options{
-		Options: badger.DefaultOptions("").WithInMemory(true),
+func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
+	opts := []node.Option{
+		node.WithInMemory(true),
 	}
-	rootstore, err := badgerds.NewDatastore("", &opts)
+
+	node, err := node.NewNode(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	dbopts = append(dbopts, db.WithACPInMemory())
-	db, err := db.NewDB(ctx, rootstore, dbopts...)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+
+	return node.DB, err
 }
 
-func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	dbopts = append(dbopts, db.WithACPInMemory())
-	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
+	path := t.TempDir()
+
+	opts := []node.Option{
+		node.WithPath(path),
+	}
+
+	node, err := node.NewNode(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return db, nil
-}
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (client.DB, string, error) {
-	var dbPath string
-	switch {
-	case databaseDir != "":
-		// restarting database
-		dbPath = databaseDir
-
-	case changeDetector.Enabled:
-		// change detector
-		dbPath = changeDetector.DatabaseDir(t)
-
-	default:
-		// default test case
-		dbPath = t.TempDir()
-	}
-
-	opts := &badgerds.Options{
-		Options: badger.DefaultOptions(dbPath),
-	}
-
-	rootstore, err := badgerds.NewDatastore(dbPath, opts)
-	if err != nil {
-		return nil, "", err
-	}
-
-	dbopts = append(dbopts, db.WithACP(dbPath))
-	db, err := db.NewDB(ctx, rootstore, dbopts...)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return db, dbPath, err
+	return node.DB, err
 }
 
 // setupDatabase returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupDatabase(s *state) (impl client.DB, path string, err error) {
-	dbopts := []db.Option{
-		db.WithUpdateEvents(),
-		db.WithLensPoolSize(lensPoolSize),
+func setupDatabase(s *state) (client.DB, string, error) {
+	opts := []node.Option{
+		node.WithLensPoolSize(lensPoolSize),
+		// The test framework sets this up elsewhere when required so that it may be wrapped
+		// into a [client.DB].
+		node.WithDisableAPI(true),
+		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
+		// to keep the tests as lightweight as possible.
+		node.WithDisableP2P(true),
+		node.WithLensRuntime(lensType),
 	}
 
+	if badgerEncryption && encryptionKey == nil {
+		key, err := crypto.GenerateAES256()
+		if err != nil {
+			return nil, "", err
+		}
+		encryptionKey = key
+	}
+
+	if encryptionKey != nil {
+		opts = append(opts, node.WithEncryptionKey(encryptionKey))
+	}
+
+	var path string
 	switch s.dbt {
 	case badgerIMType:
-		impl, err = NewBadgerMemoryDB(s.ctx, dbopts...)
+		opts = append(opts, node.WithInMemory(true))
 
 	case badgerFileType:
-		impl, path, err = NewBadgerFileDB(s.ctx, s.t, dbopts...)
+		switch {
+		case databaseDir != "":
+			// restarting database
+			path = databaseDir
+
+		case changeDetector.Enabled:
+			// change detector
+			path = changeDetector.DatabaseDir(s.t)
+
+		default:
+			// default test case
+			path = s.t.TempDir()
+		}
+
+		opts = append(opts, node.WithPath(path), node.WithACPPath(path))
 
 	case defraIMType:
-		impl, err = NewInMemoryDB(s.ctx, dbopts...)
+		opts = append(opts, node.WithDefraStore(true))
 
 	default:
-		err = fmt.Errorf("invalid database type: %v", s.dbt)
+		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
+	node, err := node.NewNode(s.ctx, opts...)
 	if err != nil {
 		return nil, "", err
 	}
-	return
+
+	return node.DB, path, nil
 }

@@ -29,6 +29,10 @@ func (_m *Collection) EXPECT() *Collection_Expecter {
 func (_m *Collection) Create(ctx context.Context, doc *client.Document) error {
 	ret := _m.Called(ctx, doc)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
 		r0 = rf(ctx, doc)
@@ -68,52 +72,13 @@ func (_c *Collection_Create_Call) RunAndReturn(run func(context.Context, *client
 	return _c
 }
 
-// CreateDocIndex provides a mock function with given fields: _a0, _a1
-func (_m *Collection) CreateDocIndex(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Collection_CreateDocIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateDocIndex'
-type Collection_CreateDocIndex_Call struct {
-	*mock.Call
-}
-
-// CreateDocIndex is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) CreateDocIndex(_a0 interface{}, _a1 interface{}) *Collection_CreateDocIndex_Call {
-	return &Collection_CreateDocIndex_Call{Call: _e.mock.On("CreateDocIndex", _a0, _a1)}
-}
-
-func (_c *Collection_CreateDocIndex_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_CreateDocIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
-	})
-	return _c
-}
-
-func (_c *Collection_CreateDocIndex_Call) Return(_a0 error) *Collection_CreateDocIndex_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Collection_CreateDocIndex_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_CreateDocIndex_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CreateIndex provides a mock function with given fields: _a0, _a1
 func (_m *Collection) CreateIndex(_a0 context.Context, _a1 client.IndexDescription) (client.IndexDescription, error) {
 	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateIndex")
+	}
 
 	var r0 client.IndexDescription
 	var r1 error
@@ -168,6 +133,10 @@ func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context.Context, cl
 func (_m *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
 	ret := _m.Called(ctx, docs)
 
+	if len(ret) == 0 {
+		panic("no return value specified for CreateMany")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, []*client.Document) error); ok {
 		r0 = rf(ctx, docs)
@@ -211,6 +180,10 @@ func (_c *Collection_CreateMany_Call) RunAndReturn(run func(context.Context, []*
 func (_m *Collection) Definition() client.CollectionDefinition {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Definition")
+	}
+
 	var r0 client.CollectionDefinition
 	if rf, ok := ret.Get(0).(func() client.CollectionDefinition); ok {
 		r0 = rf()
@@ -251,6 +224,10 @@ func (_c *Collection_Definition_Call) RunAndReturn(run func() client.CollectionD
 // Delete provides a mock function with given fields: ctx, docID
 func (_m *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
 	ret := _m.Called(ctx, docID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
 
 	var r0 bool
 	var r1 error
@@ -301,52 +278,13 @@ func (_c *Collection_Delete_Call) RunAndReturn(run func(context.Context, client.
 	return _c
 }
 
-// DeleteDocIndex provides a mock function with given fields: _a0, _a1
-func (_m *Collection) DeleteDocIndex(_a0 context.Context, _a1 *client.Document) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Collection_DeleteDocIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDocIndex'
-type Collection_DeleteDocIndex_Call struct {
-	*mock.Call
-}
-
-// DeleteDocIndex is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 *client.Document
-func (_e *Collection_Expecter) DeleteDocIndex(_a0 interface{}, _a1 interface{}) *Collection_DeleteDocIndex_Call {
-	return &Collection_DeleteDocIndex_Call{Call: _e.mock.On("DeleteDocIndex", _a0, _a1)}
-}
-
-func (_c *Collection_DeleteDocIndex_Call) Run(run func(_a0 context.Context, _a1 *client.Document)) *Collection_DeleteDocIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
-	})
-	return _c
-}
-
-func (_c *Collection_DeleteDocIndex_Call) Return(_a0 error) *Collection_DeleteDocIndex_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Collection_DeleteDocIndex_Call) RunAndReturn(run func(context.Context, *client.Document) error) *Collection_DeleteDocIndex_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // DeleteWithFilter provides a mock function with given fields: ctx, filter
 func (_m *Collection) DeleteWithFilter(ctx context.Context, filter interface{}) (*client.DeleteResult, error) {
 	ret := _m.Called(ctx, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteWithFilter")
+	}
 
 	var r0 *client.DeleteResult
 	var r1 error
@@ -403,6 +341,10 @@ func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(context.Contex
 func (_m *Collection) Description() client.CollectionDescription {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Description")
+	}
+
 	var r0 client.CollectionDescription
 	if rf, ok := ret.Get(0).(func() client.CollectionDescription); ok {
 		r0 = rf()
@@ -443,6 +385,10 @@ func (_c *Collection_Description_Call) RunAndReturn(run func() client.Collection
 // DropIndex provides a mock function with given fields: ctx, indexName
 func (_m *Collection) DropIndex(ctx context.Context, indexName string) error {
 	ret := _m.Called(ctx, indexName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DropIndex")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
@@ -486,6 +432,10 @@ func (_c *Collection_DropIndex_Call) RunAndReturn(run func(context.Context, stri
 // Exists provides a mock function with given fields: ctx, docID
 func (_m *Collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
 	ret := _m.Called(ctx, docID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Exists")
+	}
 
 	var r0 bool
 	var r1 error
@@ -539,6 +489,10 @@ func (_c *Collection_Exists_Call) RunAndReturn(run func(context.Context, client.
 // Get provides a mock function with given fields: ctx, docID, showDeleted
 func (_m *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
 	ret := _m.Called(ctx, docID, showDeleted)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
 
 	var r0 *client.Document
 	var r1 error
@@ -596,6 +550,10 @@ func (_c *Collection_Get_Call) RunAndReturn(run func(context.Context, client.Doc
 func (_m *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
 	ret := _m.Called(ctx)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllDocIDs")
+	}
+
 	var r0 <-chan client.DocIDResult
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context) (<-chan client.DocIDResult, error)); ok {
@@ -649,6 +607,10 @@ func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(context.Context) (
 // GetIndexes provides a mock function with given fields: ctx
 func (_m *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
 	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetIndexes")
+	}
 
 	var r0 []client.IndexDescription
 	var r1 error
@@ -704,6 +666,10 @@ func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(context.Context) ([]
 func (_m *Collection) ID() uint32 {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for ID")
+	}
+
 	var r0 uint32
 	if rf, ok := ret.Get(0).(func() uint32); ok {
 		r0 = rf()
@@ -745,6 +711,10 @@ func (_c *Collection_ID_Call) RunAndReturn(run func() uint32) *Collection_ID_Cal
 func (_m *Collection) Name() immutable.Option[string] {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Name")
+	}
+
 	var r0 immutable.Option[string]
 	if rf, ok := ret.Get(0).(func() immutable.Option[string]); ok {
 		r0 = rf()
@@ -785,6 +755,10 @@ func (_c *Collection_Name_Call) RunAndReturn(run func() immutable.Option[string]
 // Save provides a mock function with given fields: ctx, doc
 func (_m *Collection) Save(ctx context.Context, doc *client.Document) error {
 	ret := _m.Called(ctx, doc)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Save")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
@@ -829,6 +803,10 @@ func (_c *Collection_Save_Call) RunAndReturn(run func(context.Context, *client.D
 func (_m *Collection) Schema() client.SchemaDescription {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for Schema")
+	}
+
 	var r0 client.SchemaDescription
 	if rf, ok := ret.Get(0).(func() client.SchemaDescription); ok {
 		r0 = rf()
@@ -869,6 +847,10 @@ func (_c *Collection_Schema_Call) RunAndReturn(run func() client.SchemaDescripti
 // SchemaRoot provides a mock function with given fields:
 func (_m *Collection) SchemaRoot() string {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SchemaRoot")
+	}
 
 	var r0 string
 	if rf, ok := ret.Get(0).(func() string); ok {
@@ -911,6 +893,10 @@ func (_c *Collection_SchemaRoot_Call) RunAndReturn(run func() string) *Collectio
 func (_m *Collection) Update(ctx context.Context, docs *client.Document) error {
 	ret := _m.Called(ctx, docs)
 
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
 		r0 = rf(ctx, docs)
@@ -950,53 +936,13 @@ func (_c *Collection_Update_Call) RunAndReturn(run func(context.Context, *client
 	return _c
 }
 
-// UpdateDocIndex provides a mock function with given fields: ctx, oldDoc, newDoc
-func (_m *Collection) UpdateDocIndex(ctx context.Context, oldDoc *client.Document, newDoc *client.Document) error {
-	ret := _m.Called(ctx, oldDoc, newDoc)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *client.Document, *client.Document) error); ok {
-		r0 = rf(ctx, oldDoc, newDoc)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Collection_UpdateDocIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDocIndex'
-type Collection_UpdateDocIndex_Call struct {
-	*mock.Call
-}
-
-// UpdateDocIndex is a helper method to define mock.On call
-//   - ctx context.Context
-//   - oldDoc *client.Document
-//   - newDoc *client.Document
-func (_e *Collection_Expecter) UpdateDocIndex(ctx interface{}, oldDoc interface{}, newDoc interface{}) *Collection_UpdateDocIndex_Call {
-	return &Collection_UpdateDocIndex_Call{Call: _e.mock.On("UpdateDocIndex", ctx, oldDoc, newDoc)}
-}
-
-func (_c *Collection_UpdateDocIndex_Call) Run(run func(ctx context.Context, oldDoc *client.Document, newDoc *client.Document)) *Collection_UpdateDocIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document), args[2].(*client.Document))
-	})
-	return _c
-}
-
-func (_c *Collection_UpdateDocIndex_Call) Return(_a0 error) *Collection_UpdateDocIndex_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Collection_UpdateDocIndex_Call) RunAndReturn(run func(context.Context, *client.Document, *client.Document) error) *Collection_UpdateDocIndex_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // UpdateWithFilter provides a mock function with given fields: ctx, filter, updater
 func (_m *Collection) UpdateWithFilter(ctx context.Context, filter interface{}, updater string) (*client.UpdateResult, error) {
 	ret := _m.Called(ctx, filter, updater)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateWithFilter")
+	}
 
 	var r0 *client.UpdateResult
 	var r1 error

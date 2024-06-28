@@ -17,11 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var identity1 = "cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"
-var identity2 = "cosmos1x25hhksxhu86r45hqwk28dd70qzux3262hdrll"
+var identity1 = "did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn"
+var identity2 = "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F"
+var invalidIdentity = "did:something"
 
-var validPolicyID string = "4f13c5084c3d0e1e5c5db702fceef84c3b6ab948949ca8e27fcaad3fb8bc39f4"
+var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 var validPolicy string = `
+name: test
 description: a policy
 
 actor:
@@ -46,7 +48,7 @@ resources:
 
 func Test_LocalACP_InMemory_StartAndClose_NoError(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -62,7 +64,7 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -72,9 +74,9 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
+func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterWipeReturnsSameID(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -96,7 +98,7 @@ func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
 
-	// Since nothing is persisted should allow adding same policy again.
+	// Since nothing is persisted should allow adding same policy again with same ID
 
 	localACP.Init(ctx, "")
 	errStart = localACP.Start(ctx)
@@ -118,12 +120,12 @@ func Test_LocalACP_InMemory_AddPolicy_CanCreateTwice(t *testing.T) {
 	require.Nil(t, errClose)
 }
 
-func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
+func Test_LocalACP_PersistentMemory_AddPolicy_CreatingSamePolicyReturnsDifferentIDs(t *testing.T) {
 	acpPath := t.TempDir()
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -150,14 +152,14 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
 	errStart = localACP.Start(ctx)
 	require.Nil(t, errStart)
 
-	// Should not allow us to create the same policy again as it exists already.
-	_, errAddPolicy = localACP.AddPolicy(
+	// Should generate a different ID for the new policy, even though the payload is the same
+	newPolicyID, errAddPolicy := localACP.AddPolicy(
 		ctx,
 		identity1,
 		validPolicy,
 	)
-	require.Error(t, errAddPolicy)
-	require.ErrorIs(t, errAddPolicy, ErrFailedToAddPolicyWithACP)
+	require.NoError(t, errAddPolicy)
+	require.NotEqual(t, newPolicyID, policyID)
 
 	errClose = localACP.Close()
 	require.Nil(t, errClose)
@@ -165,7 +167,7 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CanNotCreateTwice(t *testing.T) {
 
 func Test_LocalACP_InMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -215,7 +217,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -278,7 +280,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 
 func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOtherwise(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -358,7 +360,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -454,7 +456,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 
 func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherwise(t *testing.T) {
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -540,7 +542,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	var localACP ACPLocal
+	localACP := NewLocalACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -651,4 +653,96 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 
 	errClose = localACP.Close()
 	require.Nil(t, errClose)
+}
+
+func Test_LocalACP_InMemory_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	policyID, err := localACP.AddPolicy(
+		ctx,
+		invalidIdentity,
+		validPolicy,
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.Empty(t, policyID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_InMemory_RegisterObject_InvalidCreatorIDReturnsError(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	err = localACP.RegisterDocObject(
+		ctx,
+		invalidIdentity,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	policyID, err := localACP.AddPolicy(
+		ctx,
+		invalidIdentity,
+		validPolicy,
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.Empty(t, policyID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	err = localACP.RegisterDocObject(
+		ctx,
+		invalidIdentity,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
 }

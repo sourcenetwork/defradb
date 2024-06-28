@@ -38,7 +38,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
 						links {
 							cid
 						}
@@ -56,8 +56,8 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 							"fieldId": "1",
 							"spans": []dataMap{
 								{
-									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
+									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
 								},
 							},
 						},
@@ -81,7 +81,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
 						links {
 							cid
 						}
@@ -99,8 +99,8 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 							"fieldId": nil,
 							"spans": []dataMap{
 								{
-									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
+									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e85",
 								},
 							},
 						},
@@ -124,7 +124,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -143,8 +143,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 							"fieldId": "1",
 							"spans": []dataMap{
 								{
-									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
+									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
 								},
 							},
 						},
@@ -168,7 +168,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
 						cid
 						links {
 							cid
@@ -187,8 +187,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 							"fieldId": "C",
 							"spans": []dataMap{
 								{
-									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
-									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
+									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
+									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/D",
 								},
 							},
 						},

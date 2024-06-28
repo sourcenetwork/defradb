@@ -26,6 +26,7 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a policy
 
                     actor:
@@ -53,7 +54,7 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
                               - actor
                 `,
 
-				ExpectedPolicyID: "ecfeeebd1b65e6a21b2f1b57006176bcbc6a37ef238f27c7034953f46fe04674",
+				ExpectedPolicyID: "af2a2eaa2d6701262ea60665487c87e3d41ab727194e1ea18ec16348149a02cc",
 			},
 		},
 	}

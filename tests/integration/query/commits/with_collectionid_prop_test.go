@@ -43,19 +43,19 @@ func TestQueryCommitsWithCollectionID(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
+						"collectionID": int64(1),
+					},
+					{
+						"collectionID": int64(1),
+					},
+					{
+						"collectionID": int64(1),
+					},
+					{
 						"collectionID": int64(2),
 					},
 					{
 						"collectionID": int64(2),
-					},
-					{
-						"collectionID": int64(1),
-					},
-					{
-						"collectionID": int64(1),
-					},
-					{
-						"collectionID": int64(1),
 					},
 				},
 			},

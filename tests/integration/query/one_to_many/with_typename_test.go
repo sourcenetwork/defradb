@@ -31,15 +31,15 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
 				`{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
 			},
 			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
 				`{
 					"name": "John Grisham",
 					"age": 65,

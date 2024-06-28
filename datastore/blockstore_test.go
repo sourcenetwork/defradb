@@ -19,7 +19,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/stretchr/testify/require"
 
-	ccid "github.com/sourcenetwork/defradb/core/cid"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 
 	"github.com/sourcenetwork/defradb/datastore/memory"
 )

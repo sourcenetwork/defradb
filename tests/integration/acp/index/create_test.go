@@ -17,53 +17,21 @@ import (
 	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
-// This test documents that we don't allow creating indexes on collections that have policy
-// until the following is implemented:
-// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2365
-func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_ReturnError(t *testing.T) {
+func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, with creating new index using separate request on permissioned collection, error",
+		Description: "Test acp, with creating new index using separate request on permissioned collection, no error",
 		Actions: []any{
 
 			testUtils.AddPolicy{
-
-				Identity: acpUtils.Actor1Identity,
-
-				Policy: `
-                    description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          write:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				Identity:         acpUtils.Actor1Identity,
+				Policy:           userPolicy,
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String
@@ -74,12 +42,8 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_ReturnError(t
 
 			testUtils.CreateIndex{
 				CollectionID: 0,
-
-				IndexName: "some_index",
-
-				FieldName: "name",
-
-				ExpectedError: "can not create index on a collection with a policy",
+				IndexName:    "some_index",
+				FieldName:    "name",
 			},
 
 			testUtils.Request{
@@ -99,61 +63,27 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_ReturnError(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents that we don't allow creating indexes on collections that have policy
-// until the following is implemented:
-// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2365
-func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_ReturnError(t *testing.T) {
+func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, with creating new index using directive on permissioned collection, error",
+		Description: "Test acp, with creating new index using directive on permissioned collection, no error",
 		Actions: []any{
 
 			testUtils.AddPolicy{
-
-				Identity: acpUtils.Actor1Identity,
-
-				Policy: `
-                    description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          write:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				Identity:         acpUtils.Actor1Identity,
+				Policy:           userPolicy,
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String @index
 						age: Int
 					}
 				`,
-
-				ExpectedError: "can not create index on a collection with a policy",
 			},
 
 			testUtils.Request{
@@ -164,8 +94,6 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_ReturnError(t *test
 							age
 						}
 					}`,
-
-				ExpectedError: `Cannot query field "Users" on type "Query"`,
 			},
 		},
 	}

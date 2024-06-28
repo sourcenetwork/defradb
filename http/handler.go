@@ -75,13 +75,12 @@ func NewHandler(db client.DB) (*Handler, error) {
 		return nil, err
 	}
 	txs := &sync.Map{}
-
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
-			IdentityMiddleware,
+			AuthMiddleware,
 		)
 		r.Handle("/*", router)
 	})
@@ -89,7 +88,6 @@ func NewHandler(db client.DB) (*Handler, error) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
 	mux.Handle("/*", playgroundHandler)
-
 	return &Handler{
 		db:  db,
 		mux: mux,

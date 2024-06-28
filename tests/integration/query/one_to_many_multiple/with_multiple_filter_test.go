@@ -17,77 +17,118 @@ import (
 )
 
 func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from one side with multiple many fitlers",
-		Request: `query {
-				Author(filter: {name: {_eq: "John Grisham"}, books: {score: {_eq: 1}}, articles: {rating: {_eq: 3}}}) {
-					name
-				}
-			}`,
-		Docs: map[int][]string{
-			//articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-					"rating": 3
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-					"rating": 2
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-					"rating": 1
-				}`,
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Article {
+						name: String
+						author: Author
+						rating: Int
+					}
+
+					type Book {
+						name: String
+						author: Author
+						score: Int
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						books: [Book]
+						articles: [Article]
+					}
+				`,
 			},
-			//books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-					"score": 1
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-					"score": 2
-				}`,
-				`{
-					"name": "Sooley",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-					"score": 3
-				}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-					"score": 4
-				}`,
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":     "John Grisham",
+					"age":      65,
+					"verified": true,
+				},
 			},
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":     "Cornelia Funke",
+					"age":      62,
+					"verified": false,
+				},
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "After Guantánamo, Another Injustice",
+					"author_id": testUtils.NewDocIndex(2, 0),
+					"rating":    3,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "To my dear readers",
+					"author_id": testUtils.NewDocIndex(2, 1),
+					"rating":    2,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Twinklestar's Favourite Xmas Cookie",
+					"author_id": testUtils.NewDocIndex(2, 1),
+					"rating":    1,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(2, 0),
+					"score":     1,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"author_id": testUtils.NewDocIndex(2, 0),
+					"score":     2,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Sooley",
+					"author_id": testUtils.NewDocIndex(2, 0),
+					"score":     3,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"author_id": testUtils.NewDocIndex(2, 1),
+					"score":     4,
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {name: {_eq: "John Grisham"}, books: {score: {_eq: 1}}, articles: {rating: {_eq: 3}}}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

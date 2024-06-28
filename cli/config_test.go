@@ -14,17 +14,20 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateConfig(t *testing.T) {
 	rootdir := t.TempDir()
-	err := createConfig(rootdir, NewDefraCommand().PersistentFlags())
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	err := createConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	// ensure no errors when config already exists
-	err = createConfig(rootdir, NewDefraCommand().PersistentFlags())
+	err = createConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "config.yaml"))
@@ -32,11 +35,12 @@ func TestCreateConfig(t *testing.T) {
 
 func TestLoadConfigNotExist(t *testing.T) {
 	rootdir := t.TempDir()
-	cfg, err := loadConfig(rootdir, NewDefraCommand().PersistentFlags())
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	cfg, err := loadConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.Equal(t, 5, cfg.GetInt("datastore.maxtxnretries"))
-
 	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.badger.path"))
 	assert.Equal(t, 1<<30, cfg.GetInt("datastore.badger.valuelogfilesize"))
 	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
@@ -58,5 +62,10 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, false, cfg.GetBool("log.stacktrace"))
 	assert.Equal(t, false, cfg.GetBool("log.source"))
 	assert.Equal(t, "", cfg.GetString("log.overrides"))
-	assert.Equal(t, false, cfg.GetBool("log.nocolor"))
+	assert.Equal(t, false, cfg.GetBool("log.colordisabled"))
+
+	assert.Equal(t, filepath.Join(rootdir, "keys"), cfg.GetString("keyring.path"))
+	assert.Equal(t, false, cfg.GetBool("keyring.disabled"))
+	assert.Equal(t, "defradb", cfg.GetString("keyring.namespace"))
+	assert.Equal(t, "file", cfg.GetString("keyring.backend"))
 }

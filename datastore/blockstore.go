@@ -13,13 +13,14 @@ package datastore
 import (
 	"context"
 
-	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/ipfs/boxo/blockstore"
 	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -44,16 +45,31 @@ import (
 
 // NewBlockstore returns a default Blockstore implementation
 // using the provided datastore.Batching backend.
-func NewBlockstore(store DSReaderWriter) blockstore.Blockstore {
+func newBlockstore(store DSReaderWriter) *bstore {
 	return &bstore{
 		store: store,
 	}
+}
+
+func newIPLDStore(store blockstore.Blockstore) *bsadapter.Adapter {
+	return &bsadapter.Adapter{Wrapped: store}
 }
 
 type bstore struct {
 	store DSReaderWriter
 
 	rehash bool
+}
+
+var _ blockstore.Blockstore = (*bstore)(nil)
+var _ DAGStore = (*bstore)(nil)
+
+// AsIPLDStorage returns an IPLDStorage instance.
+//
+// It wraps the blockstore in an IPLD Blockstore adapter for use with
+// the IPLD LinkSystem.
+func (bs *bstore) AsIPLDStorage() IPLDStorage {
+	return newIPLDStore(bs)
 }
 
 // HashOnRead enables or disables rehashing of blocks on read.

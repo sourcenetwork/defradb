@@ -20,71 +20,11 @@ import (
 )
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collection(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
-		// This restiction is temporary due to an inconsitent error message, see
-		// TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL
-		// and https://github.com/sourcenetwork/defradb/issues/1854 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "New Shahzad"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author": "%s"
-					}`,
-					author1ID,
-				),
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 1,
-				DocID:        1,
-				// NOTE: There is no `published` on book.
-				Doc: fmt.Sprintf(
-					`{
-						"published": "%s"
-					}`,
-					bookID,
-				),
-				ExpectedError: "The given field does not exist. Name: published",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
-
-	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from single side (wrong)",
-		// This restiction is temporary due to an inconsitent error message, see
-		// TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collection
-		// and https://github.com/sourcenetwork/defradb/issues/1854 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -129,7 +69,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
@@ -202,7 +142,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
@@ -257,8 +197,8 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2ID := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
+	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side, with a wrong field.",
@@ -310,8 +250,8 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.T) {
-	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2ID := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
+	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side",
@@ -359,16 +299,16 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
  				}`,
 				Results: []map[string]any{
 					{
-						"name":      "John Grisham",
-						"published": []map[string]any{},
-					},
-					{
 						"name": "New Shahzad",
 						"published": []map[string]any{
 							{
 								"name": "Painted House",
 							},
 						},
+					},
+					{
+						"name":      "John Grisham",
+						"published": []map[string]any{},
 					},
 				},
 			},

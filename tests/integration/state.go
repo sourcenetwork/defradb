@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
@@ -27,7 +28,7 @@ type state struct {
 	ctx context.Context
 
 	// The Go Test test state
-	t *testing.T
+	t testing.TB
 
 	// The TestCase currently being executed.
 	testCase TestCase
@@ -51,6 +52,9 @@ type state struct {
 
 	// These synchronisation channels allow async actions to track their completion.
 	syncChans []chan struct{}
+
+	// eventSubs is a list of all event subscriptions
+	eventSubs []*event.Subscription
 
 	// The addresses of any nodes configured.
 	nodeAddresses []peer.AddrInfo
@@ -88,7 +92,7 @@ type state struct {
 // newState returns a new fresh state for the given testCase.
 func newState(
 	ctx context.Context,
-	t *testing.T,
+	t testing.TB,
 	testCase TestCase,
 	dbt DatabaseType,
 	clientType ClientType,
@@ -104,6 +108,7 @@ func newState(
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
 		syncChans:                []chan struct{}{},
+		eventSubs:                []*event.Subscription{},
 		nodeAddresses:            []peer.AddrInfo{},
 		nodeConfigs:              [][]net.NodeOpt{},
 		nodes:                    []clients.Client{},

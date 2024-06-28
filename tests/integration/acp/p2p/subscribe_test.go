@@ -35,6 +35,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_Error(t *testing
 				Identity: acpUtils.Actor1Identity,
 
 				Policy: `
+                    name: test
                     description: a test policy which marks a collection in a database as a resource
 
                     actor:
@@ -62,13 +63,13 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_Error(t *testing
                               - actor
                 `,
 
-				ExpectedPolicyID: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "53980e762616fcffbe76307995895e862f87ef3f21d509325d1dc772a770b001",
+						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
 						name: String

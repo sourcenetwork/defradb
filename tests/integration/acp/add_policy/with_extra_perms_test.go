@@ -26,6 +26,7 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     resources:
@@ -47,7 +48,7 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
                       name: actor
                 `,
 
-				ExpectedPolicyID: "9d518bb2d5aceb2c8f9b12b909eecd50276c1bd0250069875f265166e6030bb5",
+				ExpectedPolicyID: "a756ba5a7fe25e3fc36a4f113016a49b718b09028c917199ae68f478addc048c",
 			},
 		},
 	}
@@ -65,6 +66,7 @@ func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
 				Identity: actor1Identity,
 
 				Policy: `
+                    name: a policy
                     description: a policy
 
                     resources:

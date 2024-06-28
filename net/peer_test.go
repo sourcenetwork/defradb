@@ -12,90 +12,46 @@ package net
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	ipld "github.com/ipfs/go-ipld-format"
 	libp2p "github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/db"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
-type EmptyNode struct{}
-
-var ErrEmptyNode error = errors.New("dummy node")
-
-func (n *EmptyNode) Resolve([]string) (any, []string, error) {
-	return nil, nil, ErrEmptyNode
-}
-
-func (n *EmptyNode) Tree(string, int) []string {
-	return nil
-}
-
-func (n *EmptyNode) ResolveLink([]string) (*ipld.Link, []string, error) {
-	return nil, nil, ErrEmptyNode
-}
-
-func (n *EmptyNode) Copy() ipld.Node {
-	return &EmptyNode{}
-}
-
-func (n *EmptyNode) Cid() cid.Cid {
-	id, err := cid.V1Builder{
-		Codec:    cid.DagProtobuf,
-		MhType:   mh.SHA2_256,
-		MhLength: 0, // default length
-	}.Sum(nil)
-
-	if err != nil {
-		panic("failed to create an empty cid!")
+func emptyBlock() []byte {
+	block := coreblock.Block{
+		Delta: crdt.CRDT{
+			CompositeDAGDelta: &crdt.CompositeDAGDelta{},
+		},
 	}
-	return id
-}
-
-func (n *EmptyNode) Links() []*ipld.Link {
-	return nil
-}
-
-func (n *EmptyNode) Loggable() map[string]any {
-	return nil
-}
-
-func (n *EmptyNode) String() string {
-	return "[]"
-}
-
-func (n *EmptyNode) RawData() []byte {
-	return nil
-}
-
-func (n *EmptyNode) Size() (uint64, error) {
-	return 0, nil
-}
-
-func (n *EmptyNode) Stat() (*ipld.NodeStat, error) {
-	return &ipld.NodeStat{}, nil
+	b, _ := block.Marshal()
+	return b
 }
 
 func createCID(doc *client.Document) (cid.Cid, error) {
 	pref := cid.V1Builder{
-		Codec:    cid.DagProtobuf,
+		Codec:    cid.DagCBOR,
 		MhType:   mh.SHA2_256,
 		MhLength: 0, // default length
 	}
@@ -117,7 +73,9 @@ const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents(), db.WithACPInMemory())
+	acpLocal := acp.NewLocalACP()
+	acpLocal.Init(context.Background(), "")
+	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](acpLocal), nil)
 	require.NoError(t, err)
 
 	n, err := NewNode(
@@ -133,7 +91,7 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 func TestNewPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	h, err := libp2p.New()
@@ -156,7 +114,7 @@ func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, `type User {
@@ -206,11 +164,11 @@ func TestStartAndClose_NoError(t *testing.T) {
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db1, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, db.WithUpdateEvents())
+	db2, err := db.NewDB(ctx, store2, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -242,11 +200,11 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, db.WithUpdateEvents())
+	db1, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, db.WithUpdateEvents())
+	db2, err := db.NewDB(ctx, store2, acp.NoACP, nil)
 	require.NoError(t, err)
 
 	n1, err := NewNode(
@@ -279,46 +237,6 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	db2.Close()
 }
 
-func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store)
-	require.NoError(t, err)
-
-	n, err := NewNode(
-		ctx,
-		db,
-		WithEnablePubSub(true),
-	)
-	require.NoError(t, err)
-
-	err = n.Start()
-	require.ErrorIs(t, err, ErrNilUpdateChannel)
-
-	db.Close()
-}
-
-func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
-	require.NoError(t, err)
-
-	n, err := NewNode(
-		ctx,
-		db,
-		WithEnablePubSub(true),
-	)
-	require.NoError(t, err)
-
-	db.Events().Updates.Value().Close()
-
-	err = n.Start()
-	require.ErrorContains(t, err, "cannot subscribe to a closed channel")
-
-	db.Close()
-}
-
 func TestRegisterNewDocument_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
@@ -339,7 +257,7 @@ func TestRegisterNewDocument_NoError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.ID(), cid, &EmptyNode{}, col.SchemaRoot())
+	err = n.RegisterNewDocument(ctx, doc.ID(), cid, emptyBlock(), col.SchemaRoot())
 	require.NoError(t, err)
 }
 
@@ -366,7 +284,7 @@ func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.ID(), cid, &EmptyNode{}, col.SchemaRoot())
+	err = n.RegisterNewDocument(ctx, doc.ID(), cid, emptyBlock(), col.SchemaRoot())
 	require.Equal(t, err.Error(), "creating topic: joining topic: topic already exists")
 }
 
@@ -400,6 +318,7 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
 	defer n.Close()
 
 	policy := `
+        name: test
         description: a policy
         actor:
           name: actor
@@ -415,11 +334,18 @@ func TestSetReplicatorWithACollectionSpecifiedThatHasPolicy_ReturnError(t *testi
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
+
+	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -451,6 +377,7 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
 	defer n.Close()
 
 	policy := `
+        name: test
         description: a policy
         actor:
           name: actor
@@ -466,11 +393,18 @@ func TestSetReplicatorWithSomeCollectionThatHasPolicyUsingAllCollectionsByDefaul
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
+
+	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -810,6 +744,7 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	defer n.Close()
 
 	policy := `
+        name: test
         description: a policy
         actor:
           name: actor
@@ -825,11 +760,18 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
                 types:
                   - actor
     `
-	ctx = db.SetContextIdentity(ctx, acpIdentity.New("cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969"))
+
+	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
+
+	ctx = db.SetContextIdentity(ctx, identity)
 	policyResult, err := d.AddPolicy(ctx, policy)
 	policyID := policyResult.PolicyID
 	require.NoError(t, err)
-	require.Equal(t, "fc3a0a39c73949c70a79e02b8d928028e9cbcc772ba801463a6acdcf2f256cd4", policyID)
+	require.Equal(t, "7b5ed30570e8d9206027ef6d5469879a6c1ea4595625c6ca33a19063a6ed6214", policyID)
 
 	schema := fmt.Sprintf(`
 		type User @policy(id: "%s", resource: "user") { 
@@ -946,24 +888,17 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n.handleDocCreateLog(events.Update{
+	err = n.handleDocCreateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
-		Priority:   0,
+		Block:      b,
 	})
 	require.NoError(t, err)
 }
@@ -973,7 +908,7 @@ func TestHandleDocCreateLog_WithInvalidDocID_NoError(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	err := n.handleDocCreateLog(events.Update{
+	err := n.handleDocCreateLog(event.Update{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
@@ -1002,7 +937,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocCreateLog(events.Update{
+	err = n.handleDocCreateLog(event.Update{
 		DocID:      doc.ID().String(),
 		SchemaRoot: col.SchemaRoot(),
 	})
@@ -1029,24 +964,17 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(events.Update{
+	err = n.handleDocUpdateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
-		Priority:   0,
+		Block:      b,
 	})
 	require.NoError(t, err)
 }
@@ -1056,7 +984,7 @@ func TestHandleDoUpdateLog_WithInvalidDocID_NoError(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	err := n.handleDocUpdateLog(events.Update{
+	err := n.handleDocUpdateLog(event.Update{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
@@ -1082,26 +1010,20 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(events.Update{
+	err = n.handleDocUpdateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
+		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -1126,34 +1048,20 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	docCid, err := createCID(doc)
+	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocID:           doc.ID().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
+	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), col.SchemaRoot(), true)
 	require.NoError(t, err)
 
-	err = n.handleDocUpdateLog(events.Update{
+	err = n.handleDocUpdateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        docCid,
+		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
+		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
-}
-
-func TestSession_NoError(t *testing.T) {
-	ctx := context.Background()
-	_, n := newTestNode(ctx, t)
-	defer n.Close()
-	ng := n.Session(ctx)
-	require.Implements(t, (*ipld.NodeGetter)(nil), ng)
 }
