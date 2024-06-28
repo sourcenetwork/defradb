@@ -102,6 +102,18 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 		if prop == request.Input { // parse input
 			raw := argument.Value.(*ast.ObjectValue)
 			mut.Input = parseMutationInputObject(raw)
+		} else if prop == request.Inputs {
+			raw := argument.Value.(*ast.ListValue)
+
+			mut.Inputs = make([]map[string]any, len(raw.Values))
+
+			for i, val := range raw.Values {
+				doc, ok := val.(*ast.ObjectValue)
+				if !ok {
+					return nil, client.NewErrUnexpectedType[*ast.ObjectValue]("doc array element", val)
+				}
+				mut.Inputs[i] = parseMutationInputObject(doc)
+			}
 		} else if prop == request.FilterClause { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)

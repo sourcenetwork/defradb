@@ -1300,58 +1300,56 @@ func createDocViaGQL(
 	collections []client.Collection,
 ) ([]*client.Document, error) {
 	collection := collections[action.CollectionID]
-	var inputs []string
+	var input string
 
+	paramName := "input"
+
+	var err error
 	if action.DocMap != nil {
-		input, err := valueToGQL(action.DocMap)
-		require.NoError(s.t, err)
-		inputs = append(inputs, input)
+		input, err = valueToGQL(action.DocMap)
 	} else if client.IsJSONArray([]byte(action.Doc)) {
 		var docMaps []map[string]any
-		err := json.Unmarshal([]byte(action.Doc), &docMaps)
+		err = json.Unmarshal([]byte(action.Doc), &docMaps)
 		require.NoError(s.t, err)
-		for _, docMap := range docMaps {
-			input, err := valueToGQL(docMap)
-			require.NoError(s.t, err)
-			inputs = append(inputs, input)
-		}
+		paramName = "inputs"
+		input, err = arrayToGQL(docMaps)
 	} else {
-		input, err := jsonToGQL(action.Doc)
-		require.NoError(s.t, err)
-		inputs = append(inputs, input)
+		input, err = jsonToGQL(action.Doc)
 	}
+	require.NoError(s.t, err)
 
 	var docs []*client.Document
 
-	for _, input := range inputs {
-		request := fmt.Sprintf(
-			`mutation {
-			create_%s(input: %s) {
+	request := fmt.Sprintf(
+		`mutation {
+			create_%s(%s: %s) {
 				_docID
 			}
 		}`,
-			collection.Name().Value(),
-			input,
-		)
+		collection.Name().Value(),
+		paramName,
+		input,
+	)
 
-		txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-		ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
 
-		result := node.ExecRequest(
-			ctx,
-			request,
-		)
-		if len(result.GQL.Errors) > 0 {
-			return nil, result.GQL.Errors[0]
-		}
+	result := node.ExecRequest(
+		ctx,
+		request,
+	)
+	if len(result.GQL.Errors) > 0 {
+		return nil, result.GQL.Errors[0]
+	}
 
-		resultantDocs, ok := result.GQL.Data.([]map[string]any)
-		if !ok || len(resultantDocs) == 0 {
-			return nil, nil
-		}
+	resultantDocs, ok := result.GQL.Data.([]map[string]any)
+	if !ok || len(resultantDocs) == 0 {
+		return nil, nil
+	}
 
-		docIDString := resultantDocs[0]["_docID"].(string)
+	for _, docMap := range resultantDocs {
+		docIDString := docMap["_docID"].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
 		require.NoError(s.t, err)
 

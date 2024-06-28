@@ -41,6 +41,12 @@ type ObjectMutation struct {
 	//
 	// This is ignored for [DeleteObjects] mutations.
 	Input map[string]any
+
+	// Inputs is the array of json representations of the fieldName-value pairs of document 
+	// properties to mutate.
+	//
+	// This is ignored for [DeleteObjects] mutations.
+	Inputs []map[string]any
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as

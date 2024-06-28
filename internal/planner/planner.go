@@ -163,7 +163,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
 	case mapper.CreateObjects:
-		return p.CreateDoc(stmt)
+		return p.CreateDocs(stmt)
 
 	case mapper.UpdateObjects:
 		return p.UpdateDocs(stmt)

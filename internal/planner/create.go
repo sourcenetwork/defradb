@@ -36,13 +36,12 @@ type createNode struct {
 	collection client.Collection
 
 	// input map of fields and values
-	input map[string]any
-	doc   *client.Document
+	input []map[string]any
+	docs  []*client.Document
 
 	err error
 
-	returned bool
-	results  planNode
+	results planNode
 
 	execInfo createExecInfo
 }
@@ -56,17 +55,55 @@ func (n *createNode) Kind() string { return "createNode" }
 
 func (n *createNode) Init() error { return nil }
 
-func (n *createNode) Start() error {
-	doc, err := client.NewDocFromMap(n.input, n.collection.Definition())
-	if err != nil {
-		n.err = err
-		return err
+func docIDsToSpans(ids []string, desc client.CollectionDescription) core.Spans {
+	spans := make([]core.Span, len(ids))
+	for i, id := range ids {
+		docID := base.MakeDataStoreKeyWithCollectionAndDocID(desc, id)
+		spans[i] = core.NewSpan(docID, docID.PrefixEnd())
 	}
-	n.doc = doc
-	return nil
+	return core.NewSpans(spans...)
 }
 
-// Next only returns once.
+func documentsToDocIDs(docs []*client.Document) []string {
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID().String()
+	}
+	return docIDs
+}
+
+func (n *createNode) Start() (err error) {
+	n.docs = make([]*client.Document, len(n.input))
+	defer func() { n.err = err }()
+
+	for i, input := range n.input {
+		doc, err := client.NewDocFromMap(input, n.collection.Definition())
+		if err != nil {
+			return err
+		}
+		n.docs[i] = doc
+	}
+
+	if len(n.docs) == 1 {
+		err = n.collection.Create(n.p.ctx, n.docs[0])
+	} else {
+		err = n.collection.CreateMany(n.p.ctx, n.docs)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	n.results.Spans(docIDsToSpans(documentsToDocIDs(n.docs), n.collection.Description()))
+
+	err = n.results.Init()
+	if err != nil {
+		return err
+	}
+
+	return n.results.Start()
+}
+
 func (n *createNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
@@ -74,58 +111,9 @@ func (n *createNode) Next() (bool, error) {
 		return false, n.err
 	}
 
-	if n.returned {
-		return false, nil
-	}
-
-	if err := n.collection.Create(
-		n.p.ctx,
-		n.doc,
-	); err != nil {
-		return false, err
-	}
-
-	currentValue := n.documentMapping.NewDoc()
-
-	currentValue.SetID(n.doc.ID().String())
-	for i, value := range n.doc.Values() {
-		if len(n.documentMapping.IndexesByName[i.Name()]) > 0 {
-			n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
-		} else if aliasName := i.Name() + request.RelatedObjectID; len(n.documentMapping.IndexesByName[aliasName]) > 0 {
-			n.documentMapping.SetFirstOfName(&currentValue, aliasName, value.Value())
-		} else {
-			return false, client.NewErrFieldNotExist(i.Name())
-		}
-	}
-
-	n.returned = true
-	n.currentValue = currentValue
-
-	desc := n.collection.Description()
-	docID := base.MakeDataStoreKeyWithCollectionAndDocID(desc, currentValue.GetID())
-	n.results.Spans(core.NewSpans(core.NewSpan(docID, docID.PrefixEnd())))
-
-	err := n.results.Init()
-	if err != nil {
-		return false, err
-	}
-
-	err = n.results.Start()
-	if err != nil {
-		return false, err
-	}
-
-	// get the next result based on our point lookup
 	next, err := n.results.Next()
-	if err != nil {
-		return false, err
-	}
-	if !next {
-		return false, nil
-	}
-
 	n.currentValue = n.results.Value()
-	return true, nil
+	return next, err
 }
 
 func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
@@ -155,7 +143,7 @@ func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, e
 	}
 }
 
-func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
+func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 	results, err := p.Select(&parsed.Select)
 	if err != nil {
 		return nil, err
@@ -164,9 +152,12 @@ func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
-		input:     parsed.Input,
+		input:     parsed.Inputs,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
+	}
+	if parsed.Input != nil {
+		create.input = []map[string]any{parsed.Input}
 	}
 
 	// get collection

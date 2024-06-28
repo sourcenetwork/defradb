@@ -52,11 +52,11 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 						TargetNodeName:    "createNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"input": dataMap{
+							"input": []dataMap{{
 								"age":      int32(27),
 								"name":     "Shahzad Lone",
 								"verified": true,
-							},
+							}},
 						},
 					},
 				},
@@ -90,10 +90,10 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 						TargetNodeName:    "createNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"input": dataMap{
+							"input": []dataMap{{
 								"age":  int32(27),
 								"name": "Shahzad Lone",
-							},
+							}},
 						},
 					},
 				},

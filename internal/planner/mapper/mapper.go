@@ -1168,6 +1168,7 @@ func ToMutation(ctx context.Context, store client.Store, mutationRequest *reques
 		Select: *underlyingSelect,
 		Type:   MutationType(mutationRequest.Type),
 		Input:  mutationRequest.Input,
+		Inputs: mutationRequest.Inputs,
 	}, nil
 }
 
