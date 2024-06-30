@@ -593,10 +593,6 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 
 		mutationObj := gql.NewInputObject(mutationObjConf)
 		g.manager.schema.TypeMap()[mutationObj.Name()] = mutationObj
-
-		mutationList := gql.NewList(mutationObj)
-		mutationListName := collection.Description.Name.Value() + mutationInputsNameSuffix
-		g.manager.schema.TypeMap()[mutationListName] = mutationList
 	}
 
 	return nil
