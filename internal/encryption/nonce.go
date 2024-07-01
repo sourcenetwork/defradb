@@ -45,6 +45,7 @@ func generateTestNonce() ([]byte, error) {
 func init() {
 	arg := os.Args[0]
 	// If the binary is a test binary, use a deterministic nonce.
+	// TODO: We should try to find a better way to detect this https://github.com/sourcenetwork/defradb/issues/2801
 	if strings.HasSuffix(arg, ".test") || strings.Contains(arg, "/defradb/tests/") {
 		generateNonceFunc = generateTestNonce
 		generateEncryptionKeyFunc = generateTestEncryptionKey

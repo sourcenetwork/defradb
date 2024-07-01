@@ -244,6 +244,7 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
+// If onlyHeads is true, it will skip merging and update only the heads.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	block *coreblock.Block,
