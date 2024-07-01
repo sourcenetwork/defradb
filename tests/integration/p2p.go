@@ -288,9 +288,15 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
+	sub, err := sourceNode.Events().Subscribe(event.ReplicatorCompletedName)
+	require.NoError(s.t, err)
+	err = sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
+	if err == nil {
+		// wait for the replicator setup to complete
+		<-sub.Message()
+	}
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
@@ -306,9 +312,15 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+	sub, err := sourceNode.Events().Subscribe(event.ReplicatorCompletedName)
+	require.NoError(s.t, err)
+	err = sourceNode.DeleteReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
+	if err == nil {
+		// wait for the replicator setup to complete
+		<-sub.Message()
+	}
 	require.NoError(s.t, err)
 }
 
@@ -390,7 +402,15 @@ func subscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	sub, err := n.Events().Subscribe(event.P2PTopicCompletedName)
+	require.NoError(s.t, err)
+
+	err = n.AddP2PCollections(s.ctx, schemaRoots)
+	if err == nil {
+		// wait for the p2p collection setup to complete
+		<-sub.Message()
+	}
+
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -420,7 +440,15 @@ func unsubscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	sub, err := n.Events().Subscribe(event.P2PTopicCompletedName)
+	require.NoError(s.t, err)
+
+	err = n.RemoveP2PCollections(s.ctx, schemaRoots)
+	if err == nil {
+		// wait for the p2p collection setup to complete
+		<-sub.Message()
+	}
+
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 

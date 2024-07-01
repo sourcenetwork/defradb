@@ -435,11 +435,11 @@ func (c *Client) Close() {
 	// do nothing
 }
 
-func (c *Client) Root() datastore.RootStore {
+func (c *Client) Rootstore() datastore.Rootstore {
 	panic("client side database")
 }
 
-func (c *Client) Blockstore() datastore.DAGStore {
+func (c *Client) Blockstore() datastore.Blockstore {
 	panic("client side database")
 }
 

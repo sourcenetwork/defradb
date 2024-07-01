@@ -99,7 +99,7 @@ func (c *Transaction) Peerstore() datastore.DSBatching {
 	panic("client side transaction")
 }
 
-func (c *Transaction) DAGstore() datastore.DAGStore {
+func (c *Transaction) Blockstore() datastore.Blockstore {
 	panic("client side transaction")
 }
 

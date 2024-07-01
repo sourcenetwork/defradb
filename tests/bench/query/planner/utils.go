@@ -136,7 +136,7 @@ func (*dummyTxn) Rootstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Datastore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Headstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Peerstore() datastore.DSBatching       { return nil }
-func (*dummyTxn) DAGstore() datastore.DAGStore          { return nil }
+func (*dummyTxn) Blockstore() datastore.Blockstore      { return nil }
 func (*dummyTxn) Systemstore() datastore.DSReaderWriter { return nil }
 func (*dummyTxn) Commit(ctx context.Context) error      { return nil }
 func (*dummyTxn) Discard(ctx context.Context)           {}

@@ -56,6 +56,7 @@ var (
 	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
 	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
 	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
+	ErrCollectionNotFound                  = errors.New(errCollectionNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

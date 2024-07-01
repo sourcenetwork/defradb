@@ -19,6 +19,6 @@ import (
 // Client implements the P2P interface along with a few other methods
 // required for testing.
 type Client interface {
-	client.P2P
+	client.DB
 	Bootstrap([]peer.AddrInfo)
 }

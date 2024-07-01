@@ -36,7 +36,7 @@ func prepareDataStore(t *testing.T) *DSReaderWriter {
 	return dataStore
 }
 
-func prepareRootStore(t *testing.T) *DSReaderWriter {
+func prepareRootstore(t *testing.T) *DSReaderWriter {
 	return NewDSReaderWriter(t)
 }
 
@@ -73,7 +73,7 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	result := &MultiStoreTxn{
 		Txn:             txn,
 		t:               t,
-		MockRootstore:   prepareRootStore(t),
+		MockRootstore:   prepareRootstore(t),
 		MockDatastore:   prepareDataStore(t),
 		MockHeadstore:   prepareHeadStore(t),
 		MockDAGstore:    prepareDAGStore(t),
@@ -83,7 +83,7 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	txn.EXPECT().Rootstore().Return(result.MockRootstore).Maybe()
 	txn.EXPECT().Datastore().Return(result.MockDatastore).Maybe()
 	txn.EXPECT().Headstore().Return(result.MockHeadstore).Maybe()
-	txn.EXPECT().DAGstore().Return(result.MockDAGstore).Maybe()
+	txn.EXPECT().Blockstore().Return(result.MockDAGstore).Maybe()
 	txn.EXPECT().Systemstore().Return(result.MockSystemstore).Maybe()
 
 	return result

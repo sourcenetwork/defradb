@@ -473,11 +473,11 @@ func TestCreateIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 
 	testErr := errors.New("test error")
 
-	mockedRootStore := mocks.NewRootStore(t)
-	mockedRootStore.On("Close").Return(nil)
+	mockedRootstore := mocks.NewRootstore(t)
+	mockedRootstore.On("Close").Return(nil)
 
-	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
-	f.db.rootstore = mockedRootStore
+	mockedRootstore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
+	f.db.rootstore = mockedRootstore
 
 	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.ErrorIs(t, err, testErr)
@@ -859,15 +859,15 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 	testErr := errors.New("test error")
 
-	workingRootStore := f.db.rootstore
-	mockedRootStore := mocks.NewRootStore(t)
-	f.db.rootstore = mockedRootStore
-	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
+	workingRootstore := f.db.rootstore
+	mockedRootstore := mocks.NewRootstore(t)
+	f.db.rootstore = mockedRootstore
+	mockedRootstore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
 
 	_, err := f.users.GetIndexes(f.ctx)
 	require.ErrorIs(t, err, testErr)
 
-	f.db.rootstore = workingRootStore
+	f.db.rootstore = workingRootstore
 
 	indexes, err := f.users.GetIndexes(f.ctx)
 	require.NoError(t, err)
@@ -1075,11 +1075,11 @@ func TestDropIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 
 	testErr := errors.New("test error")
 
-	mockedRootStore := mocks.NewRootStore(t)
-	mockedRootStore.On("Close").Return(nil)
+	mockedRootstore := mocks.NewRootstore(t)
+	mockedRootstore.On("Close").Return(nil)
 
-	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
-	f.db.rootstore = mockedRootStore
+	mockedRootstore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
+	f.db.rootstore = mockedRootstore
 
 	err := f.users.DropIndex(f.ctx, testUsersColIndexName)
 	require.ErrorIs(t, err, testErr)

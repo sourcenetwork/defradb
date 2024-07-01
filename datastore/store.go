@@ -24,8 +24,8 @@ var (
 	log = corelog.NewLogger("store")
 )
 
-// RootStore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
-type RootStore interface {
+// Rootstore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
+type Rootstore interface {
 	ds.Batching
 	ds.TxnDatastore
 }
@@ -47,10 +47,10 @@ type MultiStore interface {
 	// under the /peers namespace
 	Peerstore() DSBatching
 
-	// DAGstore is a wrapped root DSReaderWriter
-	// as a Blockstore, embedded into a DAGStore
+	// Blockstore is a wrapped root DSReaderWriter
+	// as a Blockstore, embedded into a Blockstore
 	// under the /blocks namespace
-	DAGstore() DAGStore
+	Blockstore() Blockstore
 
 	// Headstore is a wrapped root DSReaderWriter
 	// under the /system namespace
@@ -70,8 +70,8 @@ type DSReaderWriter interface {
 	iterable.Iterable
 }
 
-// DAGStore proxies the ipld.DAGService under the /core namespace for future-proofing
-type DAGStore interface {
+// Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
+type Blockstore interface {
 	blockstore.Blockstore
 	AsIPLDStorage() IPLDStorage
 }
