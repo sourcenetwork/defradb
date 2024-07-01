@@ -23,10 +23,9 @@ import (
 
 func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 	queue := newMergeQueue()
-	// These are used to ensure we only trigger loadAndPublishP2PCollections and loadAndPublishReplicators
+	// This is used to ensure we only trigger loadAndPublishP2PCollections and loadAndPublishReplicators
 	// once per db instanciation.
-	onceReps := sync.Once{}
-	onceP2PCollection := sync.Once{}
+	loadOnce := sync.Once{}
 	for {
 		select {
 		case <-ctx.Done():
@@ -66,16 +65,15 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 			case event.PeerInfo:
 				db.peerInfo.Store(evt.Info)
 				// Load and publish P2P collections and replicators once per db instance start.
-				// Go routines are used to ensure the message handler is not blocked by these potentially
+				// A Go routine is used to ensure the message handler is not blocked by these potentially
 				// long running operations.
-				go onceP2PCollection.Do(func() {
+				go loadOnce.Do(func() {
 					err := db.loadAndPublishP2PCollections(ctx)
 					if err != nil {
 						log.ErrorContextE(ctx, "Failed to load P2P collections", err)
 					}
-				})
-				go onceReps.Do(func() {
-					err := db.loadAndPublishReplicators(ctx)
+
+					err = db.loadAndPublishReplicators(ctx)
 					if err != nil {
 						log.ErrorContextE(ctx, "Failed to load replicators", err)
 					}
