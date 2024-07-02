@@ -29,7 +29,7 @@ func (db *db) createCollections(
 	ctx context.Context,
 	newDefinitions []client.CollectionDefinition,
 ) ([]client.CollectionDefinition, error) {
-	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
+	returnDescriptions := make([]client.CollectionDefinition, 0, len(newDefinitions))
 
 	existingDefinitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {

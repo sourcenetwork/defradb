@@ -34,7 +34,7 @@ func TestBlobScalarTypeSerialize(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType.Serialize(c.input)
+		result := BlobScalarType().Serialize(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -60,7 +60,7 @@ func TestBlobScalarTypeParseValue(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType.ParseValue(c.input)
+		result := BlobScalarType().ParseValue(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -82,7 +82,7 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 		{&ast.ObjectValue{}, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType.ParseLiteral(c.input)
+		result := BlobScalarType().ParseLiteral(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -141,10 +141,10 @@ func TestJSONScalarTypeParseAndSerialize(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		parsed := JSONScalarType.ParseValue(c.input)
+		parsed := JSONScalarType().ParseValue(c.input)
 		assert.Equal(t, c.expect, parsed)
 
-		serialized := JSONScalarType.Serialize(c.input)
+		serialized := JSONScalarType().Serialize(c.input)
 		assert.Equal(t, c.expect, serialized)
 	}
 }
@@ -165,7 +165,7 @@ func TestJSONScalarTypeParseLiteral(t *testing.T) {
 		{&ast.ObjectValue{}, nil},
 	}
 	for _, c := range cases {
-		result := JSONScalarType.ParseLiteral(c.input)
+		result := JSONScalarType().ParseLiteral(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }

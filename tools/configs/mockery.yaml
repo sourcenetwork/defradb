@@ -4,8 +4,6 @@ with-expecter: true
 
 quiet: False
 
-keeptree: True
-
 disable-version-string: True
 
 log-level: "info"

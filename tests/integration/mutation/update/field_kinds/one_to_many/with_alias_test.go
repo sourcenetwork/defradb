@@ -25,66 +25,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
-		// This restiction is temporary due to an inconsitent error message, see
-		// TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL
-		// and https://github.com/sourcenetwork/defradb/issues/1854 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "New Shahzad"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author": "%s"
-					}`,
-					author1ID,
-				),
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 1,
-				DocID:        1,
-				// NOTE: There is no `published` on book.
-				Doc: fmt.Sprintf(
-					`{
-						"published": "%s"
-					}`,
-					bookID,
-				),
-				ExpectedError: "The given field does not exist. Name: published",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
-	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
-
-	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from single side (wrong)",
-		// This restiction is temporary due to an inconsitent error message, see
-		// TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collection
-		// and https://github.com/sourcenetwork/defradb/issues/1854 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

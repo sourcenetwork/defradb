@@ -50,3 +50,19 @@ func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
 	assert.NoFileExists(t, filepath.Join(rootdir, "keys", encryptionKeyName))
 	assert.FileExists(t, filepath.Join(rootdir, "keys", peerKeyName))
 }
+
+func TestKeyringGenerateNoPeerKey(t *testing.T) {
+	rootdir := t.TempDir()
+	readPassword = func(_ *cobra.Command, _ string) ([]byte, error) {
+		return []byte("secret"), nil
+	}
+
+	cmd := NewDefraCommand()
+	cmd.SetArgs([]string{"keyring", "generate", "--no-peer-key", "--rootdir", rootdir})
+
+	err := cmd.Execute()
+	require.NoError(t, err)
+
+	assert.FileExists(t, filepath.Join(rootdir, "keys", encryptionKeyName))
+	assert.NoFileExists(t, filepath.Join(rootdir, "keys", peerKeyName))
+}

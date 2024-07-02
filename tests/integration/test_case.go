@@ -81,6 +81,15 @@ type SchemaUpdate struct {
 	// The schema update.
 	Schema string
 
+	// Optionally, the expected results.
+	//
+	// Each item will be compared individually, if ID, RootID, SchemaVersionID or Fields on the
+	// expected item are default they will not be compared with the actual.
+	//
+	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
+	// to allow their ommission in most cases).
+	ExpectedResults []client.CollectionDescription
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that

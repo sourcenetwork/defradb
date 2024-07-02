@@ -36,4 +36,4 @@ jobs:
           go-version-input: "1.21"
           go-package: ./...
           check-latest: true
-          cache: true
+          cache: false

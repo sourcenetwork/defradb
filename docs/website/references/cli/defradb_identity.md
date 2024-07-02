@@ -1,37 +1,15 @@
-## defradb keyring generate
+## defradb identity
 
-Generate private keys
+Interact with identity features of DefraDB instance
 
 ### Synopsis
 
-Generate private keys.
-Randomly generate and store private keys in the keyring.
-By default peer and encryption keys will be generated.
-
-WARNING: This will overwrite existing keys in the keyring.
-
-Example:
-  defradb keyring generate
-
-Example: with no encryption key
-  defradb keyring generate --no-encryption-key
-
-Example: with no peer key
-  defradb keyring generate --no-peer-key
-
-Example: with system keyring
-  defradb keyring generate --keyring-backend system
-
-```
-defradb keyring generate [flags]
-```
+Interact with identity features of DefraDB instance
 
 ### Options
 
 ```
-  -h, --help                help for generate
-      --no-encryption-key   Skip generating an encryption key. Encryption at rest will be disabled
-      --no-peer-key         Skip generating a peer key.
+  -h, --help   help for identity
 ```
 
 ### Options inherited from parent commands
@@ -54,5 +32,6 @@ defradb keyring generate [flags]
 
 ### SEE ALSO
 
-* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
+* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb identity new](defradb_identity_new.md)	 - Generate a new identity
 

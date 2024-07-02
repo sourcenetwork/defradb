@@ -8,9 +8,7 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-# This workflow checks that all mocks are up to date.
-# If the mocks are not up to date then this action will fail.
-name: Check Mocks Workflow
+name: Check Data Format Changes Workflow
 
 on:
   pull_request:
@@ -26,12 +24,13 @@ on:
       - develop
 
 jobs:
-  check-mocks:
-    name: Check mocks job
+  check-data-format-changes:
+    name: Check data format changes job
 
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -42,10 +41,10 @@ jobs:
           check-latest: true
           cache: false
 
-      - name: Try generating mocks
-        run: make mocks
+      - name: Build dependencies
+        run: |
+          make deps:modules
+          make deps:test
 
-      - name: Check no new changes exist
-        uses: tj-actions/verify-changed-files@v20
-        with:
-          fail-if-changed: true
+      - name: Run data format change detection tests
+        run: make test:changes

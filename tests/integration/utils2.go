@@ -999,10 +999,14 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.AddSchema(s.ctx, action.Schema)
+		results, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if action.ExpectedResults != nil {
+			assertCollectionDescriptions(s, action.ExpectedResults, results)
+		}
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
@@ -1088,39 +1092,16 @@ func getCollections(
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.SetContextTxn(s.ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
+		resultDescriptions := make([]client.CollectionDescription, len(results))
+		for i, col := range results {
+			resultDescriptions[i] = col.Description()
+		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			require.Equal(s.t, len(action.ExpectedResults), len(results))
-
-			for i, expected := range action.ExpectedResults {
-				actual := results[i].Description()
-				if expected.ID != 0 {
-					require.Equal(s.t, expected.ID, actual.ID)
-				}
-				if expected.RootID != 0 {
-					require.Equal(s.t, expected.RootID, actual.RootID)
-				}
-				if expected.SchemaVersionID != "" {
-					require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
-				}
-
-				require.Equal(s.t, expected.Name, actual.Name)
-
-				if expected.Indexes != nil || len(actual.Indexes) != 0 {
-					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-					// This is to say each test action from having to bother declaring an empty slice (if there are no indexes)
-					require.Equal(s.t, expected.Indexes, actual.Indexes)
-				}
-
-				if expected.Sources != nil || len(actual.Sources) != 0 {
-					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-					// This is to say each test action from having to bother declaring an empty slice (if there are no sources)
-					require.Equal(s.t, expected.Sources, actual.Sources)
-				}
-			}
+			assertCollectionDescriptions(s, action.ExpectedResults, resultDescriptions)
 		}
 	}
 }
@@ -1891,6 +1872,16 @@ func assertRequestResults(
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
+			case DocIndex:
+				expectedDocID := s.documents[r.CollectionIndex][r.Index].ID().String()
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedDocID,
+					actualValue,
+					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+				)
+
 			default:
 				assertResultsEqual(
 					s.t,

@@ -17,6 +17,7 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
 	"github.com/stretchr/testify/require"
 
@@ -107,7 +108,11 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 			},
 		},
 	}
-	compositeUpdateBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), compositeUpdateBlock.GenerateNode())
+	compositeUpdateBlockLink, err := lsys.Store(
+		ipld.LinkContext{},
+		GetLinkPrototype(),
+		compositeUpdateBlock.GenerateNode(),
+	)
 	if err != nil {
 		return cidlink.Link{}, err
 	}
@@ -124,8 +129,7 @@ func TestBlock(t *testing.T) {
 	rootLink, err := generateBlocks(&lsys)
 	require.NoError(t, err)
 
-	proto := SchemaPrototype.Representation()
-	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, proto)
+	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, SchemaPrototype)
 	require.NoError(t, err)
 
 	block, err := GetFromNode(nd)
@@ -139,7 +143,7 @@ func TestBlock(t *testing.T) {
 
 	require.Equal(t, block, newBlock)
 
-	newNode := block.GenerateNode()
+	newNode := bindnode.Wrap(block, Schema)
 	require.Equal(t, nd, newNode)
 
 	link, err := block.GenerateLink()
@@ -165,8 +169,7 @@ func TestBlockDeltaPriority(t *testing.T) {
 	rootLink, err := generateBlocks(&lsys)
 	require.NoError(t, err)
 
-	proto := SchemaPrototype.Representation()
-	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, proto)
+	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, SchemaPrototype)
 	require.NoError(t, err)
 
 	block, err := GetFromNode(nd)
@@ -175,4 +178,53 @@ func TestBlockDeltaPriority(t *testing.T) {
 	// The generateBlocks function creates a block with one update
 	// which results in a priority of 2.
 	require.Equal(t, uint64(2), block.Delta.GetPriority())
+}
+
+func TestBlockMarshal_IsEncryptedNotSet_ShouldNotContainIsEcryptedField(t *testing.T) {
+	lsys := cidlink.DefaultLinkSystem()
+	store := memstore.Store{}
+	lsys.SetReadStorage(&store)
+	lsys.SetWriteStorage(&store)
+
+	fieldBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+	}
+
+	b, err := fieldBlock.Marshal()
+	require.NoError(t, err)
+	require.NotContains(t, string(b), "isEncrypted")
+}
+
+func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *testing.T) {
+	lsys := cidlink.DefaultLinkSystem()
+	store := memstore.Store{}
+	lsys.SetReadStorage(&store)
+	lsys.SetWriteStorage(&store)
+
+	fieldBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+	}
+	fieldBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), fieldBlock.GenerateNode())
+	require.NoError(t, err)
+
+	nd, err := lsys.Load(ipld.LinkContext{}, fieldBlockLink, SchemaPrototype)
+	require.NoError(t, err)
+	_, err = GetFromNode(nd)
+	require.NoError(t, err)
 }

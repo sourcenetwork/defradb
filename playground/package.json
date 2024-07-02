@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "graphiql": "^3.2.3",
-    "graphql": "^16.8.2",
+    "graphiql": "^3.3.1",
+    "graphql": "^16.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "swagger-ui-react": "^5.17.14"
@@ -26,7 +26,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.2",
     "vite": "^5.3.1"
   }
 }

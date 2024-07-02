@@ -30,7 +30,7 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func Test_didFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
+func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
 	mockedProducer := func(crypto.KeyType, []byte) (*key.DIDKey, error) {
 		return nil, fmt.Errorf("did generation err")
 	}
@@ -41,4 +41,38 @@ func Test_didFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
 
 	require.Empty(t, did)
 	require.ErrorIs(t, err, ErrDIDCreation)
+}
+
+func Test_RawIdentityGeneration_ReturnsNewRawIdentity(t *testing.T) {
+	newIdentity, err := Generate()
+	require.NoError(t, err)
+
+	// Check that both private and public key are not empty.
+	require.NotEmpty(t, newIdentity.PrivateKey)
+	require.NotEmpty(t, newIdentity.PublicKey)
+
+	// Check leading `did:key` prefix.
+	require.Equal(t, newIdentity.DID[:7], "did:key")
+}
+
+func Test_RawIdentityGenerationIsNotFixed_ReturnsUniqueRawIdentites(t *testing.T) {
+	newIdentity1, err1 := Generate()
+	newIdentity2, err2 := Generate()
+	require.NoError(t, err1)
+	require.NoError(t, err2)
+
+	// Check that both private and public key are not empty.
+	require.NotEmpty(t, newIdentity1.PrivateKey)
+	require.NotEmpty(t, newIdentity1.PublicKey)
+	require.NotEmpty(t, newIdentity2.PrivateKey)
+	require.NotEmpty(t, newIdentity2.PublicKey)
+
+	// Check leading `did:key` prefix.
+	require.Equal(t, newIdentity1.DID[:7], "did:key")
+	require.Equal(t, newIdentity2.DID[:7], "did:key")
+
+	// Check both are different.
+	require.NotEqual(t, newIdentity1.PrivateKey, newIdentity2.PrivateKey)
+	require.NotEqual(t, newIdentity1.PublicKey, newIdentity2.PublicKey)
+	require.NotEqual(t, newIdentity1.DID, newIdentity2.DID)
 }

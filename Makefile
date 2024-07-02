@@ -160,7 +160,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v2@v2.32.0
+	go install github.com/vektra/mockery/v2@v2.43.0
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -380,3 +380,11 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
+
+.PHONY: fix
+fix:
+	@$(MAKE) deps
+	@$(MAKE) lint\:fix
+	@$(MAKE) tidy
+	@$(MAKE) mocks
+	@$(MAKE) docs

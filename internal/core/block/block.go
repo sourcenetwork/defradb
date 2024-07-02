@@ -30,7 +30,7 @@ import (
 // Schema is the IPLD schema type that represents a `Block`.
 var (
 	Schema          schema.Type
-	SchemaPrototype schema.TypedPrototype
+	SchemaPrototype ipld.NodePrototype
 )
 
 func init() {
@@ -49,7 +49,7 @@ type schemaDefinition interface {
 	IPLDSchemaBytes() []byte
 }
 
-func mustSetSchema(schemas ...schemaDefinition) (schema.Type, schema.TypedPrototype) {
+func mustSetSchema(schemas ...schemaDefinition) (schema.Type, ipld.NodePrototype) {
 	schemaBytes := make([][]byte, 0, len(schemas))
 	for _, s := range schemas {
 		schemaBytes = append(schemaBytes, s.IPLDSchemaBytes())
@@ -66,7 +66,7 @@ func mustSetSchema(schemas ...schemaDefinition) (schema.Type, schema.TypedProtot
 	// If [Block] and `blockSchematype` do not match, this will panic.
 	proto := bindnode.Prototype(&Block{}, blockSchemaType)
 
-	return blockSchemaType, proto
+	return blockSchemaType, proto.Representation()
 }
 
 // DAGLink represents a link to another object in a DAG.
@@ -201,9 +201,9 @@ func (block *Block) Unmarshal(b []byte) error {
 	return nil
 }
 
-// GenerateNode generates an IPLD node from the block.
+// GenerateNode generates an IPLD node from the block in its representation form.
 func (block *Block) GenerateNode() (node ipld.Node) {
-	return bindnode.Wrap(block, Schema)
+	return bindnode.Wrap(block, Schema).Representation()
 }
 
 // GetLinkByName returns the link by name. It will return false if the link does not exist.
@@ -219,11 +219,14 @@ func (block *Block) GetLinkByName(name string) (cidlink.Link, bool) {
 // GenerateLink generates a cid link for the block.
 func (block *Block) GenerateLink() (cidlink.Link, error) {
 	node := bindnode.Wrap(block, Schema)
-	return GetLinkFromNode(node)
+	return GetLinkFromNode(node.Representation())
 }
 
 // GetLinkFromNode returns the cid link from the node.
 func GetLinkFromNode(node ipld.Node) (cidlink.Link, error) {
+	if typedNode, ok := node.(schema.TypedNode); ok {
+		node = typedNode.Representation()
+	}
 	lsys := cidlink.DefaultLinkSystem()
 	link, err := lsys.ComputeLink(GetLinkPrototype(), node)
 	if err != nil {

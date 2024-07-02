@@ -35,7 +35,6 @@ jobs:
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         lens-type: [wasm-time]
-        detect-changes: [false]
         database-encryption: [false]
         include:
           - os: ubuntu-latest
@@ -43,21 +42,24 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            detect-changes: true
+            database-encryption: true
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wazero
             database-encryption: false
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
-            lens-type: wasm-time
-            detect-changes: false
-            database-encryption: true
+            lens-type: wasmer
+            database-encryption: false
           - os: macos-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
-            detect-changes: false
             database-encryption: false
 ## TODO: https://github.com/sourcenetwork/defradb/issues/2080
 ## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
@@ -65,22 +67,8 @@ jobs:
 ##          client-type: go
 ##          database-type: badger-memory
 ##          mutation-type: collection-save
-##          detect-changes: false
+##          lens-type: wasm-time
 ##          database-encryption: false
-          - os: ubuntu-latest
-            client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            lens-type: wazero
-            detect-changes: false
-            database-encryption: false
-          - os: ubuntu-latest
-            client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            lens-type: wasmer
-            detect-changes: false
-            database-encryption: false
 
     runs-on: ${{ matrix.os }}
 
@@ -102,13 +90,14 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.21"
+          go-version-file: 'go.mod'
           check-latest: true
+          cache: false
 
       - name: Set cache paths
         id: cache-paths
@@ -155,18 +144,22 @@ jobs:
           make deps:test
 
       - name: Run integration tests
-        if: ${{ !matrix.detect-changes }}
         run: make test:coverage
 
-      - name: Run change detector tests
-        if: ${{ matrix.detect-changes }}
-        run: make test:changes
-
       - name: Upload coverage artifact
-        if: ${{ !matrix.detect-changes }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}_${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
+          # Make sure the name is always unique per job as artifacts are now immutable.
+          # Note Issue: https://github.com/actions/upload-artifact/issues/478
+          # Solve: https://github.com/actions/upload-artifact/issues/478#issuecomment-1885470013
+          name: "coverage\
+            _${{ matrix.os }}\
+            _${{ matrix.client-type }}\
+            _${{ matrix.database-type }}\
+            _${{ matrix.mutation-type }}\
+            _${{ matrix.lens-type }}\
+            _${{ matrix.database-encryption }}\
+          "
           path: coverage.txt
           if-no-files-found: error
           retention-days: 7
@@ -185,11 +178,14 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download coverage reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
+          pattern: coverage_*
+          # Note: https://github.com/actions/download-artifact/blob/main/docs/MIGRATION.md
+          merge-multiple: false
           path: coverage_reports
 
       - name: Upload coverage to Codecov
@@ -197,6 +193,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: defradb-codecov
+          files: coverage_reports/**/*.txt
           flags: all-tests
           os: 'linux'
           fail_ci_if_error: true

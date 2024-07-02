@@ -46,24 +46,26 @@ func coerceBlob(value any) any {
 	}
 }
 
-var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
-	Name:        "Blob",
-	Description: "The `Blob` scalar type represents a binary large object.",
-	// Serialize converts the value to a hex string
-	Serialize: coerceBlob,
-	// ParseValue converts the value to a hex string
-	ParseValue: coerceBlob,
-	// ParseLiteral converts the ast value to a hex string
-	ParseLiteral: func(valueAST ast.Value) any {
-		switch valueAST := valueAST.(type) {
-		case *ast.StringValue:
-			return coerceBlob(valueAST.Value)
-		default:
-			// return nil if the value cannot be parsed
-			return nil
-		}
-	},
-})
+func BlobScalarType() *graphql.Scalar {
+	return graphql.NewScalar(graphql.ScalarConfig{
+		Name:        "Blob",
+		Description: "The `Blob` scalar type represents a binary large object.",
+		// Serialize converts the value to a hex string
+		Serialize: coerceBlob,
+		// ParseValue converts the value to a hex string
+		ParseValue: coerceBlob,
+		// ParseLiteral converts the ast value to a hex string
+		ParseLiteral: func(valueAST ast.Value) any {
+			switch valueAST := valueAST.(type) {
+			case *ast.StringValue:
+				return coerceBlob(valueAST.Value)
+			default:
+				// return nil if the value cannot be parsed
+				return nil
+			}
+		},
+	})
+}
 
 // coerceJSON converts the given value into a valid json string.
 // If the value cannot be converted nil is returned.
@@ -98,21 +100,23 @@ func coerceJSON(value any) any {
 	}
 }
 
-var JSONScalarType = graphql.NewScalar(graphql.ScalarConfig{
-	Name:        "JSON",
-	Description: "The `JSON` scalar type represents a JSON string.",
-	// Serialize converts the value to a json string
-	Serialize: coerceJSON,
-	// ParseValue converts the value to a json string
-	ParseValue: coerceJSON,
-	// ParseLiteral converts the ast value to a json string
-	ParseLiteral: func(valueAST ast.Value) any {
-		switch valueAST := valueAST.(type) {
-		case *ast.StringValue:
-			return coerceJSON(valueAST.Value)
-		default:
-			// return nil if the value cannot be parsed
-			return nil
-		}
-	},
-})
+func JSONScalarType() *graphql.Scalar {
+	return graphql.NewScalar(graphql.ScalarConfig{
+		Name:        "JSON",
+		Description: "The `JSON` scalar type represents a JSON string.",
+		// Serialize converts the value to a json string
+		Serialize: coerceJSON,
+		// ParseValue converts the value to a json string
+		ParseValue: coerceJSON,
+		// ParseLiteral converts the ast value to a json string
+		ParseLiteral: func(valueAST ast.Value) any {
+			switch valueAST := valueAST.(type) {
+			case *ast.StringValue:
+				return coerceJSON(valueAST.Value)
+			default:
+				// return nil if the value cannot be parsed
+				return nil
+			}
+		},
+	})
+}

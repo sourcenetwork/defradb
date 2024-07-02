@@ -16,34 +16,23 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-var (
-	// Helper only for `commit` below.
-	commitCountFieldArg = gql.NewEnum(gql.EnumConfig{
-		Name:        "commitCountFieldArg",
-		Description: CountFieldDescription,
-		Values: gql.EnumValueConfigMap{
-			"links": &gql.EnumValueConfig{
-				Description: commitLinksDescription,
-				Value:       "links",
-			},
-		},
-	})
-
-	// Commit represents an individual commit to a MerkleCRDT
-	// type Commit {
-	// 	Height: Int
-	// 	CID: String
-	// 	DocID: String
-	// 	CollectionID: Int
-	// 	SchemaVersionID: String
-	// 	Delta: String
-	// 	Previous: [Commit]
-	//  Links: [Commit]
-	// }
-	//
-	// Any self referential type needs to be initialized
-	// inside the init() func
-	CommitObject = gql.NewObject(gql.ObjectConfig{
+// Commit represents an individual commit to a MerkleCRDT
+//
+//	type Commit {
+//		Height: Int
+//		CID: String
+//		DocID: String
+//		CollectionID: Int
+//		SchemaVersionID: String
+//		Delta: String
+//		Previous: [Commit]
+//	 Links: [Commit]
+//	}
+//
+// Any self referential type needs to be initialized
+// inside the init() func
+func CommitObject(commitLinkObject *gql.Object) *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
 		Name:        request.CommitTypeName,
 		Description: commitDescription,
 		Fields: gql.Fields{
@@ -81,23 +70,34 @@ var (
 			},
 			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
-				Type:        gql.NewList(CommitLinkObject),
+				Type:        gql.NewList(commitLinkObject),
 			},
 			request.CountFieldName: &gql.Field{
 				Description: CountFieldDescription,
 				Type:        gql.Int,
 				Args: gql.FieldConfigArgument{
 					request.FieldName: &gql.ArgumentConfig{
-						Type: commitCountFieldArg,
+						Type: gql.NewEnum(gql.EnumConfig{
+							Name:        "commitCountFieldArg",
+							Description: CountFieldDescription,
+							Values: gql.EnumValueConfigMap{
+								"links": &gql.EnumValueConfig{
+									Description: commitLinksDescription,
+									Value:       "links",
+								},
+							},
+						}),
 					},
 				},
 			},
 		},
 	})
+}
 
-	// CommitLink is a named DAG link between commits.
-	// This is primary used for CompositeDAG CRDTs
-	CommitLinkObject = gql.NewObject(gql.ObjectConfig{
+// CommitLink is a named DAG link between commits.
+// This is primary used for CompositeDAG CRDTs
+func CommitLinkObject() *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
 		Name:        "CommitLink",
 		Description: commitLinksDescription,
 		Fields: gql.Fields{
@@ -111,78 +111,80 @@ var (
 			},
 		},
 	})
+}
 
-	CommitsOrderArg = gql.NewInputObject(
+func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
+	return gql.NewInputObject(
 		gql.InputObjectConfig{
 			Name:        "commitsOrderArg",
 			Description: OrderArgDescription,
 			Fields: gql.InputObjectConfigFieldMap{
 				"height": &gql.InputObjectFieldConfig{
 					Description: commitHeightFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 				"cid": &gql.InputObjectFieldConfig{
 					Description: commitCIDFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 				request.DocIDArgName: &gql.InputObjectFieldConfig{
 					Description: commitDocIDFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 				"collectionID": &gql.InputObjectFieldConfig{
 					Description: commitCollectionIDFieldDescription,
-					Type:        OrderingEnum,
+					Type:        orderEnum,
 				},
 			},
 		},
 	)
+}
 
-	commitFields = gql.NewEnum(
-		gql.EnumConfig{
-			Name:        "commitFields",
-			Description: commitFieldsEnumDescription,
-			Values: gql.EnumValueConfigMap{
-				"height": &gql.EnumValueConfig{
-					Value:       "height",
-					Description: commitHeightFieldDescription,
-				},
-				"cid": &gql.EnumValueConfig{
-					Value:       "cid",
-					Description: commitCIDFieldDescription,
-				},
-				request.DocIDArgName: &gql.EnumValueConfig{
-					Value:       request.DocIDArgName,
-					Description: commitDocIDFieldDescription,
-				},
-				"collectionID": &gql.EnumValueConfig{
-					Value:       "collectionID",
-					Description: commitCollectionIDFieldDescription,
-				},
-				"fieldName": &gql.EnumValueConfig{
-					Value:       "fieldName",
-					Description: commitFieldNameFieldDescription,
-				},
-				"fieldId": &gql.EnumValueConfig{
-					Value:       "fieldId",
-					Description: commitFieldIDFieldDescription,
-				},
-			},
-		},
-	)
-
-	QueryCommits = &gql.Field{
+func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Field {
+	return &gql.Field{
 		Name:        "commits",
 		Description: commitsQueryDescription,
-		Type:        gql.NewList(CommitObject),
+		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
 			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
-			"order":              NewArgConfig(CommitsOrderArg, OrderArgDescription),
+			"order":              NewArgConfig(commitsOrderArg, OrderArgDescription),
 			"cid":                NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
-						commitFields,
+						gql.NewEnum(
+							gql.EnumConfig{
+								Name:        "commitFields",
+								Description: commitFieldsEnumDescription,
+								Values: gql.EnumValueConfigMap{
+									"height": &gql.EnumValueConfig{
+										Value:       "height",
+										Description: commitHeightFieldDescription,
+									},
+									"cid": &gql.EnumValueConfig{
+										Value:       "cid",
+										Description: commitCIDFieldDescription,
+									},
+									request.DocIDArgName: &gql.EnumValueConfig{
+										Value:       request.DocIDArgName,
+										Description: commitDocIDFieldDescription,
+									},
+									"collectionID": &gql.EnumValueConfig{
+										Value:       "collectionID",
+										Description: commitCollectionIDFieldDescription,
+									},
+									"fieldName": &gql.EnumValueConfig{
+										Value:       "fieldName",
+										Description: commitFieldNameFieldDescription,
+									},
+									"fieldId": &gql.EnumValueConfig{
+										Value:       "fieldId",
+										Description: commitFieldIDFieldDescription,
+									},
+								},
+							},
+						),
 					),
 				),
 				GroupByArgDescription,
@@ -192,14 +194,16 @@ var (
 			request.DepthClause:  NewArgConfig(gql.Int, commitDepthArgDescription),
 		},
 	}
+}
 
-	QueryLatestCommits = &gql.Field{
+func QueryLatestCommits(commitObject *gql.Object) *gql.Field {
+	return &gql.Field{
 		Name:        "latestCommits",
 		Description: latestCommitsQueryDescription,
-		Type:        gql.NewList(CommitObject),
+		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
 			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}
-)
+}
