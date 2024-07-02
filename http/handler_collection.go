@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
-const DocEncryptionHeader = "EncryptDoc"
+const docEncryptParam = "encrypt"
 
 type collectionHandler struct{}
 
@@ -47,7 +47,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := req.Context()
-	if req.Header.Get(DocEncryptionHeader) == "1" {
+	if req.URL.Query().Get(docEncryptParam) == "true" {
 		ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
 	}
 

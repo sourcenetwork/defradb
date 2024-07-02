@@ -29,7 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.DB = (*Client)(nil)
@@ -350,6 +349,7 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = []error{err}
 		return result
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		result.GQL.Errors = []error{err}
@@ -357,10 +357,7 @@ func (c *Client) ExecRequest(
 	}
 	err = c.http.setDefaultHeaders(req)
 
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
-		req.Header.Set(DocEncryptionHeader, "1")
-	}
+	setDocEncryptionFlagIfNeeded(ctx, req)
 
 	if err != nil {
 		result.GQL.Errors = []error{err}
