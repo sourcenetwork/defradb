@@ -21,7 +21,10 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
+
+const docEncryptParam = "encrypt"
 
 type collectionHandler struct{}
 
@@ -43,6 +46,11 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	ctx := req.Context()
+	if req.URL.Query().Get(docEncryptParam) == "true" {
+		ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
+	}
+
 	switch {
 	case client.IsJSONArray(data):
 		docList, err := client.NewDocsFromJSON(data, col.Definition())
@@ -51,7 +59,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(req.Context(), docList); err != nil {
+		if err := col.CreateMany(ctx, docList); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -62,7 +70,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(req.Context(), doc); err != nil {
+		if err := col.Create(ctx, doc); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}

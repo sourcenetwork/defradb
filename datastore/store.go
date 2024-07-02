@@ -38,6 +38,10 @@ type MultiStore interface {
 	// under the /data namespace
 	Datastore() DSReaderWriter
 
+	// Encstore is a wrapped root DSReaderWriter
+	// under the /enc namespace
+	Encstore() DSReaderWriter
+
 	// Headstore is a wrapped root DSReaderWriter
 	// under the /head namespace
 	Headstore() DSReaderWriter

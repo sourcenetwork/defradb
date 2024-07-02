@@ -29,16 +29,10 @@ type Mutation struct {
 
 	// Input is the map of fields and values used for the mutation.
 	Input map[string]any
-}
 
-func (m *Mutation) CloneTo(index int) Requestable {
-	return m.cloneTo(index)
-}
+	// Inputs is the array of maps of fields and values used for the mutation.
+	Inputs []map[string]any
 
-func (m *Mutation) cloneTo(index int) *Mutation {
-	return &Mutation{
-		Select: *m.Select.cloneTo(index),
-		Type:   m.Type,
-		Input:  m.Input,
-	}
+	// Encrypt is a flag to indicate if the input data should be encrypted.
+	Encrypt bool
 }

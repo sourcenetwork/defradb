@@ -415,7 +415,7 @@ func (vf *VersionedFetcher) processBlock(
 		vf.mCRDTs[crdtIndex] = mcrdt
 	}
 
-	err = mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink)
+	err = mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink, false)
 	return err
 }
 

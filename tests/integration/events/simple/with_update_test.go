@@ -49,17 +49,18 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 			"Users": []func(c client.Collection){
 				func(c client.Collection) {
 					err = c.Save(context.Background(), doc1)
-					assert.Nil(t, err)
+					assert.NoError(t, err)
 				},
 				func(c client.Collection) {
 					err = c.Save(context.Background(), doc2)
-					assert.Nil(t, err)
+					assert.NoError(t, err)
 				},
 				func(c client.Collection) {
 					// Update John
-					doc1.Set("name", "Johnnnnn")
+					err = doc1.Set("name", "Johnnnnn")
+					assert.NoError(t, err)
 					err = c.Save(context.Background(), doc1)
-					assert.Nil(t, err)
+					assert.NoError(t, err)
 				},
 			},
 		},

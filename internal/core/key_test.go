@@ -54,7 +54,7 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocIDAndFieldIdAndInsta
 		DataStoreKey{
 			CollectionRootID: collectionRootID,
 			DocID:            docID,
-			FieldId:          fieldID,
+			FieldID:          fieldID,
 			InstanceType:     InstanceType(instanceType)},
 		result)
 	assert.Equal(t, fmt.Sprintf("/%v/%s/%s/%s", collectionRootID, instanceType, docID, fieldID), resultString)

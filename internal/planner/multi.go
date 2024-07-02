@@ -131,7 +131,7 @@ func (p *parallelNode) Next() (bool, error) {
 	return orNext, nil
 }
 
-func (p *parallelNode) nextMerge(index int, plan planNode) (bool, error) {
+func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 	if next, err := plan.Next(); !next {
 		return false, err
 	}

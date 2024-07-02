@@ -112,7 +112,7 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	}
 
 	for i, span := range headSetSpans.Value {
-		if span.Start().FieldId != fieldId {
+		if span.Start().FieldID != fieldId {
 			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldId(fieldId), core.DataStoreKey{})
 		}
 	}

@@ -14,15 +14,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
-// jsonToGql transforms a json doc string to a gql string.
+// jsonToGQL transforms a json doc string to a gql string.
 func jsonToGQL(val string) (string, error) {
-	var doc map[string]any
-	if err := json.Unmarshal([]byte(val), &doc); err != nil {
-		return "", err
+	bytes := []byte(val)
+
+	if client.IsJSONArray(bytes) {
+		var doc []map[string]any
+		if err := json.Unmarshal(bytes, &doc); err != nil {
+			return "", err
+		}
+		return arrayToGQL(doc)
+	} else {
+		var doc map[string]any
+		if err := json.Unmarshal(bytes, &doc); err != nil {
+			return "", err
+		}
+		return mapToGQL(doc)
 	}
-	return mapToGQL(doc)
 }
 
 // valueToGQL transforms a value to a gql string.
@@ -41,7 +53,7 @@ func valueToGQL(val any) (string, error) {
 	return string(out), nil
 }
 
-// mapToGql transforms a map to a gql string.
+// mapToGQL transforms a map to a gql string.
 func mapToGQL(val map[string]any) (string, error) {
 	var entries []string
 	for k, v := range val {
@@ -59,6 +71,19 @@ func sliceToGQL(val []any) (string, error) {
 	var entries []string
 	for _, v := range val {
 		out, err := valueToGQL(v)
+		if err != nil {
+			return "", err
+		}
+		entries = append(entries, out)
+	}
+	return fmt.Sprintf("[%s]", strings.Join(entries, ",")), nil
+}
+
+// arrayToGQL transforms an array of maps to a gql string.
+func arrayToGQL(val []map[string]any) (string, error) {
+	var entries []string
+	for _, v := range val {
+		out, err := mapToGQL(v)
 		if err != nil {
 			return "", err
 		}

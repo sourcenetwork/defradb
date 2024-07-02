@@ -163,7 +163,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
 	case mapper.CreateObjects:
-		return p.CreateDoc(stmt)
+		return p.CreateDocs(stmt)
 
 	case mapper.UpdateObjects:
 		return p.UpdateDocs(stmt)
@@ -528,7 +528,7 @@ func walkAndFindPlanType[T planNode](planNode planNode) (T, bool) {
 
 // executeRequest executes the plan graph that represents the request that was made.
 func (p *Planner) executeRequest(
-	ctx context.Context,
+	_ context.Context,
 	planNode planNode,
 ) ([]map[string]any, error) {
 	if err := planNode.Start(); err != nil {

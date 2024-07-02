@@ -156,4 +156,9 @@ Indicates as to whether or not this document has been deleted.
 	versionFieldDescription string = `
 Returns the head commit for this document.
 `
+
+	encryptArgDescription string = `
+Encrypt flag specified if the input document(s) needs to be encrypted. If set, DefraDB will generate a
+symmetric key for encryption using AES-GCM.
+`
 )

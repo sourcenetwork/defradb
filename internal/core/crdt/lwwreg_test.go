@@ -31,7 +31,7 @@ func setupLWWRegister() LWWRegister {
 	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
 }
 
-func setupLoadedLWWRegster(ctx context.Context) LWWRegister {
+func setupLoadedLWWRegister(ctx context.Context) LWWRegister {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
 	addDelta.SetPriority(1)
@@ -73,7 +73,7 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 
 func TestLWWReisterFollowupMerge(t *testing.T) {
 	ctx := context.Background()
-	lww := setupLoadedLWWRegster(ctx)
+	lww := setupLoadedLWWRegister(ctx)
 	addDelta := lww.Set([]byte("test2"))
 	addDelta.SetPriority(2)
 	lww.Merge(ctx, addDelta)
@@ -90,7 +90,7 @@ func TestLWWReisterFollowupMerge(t *testing.T) {
 
 func TestLWWRegisterOldMerge(t *testing.T) {
 	ctx := context.Background()
-	lww := setupLoadedLWWRegster(ctx)
+	lww := setupLoadedLWWRegister(ctx)
 	addDelta := lww.Set([]byte("test-1"))
 	addDelta.SetPriority(0)
 	lww.Merge(ctx, addDelta)

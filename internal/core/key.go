@@ -71,7 +71,7 @@ type DataStoreKey struct {
 	CollectionRootID uint32
 	InstanceType     InstanceType
 	DocID            string
-	FieldId          string
+	FieldID          string
 }
 
 var _ Key = (*DataStoreKey)(nil)
@@ -238,7 +238,7 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey.InstanceType = InstanceType(elements[1])
 	dataStoreKey.DocID = elements[2]
 	if numberOfElements == 4 {
-		dataStoreKey.FieldId = elements[3]
+		dataStoreKey.FieldID = elements[3]
 	}
 
 	return dataStoreKey, nil
@@ -429,21 +429,21 @@ func (k DataStoreKey) WithDocID(docID string) DataStoreKey {
 func (k DataStoreKey) WithInstanceInfo(key DataStoreKey) DataStoreKey {
 	newKey := k
 	newKey.DocID = key.DocID
-	newKey.FieldId = key.FieldId
+	newKey.FieldID = key.FieldID
 	newKey.InstanceType = key.InstanceType
 	return newKey
 }
 
 func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
 	newKey := k
-	newKey.FieldId = fieldId
+	newKey.FieldID = fieldId
 	return newKey
 }
 
 func (k DataStoreKey) ToHeadStoreKey() HeadStoreKey {
 	return HeadStoreKey{
 		DocID:   k.DocID,
-		FieldId: k.FieldId,
+		FieldId: k.FieldID,
 	}
 }
 
@@ -477,8 +477,8 @@ func (k DataStoreKey) ToString() string {
 	if k.DocID != "" {
 		result = result + "/" + k.DocID
 	}
-	if k.FieldId != "" {
-		result = result + "/" + k.FieldId
+	if k.FieldID != "" {
+		result = result + "/" + k.FieldID
 	}
 
 	return result
@@ -495,7 +495,7 @@ func (k DataStoreKey) ToDS() ds.Key {
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
 	return k.CollectionRootID == other.CollectionRootID &&
 		k.DocID == other.DocID &&
-		k.FieldId == other.FieldId &&
+		k.FieldID == other.FieldID &&
 		k.InstanceType == other.InstanceType
 }
 
@@ -769,8 +769,8 @@ func (k HeadStoreKey) ToDS() ds.Key {
 func (k DataStoreKey) PrefixEnd() DataStoreKey {
 	newKey := k
 
-	if k.FieldId != "" {
-		newKey.FieldId = string(bytesPrefixEnd([]byte(k.FieldId)))
+	if k.FieldID != "" {
+		newKey.FieldID = string(bytesPrefixEnd([]byte(k.FieldID)))
 		return newKey
 	}
 	if k.DocID != "" {
@@ -789,12 +789,12 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 	return newKey
 }
 
-// FieldID extracts the Field Identifier from the Key.
-// In a Primary index, the last key path is the FieldID.
+// FieldIDAsUint extracts the Field Identifier from the Key.
+// In a Primary index, the last key path is the FieldIDAsUint.
 // This may be different in Secondary Indexes.
 // An error is returned if it can't correct convert the field to a uint32.
-func (k DataStoreKey) FieldID() (uint32, error) {
-	fieldID, err := strconv.Atoi(k.FieldId)
+func (k DataStoreKey) FieldIDAsUint() (uint32, error) {
+	fieldID, err := strconv.Atoi(k.FieldID)
 	if err != nil {
 		return 0, NewErrFailedToGetFieldIdOfKey(err)
 	}
@@ -813,4 +813,35 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
+}
+
+// EncStoreDocKey is a key for the encryption store.
+type EncStoreDocKey struct {
+	DocID   string
+	FieldID uint32
+}
+
+var _ Key = (*EncStoreDocKey)(nil)
+
+// NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
+func NewEncStoreDocKey(docID string, fieldID uint32) EncStoreDocKey {
+	return EncStoreDocKey{
+		DocID:   docID,
+		FieldID: fieldID,
+	}
+}
+
+func (k EncStoreDocKey) ToString() string {
+	if k.FieldID == 0 {
+		return k.DocID
+	}
+	return fmt.Sprintf("%s/%d", k.DocID, k.FieldID)
+}
+
+func (k EncStoreDocKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k EncStoreDocKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
 }

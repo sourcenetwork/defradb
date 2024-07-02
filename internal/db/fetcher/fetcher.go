@@ -351,7 +351,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 
 	if seekNext {
 		curKey := df.kv.Key
-		curKey.FieldId = "" // clear field so prefixEnd applies to docID
+		curKey.FieldID = "" // clear field so prefixEnd applies to docID
 		seekKey := curKey.PrefixEnd().ToString()
 		spanDone, df.kv, err = df.seekKV(seekKey)
 		// handle any internal errors
@@ -504,7 +504,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		}
 	}
 
-	if kv.Key.FieldId == core.DATASTORE_DOC_VERSION_FIELD_ID {
+	if kv.Key.FieldID == core.DATASTORE_DOC_VERSION_FIELD_ID {
 		df.doc.schemaVersionID = string(kv.Value)
 		return nil
 	}
@@ -515,7 +515,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 	}
 
 	// extract the FieldID and update the encoded doc properties map
-	fieldID, err := kv.Key.FieldID()
+	fieldID, err := kv.Key.FieldIDAsUint()
 	if err != nil {
 		return err
 	}

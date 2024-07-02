@@ -103,6 +103,8 @@ type Block struct {
 	Delta crdt.CRDT
 	// Links are the links to other blocks in the DAG.
 	Links []DAGLink
+	// IsEncrypted is a flag that indicates if the block's delta is encrypted.
+	IsEncrypted *bool
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.
@@ -111,8 +113,9 @@ type Block struct {
 func (b Block) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type Block struct {
-		delta	CRDT
-		links	[ DAGLink ]
+		delta				 CRDT
+		links				 [ DAGLink ]
+		isEncrypted optional Bool
 	}`)
 }
 
@@ -143,19 +146,9 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 
 	blockLinks = append(blockLinks, links...)
 
-	var crdtDelta crdt.CRDT
-	switch delta := delta.(type) {
-	case *crdt.LWWRegDelta:
-		crdtDelta = crdt.CRDT{LWWRegDelta: delta}
-	case *crdt.CompositeDAGDelta:
-		crdtDelta = crdt.CRDT{CompositeDAGDelta: delta}
-	case *crdt.CounterDelta:
-		crdtDelta = crdt.CRDT{CounterDelta: delta}
-	}
-
 	return &Block{
 		Links: blockLinks,
-		Delta: crdtDelta,
+		Delta: crdt.NewCRDT(delta),
 	}
 }
 
