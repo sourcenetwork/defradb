@@ -252,9 +252,10 @@ func TestIsJSONArray(t *testing.T) {
 			name: "Valid JSON Array with Whitespace",
 			input: []byte(`
 				[
-					{"name": "John", "age": 21},
-					{"name": "Islam", "age": 33}
-				]`),
+					{	"name": "John", "age": 21	},
+					{	"name": "Islam", "age": 33	}
+				]
+			`),
 			expected: true,
 		},
 	}
