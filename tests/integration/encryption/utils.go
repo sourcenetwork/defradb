@@ -11,6 +11,7 @@
 package encryption
 
 import (
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,4 +29,9 @@ func updateUserCollectionSchema() testUtils.SchemaUpdate {
 	return testUtils.SchemaUpdate{
 		Schema: userCollectionGQLSchema,
 	}
+}
+
+func encrypt(plaintext []byte) []byte {
+	val, _ := encryption.EncryptAES(plaintext, []byte("examplekey1234567890examplekey12"))
+	return val
 }

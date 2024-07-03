@@ -158,7 +158,15 @@ Returns the head commit for this document.
 `
 
 	encryptArgDescription string = `
-Encrypt flag specified if the input document(s) needs to be encrypted. If set, DefraDB will generate a
-symmetric key for encryption using AES-GCM.
+Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
+ DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
+ use it to encrypt all fields' values.
+`
+
+	encryptFieldsArgDescription string = `
+An optional list of individual fields that should be encrypted. For every field
+ in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
+ If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
+ be encrypted with the same key.
 `
 )

@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
@@ -25,6 +26,7 @@ import (
 )
 
 const docEncryptParam = "encrypt"
+const docEncryptFieldsParam = "encryptFields"
 
 type collectionHandler struct{}
 
@@ -47,8 +49,16 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := req.Context()
-	if req.URL.Query().Get(docEncryptParam) == "true" {
-		ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
+	q := req.URL.Query()
+	encConf := encryption.DocEncConfig{}
+	if q.Get(docEncryptParam) == "true" {
+		encConf.IsEncrypted = true
+	}
+	if q.Get(docEncryptFieldsParam) != "" {
+		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
+	}
+	if encConf.IsEncrypted || len(encConf.EncryptedFields) > 0 {
+		ctx = encryption.SetContextConfig(ctx, encConf)
 	}
 
 	switch {

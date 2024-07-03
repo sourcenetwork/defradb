@@ -86,8 +86,7 @@ func (mc *MerkleClock) AddDelta(
 	delta.SetPriority(height)
 	block := coreblock.New(delta, links, heads...)
 
-	// Write the new block to the dag store.
-	isEncrypted, err := mc.checkIfBlockEncryptionEnabled(ctx, heads)
+	isEncrypted, err := mc.checkIfBlockEncryptionEnabled(ctx, block.Delta.GetFieldName(), heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -130,10 +129,10 @@ func (mc *MerkleClock) AddDelta(
 
 func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 	ctx context.Context,
+	fieldName string,
 	heads []cid.Cid,
 ) (bool, error) {
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
+	if encryption.ShouldEncryptField(ctx, fieldName) {
 		return true, nil
 	}
 
@@ -156,7 +155,8 @@ func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 
 func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
 	clonedCRDT := block.Delta.Clone()
-	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()), 0, clonedCRDT.GetData())
+	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()),
+		clonedCRDT.GetFieldName(), clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}

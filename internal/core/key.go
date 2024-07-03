@@ -795,25 +795,25 @@ func bytesPrefixEnd(b []byte) []byte {
 
 // EncStoreDocKey is a key for the encryption store.
 type EncStoreDocKey struct {
-	DocID   string
-	FieldID uint32
+	DocID     string
+	FieldName string
 }
 
 var _ Key = (*EncStoreDocKey)(nil)
 
 // NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-func NewEncStoreDocKey(docID string, fieldID uint32) EncStoreDocKey {
+func NewEncStoreDocKey(docID string, fieldName string) EncStoreDocKey {
 	return EncStoreDocKey{
-		DocID:   docID,
-		FieldID: fieldID,
+		DocID:     docID,
+		FieldName: fieldName,
 	}
 }
 
 func (k EncStoreDocKey) ToString() string {
-	if k.FieldID == 0 {
+	if k.FieldName == "" {
 		return k.DocID
 	}
-	return fmt.Sprintf("%s/%d", k.DocID, k.FieldID)
+	return fmt.Sprintf("%s/%s", k.DocID, k.FieldName)
 }
 
 func (k EncStoreDocKey) Bytes() []byte {

@@ -13,14 +13,8 @@ package encryption
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
-
-func encrypt(plaintext []byte) []byte {
-	val, _ := encryption.EncryptAES(plaintext, []byte("examplekey1234567890examplekey12"))
-	return val
-}
 
 func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 	const docID = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"

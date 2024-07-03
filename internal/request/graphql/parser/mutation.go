@@ -142,6 +142,17 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			mut.DocIDs = immutable.Some(ids)
 		} else if prop == request.EncryptArgName {
 			mut.Encrypt = argument.Value.(*ast.BooleanValue).Value
+		} else if prop == request.EncryptFieldsArgName {
+			raw := argument.Value.(*ast.ListValue)
+			fieldNames := make([]string, len(raw.Values))
+			for i, val := range raw.Values {
+				id, ok := val.(*ast.StringValue)
+				if !ok {
+					return nil, client.NewErrUnexpectedType[*ast.StringValue]("encryptField argument", val)
+				}
+				fieldNames[i] = id.Value
+			}
+			mut.EncryptFields = fieldNames
 		}
 	}
 
