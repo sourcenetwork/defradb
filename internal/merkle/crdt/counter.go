@@ -39,7 +39,7 @@ func NewMerkleCounter(
 	kind client.ScalarKind,
 ) *MerkleCounter {
 	register := crdt.NewCounter(store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement, kind)
-	clk := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), register)
+	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), key.ToHeadStoreKey(), register)
 	base := &baseMerkleCRDT{clock: clk, crdt: register}
 	return &MerkleCounter{
 		baseMerkleCRDT: base,

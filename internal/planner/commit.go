@@ -184,7 +184,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	var currentCid *cid.Cid
-	store := n.planner.txn.DAGstore()
+	store := n.planner.txn.Blockstore()
 
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]

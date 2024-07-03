@@ -55,7 +55,7 @@ const (
 type db struct {
 	glock sync.RWMutex
 
-	rootstore  datastore.RootStore
+	rootstore  datastore.Rootstore
 	multistore datastore.MultiStore
 
 	events *event.Bus
@@ -75,12 +75,16 @@ type db struct {
 
 	// Contains ACP if it exists
 	acp immutable.Option[acp.ACP]
+
+	// The peer ID and network address information for the current node
+	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
+	peerInfo atomic.Value
 }
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
-	rootstore datastore.RootStore,
+	rootstore datastore.Rootstore,
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -90,7 +94,7 @@ func NewDB(
 
 func newDB(
 	ctx context.Context,
-	rootstore datastore.RootStore,
+	rootstore datastore.Rootstore,
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -126,11 +130,11 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
 	if err != nil {
 		return nil, err
 	}
-	go db.handleMerges(ctx, sub)
+	go db.handleMessages(ctx, sub)
 
 	return db, nil
 }
@@ -147,14 +151,14 @@ func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Tx
 	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
-// Root returns the root datastore.
-func (db *db) Root() datastore.RootStore {
+// Rootstore returns the root datastore.
+func (db *db) Rootstore() datastore.Rootstore {
 	return db.rootstore
 }
 
 // Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Blockstore() datastore.DAGStore {
-	return db.multistore.DAGstore()
+func (db *db) Blockstore() datastore.Blockstore {
+	return db.multistore.Blockstore()
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.

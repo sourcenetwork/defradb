@@ -26,7 +26,7 @@ import (
 
 type Stores interface {
 	Datastore() datastore.DSReaderWriter
-	DAGstore() datastore.DAGStore
+	Blockstore() datastore.Blockstore
 	Headstore() datastore.DSReaderWriter
 }
 

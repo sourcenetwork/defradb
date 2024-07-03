@@ -32,7 +32,7 @@ type multistore struct {
 	peer   DSBatching
 	system DSReaderWriter
 	// block DSReaderWriter
-	dag DAGStore
+	dag Blockstore
 }
 
 var _ MultiStore = (*multistore)(nil)
@@ -67,8 +67,8 @@ func (ms multistore) Peerstore() DSBatching {
 	return ms.peer
 }
 
-// DAGstore implements MultiStore.
-func (ms multistore) DAGstore() DAGStore {
+// Blockstore implements MultiStore.
+func (ms multistore) Blockstore() Blockstore {
 	return ms.dag
 }
 

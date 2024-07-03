@@ -77,8 +77,8 @@ func (w *TxWrapper) Peerstore() datastore.DSBatching {
 	return w.server.Peerstore()
 }
 
-func (w *TxWrapper) DAGstore() datastore.DAGStore {
-	return w.server.DAGstore()
+func (w *TxWrapper) Blockstore() datastore.Blockstore {
+	return w.server.Blockstore()
 }
 
 func (w *TxWrapper) Systemstore() datastore.DSReaderWriter {

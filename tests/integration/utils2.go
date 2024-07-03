@@ -650,10 +650,10 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := setupDatabase(s)
+		node, path, err := setupNode(s)
 		require.Nil(s.t, err)
 
-		c, err := setupClient(s, &net.Node{DB: db})
+		c, err := setupClient(s, node)
 		require.Nil(s.t, err)
 
 		s.nodes = append(s.nodes, c)
@@ -679,18 +679,34 @@ func restartNodes(
 	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
-		db, _, err := setupDatabase(s)
+		node, _, err := setupNode(s)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
 		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
 			// basic (i.e. no P2P stuff) and can be yielded now.
-			c, err := setupClient(s, &net.Node{DB: db})
+			c, err := setupClient(s, node)
 			require.NoError(s.t, err)
 			s.nodes[i] = c
 			continue
 		}
+
+		// We need to ensure that on restart, the node pubsub is configured before
+		// we continue with the test. Otherwise, we may miss update events.
+		readySub, err := node.DB.Events().Subscribe(event.P2PTopicCompletedName, event.ReplicatorCompletedName)
+		require.NoError(s.t, err)
+		waitLen := 0
+		cols, err := node.DB.GetAllP2PCollections(s.ctx)
+		require.NoError(s.t, err)
+		if len(cols) > 0 {
+			// there is only one message for loading of P2P collections
+			waitLen++
+		}
+		reps, err := node.DB.GetAllReplicators(s.ctx)
+		require.NoError(s.t, err)
+		// there is one message per replicator
+		waitLen += len(reps)
 
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
@@ -702,16 +718,16 @@ func restartNodes(
 		nodeOpts := s.nodeConfigs[i]
 		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
-		var n *net.Node
-		n, err = net.NewNode(s.ctx, db, nodeOpts...)
+		p, err := net.NewPeer(s.ctx, node.DB.Rootstore(), node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
 		require.NoError(s.t, err)
 
-		if err := n.Start(); err != nil {
-			n.Close()
+		if err := p.Start(); err != nil {
+			p.Close()
 			require.NoError(s.t, err)
 		}
+		node.Peer = p
 
-		c, err := setupClient(s, n)
+		c, err := setupClient(s, node)
 		require.NoError(s.t, err)
 		s.nodes[i] = c
 
@@ -724,6 +740,15 @@ func restartNodes(
 		updateSub, err := c.Events().Subscribe(event.UpdateName)
 		require.NoError(s.t, err)
 		s.nodeUpdateSubs[i] = updateSub
+
+		for waitLen > 0 {
+			select {
+			case <-readySub.Message():
+				waitLen--
+			case <-time.After(10 * time.Second):
+				s.t.Fatalf("timeout waiting for node to be ready")
+			}
+		}
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -775,7 +800,7 @@ func configureNode(
 		return
 	}
 
-	db, path, err := setupDatabase(s) //disable change dector, or allow it?
+	node, path, err := setupNode(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	privateKey, err := crypto.GenerateEd25519()
@@ -784,20 +809,21 @@ func configureNode(
 	nodeOpts := action()
 	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
 
-	var n *net.Node
-	n, err = net.NewNode(s.ctx, db, nodeOpts...)
+	p, err := net.NewPeer(s.ctx, node.DB.Rootstore(), node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
 	require.NoError(s.t, err)
 
-	log.InfoContext(s.ctx, "Starting P2P node", corelog.Any("P2P address", n.PeerInfo()))
-	if err := n.Start(); err != nil {
-		n.Close()
+	log.InfoContext(s.ctx, "Starting P2P node", corelog.Any("P2P address", p.PeerInfo()))
+	if err := p.Start(); err != nil {
+		p.Close()
 		require.NoError(s.t, err)
 	}
 
-	s.nodeAddresses = append(s.nodeAddresses, n.PeerInfo())
+	s.nodeAddresses = append(s.nodeAddresses, p.PeerInfo())
 	s.nodeConfigs = append(s.nodeConfigs, nodeOpts)
 
-	c, err := setupClient(s, n)
+	node.Peer = p
+
+	c, err := setupClient(s, node)
 	require.NoError(s.t, err)
 
 	s.nodes = append(s.nodes, c)
@@ -1143,7 +1169,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.P2P, []client.Collection) (*client.Document, error)
+	var mutation func(*state, CreateDoc, client.DB, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1188,7 +1214,7 @@ func createDoc(
 func createDocViaColSave(
 	s *state,
 	action CreateDoc,
-	node client.P2P,
+	node client.DB,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
@@ -1213,7 +1239,7 @@ func createDocViaColSave(
 func createDocViaColCreate(
 	s *state,
 	action CreateDoc,
-	node client.P2P,
+	node client.DB,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
@@ -1238,7 +1264,7 @@ func createDocViaColCreate(
 func createDocViaGQL(
 	s *state,
 	action CreateDoc,
-	node client.P2P,
+	node client.DB,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
@@ -1344,7 +1370,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, client.P2P, []client.Collection) error
+	var mutation func(*state, UpdateDoc, client.DB, []client.Collection) error
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1378,7 +1404,7 @@ func updateDoc(
 func updateDocViaColSave(
 	s *state,
 	action UpdateDoc,
-	node client.P2P,
+	node client.DB,
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
@@ -1405,7 +1431,7 @@ func updateDocViaColSave(
 func updateDocViaColUpdate(
 	s *state,
 	action UpdateDoc,
-	node client.P2P,
+	node client.DB,
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
@@ -1429,7 +1455,7 @@ func updateDocViaColUpdate(
 func updateDocViaGQL(
 	s *state,
 	action UpdateDoc,
-	node client.P2P,
+	node client.DB,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]

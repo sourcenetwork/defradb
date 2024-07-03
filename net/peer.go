@@ -14,40 +14,53 @@ package net
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ipfs/boxo/bitswap"
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
 	exchange "github.com/ipfs/boxo/exchange"
+	"github.com/ipfs/boxo/ipns"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	libp2p "github.com/libp2p/go-libp2p"
 	gostream "github.com/libp2p/go-libp2p-gostream"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	record "github.com/libp2p/go-libp2p-record"
+	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
+	libp2pEvent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	peerstore "github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/core/routing"
+
+	// @TODO: https://github.com/sourcenetwork/defradb/issues/1902
+	//nolint:staticcheck
+	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	//config??
+	blockstore datastore.Blockstore
 
-	db        client.DB
+	bus       *event.Bus
 	updateSub *event.Subscription
 
 	host host.Host
@@ -57,50 +70,156 @@ type Peer struct {
 	server *server
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
-	// replicators is a map from collectionName => peerId
-	replicators map[string]map[peer.ID]struct{}
-	mu          sync.Mutex
-
 	// peer DAG service
 	exch  exchange.Interface
 	bserv blockservice.BlockService
 
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx      context.Context
+	cancel   context.CancelFunc
+	dhtClose func() error
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
 	ctx context.Context,
-	db client.DB,
-	h host.Host,
-	dht routing.Routing,
-	ps *pubsub.PubSub,
-	serverOptions []grpc.ServerOption,
-	dialOptions []grpc.DialOption,
-) (*Peer, error) {
-	if db == nil {
+	rootstore datastore.Rootstore,
+	blockstore datastore.Blockstore,
+	bus *event.Bus,
+	opts ...NodeOpt,
+) (p *Peer, err error) {
+	if rootstore == nil || blockstore == nil {
 		return nil, ErrNilDB
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	p := &Peer{
-		host:        h,
-		dht:         dht,
-		ps:          ps,
-		db:          db,
-		p2pRPC:      grpc.NewServer(serverOptions...),
-		ctx:         ctx,
-		cancel:      cancel,
-		replicators: make(map[string]map[peer.ID]struct{}),
+	options := DefaultOptions()
+	for _, opt := range opts {
+		opt(options)
 	}
-	var err error
-	p.server, err = newServer(p, dialOptions...)
+
+	connManager, err := connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
 	if err != nil {
 		return nil, err
 	}
 
-	err = p.loadReplicators(p.ctx)
+	var listenAddresses []multiaddr.Multiaddr
+	for _, addr := range options.ListenAddresses {
+		listenAddress, err := multiaddr.NewMultiaddr(addr)
+		if err != nil {
+			return nil, err
+		}
+		listenAddresses = append(listenAddresses, listenAddress)
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if p == nil {
+			cancel()
+		}
+	}()
+
+	peerstore, err := pstoreds.NewPeerstore(ctx, rootstore, pstoreds.DefaultOpts())
+	if err != nil {
+		return nil, err
+	}
+
+	if options.PrivateKey == nil {
+		// generate an ephemeral private key
+		key, err := crypto.GenerateEd25519()
+		if err != nil {
+			return nil, err
+		}
+		options.PrivateKey = key
+	}
+
+	// unmarshal the private key bytes
+	privateKey, err := libp2pCrypto.UnmarshalEd25519PrivateKey(options.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var ddht *dualdht.DHT
+
+	libp2pOpts := []libp2p.Option{
+		libp2p.ConnectionManager(connManager),
+		libp2p.DefaultTransports,
+		libp2p.Identity(privateKey),
+		libp2p.ListenAddrs(listenAddresses...),
+		libp2p.Peerstore(peerstore),
+		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
+			// Delete this line and uncomment the next 6 lines once we remove batchable datastore support.
+			// var store ds.Batching
+			// // If `rootstore` doesn't implement `Batching`, `nil` will be passed
+			// // to newDHT which will cause the DHT to be stored in memory.
+			// if dsb, isBatching := rootstore.(ds.Batching); isBatching {
+			// 	store = dsb
+			// }
+			ddht, err = newDHT(ctx, h, rootstore)
+			return ddht, err
+		}),
+	}
+	if !options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.DisableRelay())
+	}
+
+	h, err := libp2p.New(libp2pOpts...)
+	if err != nil {
+		return nil, err
+	}
+	log.InfoContext(
+		ctx,
+		"Created LibP2P host",
+		corelog.Any("PeerId", h.ID()),
+		corelog.Any("Address", options.ListenAddresses),
+	)
+
+	var ps *pubsub.PubSub
+	if options.EnablePubSub {
+		ps, err = pubsub.NewGossipSub(
+			ctx,
+			h,
+			pubsub.WithPeerExchange(true),
+			pubsub.WithFloodPublish(true),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	sub, err := h.EventBus().Subscribe(&libp2pEvent.EvtPeerConnectednessChanged{})
+	if err != nil {
+		return nil, err
+	}
+	// publish subscribed events to the event bus
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case val, isOpen := <-sub.Out():
+				if !isOpen {
+					return
+				}
+				bus.Publish(event.NewMessage(event.PeerName, val))
+			}
+		}
+	}()
+
+	p = &Peer{
+		host:       h,
+		dht:        ddht,
+		ps:         ps,
+		blockstore: blockstore,
+		bus:        bus,
+		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
+		ctx:        ctx,
+		cancel:     cancel,
+	}
+
+	p.server, err = newServer(p, options.GRPCDialOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +231,6 @@ func NewPeer(
 
 // Start all the internal workers/goroutines/loops that manage the P2P state.
 func (p *Peer) Start() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	// reconnect to known peers
 	var wg sync.WaitGroup
 	for _, id := range p.host.Peerstore().PeersWithAddrs() {
@@ -142,13 +258,13 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		sub, err := p.db.Events().Subscribe(event.UpdateName)
+		sub, err := p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
 		if err != nil {
 			return err
 		}
 		p.updateSub = sub
 		log.InfoContext(p.ctx, "Starting internal broadcaster for pubsub network")
-		go p.handleBroadcastLoop()
+		go p.handleMessageLoop()
 	}
 
 	log.InfoContext(
@@ -163,6 +279,8 @@ func (p *Peer) Start() error {
 			log.ErrorContextE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
+
+	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
 	return nil
 }
@@ -180,10 +298,9 @@ func (p *Peer) Close() {
 			log.ErrorContextE(p.ctx, "Failed closing server RPC connections", err)
 		}
 	}
-	stopGRPCServer(p.ctx, p.p2pRPC)
 
 	if p.updateSub != nil {
-		p.db.Events().Unsubscribe(p.updateSub)
+		p.bus.Unsubscribe(p.updateSub)
 	}
 
 	if err := p.bserv.Close(); err != nil {
@@ -194,31 +311,50 @@ func (p *Peer) Close() {
 		log.ErrorContextE(p.ctx, "Error closing host", err)
 	}
 
-	p.cancel()
+	if p.dhtClose != nil {
+		err := p.dhtClose()
+		if err != nil {
+			log.ErrorContextE(p.ctx, "Failed to close DHT", err)
+		}
+	}
+
+	stopGRPCServer(p.ctx, p.p2pRPC)
+
+	if p.cancel != nil {
+		p.cancel()
+	}
 }
 
-// handleBroadcast loop manages the transition of messages
+// handleMessage loop manages the transition of messages
 // from the internal broadcaster to the external pubsub network
-func (p *Peer) handleBroadcastLoop() {
+func (p *Peer) handleMessageLoop() {
 	for {
 		msg, isOpen := <-p.updateSub.Message()
 		if !isOpen {
 			return
 		}
-		update, ok := msg.Data.(event.Update)
-		if !ok {
-			continue // ignore invalid value
-		}
 
-		var err error
-		if update.IsCreate {
-			err = p.handleDocCreateLog(update)
-		} else {
-			err = p.handleDocUpdateLog(update)
-		}
+		switch evt := msg.Data.(type) {
+		case event.Update:
+			var err error
+			if evt.IsCreate {
+				err = p.handleDocCreateLog(evt)
+			} else {
+				err = p.handleDocUpdateLog(evt)
+			}
 
-		if err != nil {
-			log.ErrorContextE(p.ctx, "Error while handling broadcast log", err)
+			if err != nil {
+				log.ErrorContextE(p.ctx, "Error while handling broadcast log", err)
+			}
+
+		case event.P2PTopic:
+			p.server.updatePubSubTopics(evt)
+
+		case event.Replicator:
+			p.server.updateReplicators(evt)
+		default:
+			// ignore other events
+			continue
 		}
 	}
 }
@@ -256,112 +392,6 @@ func (p *Peer) RegisterNewDocument(
 	}
 
 	return p.server.publishLog(p.ctx, schemaRoot, req)
-}
-
-func (p *Peer) pushToReplicator(
-	ctx context.Context,
-	txn datastore.Txn,
-	collection client.Collection,
-	docIDsCh <-chan client.DocIDResult,
-	pid peer.ID,
-) {
-	for docIDResult := range docIDsCh {
-		if docIDResult.Err != nil {
-			log.ErrorContextE(ctx, "Key channel error", docIDResult.Err)
-			continue
-		}
-		docID := core.DataStoreKeyFromDocID(docIDResult.ID)
-		headset := clock.NewHeadSet(
-			txn.Headstore(),
-			docID.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
-		)
-		cids, _, err := headset.List(ctx)
-		if err != nil {
-			log.ErrorContextE(
-				ctx,
-				"Failed to get heads",
-				err,
-				corelog.String("DocID", docIDResult.ID.String()),
-				corelog.Any("PeerID", pid),
-				corelog.Any("Collection", collection.Name()))
-			continue
-		}
-		// loop over heads, get block, make the required logs, and send
-		for _, c := range cids {
-			blk, err := txn.DAGstore().Get(ctx, c)
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to get block", err,
-					corelog.Any("CID", c),
-					corelog.Any("PeerID", pid),
-					corelog.Any("Collection", collection.Name()))
-				continue
-			}
-
-			evt := event.Update{
-				DocID:      docIDResult.ID.String(),
-				Cid:        c,
-				SchemaRoot: collection.SchemaRoot(),
-				Block:      blk.RawData(),
-			}
-			if err := p.server.pushLog(ctx, evt, pid); err != nil {
-				log.ErrorContextE(
-					ctx,
-					"Failed to replicate log",
-					err,
-					corelog.Any("CID", c),
-					corelog.Any("PeerID", pid),
-				)
-			}
-		}
-	}
-}
-
-func (p *Peer) loadReplicators(ctx context.Context) error {
-	reps, err := p.GetAllReplicators(ctx)
-	if err != nil {
-		return errors.Wrap("failed to get replicators", err)
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	for _, rep := range reps {
-		for _, schema := range rep.Schemas {
-			if pReps, exists := p.replicators[schema]; exists {
-				if _, exists := pReps[rep.Info.ID]; exists {
-					continue
-				}
-			} else {
-				p.replicators[schema] = make(map[peer.ID]struct{})
-			}
-
-			// add to replicators list
-			p.replicators[schema][rep.Info.ID] = struct{}{}
-		}
-
-		// Add the destination's peer multiaddress in the peerstore.
-		// This will be used during connection and stream creation by libp2p.
-		p.host.Peerstore().AddAddrs(rep.Info.ID, rep.Info.Addrs, peerstore.PermanentAddrTTL)
-
-		log.InfoContext(ctx, "loaded replicators from datastore", corelog.Any("Replicator", rep))
-	}
-
-	return nil
-}
-
-func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, error) {
-	collections, err := p.GetAllP2PCollections(ctx)
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
-		return nil, err
-	}
-	colMap := make(map[string]struct{})
-	for _, col := range collections {
-		err := p.server.addPubSubTopic(col, true)
-		if err != nil {
-			return nil, err
-		}
-		colMap[col] = struct{}{}
-	}
-
-	return colMap, nil
 }
 
 func (p *Peer) handleDocCreateLog(evt event.Update) error {
@@ -425,9 +455,9 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 		peers[peer.String()] = struct{}{}
 	}
 
-	p.mu.Lock()
-	reps, exists := p.replicators[lg.SchemaRoot]
-	p.mu.Unlock()
+	p.server.mu.Lock()
+	reps, exists := p.server.replicators[lg.SchemaRoot]
+	p.server.mu.Unlock()
 
 	if exists {
 		for pid := range reps {
@@ -453,8 +483,8 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 
 func (p *Peer) setupBlockService() {
 	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
-	bswap := bitswap.New(p.ctx, bswapnet, p.db.Blockstore())
-	p.bserv = blockservice.New(p.db.Blockstore(), bswap)
+	bswap := bitswap.New(p.ctx, bswapnet, p.blockstore)
+	p.bserv = blockservice.New(p.blockstore, bswap)
 	p.exch = bswap
 }
 
@@ -474,22 +504,63 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	}
 }
 
-// rollbackAddPubSubTopics removes the given topics from the pubsub system.
-func (p *Peer) rollbackAddPubSubTopics(topics []string, cause error) error {
-	for _, topic := range topics {
-		if err := p.server.removePubSubTopic(topic); err != nil {
-			return errors.WithStack(err, errors.NewKV("Cause", cause))
-		}
+// Bootstrap connects to the given peers.
+func (p *Peer) Bootstrap(addrs []peer.AddrInfo) {
+	var connected uint64
+
+	var wg sync.WaitGroup
+	for _, pinfo := range addrs {
+		wg.Add(1)
+		go func(pinfo peer.AddrInfo) {
+			defer wg.Done()
+			err := p.host.Connect(p.ctx, pinfo)
+			if err != nil {
+				log.InfoContext(p.ctx, "Cannot connect to peer", corelog.Any("Error", err))
+				return
+			}
+			log.InfoContext(p.ctx, "Connected", corelog.Any("PeerID", pinfo.ID))
+			atomic.AddUint64(&connected, 1)
+		}(pinfo)
 	}
-	return cause
+
+	wg.Wait()
+
+	if nPeers := len(addrs); int(connected) < nPeers/2 {
+		log.InfoContext(p.ctx, fmt.Sprintf("Only connected to %d bootstrap peers out of %d", connected, nPeers))
+	}
+
+	err := p.dht.Bootstrap(p.ctx)
+	if err != nil {
+		log.ErrorContextE(p.ctx, "Problem bootstraping using DHT", err)
+		return
+	}
 }
 
-// rollbackRemovePubSubTopics adds back the given topics from the pubsub system.
-func (p *Peer) rollbackRemovePubSubTopics(topics []string, cause error) error {
-	for _, topic := range topics {
-		if err := p.server.addPubSubTopic(topic, true); err != nil {
-			return errors.WithStack(err, errors.NewKV("Cause", cause))
-		}
+func (p *Peer) PeerID() peer.ID {
+	return p.host.ID()
+}
+
+func (p *Peer) ListenAddrs() []multiaddr.Multiaddr {
+	return p.host.Network().ListenAddresses()
+}
+
+func (p *Peer) PeerInfo() peer.AddrInfo {
+	return peer.AddrInfo{
+		ID:    p.host.ID(),
+		Addrs: p.host.Network().ListenAddresses(),
 	}
-	return cause
+}
+
+func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, error) {
+	dhtOpts := []dualdht.Option{
+		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
+		dualdht.DHTOption(dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()})),
+		dualdht.DHTOption(dht.Concurrency(10)),
+		dualdht.DHTOption(dht.Mode(dht.ModeAuto)),
+	}
+	if dsb != nil {
+		dhtOpts = append(dhtOpts, dualdht.DHTOption(dht.Datastore(dsb)))
+	}
+
+	return dualdht.New(ctx, h, dhtOpts...)
 }

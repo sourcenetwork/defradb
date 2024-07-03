@@ -32,7 +32,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, datastore.DSReaderWriter) {
 	multistore := datastore.MultiStoreFrom(s)
 
 	reg := crdt.NewLWWRegister(multistore.Datastore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
-	clk := clock.NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg)
+	clk := clock.NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), core.HeadStoreKey{}, reg)
 	return &baseMerkleCRDT{clock: clk, crdt: reg}, multistore.Rootstore()
 }
 
