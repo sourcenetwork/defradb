@@ -44,7 +44,7 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                     }`,
 				Results: []map[string]any{
 					{
-						"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+						"_docID": testUtils.NewDocIndex(0, 0),
 						"name":   "John",
 						"age":    int64(21),
 					},
@@ -57,12 +57,9 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 }
 
 func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testing.T) {
-	const docID = "bae-ab8ae7d9-6473-5101-ba02-66b217948d7a"
-
 	const query = `
 		query {
 			Users {
-				_docID
 				name
 				points
 			}
@@ -88,7 +85,6 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 				Request: query,
 				Results: []map[string]any{
 					{
-						"_docID": docID,
 						"name":   "John",
 						"points": 5,
 					},
@@ -102,7 +98,6 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 				Request: query,
 				Results: []map[string]any{
 					{
-						"_docID": docID,
 						"name":   "John",
 						"points": 8,
 					},

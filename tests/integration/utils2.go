@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
@@ -107,6 +108,7 @@ func init() {
 	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
 		skipNetworkTests, _ = strconv.ParseBool(value)
 	}
+	mutationType = GQLRequestMutationType
 }
 
 // AssertPanic asserts that the code inside the specified PanicTestFunc panics.
@@ -1302,7 +1304,7 @@ func createDocViaGQL(
 	collection := collections[action.CollectionID]
 	var input string
 
-	paramName := "input"
+	paramName := request.Input
 
 	var err error
 	if action.DocMap != nil {
@@ -1311,7 +1313,7 @@ func createDocViaGQL(
 		var docMaps []map[string]any
 		err = json.Unmarshal([]byte(action.Doc), &docMaps)
 		require.NoError(s.t, err)
-		paramName = "inputs"
+		paramName = request.Inputs
 		input, err = arrayToGQL(docMaps)
 	} else {
 		input, err = jsonToGQL(action.Doc)
@@ -1321,10 +1323,10 @@ func createDocViaGQL(
 	params := paramName + ": " + input
 
 	if action.IsEncrypted {
-		params = params + ", encrypt: true"
+		params = params + ", " + request.EncryptArgName + ": true"
 	}
 
-	request := fmt.Sprintf(
+	req := fmt.Sprintf(
 		`mutation {
 			create_%s(%s) {
 				_docID
@@ -1338,10 +1340,7 @@ func createDocViaGQL(
 
 	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
 
-	result := node.ExecRequest(
-		ctx,
-		request,
-	)
+	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -1354,7 +1353,7 @@ func createDocViaGQL(
 	docs := make([]*client.Document, len(resultantDocs))
 
 	for i, docMap := range resultantDocs {
-		docIDString := docMap["_docID"].(string)
+		docIDString := docMap[request.DocIDFieldName].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
 		require.NoError(s.t, err)
 

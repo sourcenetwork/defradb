@@ -104,6 +104,7 @@ type Block struct {
 	// Links are the links to other blocks in the DAG.
 	Links []DAGLink
 	// IsEncrypted is a flag that indicates if the block's delta is encrypted.
+	// It needs to be a pointer so that it can be translated from and to `optional Bool` in the IPLD schema.
 	IsEncrypted *bool
 }
 

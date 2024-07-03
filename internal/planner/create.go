@@ -40,7 +40,7 @@ type createNode struct {
 	input []map[string]any
 	docs  []*client.Document
 
-	err error
+	didCreate bool
 
 	results planNode
 
@@ -73,9 +73,8 @@ func documentsToDocIDs(docs []*client.Document) []string {
 	return docIDs
 }
 
-func (n *createNode) Start() (err error) {
+func (n *createNode) Start() error {
 	n.docs = make([]*client.Document, len(n.input))
-	defer func() { n.err = err }()
 
 	for i, input := range n.input {
 		doc, err := client.NewDocFromMap(input, n.collection.Definition())
@@ -85,31 +84,30 @@ func (n *createNode) Start() (err error) {
 		n.docs[i] = doc
 	}
 
-	if len(n.docs) == 1 {
-		err = n.collection.Create(n.p.ctx, n.docs[0])
-	} else {
-		err = n.collection.CreateMany(n.p.ctx, n.docs)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	n.results.Spans(docIDsToSpans(documentsToDocIDs(n.docs), n.collection.Description()))
-
-	err = n.results.Init()
-	if err != nil {
-		return err
-	}
-
-	return n.results.Start()
+	return nil
 }
 
 func (n *createNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if n.err != nil {
-		return false, n.err
+	if !n.didCreate {
+		err := n.collection.CreateMany(n.p.ctx, n.docs)
+		if err != nil {
+			return false, err
+		}
+
+		n.results.Spans(docIDsToSpans(documentsToDocIDs(n.docs), n.collection.Description()))
+
+		err = n.results.Init()
+		if err != nil {
+			return false, err
+		}
+
+		err = n.results.Start()
+		if err != nil {
+			return false, err
+		}
+		n.didCreate = true
 	}
 
 	next, err := n.results.Next()

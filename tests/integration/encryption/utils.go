@@ -14,6 +14,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+// we explicitly set LWW CRDT type because we want to test encryption with this specific CRDT type
+// and we don't wat to rely on the default behavior
 const userCollectionGQLSchema = (`
 	type Users {
 		name: String
