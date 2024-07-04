@@ -27,10 +27,7 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                     }
                 `},
 			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
+				Doc:         john21Doc,
 				IsEncrypted: true,
 			},
 			testUtils.Request{

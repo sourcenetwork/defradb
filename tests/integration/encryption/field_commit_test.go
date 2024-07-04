@@ -14,20 +14,82 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncrypted(t *testing.T) {
-	const docID = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
+				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							delta
+							docID
+							fieldName
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"delta":     encrypt(testUtils.CBORValue(21), john21DocID, "age"),
+						"docID":     john21DocID,
+						"fieldName": "age",
+					},
+					{
+						"delta":     testUtils.CBORValue("John"),
+						"docID":     john21DocID,
+						"fieldName": "name",
+					},
+					{
+						"delta":     nil,
+						"docID":     john21DocID,
+						"fieldName": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyForIndividualFields(t *testing.T) {
+	deltaForField := func(fieldName string, result []map[string]any) []byte {
+		for _, r := range result {
+			if r["fieldName"] == fieldName {
+				return r["delta"].([]byte)
+			}
+		}
+		t.Fatalf("Field %s not found in results %v", fieldName, result)
+		return nil
+	}
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name1: String
+						name2: String
+						name3: String
+						name4: String
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name1": "John",
+						"name2": "John",
+						"name3": "John",
+						"name4": "John"
+					}`,
+				IsEncrypted:     true,
+				EncryptedFields: []string{"name1", "name3"},
 			},
 			testUtils.Request{
 				Request: `
@@ -35,35 +97,21 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 						commits {
 							cid
 							delta
-							docID
-							fieldId
 							fieldName
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"cid":       "bafyreih7ry7ef26xn3lm2rhxusf2rbgyvl535tltrt6ehpwtvdnhlmptiu",
-						"delta":     encrypt(testUtils.CBORValue(21)),
-						"docID":     docID,
-						"fieldId":   "1",
-						"fieldName": "age",
-					},
-					{
-						"cid":       "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"delta":     testUtils.CBORValue("John"),
-						"docID":     docID,
-						"fieldId":   "2",
-						"fieldName": "name",
-					},
-					{
-						"cid":       "bafyreifwckkbrr4vzgv5k6sc6jbp6xsns6w75lm2pemjcaenlkyz5qqzam",
-						"delta":     nil,
-						"docID":     docID,
-						"fieldId":   "C",
-						"fieldName": nil,
-					},
-				},
+				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result []map[string]any) (bool, string) {
+					name1 := deltaForField("name1", result)
+					name2 := deltaForField("name2", result)
+					name3 := deltaForField("name3", result)
+					name4 := deltaForField("name4", result)
+					assert.Equal(t, name2, name4, "name2 and name4 should have the same encryption key")
+					assert.NotEqual(t, name2, name1, "name2 and name1 should have different encryption keys")
+					assert.NotEqual(t, name2, name3, "name2 and name3 should have different encryption keys")
+					assert.NotEqual(t, name1, name3, "name1 and name3 should have different encryption keys")
+					return true, ""
+				}),
 			},
 		},
 	}

@@ -30,7 +30,7 @@ const keyLength = 32 // 32 bytes for AES-256
 const testEncryptionKey = "examplekey1234567890examplekey12"
 
 // generateEncryptionKey generates a random AES key.
-func generateEncryptionKey() ([]byte, error) {
+func generateEncryptionKey(_, _ string) ([]byte, error) {
 	key := make([]byte, keyLength)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
 		return nil, err
@@ -39,8 +39,10 @@ func generateEncryptionKey() ([]byte, error) {
 }
 
 // generateTestEncryptionKey generates a deterministic encryption key for testing.
-func generateTestEncryptionKey() ([]byte, error) {
-	return []byte(testEncryptionKey), nil
+// While testing, we also want to make sure different keys are generated for different docs and fields
+// and that's why we use the docID and fieldName to generate the key.
+func generateTestEncryptionKey(docID, fieldName string) ([]byte, error) {
+	return []byte(fieldName + docID + testEncryptionKey)[0:keyLength], nil
 }
 
 // DocEncryptor is a document encryptor that encrypts and decrypts individual document fields.
@@ -99,7 +101,7 @@ func shouldEncryptField(conf immutable.Option[DocEncConfig], fieldName string) b
 // Encrypt encrypts the given plainText that is associated with the given docID and fieldName.
 // If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
 // Otherwise, it will use document-level encryption key.
-func (d *DocEncryptor) Encrypt(docID string, fieldName string, plainText []byte) ([]byte, error) {
+func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byte, error) {
 	if !shouldEncryptIndividualField(d.conf, fieldName) {
 		fieldName = ""
 	}
@@ -113,7 +115,7 @@ func (d *DocEncryptor) Encrypt(docID string, fieldName string, plainText []byte)
 			return plainText, nil
 		}
 
-		encryptionKey, err = generateEncryptionKeyFunc()
+		encryptionKey, err = generateEncryptionKeyFunc(docID, fieldName)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +130,7 @@ func (d *DocEncryptor) Encrypt(docID string, fieldName string, plainText []byte)
 
 // Decrypt decrypts the given cipherText that is associated with the given docID and fieldName.
 // If the corresponding encryption key is not found, it returns nil.
-func (d *DocEncryptor) Decrypt(docID string, fieldName string, cipherText []byte) ([]byte, error) {
+func (d *DocEncryptor) Decrypt(docID, fieldName string, cipherText []byte) ([]byte, error) {
 	encKey, _, err := d.fetchEncryptionKey(docID, fieldName)
 	if err != nil {
 		return nil, err

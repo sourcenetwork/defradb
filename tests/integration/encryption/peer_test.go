@@ -33,11 +33,8 @@ func TestDocEncryptionPeer_IfPeerHasNoKey_ShouldNotFetch(t *testing.T) {
 				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John",
-					"age": 21
-				}`,
+				NodeID:      immutable.Some(0),
+				Doc:         john21Doc,
 				IsEncrypted: true,
 			},
 			testUtils.WaitForSync{},
@@ -71,11 +68,8 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John",
-					"age": 21
-				}`,
+				NodeID:      immutable.Some(0),
+				Doc:         john21Doc,
 				IsEncrypted: true,
 			},
 			testUtils.WaitForSync{},
@@ -100,41 +94,41 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"cid":          "bafyreih7ry7ef26xn3lm2rhxusf2rbgyvl535tltrt6ehpwtvdnhlmptiu",
+						"cid":          "bafyreibdjepzhhiez4o27srv33xcd52yr336tpzqtkv36rdf3h3oue2l5m",
 						"collectionID": int64(1),
-						"delta":        encrypt(testUtils.CBORValue(21)),
-						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+						"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
+						"docID":        john21DocID,
 						"fieldId":      "1",
 						"fieldName":    "age",
 						"height":       int64(1),
 						"links":        []map[string]any{},
 					},
 					{
-						"cid":          "bafyreifusejlwidaqswasct37eorazlfix6vyyn5af42pmjvktilzj5cty",
+						"cid":          "bafyreihkiua7jpwkye3xlex6s5hh2azckcaljfi2h3iscgub5sikacyrbu",
 						"collectionID": int64(1),
-						"delta":        encrypt(testUtils.CBORValue("John")),
-						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+						"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
+						"docID":        john21DocID,
 						"fieldId":      "2",
 						"fieldName":    "name",
 						"height":       int64(1),
 						"links":        []map[string]any{},
 					},
 					{
-						"cid":          "bafyreicvxlfxeqghmc3gy56rp5rzfejnbng4nu77x5e3wjinfydl6wvycq",
+						"cid":          "bafyreidxdhzhwjrv5s4x6cho5drz6xq2tc7oymzupf4p4gfk6eelsnc7ke",
 						"collectionID": int64(1),
 						"delta":        nil,
-						"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+						"docID":        john21DocID,
 						"fieldId":      "C",
 						"fieldName":    nil,
 						"height":       int64(1),
 						"links": []map[string]any{
 							{
-								"cid":  "bafyreifusejlwidaqswasct37eorazlfix6vyyn5af42pmjvktilzj5cty",
-								"name": "name",
+								"cid":  "bafyreibdjepzhhiez4o27srv33xcd52yr336tpzqtkv36rdf3h3oue2l5m",
+								"name": "age",
 							},
 							{
-								"cid":  "bafyreih7ry7ef26xn3lm2rhxusf2rbgyvl535tltrt6ehpwtvdnhlmptiu",
-								"name": "age",
+								"cid":  "bafyreihkiua7jpwkye3xlex6s5hh2azckcaljfi2h3iscgub5sikacyrbu",
+								"name": "name",
 							},
 						},
 					},
