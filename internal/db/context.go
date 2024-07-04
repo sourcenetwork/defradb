@@ -17,6 +17,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 // txnContextKey is the key type for transaction context values.
@@ -62,6 +63,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	if err != nil {
 		return nil, txn, err
 	}
+	ctx = encryption.ContextWithStore(ctx, txn)
 	return SetContextTxn(ctx, txn), txn, nil
 }
 
@@ -86,9 +88,6 @@ func TryGetContextTxn(ctx context.Context) (datastore.Txn, bool) {
 func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 	return context.WithValue(ctx, txnContextKey{}, txn)
 }
-
-// TryGetContextTxn returns an identity and a bool indicating if the
-// identity was retrieved from the given context.
 
 // GetContextIdentity returns the identity from the given context.
 //

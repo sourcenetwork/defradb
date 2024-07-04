@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -65,6 +66,11 @@ func (c *Collection) Create(
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Description().Name.Value())
 
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		args = append(args, "--encrypt")
+	}
+
 	document, err := doc.String()
 	if err != nil {
 		return err
@@ -90,21 +96,22 @@ func (c *Collection) CreateMany(
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Description().Name.Value())
 
-	docMapList := make([]map[string]any, len(docs))
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() && encConf.Value().IsEncrypted {
+		args = append(args, "--encrypt")
+	}
+
+	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
-		docMap, err := doc.ToMap()
+		docStr, err := doc.String()
 		if err != nil {
 			return err
 		}
-		docMapList[i] = docMap
+		docStrings[i] = docStr
 	}
-	documents, err := json.Marshal(docMapList)
-	if err != nil {
-		return err
-	}
-	args = append(args, string(documents))
+	args = append(args, "["+strings.Join(docStrings, ",")+"]")
 
-	_, err = c.cmd.execute(ctx, args)
+	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
 		return err
 	}

@@ -195,6 +195,53 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard
 	return _c
 }
 
+// Encstore provides a mock function with given fields:
+func (_m *Txn) Encstore() datastore.DSReaderWriter {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Encstore")
+	}
+
+	var r0 datastore.DSReaderWriter
+	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.DSReaderWriter)
+		}
+	}
+
+	return r0
+}
+
+// Txn_Encstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Encstore'
+type Txn_Encstore_Call struct {
+	*mock.Call
+}
+
+// Encstore is a helper method to define mock.On call
+func (_e *Txn_Expecter) Encstore() *Txn_Encstore_Call {
+	return &Txn_Encstore_Call{Call: _e.mock.On("Encstore")}
+}
+
+func (_c *Txn_Encstore_Call) Run(run func()) *Txn_Encstore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Txn_Encstore_Call) Return(_a0 datastore.DSReaderWriter) *Txn_Encstore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Txn_Encstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Encstore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Headstore provides a mock function with given fields:
 func (_m *Txn) Headstore() datastore.DSReaderWriter {
 	ret := _m.Called()

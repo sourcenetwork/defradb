@@ -349,12 +349,16 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = []error{err}
 		return result
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
 	}
 	err = c.http.setDefaultHeaders(req)
+
+	setDocEncryptionFlagIfNeeded(ctx, req)
+
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
