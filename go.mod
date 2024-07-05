@@ -9,7 +9,7 @@ require (
 	github.com/cyware/ssi-sdk v0.0.0-20231229164914-f93f3006379f
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
 	github.com/evanphx/json-patch/v5 v5.9.0
-	github.com/fxamacker/cbor/v2 v2.6.0
+	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/getkin/kin-openapi v0.125.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
