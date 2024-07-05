@@ -102,15 +102,16 @@ func shouldEncryptField(conf immutable.Option[DocEncConfig], fieldName string) b
 // If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
 // Otherwise, it will use document-level encryption key.
 func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byte, error) {
-	if !shouldEncryptIndividualField(d.conf, fieldName) {
-		fieldName = ""
-	}
-	encryptionKey, storeKey, err := d.fetchEncryptionKey(docID, fieldName)
+	encryptionKey, err := d.fetchEncryptionKey(docID, fieldName)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(encryptionKey) == 0 {
+		if !shouldEncryptIndividualField(d.conf, fieldName) {
+			fieldName = ""
+		}
+
 		if !shouldEncryptField(d.conf, fieldName) {
 			return plainText, nil
 		}
@@ -120,6 +121,7 @@ func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byt
 			return nil, err
 		}
 
+		storeKey := core.NewEncStoreDocKey(docID, fieldName)
 		err = d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
 		if err != nil {
 			return nil, err
@@ -131,7 +133,7 @@ func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byt
 // Decrypt decrypts the given cipherText that is associated with the given docID and fieldName.
 // If the corresponding encryption key is not found, it returns nil.
 func (d *DocEncryptor) Decrypt(docID, fieldName string, cipherText []byte) ([]byte, error) {
-	encKey, _, err := d.fetchEncryptionKey(docID, fieldName)
+	encKey, err := d.fetchEncryptionKey(docID, fieldName)
 	if err != nil {
 		return nil, err
 	}
@@ -143,17 +145,34 @@ func (d *DocEncryptor) Decrypt(docID, fieldName string, cipherText []byte) ([]by
 
 // fetchEncryptionKey fetches the encryption key for the given docID and fieldName.
 // If the key is not found, it returns an empty key.
-func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldName string) ([]byte, core.EncStoreDocKey, error) {
-	storeKey := core.NewEncStoreDocKey(docID, fieldName)
+func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldName string) ([]byte, error) {
 	if d.store == nil {
-		return nil, core.EncStoreDocKey{}, ErrNoStorageProvided
+		return nil, ErrNoStorageProvided
 	}
+	// first we try to find field-level key
+	storeKey := core.NewEncStoreDocKey(docID, fieldName)
 	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
 	isNotFound := errors.Is(err, ds.ErrNotFound)
-	if err != nil && !isNotFound {
-		return nil, core.EncStoreDocKey{}, err
+	if err != nil {
+		if !isNotFound {
+			return nil, err
+		}
+		// if previous fetch was for doc-level, there is nothing else to look for
+		if fieldName == "" {
+			return nil, nil
+		}
+		if shouldEncryptIndividualField(d.conf, fieldName) {
+			return nil, nil
+		}
+		// try to find doc-level key
+		storeKey.FieldName = ""
+		encryptionKey, err = d.store.Get(d.ctx, storeKey.ToDS())
+		isNotFound = errors.Is(err, ds.ErrNotFound)
+		if err != nil && !isNotFound {
+			return nil, err
+		}
 	}
-	return encryptionKey, storeKey, nil
+	return encryptionKey, nil
 }
 
 // EncryptDoc encrypts the given plainText that is associated with the given docID and fieldName with

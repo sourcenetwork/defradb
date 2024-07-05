@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
@@ -310,6 +312,48 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 						"docID": testUtils.NewDocIndex(0, 1),
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John",
+						"age": 21
+					}`,
+				IsEncrypted: true,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "Islam",
+						"age": 21
+					}`,
+				IsEncrypted: true,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits(fieldId: "1") {
+							delta
+							fieldName
+						}
+					}
+				`,
+				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result []map[string]any) (bool, string) {
+					require.Equal(t, 2, len(result), "Expected 2 commits")
+					require.Equal(t, result[0]["fieldName"], "age")
+					delta1 := result[0]["delta"].([]byte)
+					delta2 := result[1]["delta"].([]byte)
+					assert.NotEqual(t, delta1, delta2, "docs should be encrypted with different encryption keys")
+					return true, ""
+				}),
 			},
 		},
 	}
