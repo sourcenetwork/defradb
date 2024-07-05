@@ -32,6 +32,16 @@ const (
 	PubSubName = Name("pubsub")
 	// PeerName is the name of the network connect event.
 	PeerName = Name("peer")
+	// P2PTopicName is the name of the network p2p topic update event.
+	P2PTopicName = Name("p2p-topic")
+	// PeerInfoName is the name of the network peer info event.
+	PeerInfoName = Name("peer-info")
+	// ReplicatorName is the name of the replicator event.
+	ReplicatorName = Name("replicator")
+	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
+	P2PTopicCompletedName = Name("p2p-topic-completed")
+	// ReplicatorCompletedName is the name of the replicator completed event.
+	ReplicatorCompletedName = Name("replicator-completed")
 )
 
 // Peer is an event that is published when
@@ -109,4 +119,26 @@ type Subscription struct {
 // Message returns the next event value from the subscription.
 func (s *Subscription) Message() <-chan Message {
 	return s.value
+}
+
+// P2PTopic is an event that is published when a peer has updated the topics it is subscribed to.
+type P2PTopic struct {
+	ToAdd    []string
+	ToRemove []string
+}
+
+// PeerInfo is an event that is published when the node has updated its peer info.
+type PeerInfo struct {
+	Info peer.AddrInfo
+}
+
+// Replicator is an event that is published when a replicator is added or updated.
+type Replicator struct {
+	// The peer info for the replicator instance.
+	Info peer.AddrInfo
+	// The map of schema roots that the replicator will receive updates for.
+	Schemas map[string]struct{}
+	// Docs will receive Updates if new collections have been added to the replicator
+	// and those collections have documents to be replicated.
+	Docs <-chan Update
 }

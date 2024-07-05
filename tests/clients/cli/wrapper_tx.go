@@ -83,8 +83,8 @@ func (w *Transaction) Peerstore() datastore.DSBatching {
 	return w.tx.Peerstore()
 }
 
-func (w *Transaction) DAGstore() datastore.DAGStore {
-	return w.tx.DAGstore()
+func (w *Transaction) Blockstore() datastore.Blockstore {
+	return w.tx.Blockstore()
 }
 
 func (w *Transaction) Systemstore() datastore.DSReaderWriter {

@@ -86,7 +86,7 @@ type VersionedFetcher struct {
 	ctx context.Context
 
 	// Transient version store
-	root  datastore.RootStore
+	root  datastore.Rootstore
 	store datastore.Txn
 
 	dsKey   core.DataStoreKey
@@ -281,7 +281,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// @body: We could possibly append the DocID to the CID either as a
 	// child key, or an instance on the CID key.
 
-	hasLocalBlock, err := vf.store.DAGstore().Has(vf.ctx, c)
+	hasLocalBlock, err := vf.store.Blockstore().Has(vf.ctx, c)
 	if err != nil {
 		return NewErrVFetcherFailedToFindBlock(err)
 	}
@@ -290,13 +290,13 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 		return nil
 	}
 
-	blk, err := vf.txn.DAGstore().Get(vf.ctx, c)
+	blk, err := vf.txn.Blockstore().Get(vf.ctx, c)
 	if err != nil {
 		return NewErrVFetcherFailedToGetBlock(err)
 	}
 
 	// store the block in the local (transient store)
-	if err := vf.store.DAGstore().Put(vf.ctx, blk); err != nil {
+	if err := vf.store.Blockstore().Put(vf.ctx, blk); err != nil {
 		return NewErrVFetcherFailedToWriteBlock(err)
 	}
 
@@ -336,7 +336,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 }
 
 // merge in the state of the IPLD Block identified by CID c into the VersionedFetcher state.
-// Requires the CID to already exist in the DAGStore.
+// Requires the CID to already exist in the Blockstore.
 // This function only works for merging Composite MerkleCRDT objects.
 //
 // First it checks for the existence of the block,
@@ -421,7 +421,7 @@ func (vf *VersionedFetcher) processBlock(
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 	// get Block
-	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
+	blk, err := vf.store.Blockstore().Get(vf.ctx, c)
 	if err != nil {
 		return nil, NewErrFailedToGetDagNode(err)
 	}

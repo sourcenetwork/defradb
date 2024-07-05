@@ -45,8 +45,9 @@ var def = client.CollectionDefinition{
 
 func TestPushlogWithDialFailure(t *testing.T) {
 	ctx := context.Background()
-	_, n := newTestNode(ctx, t)
-	defer n.Close()
+	db, p := newTestPeer(ctx, t)
+	defer db.Close()
+	defer p.Close()
 
 	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), def)
 	require.NoError(t, err)
@@ -56,13 +57,13 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	n.server.opts = append(
-		n.server.opts,
+	p.server.opts = append(
+		p.server.opts,
 		grpc.WithTransportCredentials(nil),
 		grpc.WithCredentialsBundle(nil),
 	)
 
-	err = n.server.pushLog(ctx, event.Update{
+	err = p.server.pushLog(ctx, event.Update{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
@@ -73,8 +74,9 @@ func TestPushlogWithDialFailure(t *testing.T) {
 
 func TestPushlogWithInvalidPeerID(t *testing.T) {
 	ctx := context.Background()
-	_, n := newTestNode(ctx, t)
-	defer n.Close()
+	db, p := newTestPeer(ctx, t)
+	defer db.Close()
+	defer p.Close()
 
 	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), def)
 	require.NoError(t, err)
@@ -84,7 +86,7 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.server.pushLog(ctx, event.Update{
+	err = p.server.pushLog(ctx, event.Update{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
@@ -95,27 +97,29 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 
 func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	ctx := context.Background()
-	_, n1 := newTestNode(ctx, t)
-	defer n1.Close()
-	n1.Start()
-	_, n2 := newTestNode(ctx, t)
-	defer n2.Close()
-	n2.Start()
+	db1, p1 := newTestPeer(ctx, t)
+	defer db1.Close()
+	defer p1.Close()
+	p1.Start()
+	db2, p2 := newTestPeer(ctx, t)
+	defer p2.Close()
+	defer db2.Close()
+	p2.Start()
 
-	err := n1.host.Connect(ctx, n2.PeerInfo())
+	err := p1.host.Connect(ctx, p2.PeerInfo())
 	require.NoError(t, err)
 
-	_, err = n1.db.AddSchema(ctx, `type User {
+	_, err = db1.AddSchema(ctx, `type User {
 		name: String
 	}`)
 	require.NoError(t, err)
 
-	_, err = n2.db.AddSchema(ctx, `type User {
+	_, err = db2.AddSchema(ctx, `type User {
 		name: String
 	}`)
 	require.NoError(t, err)
 
-	col, err := n1.db.GetCollectionByName(ctx, "User")
+	col, err := db1.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`), col.Definition())
@@ -124,22 +128,22 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
-	col, err = n2.db.GetCollectionByName(ctx, "User")
+	col, err = db2.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
-	headCID, err := getHead(ctx, n1.db, doc.ID())
+	headCID, err := getHead(ctx, db1, doc.ID())
 	require.NoError(t, err)
 
-	b, err := n1.db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	b, err := db1.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = n1.server.pushLog(ctx, event.Update{
+	err = p1.server.pushLog(ctx, event.Update{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
 		Block:      b,
-	}, n2.PeerInfo().ID)
+	}, p2.PeerInfo().ID)
 	require.NoError(t, err)
 }

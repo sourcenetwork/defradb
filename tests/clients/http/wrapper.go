@@ -24,22 +24,22 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.P2P = (*Wrapper)(nil)
+var _ client.DB = (*Wrapper)(nil)
 
 // Wrapper combines an HTTP client and server into a
 // single struct that implements the client.DB interface.
 type Wrapper struct {
-	node       *net.Node
+	node       *node.Node
 	handler    *http.Handler
 	client     *http.Client
 	httpServer *httptest.Server
 }
 
-func NewWrapper(node *net.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node)
+func NewWrapper(node *node.Node) (*Wrapper, error) {
+	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -199,40 +199,40 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	return &TxWrapper{server, client}, nil
 }
 
-func (w *Wrapper) Root() datastore.RootStore {
-	return w.node.Root()
+func (w *Wrapper) Rootstore() datastore.Rootstore {
+	return w.node.DB.Rootstore()
 }
 
-func (w *Wrapper) Blockstore() datastore.DAGStore {
-	return w.node.Blockstore()
+func (w *Wrapper) Blockstore() datastore.Blockstore {
+	return w.node.DB.Blockstore()
 }
 
 func (w *Wrapper) Headstore() ds.Read {
-	return w.node.Headstore()
+	return w.node.DB.Headstore()
 }
 
 func (w *Wrapper) Peerstore() datastore.DSBatching {
-	return w.node.Peerstore()
+	return w.node.DB.Peerstore()
 }
 
 func (w *Wrapper) Close() {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
-	w.node.Close()
+	_ = w.node.Close(context.Background())
 }
 
 func (w *Wrapper) Events() *event.Bus {
-	return w.node.Events()
+	return w.node.DB.Events()
 }
 
 func (w *Wrapper) MaxTxnRetries() int {
-	return w.node.MaxTxnRetries()
+	return w.node.DB.MaxTxnRetries()
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return w.node.PrintDump(ctx)
+	return w.node.DB.PrintDump(ctx)
 }
 
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
-	w.node.Bootstrap(addrs)
+	w.node.Peer.Bootstrap(addrs)
 }

@@ -216,7 +216,7 @@ func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
 
 func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
-	return dbi.Root(), err
+	return dbi.Rootstore(), err
 }
 
 func newBenchStoreInfo(ctx context.Context, t testing.TB) (client.DB, error) {

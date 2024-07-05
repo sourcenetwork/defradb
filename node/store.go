@@ -77,7 +77,7 @@ func WithEncryptionKey(encryptionKey []byte) StoreOpt {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.RootStore, error) {
+func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.Rootstore, error) {
 	options := DefaultStoreOptions()
 	for _, opt := range opts {
 		opt(options)
