@@ -342,7 +342,7 @@ func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
 // Note: This function only fails if the collection of the datapoints goes wrong, otherwise
 // even if plan execution fails this function would return the collected datapoints.
 func (p *Planner) executeAndExplainRequest(
-	ctx context.Context,
+	_ context.Context,
 	plan planNode,
 ) ([]map[string]any, error) {
 	executionSuccess := false

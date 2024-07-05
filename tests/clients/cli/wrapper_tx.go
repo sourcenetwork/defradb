@@ -75,6 +75,10 @@ func (w *Transaction) Datastore() datastore.DSReaderWriter {
 	return w.tx.Datastore()
 }
 
+func (w *Transaction) Encstore() datastore.DSReaderWriter {
+	return w.tx.Encstore()
+}
+
 func (w *Transaction) Headstore() datastore.DSReaderWriter {
 	return w.tx.Headstore()
 }
