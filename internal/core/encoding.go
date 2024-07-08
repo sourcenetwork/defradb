@@ -314,13 +314,14 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 		data = data[1:]
 	}
 
+	const docKeyLength int = 40
 	var docID string
-	if len(data) > 40 {
+	if len(data) > docKeyLength {
 		if data[0] == '/' {
 			data = data[1:]
 		}
-		docID = string(data[:40])
-		data = data[40:]
+		docID = string(data[:docKeyLength])
+		data = data[docKeyLength:]
 	}
 
 	var fieldID string
