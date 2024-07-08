@@ -208,3 +208,15 @@ func TestEncryptorDecrypt_IfKeyFoundInStorage_ShouldUseItToReturnPlainText(t *te
 	assert.NoError(t, err)
 	assert.Equal(t, getPlainText(), plainText)
 }
+
+func TestEncryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
+	data, err := EncryptDoc(context.Background(), docID, fieldName, getPlainText())
+	assert.Nil(t, data, "data should be nil")
+	assert.NoError(t, err, "error should be nil")
+}
+
+func TestDecryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
+	data, err := DecryptDoc(context.Background(), docID, fieldName, getCipherText(t, fieldName))
+	assert.Nil(t, data, "data should be nil")
+	assert.NoError(t, err, "error should be nil")
+}
