@@ -289,6 +289,7 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 	return b
 }
 
+// DecodeDataStoreKey decodes a store key into a [DataStoreKey].
 func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 	if len(data) == 0 {
 		return DataStoreKey{}, ErrEmptyKey
@@ -340,6 +341,7 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 	}, nil
 }
 
+// EncodeDataStoreKey encodes a [*DataStoreKey] to a byte array suitable for sorting in the store.
 func EncodeDataStoreKey(key *DataStoreKey) []byte {
 	var result []byte
 
