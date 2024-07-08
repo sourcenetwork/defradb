@@ -16,6 +16,14 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+/*
+These tests cover a failure case where the nth collection would become unreadable by the fetcher
+due to a key encoding/iteration problem.
+
+They were introduced with the fix to https://github.com/sourcenetwork/defradb/issues/2810 in PR
+https://github.com/sourcenetwork/defradb/pull/2819
+*/
+
 func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
