@@ -61,10 +61,10 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 }
 
 func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyForIndividualFields(t *testing.T) {
-	deltaForField := func(fieldName string, result []map[string]any) []byte {
+	deltaForField := func(fieldName string, result []map[string]any) any {
 		for _, r := range result {
 			if r["fieldName"] == fieldName {
-				return r["delta"].([]byte)
+				return r["delta"]
 			}
 		}
 		t.Fatalf("Field %s not found in results %v", fieldName, result)
@@ -120,11 +120,11 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyForIndividualFields2(t *testing.T) {
-	deltaForField := func(fieldName string, result []map[string]any) []byte {
+func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicatedEncKeyForIndividualFields(t *testing.T) {
+	deltaForField := func(fieldName string, result []map[string]any) any {
 		for _, r := range result {
 			if r["fieldName"] == fieldName {
-				return r["delta"].([]byte)
+				return r["delta"]
 			}
 		}
 		t.Fatalf("Field %s not found in results %v", fieldName, result)
@@ -163,7 +163,6 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 			testUtils.Request{
 				Request: `
 					query {
-
 						commits(order: {height: DESC}, limit: 5) {
 							cid
 							delta

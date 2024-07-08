@@ -63,13 +63,7 @@ func (c *Collection) Create(
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
 
-	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name.Value())
-
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
-		args = append(args, "--encrypt")
-	}
+	args := makeDocCreateArgs(ctx, c)
 
 	document, err := doc.String()
 	if err != nil {
@@ -93,13 +87,7 @@ func (c *Collection) CreateMany(
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
 
-	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name.Value())
-
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
-		args = append(args, "--encrypt")
-	}
+	args := makeDocCreateArgs(ctx, c)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -119,6 +107,26 @@ func (c *Collection) CreateMany(
 		doc.Clean()
 	}
 	return nil
+}
+
+func makeDocCreateArgs(
+	ctx context.Context,
+	c *Collection,
+) []string {
+	args := []string{"client", "collection", "create"}
+	args = append(args, "--name", c.Description().Name.Value())
+
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() {
+		if encConf.Value().IsEncrypted {
+			args = append(args, "--encrypt")
+		}
+		if len(encConf.Value().EncryptedFields) > 0 {
+			args = append(args, "--encrypt-fields", strings.Join(encConf.Value().EncryptedFields, ","))
+		}
+	}
+
+	return args
 }
 
 func (c *Collection) Update(

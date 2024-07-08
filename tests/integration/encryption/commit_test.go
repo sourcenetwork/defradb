@@ -350,8 +350,8 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result []map[string]any) (bool, string) {
 					require.Equal(t, 2, len(result), "Expected 2 commits")
 					require.Equal(t, result[0]["fieldName"], "age")
-					delta1 := result[0]["delta"].([]byte)
-					delta2 := result[1]["delta"].([]byte)
+					delta1 := result[0]["delta"]
+					delta2 := result[1]["delta"]
 					assert.NotEqual(t, delta1, delta2, "docs should be encrypted with different encryption keys")
 					return true, ""
 				}),
