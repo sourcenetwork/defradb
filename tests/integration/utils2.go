@@ -1300,7 +1300,6 @@ func createDocViaGQL(
 	node client.DB,
 	collections []client.Collection,
 ) ([]*client.Document, error) {
-	println(fmt.Sprint(collections))
 	collection := collections[action.CollectionID]
 	var input string
 
