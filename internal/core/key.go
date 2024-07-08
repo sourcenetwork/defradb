@@ -215,33 +215,7 @@ var _ Key = (*ReplicatorKey)(nil)
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
 func NewDataStoreKey(key string) (DataStoreKey, error) {
-	dataStoreKey := DataStoreKey{}
-	if key == "" {
-		return dataStoreKey, ErrEmptyKey
-	}
-
-	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
-
-	numberOfElements := len(elements)
-
-	// With less than 3 or more than 4 elements, we know it's an invalid key
-	if numberOfElements < 3 || numberOfElements > 4 {
-		return dataStoreKey, ErrInvalidKey
-	}
-
-	colRootID, err := strconv.Atoi(elements[0])
-	if err != nil {
-		return DataStoreKey{}, err
-	}
-
-	dataStoreKey.CollectionRootID = uint32(colRootID)
-	dataStoreKey.InstanceType = InstanceType(elements[1])
-	dataStoreKey.DocID = elements[2]
-	if numberOfElements == 4 {
-		dataStoreKey.FieldID = elements[3]
-	}
-
-	return dataStoreKey, nil
+	return DecodeDataStoreKey([]byte(key))
 }
 
 func MustNewDataStoreKey(key string) DataStoreKey {
@@ -466,26 +440,11 @@ func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
 }
 
 func (k DataStoreKey) ToString() string {
-	var result string
-
-	if k.CollectionRootID != 0 {
-		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
-	}
-	if k.InstanceType != "" {
-		result = result + "/" + string(k.InstanceType)
-	}
-	if k.DocID != "" {
-		result = result + "/" + k.DocID
-	}
-	if k.FieldID != "" {
-		result = result + "/" + k.FieldID
-	}
-
-	return result
+	return string(k.Bytes())
 }
 
 func (k DataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
+	return EncodeDataStoreKey(&k)
 }
 
 func (k DataStoreKey) ToDS() ds.Key {

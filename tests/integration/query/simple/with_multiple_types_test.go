@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package issues
+package simple
 
 import (
 	"testing"
@@ -123,7 +123,11 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{},
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
 			},
 		},
 	}
@@ -183,7 +187,11 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{},
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
 			},
 		},
 	}

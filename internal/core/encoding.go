@@ -288,3 +288,81 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 
 	return b
 }
+
+func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
+	if len(data) == 0 {
+		return DataStoreKey{}, ErrEmptyKey
+	}
+
+	if data[0] != '/' {
+		return DataStoreKey{}, ErrInvalidKey
+	}
+	data = data[1:]
+
+	data, colRootID, err := encoding.DecodeUvarintAscending(data)
+	if err != nil {
+		return DataStoreKey{}, err
+	}
+
+	var instanceType InstanceType
+	if len(data) > 1 {
+		if data[0] == '/' {
+			data = data[1:]
+		}
+		instanceType = InstanceType(data[0])
+		data = data[1:]
+	}
+
+	var docID string
+	if len(data) > 40 {
+		if data[0] == '/' {
+			data = data[1:]
+		}
+		docID = string(data[:40])
+		data = data[40:]
+	}
+
+	var fieldID string
+	if len(data) > 1 {
+		if data[0] == '/' {
+			data = data[1:]
+		}
+		// Todo: This should be encoded/decoded properly in
+		// https://github.com/sourcenetwork/defradb/issues/2818
+		fieldID = string(data)
+	}
+
+	return DataStoreKey{
+		CollectionRootID: uint32(colRootID),
+		InstanceType:     (instanceType),
+		DocID:            docID,
+		FieldID:          fieldID,
+	}, nil
+}
+
+func EncodeDataStoreKey(key *DataStoreKey) []byte {
+	var result []byte
+
+	if key.CollectionRootID != 0 {
+		result = encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionRootID))
+	}
+
+	if key.InstanceType != "" {
+		result = append(result, '/')
+		result = append(result, []byte(string(key.InstanceType))...)
+	}
+
+	if key.DocID != "" {
+		result = append(result, '/')
+		result = append(result, []byte(key.DocID)...)
+	}
+
+	if key.FieldID != "" {
+		result = append(result, '/')
+		// Todo: This should be encoded/decoded properly in
+		// https://github.com/sourcenetwork/defradb/issues/2818
+		result = append(result, []byte(key.FieldID)...)
+	}
+
+	return result
+}
