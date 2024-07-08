@@ -13,8 +13,9 @@ package encryption
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/stretchr/testify/assert"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncrypted(t *testing.T) {

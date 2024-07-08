@@ -18,9 +18,10 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/immutable"
 )
 
 var generateEncryptionKeyFunc = generateEncryptionKey

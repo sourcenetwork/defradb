@@ -19,9 +19,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/immutable"
 )
 
 var testErr = errors.New("test error")
