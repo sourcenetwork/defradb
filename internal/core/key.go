@@ -451,6 +451,25 @@ func (k DataStoreKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
+func (k DataStoreKey) PrettyPrint() string {
+	var result string
+
+	if k.CollectionRootID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
+	}
+	if k.InstanceType != "" {
+		result = result + "/" + string(k.InstanceType)
+	}
+	if k.DocID != "" {
+		result = result + "/" + k.DocID
+	}
+	if k.FieldID != "" {
+		result = result + "/" + k.FieldID
+	}
+
+	return result
+}
+
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
 	return k.CollectionRootID == other.CollectionRootID &&
 		k.DocID == other.DocID &&
