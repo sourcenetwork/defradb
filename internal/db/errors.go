@@ -100,6 +100,7 @@ const (
 	errReplicatorDocID                          string = "failed to get docID for replicator"
 	errReplicatorCollections                    string = "failed to get collections for replicator"
 	errReplicatorNotFound                       string = "replicator not found"
+	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
 )
 
 var (
@@ -140,6 +141,7 @@ var (
 	ErrSelfTargetForReplicator                  = errors.New("can't target ourselves as a replicator")
 	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
 	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)
+	ErrCanNotEncryptBuiltinField                = errors.New(errCanNotEncryptBuiltinField)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -328,6 +330,10 @@ func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error 
 		errors.NewKV("ProposedIndex", proposedIndex),
 		errors.NewKV("ExistingIndex", existingIndex),
 	)
+}
+
+func NewErrCanNotEncryptBuiltinField(name string) error {
+	return errors.New(errCanNotEncryptBuiltinField, errors.NewKV("Name", name))
 }
 
 func NewErrCannotDeleteField(name string) error {
