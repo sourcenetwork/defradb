@@ -27,8 +27,8 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                     }
                 `},
 			testUtils.CreateDoc{
-				Doc:         john21Doc,
-				IsEncrypted: true,
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -76,7 +76,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 						"name":	"John",
 						"points": 5
 					}`,
-				IsEncrypted: true,
+				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: query,

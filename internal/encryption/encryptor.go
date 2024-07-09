@@ -85,7 +85,7 @@ func shouldEncryptField(conf immutable.Option[DocEncConfig], fieldName string) b
 	if !conf.HasValue() {
 		return false
 	}
-	if conf.Value().IsEncrypted {
+	if conf.Value().IsDocEncrypted {
 		return true
 	}
 	if fieldName == "" {

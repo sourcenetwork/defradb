@@ -24,8 +24,8 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
-				Doc:         john21Doc,
-				IsEncrypted: true,
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -98,8 +98,8 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
-				Doc:         john21Doc,
-				IsEncrypted: true,
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
@@ -134,8 +134,8 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
-				Doc:         john21Doc,
-				IsEncrypted: true,
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
 			},
 			testUtils.CreateDoc{
 				Doc: islam33Doc,
@@ -198,8 +198,8 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
                     }
                 `},
 			testUtils.CreateDoc{
-				Doc:         `{ "points": 5 }`,
-				IsEncrypted: true,
+				Doc:            `{ "points": 5 }`,
+				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -239,8 +239,8 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
                     }
                 `},
 			testUtils.CreateDoc{
-				Doc:         `{ "points": 5 }`,
-				IsEncrypted: true,
+				Doc:            `{ "points": 5 }`,
+				IsDocEncrypted: true,
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
@@ -275,8 +275,8 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
-				Doc:         "[" + john21Doc + ", " + islam33Doc + "]",
-				IsEncrypted: true,
+				Doc:            "[" + john21Doc + ", " + islam33Doc + "]",
+				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -329,14 +329,14 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 						"name": "John",
 						"age": 21
 					}`,
-				IsEncrypted: true,
+				IsDocEncrypted: true,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 						"name": "Islam",
 						"age": 21
 					}`,
-				IsEncrypted: true,
+				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `

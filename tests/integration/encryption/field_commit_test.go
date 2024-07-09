@@ -89,7 +89,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 						"name3": "John",
 						"name4": "John"
 					}`,
-				IsEncrypted:     true,
+				IsDocEncrypted:  true,
 				EncryptedFields: []string{"name1", "name3"},
 			},
 			testUtils.Request{
@@ -149,7 +149,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 						"name3": "John",
 						"name4": "John"
 					}`,
-				IsEncrypted:     true,
+				IsDocEncrypted:  true,
 				EncryptedFields: []string{"name1", "name3"},
 			},
 			testUtils.UpdateDoc{

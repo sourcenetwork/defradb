@@ -1252,7 +1252,7 @@ func createDocViaColSave(
 func makeContextForDocCreate(s *state, ctx context.Context, action *CreateDoc) context.Context {
 	identity := getIdentity(s, action.Identity)
 	ctx = db.SetContextIdentity(ctx, identity)
-	ctx = encryption.SetContextConfigFromParams(ctx, action.IsEncrypted, action.EncryptedFields)
+	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
 
@@ -1320,7 +1320,7 @@ func createDocViaGQL(
 
 	params := paramName + ": " + input
 
-	if action.IsEncrypted {
+	if action.IsDocEncrypted {
 		params = params + ", " + request.EncryptDocArgName + ": true"
 	}
 	if len(action.EncryptedFields) > 0 {

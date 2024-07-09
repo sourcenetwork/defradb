@@ -52,12 +52,12 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
 	encConf := encryption.DocEncConfig{}
 	if q.Get(docEncryptParam) == "true" {
-		encConf.IsEncrypted = true
+		encConf.IsDocEncrypted = true
 	}
 	if q.Get(docEncryptFieldsParam) != "" {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
-	if encConf.IsEncrypted || len(encConf.EncryptedFields) > 0 {
+	if encConf.IsDocEncrypted || len(encConf.EncryptedFields) > 0 {
 		ctx = encryption.SetContextConfig(ctx, encConf)
 	}
 

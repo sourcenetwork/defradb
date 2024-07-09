@@ -118,7 +118,7 @@ func makeDocCreateArgs(
 
 	encConf := encryption.GetContextConfig(ctx)
 	if encConf.HasValue() {
-		if encConf.Value().IsEncrypted {
+		if encConf.Value().IsDocEncrypted {
 			args = append(args, "--encrypt")
 		}
 		if len(encConf.Value().EncryptedFields) > 0 {

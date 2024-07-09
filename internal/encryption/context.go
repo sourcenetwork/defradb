@@ -75,7 +75,7 @@ func SetContextConfigFromParams(ctx context.Context, encryptDoc bool, encryptFie
 	if encryptDoc || len(encryptFields) > 0 {
 		conf := DocEncConfig{EncryptedFields: encryptFields}
 		if encryptDoc {
-			conf.IsEncrypted = true
+			conf.IsDocEncrypted = true
 		}
 		ctx = SetContextConfig(ctx, conf)
 	}

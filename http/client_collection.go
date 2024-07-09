@@ -134,7 +134,7 @@ func setDocEncryptionFlagIfNeeded(ctx context.Context, req *http.Request) {
 	encConf := encryption.GetContextConfig(ctx)
 	if encConf.HasValue() {
 		q := req.URL.Query()
-		if encConf.Value().IsEncrypted {
+		if encConf.Value().IsDocEncrypted {
 			q.Set(docEncryptParam, "true")
 		}
 		if len(encConf.Value().EncryptedFields) > 0 {

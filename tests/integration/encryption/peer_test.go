@@ -33,9 +33,9 @@ func TestDocEncryptionPeer_IfPeerHasNoKey_ShouldNotFetch(t *testing.T) {
 				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
-				NodeID:      immutable.Some(0),
-				Doc:         john21Doc,
-				IsEncrypted: true,
+				NodeID:         immutable.Some(0),
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -68,9 +68,9 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
-				NodeID:      immutable.Some(0),
-				Doc:         john21Doc,
-				IsEncrypted: true,
+				NodeID:         immutable.Some(0),
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{

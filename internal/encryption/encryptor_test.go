@@ -47,7 +47,7 @@ func getCipherText(t *testing.T, fieldName string) []byte {
 }
 
 func newDefaultEncryptor(t *testing.T) (*DocEncryptor, *mocks.DSReaderWriter) {
-	return newEncryptorWithConfig(t, DocEncConfig{IsEncrypted: true})
+	return newEncryptorWithConfig(t, DocEncConfig{IsDocEncrypted: true})
 }
 
 func newEncryptorWithConfig(t *testing.T, conf DocEncConfig) (*DocEncryptor, *mocks.DSReaderWriter) {
