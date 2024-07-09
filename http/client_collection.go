@@ -132,9 +132,14 @@ func (c *Collection) CreateMany(
 
 func setDocEncryptionFlagIfNeeded(ctx context.Context, req *http.Request) {
 	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() && encConf.Value().IsEncrypted {
+	if encConf.HasValue() {
 		q := req.URL.Query()
-		q.Set(docEncryptParam, "true")
+		if encConf.Value().IsDocEncrypted {
+			q.Set(docEncryptParam, "true")
+		}
+		if len(encConf.Value().EncryptedFields) > 0 {
+			q.Set(docEncryptFieldsParam, strings.Join(encConf.Value().EncryptedFields, ","))
+		}
 		req.URL.RawQuery = q.Encode()
 	}
 }

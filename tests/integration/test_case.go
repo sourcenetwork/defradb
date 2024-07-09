@@ -230,7 +230,10 @@ type CreateDoc struct {
 	Identity immutable.Option[int]
 
 	// Specifies whether the document should be encrypted.
-	IsEncrypted bool
+	IsDocEncrypted bool
+
+	// Individual fields of the document to encrypt.
+	EncryptedFields []string
 
 	// The collection in which this document should be created.
 	CollectionID int

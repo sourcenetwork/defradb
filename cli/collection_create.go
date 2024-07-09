@@ -17,25 +17,34 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 func MakeCollectionCreateCommand() *cobra.Command {
 	var file string
-	var shouldEncrypt bool
+	var shouldEncryptDoc bool
+	var encryptedFields []string
 	var cmd = &cobra.Command{
-		Use:   "create [-i --identity] [-e --encrypt] <document>",
+		Use:   "create [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
 		Short: "Create a new document.",
 		Long: `Create a new document.
 		
 Options:
-    -i, --identity 
-        Marks the document as private and set the identity as the owner. The access to the document
+	-i, --identity 
+		Marks the document as private and set the identity as the owner. The access to the document
 		and permissions are controlled by ACP (Access Control Policy).
 
 	-e, --encrypt
 		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
 		symmetric key for encryption using AES-GCM.
+	
+	--encrypt-fields
+		Comma-separated list of fields to encrypt. If set, DefraDB will encrypt only the specified fields
+		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
+		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
+		will be encrypted with the same key.
 
 Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
@@ -81,7 +90,7 @@ Example: create from stdin:
 			}
 
 			txn, _ := db.TryGetContextTxn(cmd.Context())
-			setContextDocEncryption(cmd, shouldEncrypt, txn)
+			setContextDocEncryption(cmd, shouldEncryptDoc, encryptedFields, txn)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())
@@ -98,8 +107,23 @@ Example: create from stdin:
 			return col.Create(cmd.Context(), doc)
 		},
 	}
-	cmd.PersistentFlags().BoolVarP(&shouldEncrypt, "encrypt", "e", false,
+	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
 		"Flag to enable encryption of the document")
+	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
+		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	return cmd
+}
+
+// setContextDocEncryption sets doc encryption for the current command context.
+func setContextDocEncryption(cmd *cobra.Command, shouldEncryptDoc bool, encryptFields []string, txn datastore.Txn) {
+	if !shouldEncryptDoc && len(encryptFields) == 0 {
+		return
+	}
+	ctx := cmd.Context()
+	if txn != nil {
+		ctx = encryption.ContextWithStore(ctx, txn)
+	}
+	ctx = encryption.SetContextConfigFromParams(ctx, shouldEncryptDoc, encryptFields)
+	cmd.SetContext(ctx)
 }

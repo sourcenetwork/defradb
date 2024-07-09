@@ -29,16 +29,13 @@ type configContextKey struct{}
 func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
 	enc, ok := ctx.Value(docEncContextKey{}).(*DocEncryptor)
 	if ok {
-		checkKeyGenerationFlag(ctx, enc)
+		setConfig(ctx, enc)
 	}
 	return enc, ok
 }
 
-func checkKeyGenerationFlag(ctx context.Context, enc *DocEncryptor) {
-	encConfig := GetContextConfig(ctx)
-	if encConfig.HasValue() && encConfig.Value().IsEncrypted {
-		enc.EnableKeyGeneration()
-	}
+func setConfig(ctx context.Context, enc *DocEncryptor) {
+	enc.SetConfig(GetContextConfig(ctx))
 }
 
 func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
@@ -70,4 +67,17 @@ func GetContextConfig(ctx context.Context) immutable.Option[DocEncConfig] {
 // SetContextConfig returns a new context with the doc encryption config set.
 func SetContextConfig(ctx context.Context, encConfig DocEncConfig) context.Context {
 	return context.WithValue(ctx, configContextKey{}, encConfig)
+}
+
+// SetContextConfigFromParams returns a new context with the doc encryption config created from given params.
+// If encryptDoc is false, and encryptFields is empty, the context is returned as is.
+func SetContextConfigFromParams(ctx context.Context, encryptDoc bool, encryptFields []string) context.Context {
+	if encryptDoc || len(encryptFields) > 0 {
+		conf := DocEncConfig{EncryptedFields: encryptFields}
+		if encryptDoc {
+			conf.IsDocEncrypted = true
+		}
+		ctx = SetContextConfig(ctx, conf)
+	}
+	return ctx
 }
