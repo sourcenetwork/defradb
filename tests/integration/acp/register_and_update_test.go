@@ -30,7 +30,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -136,7 +136,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -196,7 +196,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				DocID: 0,
 
@@ -232,10 +232,6 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 }
 
 func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and update with identity, can update",
@@ -243,7 +239,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -292,7 +288,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -305,7 +301,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				DocID: 0,
 
@@ -317,7 +313,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -343,10 +339,6 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 }
 
 func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and update without identity, can not update",
@@ -360,7 +352,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -409,7 +401,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -434,7 +426,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -460,12 +452,6 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 }
 
 func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
-	WrongIdentity := Actor2Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and update without identity, can not update",
@@ -479,7 +465,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -528,7 +514,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -541,7 +527,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: WrongIdentity,
+				Identity: immutable.Some(2),
 
 				DocID: 0,
 
@@ -555,7 +541,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -583,10 +569,6 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 // This separate GQL test should be merged with the ones above when all the clients are fixed
 // to behave the same in: https://github.com/sourcenetwork/defradb/issues/2410
 func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and update without identity (gql), can not update",
@@ -599,7 +581,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -648,7 +630,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -671,7 +653,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -699,12 +681,6 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 // This separate GQL test should be merged with the ones above when all the clients are fixed
 // to behave the same in: https://github.com/sourcenetwork/defradb/issues/2410
 func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
-	WrongIdentity := Actor2Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and update without identity (gql), can not update",
@@ -717,7 +693,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -766,7 +742,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -779,7 +755,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: WrongIdentity,
+				Identity: immutable.Some(2),
 
 				DocID: 0,
 
@@ -791,7 +767,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {

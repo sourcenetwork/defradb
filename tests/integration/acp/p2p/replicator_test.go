@@ -13,8 +13,9 @@ package test_acp_p2p
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 // This test documents that we don't allow setting replicator with a collections that has a policy
@@ -32,7 +33,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_Error(t *testing.T)
 
 			testUtils.AddPolicy{
 
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test

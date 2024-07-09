@@ -16,6 +16,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	identity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -43,6 +44,8 @@ type state struct {
 	//
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
+
+	identities []identity.Identity
 
 	// Will recieve an item once all actions have finished processing.
 	allActionsDone chan struct{}
