@@ -11,6 +11,9 @@
 package tests
 
 import (
+	"math/rand"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +32,7 @@ type AddPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity immutable.Option[acpIdentity.Identity]
+	Identity immutable.Option[int]
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -52,7 +55,8 @@ func addPolicyACP(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		ctx := db.SetContextIdentity(s.ctx, action.Identity)
+		identity := getIdentity(s, action.Identity)
+		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		if err == nil {
@@ -62,5 +66,30 @@ func addPolicyACP(
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
+}
+
+func getIdentity(s *state, index immutable.Option[int]) immutable.Option[acpIdentity.Identity] {
+	if !index.HasValue() {
+		return immutable.None[acpIdentity.Identity]()
+	}
+
+	if len(s.identities) <= index.Value() {
+		// Generate the keys using the index as the seed so that multiple
+		// runs yield the same private key.  This is important for stuff like
+		// the change detector.
+		source := rand.NewSource(int64(index.Value()))
+		r := rand.New(source)
+
+		privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
+		require.NoError(s.t, err)
+
+		identity, err := acpIdentity.FromPrivateKey(privateKey)
+		require.NoError(s.t, err)
+
+		s.identities = append(s.identities, identity.Value())
+		return identity
+	} else {
+		return immutable.Some[acpIdentity.Identity](s.identities[index.Value()])
 	}
 }

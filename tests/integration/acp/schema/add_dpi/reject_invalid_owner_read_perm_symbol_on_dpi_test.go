@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +30,7 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOn
 
 			testUtils.AddPolicy{
 
-				Identity: actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -114,7 +116,7 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExpr
 
 			testUtils.AddPolicy{
 
-				Identity: actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -200,7 +202,7 @@ func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDPI
 
 			testUtils.AddPolicy{
 
-				Identity: actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test

@@ -13,6 +13,8 @@ package test_acp_add_policy
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +24,7 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
 		Description: "Test acp, where a relation is managing another relation, valid policy id",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: a policy

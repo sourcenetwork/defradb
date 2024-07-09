@@ -13,8 +13,9 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestColDescrUpdateRemovePolicy_Errors(t *testing.T) {
@@ -22,7 +23,7 @@ func TestColDescrUpdateRemovePolicy_Errors(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test

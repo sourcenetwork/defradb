@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -29,7 +31,7 @@ func TestACP_AddDPISchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
 
 			testUtils.AddPolicy{
 
-				Identity: actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test

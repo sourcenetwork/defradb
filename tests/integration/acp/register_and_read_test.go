@@ -13,6 +13,8 @@ package test_acp
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,7 +26,7 @@ func TestACP_CreateWithoutIdentityAndReadWithoutIdentity_CanRead(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -113,7 +115,7 @@ func TestACP_CreateWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -171,7 +173,7 @@ func TestACP_CreateWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -204,7 +206,7 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -253,7 +255,7 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -264,7 +266,7 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -297,7 +299,7 @@ func TestACP_CreateWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -346,7 +348,7 @@ func TestACP_CreateWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -382,7 +384,7 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                      name: test
@@ -431,7 +433,7 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Doc: `
  					{
@@ -442,7 +444,7 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
 			},
 
 			testUtils.Request{
-				Identity: Actor2Identity,
+				Identity: immutable.Some(2),
 
 				Request: `
  					query {
