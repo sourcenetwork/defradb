@@ -26,7 +26,7 @@ const (
 	FieldIDName = "fieldId"
 	ShowDeleted = "showDeleted"
 
-	EncryptArgName       = "encrypt"
+	EncryptDocArgName    = "encrypt"
 	EncryptFieldsArgName = "encryptFields"
 
 	FilterClause  = "filter"

@@ -24,7 +24,7 @@ import (
 
 func MakeCollectionCreateCommand() *cobra.Command {
 	var file string
-	var shouldEncrypt bool
+	var shouldEncryptDoc bool
 	var encryptedFields []string
 	var cmd = &cobra.Command{
 		Use:   "create [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
@@ -90,7 +90,7 @@ Example: create from stdin:
 			}
 
 			txn, _ := db.TryGetContextTxn(cmd.Context())
-			setContextDocEncryption(cmd, shouldEncrypt, encryptedFields, txn)
+			setContextDocEncryption(cmd, shouldEncryptDoc, encryptedFields, txn)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())
@@ -107,7 +107,7 @@ Example: create from stdin:
 			return col.Create(cmd.Context(), doc)
 		},
 	}
-	cmd.PersistentFlags().BoolVarP(&shouldEncrypt, "encrypt", "e", false,
+	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
 		"Flag to enable encryption of the document")
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
@@ -116,14 +116,14 @@ Example: create from stdin:
 }
 
 // setContextDocEncryption sets doc encryption for the current command context.
-func setContextDocEncryption(cmd *cobra.Command, shouldEncrypt bool, encryptFields []string, txn datastore.Txn) {
-	if !shouldEncrypt && len(encryptFields) == 0 {
+func setContextDocEncryption(cmd *cobra.Command, shouldEncryptDoc bool, encryptFields []string, txn datastore.Txn) {
+	if !shouldEncryptDoc && len(encryptFields) == 0 {
 		return
 	}
 	ctx := cmd.Context()
 	if txn != nil {
 		ctx = encryption.ContextWithStore(ctx, txn)
 	}
-	ctx = encryption.SetContextConfigFromParams(ctx, shouldEncrypt, encryptFields)
+	ctx = encryption.SetContextConfigFromParams(ctx, shouldEncryptDoc, encryptFields)
 	cmd.SetContext(ctx)
 }
