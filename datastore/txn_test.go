@@ -47,7 +47,7 @@ func TestNewTxnFromWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = NewTxnFrom(ctx, rootstore, 0, false)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestOnSuccess(t *testing.T) {
@@ -107,7 +107,7 @@ func TestOnError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = txn.Commit(ctx)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 
 	require.Equal(t, text, "Source Inc")
 }
@@ -131,7 +131,7 @@ func TestOnErrorAsync(t *testing.T) {
 
 	wg.Add(1)
 	err = txn.Commit(ctx)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 	wg.Wait()
 }
 

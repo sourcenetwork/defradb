@@ -91,7 +91,7 @@ func TestBStoreGetWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = bs.Get(ctx, cID)
-	require.ErrorIs(t, err, memory.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestBStoreGetWithReHash(t *testing.T) {
@@ -190,5 +190,5 @@ func TestPutManyWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	err = bs.PutMany(ctx, []blocks.Block{b, b2})
-	require.ErrorIs(t, err, memory.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }

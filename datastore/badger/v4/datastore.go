@@ -24,10 +24,6 @@ import (
 
 var log = logger.Logger("badger")
 
-var (
-	ErrClosed = errors.New("datastore closed")
-)
-
 type Datastore struct {
 	DB *badger.DB
 

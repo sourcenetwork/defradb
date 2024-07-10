@@ -13,7 +13,12 @@ package badger
 import (
 	dsq "github.com/ipfs/go-datastore/query"
 
+	datastoreErrors "github.com/sourcenetwork/defradb/datastore/errors"
 	"github.com/sourcenetwork/defradb/errors"
+)
+
+var (
+	ErrClosed = datastoreErrors.ErrClosed
 )
 
 const errOrderType string = "invalid order type"

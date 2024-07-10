@@ -85,7 +85,7 @@ func TestQueryWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = dsRW.Query(ctx, query.Query{})
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestIteratePrefix(t *testing.T) {
@@ -118,5 +118,5 @@ func TestIteratePrefixWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = iter.IteratePrefix(ctx, ds.NewKey("key1"), ds.NewKey("key1"))
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }

@@ -13,6 +13,7 @@ package errors
 import "errors"
 
 var (
+	ErrClosed = errors.New("datastore closed")
 	// ErrConflict is returned when a transaction conflicts with another transaction. This can
 	// happen if the read rows had been updated concurrently by another transaction.
 	//

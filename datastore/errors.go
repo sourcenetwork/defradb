@@ -30,6 +30,7 @@ var (
 	// ipfs-blockstore.ErrNotFound => error
 	// ErrNotFound is an error returned when a block is not found.
 	ErrNotFound    = errors.New("blockstore: block not found")
+	ErrClosed      = datastoreErrors.ErrClosed
 	ErrTxnConflict = datastoreErrors.ErrTxnConflict
 )
 

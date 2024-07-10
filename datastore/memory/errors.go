@@ -18,4 +18,5 @@ var (
 	ErrReadOnlyTxn  = errors.ErrReadOnlyTxn
 	ErrTxnDiscarded = errors.ErrTxnDiscarded
 	ErrTxnConflict  = errors.ErrTxnConflict
+	ErrClosed       = errors.ErrClosed
 )
