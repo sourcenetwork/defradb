@@ -71,7 +71,7 @@ func init() {
 
 func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	opts := []node.Option{
-		node.WithInMemory(true),
+		node.WithBadgerInMemory(true),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -86,7 +86,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{
-		node.WithPath(path),
+		node.WithBadgerPath(path),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -121,13 +121,13 @@ func setupNode(s *state) (*node.Node, string, error) {
 	}
 
 	if encryptionKey != nil {
-		opts = append(opts, node.WithEncryptionKey(encryptionKey))
+		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	}
 
 	var path string
 	switch s.dbt {
 	case badgerIMType:
-		opts = append(opts, node.WithInMemory(true))
+		opts = append(opts, node.WithBadgerInMemory(true))
 
 	case badgerFileType:
 		switch {
@@ -144,10 +144,10 @@ func setupNode(s *state) (*node.Node, string, error) {
 			path = s.t.TempDir()
 		}
 
-		opts = append(opts, node.WithPath(path), node.WithACPPath(path))
+		opts = append(opts, node.WithBadgerPath(path), node.WithACPPath(path))
 
 	case defraIMType:
-		opts = append(opts, node.WithDefraStore(true))
+		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:
 		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)

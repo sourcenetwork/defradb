@@ -14,65 +14,75 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 )
+
+type StoreType string
+
+const (
+	// The Go-enum default StoreType.
+	//
+	// The actual store type that this resolves to depends on the build target.
+	DefaultStore StoreType = ""
+)
+
+// storeConstructors is a map of [StoreType]s to store constructors.
+//
+// Is is populated by the `init` functions in the runtime-specific files - this
+// allows it's population to be managed by build flags.
+var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error){}
 
 // StoreOptions contains store configuration values.
 type StoreOptions struct {
-	path             string
-	inMemory         bool
-	defraStore       bool
-	valueLogFileSize int64
-	encryptionKey    []byte
+	store               StoreType
+	badgerPath          string
+	badgerFileSize      int64
+	badgerEncryptionKey []byte
+	badgerInMemory      bool
 }
 
 // DefaultStoreOptions returns new options with default values.
 func DefaultStoreOptions() *StoreOptions {
 	return &StoreOptions{
-		inMemory:         false,
-		valueLogFileSize: 1 << 30,
+		badgerInMemory: false,
+		badgerFileSize: 1 << 30,
 	}
 }
 
 // StoreOpt is a function for setting configuration values.
 type StoreOpt func(*StoreOptions)
 
-// WithInMemory sets the in memory flag.
-func WithInMemory(inMemory bool) StoreOpt {
+// WithStoreType sets the store type to use.
+func WithStoreType(store StoreType) StoreOpt {
 	return func(o *StoreOptions) {
-		o.inMemory = inMemory
+		o.store = store
 	}
 }
 
-// WithDefraStore sets the defra store flag.
-//
-// Setting this to true will result in the defra node being created with
-// the a custom defra implementation of the rootstore instead of badger.
-func WithDefraStore(defraStore bool) StoreOpt {
+// WithBadgerInMemory sets the badger in memory option.
+func WithBadgerInMemory(enable bool) StoreOpt {
 	return func(o *StoreOptions) {
-		o.defraStore = defraStore
+		o.badgerInMemory = enable
 	}
 }
 
-// WithPath sets the datastore path.
-func WithPath(path string) StoreOpt {
+// WithBadgerPath sets the badger datastore path.
+func WithBadgerPath(path string) StoreOpt {
 	return func(o *StoreOptions) {
-		o.path = path
+		o.badgerPath = path
 	}
 }
 
-// WithValueLogFileSize sets the badger value log file size.
-func WithValueLogFileSize(size int64) StoreOpt {
+// WithBadgerFileSize sets the badger value log file size.
+func WithBadgerFileSize(size int64) StoreOpt {
 	return func(o *StoreOptions) {
-		o.valueLogFileSize = size
+		o.badgerFileSize = size
 	}
 }
 
-// WithEncryptionKey sets the badger encryption key.
-func WithEncryptionKey(encryptionKey []byte) StoreOpt {
+// WithBadgerEncryptionKey sets the badger encryption key.
+func WithBadgerEncryptionKey(encryptionKey []byte) StoreOpt {
 	return func(o *StoreOptions) {
-		o.encryptionKey = encryptionKey
+		o.badgerEncryptionKey = encryptionKey
 	}
 }
 
@@ -82,22 +92,9 @@ func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.Rootstore, error
 	for _, opt := range opts {
 		opt(options)
 	}
-
-	if options.defraStore {
-		return memory.NewDatastore(ctx), nil
+	storeConstructor, ok := storeConstructors[options.store]
+	if ok {
+		return storeConstructor(ctx, options)
 	}
-
-	badgerOpts := badger.DefaultOptions
-	badgerOpts.InMemory = options.inMemory
-	badgerOpts.ValueLogFileSize = options.valueLogFileSize
-	badgerOpts.EncryptionKey = options.encryptionKey
-
-	if len(options.encryptionKey) > 0 {
-		// Having a cache improves the performance.
-		// Otherwise, your reads would be very slow while encryption is enabled.
-		// https://dgraph.io/docs/badger/get-started/#encryption-mode
-		badgerOpts.IndexCacheSize = 100 << 20
-	}
-
-	return badger.NewDatastore(options.path, &badgerOpts)
+	return nil, NewErrStoreTypeNotSupported(options.store)
 }

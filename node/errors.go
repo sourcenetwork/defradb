@@ -16,10 +16,18 @@ import (
 
 const (
 	errLensRuntimeNotSupported string = "the selected lens runtime is not supported by this build"
+	errStoreTypeNotSupported   string = "the selected store type is not supported by this build"
 )
 
-var ErrLensRuntimeNotSupported = errors.New(errLensRuntimeNotSupported)
+var (
+	ErrLensRuntimeNotSupported = errors.New(errLensRuntimeNotSupported)
+	ErrStoreTypeNotSupported   = errors.New(errStoreTypeNotSupported)
+)
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
+}
+
+func NewErrStoreTypeNotSupported(store StoreType) error {
+	return errors.New(errStoreTypeNotSupported, errors.NewKV("Store", store))
 }

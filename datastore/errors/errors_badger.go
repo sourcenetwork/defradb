@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,14 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package memory
+//go:build !js
 
-import (
-	"github.com/sourcenetwork/defradb/datastore/errors"
-)
+package errors
 
-var (
-	ErrReadOnlyTxn  = errors.ErrReadOnlyTxn
-	ErrTxnDiscarded = errors.ErrTxnDiscarded
-	ErrTxnConflict  = errors.ErrTxnConflict
-)
+import "github.com/sourcenetwork/badger/v4"
+
+func init() {
+	ErrTxnConflict = badger.ErrConflict
+	ErrTxnDiscarded = badger.ErrDiscardedTxn
+	ErrReadOnlyTxn = badger.ErrReadOnlyTxn
+}

@@ -12,6 +12,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -19,6 +20,10 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/tidwall/btree"
+)
+
+var (
+	ErrClosed = errors.New("datastore closed")
 )
 
 type dsTxn struct {

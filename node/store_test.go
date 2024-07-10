@@ -18,30 +18,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWithInMemory(t *testing.T) {
+func TestWithStore(t *testing.T) {
 	options := &StoreOptions{}
-	WithInMemory(true)(options)
-	assert.Equal(t, true, options.inMemory)
+	WithStoreType(MemoryStore)(options)
+	assert.Equal(t, MemoryStore, options.store)
 }
 
-func TestWithPath(t *testing.T) {
+func TestWithBadgerPath(t *testing.T) {
 	options := &StoreOptions{}
-	WithPath("tmp")(options)
-	assert.Equal(t, "tmp", options.path)
+	WithBadgerPath("test")(options)
+	assert.Equal(t, "test", options.badgerPath)
 }
 
-func TestWithValueLogFileSize(t *testing.T) {
+func TestWithBadgerInMemory(t *testing.T) {
 	options := &StoreOptions{}
-	WithValueLogFileSize(int64(5 << 30))(options)
-	assert.Equal(t, int64(5<<30), options.valueLogFileSize)
+	WithBadgerInMemory(true)(options)
+	assert.Equal(t, true, options.badgerInMemory)
 }
 
-func TestWithEncryptionKey(t *testing.T) {
+func TestWithBadgerFileSize(t *testing.T) {
+	options := &StoreOptions{}
+	WithBadgerFileSize(int64(5 << 30))(options)
+	assert.Equal(t, int64(5<<30), options.badgerFileSize)
+}
+
+func TestWithBadgerEncryptionKey(t *testing.T) {
 	encryptionKey := make([]byte, 32)
 	_, err := rand.Read(encryptionKey)
 	require.NoError(t, err)
 
 	options := &StoreOptions{}
-	WithEncryptionKey(encryptionKey)(options)
-	assert.Equal(t, encryptionKey, options.encryptionKey)
+	WithBadgerEncryptionKey(encryptionKey)(options)
+	assert.Equal(t, encryptionKey, options.badgerEncryptionKey)
 }

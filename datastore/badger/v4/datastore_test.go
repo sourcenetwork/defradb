@@ -1127,7 +1127,7 @@ func TestTxnWithConflict(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Commit(ctx)
-	require.ErrorIs(t, err, ErrTxnConflict)
+	require.ErrorIs(t, err, badger.ErrConflict)
 }
 
 func TestTxnWithNoConflictAfterDelete(t *testing.T) {
