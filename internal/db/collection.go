@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -561,6 +562,27 @@ func (c *collection) Save(
 	return txn.Commit(ctx)
 }
 
+func (c *collection) validateEncryptedFields(ctx context.Context) error {
+	encConf := encryption.GetContextConfig(ctx)
+	if !encConf.HasValue() {
+		return nil
+	}
+	fields := encConf.Value().EncryptedFields
+	if len(fields) == 0 {
+		return nil
+	}
+
+	for _, field := range fields {
+		if _, exists := c.Schema().GetFieldByName(field); !exists {
+			return client.NewErrFieldNotExist(field)
+		}
+		if strings.HasPrefix(field, "_") {
+			return NewErrCanNotEncryptBuiltinField(field)
+		}
+	}
+	return nil
+}
+
 // save saves the document state. save MUST not be called outside the `c.create`
 // and `c.update` methods as we wrap the acp logic within those methods. Calling
 // save elsewhere could cause the omission of acp checks.
@@ -569,6 +591,10 @@ func (c *collection) save(
 	doc *client.Document,
 	isCreate bool,
 ) (cid.Cid, error) {
+	if err := c.validateEncryptedFields(ctx); err != nil {
+		return cid.Undef, err
+	}
+
 	if !isCreate {
 		err := c.updateIndexedDoc(ctx, doc)
 		if err != nil {
@@ -657,7 +683,7 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			link, _, err := merkleCRDT.Save(ctx, &merklecrdt.DocField{DocID: primaryKey.DocID, FieldValue: val})
+			link, _, err := merkleCRDT.Save(ctx, merklecrdt.NewDocField(primaryKey.DocID, k, val))
 			if err != nil {
 				return cid.Undef, err
 			}

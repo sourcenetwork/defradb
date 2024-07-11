@@ -41,7 +41,7 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 			testUtils.IntrospectionRequest{
 				Request: `
 				{
-				  __type(name: "BookFields") {
+				  __type(name: "BookField") {
 				    name
 				    kind
 				    enumValues {
@@ -53,7 +53,7 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 				ContainsData: map[string]any{
 					"__type": map[string]any{
 						"kind": "ENUM",
-						"name": "BookFields",
+						"name": "BookField",
 						"enumValues": []any{
 							// Internal related object fields.
 							map[string]any{"name": "author"},
@@ -103,7 +103,7 @@ func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 			testUtils.IntrospectionRequest{
 				Request: `
 				{
-				  __type(name: "AuthorFields") {
+				  __type(name: "AuthorField") {
 				    name
 				    kind
 				    enumValues {
@@ -115,7 +115,7 @@ func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 				ContainsData: map[string]any{
 					"__type": map[string]any{
 						"kind": "ENUM",
-						"name": "AuthorFields",
+						"name": "AuthorField",
 						"enumValues": []any{
 							// Internal related object fields.
 							map[string]any{"name": "published"},

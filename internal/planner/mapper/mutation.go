@@ -35,4 +35,7 @@ type Mutation struct {
 
 	// Encrypt is a flag to indicate if the input data should be encrypted.
 	Encrypt bool
+
+	// EncryptFields is a list of fields from the input data that should be encrypted.
+	EncryptFields []string
 }

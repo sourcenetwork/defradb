@@ -1251,9 +1251,7 @@ func createDocViaColSave(
 func makeContextForDocCreate(s *state, ctx context.Context, action *CreateDoc) context.Context {
 	identity := getIdentity(s, action.Identity)
 	ctx = db.SetContextIdentity(ctx, identity)
-	if action.IsEncrypted {
-		ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
-	}
+	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
 
@@ -1321,8 +1319,12 @@ func createDocViaGQL(
 
 	params := paramName + ": " + input
 
-	if action.IsEncrypted {
-		params = params + ", " + request.EncryptArgName + ": true"
+	if action.IsDocEncrypted {
+		params = params + ", " + request.EncryptDocArgName + ": true"
+	}
+	if len(action.EncryptedFields) > 0 {
+		params = params + ", " + request.EncryptFieldsArgName + ": [" +
+			strings.Join(action.EncryptedFields, ", ") + "]"
 	}
 
 	req := fmt.Sprintf(
@@ -1336,8 +1338,7 @@ func createDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
+	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, action.Identity))
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {

@@ -50,6 +50,9 @@ type ObjectMutation struct {
 
 	// Encrypt is a boolean flag that indicates whether the input data should be encrypted.
 	Encrypt bool
+
+	// EncryptFields is a list of doc fields from input data that should be encrypted.
+	EncryptFields []string
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as

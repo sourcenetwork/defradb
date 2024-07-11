@@ -10,13 +10,28 @@
 
 package merklecrdt
 
-import "github.com/sourcenetwork/defradb/client"
+import (
+	"github.com/sourcenetwork/defradb/client"
+)
 
 // DocField is a struct that holds the document ID and the field value.
 // This is used to have a link between the document and the field value.
 // For example, to check if the field value needs to be encrypted depending on the document-level
 // encryption is enabled or not.
 type DocField struct {
-	DocID      string
+	// DocID is the ID of a document associated with the field value.
+	DocID string
+	// FieldName is the name of the field.
+	FieldName string
+	// FieldValue is the field value.
 	FieldValue *client.FieldValue
+}
+
+// NewDocField creates a new DocField instance.
+func NewDocField(docID, fieldName string, fieldValue *client.FieldValue) *DocField {
+	return &DocField{
+		DocID:      docID,
+		FieldName:  fieldName,
+		FieldValue: fieldValue,
+	}
 }

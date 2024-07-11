@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
+func TestDocEncryptionField_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -27,8 +27,8 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                     }
                 `},
 			testUtils.CreateDoc{
-				Doc:            john21Doc,
-				IsDocEncrypted: true,
+				Doc:             john21Doc,
+				EncryptedFields: []string{"name"},
 			},
 			testUtils.Request{
 				Request: `
@@ -44,59 +44,6 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 						"_docID": testUtils.NewDocIndex(0, 0),
 						"name":   "John",
 						"age":    int64(21),
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testing.T) {
-	const query = `
-		query {
-			Users {
-				name
-				points
-			}
-		}`
-
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-                    type Users {
-                        name: String
-                        points: Int @crdt(type: "pcounter")
-                    }
-                `},
-			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"points": 5
-					}`,
-				IsDocEncrypted: true,
-			},
-			testUtils.Request{
-				Request: query,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": 5,
-					},
-				},
-			},
-			testUtils.UpdateDoc{
-				DocID: 0,
-				Doc:   `{ "points": 3 }`,
-			},
-			testUtils.Request{
-				Request: query,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": 8,
 					},
 				},
 			},
