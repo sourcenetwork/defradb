@@ -120,11 +120,6 @@ func (a *acpSourceHub) Policy(
 		return immutable.None[policy](), err
 	}
 
-	resources := make(map[string]*resource, len(response.Policy.Resources))
-	for _, resource := range resources {
-		resources[resource.Name] = resource
-	}
-
 	return immutable.Some(
 		mapSourceHubPolicy(response.Policy),
 	), nil
