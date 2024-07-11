@@ -18,6 +18,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -64,7 +65,6 @@ func MakeStartCommand() *cobra.Command {
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
-				node.WithSourceHubKeyName(cfg.GetString("acp.sourceHub.KeyName")),
 				node.WithPeers(peers...),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
@@ -106,8 +106,15 @@ func MakeStartCommand() *cobra.Command {
 				}
 
 				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
-				// WARNING: This relies on the fact that the keyring password must have been entered at least once already
-				opts = append(opts, node.WithKeyring(immutable.Some(kr)))
+
+				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
+				if sourceHubKeyName != "" {
+					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
+					if err != nil {
+						return err
+					}
+					opts = append(opts, node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)))
+				}
 			}
 
 			acpType := getAcpType(cfg.GetString("acp.type"))

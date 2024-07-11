@@ -14,21 +14,18 @@ import (
 	"context"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/sourcehub/sdk"
 	acptypes "github.com/sourcenetwork/sourcehub/x/acp/types"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/keyring"
 )
 
 type acpSourceHub struct {
-	client     *sdk.Client
-	txBuilder  *sdk.TxBuilder
-	keyring    keyring.Keyring
-	acpKeyName string
+	client    *sdk.Client
+	txBuilder *sdk.TxBuilder
+	signer    sdk.TxSigner
 }
 
 var _ sourceHubClient = (*acpSourceHub)(nil)
@@ -37,8 +34,7 @@ func NewACPSourceHub(
 	chainID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	keyring keyring.Keyring,
-	acpKeyName string,
+	signer sdk.TxSigner,
 ) (*acpSourceHub, error) {
 	client, err := sdk.NewClient(sdk.WithGRPCAddr(grpcAddress), sdk.WithCometRPCAddr(cometRPCAddress))
 	if err != nil {
@@ -54,10 +50,9 @@ func NewACPSourceHub(
 	}
 
 	return &acpSourceHub{
-		client:     client,
-		txBuilder:  &txBuilder,
-		keyring:    keyring,
-		acpKeyName: acpKeyName,
+		client:    client,
+		txBuilder: &txBuilder,
+		signer:    signer,
 	}, nil
 }
 
@@ -76,20 +71,11 @@ func (a *acpSourceHub) AddPolicy(
 	policyMarshalType policyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	adminKey, err := a.keyring.Get(a.acpKeyName)
-	if err != nil {
-		return "", err
-	}
-
-	signer := sdk.TxSignerFromCosmosKey(&secp256k1.PrivKey{
-		Key: adminKey,
-	})
-
 	msgSet := sdk.MsgSet{}
 	policyMapper := msgSet.WithCreatePolicy(
-		acptypes.NewMsgCreatePolicyNow(signer.GetAccAddress(), policy, acptypes.PolicyMarshalingType(policyMarshalType)),
+		acptypes.NewMsgCreatePolicyNow(a.signer.GetAccAddress(), policy, acptypes.PolicyMarshalingType(policyMarshalType)),
 	)
-	tx, err := a.txBuilder.Build(ctx, signer, &msgSet)
+	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
 		return "", err
 	}
@@ -185,24 +171,15 @@ func (a *acpSourceHub) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) (RegistrationResult, error) {
-	adminKey, err := a.keyring.Get(a.acpKeyName)
-	if err != nil {
-		return 0, err
-	}
-
-	signer := sdk.TxSignerFromCosmosKey(&secp256k1.PrivKey{
-		Key: []byte(adminKey),
-	})
-
 	msgSet := sdk.MsgSet{}
 	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
-		Creator:      signer.GetAccAddress(),
+		Creator:      a.signer.GetAccAddress(),
 		BearerToken:  identity.BearerToken,
 		PolicyId:     policyID,
 		Cmd:          acptypes.NewRegisterObjectCmd(acptypes.NewObject(resourceName, objectID)),
 		CreationTime: creationTime,
 	})
-	tx, err := a.txBuilder.Build(ctx, signer, &msgSet)
+	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
 		return 0, err
 	}

@@ -16,10 +16,10 @@ import (
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/keyring"
 )
 
 // sourceHubClient is a private abstraction to allow multiple ACP implementations
@@ -107,10 +107,9 @@ func NewSourceHubACP(
 	chainID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	keyring keyring.Keyring,
-	acpKeyName string,
+	signer sdk.TxSigner,
 ) (ACP, error) {
-	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, keyring, acpKeyName)
+	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, signer)
 	if err != nil {
 		return nil, err
 	}

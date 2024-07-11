@@ -14,9 +14,9 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/sourcehub/sdk"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/keyring"
 )
 
 type ACPType uint8
@@ -34,8 +34,7 @@ type ACPOptions struct {
 	// Note: An empty path will result in an in-memory ACP instance.
 	path string
 
-	keyring                  immutable.Option[keyring.Keyring]
-	sourceHubKeyName         string
+	signer                   immutable.Option[sdk.TxSigner]
 	sourceHubChainID         string
 	sourceHubGRPCAddress     string
 	sourceHubCometRPCAddress string
@@ -67,20 +66,12 @@ func WithACPPath(path string) ACPOpt {
 	}
 }
 
-// WithKeyring sets the keyring for Defra to use.
+// WithKeyring sets the txn signer for Defra to use.
 //
 // It is only required when SourceHub ACP is active.
-func WithKeyring(keyring immutable.Option[keyring.Keyring]) ACPOpt {
+func WithTxnSigner(signer immutable.Option[sdk.TxSigner]) ACPOpt {
 	return func(o *ACPOptions) {
-		o.keyring = keyring
-	}
-}
-
-// WithSourceHubKeyName specifies the name of the key in the keyring to use to sign
-// and (pay for) SourceHub transactions.
-func WithSourceHubKeyName(sourceHubKeyName string) ACPOpt {
-	return func(o *ACPOptions) {
-		o.sourceHubKeyName = sourceHubKeyName
+		o.signer = signer
 	}
 }
 
@@ -125,16 +116,15 @@ func NewACP(ctx context.Context, opts ...ACPOpt) (immutable.Option[acp.ACP], err
 		return immutable.Some[acp.ACP](acpLocal), nil
 
 	case SourceHubACPType:
-		if !options.keyring.HasValue() {
-			return acp.NoACP, ErrKeyringMissingForSourceHubACP
+		if !options.signer.HasValue() {
+			return acp.NoACP, ErrSignerMissingForSourceHubACP
 		}
 
 		acpSourceHub, err := acp.NewSourceHubACP(
 			options.sourceHubChainID,
 			options.sourceHubGRPCAddress,
 			options.sourceHubCometRPCAddress,
-			options.keyring.Value(),
-			options.sourceHubKeyName,
+			options.signer.Value(),
 		)
 		if err != nil {
 			return acp.NoACP, err

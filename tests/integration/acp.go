@@ -27,6 +27,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -338,10 +339,14 @@ cmdReaderLoop:
 		},
 	)
 
+	signer, err := keyring.NewTxSignerFromKeyringKey(kr, validatorName)
+	if err != nil {
+		return nil, err
+	}
+
 	return []node.ACPOpt{
-		node.WithKeyring(immutable.Some[keyring.Keyring](kr)),
+		node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)),
 		node.WithSourceHubChainID(chainID),
-		node.WithSourceHubKeyName(validatorName),
 		node.WithSourceHubGRPCAddress(gRpcAddress),
 		node.WithSourceHubCometRPCAddress(rpcAddress),
 	}, nil
