@@ -19,6 +19,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -164,12 +165,12 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 
 	// Annoyingly, the CLI does not support support changing the comet config params that we need,
 	// so we have to manually rewrite the config file.
-	cfg, err := toml.LoadFile(directory + "/config/config.toml")
+	cfg, err := toml.LoadFile(filepath.Join(directory, "config", "config.toml"))
 	if err != nil {
 		return nil, err
 	}
 
-	fo, err := os.Create(directory + "/config/config.toml")
+	fo, err := os.Create(filepath.Join(directory, "config", "config.toml"))
 	if err != nil {
 		return nil, err
 	}
