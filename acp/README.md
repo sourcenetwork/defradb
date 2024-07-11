@@ -436,8 +436,14 @@ To perform authenticated operations you will need to build and sign a JWT token 
 
 - `sub` public key of the identity
 - `aud` host name of the defradb api
+- The `exp` and `nbf` fields should also be set to short-lived durations.
 
-> The `exp` and `nbf` fields should also be set to short-lived durations.
+Additionally, if using SourceHub ACP, the following must be set:
+- `iss` should be set to the user's DID, e.g. `"did:key:z6MkkHsQbp3tXECqmUJoCJwyuxSKn1BDF1RHzwDGg9tHbXKw"`
+- `iat` should be set to the current unix timestamp
+- `authorized_account` should be set to the SourceHub address of the account signing SourceHub transactions on your
+  behalf - WARNING - this will currently enable this account to make any SourceHub as your user for the lifetime of the
+  token, so please only set this if you fully trust the node/account.
 
 The JWT must be signed with the `secp256k1` private key of the identity you wish to perform actions as.
 
