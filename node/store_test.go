@@ -11,11 +11,9 @@
 package node
 
 import (
-	"crypto/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestWithStore(t *testing.T) {
@@ -28,26 +26,4 @@ func TestWithStorePath(t *testing.T) {
 	options := &StoreOptions{}
 	WithStorePath("test")(options)
 	assert.Equal(t, "test", options.path)
-}
-
-func TestWithBadgerInMemory(t *testing.T) {
-	options := &StoreOptions{}
-	WithBadgerInMemory(true)(options)
-	assert.Equal(t, true, options.badgerInMemory)
-}
-
-func TestWithBadgerFileSize(t *testing.T) {
-	options := &StoreOptions{}
-	WithBadgerFileSize(int64(5 << 30))(options)
-	assert.Equal(t, int64(5<<30), options.badgerFileSize)
-}
-
-func TestWithBadgerEncryptionKey(t *testing.T) {
-	encryptionKey := make([]byte, 32)
-	_, err := rand.Read(encryptionKey)
-	require.NoError(t, err)
-
-	options := &StoreOptions{}
-	WithBadgerEncryptionKey(encryptionKey)(options)
-	assert.Equal(t, encryptionKey, options.badgerEncryptionKey)
 }

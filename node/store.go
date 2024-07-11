@@ -65,27 +65,6 @@ func WithStorePath(path string) StoreOpt {
 	}
 }
 
-// WithBadgerInMemory sets the badger in memory option.
-func WithBadgerInMemory(enable bool) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerInMemory = enable
-	}
-}
-
-// WithBadgerFileSize sets the badger value log file size.
-func WithBadgerFileSize(size int64) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerFileSize = size
-	}
-}
-
-// WithBadgerEncryptionKey sets the badger encryption key.
-func WithBadgerEncryptionKey(encryptionKey []byte) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerEncryptionKey = encryptionKey
-	}
-}
-
 // NewStore returns a new store with the given options.
 func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.Rootstore, error) {
 	options := DefaultStoreOptions()
