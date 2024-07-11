@@ -19,12 +19,12 @@ import (
 	"github.com/sourcenetwork/defradb/acp"
 )
 
-type ACPType uint8
+type ACPType string
 
 const (
-	NoACPType        ACPType = 0
-	LocalACPType     ACPType = 1
-	SourceHubACPType ACPType = 2
+	NoACPType        ACPType = "none"
+	LocalACPType     ACPType = "local"
+	SourceHubACPType ACPType = "source-hub"
 )
 
 // ACPOptions contains ACP configuration values.

@@ -117,9 +117,9 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
-			acpType := getAcpType(cfg.GetString("acp.type"))
-			if acpType.HasValue() {
-				opts = append(opts, node.WithACPType(acpType.Value()))
+			acpType := cfg.GetString("acp.type")
+			if acpType != "" {
+				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)
@@ -199,17 +199,4 @@ func MakeStartCommand() *cobra.Command {
 		"Path to the private key for tls",
 	)
 	return cmd
-}
-
-func getAcpType(acpTypeString string) immutable.Option[node.ACPType] {
-	switch acpTypeString {
-	case "none":
-		return immutable.Some(node.NoACPType)
-	case "local":
-		return immutable.Some(node.LocalACPType)
-	case "source-hub":
-		return immutable.Some(node.SourceHubACPType)
-	default:
-		return immutable.None[node.ACPType]()
-	}
 }
