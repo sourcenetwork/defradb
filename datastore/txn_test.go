@@ -252,7 +252,7 @@ func TestMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithConflic
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
@@ -281,7 +281,7 @@ func TestMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflic
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestBadgerMemoryStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
@@ -338,7 +338,7 @@ func TestBadgerMemoryStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithC
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestBadgerMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
@@ -369,7 +369,7 @@ func TestBadgerMemoryStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithC
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestBadgerFileStoreTxn_TwoTransactionsWithPutConflict_ShouldSucceed(t *testing.T) {
@@ -426,7 +426,7 @@ func TestBadgerFileStoreTxn_TwoTransactionsWithGetPutConflict_ShouldErrorWithCon
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestBadgerFileStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithConflict(t *testing.T) {
@@ -457,7 +457,7 @@ func TestBadgerFileStoreTxn_TwoTransactionsWithHasPutConflict_ShouldErrorWithCon
 	require.NoError(t, err)
 
 	err = txn1.Commit(ctx)
-	require.ErrorIs(t, err, badger.ErrConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestMemoryStoreTxn_TwoTransactionsWithQueryAndPut_ShouldOmmitNewPut(t *testing.T) {

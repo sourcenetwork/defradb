@@ -762,7 +762,8 @@ func (t *txn) Commit(ctx context.Context) error {
 }
 
 func (t *txn) commit() error {
-	return t.txn.Commit()
+	err := t.txn.Commit()
+	return convertError(err)
 }
 
 func (t *txn) Discard(ctx context.Context) {
