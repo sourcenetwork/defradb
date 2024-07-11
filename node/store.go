@@ -34,7 +34,7 @@ var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOp
 // StoreOptions contains store configuration values.
 type StoreOptions struct {
 	store               StoreType
-	badgerPath          string
+	path                string
 	badgerFileSize      int64
 	badgerEncryptionKey []byte
 	badgerInMemory      bool
@@ -58,17 +58,17 @@ func WithStoreType(store StoreType) StoreOpt {
 	}
 }
 
+// WithStorePath sets the store path.
+func WithStorePath(path string) StoreOpt {
+	return func(o *StoreOptions) {
+		o.path = path
+	}
+}
+
 // WithBadgerInMemory sets the badger in memory option.
 func WithBadgerInMemory(enable bool) StoreOpt {
 	return func(o *StoreOptions) {
 		o.badgerInMemory = enable
-	}
-}
-
-// WithBadgerPath sets the badger datastore path.
-func WithBadgerPath(path string) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerPath = path
 	}
 }
 

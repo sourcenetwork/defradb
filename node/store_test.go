@@ -24,10 +24,10 @@ func TestWithStore(t *testing.T) {
 	assert.Equal(t, MemoryStore, options.store)
 }
 
-func TestWithBadgerPath(t *testing.T) {
+func TestWithStorePath(t *testing.T) {
 	options := &StoreOptions{}
-	WithBadgerPath("test")(options)
-	assert.Equal(t, "test", options.badgerPath)
+	WithStorePath("test")(options)
+	assert.Equal(t, "test", options.path)
 }
 
 func TestWithBadgerInMemory(t *testing.T) {

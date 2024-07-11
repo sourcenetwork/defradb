@@ -19,9 +19,8 @@ import (
 )
 
 var (
-	ErrClosed       = datastoreErrors.ErrClosed
-	ErrTxnConflict  = datastoreErrors.ErrTxnConflict
-	ErrDiscardedTxn = datastoreErrors.ErrTxnDiscarded
+	ErrClosed      = datastoreErrors.ErrClosed
+	ErrTxnConflict = datastoreErrors.ErrTxnConflict
 )
 
 const errOrderType string = "invalid order type"

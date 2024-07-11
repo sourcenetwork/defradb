@@ -36,7 +36,7 @@ func init() {
 			badgerOpts.IndexCacheSize = 100 << 20
 		}
 
-		return badger.NewDatastore(options.badgerPath, &badgerOpts)
+		return badger.NewDatastore(options.path, &badgerOpts)
 	}
 	storeConstructors[BadgerStore] = constructor
 	storeConstructors[DefaultStore] = constructor

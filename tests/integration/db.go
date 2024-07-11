@@ -86,7 +86,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{
-		node.WithBadgerPath(path),
+		node.WithStorePath(path),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -144,7 +144,7 @@ func setupNode(s *state) (*node.Node, string, error) {
 			path = s.t.TempDir()
 		}
 
-		opts = append(opts, node.WithBadgerPath(path), node.WithACPPath(path))
+		opts = append(opts, node.WithStorePath(path), node.WithACPPath(path))
 
 	case defraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))

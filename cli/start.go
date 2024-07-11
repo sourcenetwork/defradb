@@ -57,7 +57,7 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			opts := []node.Option{
-				node.WithBadgerPath(cfg.GetString("datastore.badger.path")),
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithACPType(node.LocalACPType),
