@@ -16,24 +16,9 @@ var (
 	ErrClosed = errors.New("datastore closed")
 	// ErrConflict is returned when a transaction conflicts with another transaction. This can
 	// happen if the read rows had been updated concurrently by another transaction.
-	//
-	// This error is copied from badger because it is used in a few places outside of the datastore
-	// package. This copy ensures that we can build in environments that do not support badger.
-	//
-	//nolint:revive
-	ErrTxnConflict = errors.New("Transaction Conflict. Please retry")
+	ErrTxnConflict = errors.New("transaction Conflict. Please retry")
 	// ErrDiscardedTxn is returned if a previously discarded transaction is re-used.
-	//
-	// This error is copied from badger because it is used in a few places outside of the datastore
-	// package. This copy ensures that we can build in environments that do not support badger.
-	//
-	//nolint:revive
-	ErrTxnDiscarded = errors.New("This transaction has been discarded. Create a new one")
+	ErrTxnDiscarded = errors.New("this transaction has been discarded. Create a new one")
 	// ErrReadOnlyTxn is returned if an update function is called on a read-only transaction.
-	//
-	// This error is copied from badger because it is used in a few places outside of the datastore
-	// package. This copy ensures that we can build in environments that do not support badger.
-	//
-	//nolint:revive
-	ErrReadOnlyTxn = errors.New("No sets or deletes are allowed in a read-only transaction")
+	ErrReadOnlyTxn = errors.New("no sets or deletes are allowed in a read-only transaction")
 )
