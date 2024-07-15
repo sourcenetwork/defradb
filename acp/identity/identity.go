@@ -56,7 +56,7 @@ type Identity struct {
 //     by the Defra http client.  For example `github.com/sourcenetwork/defradb`
 //   - authorizedAccount: An account that this identity is authorizing to make
 //     SourceHub calls on behalf of this actor.  This is currently required when
-//     using the SourceHub ACP module.
+//     using SourceHub ACP.
 func FromPrivateKey(
 	privateKey *secp256k1.PrivateKey,
 	duration time.Duration,
