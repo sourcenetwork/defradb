@@ -57,7 +57,7 @@ func NewACPSourceHub(
 }
 
 func (a *acpSourceHub) Init(ctx context.Context, path string) {
-
+	// no-op
 }
 
 func (a *acpSourceHub) Start(ctx context.Context) error {
