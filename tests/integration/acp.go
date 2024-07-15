@@ -247,7 +247,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	// process involves finding free ports, dropping them, and then assigning them to the source hub node.
 	//
 	// We have to do this because source hub (cosmos) annoyingly does not support automatic port assignment
-	// (appart from the p2p port which we just managage here for consistency).
+	// (appart from the p2p port which we just manage here for consistency).
 	//
 	// We need to lock before getting the ports, otherwise they may try and use the port we use for locking.
 	// We can only unlock after the source hub node has started and begun listening on the assigned ports.
