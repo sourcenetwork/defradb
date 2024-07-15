@@ -57,11 +57,15 @@ type Identity struct {
 //   - authorizedAccount: An account that this identity is authorizing to make
 //     SourceHub calls on behalf of this actor.  This is currently required when
 //     using SourceHub ACP.
+//   - skipTokenGeneration: If true, BearerToken will not be set.  This parameter is
+//     provided as generating and signing the token is relatively slow, and only required
+//     by remote Defra clients (CLI, http), or if using SourceHub ACP.
 func FromPrivateKey(
 	privateKey *secp256k1.PrivateKey,
 	duration time.Duration,
 	audience immutable.Option[string],
 	authorizedAccount immutable.Option[string],
+	skipTokenGeneration bool,
 ) (Identity, error) {
 	publicKey := privateKey.PubKey()
 	did, err := DIDFromPublicKey(publicKey)
@@ -69,35 +73,38 @@ func FromPrivateKey(
 		return Identity{}, err
 	}
 
-	subject := hex.EncodeToString(publicKey.SerializeCompressed())
-	now := time.Now()
+	var signedToken []byte
+	if !skipTokenGeneration {
+		subject := hex.EncodeToString(publicKey.SerializeCompressed())
+		now := time.Now()
 
-	jwtBuilder := jwt.NewBuilder()
-	jwtBuilder = jwtBuilder.Subject(subject)
-	jwtBuilder = jwtBuilder.Expiration(now.Add(duration))
-	jwtBuilder = jwtBuilder.NotBefore(now)
-	jwtBuilder = jwtBuilder.Issuer(did)
-	jwtBuilder = jwtBuilder.IssuedAt(now)
+		jwtBuilder := jwt.NewBuilder()
+		jwtBuilder = jwtBuilder.Subject(subject)
+		jwtBuilder = jwtBuilder.Expiration(now.Add(duration))
+		jwtBuilder = jwtBuilder.NotBefore(now)
+		jwtBuilder = jwtBuilder.Issuer(did)
+		jwtBuilder = jwtBuilder.IssuedAt(now)
 
-	if audience.HasValue() {
-		jwtBuilder = jwtBuilder.Audience([]string{audience.Value()})
-	}
+		if audience.HasValue() {
+			jwtBuilder = jwtBuilder.Audience([]string{audience.Value()})
+		}
 
-	token, err := jwtBuilder.Build()
-	if err != nil {
-		return Identity{}, err
-	}
-
-	if authorizedAccount.HasValue() {
-		err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
+		token, err := jwtBuilder.Build()
 		if err != nil {
 			return Identity{}, err
 		}
-	}
 
-	signedToken, err := jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, privateKey.ToECDSA()))
-	if err != nil {
-		return Identity{}, err
+		if authorizedAccount.HasValue() {
+			err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
+			if err != nil {
+				return Identity{}, err
+			}
+		}
+
+		signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, privateKey.ToECDSA()))
+		if err != nil {
+			return Identity{}, err
+		}
 	}
 
 	return Identity{

@@ -400,6 +400,11 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 	nodeIdentities := s.identities[nodeIndex]
 
 	if len(nodeIdentities) <= index.Value() {
+		identities := make([]acpIdentity.Identity, index.Value()+1)
+		copy(identities, nodeIdentities)
+		nodeIdentities = identities
+		s.identities[nodeIndex] = nodeIdentities
+
 		var audience immutable.Option[string]
 		switch client := s.nodes[nodeIndex].(type) {
 		case *http.Wrapper:
@@ -422,12 +427,13 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 			authTokenExpiration,
 			audience,
 			immutable.Some(s.sourcehubAddress),
+			// Creating and signing the bearer token is slow, so we skip it if it not
+			// required.
+			!(acpType == SourceHubACPType || audience.HasValue()),
 		)
 		require.NoError(s.t, err)
 
-		nodeIdentities = append(nodeIdentities, identity)
-		s.identities[nodeIndex] = nodeIdentities
-
+		nodeIdentities[index.Value()] = identity
 		return immutable.Some(identity)
 	} else {
 		return immutable.Some(nodeIdentities[index.Value()])

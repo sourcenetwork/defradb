@@ -171,6 +171,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		authTokenExpiration,
 		immutable.Some(cfg.GetString("api.address")),
 		sourcehubAddress,
+		false,
 	)
 	if err != nil {
 		return err

@@ -279,7 +279,7 @@ func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	privKeyBytes, err := hex.DecodeString("028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f")
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
-	identity, err := acpIdentity.FromPrivateKey(privKey, time.Hour, immutable.None[string](), immutable.None[string]())
+	identity, err := acpIdentity.FromPrivateKey(privKey, time.Hour, immutable.None[string](), immutable.None[string](), false)
 	require.NoError(t, err)
 
 	ctx = SetContextIdentity(ctx, immutable.Some(identity))

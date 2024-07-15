@@ -33,6 +33,7 @@ func TestVerifyAuthToken(t *testing.T) {
 		time.Hour,
 		immutable.Some(audience),
 		immutable.None[string](),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -49,6 +50,7 @@ func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
 		time.Hour,
 		immutable.Some("valid"),
 		immutable.None[string](),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -68,6 +70,7 @@ func TestVerifyAuthTokenErrorsWithExpired(t *testing.T) {
 		-time.Hour,
 		immutable.Some(audience),
 		immutable.None[string](),
+		false,
 	)
 	require.NoError(t, err)
 
