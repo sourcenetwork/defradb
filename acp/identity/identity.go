@@ -29,6 +29,8 @@ type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
 
+// BearerTokenSignatureScheme is the signature algorithm used to sign the
+// Identity.BearerToken.
 const BearerTokenSignatureScheme = jwa.ES256K
 
 // Identity describes a unique actor.
