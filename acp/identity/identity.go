@@ -108,6 +108,7 @@ func FromPrivateKey(
 	}, nil
 }
 
+// FromToken constructs a new `Indentity` from a bearer token.
 func FromToken(data []byte) (Identity, error) {
 	token, err := jwt.Parse(data, jwt.WithVerify(false))
 	if err != nil {
