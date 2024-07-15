@@ -32,6 +32,8 @@ type ACPOptions struct {
 	acpType ACPType
 
 	// Note: An empty path will result in an in-memory ACP instance.
+	//
+	// This is only used for local acp.
 	path string
 
 	signer                   immutable.Option[sdk.TxSigner]
