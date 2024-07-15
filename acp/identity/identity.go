@@ -29,7 +29,7 @@ type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
 
-var AuthTokenSignatureScheme = jwa.ES256K
+var BearerTokenSignatureScheme = jwa.ES256K
 
 // Identity describes a unique actor.
 type Identity struct {
@@ -92,7 +92,7 @@ func FromPrivateKey(
 		}
 	}
 
-	signedToken, err := jwt.Sign(token, jwt.WithKey(AuthTokenSignatureScheme, privateKey.ToECDSA()))
+	signedToken, err := jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, privateKey.ToECDSA()))
 	if err != nil {
 		return Identity{}, err
 	}

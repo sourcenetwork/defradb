@@ -41,7 +41,7 @@ func verifyAuthToken(identity acpIdentity.Identity, audience string) error {
 
 	_, err = jws.Verify(
 		[]byte(identity.BearerToken),
-		jws.WithKey(acpIdentity.AuthTokenSignatureScheme, identity.PublicKey.ToECDSA()),
+		jws.WithKey(acpIdentity.BearerTokenSignatureScheme, identity.PublicKey.ToECDSA()),
 	)
 	if err != nil {
 		return err
