@@ -45,7 +45,7 @@ func TestNewConcurrentTxnFromWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = NewConcurrentTxnFrom(ctx, rootstore, 0, false)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
@@ -67,7 +67,7 @@ func TestNewConcurrentTxnFromNonIterableWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = NewConcurrentTxnFrom(ctx, rootstore, 0, false)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestConcurrentTxnSync(t *testing.T) {

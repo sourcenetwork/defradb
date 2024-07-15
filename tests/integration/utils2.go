@@ -32,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -1692,7 +1691,7 @@ func withRetry(
 ) error {
 	for i := 0; i < nodes[nodeID].MaxTxnRetries(); i++ {
 		err := action()
-		if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
+		if errors.Is(err, datastore.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}

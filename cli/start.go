@@ -57,8 +57,8 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			opts := []node.Option{
-				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
+				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithACPType(node.LocalACPType),
 				node.WithPeers(peers...),
@@ -100,7 +100,7 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
-				opts = append(opts, node.WithEncryptionKey(encryptionKey))
+				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)
