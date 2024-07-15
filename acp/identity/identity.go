@@ -45,6 +45,7 @@ type Identity struct {
 	// using the did:key method
 	DID string
 
+	// BearerToken is the signed bearer token that represents this identity.
 	BearerToken string
 }
 
