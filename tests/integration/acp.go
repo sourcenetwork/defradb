@@ -164,7 +164,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	// Annoyingly, the CLI does not support support changing the comet config params that we need,
+	// Annoyingly, the CLI does not support changing the comet config params that we need,
 	// so we have to manually rewrite the config file.
 	cfg, err := toml.LoadFile(filepath.Join(directory, "config", "config.toml"))
 	if err != nil {
