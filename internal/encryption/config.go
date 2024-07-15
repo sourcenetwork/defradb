@@ -12,5 +12,8 @@ package encryption
 
 // DocEncConfig is the configuration for document encryption.
 type DocEncConfig struct {
-	IsEncrypted bool
+	// IsDocEncrypted is a flag to indicate if the document should be encrypted.
+	IsDocEncrypted bool
+	//  EncryptedFields is a list of fields individual that should be encrypted.
+	EncryptedFields []string
 }

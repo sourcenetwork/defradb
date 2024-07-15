@@ -215,33 +215,7 @@ var _ Key = (*ReplicatorKey)(nil)
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
 func NewDataStoreKey(key string) (DataStoreKey, error) {
-	dataStoreKey := DataStoreKey{}
-	if key == "" {
-		return dataStoreKey, ErrEmptyKey
-	}
-
-	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
-
-	numberOfElements := len(elements)
-
-	// With less than 3 or more than 4 elements, we know it's an invalid key
-	if numberOfElements < 3 || numberOfElements > 4 {
-		return dataStoreKey, ErrInvalidKey
-	}
-
-	colRootID, err := strconv.Atoi(elements[0])
-	if err != nil {
-		return DataStoreKey{}, err
-	}
-
-	dataStoreKey.CollectionRootID = uint32(colRootID)
-	dataStoreKey.InstanceType = InstanceType(elements[1])
-	dataStoreKey.DocID = elements[2]
-	if numberOfElements == 4 {
-		dataStoreKey.FieldID = elements[3]
-	}
-
-	return dataStoreKey, nil
+	return DecodeDataStoreKey([]byte(key))
 }
 
 func MustNewDataStoreKey(key string) DataStoreKey {
@@ -466,6 +440,18 @@ func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
 }
 
 func (k DataStoreKey) ToString() string {
+	return string(k.Bytes())
+}
+
+func (k DataStoreKey) Bytes() []byte {
+	return EncodeDataStoreKey(&k)
+}
+
+func (k DataStoreKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k DataStoreKey) PrettyPrint() string {
 	var result string
 
 	if k.CollectionRootID != 0 {
@@ -482,14 +468,6 @@ func (k DataStoreKey) ToString() string {
 	}
 
 	return result
-}
-
-func (k DataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k DataStoreKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
 }
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
@@ -817,25 +795,25 @@ func bytesPrefixEnd(b []byte) []byte {
 
 // EncStoreDocKey is a key for the encryption store.
 type EncStoreDocKey struct {
-	DocID   string
-	FieldID uint32
+	DocID     string
+	FieldName string
 }
 
 var _ Key = (*EncStoreDocKey)(nil)
 
 // NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-func NewEncStoreDocKey(docID string, fieldID uint32) EncStoreDocKey {
+func NewEncStoreDocKey(docID string, fieldName string) EncStoreDocKey {
 	return EncStoreDocKey{
-		DocID:   docID,
-		FieldID: fieldID,
+		DocID:     docID,
+		FieldName: fieldName,
 	}
 }
 
 func (k EncStoreDocKey) ToString() string {
-	if k.FieldID == 0 {
+	if k.FieldName == "" {
 		return k.DocID
 	}
-	return fmt.Sprintf("%s/%d", k.DocID, k.FieldID)
+	return fmt.Sprintf("%s/%s", k.DocID, k.FieldName)
 }
 
 func (k EncStoreDocKey) Bytes() []byte {

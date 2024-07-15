@@ -13,8 +13,9 @@ package test_acp_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testing.T) {
@@ -23,7 +24,7 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 		Actions: []any{
 
 			testUtils.AddPolicy{
-				Identity:         acpUtils.Actor1Identity,
+				Identity:         immutable.Some(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -69,7 +70,7 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 		Actions: []any{
 
 			testUtils.AddPolicy{
-				Identity:         acpUtils.Actor1Identity,
+				Identity:         immutable.Some(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},

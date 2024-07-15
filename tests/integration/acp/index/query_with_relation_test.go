@@ -13,14 +13,15 @@ package test_acp_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 	return []any{
 		testUtils.AddPolicy{
-			Identity:         acpUtils.Actor1Identity,
+			Identity:         immutable.Some(1),
 			Policy:           bookAuthorPolicy,
 			ExpectedPolicyID: "f6927e8861f91122a5e3e333249297e4315b672298b5cb93ee3f49facc1e0d11",
 		},
@@ -55,7 +56,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			}`,
 		},
 		testUtils.CreateDoc{
-			Identity:     acpUtils.Actor1Identity,
+			Identity:     immutable.Some(1),
 			CollectionID: 0,
 			// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
 			Doc: `{
@@ -73,7 +74,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			},
 		},
 		testUtils.CreateDoc{
-			Identity:     acpUtils.Actor1Identity,
+			Identity:     immutable.Some(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "A Time for Mercy",
@@ -82,7 +83,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			},
 		},
 		testUtils.CreateDoc{
-			Identity:     acpUtils.Actor1Identity,
+			Identity:     immutable.Some(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "Theif Lord",
@@ -133,7 +134,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						Author(filter: {
@@ -179,7 +180,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_Sh
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						Author(filter: {
@@ -246,7 +247,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						Book(filter: {
@@ -291,7 +292,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithWrongIdentity_Sh
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						Book(filter: {

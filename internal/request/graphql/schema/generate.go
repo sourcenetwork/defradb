@@ -33,6 +33,11 @@ const (
 	mutationInputsNameSuffix = "MutationInputsArg"
 )
 
+const (
+	typeFieldEnumSuffix         = "Field"
+	typeExplicitFieldEnumSuffix = "ExplicitField"
+)
+
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
@@ -385,7 +390,7 @@ func (g *Generator) createExpandedFieldList(
 				listFieldFilterArgDescription,
 			),
 			"groupBy": schemaTypes.NewArgConfig(
-				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
+				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+typeFieldEnumSuffix])),
 				schemaTypes.GroupByArgDescription,
 			),
 			"order": schemaTypes.NewArgConfig(
@@ -1046,14 +1051,21 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, NewErrTypeNotFound(mutationInputName)
 	}
 
+	explicitUserFieldsEnum := g.genUserExplicitTypeFieldsEnum(obj)
+
+	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
+
 	create := &gql.Field{
 		Name:        "create_" + obj.Name(),
 		Description: createDocumentDescription,
 		Type:        obj,
 		Args: gql.FieldConfigArgument{
-			"input":   schemaTypes.NewArgConfig(mutationInput, "Create a "+obj.Name()+" document"),
-			"inputs":  schemaTypes.NewArgConfig(gql.NewList(mutationInput), "Create "+obj.Name()+" documents"),
-			"encrypt": schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
+			request.Input: schemaTypes.NewArgConfig(mutationInput, "Create a "+obj.Name()+" document"),
+			request.Inputs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
+				"Create "+obj.Name()+" documents"),
+			request.EncryptDocArgName: schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
+			request.EncryptFieldsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(explicitUserFieldsEnum)),
+				encryptFieldsArgDescription),
 		},
 	}
 
@@ -1065,7 +1077,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
 			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
 			"filter":              schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
-			"input":               schemaTypes.NewArgConfig(mutationInput, "Update field values"),
+			request.Input:         schemaTypes.NewArgConfig(mutationInput, "Update field values"),
 		},
 	}
 
@@ -1085,11 +1097,27 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 	enumFieldsCfg := gql.EnumConfig{
-		Name:   genTypeName(obj, "Fields"),
+		Name:   genTypeName(obj, typeFieldEnumSuffix),
 		Values: gql.EnumValueConfigMap{},
 	}
 
 	for f, field := range obj.Fields() {
+		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
+	}
+
+	return gql.NewEnum(enumFieldsCfg)
+}
+
+func (g *Generator) genUserExplicitTypeFieldsEnum(obj *gql.Object) *gql.Enum {
+	enumFieldsCfg := gql.EnumConfig{
+		Name:   genTypeName(obj, typeExplicitFieldEnumSuffix),
+		Values: gql.EnumValueConfigMap{},
+	}
+
+	for f, field := range obj.Fields() {
+		if strings.HasPrefix(field.Name, "_") {
+			continue
+		}
 		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
 	}
 

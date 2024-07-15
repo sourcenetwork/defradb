@@ -371,7 +371,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 			},
 		},
 
-		ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorFields\", found published_id.",
+		ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorField\", found published_id.",
 	}
 
 	executeTestCase(t, test)
@@ -449,7 +449,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 			},
 		},
 
-		ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorFields\", found published_id.",
+		ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorField\", found published_id.",
 	}
 
 	executeTestCase(t, test)

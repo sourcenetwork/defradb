@@ -13,8 +13,9 @@ package test_acp
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
@@ -51,7 +52,7 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						_avg(Employee: {field: salary})
@@ -78,7 +79,7 @@ func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						_avg(Employee: {field: salary})

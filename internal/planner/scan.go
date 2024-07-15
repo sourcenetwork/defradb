@@ -236,8 +236,10 @@ func (n *scanNode) explainSpans() []map[string]any {
 	spansExplainer := []map[string]any{}
 	for _, span := range n.spans.Value {
 		spanExplainer := map[string]any{
-			"start": span.Start().ToString(),
-			"end":   span.End().ToString(),
+			// These must be pretty printed as the explain results need to be returnable
+			// as json via some clients (e.g. http and cli)
+			"start": span.Start().PrettyPrint(),
+			"end":   span.End().PrettyPrint(),
 		}
 
 		spansExplainer = append(spansExplainer, spanExplainer)

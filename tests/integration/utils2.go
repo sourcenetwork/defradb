@@ -870,33 +870,48 @@ func refreshDocuments(
 	}
 
 	for i := 0; i < startActionIndex; i++ {
+		// We need to add the existing documents in the order in which the test case lists them
+		// otherwise they cannot be referenced correctly by other actions.
 		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
 
-			// We need to add the existing documents in the order in which the test case lists them
-			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+			var doc *client.Document
+			var docs []*client.Document
+			var err error
+			if action.DocMap != nil {
+				substituteRelations(s, action)
+				doc, err = client.NewDocFromMap(action.DocMap, collection.Definition())
+				docs = append(docs, doc)
+			} else if client.IsJSONArray([]byte(action.Doc)) {
+				docs, err = client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
+			} else {
+				doc, err = client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+				docs = append(docs, doc)
+			}
+
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
 			}
 
-			ctx := makeContextForDocCreate(s.ctx, &action)
+			for _, doc := range docs {
+				ctx := makeContextForDocCreate(s, s.ctx, &action)
 
-			// The document may have been mutated by other actions, so to be sure we have the latest
-			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(ctx, doc.ID(), false)
-			if err != nil {
-				// If an err has been returned, ignore it - it may be expected and if not
-				// the test will fail later anyway
-				continue
+				// The document may have been mutated by other actions, so to be sure we have the latest
+				// version without having to worry about the individual update mechanics we fetch it.
+				doc, err = collection.Get(ctx, doc.ID(), false)
+				if err != nil {
+					// If an err has been returned, ignore it - it may be expected and if not
+					// the test will fail later anyway
+					continue
+				}
+
+				s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
 			}
-
-			s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
 		}
 	}
 }
@@ -1238,7 +1253,7 @@ func createDocViaColSave(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
 
 	for _, doc := range docs {
 		err = collections[action.CollectionID].Save(ctx, doc)
@@ -1249,11 +1264,10 @@ func createDocViaColSave(
 	return docs, nil
 }
 
-func makeContextForDocCreate(ctx context.Context, action *CreateDoc) context.Context {
-	ctx = db.SetContextIdentity(ctx, action.Identity)
-	if action.IsEncrypted {
-		ctx = encryption.SetContextConfig(ctx, encryption.DocEncConfig{IsEncrypted: true})
-	}
+func makeContextForDocCreate(s *state, ctx context.Context, action *CreateDoc) context.Context {
+	identity := getIdentity(s, action.Identity)
+	ctx = db.SetContextIdentity(ctx, identity)
+	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
 
@@ -1283,7 +1297,7 @@ func createDocViaColCreate(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
 
 	if len(docs) > 1 {
 		err = collections[action.CollectionID].CreateMany(ctx, docs)
@@ -1321,8 +1335,12 @@ func createDocViaGQL(
 
 	params := paramName + ": " + input
 
-	if action.IsEncrypted {
-		params = params + ", " + request.EncryptArgName + ": true"
+	if action.IsDocEncrypted {
+		params = params + ", " + request.EncryptDocArgName + ": true"
+	}
+	if len(action.EncryptedFields) > 0 {
+		params = params + ", " + request.EncryptFieldsArgName + ": [" +
+			strings.Join(action.EncryptedFields, ", ") + "]"
 	}
 
 	req := fmt.Sprintf(
@@ -1336,8 +1354,7 @@ func createDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-
-	ctx := makeContextForDocCreate(db.SetContextTxn(s.ctx, txn), &action)
+	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, action.Identity))
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1391,7 +1408,8 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1449,7 +1467,8 @@ func updateDocViaColSave(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1476,7 +1495,8 @@ func updateDocViaColUpdate(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1519,7 +1539,8 @@ func updateDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx = db.SetContextIdentity(ctx, identity)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1739,7 +1760,8 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		ctx = db.SetContextIdentity(ctx, action.Identity)
+		identity := getIdentity(s, action.Identity)
+		ctx = db.SetContextIdentity(ctx, identity)
 
 		result := node.ExecRequest(ctx, action.Request)
 

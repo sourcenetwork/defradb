@@ -159,9 +159,7 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		create.input = []map[string]any{parsed.Input}
 	}
 
-	if parsed.Encrypt {
-		p.ctx = encryption.SetContextConfig(p.ctx, encryption.DocEncConfig{IsEncrypted: true})
-	}
+	p.ctx = encryption.SetContextConfigFromParams(p.ctx, parsed.Encrypt, parsed.EncryptFields)
 
 	// get collection
 	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)

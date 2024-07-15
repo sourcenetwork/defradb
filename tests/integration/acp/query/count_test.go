@@ -13,8 +13,9 @@ package test_acp
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
@@ -78,7 +79,7 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						_count(Employee: {})
@@ -104,7 +105,7 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						Company {
@@ -135,7 +136,7 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						_count(Employee: {})
@@ -161,7 +162,7 @@ func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						Company {
