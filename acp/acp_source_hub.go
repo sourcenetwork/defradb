@@ -16,16 +16,16 @@ import (
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
+	sourcehub "github.com/sourcenetwork/sourcehub/sdk"
 	acptypes "github.com/sourcenetwork/sourcehub/x/acp/types"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
 type acpSourceHub struct {
-	client    *sdk.Client
-	txBuilder *sdk.TxBuilder
-	signer    sdk.TxSigner
+	client    *sourcehub.Client
+	txBuilder *sourcehub.TxBuilder
+	signer    sourcehub.TxSigner
 }
 
 var _ sourceHubClient = (*acpSourceHub)(nil)
@@ -34,16 +34,19 @@ func NewACPSourceHub(
 	chainID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	signer sdk.TxSigner,
+	signer sourcehub.TxSigner,
 ) (*acpSourceHub, error) {
-	client, err := sdk.NewClient(sdk.WithGRPCAddr(grpcAddress), sdk.WithCometRPCAddr(cometRPCAddress))
+	client, err := sourcehub.NewClient(
+		sourcehub.WithGRPCAddr(grpcAddress),
+		sourcehub.WithCometRPCAddr(cometRPCAddress),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	txBuilder, err := sdk.NewTxBuilder(
-		sdk.WithSDKClient(client),
-		sdk.WithChainID(chainID),
+	txBuilder, err := sourcehub.NewTxBuilder(
+		sourcehub.WithSDKClient(client),
+		sourcehub.WithChainID(chainID),
 	)
 	if err != nil {
 		return nil, err
@@ -71,7 +74,7 @@ func (a *acpSourceHub) AddPolicy(
 	policyMarshalType policyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	msgSet := sdk.MsgSet{}
+	msgSet := sourcehub.MsgSet{}
 	policyMapper := msgSet.WithCreatePolicy(
 		acptypes.NewMsgCreatePolicyNow(a.signer.GetAccAddress(), policy, acptypes.PolicyMarshalingType(policyMarshalType)),
 	)
@@ -166,7 +169,7 @@ func (a *acpSourceHub) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) (RegistrationResult, error) {
-	msgSet := sdk.MsgSet{}
+	msgSet := sourcehub.MsgSet{}
 	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
 		Creator:      a.signer.GetAccAddress(),
 		BearerToken:  identity.BearerToken,
