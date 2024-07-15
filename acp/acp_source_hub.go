@@ -124,14 +124,14 @@ func (a *acpSourceHub) Policy(
 	}
 
 	return immutable.Some(
-		mapSourceHubPolicy(response.Policy),
+		fromSourceHubPolicy(response.Policy),
 	), nil
 }
 
-func mapSourceHubPolicy(pol *acptypes.Policy) policy {
+func fromSourceHubPolicy(pol *acptypes.Policy) policy {
 	resources := make(map[string]*resource)
 	for _, coreResource := range pol.Resources {
-		resource := mapSourceHubResource(coreResource)
+		resource := fromSourceHubResource(coreResource)
 		resources[resource.Name] = resource
 	}
 
@@ -141,10 +141,10 @@ func mapSourceHubPolicy(pol *acptypes.Policy) policy {
 	}
 }
 
-func mapSourceHubResource(policy *acptypes.Resource) *resource {
+func fromSourceHubResource(policy *acptypes.Resource) *resource {
 	perms := make(map[string]*permission)
 	for _, corePermission := range policy.Permissions {
-		perm := mapSourceHubPermission(corePermission)
+		perm := fromSourceHubPermission(corePermission)
 		perms[perm.Name] = perm
 	}
 
@@ -154,7 +154,7 @@ func mapSourceHubResource(policy *acptypes.Resource) *resource {
 	}
 }
 
-func mapSourceHubPermission(perm *acptypes.Permission) *permission {
+func fromSourceHubPermission(perm *acptypes.Permission) *permission {
 	return &permission{
 		Name:       perm.Name,
 		Expression: perm.Expression,
