@@ -29,7 +29,7 @@ type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
 
-var BearerTokenSignatureScheme = jwa.ES256K
+const BearerTokenSignatureScheme = jwa.ES256K
 
 // Identity describes a unique actor.
 type Identity struct {
