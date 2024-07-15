@@ -79,6 +79,8 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test acp, adding a policy that has only space",
 		SupportedACPTypes: immutable.Some([]testUtils.ACPType{
+			// This is currently a local-acp only limitation, this test-restriction
+			// can be lifted if/when SourceHub introduces the same limitation.
 			testUtils.LocalACPType,
 		}),
 		Actions: []any{
