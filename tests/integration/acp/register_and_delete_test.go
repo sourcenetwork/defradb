@@ -13,6 +13,8 @@ package test_acp
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +30,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -122,7 +124,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -182,7 +184,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: Actor1Identity,
+				Identity: immutable.Some(1),
 
 				DocID: 0,
 			},
@@ -206,10 +208,6 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 }
 
 func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and delete with identity, can delete",
@@ -217,7 +215,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -266,7 +264,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -279,13 +277,13 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -305,10 +303,6 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 }
 
 func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and delete without identity, can not delete",
@@ -316,7 +310,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -365,7 +359,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -384,7 +378,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {
@@ -410,12 +404,6 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 }
 
 func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
-	// OwnerIdentity should be the same identity that is used to do the registering/creation,
-	// and the final read check to see the state of that registered document.
-	OwnerIdentity := Actor1Identity
-
-	WrongIdentity := Actor2Identity
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, create with identity, and delete without identity, can not delete",
@@ -423,7 +411,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Policy: `
                     name: test
@@ -472,7 +460,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Doc: `
 					{
@@ -485,7 +473,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: WrongIdentity,
+				Identity: immutable.Some(2),
 
 				DocID: 0,
 
@@ -493,7 +481,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 			},
 
 			testUtils.Request{
-				Identity: OwnerIdentity,
+				Identity: immutable.Some(1),
 
 				Request: `
 					query {

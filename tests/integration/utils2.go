@@ -12,6 +12,7 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -29,12 +30,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -867,32 +869,48 @@ func refreshDocuments(
 	}
 
 	for i := 0; i < startActionIndex; i++ {
+		// We need to add the existing documents in the order in which the test case lists them
+		// otherwise they cannot be referenced correctly by other actions.
 		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
 
-			// We need to add the existing documents in the order in which the test case lists them
-			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+			var doc *client.Document
+			var docs []*client.Document
+			var err error
+			if action.DocMap != nil {
+				substituteRelations(s, action)
+				doc, err = client.NewDocFromMap(action.DocMap, collection.Definition())
+				docs = append(docs, doc)
+			} else if client.IsJSONArray([]byte(action.Doc)) {
+				docs, err = client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
+			} else {
+				doc, err = client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+				docs = append(docs, doc)
+			}
+
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
 			}
 
-			ctx := db.SetContextIdentity(s.ctx, action.Identity)
-			// The document may have been mutated by other actions, so to be sure we have the latest
-			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(ctx, doc.ID(), false)
-			if err != nil {
-				// If an err has been returned, ignore it - it may be expected and if not
-				// the test will fail later anyway
-				continue
-			}
+			for _, doc := range docs {
+				ctx := makeContextForDocCreate(s, s.ctx, &action)
 
-			s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+				// The document may have been mutated by other actions, so to be sure we have the latest
+				// version without having to worry about the individual update mechanics we fetch it.
+				doc, err = collection.Get(ctx, doc.ID(), false)
+				if err != nil {
+					// If an err has been returned, ignore it - it may be expected and if not
+					// the test will fail later anyway
+					continue
+				}
+
+				s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+			}
 		}
 	}
 }
@@ -1169,7 +1187,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.DB, []client.Collection) (*client.Document, error)
+	var mutation func(*state, CreateDoc, client.DB, []client.Collection) ([]*client.Document, error)
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1183,7 +1201,7 @@ func createDoc(
 	}
 
 	var expectedErrorRaised bool
-	var doc *client.Document
+	var docs []*client.Document
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
@@ -1191,7 +1209,7 @@ func createDoc(
 			nodeID,
 			func() error {
 				var err error
-				doc, err = mutation(s, action, actionNodes[nodeID], collections)
+				docs, err = mutation(s, action, actionNodes[nodeID], collections)
 				return err
 			},
 		)
@@ -1204,11 +1222,10 @@ func createDoc(
 		// Expand the slice if required, so that the document can be accessed by collection index
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
-	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
-
 	if action.ExpectedError == "" {
 		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
 	}
+	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
 }
 
 func createDocViaColSave(
@@ -1216,13 +1233,21 @@ func createDocViaColSave(
 	action CreateDoc,
 	node client.DB,
 	collections []client.Collection,
-) (*client.Document, error) {
-	var err error
+) ([]*client.Document, error) {
+	var docs []*client.Document
 	var doc *client.Document
+	var err error
 	if action.DocMap != nil {
 		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+		docs = []*client.Document{doc}
 	} else {
-		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+		bytes := []byte(action.Doc)
+		if client.IsJSONArray(bytes) {
+			docs, err = client.NewDocsFromJSON(bytes, collections[action.CollectionID].Definition())
+		} else {
+			doc, err = client.NewDocFromJSON(bytes, collections[action.CollectionID].Definition())
+			docs = []*client.Document{doc}
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -1230,10 +1255,22 @@ func createDocViaColSave(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
 
-	return doc, collections[action.CollectionID].Save(ctx, doc)
+	for _, doc := range docs {
+		err = collections[action.CollectionID].Save(ctx, doc)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return docs, nil
+}
+
+func makeContextForDocCreate(s *state, ctx context.Context, action *CreateDoc) context.Context {
+	identity := getIdentity(s, action.Identity)
+	ctx = db.SetContextIdentity(ctx, identity)
+	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
+	return ctx
 }
 
 func createDocViaColCreate(
@@ -1241,13 +1278,20 @@ func createDocViaColCreate(
 	action CreateDoc,
 	node client.DB,
 	collections []client.Collection,
-) (*client.Document, error) {
-	var err error
+) ([]*client.Document, error) {
+	var docs []*client.Document
 	var doc *client.Document
+	var err error
 	if action.DocMap != nil {
 		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
+		docs = []*client.Document{doc}
 	} else {
-		doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+		if client.IsJSONArray([]byte(action.Doc)) {
+			docs, err = client.NewDocsFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+		} else {
+			doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
+			docs = []*client.Document{doc}
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -1255,10 +1299,15 @@ func createDocViaColCreate(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
 
-	return doc, collections[action.CollectionID].Create(ctx, doc)
+	if len(docs) > 1 {
+		err = collections[action.CollectionID].CreateMany(ctx, docs)
+	} else {
+		err = collections[action.CollectionID].Create(ctx, doc)
+	}
+
+	return docs, err
 }
 
 func createDocViaGQL(
@@ -1266,37 +1315,50 @@ func createDocViaGQL(
 	action CreateDoc,
 	node client.DB,
 	collections []client.Collection,
-) (*client.Document, error) {
+) ([]*client.Document, error) {
 	collection := collections[action.CollectionID]
-	var err error
 	var input string
 
+	paramName := request.Input
+
+	var err error
 	if action.DocMap != nil {
 		input, err = valueToGQL(action.DocMap)
+	} else if client.IsJSONArray([]byte(action.Doc)) {
+		var docMaps []map[string]any
+		err = json.Unmarshal([]byte(action.Doc), &docMaps)
+		require.NoError(s.t, err)
+		paramName = request.Inputs
+		input, err = arrayToGQL(docMaps)
 	} else {
 		input, err = jsonToGQL(action.Doc)
 	}
 	require.NoError(s.t, err)
 
-	request := fmt.Sprintf(
+	params := paramName + ": " + input
+
+	if action.IsDocEncrypted {
+		params = params + ", " + request.EncryptDocArgName + ": true"
+	}
+	if len(action.EncryptedFields) > 0 {
+		params = params + ", " + request.EncryptFieldsArgName + ": [" +
+			strings.Join(action.EncryptedFields, ", ") + "]"
+	}
+
+	req := fmt.Sprintf(
 		`mutation {
-			create_%s(input: %s) {
+			create_%s(%s) {
 				_docID
 			}
 		}`,
 		collection.Name().Value(),
-		input,
+		params,
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, action.Identity))
 
-	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
-
-	result := node.ExecRequest(
-		ctx,
-		request,
-	)
+	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -1306,14 +1368,20 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docIDString := resultantDocs[0]["_docID"].(string)
-	docID, err := client.NewDocIDFromString(docIDString)
-	require.NoError(s.t, err)
+	docs := make([]*client.Document, len(resultantDocs))
 
-	doc, err := collection.Get(ctx, docID, false)
-	require.NoError(s.t, err)
+	for i, docMap := range resultantDocs {
+		docIDString := docMap[request.DocIDFieldName].(string)
+		docID, err := client.NewDocIDFromString(docIDString)
+		require.NoError(s.t, err)
 
-	return doc, nil
+		doc, err := collection.Get(ctx, docID, false)
+		require.NoError(s.t, err)
+
+		docs[i] = doc
+	}
+
+	return docs, nil
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -1342,7 +1410,8 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1408,7 +1477,8 @@ func updateDocViaColSave(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1435,7 +1505,8 @@ func updateDocViaColUpdate(
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	ctx := db.SetContextIdentity(s.ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
 	if err != nil {
@@ -1478,7 +1549,8 @@ func updateDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	ctx = db.SetContextIdentity(ctx, action.Identity)
+	identity := getIdentity(s, action.Identity)
+	ctx = db.SetContextIdentity(ctx, identity)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1630,7 +1702,7 @@ func withRetry(
 ) error {
 	for i := 0; i < nodes[nodeID].MaxTxnRetries(); i++ {
 		err := action()
-		if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
+		if errors.Is(err, datastore.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -1698,7 +1770,8 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		ctx = db.SetContextIdentity(ctx, action.Identity)
+		identity := getIdentity(s, action.Identity)
+		ctx = db.SetContextIdentity(ctx, identity)
 
 		result := node.ExecRequest(ctx, action.Request)
 

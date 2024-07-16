@@ -10,12 +10,13 @@
 
 package memory
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"github.com/sourcenetwork/defradb/datastore/errors"
+)
 
 var (
-	ErrReadOnlyTxn  = errors.New("read only transaction")
-	ErrTxnDiscarded = errors.New("transaction discarded")
-	//nolint:revive
-	ErrTxnConflict = errors.New("Transaction Conflict. Please retry")
-	ErrClosed      = errors.New("datastore closed")
+	ErrReadOnlyTxn  = errors.ErrReadOnlyTxn
+	ErrTxnDiscarded = errors.ErrTxnDiscarded
+	ErrTxnConflict  = errors.ErrTxnConflict
+	ErrClosed       = errors.ErrClosed
 )

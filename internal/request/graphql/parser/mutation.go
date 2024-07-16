@@ -102,6 +102,18 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 		if prop == request.Input { // parse input
 			raw := argument.Value.(*ast.ObjectValue)
 			mut.Input = parseMutationInputObject(raw)
+		} else if prop == request.Inputs {
+			raw := argument.Value.(*ast.ListValue)
+
+			mut.Inputs = make([]map[string]any, len(raw.Values))
+
+			for i, val := range raw.Values {
+				doc, ok := val.(*ast.ObjectValue)
+				if !ok {
+					return nil, client.NewErrUnexpectedType[*ast.ObjectValue]("doc array element", val)
+				}
+				mut.Inputs[i] = parseMutationInputObject(doc)
+			}
 		} else if prop == request.FilterClause { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
@@ -128,6 +140,15 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 				ids[i] = id.Value
 			}
 			mut.DocIDs = immutable.Some(ids)
+		} else if prop == request.EncryptDocArgName {
+			mut.Encrypt = argument.Value.(*ast.BooleanValue).Value
+		} else if prop == request.EncryptFieldsArgName {
+			raw := argument.Value.(*ast.ListValue)
+			fieldNames := make([]string, len(raw.Values))
+			for i, val := range raw.Values {
+				fieldNames[i] = val.GetValue().(string)
+			}
+			mut.EncryptFields = fieldNames
 		}
 	}
 

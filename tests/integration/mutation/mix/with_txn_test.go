@@ -300,7 +300,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 			},
 			testUtils.TransactionCommit{
 				TransactionID: 1,
-				ExpectedError: "Transaction Conflict. Please retry",
+				ExpectedError: "transaction Conflict. Please retry",
 			},
 			testUtils.Request{
 				// Query after transactions have been commited:

@@ -16,7 +16,7 @@ import (
 
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -48,7 +48,7 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 					var err error
 					for i := 0; i < db.MaxTxnRetries(); i++ {
 						err = db.executeMerge(ctx, evt)
-						if errors.Is(err, badger.ErrTxnConflict) {
+						if errors.Is(err, datastore.ErrTxnConflict) {
 							continue // retry merge
 						}
 						break // merge success or error

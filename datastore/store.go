@@ -34,26 +34,26 @@ type Rootstore interface {
 type MultiStore interface {
 	Rootstore() DSReaderWriter
 
-	// Datastore is a wrapped root DSReaderWriter
-	// under the /data namespace
+	// Datastore is a wrapped root DSReaderWriter under the /data namespace
 	Datastore() DSReaderWriter
 
-	// Headstore is a wrapped root DSReaderWriter
-	// under the /head namespace
+	// Encstore is a wrapped root DSReaderWriter under the /enc namespace
+	// This store is used for storing symmetric encryption keys for doc encryption.
+	// The store keys are comprised of docID + field name.
+	Encstore() DSReaderWriter
+
+	// Headstore is a wrapped root DSReaderWriter under the /head namespace
 	Headstore() DSReaderWriter
 
-	// Peerstore is a wrapped root DSReaderWriter
-	// as a ds.Batching, embedded into a DSBatching
+	// Peerstore is a wrapped root DSReaderWriter as a ds.Batching, embedded into a DSBatching
 	// under the /peers namespace
 	Peerstore() DSBatching
 
-	// Blockstore is a wrapped root DSReaderWriter
-	// as a Blockstore, embedded into a Blockstore
+	// Blockstore is a wrapped root DSReaderWriter as a Blockstore, embedded into a Blockstore
 	// under the /blocks namespace
 	Blockstore() Blockstore
 
-	// Headstore is a wrapped root DSReaderWriter
-	// under the /system namespace
+	// Headstore is a wrapped root DSReaderWriter under the /system namespace
 	Systemstore() DSReaderWriter
 }
 

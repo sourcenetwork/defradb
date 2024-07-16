@@ -8,11 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_schema_add_dpi
+package encryption
 
 import (
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
-var actor1Identity = acpUtils.Actor1Identity
-var actor2Identity = acpUtils.Actor2Identity
+const (
+	errNoStorageProvided string = "no storage provided"
+)
+
+var (
+	ErrNoStorageProvided = errors.New(errNoStorageProvided)
+)

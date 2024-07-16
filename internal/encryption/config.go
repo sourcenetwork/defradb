@@ -8,11 +8,12 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_add_policy
+package encryption
 
-import (
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
-)
-
-var actor1Identity = acpUtils.Actor1Identity
-var actor2Identity = acpUtils.Actor2Identity
+// DocEncConfig is the configuration for document encryption.
+type DocEncConfig struct {
+	// IsDocEncrypted is a flag to indicate if the document should be encrypted.
+	IsDocEncrypted bool
+	//  EncryptedFields is a list of fields individual that should be encrypted.
+	EncryptedFields []string
+}

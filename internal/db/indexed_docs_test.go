@@ -709,7 +709,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	require.NoError(f.t, err)
 
 	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
-	require.ErrorIs(f.t, err, core.ErrInvalidKey)
+	require.ErrorIs(f.t, err, core.ErrFailedToGetFieldIdOfKey)
 }
 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {

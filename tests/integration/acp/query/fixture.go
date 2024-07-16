@@ -11,8 +11,9 @@
 package test_acp
 
 import (
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 const employeeCompanyPolicy = `
@@ -57,7 +58,7 @@ resources:
 func getSetupEmployeeCompanyActions() []any {
 	return []any{
 		testUtils.AddPolicy{
-			Identity:         acpUtils.Actor1Identity,
+			Identity:         immutable.Some(1),
 			Policy:           employeeCompanyPolicy,
 			ExpectedPolicyID: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 		},
@@ -95,7 +96,7 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 1,
-			Identity:     acpUtils.Actor1Identity,
+			Identity:     immutable.Some(1),
 			Doc: `
 					{
 						"name": "Private Company",
@@ -121,7 +122,7 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			Identity:     acpUtils.Actor1Identity,
+			Identity:     immutable.Some(1),
 			DocMap: map[string]any{
 				"name":    "PrivateEmp in PubCompany",
 				"salary":  30000,
@@ -130,7 +131,7 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			Identity:     acpUtils.Actor1Identity,
+			Identity:     immutable.Some(1),
 			DocMap: map[string]any{
 				"name":    "PrivateEmp in PrivateCompany",
 				"salary":  40000,

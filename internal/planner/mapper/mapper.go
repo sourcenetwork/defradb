@@ -1165,9 +1165,12 @@ func ToMutation(ctx context.Context, store client.Store, mutationRequest *reques
 	}
 
 	return &Mutation{
-		Select: *underlyingSelect,
-		Type:   MutationType(mutationRequest.Type),
-		Input:  mutationRequest.Input,
+		Select:        *underlyingSelect,
+		Type:          MutationType(mutationRequest.Type),
+		Input:         mutationRequest.Input,
+		Inputs:        mutationRequest.Inputs,
+		Encrypt:       mutationRequest.Encrypt,
+		EncryptFields: mutationRequest.EncryptFields,
 	}, nil
 }
 

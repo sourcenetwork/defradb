@@ -118,7 +118,7 @@ func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinitio
 	return doc, nil
 }
 
-var jsonArrayPattern = regexp.MustCompile(`^\s*\[.*\]\s*$`)
+var jsonArrayPattern = regexp.MustCompile(`(?s)^\s*\[.*\]\s*$`)
 
 // IsJSONArray returns true if the given byte array is a JSON Array.
 func IsJSONArray(obj []byte) bool {

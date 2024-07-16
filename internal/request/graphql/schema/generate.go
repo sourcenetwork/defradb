@@ -27,6 +27,17 @@ import (
 // create a fully DefraDB complaint GraphQL schema using a "code-first" dynamic
 // approach
 
+const (
+	filterInputNameSuffix    = "FilterArg"
+	mutationInputNameSuffix  = "MutationInputArg"
+	mutationInputsNameSuffix = "MutationInputsArg"
+)
+
+const (
+	typeFieldEnumSuffix         = "Field"
+	typeExplicitFieldEnumSuffix = "ExplicitField"
+)
+
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
@@ -171,7 +182,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 				for name, aggregateTarget := range def.Args {
 					expandedField := &gql.InputObjectFieldConfig{
 						Description: aggregateFilterArgDescription,
-						Type:        g.manager.schema.TypeMap()[name+"FilterArg"],
+						Type:        g.manager.schema.TypeMap()[name+filterInputNameSuffix],
 					}
 					aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(request.FilterClause, expandedField)
 				}
@@ -308,7 +319,7 @@ func (g *Generator) createExpandedFieldAggregate(
 		target := aggregateTarget.Name()
 		var filterTypeName string
 		if target == request.GroupFieldName {
-			filterTypeName = obj.Name() + "FilterArg"
+			filterTypeName = obj.Name() + filterInputNameSuffix
 		} else {
 			if targeted := obj.Fields()[target]; targeted != nil {
 				if list, isList := targeted.Type.(*gql.List); isList && gql.IsLeafType(list.OfType) {
@@ -319,10 +330,10 @@ func (g *Generator) createExpandedFieldAggregate(
 						// underlying name like this if it is a nullable type.
 						filterTypeName = fmt.Sprintf("NotNull%sFilterArg", notNull.OfType.Name())
 					} else {
-						filterTypeName = genTypeName(list.OfType, "FilterArg")
+						filterTypeName = genTypeName(list.OfType, filterInputNameSuffix)
 					}
 				} else {
-					filterTypeName = targeted.Type.Name() + "FilterArg"
+					filterTypeName = targeted.Type.Name() + filterInputNameSuffix
 				}
 			} else {
 				return NewErrAggregateTargetNotFound(obj.Name(), target)
@@ -353,7 +364,7 @@ func (g *Generator) createExpandedFieldSingle(
 		Type:        t,
 		Args: gql.FieldConfigArgument{
 			"filter": schemaTypes.NewArgConfig(
-				g.manager.schema.TypeMap()[typeName+"FilterArg"],
+				g.manager.schema.TypeMap()[typeName+filterInputNameSuffix],
 				singleFieldFilterArgDescription,
 			),
 		},
@@ -375,11 +386,11 @@ func (g *Generator) createExpandedFieldList(
 			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
 			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
 			"filter": schemaTypes.NewArgConfig(
-				g.manager.schema.TypeMap()[typeName+"FilterArg"],
+				g.manager.schema.TypeMap()[typeName+filterInputNameSuffix],
 				listFieldFilterArgDescription,
 			),
 			"groupBy": schemaTypes.NewArgConfig(
-				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
+				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+typeFieldEnumSuffix])),
 				schemaTypes.GroupByArgDescription,
 			),
 			"order": schemaTypes.NewArgConfig(
@@ -540,7 +551,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		// will be reassigned before the thunk is run
 		// TODO remove when Go 1.22
 		collection := c
-		mutationInputName := collection.Description.Name.Value() + "MutationInputArg"
+		mutationInputName := collection.Description.Name.Value() + mutationInputNameSuffix
 
 		// check if mutation input type exists
 		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {
@@ -1027,24 +1038,34 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, obj.Error()
 	}
 
-	filterInputName := genTypeName(obj, "FilterArg")
-	mutationInputName := genTypeName(obj, "MutationInputArg")
+	filterInputName := genTypeName(obj, filterInputNameSuffix)
+	mutationInputName := genTypeName(obj, mutationInputNameSuffix)
 
 	filterInput, ok := g.manager.schema.TypeMap()[filterInputName].(*gql.InputObject)
 	if !ok {
 		return nil, NewErrTypeNotFound(filterInputName)
 	}
+
 	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]
 	if !ok {
 		return nil, NewErrTypeNotFound(mutationInputName)
 	}
+
+	explicitUserFieldsEnum := g.genUserExplicitTypeFieldsEnum(obj)
+
+	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
 	create := &gql.Field{
 		Name:        "create_" + obj.Name(),
 		Description: createDocumentDescription,
 		Type:        obj,
 		Args: gql.FieldConfigArgument{
-			"input": schemaTypes.NewArgConfig(mutationInput, "Create field values"),
+			request.Input: schemaTypes.NewArgConfig(mutationInput, "Create a "+obj.Name()+" document"),
+			request.Inputs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
+				"Create "+obj.Name()+" documents"),
+			request.EncryptDocArgName: schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
+			request.EncryptFieldsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(explicitUserFieldsEnum)),
+				encryptFieldsArgDescription),
 		},
 	}
 
@@ -1056,7 +1077,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
 			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
 			"filter":              schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
-			"input":               schemaTypes.NewArgConfig(mutationInput, "Update field values"),
+			request.Input:         schemaTypes.NewArgConfig(mutationInput, "Update field values"),
 		},
 	}
 
@@ -1076,11 +1097,27 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 	enumFieldsCfg := gql.EnumConfig{
-		Name:   genTypeName(obj, "Fields"),
+		Name:   genTypeName(obj, typeFieldEnumSuffix),
 		Values: gql.EnumValueConfigMap{},
 	}
 
 	for f, field := range obj.Fields() {
+		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
+	}
+
+	return gql.NewEnum(enumFieldsCfg)
+}
+
+func (g *Generator) genUserExplicitTypeFieldsEnum(obj *gql.Object) *gql.Enum {
+	enumFieldsCfg := gql.EnumConfig{
+		Name:   genTypeName(obj, typeExplicitFieldEnumSuffix),
+		Values: gql.EnumValueConfigMap{},
+	}
+
+	for f, field := range obj.Fields() {
+		if strings.HasPrefix(field.Name, "_") {
+			continue
+		}
 		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
 	}
 
@@ -1092,7 +1129,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	var selfRefType *gql.InputObject
 
 	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "FilterArg"),
+		Name: genTypeName(obj, filterInputNameSuffix),
 	}
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(
 		func() (gql.InputObjectConfigFieldMap, error) {
@@ -1136,7 +1173,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 						// We want the FilterArg for the object, not the list of objects.
 						fieldType = l.OfType
 					}
-					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(fieldType, "FilterArg")]
+					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(fieldType, filterInputNameSuffix)]
 					if !isFilterable {
 						filterType = &gql.InputObjectField{}
 					}
@@ -1169,7 +1206,7 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 	}
 
 	inputCfg := gql.InputObjectConfig{
-		Name: fmt.Sprintf("%s%s", filterTypeName, "FilterArg"),
+		Name: fmt.Sprintf("%s%s", filterTypeName, filterInputNameSuffix),
 	}
 
 	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
