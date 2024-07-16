@@ -504,6 +504,11 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	}
 }
 
+// Connect initiates a connection to the peer with the given address.
+func (p *Peer) Connect(ctx context.Context, addr peer.AddrInfo) error {
+	return p.host.Connect(ctx, addr)
+}
+
 // Bootstrap connects to the given peers.
 func (p *Peer) Bootstrap(addrs []peer.AddrInfo) {
 	var connected uint64

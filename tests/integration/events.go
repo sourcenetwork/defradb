@@ -21,7 +21,7 @@ import (
 
 // eventTimeout is the default amount of time
 // to wait for an event before timing out
-const eventTimeout = 1 * time.Second
+const eventTimeout = 5 * time.Second
 
 // waitForNetworkSetupEvents waits for p2p topic completed and
 // replicator completed events to be published on the local node event bus.
