@@ -343,7 +343,7 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForSync(s, action)
+		waitForMergeEvents(s, action)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
@@ -658,7 +658,11 @@ func setStartingNodes(
 		c, err := setupClient(s, node)
 		require.Nil(s.t, err)
 
+		eventState, err := newEventState(c.Events())
+		require.NoError(s.t, err)
+
 		s.nodes = append(s.nodes, c)
+		s.nodeEvents = append(s.nodeEvents, eventState)
 		s.dbPaths = append(s.dbPaths, path)
 
 		s.nodeConnections = append(s.nodeConnections, make(map[int]struct{}))
@@ -691,6 +695,10 @@ func restartNodes(
 			c, err := setupClient(s, node)
 			require.NoError(s.t, err)
 			s.nodes[i] = c
+
+			eventState, err := newEventState(c.Events())
+			require.NoError(s.t, err)
+			s.nodeEvents[i] = eventState
 			continue
 		}
 
@@ -733,15 +741,9 @@ func restartNodes(
 		require.NoError(s.t, err)
 		s.nodes[i] = c
 
-		// subscribe to merge complete events
-		mergeCompleteSub, err := c.Events().Subscribe(event.MergeCompleteName)
+		eventState, err := newEventState(c.Events())
 		require.NoError(s.t, err)
-		s.nodeMergeCompleteSubs[i] = mergeCompleteSub
-
-		// subscribe to update events
-		updateSub, err := c.Events().Subscribe(event.UpdateName)
-		require.NoError(s.t, err)
-		s.nodeUpdateSubs[i] = updateSub
+		s.nodeEvents = append(s.nodeEvents, eventState)
 
 		for waitLen > 0 {
 			select {
@@ -828,7 +830,11 @@ func configureNode(
 	c, err := setupClient(s, node)
 	require.NoError(s.t, err)
 
+	eventState, err := newEventState(c.Events())
+	require.NoError(s.t, err)
+
 	s.nodes = append(s.nodes, c)
+	s.nodeEvents = append(s.nodeEvents, eventState)
 	s.dbPaths = append(s.dbPaths, path)
 
 	s.nodeConnections = append(s.nodeConnections, make(map[int]struct{}))
@@ -836,16 +842,6 @@ func configureNode(
 	s.nodeReplicatorTargets = append(s.nodeReplicatorTargets, make(map[int]struct{}))
 	s.expectedDocHeads = append(s.expectedDocHeads, make(map[string]cid.Cid))
 	s.actualDocHeads = append(s.actualDocHeads, make(map[string]cid.Cid))
-
-	// subscribe to merge complete events
-	mergeCompleteSub, err := c.Events().Subscribe(event.MergeCompleteName)
-	require.NoError(s.t, err)
-	s.nodeMergeCompleteSubs = append(s.nodeMergeCompleteSubs, mergeCompleteSub)
-
-	// subscribe to update events
-	updateSub, err := c.Events().Subscribe(event.UpdateName)
-	require.NoError(s.t, err)
-	s.nodeUpdateSubs = append(s.nodeUpdateSubs, updateSub)
 }
 
 func refreshDocuments(
@@ -1222,10 +1218,11 @@ func createDoc(
 		// Expand the slice if required, so that the document can be accessed by collection index
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
+	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
+
 	if action.ExpectedError == "" {
 		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
 	}
-	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
 }
 
 func createDocViaColSave(

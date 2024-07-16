@@ -25,6 +25,47 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
+// eventState contains all event related testing state for a node.
+type eventState struct {
+	// merge is the `event.MergeCompleteName` subscription
+	merge *event.Subscription
+
+	// update is the `event.UpdateName` subscription
+	update *event.Subscription
+
+	// replicator is the `event.ReplicatorCompletedName` subscription
+	replicator *event.Subscription
+
+	// p2pTopic is the `event.P2PTopicCompletedName` subscription
+	p2pTopic *event.Subscription
+}
+
+// newEventState returns an eventState with all required subscriptions.
+func newEventState(bus *event.Bus) (*eventState, error) {
+	merge, err := bus.Subscribe(event.MergeCompleteName)
+	if err != nil {
+		return nil, err
+	}
+	update, err := bus.Subscribe(event.UpdateName)
+	if err != nil {
+		return nil, err
+	}
+	replicator, err := bus.Subscribe(event.ReplicatorCompletedName)
+	if err != nil {
+		return nil, err
+	}
+	p2pTopic, err := bus.Subscribe(event.P2PTopicCompletedName)
+	if err != nil {
+		return nil, err
+	}
+	return &eventState{
+		merge:      merge,
+		update:     update,
+		replicator: replicator,
+		p2pTopic:   p2pTopic,
+	}, nil
+}
+
 type state struct {
 	// The test context.
 	ctx context.Context
@@ -54,11 +95,8 @@ type state struct {
 	// These channels will recieve a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
 
-	// nodeMergeCompleteSubs is a list of all merge complete event subscriptions
-	nodeMergeCompleteSubs []*event.Subscription
-
-	// nodeUpdateSubs is a list of all update event subscriptions
-	nodeUpdateSubs []*event.Subscription
+	// nodeEvents contains all event node subscriptions.
+	nodeEvents []*eventState
 
 	// nodeConnections contains all connected nodes.
 	//
@@ -141,11 +179,11 @@ func newState(
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
-		nodeMergeCompleteSubs:    []*event.Subscription{},
 		nodeConnections:          []map[int]struct{}{},
 		nodeReplicatorSources:    []map[int]struct{}{},
 		nodeReplicatorTargets:    []map[int]struct{}{},
 		nodePeerCollections:      []map[int]struct{}{},
+		nodeEvents:               []*eventState{},
 		actualDocHeads:           []map[string]cid.Cid{},
 		expectedDocHeads:         []map[string]cid.Cid{},
 		nodeAddresses:            []peer.AddrInfo{},
