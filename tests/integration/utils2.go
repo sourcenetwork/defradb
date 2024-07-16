@@ -664,11 +664,11 @@ func setStartingNodes(
 		s.nodeEvents = append(s.nodeEvents, eventState)
 		s.dbPaths = append(s.dbPaths, path)
 
-		s.nodeConnections = append(s.nodeConnections, make(map[int]struct{}))
-		s.nodeReplicatorSources = append(s.nodeReplicatorSources, make(map[int]struct{}))
-		s.nodeReplicatorTargets = append(s.nodeReplicatorTargets, make(map[int]struct{}))
-		s.expectedDocHeads = append(s.expectedDocHeads, make(map[string]cid.Cid))
-		s.actualDocHeads = append(s.actualDocHeads, make(map[string]cid.Cid))
+		s.p2p.connections = append(s.p2p.connections, make(map[int]struct{}))
+		s.p2p.replicatorSources = append(s.p2p.replicatorSources, make(map[int]struct{}))
+		s.p2p.replicatorTargets = append(s.p2p.replicatorTargets, make(map[int]struct{}))
+		s.p2p.expectedDocHeads = append(s.p2p.expectedDocHeads, make(map[string]cid.Cid))
+		s.p2p.actualDocHeads = append(s.p2p.actualDocHeads, make(map[string]cid.Cid))
 	}
 }
 
@@ -746,8 +746,8 @@ func refreshCollections(
 ) {
 	s.collections = make([][]client.Collection, len(s.nodes))
 
-	for i := len(s.nodePeerCollections); i < len(s.collectionNames); i++ {
-		s.nodePeerCollections = append(s.nodePeerCollections, make(map[int]struct{}))
+	for i := len(s.p2p.peerCollections); i < len(s.collectionNames); i++ {
+		s.p2p.peerCollections = append(s.p2p.peerCollections, make(map[int]struct{}))
 	}
 
 	for nodeID, node := range s.nodes {
@@ -813,11 +813,11 @@ func configureNode(
 	s.nodeEvents = append(s.nodeEvents, eventState)
 	s.dbPaths = append(s.dbPaths, path)
 
-	s.nodeConnections = append(s.nodeConnections, make(map[int]struct{}))
-	s.nodeReplicatorSources = append(s.nodeReplicatorSources, make(map[int]struct{}))
-	s.nodeReplicatorTargets = append(s.nodeReplicatorTargets, make(map[int]struct{}))
-	s.expectedDocHeads = append(s.expectedDocHeads, make(map[string]cid.Cid))
-	s.actualDocHeads = append(s.actualDocHeads, make(map[string]cid.Cid))
+	s.p2p.connections = append(s.p2p.connections, make(map[int]struct{}))
+	s.p2p.replicatorSources = append(s.p2p.replicatorSources, make(map[int]struct{}))
+	s.p2p.replicatorTargets = append(s.p2p.replicatorTargets, make(map[int]struct{}))
+	s.p2p.expectedDocHeads = append(s.p2p.expectedDocHeads, make(map[string]cid.Cid))
+	s.p2p.actualDocHeads = append(s.p2p.actualDocHeads, make(map[string]cid.Cid))
 }
 
 func refreshDocuments(

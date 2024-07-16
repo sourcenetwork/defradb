@@ -25,6 +25,39 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
+// p2pState contains all p2p related testing test.
+type p2pState struct {
+	// connections contains all connected nodes.
+	//
+	// The index of the slice is the node id. The map key is the connected node id.
+	connections []map[int]struct{}
+
+	// replicatorSources is a mapping of replicator sources to targets.
+	//
+	// The index of the slice is the source node id. The map key is the target node id.
+	replicatorSources []map[int]struct{}
+
+	// replicatorTargets is a mapping of replicator targets to sources.
+	//
+	// The index of the slice is the target node id. The map key is the source node id.
+	replicatorTargets []map[int]struct{}
+
+	// peerCollections contains all active peer collection subscriptions.
+	//
+	// The index of the slice is the collection id. The map key is the node id of the subscriber.
+	peerCollections []map[int]struct{}
+
+	// actualDocHeads contains all document heads that exist on a node.
+	//
+	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
+	actualDocHeads []map[string]cid.Cid
+
+	// expectedDocHeads contains all document heads that are expected to exist on a node.
+	//
+	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
+	expectedDocHeads []map[string]cid.Cid
+}
+
 // eventState contains all event related testing state for a node.
 type eventState struct {
 	// merge is the `event.MergeCompleteName` subscription
@@ -98,36 +131,6 @@ type state struct {
 	// nodeEvents contains all event node subscriptions.
 	nodeEvents []*eventState
 
-	// nodeConnections contains all connected nodes.
-	//
-	// The index of the slice is the node id. The map key is the connected node id.
-	nodeConnections []map[int]struct{}
-
-	// nodeReplicatorSources contains all active replicators.
-	//
-	// The index of the slice is the source node id. The map key is the target node id.
-	nodeReplicatorSources []map[int]struct{}
-
-	// nodeReplicatorTargets contains all active replicators.
-	//
-	// The index of the slice is the target node id. The map key is the source node id.
-	nodeReplicatorTargets []map[int]struct{}
-
-	// nodePeerCollections contains all active peer collection subscriptions.
-	//
-	// The index of the slice is the collection id. The map key is the node id of the subscriber.
-	nodePeerCollections []map[int]struct{}
-
-	// actualDocHeads contains all document heads that exist on a node.
-	//
-	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
-	actualDocHeads []map[string]cid.Cid
-
-	// expectedDocHeads contains all document heads that are expected to exist on a node.
-	//
-	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
-	expectedDocHeads []map[string]cid.Cid
-
 	// The addresses of any nodes configured.
 	nodeAddresses []peer.AddrInfo
 
@@ -136,6 +139,9 @@ type state struct {
 
 	// The nodes active in this test.
 	nodes []clients.Client
+
+	// The p2p test state.
+	p2p *p2pState
 
 	// The paths to any file-based databases active in this test.
 	dbPaths []string
@@ -179,16 +185,11 @@ func newState(
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
-		nodeConnections:          []map[int]struct{}{},
-		nodeReplicatorSources:    []map[int]struct{}{},
-		nodeReplicatorTargets:    []map[int]struct{}{},
-		nodePeerCollections:      []map[int]struct{}{},
 		nodeEvents:               []*eventState{},
-		actualDocHeads:           []map[string]cid.Cid{},
-		expectedDocHeads:         []map[string]cid.Cid{},
 		nodeAddresses:            []peer.AddrInfo{},
 		nodeConfigs:              [][]net.NodeOpt{},
 		nodes:                    []clients.Client{},
+		p2p:                      &p2pState{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,

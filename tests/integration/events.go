@@ -13,9 +13,10 @@ package tests
 import (
 	"time"
 
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/event"
 )
 
 // eventTimeout is the default amount of time
@@ -48,7 +49,7 @@ func waitForNetworkSetupEvents(s *state, nodeID int) {
 			p2pTopicEvents--
 
 		case <-time.After(eventTimeout):
-			s.t.Fatalf("timeout waiting for node to be ready")
+			s.t.Fatalf("timeout waiting for network setup events")
 		}
 	}
 }
@@ -67,11 +68,11 @@ func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
 	}
 
 	// all previous documents should be merged on the subscriber node
-	for key, val := range s.actualDocHeads[cfg.SourceNodeID] {
-		s.expectedDocHeads[cfg.TargetNodeID][key] = val
+	for key, val := range s.p2p.actualDocHeads[cfg.SourceNodeID] {
+		s.p2p.expectedDocHeads[cfg.TargetNodeID][key] = val
 	}
-	s.nodeReplicatorTargets[cfg.TargetNodeID][cfg.SourceNodeID] = struct{}{}
-	s.nodeReplicatorSources[cfg.SourceNodeID][cfg.TargetNodeID] = struct{}{}
+	s.p2p.replicatorTargets[cfg.TargetNodeID][cfg.SourceNodeID] = struct{}{}
+	s.p2p.replicatorSources[cfg.SourceNodeID][cfg.TargetNodeID] = struct{}{}
 }
 
 // waitForReplicatorConfigureEvent waits for a node to publish a
@@ -85,8 +86,8 @@ func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
 		require.Fail(s.t, "timeout waiting for replicator event")
 	}
 
-	delete(s.nodeReplicatorTargets[cfg.TargetNodeID], cfg.SourceNodeID)
-	delete(s.nodeReplicatorSources[cfg.SourceNodeID], cfg.TargetNodeID)
+	delete(s.p2p.replicatorTargets[cfg.TargetNodeID], cfg.SourceNodeID)
+	delete(s.p2p.replicatorSources[cfg.SourceNodeID], cfg.TargetNodeID)
 }
 
 // waitForSubscribeToCollectionEvent waits for a node to publish a
@@ -107,15 +108,15 @@ func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
 		}
-		s.nodePeerCollections[collectionIndex][action.NodeID] = struct{}{}
+		s.p2p.peerCollections[collectionIndex][action.NodeID] = struct{}{}
 		if collectionIndex >= len(s.documents) {
 			continue // no documents to track
 		}
 		// all previous documents should be merged on the subscriber node
 		for _, doc := range s.documents[collectionIndex] {
-			for nodeID := range s.nodeConnections[action.NodeID] {
-				head := s.actualDocHeads[nodeID][doc.ID().String()]
-				s.expectedDocHeads[action.NodeID][doc.ID().String()] = head
+			for nodeID := range s.p2p.connections[action.NodeID] {
+				head := s.p2p.actualDocHeads[nodeID][doc.ID().String()]
+				s.p2p.expectedDocHeads[action.NodeID][doc.ID().String()] = head
 			}
 		}
 	}
@@ -136,7 +137,7 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
 		}
-		delete(s.nodePeerCollections[collectionIndex], action.NodeID)
+		delete(s.p2p.peerCollections[collectionIndex], action.NodeID)
 	}
 }
 
@@ -160,27 +161,27 @@ func waitForUpdateEvents(s *state, nodeID immutable.Option[int], collectionID in
 		}
 
 		// update the actual document heads
-		s.actualDocHeads[i][evt.DocID] = evt.Cid
+		s.p2p.actualDocHeads[i][evt.DocID] = evt.Cid
 
 		// update the expected document heads of connected nodes
-		for id := range s.nodeConnections[i] {
-			if _, ok := s.actualDocHeads[id][evt.DocID]; ok {
-				s.expectedDocHeads[id][evt.DocID] = evt.Cid
+		for id := range s.p2p.connections[i] {
+			if _, ok := s.p2p.actualDocHeads[id][evt.DocID]; ok {
+				s.p2p.expectedDocHeads[id][evt.DocID] = evt.Cid
 			}
 		}
 		// update the expected document heads of replicator sources
-		for id := range s.nodeReplicatorTargets[i] {
-			if _, ok := s.actualDocHeads[id][evt.DocID]; ok {
-				s.expectedDocHeads[id][evt.DocID] = evt.Cid
+		for id := range s.p2p.replicatorTargets[i] {
+			if _, ok := s.p2p.actualDocHeads[id][evt.DocID]; ok {
+				s.p2p.expectedDocHeads[id][evt.DocID] = evt.Cid
 			}
 		}
 		// update the expected document heads of replicator targets
-		for id := range s.nodeReplicatorSources[i] {
-			s.expectedDocHeads[id][evt.DocID] = evt.Cid
+		for id := range s.p2p.replicatorSources[i] {
+			s.p2p.expectedDocHeads[id][evt.DocID] = evt.Cid
 		}
 		// update the expected document heads of peer collection subs
-		for id := range s.nodePeerCollections[collectionID] {
-			s.expectedDocHeads[id][evt.DocID] = evt.Cid
+		for id := range s.p2p.peerCollections[collectionID] {
+			s.p2p.expectedDocHeads[id][evt.DocID] = evt.Cid
 		}
 	}
 }
@@ -197,10 +198,10 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 		timeout = eventTimeout
 	}
 
-	for nodeID, expect := range s.expectedDocHeads {
+	for nodeID, expect := range s.p2p.expectedDocHeads {
 		// remove any docs that are already merged
 		// up to the expected document head
-		for key, val := range s.actualDocHeads[nodeID] {
+		for key, val := range s.p2p.actualDocHeads[nodeID] {
 			if head, ok := expect[key]; ok && head.String() == val.String() {
 				delete(expect, key)
 			}
