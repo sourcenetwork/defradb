@@ -175,7 +175,7 @@ jobs:
       # contains replace commands in its go.mod file.
       - name: Checkout sourcehub code into the directory
         if: ${{ matrix.acp-type == 'source-hub' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: sourcenetwork/sourcehub
           path: _sourceHub
