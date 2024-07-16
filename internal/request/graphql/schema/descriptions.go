@@ -33,8 +33,8 @@ var (
 		client.FieldKind_NILLABLE_STRING:       gql.String,
 		client.FieldKind_STRING_ARRAY:          gql.NewList(gql.NewNonNull(gql.String)),
 		client.FieldKind_NILLABLE_STRING_ARRAY: gql.NewList(gql.String),
-		client.FieldKind_NILLABLE_BLOB:         schemaTypes.BlobScalarType,
-		client.FieldKind_NILLABLE_JSON:         schemaTypes.JSONScalarType,
+		client.FieldKind_NILLABLE_BLOB:         schemaTypes.BlobScalarType(),
+		client.FieldKind_NILLABLE_JSON:         schemaTypes.JSONScalarType(),
 	}
 
 	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
