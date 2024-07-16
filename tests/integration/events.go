@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"context"
 	"time"
 
 	"github.com/sourcenetwork/defradb/event"
@@ -19,17 +18,133 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// waitForUpdateEvents waits for all selected nodes to publish an update event to the local event bus.
-//
-// Expected document heads will be updated for all nodes that should receive network merges.
-func waitForUpdateEvents(
-	s *state,
-	nodeID immutable.Option[int],
-	collectionID int,
-) {
-	ctx, cancel := context.WithTimeout(s.ctx, subscriptionTimeout*10)
-	defer cancel()
+// eventTimeout is the default amount of time
+// to wait for an event before timing out
+const eventTimeout = 1 * time.Second
 
+// waitForNetworkSetupEvents waits for p2p topic completed and
+// replicator completed events to be published on the local node event bus.
+func waitForNetworkSetupEvents(s *state, nodeID int) {
+	cols, err := s.nodes[nodeID].GetAllP2PCollections(s.ctx)
+	require.NoError(s.t, err)
+
+	reps, err := s.nodes[nodeID].GetAllReplicators(s.ctx)
+	require.NoError(s.t, err)
+
+	p2pTopicEvents := 0
+	replicatorEvents := len(reps)
+
+	// there is only one message for loading of P2P collections
+	if len(cols) > 0 {
+		p2pTopicEvents = 1
+	}
+
+	for p2pTopicEvents > 0 && replicatorEvents > 0 {
+		select {
+		case <-s.nodeEvents[nodeID].replicator.Message():
+			replicatorEvents--
+
+		case <-s.nodeEvents[nodeID].p2pTopic.Message():
+			p2pTopicEvents--
+
+		case <-time.After(eventTimeout):
+			s.t.Fatalf("timeout waiting for node to be ready")
+		}
+	}
+}
+
+// waitForReplicatorConfigureEvent waits for a  node to publish a
+// replicator completed event on the local event bus.
+//
+// Expected document heads will be updated for the targeted node.
+func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
+	select {
+	case <-s.nodeEvents[cfg.SourceNodeID].replicator.Message():
+		// event recieved
+
+	case <-time.After(eventTimeout):
+		require.Fail(s.t, "timeout waiting for replicator event")
+	}
+
+	// all previous documents should be merged on the subscriber node
+	for key, val := range s.actualDocHeads[cfg.SourceNodeID] {
+		s.expectedDocHeads[cfg.TargetNodeID][key] = val
+	}
+	s.nodeReplicatorTargets[cfg.TargetNodeID][cfg.SourceNodeID] = struct{}{}
+	s.nodeReplicatorSources[cfg.SourceNodeID][cfg.TargetNodeID] = struct{}{}
+}
+
+// waitForReplicatorConfigureEvent waits for a node to publish a
+// replicator completed event on the local event bus.
+func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
+	select {
+	case <-s.nodeEvents[cfg.SourceNodeID].replicator.Message():
+		// event recieved
+
+	case <-time.After(eventTimeout):
+		require.Fail(s.t, "timeout waiting for replicator event")
+	}
+
+	delete(s.nodeReplicatorTargets[cfg.TargetNodeID], cfg.SourceNodeID)
+	delete(s.nodeReplicatorSources[cfg.SourceNodeID], cfg.TargetNodeID)
+}
+
+// waitForSubscribeToCollectionEvent waits for a node to publish a
+// p2p topic completed event on the local event bus.
+//
+// Expected document heads will be updated for the subscriber node.
+func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
+	select {
+	case <-s.nodeEvents[action.NodeID].p2pTopic.Message():
+		// event recieved
+
+	case <-time.After(eventTimeout):
+		require.Fail(s.t, "timeout waiting for p2p topic event")
+	}
+
+	// update peer collections and expected documents of subscribed node
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistentCollectionID {
+			continue // don't track non existent collections
+		}
+		s.nodePeerCollections[collectionIndex][action.NodeID] = struct{}{}
+		if collectionIndex >= len(s.documents) {
+			continue // no documents to track
+		}
+		// all previous documents should be merged on the subscriber node
+		for _, doc := range s.documents[collectionIndex] {
+			for nodeID := range s.nodeConnections[action.NodeID] {
+				head := s.actualDocHeads[nodeID][doc.ID().String()]
+				s.expectedDocHeads[action.NodeID][doc.ID().String()] = head
+			}
+		}
+	}
+}
+
+// waitForSubscribeToCollectionEvent waits for a node to publish a
+// p2p topic completed event on the local event bus.
+func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollection) {
+	select {
+	case <-s.nodeEvents[action.NodeID].p2pTopic.Message():
+		// event recieved
+
+	case <-time.After(eventTimeout):
+		require.Fail(s.t, "timeout waiting for p2p topic event")
+	}
+
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistentCollectionID {
+			continue // don't track non existent collections
+		}
+		delete(s.nodePeerCollections[collectionIndex], action.NodeID)
+	}
+}
+
+// waitForUpdateEvents waits for all selected nodes to publish an
+// update event to the local event bus.
+//
+// Expected document heads will be updated for any connected nodes.
+func waitForUpdateEvents(s *state, nodeID immutable.Option[int], collectionID int) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
@@ -40,7 +155,7 @@ func waitForUpdateEvents(
 		case msg := <-s.nodeEvents[i].update.Message():
 			evt = msg.Data.(event.Update)
 
-		case <-ctx.Done():
+		case <-time.After(eventTimeout):
 			require.Fail(s.t, "timeout waiting for update event")
 		}
 
@@ -74,19 +189,13 @@ func waitForUpdateEvents(
 //
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
-func waitForMergeEvents(
-	s *state,
-	action WaitForSync,
-) {
+func waitForMergeEvents(s *state, action WaitForSync) {
 	var timeout time.Duration
 	if action.ExpectedTimeout != 0 {
 		timeout = action.ExpectedTimeout
 	} else {
-		timeout = subscriptionTimeout * 10
+		timeout = eventTimeout
 	}
-
-	ctx, cancel := context.WithTimeout(s.ctx, timeout)
-	defer cancel()
 
 	for nodeID, expect := range s.expectedDocHeads {
 		// remove any docs that are already merged
@@ -108,7 +217,7 @@ func waitForMergeEvents(
 			case msg := <-s.nodeEvents[nodeID].merge.Message():
 				evt = msg.Data.(event.Merge)
 
-			case <-ctx.Done():
+			case <-time.After(timeout):
 				require.Fail(s.t, "timeout waiting for merge complete event")
 			}
 

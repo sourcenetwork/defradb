@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -182,26 +181,15 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	sub, err := sourceNode.Events().Subscribe(event.ReplicatorCompletedName)
-	require.NoError(s.t, err)
-	err = sourceNode.SetReplicator(s.ctx, client.Replicator{
+	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
-	if err == nil {
-		// wait for the replicator setup to complete
-		<-sub.Message()
-	}
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
 
 	if err == nil {
-		// all previous documents should be merged on the subscriber node
-		for key, val := range s.actualDocHeads[cfg.SourceNodeID] {
-			s.expectedDocHeads[cfg.TargetNodeID][key] = val
-		}
-		s.nodeReplicatorTargets[cfg.TargetNodeID][cfg.SourceNodeID] = struct{}{}
-		s.nodeReplicatorSources[cfg.SourceNodeID][cfg.TargetNodeID] = struct{}{}
+		waitForReplicatorConfigureEvent(s, cfg)
 	}
 }
 
@@ -212,18 +200,11 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	sub, err := sourceNode.Events().Subscribe(event.ReplicatorCompletedName)
-	require.NoError(s.t, err)
-	err = sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
-	if err == nil {
-		// wait for the replicator setup to complete
-		<-sub.Message()
-	}
 	require.NoError(s.t, err)
-	delete(s.nodeReplicatorTargets[cfg.TargetNodeID], cfg.SourceNodeID)
-	delete(s.nodeReplicatorSources[cfg.SourceNodeID], cfg.TargetNodeID)
+	waitForReplicatorDeleteEvent(s, cfg)
 }
 
 // subscribeToCollection sets up a collection subscription on the given node/collection.
@@ -241,28 +222,14 @@ func subscribeToCollection(
 			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
 			continue
 		}
-		if action.ExpectedError == "" {
-			// all previous documents should be merged on the subscriber node
-			if collectionIndex < len(s.documents) {
-				for _, doc := range s.documents[collectionIndex] {
-					for nodeID := range s.nodeConnections[action.NodeID] {
-						s.expectedDocHeads[action.NodeID][doc.ID().String()] = s.actualDocHeads[nodeID][doc.ID().String()]
-					}
-				}
-			}
-			s.nodePeerCollections[collectionIndex][action.NodeID] = struct{}{}
-		}
+
 		col := s.collections[action.NodeID][collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	sub, err := n.Events().Subscribe(event.P2PTopicCompletedName)
-	require.NoError(s.t, err)
-
-	err = n.AddP2PCollections(s.ctx, schemaRoots)
+	err := n.AddP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
-		// wait for the p2p collection setup to complete
-		<-sub.Message()
+		waitForSubscribeToCollectionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -289,20 +256,14 @@ func unsubscribeToCollection(
 			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
 			continue
 		}
-		if action.ExpectedError == "" {
-			delete(s.nodePeerCollections[collectionIndex], action.NodeID)
-		}
+
 		col := s.collections[action.NodeID][collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	sub, err := n.Events().Subscribe(event.P2PTopicCompletedName)
-	require.NoError(s.t, err)
-
-	err = n.RemoveP2PCollections(s.ctx, schemaRoots)
+	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
-		// wait for the p2p collection setup to complete
-		<-sub.Message()
+		waitForUnsubscribeToCollectionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
