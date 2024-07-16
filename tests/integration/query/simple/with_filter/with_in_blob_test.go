@@ -40,7 +40,6 @@ func TestQuerySimple_WithInOpOnBlobField_ShouldFilter(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				// the filtered-by JSON has no spaces, because this is now it's stored.
 				Request: `query {
 					Users(filter: {data: {_in: ["00FF99AA"]}}) {
 						name
