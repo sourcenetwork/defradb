@@ -23,7 +23,6 @@ import (
 
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
-	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -662,13 +661,8 @@ func setStartingNodes(
 
 		s.nodes = append(s.nodes, c)
 		s.nodeEvents = append(s.nodeEvents, eventState)
+		s.nodeP2P = append(s.nodeP2P, newP2PState())
 		s.dbPaths = append(s.dbPaths, path)
-
-		s.p2p.connections = append(s.p2p.connections, make(map[int]struct{}))
-		s.p2p.replicatorSources = append(s.p2p.replicatorSources, make(map[int]struct{}))
-		s.p2p.replicatorTargets = append(s.p2p.replicatorTargets, make(map[int]struct{}))
-		s.p2p.expectedDocHeads = append(s.p2p.expectedDocHeads, make(map[string]cid.Cid))
-		s.p2p.actualDocHeads = append(s.p2p.actualDocHeads, make(map[string]cid.Cid))
 	}
 }
 
@@ -746,10 +740,6 @@ func refreshCollections(
 ) {
 	s.collections = make([][]client.Collection, len(s.nodes))
 
-	for i := len(s.p2p.peerCollections); i < len(s.collectionNames); i++ {
-		s.p2p.peerCollections = append(s.p2p.peerCollections, make(map[int]struct{}))
-	}
-
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
 		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
@@ -811,13 +801,8 @@ func configureNode(
 
 	s.nodes = append(s.nodes, c)
 	s.nodeEvents = append(s.nodeEvents, eventState)
+	s.nodeP2P = append(s.nodeP2P, newP2PState())
 	s.dbPaths = append(s.dbPaths, path)
-
-	s.p2p.connections = append(s.p2p.connections, make(map[int]struct{}))
-	s.p2p.replicatorSources = append(s.p2p.replicatorSources, make(map[int]struct{}))
-	s.p2p.replicatorTargets = append(s.p2p.replicatorTargets, make(map[int]struct{}))
-	s.p2p.expectedDocHeads = append(s.p2p.expectedDocHeads, make(map[string]cid.Cid))
-	s.p2p.actualDocHeads = append(s.p2p.actualDocHeads, make(map[string]cid.Cid))
 }
 
 func refreshDocuments(

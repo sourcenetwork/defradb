@@ -29,33 +29,45 @@ import (
 type p2pState struct {
 	// connections contains all connected nodes.
 	//
-	// The index of the slice is the node id. The map key is the connected node id.
-	connections []map[int]struct{}
+	// The map key is the connected node id.
+	connections map[int]struct{}
 
 	// replicatorSources is a mapping of replicator sources to targets.
 	//
-	// The index of the slice is the source node id. The map key is the target node id.
-	replicatorSources []map[int]struct{}
+	// The map key is the target node id.
+	replicatorSources map[int]struct{}
 
 	// replicatorTargets is a mapping of replicator targets to sources.
 	//
-	// The index of the slice is the target node id. The map key is the source node id.
-	replicatorTargets []map[int]struct{}
+	// The map key is the source node id.
+	replicatorTargets map[int]struct{}
 
 	// peerCollections contains all active peer collection subscriptions.
 	//
-	// The index of the slice is the collection id. The map key is the node id of the subscriber.
-	peerCollections []map[int]struct{}
+	// The map key is the node id of the subscriber.
+	peerCollections map[int]struct{}
 
 	// actualDocHeads contains all document heads that exist on a node.
 	//
-	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
-	actualDocHeads []map[string]cid.Cid
+	// The map key is the doc id. The map value is the doc head.
+	actualDocHeads map[string]cid.Cid
 
 	// expectedDocHeads contains all document heads that are expected to exist on a node.
 	//
-	// The index of the slice is the node id. The map key is the doc id. The map value is the doc head.
-	expectedDocHeads []map[string]cid.Cid
+	// The map key is the doc id. The map value is the doc head.
+	expectedDocHeads map[string]cid.Cid
+}
+
+// newP2PState returns a new empty p2p state.
+func newP2PState() *p2pState {
+	return &p2pState{
+		connections:       make(map[int]struct{}),
+		replicatorSources: make(map[int]struct{}),
+		replicatorTargets: make(map[int]struct{}),
+		peerCollections:   make(map[int]struct{}),
+		actualDocHeads:    make(map[string]cid.Cid),
+		expectedDocHeads:  make(map[string]cid.Cid),
+	}
 }
 
 // eventState contains all event related testing state for a node.
@@ -140,8 +152,8 @@ type state struct {
 	// The nodes active in this test.
 	nodes []clients.Client
 
-	// The p2p test state.
-	p2p *p2pState
+	// nodeP2P contains p2p states for all nodes
+	nodeP2P []*p2pState
 
 	// The paths to any file-based databases active in this test.
 	dbPaths []string
@@ -188,8 +200,8 @@ func newState(
 		nodeEvents:               []*eventState{},
 		nodeAddresses:            []peer.AddrInfo{},
 		nodeConfigs:              [][]net.NodeOpt{},
+		nodeP2P:                  []*p2pState{},
 		nodes:                    []clients.Client{},
-		p2p:                      &p2pState{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,

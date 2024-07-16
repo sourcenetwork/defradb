@@ -157,8 +157,8 @@ func connectPeers(
 	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
 
-	s.p2p.connections[cfg.SourceNodeID][cfg.TargetNodeID] = struct{}{}
-	s.p2p.connections[cfg.TargetNodeID][cfg.SourceNodeID] = struct{}{}
+	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
+	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
