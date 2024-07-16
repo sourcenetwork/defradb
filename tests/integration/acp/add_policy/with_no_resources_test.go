@@ -77,9 +77,12 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 // A Policy can have no resources (incompatible with DPI) but it needs a name.
 func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 	test := testUtils.TestCase{
-
 		Description: "Test acp, adding a policy that has only space",
-
+		SupportedACPTypes: immutable.Some([]testUtils.ACPType{
+			// This is currently a local-acp only limitation, this test-restriction
+			// can be lifted if/when SourceHub introduces the same limitation.
+			testUtils.LocalACPType,
+		}),
 		Actions: []any{
 			testUtils.AddPolicy{
 				Identity: immutable.Some(1),

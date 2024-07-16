@@ -236,3 +236,7 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
 	w.node.Peer.Bootstrap(addrs)
 }
+
+func (w *Wrapper) Host() string {
+	return w.httpServer.URL
+}

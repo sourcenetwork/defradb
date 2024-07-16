@@ -20,8 +20,9 @@ const (
 )
 
 var (
-	ErrLensRuntimeNotSupported = errors.New(errLensRuntimeNotSupported)
-	ErrStoreTypeNotSupported   = errors.New(errStoreTypeNotSupported)
+	ErrSignerMissingForSourceHubACP = errors.New("a txn signer must be provided for SourceHub ACP")
+	ErrLensRuntimeNotSupported      = errors.New(errLensRuntimeNotSupported)
+	ErrStoreTypeNotSupported        = errors.New(errStoreTypeNotSupported)
 )
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {

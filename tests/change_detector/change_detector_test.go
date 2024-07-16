@@ -59,6 +59,8 @@ func TestChanges(t *testing.T) {
 		sourceRepoPkgMap[pkg] = true
 	}
 
+	hasRunOnce := false
+
 	for _, pkg := range targetRepoPkgList {
 		pkgName := strings.TrimPrefix(pkg, "github.com/sourcenetwork/defradb/")
 		t.Run(pkgName, func(t *testing.T) {
@@ -66,7 +68,18 @@ func TestChanges(t *testing.T) {
 				t.Skip("skipping unknown or new test package")
 			}
 
-			t.Parallel()
+			if hasRunOnce {
+				// The first test runs very slowly, and if multiple tests are running concurrently
+				// all will be affected and the costs multiplied. It seems likely that this is
+				// compilation related, but that is not yet proven.
+				//
+				// Because of this the first sub-test will run on it's own, followed by the rest
+				// running in parallel.
+				t.Parallel()
+			} else {
+				hasRunOnce = true
+			}
+
 			dataDir := t.TempDir()
 
 			sourceTestPkg := filepath.Join(sourceRepoDir, pkgName)

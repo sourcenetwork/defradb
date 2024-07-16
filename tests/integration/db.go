@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
@@ -122,6 +124,23 @@ func setupNode(s *state) (*node.Node, string, error) {
 
 	if encryptionKey != nil {
 		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+	}
+
+	switch acpType {
+	case LocalACPType:
+		opts = append(opts, node.WithACPType(node.LocalACPType))
+
+	case SourceHubACPType:
+		acpOpts, err := setupSourceHub(s)
+		require.NoError(s.t, err)
+
+		opts = append(opts, node.WithACPType(node.SourceHubACPType))
+		for _, opt := range acpOpts {
+			opts = append(opts, opt)
+		}
+
+	default:
+		// no-op, use the `node` package default
 	}
 
 	var path string

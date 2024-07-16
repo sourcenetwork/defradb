@@ -15,11 +15,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-var identity1 = "did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn"
-var identity2 = "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F"
-var invalidIdentity = "did:something"
+var identity1 = identity.Identity{
+	DID: "did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn",
+}
+var identity2 = identity.Identity{
+	DID: "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F",
+}
+var invalidIdentity = identity.Identity{
+	DID: "did:something",
+}
 
 var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 var validPolicy string = `
@@ -478,7 +486,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"",
 		"",
@@ -491,7 +499,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -513,7 +521,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -525,7 +533,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity2,
+		identity2.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -564,7 +572,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"",
 		"",
@@ -577,7 +585,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -599,7 +607,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -611,7 +619,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity2,
+		identity2.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -631,7 +639,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity1,
+		identity1.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -643,7 +651,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
-		identity2,
+		identity2.DID,
 		validPolicyID,
 		"users",
 		"documentID_XYZ",

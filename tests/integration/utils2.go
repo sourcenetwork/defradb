@@ -143,6 +143,7 @@ func ExecuteTestCase(
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
+	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
 
 	var clients []ClientType
@@ -898,7 +899,7 @@ func refreshDocuments(
 			}
 
 			for _, doc := range docs {
-				ctx := makeContextForDocCreate(s, s.ctx, &action)
+				ctx := makeContextForDocCreate(s, s.ctx, 0, &action)
 
 				// The document may have been mutated by other actions, so to be sure we have the latest
 				// version without having to worry about the individual update mechanics we fetch it.
@@ -1187,7 +1188,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.DB, []client.Collection) ([]*client.Document, error)
+	var mutation func(*state, CreateDoc, client.DB, int, []client.Collection) ([]*client.Document, error)
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1209,7 +1210,7 @@ func createDoc(
 			nodeID,
 			func() error {
 				var err error
-				docs, err = mutation(s, action, actionNodes[nodeID], collections)
+				docs, err = mutation(s, action, actionNodes[nodeID], nodeID, collections)
 				return err
 			},
 		)
@@ -1229,6 +1230,7 @@ func createDocViaColSave(
 	s *state,
 	action CreateDoc,
 	node client.DB,
+	nodeIndex int,
 	collections []client.Collection,
 ) ([]*client.Document, error) {
 	var docs []*client.Document
@@ -1252,7 +1254,7 @@ func createDocViaColSave(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
 
 	for _, doc := range docs {
 		err = collections[action.CollectionID].Save(ctx, doc)
@@ -1263,8 +1265,8 @@ func createDocViaColSave(
 	return docs, nil
 }
 
-func makeContextForDocCreate(s *state, ctx context.Context, action *CreateDoc) context.Context {
-	identity := getIdentity(s, action.Identity)
+func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
+	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx = db.SetContextIdentity(ctx, identity)
 	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
@@ -1274,6 +1276,7 @@ func createDocViaColCreate(
 	s *state,
 	action CreateDoc,
 	node client.DB,
+	nodeIndex int,
 	collections []client.Collection,
 ) ([]*client.Document, error) {
 	var docs []*client.Document
@@ -1296,7 +1299,7 @@ func createDocViaColCreate(
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), &action)
+	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
 
 	if len(docs) > 1 {
 		err = collections[action.CollectionID].CreateMany(ctx, docs)
@@ -1311,6 +1314,7 @@ func createDocViaGQL(
 	s *state,
 	action CreateDoc,
 	node client.DB,
+	nodeIndex int,
 	collections []client.Collection,
 ) ([]*client.Document, error) {
 	collection := collections[action.CollectionID]
@@ -1353,7 +1357,7 @@ func createDocViaGQL(
 	)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, action.Identity))
+	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1407,12 +1411,13 @@ func deleteDoc(
 	action DeleteDoc,
 ) {
 	doc := s.documents[action.CollectionID][action.DocID]
-	identity := getIdentity(s, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
+		identity := getIdentity(s, nodeID, action.Identity)
+		ctx := db.SetContextIdentity(s.ctx, identity)
+
 		err := withRetry(
 			actionNodes,
 			nodeID,
@@ -1432,7 +1437,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, client.DB, []client.Collection) error
+	var mutation func(*state, UpdateDoc, client.DB, int, []client.Collection) error
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1451,7 +1456,7 @@ func updateDoc(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return mutation(s, action, actionNodes[nodeID], collections) },
+			func() error { return mutation(s, action, actionNodes[nodeID], nodeID, collections) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
@@ -1463,10 +1468,11 @@ func updateDocViaColSave(
 	s *state,
 	action UpdateDoc,
 	node client.DB,
+	nodeIndex int,
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	identity := getIdentity(s, action.Identity)
+	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
@@ -1491,10 +1497,11 @@ func updateDocViaColUpdate(
 	s *state,
 	action UpdateDoc,
 	node client.DB,
+	nodeIndex int,
 	collections []client.Collection,
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
-	identity := getIdentity(s, action.Identity)
+	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
@@ -1516,6 +1523,7 @@ func updateDocViaGQL(
 	s *state,
 	action UpdateDoc,
 	node client.DB,
+	nodeIndex int,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1538,7 +1546,7 @@ func updateDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 
 	ctx := db.SetContextTxn(s.ctx, txn)
-	identity := getIdentity(s, action.Identity)
+	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx = db.SetContextIdentity(ctx, identity)
 
 	result := node.ExecRequest(ctx, request)
@@ -1759,7 +1767,7 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		identity := getIdentity(s, action.Identity)
+		identity := getIdentity(s, nodeID, action.Identity)
 		ctx = db.SetContextIdentity(ctx, identity)
 
 		result := node.ExecRequest(ctx, action.Request)
@@ -2158,6 +2166,22 @@ func skipIfClientTypeUnsupported(
 	}
 
 	return filteredClients
+}
+
+func skipIfACPTypeUnsupported(t testing.TB, supporteACPTypes immutable.Option[[]ACPType]) {
+	if supporteACPTypes.HasValue() {
+		var isTypeSupported bool
+		for _, supportedType := range supporteACPTypes.Value() {
+			if supportedType == acpType {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			t.Skipf("test does not support given acp type. Type: %s", acpType)
+		}
+	}
 }
 
 // skipIfNetworkTest skips the current test if the given actions
