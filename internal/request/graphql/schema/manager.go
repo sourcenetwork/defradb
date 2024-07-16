@@ -176,8 +176,8 @@ func defaultTypes(
 		gql.String,
 
 		// Custom Scalar types
-		schemaTypes.BlobScalarType(),
-		schemaTypes.JSONScalarType(),
+		schemaTypes.BlobScalarType,
+		schemaTypes.JSONScalarType,
 
 		// Base Query types
 
@@ -195,6 +195,10 @@ func defaultTypes(
 		schemaTypes.NotNullIntOperatorBlock(),
 		schemaTypes.StringOperatorBlock(),
 		schemaTypes.NotNullstringOperatorBlock(),
+		schemaTypes.JSONOperatorBlock(),
+		schemaTypes.NotNullJSONOperatorBlock(),
+		schemaTypes.BlobOperatorBlock(),
+		schemaTypes.NotNullBlobOperatorBlock(),
 
 		commitsOrderArg,
 		commitLinkObject,

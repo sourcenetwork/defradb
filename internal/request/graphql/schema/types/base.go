@@ -360,6 +360,173 @@ func NotNullstringOperatorBlock() *gql.InputObject {
 	})
 }
 
+// JSONOperatorBlock filter block for string types.
+func JSONOperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "JSONOperatorBlock",
+		Description: stringOperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        JSONScalarType,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        JSONScalarType,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(JSONScalarType),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(JSONScalarType),
+			},
+			"_like": &gql.InputObjectFieldConfig{
+				Description: likeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nlike": &gql.InputObjectFieldConfig{
+				Description: nlikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_ilike": &gql.InputObjectFieldConfig{
+				Description: ilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nilike": &gql.InputObjectFieldConfig{
+				Description: nilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+		},
+	})
+}
+
+// NotNullJSONOperatorBlock filter block for string! types.
+func NotNullJSONOperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullJSONOperatorBlock",
+		Description: notNullStringOperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        JSONScalarType,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        JSONScalarType,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(JSONScalarType)),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(JSONScalarType)),
+			},
+			"_like": &gql.InputObjectFieldConfig{
+				Description: likeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nlike": &gql.InputObjectFieldConfig{
+				Description: nlikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_ilike": &gql.InputObjectFieldConfig{
+				Description: ilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nilike": &gql.InputObjectFieldConfig{
+				Description: nilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+		},
+	})
+}
+
+func BlobOperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "BlobOperatorBlock",
+		Description: stringOperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        BlobScalarType,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        BlobScalarType,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(BlobScalarType),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(BlobScalarType),
+			},
+			"_like": &gql.InputObjectFieldConfig{
+				Description: likeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nlike": &gql.InputObjectFieldConfig{
+				Description: nlikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_ilike": &gql.InputObjectFieldConfig{
+				Description: ilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nilike": &gql.InputObjectFieldConfig{
+				Description: nilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+		},
+	})
+}
+
+// NotNullJSONOperatorBlock filter block for string! types.
+func NotNullBlobOperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullBlobOperatorBlock",
+		Description: notNullStringOperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        BlobScalarType,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        BlobScalarType,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(BlobScalarType)),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(BlobScalarType)),
+			},
+			"_like": &gql.InputObjectFieldConfig{
+				Description: likeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nlike": &gql.InputObjectFieldConfig{
+				Description: nlikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_ilike": &gql.InputObjectFieldConfig{
+				Description: ilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			"_nilike": &gql.InputObjectFieldConfig{
+				Description: nilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+		},
+	})
+}
+
 // IdOperatorBlock filter block for ID types.
 func IdOperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{

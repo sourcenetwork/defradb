@@ -46,7 +46,7 @@ func coerceBlob(value any) any {
 	}
 }
 
-func BlobScalarType() *graphql.Scalar {
+func NewBlobScalarType() *graphql.Scalar {
 	return graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "Blob",
 		Description: "The `Blob` scalar type represents a binary large object.",
@@ -66,6 +66,8 @@ func BlobScalarType() *graphql.Scalar {
 		},
 	})
 }
+
+var BlobScalarType = NewBlobScalarType()
 
 // coerceJSON converts the given value into a valid json string.
 // If the value cannot be converted nil is returned.
@@ -100,7 +102,7 @@ func coerceJSON(value any) any {
 	}
 }
 
-func JSONScalarType() *graphql.Scalar {
+func NewJSONScalarType() *graphql.Scalar {
 	return graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "JSON",
 		Description: "The `JSON` scalar type represents a JSON string.",
@@ -120,3 +122,5 @@ func JSONScalarType() *graphql.Scalar {
 		},
 	})
 }
+
+var JSONScalarType = NewJSONScalarType()
