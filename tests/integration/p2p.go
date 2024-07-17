@@ -13,10 +13,10 @@ package tests
 import (
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
