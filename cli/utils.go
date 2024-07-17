@@ -17,8 +17,10 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -49,6 +51,11 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
+)
+
+const (
+	// authTokenExpiration is the default expiration time for auth tokens.
+	authTokenExpiration = time.Minute * 15
 )
 
 // readPassword reads a user input password without echoing it to the terminal.
@@ -149,13 +156,28 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	if err != nil {
 		return err
 	}
+
+	cfg := mustGetContextConfig(cmd)
+
+	sourcehubAddressString := cfg.GetString("acp.sourceHub.address")
+	var sourcehubAddress immutable.Option[string]
+	if sourcehubAddressString != "" {
+		sourcehubAddress = immutable.Some(sourcehubAddressString)
+	}
+
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	identity, err := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(
+		privKey,
+		authTokenExpiration,
+		immutable.Some(cfg.GetString("api.address")),
+		sourcehubAddress,
+		false,
+	)
 	if err != nil {
 		return err
 	}
 
-	ctx := db.SetContextIdentity(cmd.Context(), identity)
+	ctx := db.SetContextIdentity(cmd.Context(), immutable.Some(identity))
 	cmd.SetContext(ctx)
 	return nil
 }

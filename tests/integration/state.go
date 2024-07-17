@@ -126,7 +126,8 @@ type state struct {
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
 
-	identities []identity.Identity
+	// Identities by node index, by identity index.
+	identities [][]identity.Identity
 
 	// Will recieve an item once all actions have finished processing.
 	allActionsDone chan struct{}
@@ -171,6 +172,9 @@ type state struct {
 
 	// isBench indicates wether the test is currently being benchmarked.
 	isBench bool
+
+	// The SourceHub address used to pay for SourceHub transactions.
+	sourcehubAddress string
 }
 
 // newState returns a new fresh state for the given testCase.

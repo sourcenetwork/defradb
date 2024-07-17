@@ -61,6 +61,7 @@ The following tools are required in order to build and run the tests within this
 
 - [Go](https://go.dev/doc/install)
 - Cargo/rustc, typically installed via [rustup](https://www.rust-lang.org/tools/install)
+- [SourceHub](https://github.com/sourcenetwork/sourcehub), installed via `make install`
 
 ## Documentation
 The overall project documentation can be found at [docs.source.network](https://docs.source.network), and its source at [github.com/sourcenetwork/docs.source.network](https://github.com/sourcenetwork/docs.source.network).

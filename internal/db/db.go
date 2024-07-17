@@ -186,7 +186,7 @@ func (db *db) AddPolicy(
 
 	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
-		identity.Value().DID,
+		identity.Value(),
 		policy,
 	)
 	if err != nil {

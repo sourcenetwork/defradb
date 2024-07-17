@@ -17,13 +17,11 @@ import (
 )
 
 const (
-	errDIDCreation                            = "could not produce did for key"
-	errFailedToGenerateIdentityFromPrivateKey = "failed to generate identity from private key"
+	errDIDCreation = "could not produce did for key"
 )
 
 var (
-	ErrDIDCreation                            = errors.New(errDIDCreation)
-	ErrFailedToGenerateIdentityFromPrivateKey = errors.New(errFailedToGenerateIdentityFromPrivateKey)
+	ErrDIDCreation = errors.New(errDIDCreation)
 )
 
 func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
