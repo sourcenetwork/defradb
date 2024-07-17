@@ -12,7 +12,6 @@ package replicator
 
 import (
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -182,7 +181,6 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 			},
 			testUtils.WaitForSync{
 				// No documents should be synced
-				ExpectedTimeout: 100 * time.Millisecond,
 			},
 			testUtils.Request{
 				// Assert that John has not been synced to the second (target) node

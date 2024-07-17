@@ -341,7 +341,7 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForMergeEvents(s, action)
+		waitForMergeEvents(s)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
@@ -1425,7 +1425,7 @@ func updateDoc(
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" {
+	if action.ExpectedError == "" && !action.SkipUpdateEvent {
 		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
 	}
 }

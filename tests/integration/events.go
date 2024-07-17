@@ -202,7 +202,7 @@ func waitForUpdateEvents(s *state, nodeID immutable.Option[int], collectionID in
 //
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
-func waitForMergeEvents(s *state, action WaitForSync) {
+func waitForMergeEvents(s *state) {
 	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
 		expect := s.nodeP2P[nodeID].expectedDocHeads
 

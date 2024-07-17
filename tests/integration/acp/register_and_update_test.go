@@ -650,6 +650,8 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 						"name": "Shahzad Lone"
 					}
 				`,
+
+				SkipUpdateEvent: true,
 			},
 
 			testUtils.Request{
@@ -764,6 +766,8 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 						"name": "Shahzad Lone"
 					}
 				`,
+
+				SkipUpdateEvent: true,
 			},
 
 			testUtils.Request{

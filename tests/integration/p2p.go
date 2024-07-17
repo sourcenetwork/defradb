@@ -134,10 +134,7 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct {
-	// ExpectedTimeout is the duration to wait when expecting a timeout to occur.
-	ExpectedTimeout time.Duration
-}
+type WaitForSync struct{}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
