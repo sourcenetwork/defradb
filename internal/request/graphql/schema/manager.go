@@ -166,6 +166,9 @@ func defaultTypes(
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 ) []gql.Type {
+	blobScalarType := schemaTypes.BlobScalarType()
+	jsonScalarType := schemaTypes.JSONScalarType()
+
 	return []gql.Type{
 		// Base Scalar types
 		gql.Boolean,
@@ -176,8 +179,8 @@ func defaultTypes(
 		gql.String,
 
 		// Custom Scalar types
-		schemaTypes.BlobScalarType(),
-		schemaTypes.JSONScalarType(),
+		blobScalarType,
+		jsonScalarType,
 
 		// Base Query types
 
@@ -195,6 +198,10 @@ func defaultTypes(
 		schemaTypes.NotNullIntOperatorBlock(),
 		schemaTypes.StringOperatorBlock(),
 		schemaTypes.NotNullstringOperatorBlock(),
+		schemaTypes.JSONOperatorBlock(jsonScalarType),
+		schemaTypes.NotNullJSONOperatorBlock(jsonScalarType),
+		schemaTypes.BlobOperatorBlock(blobScalarType),
+		schemaTypes.NotNullBlobOperatorBlock(blobScalarType),
 
 		commitsOrderArg,
 		commitLinkObject,
