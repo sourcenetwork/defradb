@@ -13,6 +13,7 @@ package tests
 import (
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 
@@ -149,21 +150,17 @@ func connectPeers(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	sourceAddr := sourceNode.PeerInfo()
-	targetAddr := targetNode.PeerInfo()
-
-	log.InfoContext(s.ctx, "Connecting to peers",
-		corelog.Any("Source", sourceAddr),
-		corelog.Any("Target", targetAddr))
-
-	err := targetNode.Connect(s.ctx, sourceAddr)
-	require.NoError(s.t, err)
-
-	err = sourceNode.Connect(s.ctx, targetAddr)
-	require.NoError(s.t, err)
+	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
+	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
+	sourceNode.Bootstrap(addrs)
 
 	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
 	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
+
+	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
+	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
+	// sleep a little.
+	time.Sleep(100 * time.Millisecond)
 }
 
 // configureReplicator configures a replicator relationship between two existing, started, nodes.
@@ -231,6 +228,11 @@ func subscribeToCollection(
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
 }
 
 // unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
@@ -260,6 +262,11 @@ func unsubscribeToCollection(
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
 }
 
 // getAllP2PCollections gets all the active peer subscriptions and compares them against the

@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -101,11 +100,10 @@ func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	}
 }
 
-func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
+func (w *goClientWrapper) Bootstrap(addrs []peer.AddrInfo) {
 	if w.peer != nil {
-		return w.peer.Connect(ctx, addr)
+		w.peer.Bootstrap(addrs)
 	}
-	return nil
 }
 
 func (w *goClientWrapper) Close() {

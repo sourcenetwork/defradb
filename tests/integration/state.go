@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
-// p2pState contains all p2p related testing test.
+// p2pState contains all p2p related testing state.
 type p2pState struct {
 	// connections contains all connected nodes.
 	//

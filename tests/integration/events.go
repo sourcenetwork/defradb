@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"context"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -33,15 +32,10 @@ func waitForNetworkSetupEvents(s *state, nodeID int) {
 	reps, err := s.nodes[nodeID].GetAllReplicators(s.ctx)
 	require.NoError(s.t, err)
 
-	p2pTopicEvents := 0
 	replicatorEvents := len(reps)
+	p2pTopicEvent := len(cols) > 0
 
-	// there is only one message for loading of P2P collections
-	if len(cols) > 0 {
-		p2pTopicEvents = 1
-	}
-
-	for p2pTopicEvents > 0 && replicatorEvents > 0 {
+	for p2pTopicEvent && replicatorEvents > 0 {
 		select {
 		case _, ok := <-s.nodeEvents[nodeID].replicator.Message():
 			if !ok {
@@ -53,7 +47,7 @@ func waitForNetworkSetupEvents(s *state, nodeID int) {
 			if !ok {
 				require.Fail(s.t, "subscription closed waiting for network setup events")
 			}
-			p2pTopicEvents--
+			p2pTopicEvent = false
 
 		case <-time.After(eventTimeout):
 			s.t.Fatalf("timeout waiting for network setup events")
@@ -100,6 +94,8 @@ func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
 		require.Fail(s.t, "timeout waiting for replicator event")
 	}
 
+	delete(s.nodeP2P[cfg.TargetNodeID].connections, cfg.SourceNodeID)
+	delete(s.nodeP2P[cfg.SourceNodeID].connections, cfg.TargetNodeID)
 	delete(s.nodeP2P[cfg.SourceNodeID].replicators, cfg.TargetNodeID)
 }
 
@@ -170,6 +166,15 @@ func waitForUpdateEvents(s *state, nodeID immutable.Option[int], collectionID in
 			require.Fail(s.t, "timeout waiting for update event")
 		}
 
+		if i >= len(s.nodeConfigs) {
+			return // not testing network state
+		}
+
+		// make sure the event is published on the network before proceeding
+		// this prevents nodes from missing messages that are sent before
+		// subscriptions are setup
+		time.Sleep(100 * time.Millisecond)
+
 		// update the actual document head on the node that updated it
 		s.nodeP2P[i].actualDocHeads[evt.DocID] = evt.Cid
 
@@ -198,10 +203,6 @@ func waitForUpdateEvents(s *state, nodeID immutable.Option[int], collectionID in
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 func waitForMergeEvents(s *state, action WaitForSync) {
-	// use a longer timeout since the sync process can take a while
-	ctx, cancel := context.WithTimeout(s.ctx, 60*time.Second)
-	defer cancel()
-
 	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
 		expect := s.nodeP2P[nodeID].expectedDocHeads
 
@@ -228,7 +229,7 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 				}
 				evt = msg.Data.(event.Merge)
 
-			case <-ctx.Done():
+			case <-time.After(30 * eventTimeout):
 				require.Fail(s.t, "timeout waiting for merge complete event")
 			}
 
