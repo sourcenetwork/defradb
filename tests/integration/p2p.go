@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -150,13 +149,18 @@ func connectPeers(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
-	log.InfoContext(s.ctx, "Connecting to peers", corelog.Any("Addresses", addrs))
+	sourceAddr := sourceNode.PeerInfo()
+	targetAddr := targetNode.PeerInfo()
 
-	for _, addr := range addrs {
-		err := sourceNode.Connect(s.ctx, addr)
-		require.NoError(s.t, err)
-	}
+	log.InfoContext(s.ctx, "Connecting to peers",
+		corelog.Any("Source", sourceAddr),
+		corelog.Any("Target", targetAddr))
+
+	err := targetNode.Connect(s.ctx, sourceAddr)
+	require.NoError(s.t, err)
+
+	err = sourceNode.Connect(s.ctx, targetAddr)
+	require.NoError(s.t, err)
 
 	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
 	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}

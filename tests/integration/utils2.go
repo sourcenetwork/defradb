@@ -720,7 +720,7 @@ func restartNodes(
 
 		eventState, err := newEventState(c.Events())
 		require.NoError(s.t, err)
-		s.nodeEvents = append(s.nodeEvents, eventState)
+		s.nodeEvents[i] = eventState
 
 		waitForNetworkSetupEvents(s, i)
 	}
@@ -1182,7 +1182,9 @@ func createDoc(
 	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
 
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		for i := 0; i < len(docs); i++ {
+			waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		}
 	}
 }
 

@@ -32,15 +32,10 @@ type p2pState struct {
 	// The map key is the connected node id.
 	connections map[int]struct{}
 
-	// replicatorSources is a mapping of replicator sources to targets.
-	//
-	// The map key is the target node id.
-	replicatorSources map[int]struct{}
-
-	// replicatorTargets is a mapping of replicator targets to sources.
+	// replicators is a mapping of replicator targets.
 	//
 	// The map key is the source node id.
-	replicatorTargets map[int]struct{}
+	replicators map[int]struct{}
 
 	// peerCollections contains all active peer collection subscriptions.
 	//
@@ -61,12 +56,11 @@ type p2pState struct {
 // newP2PState returns a new empty p2p state.
 func newP2PState() *p2pState {
 	return &p2pState{
-		connections:       make(map[int]struct{}),
-		replicatorSources: make(map[int]struct{}),
-		replicatorTargets: make(map[int]struct{}),
-		peerCollections:   make(map[int]struct{}),
-		actualDocHeads:    make(map[string]cid.Cid),
-		expectedDocHeads:  make(map[string]cid.Cid),
+		connections:      make(map[int]struct{}),
+		replicators:      make(map[int]struct{}),
+		peerCollections:  make(map[int]struct{}),
+		actualDocHeads:   make(map[string]cid.Cid),
+		expectedDocHeads: make(map[string]cid.Cid),
 	}
 }
 
