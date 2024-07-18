@@ -1430,7 +1430,7 @@ func updateDoc(
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !action.SkipUpdateEvent {
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
 		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
 	}
 }

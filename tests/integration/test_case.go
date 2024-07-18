@@ -353,9 +353,11 @@ type UpdateDoc struct {
 	// contains this string.
 	ExpectedError string
 
-	// Skip waiting for an update event. This should only be used for
-	// tests that do not correctly publish an update event.
-	SkipUpdateEvent bool
+	// Skip waiting for an update event on the local event bus.
+	//
+	// This should only be used for tests that do not correctly
+	// publish an update event to the local event bus.
+	SkipLocalUpdateEvent bool
 }
 
 // IndexField describes a field to be indexed.

@@ -651,7 +651,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 					}
 				`,
 
-				SkipUpdateEvent: true,
+				SkipLocalUpdateEvent: true,
 			},
 
 			testUtils.Request{
@@ -767,7 +767,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 					}
 				`,
 
-				SkipUpdateEvent: true,
+				SkipLocalUpdateEvent: true,
 			},
 
 			testUtils.Request{
