@@ -31,8 +31,6 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	}
 	defer txn.Discard(ctx)
 
-	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
-	// ctx = db.SetContextIdentity(ctx, identity)
 	ctx = SetContextTxn(ctx, txn)
 
 	// first let's make sure the collections actually exists
@@ -53,11 +51,11 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		storeCollections = append(storeCollections, storeCol...)
 	}
 
-	// Ensure none of the collections have a policy on them, until following is implemented:
-	// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
-	for _, col := range storeCollections {
-		if col.Description().Policy.HasValue() {
-			return ErrP2PColHasPolicy
+	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+		for _, col := range storeCollections {
+			if col.Description().Policy.HasValue() {
+				return ErrP2PColHasPolicy
+			}
 		}
 	}
 
@@ -98,8 +96,6 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	}
 	defer txn.Discard(ctx)
 
-	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
-	// ctx = db.SetContextIdentity(ctx, identity)
 	ctx = SetContextTxn(ctx, txn)
 
 	// first let's make sure the collections actually exists
@@ -211,7 +207,6 @@ func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
 		if _, ok := colMap[col.SchemaRoot()]; ok {
 			continue
 		}
-		// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
 		docIDChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
 			return err

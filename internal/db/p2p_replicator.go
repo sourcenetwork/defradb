@@ -45,8 +45,6 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		return ErrSelfTargetForReplicator
 	}
 
-	// TODO-ACP: Support ACP <> P2P - https://github.com/sourcenetwork/defradb/issues/2366
-	// ctx = db.SetContextIdentity(ctx, identity)
 	ctx = SetContextTxn(ctx, txn)
 
 	storedRep := client.Replicator{}
@@ -90,20 +88,19 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		}
 
 	default:
-		// default to all collections (unless a collection contains a policy).
-		// TODO-ACP: default to all collections after resolving https://github.com/sourcenetwork/defradb/issues/2366
 		allCollections, err := db.GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
 
-		for _, col := range allCollections {
-			// Can not default to all collections if any collection has a policy.
-			// TODO-ACP: remove this check/loop after https://github.com/sourcenetwork/defradb/issues/2366
-			if col.Description().Policy.HasValue() {
-				return ErrReplicatorSomeColsHavePolicy
+		if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+			for _, col := range allCollections {
+				if col.Description().Policy.HasValue() {
+					return ErrReplicatorSomeColsHavePolicy
+				}
 			}
 		}
+
 		collections = allCollections
 	}
 

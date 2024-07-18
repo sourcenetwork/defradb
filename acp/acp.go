@@ -98,4 +98,7 @@ type ACP interface {
 		resourceName string,
 		docID string,
 	) (bool, error)
+
+	// SupportsP2P returns true if the implementation supports ACP across a peer network.
+	SupportsP2P() bool
 }

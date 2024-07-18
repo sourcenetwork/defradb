@@ -335,6 +335,11 @@ func (a *sourceHubBridge) CheckDocAccess(
 	}
 }
 
+func (a *sourceHubBridge) SupportsP2P() bool {
+	_, ok := a.client.(*acpSourceHub)
+	return ok
+}
+
 func (a *sourceHubBridge) Close() error {
 	return a.client.Close()
 }

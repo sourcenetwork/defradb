@@ -249,9 +249,6 @@ func TestGetAllP2PCollections_WithMultipleValidCollections_ShouldSucceed(t *test
 	require.Equal(t, []string{schema2.Root, schema1.Root}, cols)
 }
 
-// This test documents that we don't allow adding p2p collections that have a policy
-// until the following is implemented:
-// TODO-ACP: ACP <> P2P https://github.com/sourcenetwork/defradb/issues/2366
 func TestAddP2PCollectionsWithPermissionedCollection_Error(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
