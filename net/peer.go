@@ -24,6 +24,7 @@ import (
 	"github.com/ipfs/boxo/blockservice"
 	exchange "github.com/ipfs/boxo/exchange"
 	"github.com/ipfs/boxo/ipns"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -446,6 +447,13 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 }
 
 func (p *Peer) pushLogToReplicators(lg event.Update) {
+	// let the exchange know we have this block
+	// this should speed up the dag sync process
+	err := p.bserv.Exchange().NotifyNewBlocks(p.ctx, blocks.NewBlock(lg.Block))
+	if err != nil {
+		log.ErrorContextE(p.ctx, "Failed to notify new blocks", err)
+	}
+
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
 	for _, peer := range p.ps.ListPeers(lg.DocID) {
@@ -502,6 +510,11 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	case <-stopped:
 		timer.Stop()
 	}
+}
+
+// Connect initiates a connection to the peer with the given address.
+func (p *Peer) Connect(ctx context.Context, addr peer.AddrInfo) error {
+	return p.host.Connect(ctx, addr)
 }
 
 // Bootstrap connects to the given peers.

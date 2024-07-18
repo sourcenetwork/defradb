@@ -33,7 +33,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
@@ -253,7 +252,7 @@ func performAction(
 		configureNode(s, action)
 
 	case Restart:
-		restartNodes(s, actionIndex)
+		restartNodes(s)
 
 	case ConnectPeers:
 		connectPeers(s, action)
@@ -343,7 +342,7 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForSync(s, action)
+		waitForMergeEvents(s)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
@@ -658,14 +657,18 @@ func setStartingNodes(
 		c, err := setupClient(s, node)
 		require.Nil(s.t, err)
 
+		eventState, err := newEventState(c.Events())
+		require.NoError(s.t, err)
+
 		s.nodes = append(s.nodes, c)
+		s.nodeEvents = append(s.nodeEvents, eventState)
+		s.nodeP2P = append(s.nodeP2P, newP2PState())
 		s.dbPaths = append(s.dbPaths, path)
 	}
 }
 
 func restartNodes(
 	s *state,
-	actionIndex int,
 ) {
 	if s.dbt == badgerIMType || s.dbt == defraIMType {
 		return
@@ -686,24 +689,12 @@ func restartNodes(
 			c, err := setupClient(s, node)
 			require.NoError(s.t, err)
 			s.nodes[i] = c
+
+			eventState, err := newEventState(c.Events())
+			require.NoError(s.t, err)
+			s.nodeEvents[i] = eventState
 			continue
 		}
-
-		// We need to ensure that on restart, the node pubsub is configured before
-		// we continue with the test. Otherwise, we may miss update events.
-		readySub, err := node.DB.Events().Subscribe(event.P2PTopicCompletedName, event.ReplicatorCompletedName)
-		require.NoError(s.t, err)
-		waitLen := 0
-		cols, err := node.DB.GetAllP2PCollections(s.ctx)
-		require.NoError(s.t, err)
-		if len(cols) > 0 {
-			// there is only one message for loading of P2P collections
-			waitLen++
-		}
-		reps, err := node.DB.GetAllReplicators(s.ctx)
-		require.NoError(s.t, err)
-		// there is one message per replicator
-		waitLen += len(reps)
 
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
@@ -728,45 +719,11 @@ func restartNodes(
 		require.NoError(s.t, err)
 		s.nodes[i] = c
 
-		// subscribe to merge complete events
-		sub, err := c.Events().Subscribe(event.MergeCompleteName)
+		eventState, err := newEventState(c.Events())
 		require.NoError(s.t, err)
-		s.eventSubs[i] = sub
-		for waitLen > 0 {
-			select {
-			case <-readySub.Message():
-				waitLen--
-			case <-time.After(10 * time.Second):
-				s.t.Fatalf("timeout waiting for node to be ready")
-			}
-		}
-	}
+		s.nodeEvents[i] = eventState
 
-	// The index of the action after the last wait action before the current restart action.
-	// We wish to resume the wait clock from this point onwards.
-	waitGroupStartIndex := 0
-actionLoop:
-	for i := actionIndex; i >= 0; i-- {
-		switch s.testCase.Actions[i].(type) {
-		case WaitForSync:
-			// +1 as we do not wish to resume from the wait itself, but the next action
-			// following it. This may be the current restart action.
-			waitGroupStartIndex = i + 1
-			break actionLoop
-		}
-	}
-
-	for _, tc := range s.testCase.Actions {
-		switch action := tc.(type) {
-		case ConnectPeers:
-			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
-			time.Sleep(100 * time.Millisecond)
-			setupPeerWaitSync(s, waitGroupStartIndex, action)
-		case ConfigureReplicator:
-			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
-			time.Sleep(100 * time.Millisecond)
-			setupReplicatorWaitSync(s, waitGroupStartIndex, action)
-		}
+		waitForNetworkSetupEvents(s, i)
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -840,13 +797,13 @@ func configureNode(
 	c, err := setupClient(s, node)
 	require.NoError(s.t, err)
 
-	s.nodes = append(s.nodes, c)
-	s.dbPaths = append(s.dbPaths, path)
-
-	// subscribe to merge complete events
-	sub, err := c.Events().Subscribe(event.MergeCompleteName)
+	eventState, err := newEventState(c.Events())
 	require.NoError(s.t, err)
-	s.eventSubs = append(s.eventSubs, sub)
+
+	s.nodes = append(s.nodes, c)
+	s.nodeEvents = append(s.nodeEvents, eventState)
+	s.nodeP2P = append(s.nodeP2P, newP2PState())
+	s.dbPaths = append(s.dbPaths, path)
 }
 
 func refreshDocuments(
@@ -1224,6 +1181,12 @@ func createDoc(
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
 	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
+
+	if action.ExpectedError == "" {
+		for i := 0; i < len(docs); i++ {
+			waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		}
+	}
 }
 
 func createDocViaColSave(
@@ -1430,6 +1393,10 @@ func deleteDoc(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" {
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+	}
 }
 
 // updateDoc updates a document using the chosen [mutationType].
@@ -1462,6 +1429,10 @@ func updateDoc(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+	}
 }
 
 func updateDocViaColSave(

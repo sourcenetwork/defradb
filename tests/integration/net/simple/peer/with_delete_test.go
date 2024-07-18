@@ -175,7 +175,6 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				Doc: `{
 					"Age": 60
 				}`,
-				DontSync: true,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
@@ -247,7 +246,6 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				Doc: `{
 					"Age": 60
 				}`,
-				DontSync: true,
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node only
@@ -256,7 +254,6 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				Doc: `{
 					"Age": 62
 				}`,
-				DontSync: true,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
@@ -328,7 +325,6 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				Doc: `{
 					"Age": 60
 				}`,
-				DontSync: true,
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node only
@@ -337,12 +333,10 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				Doc: `{
 					"Age": 62
 				}`,
-				DontSync: true,
 			},
 			testUtils.DeleteDoc{
-				NodeID:   immutable.Some(0),
-				DocID:    0,
-				DontSync: true,
+				NodeID: immutable.Some(0),
+				DocID:  0,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,

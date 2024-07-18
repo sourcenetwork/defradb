@@ -318,9 +318,6 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
-
-	// Setting DontSync to true will prevent waiting for that delete.
-	DontSync bool
 }
 
 // UpdateDoc will attempt to update the given document using the set [MutationType].
@@ -356,8 +353,11 @@ type UpdateDoc struct {
 	// contains this string.
 	ExpectedError string
 
-	// Setting DontSync to true will prevent waiting for that update.
-	DontSync bool
+	// Skip waiting for an update event on the local event bus.
+	//
+	// This should only be used for tests that do not correctly
+	// publish an update event to the local event bus.
+	SkipLocalUpdateEvent bool
 }
 
 // IndexField describes a field to be indexed.
