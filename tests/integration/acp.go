@@ -69,7 +69,8 @@ func init() {
 type AddPolicy struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
-	// If a value is not provided the policy will be added in all nodes.
+	// If a value is not provided the policy will be added in all nodes, unless testing with
+	// sourcehub ACP, in which case the policy will only be defined once.
 	NodeID immutable.Option[int]
 
 	// The raw policy string.
@@ -98,7 +99,17 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
+	addedToSourceHub := false
+
 	for i, node := range getNodes(action.NodeID, s.nodes) {
+		// The policy should only be added to the SourceHub chain once.
+		if addedToSourceHub {
+			break
+		}
+		if acpType == SourceHubACPType {
+			addedToSourceHub = true
+		}
+
 		identity := getIdentity(s, i, action.Identity)
 		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
