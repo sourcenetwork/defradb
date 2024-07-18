@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
@@ -175,6 +176,9 @@ type state struct {
 
 	// The SourceHub address used to pay for SourceHub transactions.
 	sourcehubAddress string
+
+	// The ACP options to share between each node.
+	acpOptions []node.ACPOpt
 }
 
 // newState returns a new fresh state for the given testCase.
