@@ -99,17 +99,7 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
-	addedToSourceHub := false
-
 	for i, node := range getNodes(action.NodeID, s.nodes) {
-		// The policy should only be added to the SourceHub chain once.
-		if addedToSourceHub {
-			break
-		}
-		if acpType == SourceHubACPType {
-			addedToSourceHub = true
-		}
-
 		identity := getIdentity(s, i, action.Identity)
 		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
@@ -121,6 +111,12 @@ func addPolicyACP(
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		// The policy should only be added to a SourceHub chain once - there is no need to loop through
+		// the nodes.
+		if acpType == SourceHubACPType {
+			break
+		}
 	}
 }
 
