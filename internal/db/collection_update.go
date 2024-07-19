@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strings"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/immutable"
@@ -132,18 +131,6 @@ func (c *collection) updateWithFilter(
 	}
 
 	return results, nil
-}
-
-// isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
-func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (client.FieldDefinition, bool) {
-	if fieldDesc.RelationName == "" || fieldDesc.Kind != client.FieldKind_DocID {
-		return client.FieldDefinition{}, false
-	}
-
-	relationFieldDescription, valid := c.Definition().GetFieldByName(
-		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
-	)
-	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation
 }
 
 // patchPrimaryDoc patches the (primary) document linked to from the document of the given DocID via the

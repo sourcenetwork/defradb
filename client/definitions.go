@@ -10,6 +10,12 @@
 
 package client
 
+import (
+	"strings"
+
+	"github.com/sourcenetwork/defradb/client/request"
+)
+
 // CollectionDefinition contains the metadata defining what a Collection is.
 //
 // The definition types ([CollectionDefinition], [FieldDefinition]) are read-only types returned
@@ -177,4 +183,15 @@ func NewSchemaOnlyFieldDefinition(global SchemaFieldDescription) FieldDefinition
 // IsRelation returns true if this field is a relation.
 func (f FieldDefinition) IsRelation() bool {
 	return f.RelationName != ""
+}
+
+// GetSecondaryRelationField returns the secondary side field definition of this field
+// from the relationship on the given collection collection defintion and a bool indicating
+// if the primary side of the relation was found
+func (f FieldDefinition) GetSecondaryRelationField(c CollectionDefinition) (FieldDefinition, bool) {
+	if f.RelationName == "" || f.Kind != FieldKind_DocID {
+		return FieldDefinition{}, false
+	}
+	secondary, valid := c.GetFieldByName(strings.TrimSuffix(f.Name, request.RelatedObjectID))
+	return secondary, valid && !secondary.IsPrimaryRelation
 }

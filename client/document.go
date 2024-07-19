@@ -645,11 +645,30 @@ func (doc *Document) Fields() map[string]Field {
 	return doc.fields
 }
 
+// FieldDefinitions returns a map of document field names to field definitions.
+func (doc *Document) FieldDefinitions() map[string]FieldDefinition {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
+
+	defs := make(map[string]FieldDefinition)
+	for name := range doc.fields {
+		if val, ok := doc.collectionDefinition.GetFieldByName(name); ok {
+			defs[name] = val
+		}
+	}
+	return defs
+}
+
 // Values gets the document values as a map.
 func (doc *Document) Values() map[Field]*FieldValue {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	return doc.values
+}
+
+// CollectionDefinition returns the collection definition for this document.
+func (doc *Document) CollectionDefinition() CollectionDefinition {
+	return doc.collectionDefinition
 }
 
 // Bytes returns the document as a serialzed byte array using CBOR encoding.

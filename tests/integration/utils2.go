@@ -1183,9 +1183,7 @@ func createDoc(
 	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
 
 	if action.ExpectedError == "" {
-		for i := 0; i < len(docs); i++ {
-			waitForUpdateEvents(s, action.NodeID, action.CollectionID)
-		}
+		waitForUpdateEvents(s, action.NodeID, false, docs...)
 	}
 }
 
@@ -1395,7 +1393,7 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		waitForUpdateEvents(s, action.NodeID, true, doc)
 	}
 }
 
@@ -1431,7 +1429,7 @@ func updateDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		waitForUpdateEvents(s, action.NodeID, false, s.documents[action.CollectionID][action.DocID])
 	}
 }
 

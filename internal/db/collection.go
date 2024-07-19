@@ -641,7 +641,7 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
-			relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fieldDescription)
+			relationFieldDescription, isSecondaryRelationID := fieldDescription.GetSecondaryRelationField(c.Definition())
 			if isSecondaryRelationID {
 				primaryId := val.Value().(string)
 
