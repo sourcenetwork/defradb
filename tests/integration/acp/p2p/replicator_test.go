@@ -74,7 +74,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
 			testUtils.ConfigureReplicator{
 				SourceNodeID:  0,
 				TargetNodeID:  1,
-				ExpectedError: "replicator can not use all collections, as some have policy",
+				ExpectedError: "replicator collection specified has a policy on it",
 			},
 		},
 	}

@@ -137,7 +137,6 @@ var (
 	ErrP2PColHasPolicy                          = errors.New("p2p collection specified has a policy on it")
 	ErrNoTransactionInContext                   = errors.New(errNoTransactionInContext)
 	ErrReplicatorColHasPolicy                   = errors.New("replicator collection specified has a policy on it")
-	ErrReplicatorSomeColsHavePolicy             = errors.New("replicator can not use all collections, as some have policy")
 	ErrSelfTargetForReplicator                  = errors.New("can't target ourselves as a replicator")
 	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
 	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)

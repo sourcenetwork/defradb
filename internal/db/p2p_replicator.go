@@ -80,28 +80,22 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 				return NewErrReplicatorCollections(err)
 			}
 
-			if col.Description().Policy.HasValue() {
-				return ErrReplicatorColHasPolicy
-			}
-
 			collections = append(collections, col)
 		}
 
 	default:
-		allCollections, err := db.GetCollections(ctx, client.CollectionFetchOptions{})
+		collections, err = db.GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
+	}
 
-		if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
-			for _, col := range allCollections {
-				if col.Description().Policy.HasValue() {
-					return ErrReplicatorSomeColsHavePolicy
-				}
+	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+		for _, col := range collections {
+			if col.Description().Policy.HasValue() {
+				return ErrReplicatorColHasPolicy
 			}
 		}
-
-		collections = allCollections
 	}
 
 	addedCols := []client.Collection{}
