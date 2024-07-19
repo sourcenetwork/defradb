@@ -458,9 +458,10 @@ If authentication fails for any reason a `403` forbidden response will be return
 ## _FAC Usage: (coming soon)_
 
 ## Warning / Caveats
+- If using Local ACP, P2P will only work with collections that do not have a policy assigned.  If you wish to use ACP
+on collections connected to a multi-node network, please use SourceHub ACP.
+
 The following features currently don't work with ACP, they are being actively worked on.
-- [P2P: Adding a replicator with permissioned collection](https://github.com/sourcenetwork/defradb/issues/2366)
-- [P2P: Subscription to a permissioned collection](https://github.com/sourcenetwork/defradb/issues/2366)
 - [Adding Secondary Indexes](https://github.com/sourcenetwork/defradb/issues/2365)
 - [Backing/Restoring Private Documents](https://github.com/sourcenetwork/defradb/issues/2430)
 

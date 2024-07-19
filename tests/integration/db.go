@@ -131,11 +131,14 @@ func setupNode(s *state) (*node.Node, string, error) {
 		opts = append(opts, node.WithACPType(node.LocalACPType))
 
 	case SourceHubACPType:
-		acpOpts, err := setupSourceHub(s)
-		require.NoError(s.t, err)
+		if len(s.acpOptions) == 0 {
+			var err error
+			s.acpOptions, err = setupSourceHub(s)
+			require.NoError(s.t, err)
+		}
 
 		opts = append(opts, node.WithACPType(node.SourceHubACPType))
-		for _, opt := range acpOpts {
+		for _, opt := range s.acpOptions {
 			opts = append(opts, opt)
 		}
 
