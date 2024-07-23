@@ -215,6 +215,11 @@ func waitForUpdateEvents(
 					s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
 				}
 			}
+
+			// make sure the event is published on the network before proceeding
+			// this prevents nodes from missing messages that are sent before
+			// subscriptions are setup
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
