@@ -389,6 +389,12 @@ type UpdateWithFilter struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Skip waiting for an update event on the local event bus.
+	//
+	// This should only be used for tests that do not correctly
+	// publish an update event to the local event bus.
+	SkipLocalUpdateEvent bool
 }
 
 // IndexField describes a field to be indexed.

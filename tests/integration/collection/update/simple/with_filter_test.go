@@ -106,9 +106,10 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 				}`,
 			},
 			testUtils.UpdateWithFilter{
-				CollectionID: 0,
-				Filter:       `{name: {_eq: "John"}}`,
-				Updater:      `[{"name": "Eric"}, {"name": "Sam"}]`,
+				CollectionID:         0,
+				Filter:               `{name: {_eq: "John"}}`,
+				Updater:              `[{"name": "Eric"}, {"name": "Sam"}]`,
+				SkipLocalUpdateEvent: true,
 			},
 			testUtils.Request{
 				Request: `query{

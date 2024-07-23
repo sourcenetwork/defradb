@@ -1474,6 +1474,7 @@ func updateDocViaGQL(
 
 // updateWithFilter updates the set of matched documents.
 func updateWithFilter(s *state, action UpdateWithFilter) {
+	var res *client.UpdateResult
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
@@ -1484,7 +1485,8 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].UpdateWithFilter(ctx, action.Filter, action.Updater)
+				var err error
+				res, err = collections[action.CollectionID].UpdateWithFilter(ctx, action.Filter, action.Updater)
 				return err
 			},
 		)
@@ -1492,6 +1494,10 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
+		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateWithFilter(s, action, res))
+	}
 }
 
 // createIndex creates a secondary index using the collection api.
