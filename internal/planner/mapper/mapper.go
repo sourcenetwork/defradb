@@ -140,10 +140,11 @@ func toSelect(
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
 			fieldDesc, ok := definition.GetFieldByName(groupByField)
-			if ok && fieldDesc.Kind.IsObject() && !fieldDesc.Kind.IsObjectArray() {
+			if ok && fieldDesc.Kind.IsObject() {
+				if fieldDesc.Kind.IsArray() {
+					return nil, NewErrInvalidFieldToGroupBy(groupByField)
+				}
 				groupByFields[index] = groupByField + request.RelatedObjectID
-			} else if ok && fieldDesc.Kind.IsObjectArray() {
-				return nil, NewErrInvalidFieldToGroupBy(groupByField)
 			}
 		}
 
