@@ -11,193 +11,149 @@
 package update
 
 import (
-	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/sourcenetwork/defradb/client"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateWithInvalidFilterType(t *testing.T) {
+func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test update users with invalid filter type",
-		Docs:        map[string][]string{},
-		CollectionCalls: map[string][]func(client.Collection) error{
-			"Users": []func(c client.Collection) error{
-				func(c client.Collection) error {
-					ctx := context.Background()
-					// test with an invalid filter type
-					_, err := c.UpdateWithFilter(
-						ctx,
-						t,
-						`{"name": "Eric"}`,
-					)
-					return err
-				},
+		Actions: []any{
+			testUtils.UpdateWithFilter{
+				CollectionID:  0,
+				Filter:        t,
+				Updater:       `{"name": "Eric"}`,
+				ExpectedError: "invalid filter",
 			},
 		},
-		ExpectedError: "invalid filter",
 	}
 
 	executeTestCase(t, test)
 }
 
-func TestUpdateWithEmptyFilter(t *testing.T) {
+func TestUpdateWithEmptyFilter_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test update users with empty filter",
-		Docs:        map[string][]string{},
-		CollectionCalls: map[string][]func(client.Collection) error{
-			"Users": []func(c client.Collection) error{
-				func(c client.Collection) error {
-					ctx := context.Background()
-					// test with an empty filter
-					_, err := c.UpdateWithFilter(
-						ctx,
-						"",
-						`{"name": "Eric"}`,
-					)
-					return err
-				},
+		Actions: []any{
+			testUtils.UpdateWithFilter{
+				CollectionID:  0,
+				Filter:        "",
+				Updater:       `{"name": "Eric"}`,
+				ExpectedError: "invalid filter",
 			},
 		},
-		ExpectedError: "invalid filter",
 	}
 
 	executeTestCase(t, test)
 }
 
-func TestUpdateWithFilter(t *testing.T) {
-	docStr := `{
-		"name": "John",
-		"age": 21
-	}`
-
-	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"])
-	if err != nil {
-		assert.Fail(t, err.Error())
+func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test update users with filter and invalid JSON",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				CollectionID:  0,
+				Filter:        `{name: {_eq: "John"}}`,
+				Updater:       `{name: "Eric"}`,
+				ExpectedError: "cannot parse JSON: cannot parse object",
+			},
+		},
 	}
 
-	filter := `{name: {_eq: "John"}}`
+	executeTestCase(t, test)
+}
 
-	tests := []testUtils.TestCase{
-		{
-			Description: "Test update users with filter and invalid JSON",
-			Docs: map[string][]string{
-				"Users": {docStr},
+func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test update users with filter and invalid updator",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
 			},
-			CollectionCalls: map[string][]func(client.Collection) error{
-				"Users": []func(c client.Collection) error{
-					func(c client.Collection) error {
-						ctx := context.Background()
-						_, err := c.UpdateWithFilter(
-							ctx,
-							filter,
-							`{name: "Eric"}`,
-						)
-						return err
-					},
-				},
+			testUtils.UpdateWithFilter{
+				CollectionID:  0,
+				Filter:        `{name: {_eq: "John"}}`,
+				Updater:       `"name: Eric"`,
+				ExpectedError: "the updater of a document is of invalid type",
 			},
-			ExpectedError: "cannot parse JSON: cannot parse object",
-		}, {
-			Description: "Test update users with filter and invalid updator",
-			Docs: map[string][]string{
-				"Users": {docStr},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithPatch_DoesNothing(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test update users with filter and patch updator (not implemented so no change)",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
 			},
-			CollectionCalls: map[string][]func(client.Collection) error{
-				"Users": []func(c client.Collection) error{
-					func(c client.Collection) error {
-						ctx := context.Background()
-						_, err := c.UpdateWithFilter(
-							ctx,
-							filter,
-							`"name: Eric"`,
-						)
-						return err
-					},
-				},
+			testUtils.UpdateWithFilter{
+				CollectionID: 0,
+				Filter:       `{name: {_eq: "John"}}`,
+				Updater:      `[{"name": "Eric"}, {"name": "Sam"}]`,
 			},
-			ExpectedError: "the updater of a document is of invalid type",
-		}, {
-			Description: "Test update users with filter and patch updator (not implemented so no change)",
-			Docs: map[string][]string{
-				"Users": {docStr},
-			},
-			CollectionCalls: map[string][]func(client.Collection) error{
-				"Users": []func(c client.Collection) error{
-					func(c client.Collection) error {
-						ctx := context.Background()
-						_, err := c.UpdateWithFilter(
-							ctx,
-							filter,
-							`[
-								{
-									"name": "Eric"
-								}, {
-									"name": "Sam"
-								}
-							]`,
-						)
-						if err != nil {
-							return err
-						}
-
-						d, err := c.Get(ctx, doc.ID(), false)
-						if err != nil {
-							return err
-						}
-
-						name, err := d.Get("name")
-						if err != nil {
-							return err
-						}
-
-						assert.Equal(t, "John", name)
-
-						return nil
-					},
-				},
-			},
-		}, {
-			Description: "Test update users with filter",
-			Docs: map[string][]string{
-				"Users": {docStr},
-			},
-			CollectionCalls: map[string][]func(client.Collection) error{
-				"Users": []func(c client.Collection) error{
-					func(c client.Collection) error {
-						ctx := context.Background()
-						_, err := c.UpdateWithFilter(
-							ctx,
-							filter,
-							`{"name": "Eric"}`,
-						)
-						if err != nil {
-							return err
-						}
-
-						d, err := c.Get(ctx, doc.ID(), false)
-						if err != nil {
-							return err
-						}
-
-						name, err := d.Get("name")
-						if err != nil {
-							return err
-						}
-
-						assert.Equal(t, "Eric", name)
-
-						return nil
-					},
+			testUtils.Request{
+				Request: `query{
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{"name": "John"},
 				},
 			},
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test update users with filter",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				CollectionID: 0,
+				Filter:       `{name: {_eq: "John"}}`,
+				Updater:      `{"name": "Eric"}`,
+			},
+			testUtils.Request{
+				Request: `query{
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{"name": "Eric"},
+				},
+			},
+		},
 	}
+
+	executeTestCase(t, test)
 }
