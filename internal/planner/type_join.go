@@ -85,12 +85,14 @@ func (p *Planner) makeTypeIndexJoin(
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
-	if typeFieldDesc.Kind.IsObject() && !typeFieldDesc.Kind.IsArray() { // One-to-One, or One side of One-to-Many
-		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
-	} else if typeFieldDesc.Kind.IsObjectArray() { // Many side of One-to-Many
-		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
-	} else { // more to come, Many-to-Many, Embedded?
+	if !typeFieldDesc.Kind.IsObject() {
 		return nil, ErrUnknownRelationType
+	}
+
+	if typeFieldDesc.Kind.IsArray() {
+		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
+	} else {
+		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
 	}
 	if err != nil {
 		return nil, err
