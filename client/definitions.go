@@ -186,8 +186,8 @@ func (f FieldDefinition) IsRelation() bool {
 }
 
 // GetSecondaryRelationField returns the secondary side field definition of this field
-// from the relationship on the given collection collection defintion and a bool indicating
-// if the primary side of the relation was found
+// from the relationship on the given collection definition and a bool indicating
+// if the secondary side of the relation was found.
 func (f FieldDefinition) GetSecondaryRelationField(c CollectionDefinition) (FieldDefinition, bool) {
 	if f.RelationName == "" || f.Kind != FieldKind_DocID {
 		return FieldDefinition{}, false

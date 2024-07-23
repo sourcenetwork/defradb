@@ -1161,7 +1161,7 @@ func createDoc(
 	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
 
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, getEventsForCreate(s, action))
+		waitForUpdateEvents(s, action.NodeID, getEventsForCreateDoc(s, action))
 	}
 }
 
@@ -1350,7 +1350,10 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, getEventsForDelete(docID))
+		docIDs := map[string]struct{}{
+			docID.String(): {},
+		}
+		waitForUpdateEvents(s, action.NodeID, docIDs)
 	}
 }
 
@@ -1387,7 +1390,7 @@ func updateDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, getEventsForUpdate(s, action))
+		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateDoc(s, action))
 	}
 }
 

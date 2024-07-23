@@ -153,15 +153,15 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 func waitForUpdateEvents(
 	s *state,
 	nodeID immutable.Option[int],
-	updates map[string]struct{},
+	docIDs map[string]struct{},
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
 		}
 
-		expect := make(map[string]struct{})
-		for k := range updates {
+		expect := make(map[string]struct{}, len(docIDs))
+		for k := range docIDs {
 			expect[k] = struct{}{}
 		}
 
@@ -183,43 +183,11 @@ func waitForUpdateEvents(
 			require.True(s.t, ok, "unexpected document update")
 			delete(expect, evt.DocID)
 
-			if i >= len(s.nodeConfigs) {
-				continue // not testing network state
+			// we only need to update the network state if the nodes
+			// are configured for networking
+			if i < len(s.nodeConfigs) {
+				updateNetworkState(s, i, evt)
 			}
-
-			// find the correct collection index for this update
-			collectionID := 0
-			for i, c := range s.collections[i] {
-				if c.SchemaRoot() == evt.SchemaRoot {
-					collectionID = i
-				}
-			}
-
-			// update the actual document head on the node that updated it
-			s.nodeP2P[i].actualDocHeads[evt.DocID] = evt.Cid
-
-			// update the expected document heads of replicator targets
-			for id := range s.nodeP2P[i].replicators {
-				// replicator target nodes push updates to source nodes
-				s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
-			}
-
-			// update the expected document heads of connected nodes
-			for id := range s.nodeP2P[i].connections {
-				// connected nodes share updates of documents they have in common
-				if _, ok := s.nodeP2P[id].actualDocHeads[evt.DocID]; ok {
-					s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
-				}
-				// peer collection subscribers receive updates from any other subscriber node
-				if _, ok := s.nodeP2P[id].peerCollections[collectionID]; ok {
-					s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
-				}
-			}
-
-			// make sure the event is published on the network before proceeding
-			// this prevents nodes from missing messages that are sent before
-			// subscriptions are setup
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
@@ -267,11 +235,50 @@ func waitForMergeEvents(s *state) {
 	}
 }
 
-// getEventsForUpdate returns a map of expected update events for an update document action.
+// updateNetworkState updates the network state by checking which
+// nodes should receive the updated document in the given update event.
+func updateNetworkState(s *state, nodeID int, evt event.Update) {
+	// find the correct collection index for this update
+	collectionID := -1
+	for i, c := range s.collections[nodeID] {
+		if c.SchemaRoot() == evt.SchemaRoot {
+			collectionID = i
+		}
+	}
+
+	// update the actual document head on the node that updated it
+	s.nodeP2P[nodeID].actualDocHeads[evt.DocID] = evt.Cid
+
+	// update the expected document heads of replicator targets
+	for id := range s.nodeP2P[nodeID].replicators {
+		// replicator target nodes push updates to source nodes
+		s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+	}
+
+	// update the expected document heads of connected nodes
+	for id := range s.nodeP2P[nodeID].connections {
+		// connected nodes share updates of documents they have in common
+		if _, ok := s.nodeP2P[id].actualDocHeads[evt.DocID]; ok {
+			s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+		}
+		// peer collection subscribers receive updates from any other subscriber node
+		if _, ok := s.nodeP2P[id].peerCollections[collectionID]; ok {
+			s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+		}
+	}
+
+	// make sure the event is published on the network before proceeding
+	// this prevents nodes from missing messages that are sent before
+	// subscriptions are setup
+	time.Sleep(100 * time.Millisecond)
+}
+
+// getEventsForUpdateDoc returns a map of docIDs that should be
+// published to the local event bus after an UpdateDoc action.
 //
 // This will take into account any primary documents that are patched as a result
 // of the create or update.
-func getEventsForUpdate(s *state, action UpdateDoc) map[string]struct{} {
+func getEventsForUpdateDoc(s *state, action UpdateDoc) map[string]struct{} {
 	var collection client.Collection
 	if action.NodeID.HasValue() {
 		collection = s.collections[action.NodeID.Value()][action.CollectionID]
@@ -304,11 +311,12 @@ func getEventsForUpdate(s *state, action UpdateDoc) map[string]struct{} {
 	return expect
 }
 
-// getEventsForCreate returns a map of expected update events for a document create action.
+// getEventsForCreateDoc returns a map of docIDs that should be
+// published to the local event bus after a CreateDoc action.
 //
 // This will take into account any primary documents that are patched as a result
 // of the create or update.
-func getEventsForCreate(s *state, action CreateDoc) map[string]struct{} {
+func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	var collection client.Collection
 	if action.NodeID.HasValue() {
 		collection = s.collections[action.NodeID.Value()][action.CollectionID]
@@ -338,12 +346,5 @@ func getEventsForCreate(s *state, action CreateDoc) map[string]struct{} {
 		}
 	}
 
-	return expect
-}
-
-// getEventsForDelete returns a map of expected update events for a document delete action.
-func getEventsForDelete(docID client.DocID) map[string]struct{} {
-	expect := make(map[string]struct{})
-	expect[docID.String()] = struct{}{}
 	return expect
 }
