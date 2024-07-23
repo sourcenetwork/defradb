@@ -93,7 +93,7 @@ func (db *db) createCollections(
 			}
 
 			for j := range def.Description.Fields {
-				if def.Description.Fields[j].Name == localField.Name {
+				if newDefinitions[i].Description.Fields[j].Name == localField.Name {
 					newDefinitions[i].Description.Fields[j].ID = client.FieldID(fieldID)
 					break
 				}
