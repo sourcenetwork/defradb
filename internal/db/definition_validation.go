@@ -851,7 +851,7 @@ func validateSecondaryNotOnSchema(
 ) error {
 	for _, newSchema := range newState.schemaByName {
 		for _, newField := range newSchema.Fields {
-			if newField.Kind.IsObjectArray() {
+			if newField.Kind.IsObject() && newField.Kind.IsArray() {
 				return NewErrSecondaryFieldOnSchema(newField.Name)
 			}
 		}
