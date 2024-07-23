@@ -162,11 +162,11 @@ type state struct {
 	// Indexes matches that of collections.
 	collectionNames []string
 
-	// Documents by index, by collection index.
+	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
-	documents [][]*client.Document
+	docIDs [][]client.DocID
 
 	// Indexes, by index, by collection index, by node index.
 	indexes [][][]client.IndexDescription
@@ -207,7 +207,7 @@ func newState(
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
-		documents:                [][]*client.Document{},
+		docIDs:                   [][]client.DocID{},
 		indexes:                  [][][]client.IndexDescription{},
 		isBench:                  false,
 	}

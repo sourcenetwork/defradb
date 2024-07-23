@@ -823,10 +823,10 @@ func refreshDocuments(
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
-	s.documents = make([][]*client.Document, len(s.collections[0]))
+	s.docIDs = make([][]client.DocID, len(s.collections[0]))
 
 	for i := range s.collections[0] {
-		s.documents[i] = []*client.Document{}
+		s.docIDs[i] = []client.DocID{}
 	}
 
 	for i := 0; i < startActionIndex; i++ {
@@ -838,20 +838,10 @@ func refreshDocuments(
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
 
-			var doc *client.Document
-			var docs []*client.Document
-			var err error
 			if action.DocMap != nil {
 				substituteRelations(s, action)
-				doc, err = client.NewDocFromMap(action.DocMap, collection.Definition())
-				docs = append(docs, doc)
-			} else if client.IsJSONArray([]byte(action.Doc)) {
-				docs, err = client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
-			} else {
-				doc, err = client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
-				docs = append(docs, doc)
 			}
-
+			docs, err := parseCreateDocs(action, collection)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -859,18 +849,7 @@ func refreshDocuments(
 			}
 
 			for _, doc := range docs {
-				ctx := makeContextForDocCreate(s, s.ctx, 0, &action)
-
-				// The document may have been mutated by other actions, so to be sure we have the latest
-				// version without having to worry about the individual update mechanics we fetch it.
-				doc, err = collection.Get(ctx, doc.ID(), false)
-				if err != nil {
-					// If an err has been returned, ignore it - it may be expected and if not
-					// the test will fail later anyway
-					continue
-				}
-
-				s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+				s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], doc.ID())
 			}
 		}
 	}
@@ -1148,8 +1127,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.DB, int, []client.Collection) ([]*client.Document, error)
-
+	var mutation func(*state, CreateDoc, client.DB, int, client.Collection) ([]client.DocID, error)
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = createDocViaColSave
@@ -1162,7 +1140,7 @@ func createDoc(
 	}
 
 	var expectedErrorRaised bool
-	var docs []*client.Document
+	var docIDs []client.DocID
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
@@ -1170,7 +1148,7 @@ func createDoc(
 			nodeID,
 			func() error {
 				var err error
-				docs, err = mutation(s, action, actionNodes[nodeID], nodeID, collections)
+				docIDs, err = mutation(s, action, actionNodes[nodeID], nodeID, collections[action.CollectionID])
 				return err
 			},
 		)
@@ -1179,16 +1157,14 @@ func createDoc(
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
-	if action.CollectionID >= len(s.documents) {
+	if action.CollectionID >= len(s.docIDs) {
 		// Expand the slice if required, so that the document can be accessed by collection index
-		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
+		s.docIDs = append(s.docIDs, make([][]client.DocID, action.CollectionID-len(s.docIDs)+1)...)
 	}
-	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], docs...)
+	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
 
 	if action.ExpectedError == "" {
-		for i := 0; i < len(docs); i++ {
-			waitForUpdateEvents(s, action.NodeID, action.CollectionID)
-		}
+		waitForUpdateEvents(s, action.NodeID, getEventsForCreateDoc(s, action))
 	}
 }
 
@@ -1197,38 +1173,25 @@ func createDocViaColSave(
 	action CreateDoc,
 	node client.DB,
 	nodeIndex int,
-	collections []client.Collection,
-) ([]*client.Document, error) {
-	var docs []*client.Document
-	var doc *client.Document
-	var err error
-	if action.DocMap != nil {
-		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
-		docs = []*client.Document{doc}
-	} else {
-		bytes := []byte(action.Doc)
-		if client.IsJSONArray(bytes) {
-			docs, err = client.NewDocsFromJSON(bytes, collections[action.CollectionID].Definition())
-		} else {
-			doc, err = client.NewDocFromJSON(bytes, collections[action.CollectionID].Definition())
-			docs = []*client.Document{doc}
-		}
-	}
+	collection client.Collection,
+) ([]client.DocID, error) {
+	docs, err := parseCreateDocs(action, collection)
 	if err != nil {
 		return nil, err
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-
 	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
 
-	for _, doc := range docs {
-		err = collections[action.CollectionID].Save(ctx, doc)
+	docIDs := make([]client.DocID, len(docs))
+	for i, doc := range docs {
+		err := collection.Save(ctx, doc)
 		if err != nil {
 			return nil, err
 		}
+		docIDs[i] = doc.ID()
 	}
-	return docs, nil
+	return docIDs, nil
 }
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
@@ -1243,37 +1206,35 @@ func createDocViaColCreate(
 	action CreateDoc,
 	node client.DB,
 	nodeIndex int,
-	collections []client.Collection,
-) ([]*client.Document, error) {
-	var docs []*client.Document
-	var doc *client.Document
-	var err error
-	if action.DocMap != nil {
-		doc, err = client.NewDocFromMap(action.DocMap, collections[action.CollectionID].Definition())
-		docs = []*client.Document{doc}
-	} else {
-		if client.IsJSONArray([]byte(action.Doc)) {
-			docs, err = client.NewDocsFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
-		} else {
-			doc, err = client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Definition())
-			docs = []*client.Document{doc}
-		}
-	}
+	collection client.Collection,
+) ([]client.DocID, error) {
+	docs, err := parseCreateDocs(action, collection)
 	if err != nil {
 		return nil, err
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-
 	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
 
-	if len(docs) > 1 {
-		err = collections[action.CollectionID].CreateMany(ctx, docs)
-	} else {
-		err = collections[action.CollectionID].Create(ctx, doc)
+	switch {
+	case len(docs) > 1:
+		err := collection.CreateMany(ctx, docs)
+		if err != nil {
+			return nil, err
+		}
+
+	default:
+		err := collection.Create(ctx, docs[0])
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return docs, err
+	docIDs := make([]client.DocID, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID()
+	}
+	return docIDs, nil
 }
 
 func createDocViaGQL(
@@ -1281,9 +1242,8 @@ func createDocViaGQL(
 	action CreateDoc,
 	node client.DB,
 	nodeIndex int,
-	collections []client.Collection,
-) ([]*client.Document, error) {
-	collection := collections[action.CollectionID]
+	collection client.Collection,
+) ([]client.DocID, error) {
 	var input string
 
 	paramName := request.Input
@@ -1335,20 +1295,15 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docs := make([]*client.Document, len(resultantDocs))
-
+	docIDs := make([]client.DocID, len(resultantDocs))
 	for i, docMap := range resultantDocs {
 		docIDString := docMap[request.DocIDFieldName].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
 		require.NoError(s.t, err)
-
-		doc, err := collection.Get(ctx, docID, false)
-		require.NoError(s.t, err)
-
-		docs[i] = doc
+		docIDs[i] = docID
 	}
 
-	return docs, nil
+	return docIDs, nil
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -1365,8 +1320,8 @@ func substituteRelations(
 			continue
 		}
 
-		doc := s.documents[index.CollectionIndex][index.Index]
-		action.DocMap[k] = doc.ID().String()
+		docID := s.docIDs[index.CollectionIndex][index.Index]
+		action.DocMap[k] = docID.String()
 	}
 }
 
@@ -1376,7 +1331,7 @@ func deleteDoc(
 	s *state,
 	action DeleteDoc,
 ) {
-	doc := s.documents[action.CollectionID][action.DocID]
+	docID := s.docIDs[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1388,7 +1343,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].Delete(ctx, doc.ID())
+				_, err := collections[action.CollectionID].Delete(ctx, docID)
 				return err
 			},
 		)
@@ -1398,7 +1353,10 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		docIDs := map[string]struct{}{
+			docID.String(): {},
+		}
+		waitForUpdateEvents(s, action.NodeID, docIDs)
 	}
 }
 
@@ -1407,8 +1365,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, client.DB, int, []client.Collection) error
-
+	var mutation func(*state, UpdateDoc, client.DB, int, client.Collection) error
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1426,7 +1383,9 @@ func updateDoc(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return mutation(s, action, actionNodes[nodeID], nodeID, collections) },
+			func() error {
+				return mutation(s, action, actionNodes[nodeID], nodeID, collections[action.CollectionID])
+			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
@@ -1434,7 +1393,7 @@ func updateDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID)
+		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateDoc(s, action))
 	}
 }
 
@@ -1443,28 +1402,20 @@ func updateDocViaColSave(
 	action UpdateDoc,
 	node client.DB,
 	nodeIndex int,
-	collections []client.Collection,
+	collection client.Collection,
 ) error {
-	cachedDoc := s.documents[action.CollectionID][action.DocID]
 	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx := db.SetContextIdentity(s.ctx, identity)
 
-	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
+	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
 		return err
 	}
-
 	err = doc.SetWithJSON([]byte(action.Doc))
 	if err != nil {
 		return err
 	}
-
-	s.documents[action.CollectionID][action.DocID] = doc
-
-	return collections[action.CollectionID].Save(
-		ctx,
-		doc,
-	)
+	return collection.Save(ctx, doc)
 }
 
 func updateDocViaColUpdate(
@@ -1472,25 +1423,20 @@ func updateDocViaColUpdate(
 	action UpdateDoc,
 	node client.DB,
 	nodeIndex int,
-	collections []client.Collection,
+	collection client.Collection,
 ) error {
-	cachedDoc := s.documents[action.CollectionID][action.DocID]
 	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx := db.SetContextIdentity(s.ctx, identity)
 
-	doc, err := collections[action.CollectionID].Get(ctx, cachedDoc.ID(), true)
+	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
 		return err
 	}
-
 	err = doc.SetWithJSON([]byte(action.Doc))
 	if err != nil {
 		return err
 	}
-
-	s.documents[action.CollectionID][action.DocID] = doc
-
-	return collections[action.CollectionID].Update(ctx, doc)
+	return collection.Update(ctx, doc)
 }
 
 func updateDocViaGQL(
@@ -1498,10 +1444,9 @@ func updateDocViaGQL(
 	action UpdateDoc,
 	node client.DB,
 	nodeIndex int,
-	collections []client.Collection,
+	collection client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
-	collection := collections[action.CollectionID]
+	docID := s.docIDs[action.CollectionID][action.DocID]
 
 	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.t, err)
@@ -1513,15 +1458,12 @@ func updateDocViaGQL(
 			}
 		}`,
 		collection.Name().Value(),
-		doc.ID().String(),
+		docID.String(),
 		input,
 	)
 
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-
-	ctx := db.SetContextTxn(s.ctx, txn)
 	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx = db.SetContextIdentity(ctx, identity)
+	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1965,7 +1907,7 @@ func assertRequestResults(
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
 			case DocIndex:
-				expectedDocID := s.documents[r.CollectionIndex][r.Index].ID().String()
+				expectedDocID := s.docIDs[r.CollectionIndex][r.Index].String()
 				assertResultsEqual(
 					s.t,
 					s.clientType,
@@ -2225,4 +2167,26 @@ func CBORValue(value any) []byte {
 		panic(err)
 	}
 	return enc
+}
+
+// parseCreateDocs parses and returns documents from a CreateDoc action.
+func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
+	switch {
+	case action.DocMap != nil:
+		val, err := client.NewDocFromMap(action.DocMap, collection.Definition())
+		if err != nil {
+			return nil, err
+		}
+		return []*client.Document{val}, nil
+
+	case client.IsJSONArray([]byte(action.Doc)):
+		return client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
+
+	default:
+		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+		if err != nil {
+			return nil, err
+		}
+		return []*client.Document{val}, nil
+	}
 }
