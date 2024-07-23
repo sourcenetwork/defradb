@@ -314,20 +314,22 @@ func getEventsForCreate(s *state, action CreateDoc) map[string]struct{} {
 	docs, err := parseCreateDocs(action, collection)
 	require.NoError(s.t, err)
 
+	def := collection.Definition()
 	expect := make(map[string]struct{})
+
 	for _, doc := range docs {
 		expect[doc.ID().String()] = struct{}{}
 
-		defs := doc.FieldDefinitions()
-		vals := doc.Values()
-
 		// check for any secondary relation fields that could publish an event
-		for name, field := range doc.Fields() {
-			_, ok := defs[name].GetSecondaryRelationField(doc.CollectionDefinition())
+		for f, v := range doc.Values() {
+			field, ok := def.GetFieldByName(f.Name())
 			if !ok {
-				continue // ignore non secondary relation fields
+				continue // ignore unknown field
 			}
-			expect[vals[field].Value().(string)] = struct{}{}
+			_, ok = field.GetSecondaryRelationField(def)
+			if ok {
+				expect[v.Value().(string)] = struct{}{}
+			}
 		}
 	}
 
