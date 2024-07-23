@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -152,15 +153,19 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 func waitForUpdateEvents(
 	s *state,
 	nodeID immutable.Option[int],
-	isDelete bool,
-	docs ...*client.Document,
+	updates map[string]struct{},
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
 		}
 
-		for expect := getExpectedUpdates(s, isDelete, docs...); len(expect) > 0; {
+		expect := make(map[string]struct{})
+		for k := range updates {
+			expect[k] = struct{}{}
+		}
+
+		for len(expect) > 0 {
 			var evt event.Update
 			select {
 			case msg, ok := <-s.nodeEvents[i].update.Message():
@@ -257,27 +262,81 @@ func waitForMergeEvents(s *state) {
 	}
 }
 
-// getExpectedUpdates returns a map of all expected document updates that should
-// be published from a document create or update.
+// getEventsForUpdate returns a map of expected update events for an update document action.
 //
 // This will take into account any primary documents that are patched as a result
 // of the create or update.
-func getExpectedUpdates(s *state, isDelete bool, docs ...*client.Document) map[string]struct{} {
+func getEventsForUpdate(s *state, action UpdateDoc) map[string]struct{} {
+	var collection client.Collection
+	if action.NodeID.HasValue() {
+		collection = s.collections[action.NodeID.Value()][action.CollectionID]
+	} else {
+		collection = s.collections[0][action.CollectionID]
+	}
+
+	docID := s.docIDs[action.CollectionID][action.DocID]
+	def := collection.Definition()
+
+	docMap := make(map[string]any)
+	err := json.Unmarshal([]byte(action.Doc), &docMap)
+	require.NoError(s.t, err)
+
+	expect := make(map[string]struct{})
+	expect[docID.String()] = struct{}{}
+
+	// check for any secondary relation fields that could publish an event
+	for name, value := range docMap {
+		field, ok := def.GetFieldByName(name)
+		if !ok {
+			continue // ignore unknown field
+		}
+		_, ok = field.GetSecondaryRelationField(def)
+		if ok {
+			expect[value.(string)] = struct{}{}
+		}
+	}
+
+	return expect
+}
+
+// getEventsForCreate returns a map of expected update events for a document create action.
+//
+// This will take into account any primary documents that are patched as a result
+// of the create or update.
+func getEventsForCreate(s *state, action CreateDoc) map[string]struct{} {
+	var collection client.Collection
+	if action.NodeID.HasValue() {
+		collection = s.collections[action.NodeID.Value()][action.CollectionID]
+	} else {
+		collection = s.collections[0][action.CollectionID]
+	}
+
+	docs, err := parseCreateDocs(action, collection)
+	require.NoError(s.t, err)
+
 	expect := make(map[string]struct{})
 	for _, doc := range docs {
 		expect[doc.ID().String()] = struct{}{}
-		if isDelete {
-			continue // primary doc patch does not happen on delete
-		}
-		for name, def := range doc.FieldDefinitions() {
-			// if this field is a secondary relation then a primary doc
-			// patch will also happen
-			if _, ok := def.GetSecondaryRelationField(doc.CollectionDefinition()); ok {
-				val, err := doc.GetValue(name)
-				require.NoError(s.t, err)
-				expect[val.Value().(string)] = struct{}{}
+
+		defs := doc.FieldDefinitions()
+		vals := doc.Values()
+
+		// check for any secondary relation fields that could publish an event
+		for name, field := range doc.Fields() {
+			_, ok := defs[name].GetSecondaryRelationField(doc.CollectionDefinition())
+			if !ok {
+				continue // ignore non secondary relation fields
 			}
+			expect[vals[field].Value().(string)] = struct{}{}
 		}
 	}
+
+	return expect
+}
+
+// getEventsForDelete returns a map of expected update events for a document delete action.
+func getEventsForDelete(docID client.DocID) map[string]struct{} {
+	expect := make(map[string]struct{})
+	expect[docID.String()] = struct{}{}
 	return expect
 }
