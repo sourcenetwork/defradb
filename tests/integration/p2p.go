@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
@@ -134,7 +136,14 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// Event is the name of the event to wait for.
+	// If is not provided then the action will wait for MergeComplete event.
+	Event   immutable.Option[event.Name]
+	// NodeIDs are the node IDs (indexes) of the nodes to wait for sync on.
+	// If not provided then the action will wait for sync on all nodes.
+	NodeIDs []int
+}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.

@@ -109,12 +109,7 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	// merge the delta and update the state
-	err = mc.ProcessBlock(
-		ctx,
-		block,
-		link,
-		false,
-	)
+	err = mc.ProcessBlock(ctx, block, link, false, false)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -166,21 +161,26 @@ func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
-// If onlyHeads is true, it will skip merging and update only the heads.
+// If skipMerge is true, it will skip merging and update only the heads.
+// If skipHeads is true, it will skip updating the heads.
 func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
-	onlyHeads bool,
+	skipMerge bool,
+	skipHeads bool,
 ) error {
-	if !onlyHeads {
+	if !skipMerge {
 		err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
 		if err != nil {
 			return NewErrMergingDelta(blockLink.Cid, err)
 		}
 	}
 
-	return mc.updateHeads(ctx, block, blockLink)
+	if !skipHeads {
+		return mc.updateHeads(ctx, block, blockLink)
+	}
+	return nil
 }
 
 func (mc *MerkleClock) updateHeads(

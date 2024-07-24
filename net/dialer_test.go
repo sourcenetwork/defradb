@@ -30,6 +30,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		ctx,
 		db1.Rootstore(),
 		db1.Blockstore(),
+		db1.Encstore(),
 		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
@@ -39,6 +40,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		ctx,
 		db2.Rootstore(),
 		db2.Blockstore(),
+		db1.Encstore(),
 		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
@@ -63,6 +65,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		ctx,
 		db1.Rootstore(),
 		db1.Blockstore(),
+		db1.Encstore(),
 		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
@@ -72,6 +75,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		ctx,
 		db2.Rootstore(),
 		db2.Blockstore(),
+		db1.Encstore(),
 		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
@@ -99,6 +103,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		ctx,
 		db1.Rootstore(),
 		db1.Blockstore(),
+		db1.Encstore(),
 		db1.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
@@ -108,6 +113,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		ctx,
 		db2.Rootstore(),
 		db2.Blockstore(),
+		db1.Encstore(),
 		db2.Events(),
 		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)

@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 // eventTimeout is the amount of time to wait
@@ -347,4 +349,32 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	}
 
 	return expect
+}
+
+func waitForKeyRetrievedEvent(s *state, nodeIDs []int) {
+	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
+		if len(nodeIDs) > 0 && !slices.Contains(nodeIDs, nodeID) {
+			continue
+		}
+
+		select {
+		case _, ok := <-s.nodeEvents[nodeID].encKeyRetrieved.Message():
+			if !ok {
+				require.Fail(s.t, "subscription closed waiting for key retrieved event")
+			}
+
+		case <-time.After(eventTimeout):
+			require.Fail(s.t, "timeout waiting for key retrieved event")
+		}
+	}
+}
+
+func waitForSync(s *state, action WaitForSync) {
+	if !action.Event.HasValue() || action.Event.Value() == event.MergeCompleteName {
+		waitForMergeEvents(s)
+	} else if action.Event.Value() == encryption.KeyRetrievedEventName {
+		waitForKeyRetrievedEvent(s, action.NodeIDs)
+	} else {
+		require.Fail(s.t, "unsupported event type: %s", action.Event.Value())
+	}
 }

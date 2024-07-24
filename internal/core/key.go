@@ -106,7 +106,7 @@ var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocID   string
-	FieldId string //can be 'C'
+	FieldID string //can be 'C'
 	Cid     cid.Cid
 }
 
@@ -253,7 +253,7 @@ func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	return HeadStoreKey{
 		// elements[0] is empty (key has leading '/')
 		DocID:   elements[1],
-		FieldId: elements[2],
+		FieldID: elements[2],
 		Cid:     cid,
 	}, nil
 }
@@ -417,7 +417,7 @@ func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
 func (k DataStoreKey) ToHeadStoreKey() HeadStoreKey {
 	return HeadStoreKey{
 		DocID:   k.DocID,
-		FieldId: k.FieldID,
+		FieldID: k.FieldID,
 	}
 }
 
@@ -433,9 +433,9 @@ func (k HeadStoreKey) WithCid(c cid.Cid) HeadStoreKey {
 	return newKey
 }
 
-func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
+func (k HeadStoreKey) WithFieldID(fieldID string) HeadStoreKey {
 	newKey := k
-	newKey.FieldId = fieldId
+	newKey.FieldID = fieldID
 	return newKey
 }
 
@@ -723,8 +723,8 @@ func (k HeadStoreKey) ToString() string {
 	if k.DocID != "" {
 		result = result + "/" + k.DocID
 	}
-	if k.FieldId != "" {
-		result = result + "/" + k.FieldId
+	if k.FieldID != "" {
+		result = result + "/" + k.FieldID
 	}
 	if k.Cid.Defined() {
 		result = result + "/" + k.Cid.String()

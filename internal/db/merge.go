@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -63,12 +64,12 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
+	err = mp.loadComposites(ctx, dagMerge.Cid, mt, false)
 	if err != nil {
 		return err
 	}
 
-	err = mp.mergeComposites(ctx)
+	err = mp.mergeComposites(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -85,6 +86,60 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 
 	// send a complete event so we can track merges in the integration tests
 	db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
+	return nil
+}
+
+func (db *db) mergeEncryptedBlock(ctx context.Context, keyEvent encryption.KeyRetrievedEvent) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	col, err := getCollectionFromRootSchema(ctx, db, keyEvent.SchemaRoot)
+	if err != nil {
+		return err
+	}
+
+	ls := cidlink.DefaultLinkSystem()
+	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
+
+	docID, err := client.NewDocIDFromString(keyEvent.DocID)
+	if err != nil {
+		return err
+	}
+	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
+
+	mp, err := db.newMergeProcessor(txn, ls, col, dsKey)
+	if err != nil {
+		return err
+	}
+
+	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey)
+	if err != nil {
+		return err
+	}
+
+	err = mp.loadComposites(ctx, keyEvent.Cid, mt, true)
+	if err != nil {
+		return err
+	}
+
+	err = mp.mergeComposites(ctx, true)
+	if err != nil {
+		return err
+	}
+
+	err = syncIndexedDoc(ctx, docID, col)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -170,10 +225,15 @@ func (mp *mergeProcessor) loadComposites(
 	ctx context.Context,
 	blockCid cid.Cid,
 	mt mergeTarget,
+	willDecrypt bool,
 ) error {
-	if _, ok := mt.heads[blockCid]; ok {
-		// We've already processed this block.
-		return nil
+	if b, ok := mt.heads[blockCid]; ok {
+		// the head is already known, but the block might be encrypted
+		// if this time we try to decrypt it, we load the block
+		if b.IsEncrypted == nil || !*b.IsEncrypted || !willDecrypt {
+			// We've already processed this block.
+			return nil
+		}
 	}
 
 	nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
@@ -193,7 +253,7 @@ func (mp *mergeProcessor) loadComposites(
 		mp.composites.PushFront(block)
 		for _, link := range block.Links {
 			if link.Name == core.HEAD {
-				err := mp.loadComposites(ctx, link.Cid, mt)
+				err := mp.loadComposites(ctx, link.Cid, mt, willDecrypt)
 				if err != nil {
 					return err
 				}
@@ -219,23 +279,19 @@ func (mp *mergeProcessor) loadComposites(
 				}
 			}
 		}
-		return mp.loadComposites(ctx, blockCid, newMT)
+		return mp.loadComposites(ctx, blockCid, newMT, willDecrypt)
 	}
 	return nil
 }
 
-func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
+func (mp *mergeProcessor) mergeComposites(ctx context.Context, skipHeads bool) error {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
-		var onlyHeads bool
-		if block.IsEncrypted != nil && *block.IsEncrypted {
-			onlyHeads = true
-		}
 		link, err := block.GenerateLink()
 		if err != nil {
 			return err
 		}
-		err = mp.processBlock(ctx, block, link, onlyHeads)
+		err = mp.processBlock(ctx, block, link, skipHeads)
 		if err != nil {
 			return err
 		}
@@ -247,11 +303,32 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 // If onlyHeads is true, it will skip merging and update only the heads.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
-	block *coreblock.Block,
+	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
-	onlyHeads bool,
+	skipHeads bool,
 ) error {
-	crdt, err := mp.initCRDTForType(block.Delta.GetFieldName())
+	block := dagBlock
+	var skipMerge bool
+	if dagBlock.IsEncrypted != nil && *dagBlock.IsEncrypted {
+		plainTextBlock, err := decryptBlock(ctx, dagBlock)
+		if err != nil {
+			return err
+		}
+		if plainTextBlock != nil {
+			block = plainTextBlock
+		} else {
+			skipMerge = true
+			block = dagBlock
+			// if we weren't able to decrypt the block we request the encryption key
+			if dagBlock.Delta.IsComposite() {
+				docID := string(dagBlock.Delta.GetDocID())
+				schemaRoot := mp.col.SchemaRoot()
+				mp.col.db.events.Publish(encryption.NewRequestKeyMessage(docID, blockLink.Cid, schemaRoot))
+			}
+		}
+	}
+
+	crdt, err := mp.initCRDTForType(dagBlock.Delta.GetFieldName())
 	if err != nil {
 		return err
 	}
@@ -262,12 +339,12 @@ func (mp *mergeProcessor) processBlock(
 		return nil
 	}
 
-	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, onlyHeads)
+	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, skipMerge, skipHeads)
 	if err != nil {
 		return err
 	}
 
-	for _, link := range block.Links {
+	for _, link := range dagBlock.Links {
 		if link.Name == core.HEAD {
 			continue
 		}
@@ -282,12 +359,38 @@ func (mp *mergeProcessor) processBlock(
 			return err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link, onlyHeads); err != nil {
+		if err := mp.processBlock(ctx, childBlock, link.Link, skipHeads); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
+	if block.Delta.IsComposite() {
+		// for composite blocks there is nothing to decrypt
+		// so we just check if we have the encryption key for child blocks
+		bytes, err := encryption.GetDocKey(ctx, string(block.Delta.GetDocID()))
+		if err != nil {
+			return nil, err
+		}
+		if len(bytes) == 0 {
+			return nil, nil
+		}
+		return block, nil
+	}
+	clonedCRDT := block.Delta.Clone()
+	bytes, err := encryption.DecryptDoc(ctx, string(clonedCRDT.GetDocID()),
+		clonedCRDT.GetFieldName(), clonedCRDT.GetData())
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes) == 0 {
+		return nil, nil
+	}
+	clonedCRDT.SetData(bytes)
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
 }
 
 func (mp *mergeProcessor) initCRDTForType(

@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
@@ -78,6 +79,9 @@ type eventState struct {
 
 	// p2pTopic is the `event.P2PTopicCompletedName` subscription
 	p2pTopic *event.Subscription
+
+	// encKeyRetrieved is the `encryption.KeyRetrieved` subscription
+	encKeyRetrieved *event.Subscription
 }
 
 // newEventState returns an eventState with all required subscriptions.
@@ -98,11 +102,16 @@ func newEventState(bus *event.Bus) (*eventState, error) {
 	if err != nil {
 		return nil, err
 	}
+	encKeyRetrieved, err := bus.Subscribe(encryption.KeyRetrievedEventName)
+	if err != nil {
+		return nil, err
+	}
 	return &eventState{
-		merge:      merge,
-		update:     update,
-		replicator: replicator,
-		p2pTopic:   p2pTopic,
+		merge:           merge,
+		update:          update,
+		replicator:      replicator,
+		p2pTopic:        p2pTopic,
+		encKeyRetrieved: encKeyRetrieved,
 	}, nil
 }
 

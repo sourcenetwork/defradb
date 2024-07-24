@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
@@ -130,7 +131,7 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, encryption.KeyRetrievedEventName)
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +160,11 @@ func (db *db) Rootstore() datastore.Rootstore {
 // Blockstore returns the internal DAG store which contains IPLD blocks.
 func (db *db) Blockstore() datastore.Blockstore {
 	return db.multistore.Blockstore()
+}
+
+// Encstore returns the internal enc store which contains encryption key for documents and their fields.
+func (db *db) Encstore() datastore.DSReaderWriter {
+	return db.multistore.Encstore()
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.

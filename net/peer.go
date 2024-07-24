@@ -53,6 +53,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -60,6 +61,7 @@ import (
 // to the underlying DefraDB instance.
 type Peer struct {
 	blockstore datastore.Blockstore
+	encstore   datastore.DSReaderWriter
 
 	bus       *event.Bus
 	updateSub *event.Subscription
@@ -85,10 +87,11 @@ func NewPeer(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
 	blockstore datastore.Blockstore,
+	encstore datastore.DSReaderWriter,
 	bus *event.Bus,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
-	if rootstore == nil || blockstore == nil {
+	if rootstore == nil || blockstore == nil || encstore == nil {
 		return nil, ErrNilDB
 	}
 
@@ -214,6 +217,7 @@ func NewPeer(
 		dht:        ddht,
 		ps:         ps,
 		blockstore: blockstore,
+		encstore:   encstore,
 		bus:        bus,
 		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
 		ctx:        ctx,
@@ -259,7 +263,7 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		sub, err := p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		sub, err := p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName, encryption.RequestKeyEventName)
 		if err != nil {
 			return err
 		}
@@ -280,6 +284,11 @@ func (p *Peer) Start() error {
 			log.ErrorContextE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
+
+	err = p.server.addPubSubEncryptionTopic()
+	if err != nil {
+		return err
+	}
 
 	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
@@ -353,6 +362,11 @@ func (p *Peer) handleMessageLoop() {
 
 		case event.Replicator:
 			p.server.updateReplicators(evt)
+		case encryption.RequestKeyEvent:
+			err := p.handleEncryptionKeyRequest(evt)
+			if err != nil {
+				log.ErrorContextE(p.ctx, "Error while handling broadcast log", err)
+			}
 		default:
 			// ignore other events
 			continue
@@ -386,7 +400,7 @@ func (p *Peer) RegisterNewDocument(
 			Cid:        c.Bytes(),
 			SchemaRoot: []byte(schemaRoot),
 			Creator:    p.host.ID().String(),
-			Log: &pb.Document_Log{
+			Log: &pb.Log{
 				Block: rawBlock,
 			},
 		},
@@ -424,7 +438,7 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 		Cid:        evt.Cid.Bytes(),
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    p.host.ID().String(),
-		Log: &pb.Document_Log{
+		Log: &pb.Log{
 			Block: evt.Block,
 		},
 	}
@@ -441,6 +455,20 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 
 	if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
 		return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
+	}
+
+	return nil
+}
+
+func (p *Peer) handleEncryptionKeyRequest(evt encryption.RequestKeyEvent) error {
+	req := &pb.FetchEncryptionKeyRequest{
+		DocID:      []byte(evt.DocID),
+		Cid:        evt.Cid.Bytes(),
+		SchemaRoot: []byte(evt.SchemaRoot),
+	}
+
+	if err := p.server.requestEncryptionKey(p.ctx, req); err != nil {
+		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 	}
 
 	return nil

@@ -32,8 +32,11 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
+
+const encryptionTopic = "encryption"
 
 // Server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -145,7 +148,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		corelog.Any("DocID", docID.String()))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-	// suscribe to the collection.
+	// subscribed to the collection.
 	if !s.hasPubSubTopic(string(req.Body.SchemaRoot)) {
 		err = s.addPubSubTopic(docID.String(), true)
 		if err != nil {
@@ -162,6 +165,32 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}))
 
 	return &pb.PushLogReply{}, nil
+}
+
+func (s *server) TryGenEncryptionKey(
+	ctx context.Context,
+	req *pb.FetchEncryptionKeyRequest,
+) (*pb.FetchEncryptionKeyReply, error) {
+	docID, err := client.NewDocIDFromString(string(req.DocID))
+	if err != nil {
+		return nil, err
+	}
+
+	encKey, err := encryption.GetDocKey(encryption.ContextWithStore(ctx, s.peer.encstore), docID.String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(encKey) == 0 {
+		return nil, nil
+	}
+
+	res := &pb.FetchEncryptionKeyReply{
+		EncryptionKey: encKey,
+	}
+
+	return res, nil
 }
 
 // GetHeadLog receives a get head log request
@@ -206,6 +235,30 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 	s.topics[topic] = pubsubTopic{
 		Topic:      t,
 		subscribed: subscribe,
+	}
+	return nil
+}
+
+// addPubSubEncryptionTopic subscribes to a topic on the pubsub network
+func (s *server) addPubSubEncryptionTopic() error {
+	if s.peer.ps == nil {
+		return nil
+	}
+
+	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), encryptionTopic, true)
+	if err != nil {
+		return err
+	}
+
+	t.SetEventHandler(s.pubSubEventHandler)
+	t.SetMessageHandler(s.pubSubEncryptionMessageHandler)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.topics[encryptionTopic] = pubsubTopic{
+		Topic:      t,
+		subscribed: true,
 	}
 	return nil
 }
@@ -288,6 +341,57 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	return nil
 }
 
+// requestEncryptionKey publishes the given FetchEncryptionKeyRequest object on the PubSub network
+func (s *server) requestEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) error {
+	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
+		return nil
+	}
+	s.mu.Lock()
+	t, ok := s.topics[encryptionTopic]
+	s.mu.Unlock()
+	if !ok {
+		err := s.addPubSubTopic(encryptionTopic, false)
+		if err != nil {
+			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", encryptionTopic), err)
+		}
+		return s.requestEncryptionKey(ctx, req)
+	}
+
+	data, err := req.MarshalVT()
+	if err != nil {
+		return errors.Wrap("failed marshling pubsub message", err)
+	}
+
+	respChan, err := t.Publish(ctx, data)
+	if err != nil {
+		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", encryptionTopic), err)
+	}
+	go func() {
+		s.handleFetchEncryptionKeyResponse(<-respChan, req)
+	}()
+	return nil
+}
+
+// handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
+func (s *server) handleFetchEncryptionKeyResponse(
+	resp rpc.Response,
+	req *pb.FetchEncryptionKeyRequest,
+) {
+	var keyResp pb.FetchEncryptionKeyReply
+	err := proto.Unmarshal(resp.Data, &keyResp)
+	if err != nil {
+		log.ErrorContextE(s.peer.ctx, "Failed to unmarshal encryption key response", err)
+		return
+	}
+	cid, err := cid.Cast(req.Cid)
+	if err != nil {
+		log.ErrorContextE(s.peer.ctx, "Failed to parse CID", err)
+		return
+	}
+	s.peer.bus.Publish(encryption.NewKeyRetrievedMessage(
+		string(req.DocID), cid, string(req.SchemaRoot), keyResp.EncryptionKey))
+}
+
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
 	log.InfoContext(s.peer.ctx, "Received new pubsub event",
@@ -307,6 +411,25 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
+}
+
+// pubSubEncryptionMessageHandler handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
+func (s *server) pubSubEncryptionMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	req := new(pb.FetchEncryptionKeyRequest)
+	if err := proto.Unmarshal(msg, req); err != nil {
+		log.ErrorContextE(s.peer.ctx, "Failed to unmarshal pubsub message %s", err)
+		return nil, err
+	}
+
+	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
+		Addr: addr{from},
+	})
+	res, err := s.TryGenEncryptionKey(ctx, req)
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
+	}
+	return res.MarshalVT()
+	//return proto.Marshal(res)
 }
 
 // pubSubEventHandler logs events from the subscribed DocID topics.

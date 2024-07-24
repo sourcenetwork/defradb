@@ -33,8 +33,7 @@ type multistore struct {
 	head   DSReaderWriter
 	peer   DSBatching
 	system DSReaderWriter
-	// block DSReaderWriter
-	dag Blockstore
+	dag    Blockstore
 }
 
 var _ MultiStore = (*multistore)(nil)

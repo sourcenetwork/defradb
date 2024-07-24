@@ -4,17 +4,9 @@ package net.pb;
 option go_package = "/;net_pb";
 
 // Log represents a thread log.
-message Document {
-    // ID of the document.
-    bytes docID = 1;
-    // head of the log.
-    bytes head = 4;
-
-    // Record is a thread record containing link data.
-    message Log {
-        // block is the top-level node's raw data as an ipld.Block.
-        bytes block = 1;
-    }
+message Log {
+    // block is the top-level node's raw data as an ipld.Block.
+    bytes block = 1;
 }
 
 message GetDocGraphRequest {}
@@ -42,13 +34,30 @@ message PushLogRequest {
         // creator is the PeerID of the peer that created the log.
         string creator = 4;
         // log hold the block that represent version of the document.
-        Document.Log log = 6;
+        Log log = 6;
     }
+}
+
+message FetchEncryptionKeyRequest {
+    // docID is the ID of the document that is affected by the log.
+    bytes docID = 1;
+    // cid is the CID of the composite of the document.
+    bytes cid = 2;
+    // schemaRoot is the SchemaRoot of the collection that the document resides in.
+    bytes schemaRoot = 3;
 }
 
 message GetHeadLogRequest {}
 
 message PushLogReply {}
+
+message FetchEncryptionKeyReply {
+    bytes encryptionKey = 1;
+    // cid is the CID of the composite of the document.
+    bytes cid = 2;
+    // schemaRoot is the SchemaRoot of the collection that the document resides in.
+    bytes schemaRoot = 3;
+}
 
 message GetHeadLogReply {}
 
@@ -62,6 +71,8 @@ service Service {
     rpc GetLog(GetLogRequest) returns (GetLogReply) {}
     // PushLog to this peer.
     rpc PushLog(PushLogRequest) returns (PushLogReply) {}
+    // TryGenEncryptionKey from this peer.
+    rpc TryGenEncryptionKey(FetchEncryptionKeyRequest) returns (FetchEncryptionKeyReply) {}
     // GetHeadLog from this peer
     rpc GetHeadLog(GetHeadLogRequest) returns (GetHeadLogReply) {}
 }
