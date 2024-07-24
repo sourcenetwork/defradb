@@ -223,5 +223,5 @@ func (f *IndexFetcher) resetState() {
 	f.indexedFields = nil
 	f.docFields = nil
 	f.indexIter = nil
-	f.execInfo = ExecInfo{}
+	f.execInfo.Reset()
 }
