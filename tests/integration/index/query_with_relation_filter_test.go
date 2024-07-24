@@ -910,3 +910,63 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test was added during https://github.com/sourcenetwork/defradb/issues/2862
+// multiple indexed fields on the second object are required for the failure.
+func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String
+						owner: User @index
+						manufacturer: Manufacturer @index
+					}
+
+					type Manufacturer {
+						name: String
+						devices: [Device]
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name": "Apple",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "MacBook Pro",
+					"owner":        testUtils.NewDocIndex(0, 0),
+					"manufacturer": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						devices {
+							owner_id
+							manufacturer_id
+						}
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
