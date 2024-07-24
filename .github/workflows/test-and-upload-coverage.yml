@@ -179,6 +179,7 @@ jobs:
         with:
           repository: sourcenetwork/sourcehub
           path: _sourceHub
+          submodules: recursive
 
       - name: Install SourceHub CLI
         if: ${{ matrix.acp-type == 'source-hub' }}
