@@ -1852,43 +1852,62 @@ func assertRequestResults(
 
 	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
 
+	return assertRequestResultDocs(s, nodeID, expectedResults, resultantData, anyOfByField)
+}
+
+func assertRequestResultDocs(
+	s *state,
+	nodeID int,
+	expectedResults []map[string]any,
+	actualResults []map[string]any,
+	anyOfByField map[docFieldKey][]any,
+) bool {
 	// compare results
-	require.Equal(s.t, len(expectedResults), len(resultantData),
+	require.Equal(s.t, len(expectedResults), len(actualResults),
 		s.testCase.Description+" \n(number of results don't match)")
 
-	for docIndex, result := range resultantData {
-		expectedResult := expectedResults[docIndex]
+	for actualDocIndex, actualDoc := range actualResults {
+		expectedDoc := expectedResults[actualDocIndex]
 
 		require.Equal(
 			s.t,
-			len(expectedResult),
-			len(result),
+			len(expectedDoc),
+			len(actualDoc),
 			fmt.Sprintf(
 				"%s \n(number of properties for item at index %v don't match)",
 				s.testCase.Description,
-				docIndex,
+				actualDocIndex,
 			),
 		)
 
-		for field, actualValue := range result {
-			expectedValue := expectedResult[field]
-
-			switch r := expectedValue.(type) {
+		for field, actualValue := range actualDoc {
+			switch expectedValue := expectedDoc[field].(type) {
 			case AnyOf:
-				assertResultsAnyOf(s.t, s.clientType, r, actualValue)
+				assertResultsAnyOf(s.t, s.clientType, expectedValue, actualValue)
 
-				dfk := docFieldKey{docIndex, field}
+				dfk := docFieldKey{actualDocIndex, field}
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
 			case DocIndex:
-				expectedDocID := s.docIDs[r.CollectionIndex][r.Index].String()
+				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
 				assertResultsEqual(
 					s.t,
 					s.clientType,
 					expectedDocID,
 					actualValue,
-					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
+				)
+			case []map[string]any:
+				actualValueMap, ok := actualValue.([]map[string]any)
+				require.True(s.t, ok, "expected array of maps, got %T", actualValue)
+
+				assertRequestResultDocs(
+					s,
+					nodeID,
+					expectedValue,
+					actualValueMap,
+					anyOfByField,
 				)
 
 			default:
@@ -1897,7 +1916,7 @@ func assertRequestResults(
 					s.clientType,
 					expectedValue,
 					actualValue,
-					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
 				)
 			}
 		}
