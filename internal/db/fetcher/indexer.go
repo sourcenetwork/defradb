@@ -68,6 +68,8 @@ func (f *IndexFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
+	f.resetState()
+
 	f.col = col
 	f.docFilter = filter
 	f.doc = &encodedDocument{}
@@ -206,4 +208,20 @@ func (f *IndexFetcher) Close() error {
 		return f.indexIter.Close()
 	}
 	return nil
+}
+
+// resetState resets the mutable state of this IndexFetcher, returning the state to how it
+// was immediately after construction.
+func (f *IndexFetcher) resetState() {
+	// WARNING: Do not reset properties set in the constructor!
+
+	f.col = nil
+	f.txn = nil
+	f.docFilter = nil
+	f.doc = nil
+	f.mapping = nil
+	f.indexedFields = nil
+	f.docFields = nil
+	f.indexIter = nil
+	f.execInfo = ExecInfo{}
 }

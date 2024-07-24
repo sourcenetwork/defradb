@@ -963,7 +963,16 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: []map[string]any{
+					{
+						"devices": []map[string]any{
+							{
+								"owner_id":        "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+								"manufacturer_id": "bae-18c7d707-c44d-552f-b6d6-9e3d05bbf9c1",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
