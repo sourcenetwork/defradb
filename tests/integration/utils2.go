@@ -1899,8 +1899,7 @@ func assertRequestResultDocs(
 					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
 				)
 			case []map[string]any:
-				actualValueMap, ok := actualValue.([]map[string]any)
-				require.True(s.t, ok, "expected array of maps, got %T", actualValue)
+				actualValueMap := convertToArrayOfMaps(s.t, actualValue)
 
 				assertRequestResultDocs(
 					s,
@@ -1923,6 +1922,22 @@ func assertRequestResultDocs(
 	}
 
 	return false
+}
+
+func convertToArrayOfMaps(t testing.TB, value any) []map[string]any {
+	valueArrayMap, ok := value.([]map[string]any)
+	if ok {
+		return valueArrayMap
+	}
+	valueArray, ok := value.([]any)
+	require.True(t, ok, "expected value to be an array of maps %v", value)
+
+	valueArrayMap = make([]map[string]any, len(valueArray))
+	for i, v := range valueArray {
+		valueArrayMap[i], ok = v.(map[string]any)
+		require.True(t, ok, "expected value to be an array of maps %v", value)
+	}
+	return valueArrayMap
 }
 
 func assertExpectedErrorRaised(t testing.TB, description string, expectedError string, wasRaised bool) {
