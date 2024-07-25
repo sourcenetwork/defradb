@@ -864,19 +864,19 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "Sony",
-					"owner": "bae-5622129c-b893-5768-a3f4-8f745db4cc04"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"iPhone",
+				DocMap: map[string]any{
+					"model":        "iPhone",
 					"manufacturer": "Apple",
-					"owner": "bae-5622129c-b893-5768-a3f4-8f745db4cc04"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -967,8 +967,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 					{
 						"devices": []map[string]any{
 							{
-								"owner_id":        "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
-								"manufacturer_id": "bae-18c7d707-c44d-552f-b6d6-9e3d05bbf9c1",
+								"owner_id":        testUtils.NewDocIndex(0, 0),
+								"manufacturer_id": testUtils.NewDocIndex(2, 0),
 							},
 						},
 					},
