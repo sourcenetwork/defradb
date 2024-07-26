@@ -58,11 +58,13 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfig(t *testing
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"Name":     "John",
-						"Age":      int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(21),
+						},
 					},
 				},
 			},
@@ -112,11 +114,13 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfigWithNodesIn
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"Name":     "John",
-						"Age":      int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(21),
+						},
 					},
 				},
 			},

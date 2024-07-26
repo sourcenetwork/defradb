@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldKindFloatArray(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,10 +82,12 @@ func TestSchemaUpdatesAddFieldKindFloatArrayWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  []float64{3.1, -8.1, 0},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  []float64{3.1, -8.1, 0},
+						},
 					},
 				},
 			},
@@ -124,10 +128,12 @@ func TestSchemaUpdatesAddFieldKindFloatArraySubstitutionWithCreate(t *testing.T)
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  []float64{3.1, -8.1, 0},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  []float64{3.1, -8.1, 0},
+						},
 					},
 				},
 			},

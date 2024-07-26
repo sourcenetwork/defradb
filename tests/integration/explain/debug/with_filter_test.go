@@ -34,7 +34,7 @@ func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -59,7 +59,7 @@ func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -84,7 +84,7 @@ func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -109,7 +109,7 @@ func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -134,7 +134,7 @@ func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -159,7 +159,7 @@ func TestDebugExplainRequestWithMatchInsideList(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}

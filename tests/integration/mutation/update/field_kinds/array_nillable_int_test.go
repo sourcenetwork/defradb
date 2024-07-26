@@ -49,14 +49,16 @@ func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": []immutable.Option[int64]{
-							immutable.None[int64](),
-							immutable.Some[int64](2),
-							immutable.Some[int64](3),
-							immutable.None[int64](),
-							immutable.Some[int64](8),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []immutable.Option[int64]{
+								immutable.None[int64](),
+								immutable.Some[int64](2),
+								immutable.Some[int64](3),
+								immutable.None[int64](),
+								immutable.Some[int64](8),
+							},
 						},
 					},
 				},

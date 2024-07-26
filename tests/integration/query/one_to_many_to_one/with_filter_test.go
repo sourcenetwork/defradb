@@ -106,13 +106,15 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"book": []map[string]any{
-							{
-								"publisher": map[string]any{
-									"yearOpened": int64(2022),
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"book": []map[string]any{
+								{
+									"publisher": map[string]any{
+										"yearOpened": int64(2022),
+									},
 								},
 							},
 						},
@@ -139,23 +141,25 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 						s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_ge: 2020}}}})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Not a Writer",
-						"s1":   0.0,
-						"s2":   0.0,
-					},
-					{
-						"name": "John Grisham",
-						// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
-						"s1": 4.5,
-						// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
-						"s2": 4.8,
-					},
-					{
-						"name": "Cornelia Funke",
-						"s1":   0.0,
-						"s2":   4.0,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Not a Writer",
+							"s1":   0.0,
+							"s2":   0.0,
+						},
+						{
+							"name": "John Grisham",
+							// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
+							"s1": 4.5,
+							// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+							"s2": 4.8,
+						},
+						{
+							"name": "Cornelia Funke",
+							"s1":   0.0,
+							"s2":   4.0,
+						},
 					},
 				},
 			},
@@ -181,27 +185,29 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":      "Not a Writer",
-						"s1":        0.0,
-						"books2020": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						"s1":   4.5,
-						"books2020": []map[string]any{
-							{
-								"name": "Theif Lord",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":      "Not a Writer",
+							"s1":        0.0,
+							"books2020": []map[string]any{},
+						},
+						{
+							"name": "John Grisham",
+							"s1":   4.5,
+							"books2020": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
 							},
 						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"s1":   0.0,
-						"books2020": []map[string]any{
-							{
-								"name": "The Rooster Bar",
+						{
+							"name": "Cornelia Funke",
+							"s1":   0.0,
+							"books2020": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
 							},
 						},
 					},
@@ -231,50 +237,52 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"book": []map[string]any{
-							{
-								"name": "A Time for Mercy",
-								"publisher": map[string]any{
-									"yearOpened": int64(2013),
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"book": []map[string]any{
+								{
+									"name": "A Time for Mercy",
+									"publisher": map[string]any{
+										"yearOpened": int64(2013),
+									},
+								},
+								{
+									"name":      "The Associate",
+									"publisher": nil,
+								},
+								{
+									"name": "Theif Lord",
+									"publisher": map[string]any{
+										"yearOpened": int64(2020),
+									},
+								},
+								{
+									"name": "Painted House",
+									"publisher": map[string]any{
+										"yearOpened": int64(1995),
+									},
+								},
+								{
+									"name": "Sooley",
+									"publisher": map[string]any{
+										"yearOpened": int64(1999),
+									},
 								},
 							},
-							{
-								"name":      "The Associate",
-								"publisher": nil,
-							},
-							{
-								"name": "Theif Lord",
-								"publisher": map[string]any{
-									"yearOpened": int64(2020),
-								},
-							},
-							{
-								"name": "Painted House",
-								"publisher": map[string]any{
-									"yearOpened": int64(1995),
-								},
-							},
-							{
-								"name": "Sooley",
-								"publisher": map[string]any{
-									"yearOpened": int64(1999),
-								},
-							},
+							"name": "John Grisham",
 						},
-						"name": "John Grisham",
-					},
-					{
-						"book": []map[string]any{
-							{
-								"name": "The Rooster Bar",
-								"publisher": map[string]any{
-									"yearOpened": int64(2022),
+						{
+							"book": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+									"publisher": map[string]any{
+										"yearOpened": int64(2022),
+									},
 								},
 							},
+							"name": "Cornelia Funke",
 						},
-						"name": "Cornelia Funke",
 					},
 				},
 			},
@@ -327,12 +335,14 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Tolkien",
-					},
-					{
-						"name": "Cornelia Funke",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Tolkien",
+						},
+						{
+							"name": "Cornelia Funke",
+						},
 					},
 				},
 			},
@@ -349,9 +359,11 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},
@@ -388,12 +400,16 @@ func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) 
 						}
 					}
 				}`,
-				Results: []map[string]any{{
-					"name": "John Grisham",
-					"book": []map[string]any{{
-						"name": "Sooley",
-					}},
-				}},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"book": []map[string]any{{
+								"name": "Sooley",
+							}},
+						},
+					},
+				},
 			},
 		},
 	}

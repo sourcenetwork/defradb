@@ -19,10 +19,14 @@ import (
 
 var groupPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"groupNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"groupNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -48,7 +52,7 @@ func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -88,7 +92,7 @@ func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

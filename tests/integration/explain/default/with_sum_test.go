@@ -19,10 +19,14 @@ import (
 
 var sumPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"sumNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"sumNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -46,7 +50,7 @@ func TestDefaultExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t 
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{sumPattern},
+				ExpectedPatterns: sumPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

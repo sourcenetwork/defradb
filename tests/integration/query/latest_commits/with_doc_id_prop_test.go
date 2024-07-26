@@ -34,9 +34,11 @@ func TestQueryLastCommitsWithDocIDProperty(t *testing.T) {
 							docID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
+						{
+							"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+						},
 					},
 				},
 			},

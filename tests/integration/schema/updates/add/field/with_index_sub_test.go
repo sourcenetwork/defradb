@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -73,7 +75,9 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 						email
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -130,7 +134,9 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.
 						email
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

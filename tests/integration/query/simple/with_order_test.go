@@ -41,18 +41,20 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"Age":  int64(55),
-			},
-			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"Age":  int64(55),
+				},
+				{
+					"Name": "Bob",
+					"Age":  int64(32),
+				},
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
 			},
 		},
 	}
@@ -89,22 +91,24 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Alice",
-				"Age":  int64(19),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
-			},
-			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
-				"Name": "Carlo",
-				"Age":  int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Alice",
+					"Age":  int64(19),
+				},
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
+				{
+					"Name": "Bob",
+					"Age":  int64(32),
+				},
+				{
+					"Name": "Carlo",
+					"Age":  int64(55),
+				},
 			},
 		},
 	}
@@ -145,22 +149,24 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Alice",
-				"Age":  int64(19),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
-			},
-			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
-				"Name": "Carlo",
-				"Age":  int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Alice",
+					"Age":  int64(19),
+				},
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
+				{
+					"Name": "Bob",
+					"Age":  int64(32),
+				},
+				{
+					"Name": "Carlo",
+					"Age":  int64(55),
+				},
 			},
 		},
 	}
@@ -197,22 +203,24 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"Age":  int64(55),
-			},
-			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
-			},
-			{
-				"Name": "Alice",
-				"Age":  int64(19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"Age":  int64(55),
+				},
+				{
+					"Name": "Bob",
+					"Age":  int64(32),
+				},
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
+				{
+					"Name": "Alice",
+					"Age":  int64(19),
+				},
 			},
 		},
 	}
@@ -253,22 +261,24 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"Age":  int64(55),
-			},
-			{
-				"Name": "Bob",
-				"Age":  int64(32),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
-			},
-			{
-				"Name": "Alice",
-				"Age":  int64(19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"Age":  int64(55),
+				},
+				{
+					"Name": "Bob",
+					"Age":  int64(32),
+				},
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
+				{
+					"Name": "Alice",
+					"Age":  int64(19),
+				},
 			},
 		},
 	}
@@ -310,26 +320,28 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":     "Carlo",
-				"Age":      int64(55),
-				"Verified": true,
-			},
-			{
-				"Name":     "Bob",
-				"Age":      int64(21),
-				"Verified": false,
-			},
-			{
-				"Name":     "John",
-				"Age":      int64(21),
-				"Verified": true,
-			},
-			{
-				"Name":     "Alice",
-				"Age":      int64(19),
-				"Verified": false,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":     "Carlo",
+					"Age":      int64(55),
+					"Verified": true,
+				},
+				{
+					"Name":     "Bob",
+					"Age":      int64(21),
+					"Verified": false,
+				},
+				{
+					"Name":     "John",
+					"Age":      int64(21),
+					"Verified": true,
+				},
+				{
+					"Name":     "Alice",
+					"Age":      int64(19),
+					"Verified": false,
+				},
 			},
 		},
 	}

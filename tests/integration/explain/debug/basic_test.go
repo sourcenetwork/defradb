@@ -32,7 +32,7 @@ func TestDebugExplainRequest(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{basicPattern},
+				ExpectedFullGraph: basicPattern,
 			},
 		},
 	}

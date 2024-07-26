@@ -70,9 +70,11 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -131,9 +133,11 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -195,9 +199,11 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -256,9 +262,11 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -318,9 +326,11 @@ func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

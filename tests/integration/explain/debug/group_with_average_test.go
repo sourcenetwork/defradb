@@ -19,14 +19,18 @@ import (
 
 var debugGroupAveragePattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"averageNode": dataMap{
-				"countNode": dataMap{
-					"sumNode": dataMap{
-						"groupNode": dataMap{
-							"selectNode": dataMap{
-								"pipeNode": dataMap{
-									"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"averageNode": dataMap{
+						"countNode": dataMap{
+							"sumNode": dataMap{
+								"groupNode": dataMap{
+									"selectNode": dataMap{
+										"pipeNode": dataMap{
+											"scanNode": dataMap{},
+										},
+									},
 								},
 							},
 						},
@@ -54,7 +58,7 @@ func TestDebugExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupAveragePattern},
+				ExpectedPatterns: debugGroupAveragePattern,
 			},
 		},
 	}
@@ -83,7 +87,7 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupAveragePattern},
+				ExpectedPatterns: debugGroupAveragePattern,
 			},
 		},
 	}
@@ -115,7 +119,7 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroup
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupAveragePattern},
+				ExpectedPatterns: debugGroupAveragePattern,
 			},
 		},
 	}
@@ -148,7 +152,7 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAv
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupAveragePattern},
+				ExpectedPatterns: debugGroupAveragePattern,
 			},
 		},
 	}

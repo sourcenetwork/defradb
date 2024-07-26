@@ -63,22 +63,24 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Cornelia Funke",
-				"published": []map[string]any{
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Cornelia Funke",
+					"published": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
 					},
 				},
-			},
-			{
-				"name": "John Grisham",
-				"published": []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
+				{
+					"name": "John Grisham",
+					"published": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
 					},
 				},
 			},
@@ -139,38 +141,40 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Cornelia Funke",
-				"p1": []map[string]any{
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Cornelia Funke",
+					"p1": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
+					},
+					"p2": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
 					},
 				},
-				"p2": []map[string]any{
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
+				{
+					"name": "John Grisham",
+					"p1": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
 					},
-				},
-			},
-			{
-				"name": "John Grisham",
-				"p1": []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-					},
-				},
-				"p2": []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
+					"p2": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
 					},
 				},
 			},

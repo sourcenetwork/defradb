@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -73,7 +75,9 @@ func TestSchemaUpdatesAddFieldCRDTNone(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

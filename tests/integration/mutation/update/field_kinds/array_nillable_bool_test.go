@@ -49,14 +49,16 @@ func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"likedIndexes": []immutable.Option[bool]{
-							immutable.Some(true),
-							immutable.Some(true),
-							immutable.Some(false),
-							immutable.Some(true),
-							immutable.None[bool](),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"likedIndexes": []immutable.Option[bool]{
+								immutable.Some(true),
+								immutable.Some(true),
+								immutable.Some(false),
+								immutable.Some(true),
+								immutable.None[bool](),
+							},
 						},
 					},
 				},

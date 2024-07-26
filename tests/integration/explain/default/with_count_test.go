@@ -19,10 +19,14 @@ import (
 
 var countPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"countNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"countNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -46,7 +50,7 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{countPattern},
+				ExpectedPatterns: countPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

@@ -19,16 +19,20 @@ import (
 
 var topLevelCountPattern = dataMap{
 	"explain": dataMap{
-		"topLevelNode": []dataMap{
+		"operationNode": []dataMap{
 			{
-				"selectTopNode": dataMap{
-					"selectNode": dataMap{
-						"scanNode": dataMap{},
+				"topLevelNode": []dataMap{
+					{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
+					},
+					{
+						"countNode": dataMap{},
 					},
 				},
-			},
-			{
-				"countNode": dataMap{},
 			},
 		},
 	},
@@ -48,7 +52,7 @@ func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
 					_count(Author: {})
 				}`,
 
-				ExpectedPatterns: []dataMap{topLevelCountPattern},
+				ExpectedPatterns: topLevelCountPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -108,7 +112,7 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 					)
 				}`,
 
-				ExpectedPatterns: []dataMap{topLevelCountPattern},
+				ExpectedPatterns: topLevelCountPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

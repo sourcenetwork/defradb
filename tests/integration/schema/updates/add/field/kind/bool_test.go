@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldKindBool(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,10 +82,12 @@ func TestSchemaUpdatesAddFieldKindBoolWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  true,
+						},
 					},
 				},
 			},
@@ -124,10 +128,12 @@ func TestSchemaUpdatesAddFieldKindBoolSubstitutionWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  true,
+						},
 					},
 				},
 			},

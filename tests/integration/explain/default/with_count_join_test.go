@@ -21,10 +21,14 @@ import (
 
 var countTypeIndexJoinPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"countNode": dataMap{
-				"selectNode": dataMap{
-					"typeIndexJoin": normalTypeJoinPattern,
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"countNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": normalTypeJoinPattern,
+						},
+					},
 				},
 			},
 		},
@@ -48,7 +52,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{countTypeIndexJoinPattern},
+				ExpectedPatterns: countTypeIndexJoinPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -132,18 +136,20 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"countNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
-											},
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"countNode": dataMap{
+										"selectNode": dataMap{
+											"parallelNode": []dataMap{
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
 											},
 										},
 									},
@@ -285,13 +291,15 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"countNode": dataMap{
-									"selectNode": dataMap{
-										"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"countNode": dataMap{
+										"selectNode": dataMap{
+											"typeIndexJoin": normalTypeJoinPattern,
+										},
 									},
 								},
 							},
@@ -327,18 +335,20 @@ func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinFi
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"countNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
-											},
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"countNode": dataMap{
+										"selectNode": dataMap{
+											"parallelNode": []dataMap{
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
 											},
 										},
 									},

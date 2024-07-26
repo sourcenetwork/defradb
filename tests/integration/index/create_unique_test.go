@@ -110,7 +110,9 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 			testUtils.GetIndexes{
 				CollectionID: 0,

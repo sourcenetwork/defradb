@@ -45,9 +45,11 @@ func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"valid": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"valid": nil,
+						},
 					},
 				},
 			},

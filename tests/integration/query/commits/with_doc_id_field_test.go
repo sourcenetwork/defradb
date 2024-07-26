@@ -34,7 +34,9 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -60,7 +62,9 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -88,7 +92,9 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -116,9 +122,11 @@ func TestQueryCommitsWithDocIDAndFieldId(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+						},
 					},
 				},
 			},
@@ -148,9 +156,11 @@ func TestQueryCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+						},
 					},
 				},
 			},

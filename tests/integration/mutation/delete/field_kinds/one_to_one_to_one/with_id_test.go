@@ -57,9 +57,11 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 							_docID
 						}
 					}`,
-					Results: []map[string]any{
-						{
-							"_docID": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+					Results: map[string]any{
+						"delete_Author": []map[string]any{
+							{
+								"_docID": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+							},
 						},
 					},
 				},
@@ -105,9 +107,11 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 							AliasOfKey: _docID
 						}
 					}`,
-					Results: []map[string]any{
-						{
-							"AliasOfKey": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+					Results: map[string]any{
+						"delete_Author": []map[string]any{
+							{
+								"AliasOfKey": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+							},
 						},
 					},
 				},
@@ -170,9 +174,11 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 							Key: _docID
 						}
 					}`,
-					Results: []map[string]any{
-						{
-							"Key": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+					Results: map[string]any{
+						"delete_Author": []map[string]any{
+							{
+								"Key": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+							},
 						},
 					},
 				},

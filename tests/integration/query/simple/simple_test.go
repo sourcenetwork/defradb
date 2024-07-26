@@ -34,11 +34,13 @@ func TestQuerySimple(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
-				"Name":   "John",
-				"Age":    int64(21),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
+					"Name":   "John",
+					"Age":    int64(21),
+				},
 			},
 		},
 	}
@@ -63,10 +65,12 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"username": "John",
-				"age":      int64(21),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"username": "John",
+					"age":      int64(21),
+				},
 			},
 		},
 	}
@@ -95,14 +99,16 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-				"Age":  int64(27),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Bob",
+					"Age":  int64(27),
+				},
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
 			},
 		},
 	}
@@ -144,13 +150,15 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":     "John",
-				"Email":    nil,
-				"Age":      nil,
-				"HeightM":  nil,
-				"Verified": nil,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":     "John",
+					"Email":    nil,
+					"Age":      nil,
+					"HeightM":  nil,
+					"Verified": nil,
+				},
 			},
 		},
 	}
@@ -175,13 +183,15 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 				`{ }`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":     nil,
-				"Email":    nil,
-				"Age":      nil,
-				"HeightM":  nil,
-				"Verified": nil,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":     nil,
+					"Email":    nil,
+					"Age":      nil,
+					"HeightM":  nil,
+					"Verified": nil,
+				},
 			},
 		},
 	}

@@ -60,14 +60,16 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-			},
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+				},
+				{
+					"name":   "Theif Lord",
+					"rating": 4.8,
+				},
 			},
 		},
 	}
@@ -119,14 +121,16 @@ func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-			},
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":   "Theif Lord",
+					"rating": 4.8,
+				},
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+				},
 			},
 		},
 	}

@@ -67,10 +67,12 @@ func TestSchemaMigrationQuery(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -137,18 +139,20 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Islam",
-						"verified": true,
-					},
-					{
-						"name":     "Fred",
-						"verified": true,
-					},
-					{
-						"name":     "Shahzad",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Islam",
+							"verified": true,
+						},
+						{
+							"name":     "Fred",
+							"verified": true,
+						},
+						{
+							"name":     "Shahzad",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -207,10 +211,12 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -277,11 +283,13 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
-						"email":    nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+							"email":    nil,
+						},
 					},
 				},
 			},
@@ -348,11 +356,13 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
-						"email":    nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+							"email":    nil,
+						},
 					},
 				},
 			},
@@ -434,11 +444,13 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
-						"email":    "ilovewasm@source.com",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+							"email":    "ilovewasm@source.com",
+						},
 					},
 				},
 			},
@@ -520,11 +532,13 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 						email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
-						"email":    "ilovewasm@source.com",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+							"email":    "ilovewasm@source.com",
+						},
 					},
 				},
 			},
@@ -607,11 +621,13 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 						email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
-						"email":    "ilovewasm@source.com",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+							"email":    "ilovewasm@source.com",
+						},
 					},
 				},
 			},
@@ -674,10 +690,12 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": nil,
+						},
 					},
 				},
 			},
@@ -736,9 +754,11 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},
@@ -797,9 +817,11 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 						mobile
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"mobile": []int64{847, 723, 2012},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"mobile": []int64{847, 723, 2012},
+						},
 					},
 				},
 			},
@@ -857,10 +879,12 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  nil,
+						},
 					},
 				},
 			},
@@ -918,9 +942,11 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},
@@ -931,10 +957,12 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
-						"age":  int64(40),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							"age":  int64(40),
+						},
 					},
 				},
 			},
@@ -993,10 +1021,12 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 						yearsLived
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":       "John",
-						"yearsLived": int64(40),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":       "John",
+							"yearsLived": int64(40),
+						},
 					},
 				},
 			},
@@ -1054,9 +1084,11 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -1068,11 +1100,13 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 						yearsLived
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":       "John",
-						"age":        int64(40),
-						"yearsLived": int64(40),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":       "John",
+							"age":        int64(40),
+							"yearsLived": int64(40),
+						},
 					},
 				},
 			},

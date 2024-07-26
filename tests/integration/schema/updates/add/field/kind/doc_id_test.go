@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldKindDocID(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,10 +82,12 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  "nhgfdsfd",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  "nhgfdsfd",
+						},
 					},
 				},
 			},
@@ -124,10 +128,12 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  "nhgfdsfd",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  "nhgfdsfd",
+						},
 					},
 				},
 			},

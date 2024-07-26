@@ -56,7 +56,9 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 						}
 					}`,
 
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

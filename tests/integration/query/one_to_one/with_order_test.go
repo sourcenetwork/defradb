@@ -61,21 +61,23 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  int64(65),
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+					"author": map[string]any{
+						"name": "John Grisham",
+						"age":  int64(65),
+					},
 				},
-			},
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-				"author": map[string]any{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
+				{
+					"name":   "Theif Lord",
+					"rating": 4.8,
+					"author": map[string]any{
+						"name": "Cornelia Funke",
+						"age":  int64(62),
+					},
 				},
 			},
 		},
@@ -129,21 +131,23 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-				"author": map[string]any{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":   "Theif Lord",
+					"rating": 4.8,
+					"author": map[string]any{
+						"name": "Cornelia Funke",
+						"age":  int64(62),
+					},
 				},
-			},
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  int64(65),
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+					"author": map[string]any{
+						"name": "John Grisham",
+						"age":  int64(65),
+					},
 				},
 			},
 		},
@@ -193,14 +197,16 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-			},
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+				},
+				{
+					"name":   "Theif Lord",
+					"rating": 4.8,
+				},
 			},
 		},
 	}
@@ -249,14 +255,16 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-			},
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":   "Theif Lord",
+					"rating": 4.8,
+				},
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+				},
 			},
 		},
 	}

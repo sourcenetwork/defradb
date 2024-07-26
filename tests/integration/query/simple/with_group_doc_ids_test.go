@@ -49,21 +49,23 @@ func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age": int64(21),
-				"_group": []map[string]any{
-					{
-						"Name": "Fred",
-					},
-					{
-						"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age": int64(21),
+					"_group": []map[string]any{
+						{
+							"Name": "Fred",
+						},
+						{
+							"Name": "John",
+						},
 					},
 				},
-			},
-			{
-				"Age":    int64(32),
-				"_group": []map[string]any{},
+				{
+					"Age":    int64(32),
+					"_group": []map[string]any{},
+				},
 			},
 		},
 	}

@@ -49,15 +49,17 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"preferredStrings": []immutable.Option[string]{
-							immutable.Some(""),
-							immutable.Some("the previous"),
-							immutable.None[string](),
-							immutable.Some("empty string"),
-							immutable.Some("blank string"),
-							immutable.Some("hitchi"),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"preferredStrings": []immutable.Option[string]{
+								immutable.Some(""),
+								immutable.Some("the previous"),
+								immutable.None[string](),
+								immutable.Some("empty string"),
+								immutable.Some("blank string"),
+								immutable.Some("hitchi"),
+							},
 						},
 					},
 				},

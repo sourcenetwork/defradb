@@ -19,22 +19,26 @@ import (
 
 var topLevelAveragePattern = dataMap{
 	"explain": dataMap{
-		"topLevelNode": []dataMap{
+		"operationNode": []dataMap{
 			{
-				"selectTopNode": dataMap{
-					"selectNode": dataMap{
-						"scanNode": dataMap{},
+				"topLevelNode": []dataMap{
+					{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
+					},
+					{
+						"sumNode": dataMap{},
+					},
+					{
+						"countNode": dataMap{},
+					},
+					{
+						"averageNode": dataMap{},
 					},
 				},
-			},
-			{
-				"sumNode": dataMap{},
-			},
-			{
-				"countNode": dataMap{},
-			},
-			{
-				"averageNode": dataMap{},
 			},
 		},
 	},
@@ -58,7 +62,7 @@ func TestDebugExplainTopLevelAverageRequest(t *testing.T) {
 					)
 				}`,
 
-				ExpectedPatterns: []dataMap{topLevelAveragePattern},
+				ExpectedPatterns: topLevelAveragePattern,
 			},
 		},
 	}
@@ -89,7 +93,7 @@ func TestDebugExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 					)
 				}`,
 
-				ExpectedPatterns: []dataMap{topLevelAveragePattern},
+				ExpectedPatterns: topLevelAveragePattern,
 			},
 		},
 	}

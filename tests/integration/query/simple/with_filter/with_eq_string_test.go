@@ -37,10 +37,12 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(21),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
 			},
 		},
 	}
@@ -72,10 +74,12 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": nil,
-				"Age":  int64(60),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": nil,
+					"Age":  int64(60),
+				},
 			},
 		},
 	}
@@ -104,9 +108,11 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "John",
+					},
 				},
 			},
 		},
@@ -129,9 +135,11 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Age": int64(21),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Age": int64(21),
+					},
 				},
 			},
 		},
@@ -151,7 +159,9 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{},
+			Results: map[string]any{
+				"Users": []map[string]any{},
+			},
 		},
 	}
 

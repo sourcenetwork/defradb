@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldKindBoolArray(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,10 +82,12 @@ func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  []bool{true, false, true},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  []bool{true, false, true},
+						},
 					},
 				},
 			},
@@ -124,10 +128,12 @@ func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) 
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  []bool{true, false, true},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  []bool{true, false, true},
+						},
 					},
 				},
 			},

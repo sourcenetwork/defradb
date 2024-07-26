@@ -82,9 +82,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -97,11 +99,13 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// John has been migrated up to the newer schema version on node 1
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// John has been migrated up to the newer schema version on node 1
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -199,9 +203,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -214,11 +220,13 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
-						// John has been migrated up to the newer schema version on node 1
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							// John has been migrated up to the newer schema version on node 1
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -290,10 +298,12 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -306,12 +316,14 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// John has been migrated down to the older schema version on node 1
-						// clearing the verified field
-						"verified": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// John has been migrated down to the older schema version on node 1
+							// clearing the verified field
+							"verified": nil,
+						},
 					},
 				},
 			},
@@ -389,9 +401,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

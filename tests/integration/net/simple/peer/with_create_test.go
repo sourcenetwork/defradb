@@ -57,12 +57,14 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(300),
-					},
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(300),
+						},
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -73,11 +75,13 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(300),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(300),
+						},
+						// Peer sync should not sync new documents to nodes
 					},
-					// Peer sync should not sync new documents to nodes
 				},
 			},
 		},
@@ -145,18 +149,20 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(28),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(28),
+						},
+						{
+							"Age": int64(30),
+						},
+						{
+							"Age": int64(21),
+						},
+						// Peer sync should not sync new documents to nodes that is not subscribed
+						// to the P2P collection.
 					},
-					{
-						"Age": int64(30),
-					},
-					{
-						"Age": int64(21),
-					},
-					// Peer sync should not sync new documents to nodes that is not subscribed
-					// to the P2P collection.
 				},
 			},
 			testUtils.Request{
@@ -166,18 +172,20 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(28),
-					},
-					{
-						"Age": int64(30),
-					},
-					{
-						"Age": int64(21),
-					},
-					{
-						"Age": int64(31),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(28),
+						},
+						{
+							"Age": int64(30),
+						},
+						{
+							"Age": int64(21),
+						},
+						{
+							"Age": int64(31),
+						},
 					},
 				},
 			},

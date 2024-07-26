@@ -43,20 +43,22 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age": int64(32),
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age": int64(32),
+					"_group": []map[string]any{
+						{
+							"Name": "Bob",
+						},
 					},
 				},
-			},
-			{
-				"Age": int64(19),
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				{
+					"Age": int64(19),
+					"_group": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
 				},
 			},
@@ -96,33 +98,35 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age": int64(32),
-				"G1": []map[string]any{
-					{
-						"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age": int64(32),
+					"G1": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+					"G2": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
 					},
 				},
-				"G2": []map[string]any{
-					{
-						"Name": "Bob",
+				{
+					"Age": int64(19),
+					"G1": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
-					{
-						"Name": "John",
-					},
-				},
-			},
-			{
-				"Age": int64(19),
-				"G1": []map[string]any{
-					{
-						"Name": "Alice",
-					},
-				},
-				"G2": []map[string]any{
-					{
-						"Name": "Alice",
+					"G2": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
 				},
 			},
@@ -159,15 +163,17 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age": int64(32),
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age": int64(32),
+					"_group": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
 					},
 				},
 			},
@@ -208,20 +214,22 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age": int64(32),
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age": int64(32),
+					"_group": []map[string]any{
+						{
+							"Name": "Bob",
+						},
 					},
 				},
-			},
-			{
-				"Age": int64(42),
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				{
+					"Age": int64(42),
+					"_group": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
 				},
 			},

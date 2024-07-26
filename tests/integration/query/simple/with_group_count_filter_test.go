@@ -41,14 +41,16 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-			},
-			{
-				"Age":    int64(19),
-				"_count": 0,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 2,
+				},
+				{
+					"Age":    int64(19),
+					"_count": 0,
+				},
 			},
 		},
 	}
@@ -84,25 +86,27 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 2,
+					"_group": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
 					},
 				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 0,
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				{
+					"Age":    int64(19),
+					"_count": 0,
+					"_group": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
 				},
 			},
@@ -140,20 +144,22 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 1,
+					"_group": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 0,
-				"_group": []map[string]any{},
+				{
+					"Age":    int64(19),
+					"_count": 0,
+					"_group": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -189,20 +195,22 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-				"_group": []map[string]any{
-					{
-						"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 2,
+					"_group": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 0,
-				"_group": []map[string]any{},
+				{
+					"Age":    int64(19),
+					"_count": 0,
+					"_group": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -236,16 +244,18 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDiffe
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age": int64(32),
-				"C1":  2,
-				"C2":  0,
-			},
-			{
-				"Age": int64(19),
-				"C1":  0,
-				"C2":  1,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age": int64(32),
+					"C1":  2,
+					"C2":  0,
+				},
+				{
+					"Age": int64(19),
+					"C1":  0,
+					"C2":  1,
+				},
 			},
 		},
 	}

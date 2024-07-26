@@ -83,10 +83,12 @@ func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{"name": "The Client"},
-			{"name": "Painted House"},
-			{"name": "A Time for Mercy"},
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{"name": "The Client"},
+				{"name": "Painted House"},
+				{"name": "A Time for Mercy"},
+			},
 		},
 	}
 
@@ -160,10 +162,12 @@ func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{"name": "The Client"},
-			{"name": "Painted House"},
-			{"name": "A Time for Mercy"},
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{"name": "The Client"},
+				{"name": "Painted House"},
+				{"name": "A Time for Mercy"},
+			},
 		},
 	}
 
@@ -242,10 +246,12 @@ func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{"name": "The Client"},
-			{"name": "Painted House"},
-			{"name": "A Time for Mercy"},
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{"name": "The Client"},
+				{"name": "Painted House"},
+				{"name": "A Time for Mercy"},
+			},
 		},
 	}
 
@@ -319,9 +325,11 @@ func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "John Grisham",
+				},
 			},
 		},
 	}

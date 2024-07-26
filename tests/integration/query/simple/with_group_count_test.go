@@ -90,14 +90,16 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 2,
+				},
+				{
+					"Age":    int64(19),
+					"_count": 1,
+				},
 			},
 		},
 	}
@@ -114,7 +116,9 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCol
 						_count(_group: {})
 					}
 				}`,
-		Results: []map[string]any{},
+		Results: map[string]any{
+			"Users": []map[string]any{},
+		},
 	}
 
 	executeTestCase(t, test)
@@ -148,25 +152,27 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 2,
+					"_group": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
 					},
 				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				{
+					"Age":    int64(19),
+					"_count": 1,
+					"_group": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
 				},
 			},
@@ -232,14 +238,16 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":   int64(32),
-				"Count": 2,
-			},
-			{
-				"Age":   int64(19),
-				"Count": 1,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":   int64(32),
+					"Count": 2,
+				},
+				{
+					"Age":   int64(19),
+					"Count": 1,
+				},
 			},
 		},
 	}
@@ -275,16 +283,18 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"Count1": 2,
-				"Count2": 2,
-			},
-			{
-				"Age":    int64(19),
-				"Count1": 1,
-				"Count2": 1,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"Count1": 2,
+					"Count2": 2,
+				},
+				{
+					"Age":    int64(19),
+					"Count1": 1,
+					"Count2": 1,
+				},
 			},
 		},
 	}

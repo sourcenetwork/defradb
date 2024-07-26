@@ -47,31 +47,33 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Age": int64(55),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Alice",
+					"_group": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-					{
-						"Age": int64(32),
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Age": int64(25),
+						},
+						{
+							"Age": int64(32),
+						},
 					},
 				},
 			},
@@ -112,31 +114,33 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Age": int64(55),
+						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(32),
-					},
-					{
-						"Age": int64(25),
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Age": int64(32),
+						},
+						{
+							"Age": int64(25),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Alice",
+					"_group": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
 			},
@@ -177,31 +181,33 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-					{
-						"Age": int64(32),
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Age": int64(25),
+						},
+						{
+							"Age": int64(32),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Age": int64(55),
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_group": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
 			},
@@ -254,52 +260,54 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group": []map[string]any{
-							{
-								"Age": int64(32),
-							},
-							{
-								"Age": int64(25),
-							},
-						},
-					},
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(34),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(32),
+								},
+								{
+									"Age": int64(25),
+								},
 							},
 						},
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group": []map[string]any{
-							{
-								"Age": int64(55),
+						{
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(34),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(19),
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(19),
+								},
 							},
 						},
 					},
@@ -356,52 +364,54 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(34),
-							},
-							{
-								"Age": int64(25),
-							},
-						},
-					},
-					{
-						"Verified": true,
-						"_group": []map[string]any{
-							{
-								"Age": int64(32),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(34),
+								},
+								{
+									"Age": int64(25),
+								},
 							},
 						},
-					},
-				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(19),
+						{
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(32),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group": []map[string]any{
-							{
-								"Age": int64(55),
+				{
+					"Name": "Alice",
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(19),
+								},
+							},
+						},
+					},
+				},
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
+								},
 							},
 						},
 					},

@@ -56,14 +56,16 @@ func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 							height
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid":    "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
-						"height": int64(2),
-					},
-					{
-						"cid":    "bafyreibpiyrugj4gku336wp5lvcw3fgyxqpjvugm3t4z7v5h3ulwxs3x2y",
-						"height": int64(3),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid":    "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+							"height": int64(2),
+						},
+						{
+							"cid":    "bafyreibpiyrugj4gku336wp5lvcw3fgyxqpjvugm3t4z7v5h3ulwxs3x2y",
+							"height": int64(3),
+						},
 					},
 				},
 			},

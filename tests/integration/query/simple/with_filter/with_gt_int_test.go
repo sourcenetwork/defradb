@@ -38,10 +38,12 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "John",
+						"Age":  int64(21),
+					},
 				},
 			},
 		},
@@ -65,7 +67,9 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{},
+			Results: map[string]any{
+				"Users": []map[string]any{},
+			},
 		},
 		{
 			Description: "Simple query with basic filter(age), multiple results",
@@ -87,14 +91,16 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
-				},
-				{
-					"Name": "Bob",
-					"Age":  int64(32),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "John",
+						"Age":  int64(21),
+					},
+					{
+						"Name": "Bob",
+						"Age":  int64(32),
+					},
 				},
 			},
 		},
@@ -124,9 +130,11 @@ func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}

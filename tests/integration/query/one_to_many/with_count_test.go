@@ -36,10 +36,12 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":   "John Grisham",
-					"_count": 0,
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"name":   "John Grisham",
+						"_count": 0,
+					},
 				},
 			},
 		},
@@ -86,14 +88,16 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":   "Cornelia Funke",
-					"_count": 1,
-				},
-				{
-					"name":   "John Grisham",
-					"_count": 2,
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"name":   "Cornelia Funke",
+						"_count": 1,
+					},
+					{
+						"name":   "John Grisham",
+						"_count": 2,
+					},
 				},
 			},
 		},

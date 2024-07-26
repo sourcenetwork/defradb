@@ -66,18 +66,20 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"age":  int64(65),
-				"published": []map[string]any{
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "John Grisham",
+					"age":  int64(65),
+					"published": []map[string]any{
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
 					},
 				},
 			},
@@ -135,28 +137,30 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Cornelia Funke",
-				"age":  int64(62),
-				"published": []map[string]any{
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Cornelia Funke",
+					"age":  int64(62),
+					"published": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
 					},
 				},
-			},
-			{
-				"name": "John Grisham",
-				"age":  int64(65),
-				"published": []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
+				{
+					"name": "John Grisham",
+					"age":  int64(65),
+					"published": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
 					},
 				},
 			},

@@ -19,16 +19,20 @@ import (
 
 var topLevelSumPattern = dataMap{
 	"explain": dataMap{
-		"topLevelNode": []dataMap{
+		"operationNode": []dataMap{
 			{
-				"selectTopNode": dataMap{
-					"selectNode": dataMap{
-						"scanNode": dataMap{},
+				"topLevelNode": []dataMap{
+					{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
+					},
+					{
+						"sumNode": dataMap{},
 					},
 				},
-			},
-			{
-				"sumNode": dataMap{},
 			},
 		},
 	},
@@ -52,7 +56,7 @@ func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
 					)
 				}`,
 
-				ExpectedPatterns: []dataMap{topLevelSumPattern},
+				ExpectedPatterns: topLevelSumPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -114,7 +118,7 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 					)
 				}`,
 
-				ExpectedPatterns: []dataMap{topLevelSumPattern},
+				ExpectedPatterns: topLevelSumPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

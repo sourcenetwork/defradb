@@ -40,11 +40,13 @@ func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":      "John",
-				"Age":       int64(21),
-				"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":      "John",
+					"Age":       int64(21),
+					"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+				},
 			},
 		},
 	}
@@ -80,11 +82,13 @@ func TestQuerySimpleWithDateTimeEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":      "Fred",
-				"Age":       int64(44),
-				"CreatedAt": nil,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":      "Fred",
+					"Age":       int64(44),
+					"CreatedAt": nil,
+				},
 			},
 		},
 	}

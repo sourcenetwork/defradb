@@ -37,10 +37,12 @@ func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(21),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
 			},
 		},
 	}
@@ -72,10 +74,12 @@ func TestQuerySimpleWithIntEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Fred",
-				"Age":  nil,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Fred",
+					"Age":  nil,
+				},
 			},
 		},
 	}

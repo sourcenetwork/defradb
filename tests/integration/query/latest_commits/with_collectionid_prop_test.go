@@ -41,9 +41,11 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 							collectionID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"collectionID": int64(1),
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
+						{
+							"collectionID": int64(1),
+						},
 					},
 				},
 			},
@@ -53,9 +55,11 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 							collectionID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"collectionID": int64(2),
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
+						{
+							"collectionID": int64(2),
+						},
 					},
 				},
 			},

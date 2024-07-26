@@ -63,9 +63,11 @@ func TestColDescrUpdateReplaceName_GivenExistingName(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Actors": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -197,9 +199,11 @@ func TestColDescrUpdateReplaceName_RemoveExistingName(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Actors": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

@@ -19,11 +19,15 @@ import (
 
 var debugCountTypeIndexJoinManyPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"countNode": dataMap{
-				"selectNode": dataMap{
-					"typeIndexJoin": dataMap{
-						"typeJoinMany": normalTypeJoinPattern,
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"countNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": dataMap{
+								"typeJoinMany": normalTypeJoinPattern,
+							},
+						},
 					},
 				},
 			},
@@ -48,7 +52,7 @@ func TestDebugExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugCountTypeIndexJoinManyPattern},
+				ExpectedPatterns: debugCountTypeIndexJoinManyPattern,
 			},
 		},
 	}
@@ -76,21 +80,23 @@ func TestDebugExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *te
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"countNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": dataMap{
-													"typeJoinMany": debugTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"countNode": dataMap{
+										"selectNode": dataMap{
+											"parallelNode": []dataMap{
+												{
+													"typeIndexJoin": dataMap{
+														"typeJoinMany": debugTypeJoinPattern,
+													},
 												},
-											},
-											{
-												"typeIndexJoin": dataMap{
-													"typeJoinMany": debugTypeJoinPattern,
+												{
+													"typeIndexJoin": dataMap{
+														"typeJoinMany": debugTypeJoinPattern,
+													},
 												},
 											},
 										},

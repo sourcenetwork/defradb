@@ -70,25 +70,27 @@ func TestDebugExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"parallelNode": []dataMap{
-										{
-											"typeIndexJoin": dataMap{
-												"typeJoinOne": debugTypeJoinPattern,
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": dataMap{
+													"typeJoinOne": debugTypeJoinPattern,
+												},
 											},
-										},
-										{
-											"typeIndexJoin": dataMap{
-												"typeJoinMany": debugTypeJoinPattern,
+											{
+												"typeIndexJoin": dataMap{
+													"typeJoinMany": debugTypeJoinPattern,
+												},
 											},
-										},
-										{
-											"typeIndexJoin": dataMap{
-												"typeJoinOne": debugTypeJoinPattern,
+											{
+												"typeIndexJoin": dataMap{
+													"typeJoinOne": debugTypeJoinPattern,
+												},
 											},
 										},
 									},

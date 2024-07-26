@@ -43,7 +43,9 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,7 +82,9 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 						fax
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -124,11 +128,13 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// It is important to test this with data, to ensure the type has been substituted correctly
-						"age": int64(3),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// It is important to test this with data, to ensure the type has been substituted correctly
+							"age": int64(3),
+						},
 					},
 				},
 			},

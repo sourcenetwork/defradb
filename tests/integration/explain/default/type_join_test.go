@@ -57,20 +57,22 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"parallelNode": []dataMap{
-										{
-											"typeIndexJoin": normalTypeJoinPattern,
-										},
-										{
-											"typeIndexJoin": normalTypeJoinPattern,
-										},
-										{
-											"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
 										},
 									},
 								},

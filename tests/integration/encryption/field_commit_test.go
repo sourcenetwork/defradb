@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -36,21 +37,23 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta":     encrypt(testUtils.CBORValue(21), john21DocID, "age"),
-						"docID":     john21DocID,
-						"fieldName": "age",
-					},
-					{
-						"delta":     testUtils.CBORValue("John"),
-						"docID":     john21DocID,
-						"fieldName": "name",
-					},
-					{
-						"delta":     nil,
-						"docID":     john21DocID,
-						"fieldName": nil,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, "age"),
+							"docID":     john21DocID,
+							"fieldName": "age",
+						},
+						{
+							"delta":     testUtils.CBORValue("John"),
+							"docID":     john21DocID,
+							"fieldName": "name",
+						},
+						{
+							"delta":     nil,
+							"docID":     john21DocID,
+							"fieldName": nil,
+						},
 					},
 				},
 			},
@@ -102,11 +105,13 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 						}
 					}
 				`,
-				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result []map[string]any) (bool, string) {
-					name1 := deltaForField("name1", result)
-					name2 := deltaForField("name2", result)
-					name3 := deltaForField("name3", result)
-					name4 := deltaForField("name4", result)
+				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
+					commits, ok := result["commits"].([]map[string]any)
+					require.True(t, ok)
+					name1 := deltaForField("name1", commits)
+					name2 := deltaForField("name2", commits)
+					name3 := deltaForField("name3", commits)
+					name4 := deltaForField("name4", commits)
 					assert.Equal(t, name2, name4, "name2 and name4 should have the same encryption key")
 					assert.NotEqual(t, name2, name1, "name2 and name1 should have different encryption keys")
 					assert.NotEqual(t, name2, name3, "name2 and name3 should have different encryption keys")
@@ -171,11 +176,13 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 						}
 					}
 				`,
-				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result []map[string]any) (bool, string) {
-					name1 := deltaForField("name1", result)
-					name2 := deltaForField("name2", result)
-					name3 := deltaForField("name3", result)
-					name4 := deltaForField("name4", result)
+				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
+					commits, ok := result["commits"].([]map[string]any)
+					require.True(t, ok)
+					name1 := deltaForField("name1", commits)
+					name2 := deltaForField("name2", commits)
+					name3 := deltaForField("name3", commits)
+					name4 := deltaForField("name4", commits)
 					assert.Equal(t, name2, name4, "name2 and name4 should have the same encryption key")
 					assert.NotEqual(t, name2, name1, "name2 and name1 should have different encryption keys")
 					assert.NotEqual(t, name2, name3, "name2 and name3 should have different encryption keys")

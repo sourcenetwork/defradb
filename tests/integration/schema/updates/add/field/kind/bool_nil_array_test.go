@@ -43,7 +43,9 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -82,10 +84,12 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+						},
 					},
 				},
 			},
@@ -126,10 +130,12 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *tes
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+						},
 					},
 				},
 			},

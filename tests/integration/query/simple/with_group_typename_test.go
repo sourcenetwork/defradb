@@ -32,10 +32,12 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":       "John",
-				"__typename": "Users",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":       "John",
+					"__typename": "Users",
+				},
 			},
 		},
 	}
@@ -61,12 +63,14 @@ func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"__typename": "Users",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"__typename": "Users",
+						},
 					},
 				},
 			},

@@ -49,9 +49,11 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 			            _docID
 			        }
 			    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+				Results: map[string]any{
+					"delete_Book": []map[string]any{
+						{
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+						},
 					},
 				},
 			},
@@ -70,11 +72,13 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID":    "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-						"name":      "Website",
-						"published": nil,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"_docID":    "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+							"name":      "Website",
+							"published": nil,
+						},
 					},
 				},
 			},
@@ -115,9 +119,11 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 			            _docID
 			        }
 			    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+				Results: map[string]any{
+					"delete_Book": []map[string]any{
+						{
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+						},
 					},
 				},
 			},
@@ -136,7 +142,9 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Book": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -175,9 +183,11 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 			            _docID
 			        }
 			    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+				Results: map[string]any{
+					"delete_Book": []map[string]any{
+						{
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+						},
 					},
 				},
 			},
@@ -194,13 +204,15 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-						"name":   "Website",
-						"published": map[string]any{
-							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
-							"name":   "Book By Website",
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+							"name":   "Website",
+							"published": map[string]any{
+								"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+								"name":   "Book By Website",
+							},
 						},
 					},
 				},
@@ -220,11 +232,13 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID":    "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-						"name":      "Website",
-						"published": nil,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"_docID":    "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+							"name":      "Website",
+							"published": nil,
+						},
 					},
 				},
 			},
@@ -265,9 +279,11 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 			            _docID
 			        }
 			    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+				Results: map[string]any{
+					"delete_Book": []map[string]any{
+						{
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+						},
 					},
 				},
 			},
@@ -284,13 +300,15 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
-						"name":   "Book By Website",
-						"publisher": map[string]any{
-							"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-							"name":   "Website",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"_docID": "bae-e7943028-5c74-5fd4-9661-0a233edcd287",
+							"name":   "Book By Website",
+							"publisher": map[string]any{
+								"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+								"name":   "Website",
+							},
 						},
 					},
 				},
@@ -310,7 +328,9 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 						}
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Book": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -350,9 +370,11 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 			            _docID
 			        }
 			    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+				Results: map[string]any{
+					"delete_Publisher": []map[string]any{
+						{
+							"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+						},
 					},
 				},
 			},
@@ -371,7 +393,9 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 						}
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Publisher": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -411,9 +435,11 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 			            _docID
 			        }
 			    }`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+				Results: map[string]any{
+					"delete_Publisher": []map[string]any{
+						{
+							"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+						},
 					},
 				},
 			},
@@ -432,11 +458,13 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID":    "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
-						"name":      "Book By Online",
-						"publisher": nil,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"_docID":    "bae-7f6a5a76-b90d-5715-a452-708ded9e7ae7",
+							"name":      "Book By Online",
+							"publisher": nil,
+						},
 					},
 				},
 			},
