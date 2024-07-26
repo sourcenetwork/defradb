@@ -259,7 +259,7 @@ func (c *collection) makeSelectionPlan(
 		txn,
 	)
 
-	return planner.MakeSelectionPlain(slct)
+	return planner.MakeSelectionPlan(slct)
 }
 
 func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {

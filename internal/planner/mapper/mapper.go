@@ -1248,7 +1248,12 @@ func ToMutation(ctx context.Context, store client.Store, mutationRequest *reques
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func toMutation(ctx context.Context, store client.Store, mutationRequest *request.ObjectMutation, thisIndex int) (*Mutation, error) {
+func toMutation(
+	ctx context.Context,
+	store client.Store,
+	mutationRequest *request.ObjectMutation,
+	thisIndex int,
+) (*Mutation, error) {
 	underlyingSelect, err := toSelect(ctx, store, ObjectSelection, thisIndex, mutationRequest.ToSelect(), "")
 	if err != nil {
 		return nil, err

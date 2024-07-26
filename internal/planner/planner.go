@@ -488,7 +488,8 @@ func (p *Planner) executeRequest(
 	return docs, err
 }
 
-func (p *Planner) RunSubscription(
+// RunSelection runs a selection and returns the result(s).
+func (p *Planner) RunSelection(
 	ctx context.Context,
 	sel *request.Select,
 ) ([]map[string]any, error) {
@@ -542,7 +543,9 @@ func (p *Planner) RunRequest(
 //
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
-func (p *Planner) MakeSelectionPlain(selection *request.Select) (planNode, error) {
+//
+// @TODO {defradb/issues/368}: Test this exported function.
+func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error) {
 	s, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, selection)
 	if err != nil {
 		return nil, err
