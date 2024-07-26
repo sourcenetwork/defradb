@@ -568,11 +568,13 @@ func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error)
 //
 // @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
+	// TODO handle multiple operation statements
+	// https://github.com/sourcenetwork/defradb/issues/1395
 	var operation *request.OperationDefinition
 	if len(req.Mutations) > 0 {
-		operation = req.Mutations[0] // @todo: handle multiple mutation operation statements
+		operation = req.Mutations[0]
 	} else if len(req.Queries) > 0 {
-		operation = req.Queries[0] // @todo, handle multiple query operation statements
+		operation = req.Queries[0]
 	} else {
 		return nil, ErrMissingQueryOrMutation
 	}

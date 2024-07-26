@@ -10,7 +10,10 @@
 
 package mapper
 
-import "github.com/sourcenetwork/defradb/internal/core"
+import (
+	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/core"
+)
 
 // Operation represents an operation such as query or mutation.
 //
@@ -28,4 +31,19 @@ type Operation struct {
 
 	// CommitSelects is the list of commit selections in the operation.
 	CommitSelects []*CommitSelect
+}
+
+// addSelection adds a new selection to the operation's document mapping.
+// The request.Field is used as the key for the core.RenderKey and the Select
+// document mapping is added as a child field.
+func (o *Operation) addSelection(i int, f request.Field, s Select) {
+	renderKey := core.RenderKey{Index: i}
+	if f.Alias.HasValue() {
+		renderKey.Key = f.Alias.Value()
+	} else {
+		renderKey.Key = f.Name
+	}
+	o.DocumentMapping.Add(i, s.Name)
+	o.DocumentMapping.SetChildAt(i, s.DocumentMapping)
+	o.DocumentMapping.RenderKeys = append(o.DocumentMapping.RenderKeys, renderKey)
 }

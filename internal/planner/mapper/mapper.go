@@ -61,48 +61,24 @@ func ToOperation(
 			if err != nil {
 				return nil, err
 			}
-			renderKey := core.RenderKey{Index: i}
-			if t.Alias.HasValue() {
-				renderKey.Key = t.Alias.Value()
-			} else {
-				renderKey.Key = t.Name
-			}
 			operation.CommitSelects = append(operation.CommitSelects, s)
-			operation.DocumentMapping.Add(i, s.Name)
-			operation.DocumentMapping.SetChildAt(i, s.DocumentMapping)
-			operation.DocumentMapping.RenderKeys = append(operation.DocumentMapping.RenderKeys, renderKey)
+			operation.addSelection(i, t.Field, s.Select)
 
 		case *request.Select:
 			s, err := toSelect(ctx, store, ObjectSelection, i, t, "")
 			if err != nil {
 				return nil, err
 			}
-			renderKey := core.RenderKey{Index: i}
-			if t.Alias.HasValue() {
-				renderKey.Key = t.Alias.Value()
-			} else {
-				renderKey.Key = t.Name
-			}
 			operation.Selects = append(operation.Selects, s)
-			operation.DocumentMapping.Add(i, s.Name)
-			operation.DocumentMapping.SetChildAt(i, s.DocumentMapping)
-			operation.DocumentMapping.RenderKeys = append(operation.DocumentMapping.RenderKeys, renderKey)
+			operation.addSelection(i, t.Field, *s)
 
 		case *request.ObjectMutation:
 			m, err := toMutation(ctx, store, t, i)
 			if err != nil {
 				return nil, err
 			}
-			renderKey := core.RenderKey{Index: i}
-			if t.Alias.HasValue() {
-				renderKey.Key = t.Alias.Value()
-			} else {
-				renderKey.Key = t.Name
-			}
 			operation.Mutations = append(operation.Mutations, m)
-			operation.DocumentMapping.Add(i, m.Name)
-			operation.DocumentMapping.SetChildAt(i, m.DocumentMapping)
-			operation.DocumentMapping.RenderKeys = append(operation.DocumentMapping.RenderKeys, renderKey)
+			operation.addSelection(i, t.Field, m.Select)
 		}
 	}
 
