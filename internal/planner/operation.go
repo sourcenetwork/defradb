@@ -24,8 +24,9 @@ type operationNode struct {
 	documentIterator
 	docMapper
 
-	children []planNode
-	isDone   bool
+	children     []planNode
+	childIndexes []int
+	isDone       bool
 }
 
 func (n *operationNode) Spans(spans core.Spans) {
@@ -106,7 +107,7 @@ func (n *operationNode) Next() (bool, error) {
 			if !hasChild {
 				return false, ErrMissingChildValue
 			}
-			n.currentValue = child.Value()
+			n.currentValue.Fields[n.childIndexes[i]] = child.Value().Fields[0]
 
 		default:
 			var docs []core.Doc
@@ -120,7 +121,7 @@ func (n *operationNode) Next() (bool, error) {
 				}
 				docs = append(docs, child.Value())
 			}
-			n.currentValue.Fields[i] = docs
+			n.currentValue.Fields[n.childIndexes[i]] = docs
 		}
 	}
 
@@ -131,6 +132,7 @@ func (n *operationNode) Next() (bool, error) {
 // Operation creates a new operationNode using the given Selects.
 func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error) {
 	var children []planNode
+	var childIndexes []int
 
 	for _, s := range operation.Selects {
 		if _, isAgg := request.Aggregates[s.Name]; isAgg {
@@ -142,12 +144,14 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 				return nil, err
 			}
 			children = append(children, child)
+			childIndexes = append(childIndexes, s.Index)
 		} else {
 			child, err := p.Select(s)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, child)
+			childIndexes = append(childIndexes, s.Index)
 		}
 	}
 
@@ -157,6 +161,7 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 			return nil, err
 		}
 		children = append(children, child)
+		childIndexes = append(childIndexes, m.Index)
 	}
 
 	for _, s := range operation.CommitSelects {
@@ -165,6 +170,7 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 			return nil, err
 		}
 		children = append(children, child)
+		childIndexes = append(childIndexes, s.Index)
 	}
 
 	if len(children) == 0 {
@@ -172,7 +178,8 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 	}
 
 	return &operationNode{
-		docMapper: docMapper{operation.DocumentMapping},
-		children:  children,
+		docMapper:    docMapper{operation.DocumentMapping},
+		children:     children,
+		childIndexes: childIndexes,
 	}, nil
 }
