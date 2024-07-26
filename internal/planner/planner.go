@@ -110,56 +110,6 @@ func New(
 	}
 }
 
-func (p *Planner) newPlan(stmt any) (planNode, error) {
-	switch n := stmt.(type) {
-	case *request.Request:
-		if len(n.Queries) > 0 {
-			return p.newPlan(n.Queries[0]) // @todo, handle multiple query operation statements
-		} else if len(n.Mutations) > 0 {
-			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation operation statements
-		} else {
-			return nil, ErrMissingQueryOrMutation
-		}
-
-	case *request.OperationDefinition:
-		if len(n.Selections) == 0 {
-			return nil, ErrOperationDefinitionMissingSelection
-		}
-		return p.newPlan(n.Selections[0])
-
-	case *request.Select:
-		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, n)
-		if err != nil {
-			return nil, err
-		}
-
-		if _, isAgg := request.Aggregates[n.Name]; isAgg {
-			// If this Select is an aggregate, then it must be a top-level
-			// aggregate and we need to resolve it within the context of a
-			// top-level node.
-			return p.Top(m)
-		}
-
-		return p.Select(m)
-
-	case *request.CommitSelect:
-		m, err := mapper.ToCommitSelect(p.ctx, p.db, n)
-		if err != nil {
-			return nil, err
-		}
-		return p.CommitSelect(m)
-
-	case *request.ObjectMutation:
-		m, err := mapper.ToMutation(p.ctx, p.db, n)
-		if err != nil {
-			return nil, err
-		}
-		return p.newObjectMutationPlan(m)
-	}
-
-	return nil, client.NewErrUnhandledType("statement", stmt)
-}
-
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
 	case mapper.CreateObjects:
@@ -174,23 +124,6 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 	default:
 		return nil, client.NewErrUnhandledType("mutation", stmt.Type)
 	}
-}
-
-// makePlan creates a new plan from the parsed data, optimizes the plan and returns
-// it. The caller of makePlan is also responsible of calling Close() on the plan to
-// free it's resources.
-func (p *Planner) makePlan(stmt any) (planNode, error) {
-	planNode, err := p.newPlan(stmt)
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.optimizePlan(planNode)
-	if err != nil {
-		return nil, err
-	}
-
-	return planNode, err
 }
 
 // optimizePlan optimizes the plan using plan expansion and wiring.
@@ -555,12 +488,24 @@ func (p *Planner) executeRequest(
 	return docs, err
 }
 
+func (p *Planner) RunSubscription(
+	ctx context.Context,
+	sel *request.Select,
+) ([]map[string]any, error) {
+	req := &request.Request{
+		Queries: []*request.OperationDefinition{{
+			Selections: []request.Selection{sel},
+		}},
+	}
+	return p.RunRequest(ctx, req)
+}
+
 // RunRequest classifies the type of request to run, runs it, and then returns the result(s).
 func (p *Planner) RunRequest(
 	ctx context.Context,
 	req *request.Request,
-) (result []map[string]any, err error) {
-	planNode, err := p.makePlan(req)
+) ([]map[string]any, error) {
+	planNode, err := p.MakePlan(req)
 	if err != nil {
 		return nil, err
 	}
@@ -593,32 +538,24 @@ func (p *Planner) RunRequest(
 	return p.executeRequest(ctx, planNode)
 }
 
-// RunSubscriptionRequest plans a request specific to a subscription and returns the result.
-func (p *Planner) RunSubscriptionRequest(
-	ctx context.Context,
-	request *request.Select,
-) (result []map[string]any, err error) {
-	planNode, err := p.makePlan(request)
+// MakeSelectionPlan makes a plan for a single selection.
+//
+// Note: Caller is responsible to call the `Close()` method to free the allocated
+// resources of the returned plan.
+func (p *Planner) MakeSelectionPlain(selection *request.Select) (planNode, error) {
+	s, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, selection)
 	if err != nil {
 		return nil, err
 	}
-
-	defer func() {
-		if e := planNode.Close(); e != nil {
-			err = NewErrFailedToClosePlan(e, "running subscription request")
-		}
-	}()
-
-	err = planNode.Init()
+	planNode, err := p.Select(s)
 	if err != nil {
 		return nil, err
 	}
-
-	data, err := p.executeRequest(ctx, planNode)
+	err = p.optimizePlan(planNode)
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	return planNode, err
 }
 
 // MakePlan makes a plan from the parsed request.
@@ -627,6 +564,26 @@ func (p *Planner) RunSubscriptionRequest(
 // resources of the returned plan.
 //
 // @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(request *request.Request) (planNode, error) {
-	return p.makePlan(request)
+func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
+	var operation *request.OperationDefinition
+	if len(req.Mutations) > 0 {
+		operation = req.Mutations[0] // @todo: handle multiple mutation operation statements
+	} else if len(req.Queries) > 0 {
+		operation = req.Queries[0] // @todo, handle multiple query operation statements
+	} else {
+		return nil, ErrMissingQueryOrMutation
+	}
+	m, err := mapper.ToOperation(p.ctx, p.db, operation)
+	if err != nil {
+		return nil, err
+	}
+	planNode, err := p.Operation(m)
+	if err != nil {
+		return nil, err
+	}
+	err = p.optimizePlan(planNode)
+	if err != nil {
+		return nil, err
+	}
+	return planNode, err
 }

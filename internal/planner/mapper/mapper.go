@@ -41,7 +41,75 @@ const (
 	CommitSelection
 )
 
-// ToSelect converts the given [parser.Select] into a [Select].
+// ToOperation converts the given [request.OperationDefinition] into an [Operation].
+//
+// In the process of doing so it will construct the document map required to access the data
+// yielded by the [Operation].
+func ToOperation(
+	ctx context.Context,
+	store client.Store,
+	operationRequest *request.OperationDefinition,
+) (*Operation, error) {
+	operation := &Operation{
+		DocumentMapping: core.NewDocumentMapping(),
+	}
+
+	for i, s := range operationRequest.Selections {
+		switch t := s.(type) {
+		case *request.CommitSelect:
+			s, err := toCommitSelect(ctx, store, t, i)
+			if err != nil {
+				return nil, err
+			}
+			renderKey := core.RenderKey{Index: i}
+			if t.Alias.HasValue() {
+				renderKey.Key = t.Alias.Value()
+			} else {
+				renderKey.Key = t.Name
+			}
+			operation.CommitSelects = append(operation.CommitSelects, s)
+			operation.DocumentMapping.Add(i, s.Name)
+			operation.DocumentMapping.SetChildAt(i, s.DocumentMapping)
+			operation.DocumentMapping.RenderKeys = append(operation.DocumentMapping.RenderKeys, renderKey)
+
+		case *request.Select:
+			s, err := toSelect(ctx, store, ObjectSelection, i, t, "")
+			if err != nil {
+				return nil, err
+			}
+			renderKey := core.RenderKey{Index: i}
+			if t.Alias.HasValue() {
+				renderKey.Key = t.Alias.Value()
+			} else {
+				renderKey.Key = t.Name
+			}
+			operation.Selects = append(operation.Selects, s)
+			operation.DocumentMapping.Add(i, s.Name)
+			operation.DocumentMapping.SetChildAt(i, s.DocumentMapping)
+			operation.DocumentMapping.RenderKeys = append(operation.DocumentMapping.RenderKeys, renderKey)
+
+		case *request.ObjectMutation:
+			m, err := toMutation(ctx, store, t, i)
+			if err != nil {
+				return nil, err
+			}
+			renderKey := core.RenderKey{Index: i}
+			if t.Alias.HasValue() {
+				renderKey.Key = t.Alias.Value()
+			} else {
+				renderKey.Key = t.Name
+			}
+			operation.Mutations = append(operation.Mutations, m)
+			operation.DocumentMapping.Add(i, m.Name)
+			operation.DocumentMapping.SetChildAt(i, m.DocumentMapping)
+			operation.DocumentMapping.RenderKeys = append(operation.DocumentMapping.RenderKeys, renderKey)
+		}
+	}
+
+	return operation, nil
+}
+
+// ToSelect converts the given [request.Select] into a [Select].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select].
@@ -1142,7 +1210,20 @@ func ToCommitSelect(
 	store client.Store,
 	selectRequest *request.CommitSelect,
 ) (*CommitSelect, error) {
-	underlyingSelect, err := ToSelect(ctx, store, CommitSelection, selectRequest.ToSelect())
+	return toCommitSelect(ctx, store, selectRequest, 0)
+}
+
+// toCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].
+//
+// In the process of doing so it will construct the document map required to access the data
+// yielded by the [Select] embedded in the [CommitSelect].
+func toCommitSelect(
+	ctx context.Context,
+	store client.Store,
+	selectRequest *request.CommitSelect,
+	thisIndex int,
+) (*CommitSelect, error) {
+	underlyingSelect, err := toSelect(ctx, store, CommitSelection, thisIndex, selectRequest.ToSelect(), "")
 	if err != nil {
 		return nil, err
 	}
@@ -1160,11 +1241,18 @@ func ToCommitSelect(
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
 func ToMutation(ctx context.Context, store client.Store, mutationRequest *request.ObjectMutation) (*Mutation, error) {
-	underlyingSelect, err := ToSelect(ctx, store, ObjectSelection, mutationRequest.ToSelect())
+	return toMutation(ctx, store, mutationRequest, 0)
+}
+
+// toMutation converts the given [request.Mutation] into a [Mutation].
+//
+// In the process of doing so it will construct the document map required to access the data
+// yielded by the [Select] embedded in the [Mutation].
+func toMutation(ctx context.Context, store client.Store, mutationRequest *request.ObjectMutation, thisIndex int) (*Mutation, error) {
+	underlyingSelect, err := toSelect(ctx, store, ObjectSelection, thisIndex, mutationRequest.ToSelect(), "")
 	if err != nil {
 		return nil, err
 	}
-
 	return &Mutation{
 		Select:        *underlyingSelect,
 		Type:          MutationType(mutationRequest.Type),

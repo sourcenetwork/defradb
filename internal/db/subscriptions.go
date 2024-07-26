@@ -70,7 +70,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			p := planner.New(ctx, identity, db.acp, db, txn)
 			s := subRequest.ToSelect(evt.DocID, evt.Cid.String())
 
-			result, err := p.RunSubscriptionRequest(ctx, s)
+			result, err := p.RunSubscription(ctx, s)
 			if err == nil && len(result) == 0 {
 				txn.Discard(ctx)
 				continue // Don't send anything back to the client if the request yields an empty dataset.

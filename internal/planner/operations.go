@@ -34,9 +34,11 @@ var (
 	_ planNode = (*valuesNode)(nil)
 	_ planNode = (*viewNode)(nil)
 	_ planNode = (*lensNode)(nil)
+	_ planNode = (*operationNode)(nil)
 
 	_ MultiNode = (*parallelNode)(nil)
 	_ MultiNode = (*topLevelNode)(nil)
+	_ MultiNode = (*operationNode)(nil)
 )
 
 // type joinNode struct {
