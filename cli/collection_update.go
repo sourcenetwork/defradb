@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"encoding/json"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -48,8 +50,12 @@ Example: update private docID, with identity:
 			}
 
 			switch {
-			case filter != "" && updater != "":
-				res, err := col.UpdateWithFilter(cmd.Context(), filter, updater)
+			case filter != "" || updater != "":
+				var filterValue any
+				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+					return err
+				}
+				res, err := col.UpdateWithFilter(cmd.Context(), filterValue, updater)
 				if err != nil {
 					return err
 				}
