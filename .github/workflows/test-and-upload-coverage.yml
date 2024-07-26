@@ -179,6 +179,9 @@ jobs:
         with:
           repository: sourcenetwork/sourcehub
           path: _sourceHub
+          # Lock the sourcehub version until the dev branch is stable
+          # remove this when closed https://github.com/sourcenetwork/defradb/issues/2865
+          ref: c232133c35c96924509a4d955a7b450eb3624a15
 
       - name: Install SourceHub CLI
         if: ${{ matrix.acp-type == 'source-hub' }}
