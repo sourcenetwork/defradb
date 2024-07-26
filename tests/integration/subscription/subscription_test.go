@@ -28,16 +28,20 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
+				Results: [][]map[string]any{
 					{
-						"_docID": "bae-b3ce089b-f543-5984-be9f-ad7d08969f4e",
-						"age":    int64(27),
-						"name":   "John",
+						{
+							"_docID": "bae-b3ce089b-f543-5984-be9f-ad7d08969f4e",
+							"age":    int64(27),
+							"name":   "John",
+						},
 					},
 					{
-						"_docID": "bae-bc20b854-10b3-5408-b28c-f273ddda9434",
-						"age":    int64(31),
-						"name":   "Addo",
+						{
+							"_docID": "bae-bc20b854-10b3-5408-b28c-f273ddda9434",
+							"age":    int64(31),
+							"name":   "Addo",
+						},
 					},
 				},
 			},
@@ -82,10 +86,12 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
+				Results: [][]map[string]any{
 					{
-						"age":  int64(27),
-						"name": "John",
+						{
+							"age":  int64(27),
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -119,7 +125,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: [][]map[string]any{},
 			},
 			testUtils.Request{
 				Request: `mutation {
@@ -150,10 +156,12 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
+				Results: [][]map[string]any{
 					{
-						"age":  int64(27),
-						"name": "John",
+						{
+							"age":  int64(27),
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -217,11 +225,13 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
+				Results: [][]map[string]any{
 					{
-						"age":    int64(27),
-						"name":   "John",
-						"points": float64(45),
+						{
+							"age":    int64(27),
+							"name":   "John",
+							"points": float64(45),
+						},
 					},
 				},
 			},
@@ -273,16 +283,20 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
+				Results: [][]map[string]any{
 					{
-						"age":    int64(31),
-						"name":   "Addo",
-						"points": float64(55),
+						{
+							"age":    int64(31),
+							"name":   "Addo",
+							"points": float64(55),
+						},
 					},
 					{
-						"age":    int64(27),
-						"name":   "John",
-						"points": float64(55),
+						{
+							"age":    int64(27),
+							"name":   "John",
+							"points": float64(55),
+						},
 					},
 				},
 			},

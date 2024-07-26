@@ -616,7 +616,7 @@ type SubscriptionRequest struct {
 	Request string
 
 	// The expected (data) results yielded through the subscription across its lifetime.
-	Results []map[string]any
+	Results [][]map[string]any
 
 	// Any error expected from the action. Optional.
 	//
