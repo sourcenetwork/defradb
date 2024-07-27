@@ -461,13 +461,7 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 }
 
 func (p *Peer) handleEncryptionKeyRequest(evt encryption.RequestKeyEvent) error {
-	req := &pb.FetchEncryptionKeyRequest{
-		DocID:      []byte(evt.DocID),
-		Cid:        evt.Cid.Bytes(),
-		SchemaRoot: []byte(evt.SchemaRoot),
-	}
-
-	if err := p.server.requestEncryptionKey(p.ctx, req); err != nil {
+	if err := p.server.requestEncryptionKey(p.ctx, evt.DocID, evt.Cid, evt.SchemaRoot); err != nil {
 		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 	}
 
