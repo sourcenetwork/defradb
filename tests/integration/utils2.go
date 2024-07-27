@@ -308,6 +308,9 @@ func performAction(
 	case UpdateDoc:
 		updateDoc(s, action)
 
+	case UpdateWithFilter:
+		updateWithFilter(s, action)
+
 	case CreateIndex:
 		createIndex(s, action)
 
@@ -1469,6 +1472,34 @@ func updateDocViaGQL(
 	return nil
 }
 
+// updateWithFilter updates the set of matched documents.
+func updateWithFilter(s *state, action UpdateWithFilter) {
+	var res *client.UpdateResult
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
+		identity := getIdentity(s, nodeID, action.Identity)
+		ctx := db.SetContextIdentity(s.ctx, identity)
+
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error {
+				var err error
+				res, err = collections[action.CollectionID].UpdateWithFilter(ctx, action.Filter, action.Updater)
+				return err
+			},
+		)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
+		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateWithFilter(s, action, res))
+	}
+}
+
 // createIndex creates a secondary index using the collection api.
 func createIndex(
 	s *state,
@@ -1721,50 +1752,34 @@ func executeSubscriptionRequest(
 		}
 
 		go func() {
-			data := []map[string]any{}
-			errs := []error{}
-
+			var results []*client.GQLResult
 			allActionsAreDone := false
-			expectedDataRecieved := len(action.Results) == 0
-			for {
+			for !allActionsAreDone || len(results) < len(action.Results) {
 				select {
 				case s := <-result.Subscription:
-					sData, _ := s.Data.([]map[string]any)
-					errs = append(errs, s.Errors...)
-					data = append(data, sData...)
-
-					if len(data) >= len(action.Results) {
-						expectedDataRecieved = true
-					}
+					results = append(results, &s)
 
 				case <-s.allActionsDone:
 					allActionsAreDone = true
 				}
+			}
 
-				if expectedDataRecieved && allActionsAreDone {
-					finalResult := &client.GQLResult{
-						Data:   data,
-						Errors: errs,
-					}
+			subscriptionAssert <- func() {
+				for i, r := range action.Results {
+					// This assert should be executed from the main test routine
+					// so that failures will be properly handled.
+					expectedErrorRaised := assertRequestResults(
+						s,
+						results[i],
+						r,
+						action.ExpectedError,
+						nil,
+						// anyof is not yet supported by subscription requests
+						0,
+						map[docFieldKey][]any{},
+					)
 
-					subscriptionAssert <- func() {
-						// This assert should be executed from the main test routine
-						// so that failures will be properly handled.
-						expectedErrorRaised := assertRequestResults(
-							s,
-							finalResult,
-							action.Results,
-							action.ExpectedError,
-							nil,
-							// anyof is not yet supported by subscription requests
-							0,
-							map[docFieldKey][]any{},
-						)
-
-						assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-					}
-
-					return
+					assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 				}
 			}
 		}()
