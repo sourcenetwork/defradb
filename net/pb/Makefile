@@ -5,6 +5,8 @@ PROTOC_GEN_GO := $(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC := $(shell which protoc-gen-go-grpc)
 PROTOC_GEN_GO_VTPROTO := $(shell which protoc-gen-go-vtproto)
 
+LIBP2P_PATH := $(shell go list -f '{{.Dir}}' github.com/libp2p/go-libp2p)
+
 all: $(GO)
 
 deps:
@@ -14,6 +16,9 @@ deps:
 
 %.pb.go: %.proto
 	protoc \
+	-I. \
+	-I$(LIBP2P_PATH) \
+	-I$(GOPATH)/src \
 	--go_out=. --plugin protoc-gen-go="$(PROTOC_GEN_GO)" \
     --go-grpc_out=. --plugin protoc-gen-go-grpc="$(PROTOC_GEN_GO_GRPC)" \
     --go-vtproto_out=. --plugin protoc-gen-go-vtproto="$(PROTOC_GEN_GO_VTPROTO)" \

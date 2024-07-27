@@ -1,6 +1,8 @@
 syntax = "proto3";
 package net.pb;
 
+import "core/crypto/pb/crypto.proto";
+
 option go_package = "/;net_pb";
 
 // Log represents a thread log.
@@ -38,6 +40,17 @@ message PushLogRequest {
     }
 }
 
+// PeerInfo contains information about a specific peer
+message PeerInfo {
+    // id is a libp2p peer identity.
+    bytes id = 1;
+    // addresses is a list of peer's address in multiaddr format
+    // Learn more here https://github.com/multiformats/multiadd
+    repeated string addresses = 2;
+}
+
+// FetchEncryptionKeyRequest is a request to receive a doc encryption key
+// from a peer that holds it.
 message FetchEncryptionKeyRequest {
     // docID is the ID of the document that is affected by the log.
     bytes docID = 1;
@@ -45,18 +58,28 @@ message FetchEncryptionKeyRequest {
     bytes cid = 2;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
     bytes schemaRoot = 3;
+    // publicKey is a public of the requesting peer
+    crypto.pb.PublicKey publicKey = 4;
+    // peerInfo is peer information is the requesting peer
+    PeerInfo peerInfo = 5;
+    // signature is the requesting peer's signature of the request
+    bytes signature = 6;
 }
 
 message GetHeadLogRequest {}
 
 message PushLogReply {}
 
+// FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
+// by a peer that holds the requested doc encryption key.
 message FetchEncryptionKeyReply {
-    bytes encryptionKey = 1;
+    bytes encryptedKey = 1;
     // cid is the CID of the composite of the document.
     bytes cid = 2;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
     bytes schemaRoot = 3;
+    // signature is the responding peer's signature of the reply
+    bytes signature = 4;
 }
 
 message GetHeadLogReply {}
