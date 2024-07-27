@@ -1000,10 +1000,14 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"devices": []map[string]any{
+					"User": []map[string]any{
 						{
-							"owner_id":        testUtils.NewDocIndex(0, 0),
-							"manufacturer_id": testUtils.NewDocIndex(2, 0),
+							"devices": []map[string]any{
+								{
+									"owner_id":        testUtils.NewDocIndex(0, 0),
+									"manufacturer_id": testUtils.NewDocIndex(2, 0),
+								},
+							},
 						},
 					},
 				},

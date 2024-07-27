@@ -97,6 +97,9 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 							age
 						}
 					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
