@@ -1859,30 +1859,46 @@ func assertRequestResults(
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.(map[string]any)
+	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
 
 	if asserter != nil {
 		asserter.Assert(s.t, resultantData)
 		return true
 	}
 
-	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
+	// merge all keys so we can check for missing values
+	keys := make(map[string]struct{})
+	for key := range resultantData {
+		keys[key] = struct{}{}
+	}
+	for key := range expectedResults {
+		keys[key] = struct{}{}
+	}
 
-	for name, actual := range resultantData {
-		expect, ok := expectedResults[name]
-		if !ok {
-			require.Fail(s.t, "result key not found", name)
-		}
+	for key := range keys {
+		expect, ok := expectedResults[key]
+		require.True(s.t, ok, "expected key not found: %s", key)
+
+		actual, ok := resultantData[key]
+		require.True(s.t, ok, "result key not found: %s", key)
+
 		expectDocs, expectOk := expect.([]map[string]any)
 		actualDocs, actualOk := actual.([]map[string]any)
+
 		if expectOk && actualOk {
-			assertRequestResultDocs(s, nodeID, expectDocs, actualDocs, anyOfByField)
+			assertRequestResultDocs(
+				s,
+				nodeID,
+				expectDocs,
+				actualDocs,
+				anyOfByField)
 		} else {
 			assertResultsEqual(
 				s.t,
 				s.clientType,
 				expect,
 				actual,
-				fmt.Sprintf("node: %v, key: %v", nodeID, name),
+				fmt.Sprintf("node: %v, key: %v", nodeID, key),
 			)
 		}
 	}
