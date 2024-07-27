@@ -75,11 +75,12 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				txn.Discard(ctx)
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}
-			res := client.GQLResult{
-				Data: result,
-			}
+			res := client.GQLResult{}
 			if err != nil {
 				res.Errors = []error{err}
+			}
+			if len(result) > 0 {
+				res.Data = result[0]
 			}
 
 			select {
