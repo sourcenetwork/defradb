@@ -188,20 +188,20 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"_docID": "bae-4819f8a1-b519-5b46-ae39-4fdda8558e4f",
+							"_docID": testUtils.NewDocIndex(0, 2),
 							"book":   []map[string]any{},
 							"name":   "Not a Writer",
 						},
 						{
 							"name":   "Cornelia Funke",
-							"_docID": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace",
+							"_docID": testUtils.NewDocIndex(0, 1),
 							"book": []map[string]any{
 								{
-									"_docID": "bae-4dbc2bbc-0652-5412-8063-486499f1c341",
+									"_docID": testUtils.NewDocIndex(1, 0),
 									"name":   "The Rooster Bar",
 									"publisher": []map[string]any{
 										{
-											"_docID": "bae-8a8cbab7-65db-5955-b618-b82f44761cee",
+											"_docID": testUtils.NewDocIndex(2, 0),
 											"name":   "Only Publisher of The Rooster Bar",
 										},
 									},
@@ -210,53 +210,53 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 						},
 						{
 							"name":   "John Grisham",
-							"_docID": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+							"_docID": testUtils.NewDocIndex(0, 0),
 							"book": []map[string]any{
 								{
-									"_docID": "bae-13164fd9-60fd-5c32-9cb5-8bff3ef8ea53",
+									"_docID": testUtils.NewDocIndex(1, 1),
 									"name":   "Theif Lord",
 									"publisher": []map[string]any{
 										{
-											"_docID": "bae-0107f5cc-c25a-5295-8439-2b08a286af83",
+											"_docID": testUtils.NewDocIndex(2, 1),
 											"name":   "Only Publisher of Theif Lord",
 										},
 									},
 								},
 								{
-									"_docID":    "bae-1ccf3043-d760-543e-be1b-6691fa6aa7a8",
+									"_docID":    testUtils.NewDocIndex(1, 2),
 									"name":      "The Associate",
 									"publisher": []map[string]any{},
 								},
 								{
-									"_docID": "bae-5366ba09-54e8-5381-8169-a770aa9282ae",
+									"_docID": testUtils.NewDocIndex(1, 3),
 									"name":   "Painted House",
 									"publisher": []map[string]any{
 										{
-											"_docID": "bae-35f1e55a-c51b-53d7-9b28-9beb904a1343",
+											"_docID": testUtils.NewDocIndex(2, 2),
 											"name":   "Only Publisher of Painted House",
 										},
 									},
 								},
 								{
-									"_docID": "bae-96c9de0f-2903-5589-9604-b42882afde8c",
+									"_docID": testUtils.NewDocIndex(1, 4),
 									"name":   "A Time for Mercy",
 									"publisher": []map[string]any{
 										{
-											"_docID": "bae-37451579-7e50-541d-8a3c-849b290ea416",
+											"_docID": testUtils.NewDocIndex(2, 3),
 											"name":   "Only Publisher of A Time for Mercy",
 										},
 									},
 								},
 								{
-									"_docID": "bae-f52abfc3-9026-5713-9622-2d3458a386e0",
+									"_docID": testUtils.NewDocIndex(1, 5),
 									"name":   "Sooley",
 									"publisher": []map[string]any{
 										{
-											"_docID": "bae-c46b7771-843e-51ac-92be-d145aa2cfc07",
+											"_docID": testUtils.NewDocIndex(2, 5),
 											"name":   "Second of Two Publishers of Sooley",
 										},
 										{
-											"_docID": "bae-fc233f9c-f117-59de-be2b-60e4f6f0a898",
+											"_docID": testUtils.NewDocIndex(2, 4),
 											"name":   "First of Two Publishers of Sooley",
 										},
 									},

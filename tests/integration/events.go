@@ -348,3 +348,46 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 
 	return expect
 }
+
+// getEventsForUpdateWithFilter returns a map of docIDs that should be
+// published to the local event bus after a UpdateWithFilter action.
+//
+// This will take into account any primary documents that are patched as a result
+// of the create or update.
+func getEventsForUpdateWithFilter(
+	s *state,
+	action UpdateWithFilter,
+	result *client.UpdateResult,
+) map[string]struct{} {
+	var collection client.Collection
+	if action.NodeID.HasValue() {
+		collection = s.collections[action.NodeID.Value()][action.CollectionID]
+	} else {
+		collection = s.collections[0][action.CollectionID]
+	}
+
+	var docPatch map[string]any
+	err := json.Unmarshal([]byte(action.Updater), &docPatch)
+	require.NoError(s.t, err)
+
+	def := collection.Definition()
+	expect := make(map[string]struct{})
+
+	for _, docID := range result.DocIDs {
+		expect[docID] = struct{}{}
+
+		// check for any secondary relation fields that could publish an event
+		for name, value := range docPatch {
+			field, ok := def.GetFieldByName(name)
+			if !ok {
+				continue // ignore unknown field
+			}
+			_, ok = field.GetSecondaryRelationField(def)
+			if ok {
+				expect[value.(string)] = struct{}{}
+			}
+		}
+	}
+
+	return expect
+}

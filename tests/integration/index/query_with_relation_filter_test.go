@@ -898,19 +898,19 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"Walkman",
+				DocMap: map[string]any{
+					"model":        "Walkman",
 					"manufacturer": "Sony",
-					"owner": "bae-5622129c-b893-5768-a3f4-8f745db4cc04"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc: `{
-					"model":	"iPhone",
+				DocMap: map[string]any{
+					"model":        "iPhone",
 					"manufacturer": "Apple",
-					"owner": "bae-5622129c-b893-5768-a3f4-8f745db4cc04"
-				}`,
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -940,6 +940,73 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 				// we make 2 index fetches to get all 2 devices with owner_id == null
 				// and 2 field fetches to get 1 'model' field for every fetched device.
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test was added during https://github.com/sourcenetwork/defradb/issues/2862
+// multiple indexed fields on the second object are required for the failure.
+func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String
+						owner: User @index
+						manufacturer: Manufacturer @index
+					}
+
+					type Manufacturer {
+						name: String
+						devices: [Device]
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name": "Apple",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "MacBook Pro",
+					"owner":        testUtils.NewDocIndex(0, 0),
+					"manufacturer": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						devices {
+							owner_id
+							manufacturer_id
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"devices": []map[string]any{
+						{
+							"owner_id":        testUtils.NewDocIndex(0, 0),
+							"manufacturer_id": testUtils.NewDocIndex(2, 0),
+						},
+					},
+				},
 			},
 		},
 	}
