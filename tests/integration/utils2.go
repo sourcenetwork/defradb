@@ -1882,10 +1882,9 @@ func assertRequestResults(
 		actual, ok := resultantData[key]
 		require.True(s.t, ok, "result key not found: %s", key)
 
-		expectDocs, expectOk := expect.([]map[string]any)
-		actualDocs, actualOk := actual.([]map[string]any)
-
-		if expectOk && actualOk {
+		expectDocs, ok := expect.([]map[string]any)
+		if ok {
+			actualDocs := convertToArrayOfMaps(s.t, actual)
 			assertRequestResultDocs(
 				s,
 				nodeID,

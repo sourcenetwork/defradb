@@ -280,16 +280,10 @@ func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
 
 	// fix data type to match tests
 	switch t := out["data"].(type) {
-	case []any:
-		var fixed []map[string]any
-		for _, v := range t {
-			fixed = append(fixed, v.(map[string]any))
-		}
-		res.Data = fixed
 	case map[string]any:
 		res.Data = t
 	default:
-		res.Data = []map[string]any{}
+		res.Data = map[string]any{}
 	}
 
 	return nil
