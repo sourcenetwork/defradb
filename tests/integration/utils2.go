@@ -1272,15 +1272,8 @@ func createDocViaGQL(
 			strings.Join(action.EncryptedFields, ", ") + "]"
 	}
 
-	req := fmt.Sprintf(
-		`mutation {
-			create_%s(%s) {
-				_docID
-			}
-		}`,
-		collection.Name().Value(),
-		params,
-	)
+	key := fmt.Sprintf("create_%s", collection.Name().Value())
+	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
@@ -1290,13 +1283,11 @@ func createDocViaGQL(
 		return nil, result.GQL.Errors[0]
 	}
 
-	resultantDocs, ok := result.GQL.Data.([]map[string]any)
-	if !ok || len(resultantDocs) == 0 {
-		return nil, nil
-	}
+	resultData := result.GQL.Data.(map[string]any)
+	resultDocs := ConvertToArrayOfMaps(s.t, resultData[key])
 
-	docIDs := make([]client.DocID, len(resultantDocs))
-	for i, docMap := range resultantDocs {
+	docIDs := make([]client.DocID, len(resultDocs))
+	for i, docMap := range resultDocs {
 		docIDString := docMap[request.DocIDFieldName].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
 		require.NoError(s.t, err)
