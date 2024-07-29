@@ -41,6 +41,8 @@ func (n *operationNode) Kind() string {
 
 func (n *operationNode) Init() error {
 	n.isDone = false
+	n.currentValue = core.Doc{}
+
 	for _, child := range n.children {
 		err := child.Init()
 		if err != nil {
@@ -76,19 +78,6 @@ func (n *operationNode) Source() planNode {
 
 func (p *operationNode) Children() []planNode {
 	return p.children
-}
-
-func (n *operationNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	switch explainType {
-	case request.SimpleExplain:
-		return map[string]any{}, nil
-
-	case request.ExecuteExplain:
-		return map[string]any{}, nil
-
-	default:
-		return nil, ErrUnknownExplainRequestType
-	}
 }
 
 func (n *operationNode) Next() (bool, error) {
