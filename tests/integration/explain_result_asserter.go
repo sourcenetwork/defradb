@@ -69,8 +69,7 @@ func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
 		assert.Equal(t, a.planExecutions.Value(), actual,
 			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
 	}
-	operationNode, ok := explainNode["operationNode"].([]dataMap)
-	require.True(t, ok, "Expected operationNode")
+	operationNode := ConvertToArrayOfMaps(t, explainNode["operationNode"])
 	require.Len(t, operationNode, 1)
 	selectTopNode, ok := operationNode[0]["selectTopNode"].(dataMap)
 	require.True(t, ok, "Expected selectTopNode")

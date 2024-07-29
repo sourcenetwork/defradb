@@ -267,6 +267,7 @@ func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
 	if err := dec.Decode(&out); err != nil {
 		return err
 	}
+	res.Data = out["data"]
 
 	// fix errors type to match tests
 	switch t := out["errors"].(type) {
@@ -276,14 +277,6 @@ func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
 		}
 	default:
 		res.Errors = nil
-	}
-
-	// fix data type to match tests
-	switch t := out["data"].(type) {
-	case map[string]any:
-		res.Data = t
-	default:
-		res.Data = map[string]any{}
 	}
 
 	return nil
