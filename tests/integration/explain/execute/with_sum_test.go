@@ -38,8 +38,8 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     3,
-						"planExecutions":   uint64(4),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
@@ -93,8 +93,8 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     2,
-						"planExecutions":   uint64(3),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{

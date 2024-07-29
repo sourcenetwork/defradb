@@ -56,8 +56,8 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     2,
-						"planExecutions":   uint64(3),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
@@ -101,8 +101,8 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     0,
-						"planExecutions":   uint64(1),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
@@ -233,8 +233,8 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"planExecutions":   uint64(1),
-						"sizeOfResult":     0,
+						"planExecutions":   uint64(2),
+						"sizeOfResult":     1,
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{

@@ -39,8 +39,8 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     2,
-						"planExecutions":   uint64(3),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
@@ -125,8 +125,8 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     4,
-						"planExecutions":   uint64(5),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
@@ -179,8 +179,8 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     2,
-						"planExecutions":   uint64(3),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
@@ -240,8 +240,8 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     2,
-						"planExecutions":   uint64(3),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{

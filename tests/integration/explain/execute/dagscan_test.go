@@ -40,8 +40,8 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     5,
-						"planExecutions":   uint64(6),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{

@@ -45,8 +45,8 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 				ExpectedFullGraph: dataMap{
 					"explain": dataMap{
 						"executionSuccess": true,
-						"sizeOfResult":     2,
-						"planExecutions":   uint64(3),
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
 								"updateNode": dataMap{
