@@ -1884,7 +1884,7 @@ func assertRequestResults(
 
 		expectDocs, ok := expect.([]map[string]any)
 		if ok {
-			actualDocs := convertToArrayOfMaps(s.t, actual)
+			actualDocs := ConvertToArrayOfMaps(s.t, actual)
 			assertRequestResultDocs(
 				s,
 				nodeID,
@@ -1949,7 +1949,7 @@ func assertRequestResultDocs(
 					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
 				)
 			case []map[string]any:
-				actualValueMap := convertToArrayOfMaps(s.t, actualValue)
+				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
 
 				assertRequestResultDocs(
 					s,
@@ -1974,7 +1974,7 @@ func assertRequestResultDocs(
 	return false
 }
 
-func convertToArrayOfMaps(t testing.TB, value any) []map[string]any {
+func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {
 	valueArrayMap, ok := value.([]map[string]any)
 	if ok {
 		return valueArrayMap

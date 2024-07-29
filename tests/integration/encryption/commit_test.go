@@ -359,9 +359,8 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 						}
 					}
 				`,
-				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
-					commits, ok := result["commits"].([]map[string]any)
-					require.True(t, ok)
+				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
+					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
 					require.Equal(t, 2, len(commits), "Expected 2 commits")
 					require.Equal(t, commits[0]["fieldName"], "age")
 					delta1 := commits[0]["delta"]

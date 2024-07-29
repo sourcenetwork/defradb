@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -105,9 +104,8 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 						}
 					}
 				`,
-				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
-					commits, ok := result["commits"].([]map[string]any)
-					require.True(t, ok)
+				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
+					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
 					name1 := deltaForField("name1", commits)
 					name2 := deltaForField("name2", commits)
 					name3 := deltaForField("name3", commits)
@@ -177,8 +175,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 					}
 				`,
 				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
-					commits, ok := result["commits"].([]map[string]any)
-					require.True(t, ok)
+					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
 					name1 := deltaForField("name1", commits)
 					name2 := deltaForField("name2", commits)
 					name3 := deltaForField("name3", commits)
