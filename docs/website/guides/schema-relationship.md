@@ -234,23 +234,25 @@ query {
 
 ```json
 // Results:
-[
-  {
-    "name": "Saadi Shirazi",
-    "dateOfBirth":  "1210-07-23T03:46:56.647Z",
-    "authoredBooks": [
-    	{
-            "name": "Gulistan",
-            "genre": "Poetry",
-          	"description": "Persian poetry of ideas"
-    	},
-    	{
-            "name":  "Bustan",
-            "genre": "Poetry"
-    	}
-    ]
-  }
-]
+{
+  "Author": [
+    {
+      "name": "Saadi Shirazi",
+      "dateOfBirth":  "1210-07-23T03:46:56.647Z",
+      "authoredBooks": [
+        {
+              "name": "Gulistan",
+              "genre": "Poetry",
+              "description": "Persian poetry of ideas"
+        },
+        {
+              "name":  "Bustan",
+              "genre": "Poetry"
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ```graphql
@@ -268,24 +270,26 @@ query {
 
 ```json
 // Results:
-[
-  {
-    "name": "Gulistan",
-    "genre": "Poetry",
-    "Author": {
-      "name": "Saadi Shirazi",
-      "dateOfBirth":  "1210-07-23T03:46:56.647Z",
+{
+  "Book": [
+    {
+      "name": "Gulistan",
+      "genre": "Poetry",
+      "Author": {
+        "name": "Saadi Shirazi",
+        "dateOfBirth":  "1210-07-23T03:46:56.647Z",
+      }
+    },
+    {
+      "name": "Bustan",
+      "genre": "Poetry",
+      "Author": {
+        "name": "Saadi Shirazi",
+        "dateOfBirth":  "1210-07-23T03:46:56.647Z",
+      }
     }
-  },
-  {
-    "name": "Bustan",
-    "genre": "Poetry",
-    "Author": {
-      "name": "Saadi Shirazi",
-      "dateOfBirth":  "1210-07-23T03:46:56.647Z",
-    }
-  }
-]
+  ]
+}
 ```
 
 ```graphql
@@ -303,18 +307,20 @@ query {
 
 ```json
 // Results:
-[
-  {
-    "name": "Saadi Shirazi",
-    "dateOfBirth":  "1210-07-23T03:46:56.647Z",
-    "authoredBooks": [
-    	{
-            "name": "Gulistan",
-            "genre": "Poetry"
-    	}
-    ]
-  }
-]
+{
+  "Author": [
+    {
+      "name": "Saadi Shirazi",
+      "dateOfBirth":  "1210-07-23T03:46:56.647Z",
+      "authoredBooks": [
+        {
+              "name": "Gulistan",
+              "genre": "Poetry"
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ```graphql
@@ -330,12 +336,14 @@ query {
 
 ```json
 // Results:
-[
-  {
-    "name": "Saadi Shirazi",
-    "dateOfBirth":  "1210-07-23T03:46:56.647Z"
-  }
-]
+{
+  "Author": [
+    {
+      "name": "Saadi Shirazi",
+      "dateOfBirth":  "1210-07-23T03:46:56.647Z"
+    }
+  ]
+}
 ```
 
 Note:

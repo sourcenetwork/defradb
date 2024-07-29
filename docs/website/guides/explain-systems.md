@@ -134,26 +134,24 @@ query @explain(type: execute) {
 
 ```json
 // Response
-[
-	{
-		"explain": {
-			"executionSuccess": true,
-			"sizeOfResult":     1,
-			"planExecutions":   2,
-			"selectTopNode": {
-				"selectNode": {
-					"iterations":    2,
-					"filterMatches": 1,
-					"scanNode": {
-						"iterations":    2,
-						"docFetches":    2,
-						"filterMatches": 1
-					}
-				}
-			}
-		}
-	}
-]
+{
+    "explain": {
+        "executionSuccess": true,
+        "sizeOfResult":     1,
+        "planExecutions":   2,
+        "selectTopNode": {
+            "selectNode": {
+                "iterations":    2,
+                "filterMatches": 1,
+                "scanNode": {
+                    "iterations":    2,
+                    "docFetches":    2,
+                    "filterMatches": 1
+                }
+            }
+        }
+    }
+}
 ```
 
 Because Execute Explain actually executes the plan, it will of course take more time to complete and return results than the Simple Explain. It will actually take slightly longer to execute than the non-explain counterpart, as it has the overhead of measuring and collecting information.
