@@ -45,6 +45,7 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -461,8 +462,12 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 }
 
 func (p *Peer) handleEncryptionKeyRequest(evt encryption.RequestKeyEvent) error {
-	if err := p.server.requestEncryptionKey(p.ctx, evt.DocID, evt.Cid, evt.SchemaRoot); err != nil {
-		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+	if err := p.server.requestEncryptionKey(p.ctx, evt); err != nil {
+		kvs := []errors.KV{}
+		if evt.FieldName.HasValue() {
+			kvs = append(kvs, errors.NewKV("FieldName", evt.FieldName))
+		}
+		return NewErrRequestingEncryptionKey(err, evt.Cid.String(), evt.DocID, kvs...)
 	}
 
 	return nil

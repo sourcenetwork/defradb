@@ -139,7 +139,7 @@ type GetAllP2PCollections struct {
 type WaitForSync struct {
 	// Event is the name of the event to wait for.
 	// If is not provided then the action will wait for MergeComplete event.
-	Event   immutable.Option[event.Name]
+	Event immutable.Option[event.Name]
 	// NodeIDs are the node IDs (indexes) of the nodes to wait for sync on.
 	// If not provided then the action will wait for sync on all nodes.
 	NodeIDs []int

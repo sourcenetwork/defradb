@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	errNodeToBlock        string = "failed to convert node to block"
-	errEncodingBlock      string = "failed to encode block"
-	errUnmarshallingBlock string = "failed to unmarshal block"
-	errGeneratingLink     string = "failed to generate link"
+	errNodeToBlock                string = "failed to convert node to block"
+	errEncodingBlock              string = "failed to encode block"
+	errUnmarshallingBlock         string = "failed to unmarshal block"
+	errGeneratingLink             string = "failed to generate link"
+	errInvalidBlockEncryptionType string = "invalid block encryption type"
 )
 
 // Errors returnable from this package.
@@ -28,10 +29,11 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrNodeToBlock        = errors.New(errNodeToBlock)
-	ErrEncodingBlock      = errors.New(errEncodingBlock)
-	ErrUnmarshallingBlock = errors.New(errUnmarshallingBlock)
-	ErrGeneratingLink     = errors.New(errGeneratingLink)
+	ErrNodeToBlock                = errors.New(errNodeToBlock)
+	ErrEncodingBlock              = errors.New(errEncodingBlock)
+	ErrUnmarshallingBlock         = errors.New(errUnmarshallingBlock)
+	ErrGeneratingLink             = errors.New(errGeneratingLink)
+	ErrInvalidBlockEncryptionType = errors.New(errInvalidBlockEncryptionType)
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.

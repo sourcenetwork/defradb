@@ -24,6 +24,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
@@ -189,12 +190,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.Wrap("invalid peer info", err)
 	}
 
-	docID, err := client.NewDocIDFromString(string(req.DocID))
-	if err != nil {
-		return nil, err
-	}
-
-	encKey, err := encryption.GetDocKey(encryption.ContextWithStore(ctx, s.peer.encstore), docID.String())
+	encKey, err := s.getEncryptionKey(ctx, req)
 	if err != nil || len(encKey) == 0 {
 		return nil, err
 	}
@@ -413,7 +409,9 @@ func toProtoPeerInfo(peerInfo libpeer.AddrInfo) *pb.PeerInfo {
 	return protoPeerInfo
 }
 
-func (s *server) prepareFetchEncryptionKeyRequest(docID string, cid cid.Cid, schemaRoot string) (*pb.FetchEncryptionKeyRequest, error) {
+func (s *server) prepareFetchEncryptionKeyRequest(
+	evt encryption.RequestKeyEvent,
+) (*pb.FetchEncryptionKeyRequest, error) {
 	publicKey := s.peer.host.Peerstore().PubKey(s.peer.host.ID())
 	protoPublicKey, err := libp2pCrypto.PublicKeyToProto(publicKey)
 	if err != nil {
@@ -421,11 +419,15 @@ func (s *server) prepareFetchEncryptionKeyRequest(docID string, cid cid.Cid, sch
 	}
 
 	req := &pb.FetchEncryptionKeyRequest{
-		DocID:      []byte(docID),
-		Cid:        cid.Bytes(),
-		SchemaRoot: []byte(schemaRoot),
+		DocID:      []byte(evt.DocID),
+		Cid:        evt.Cid.Bytes(),
+		SchemaRoot: []byte(evt.SchemaRoot),
 		PublicKey:  protoPublicKey,
 		PeerInfo:   toProtoPeerInfo(s.peer.PeerInfo()),
+	}
+
+	if evt.FieldName.HasValue() {
+		req.FieldName = evt.FieldName.Value()
 	}
 
 	req.Signature, err = s.signRequest(req)
@@ -437,12 +439,12 @@ func (s *server) prepareFetchEncryptionKeyRequest(docID string, cid cid.Cid, sch
 }
 
 // requestEncryptionKey publishes the given FetchEncryptionKeyRequest object on the PubSub network
-func (s *server) requestEncryptionKey(ctx context.Context, docID string, cid cid.Cid, schemaRoot string) error {
+func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.RequestKeyEvent) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
 
-	req, err := s.prepareFetchEncryptionKeyRequest(docID, cid, schemaRoot)
+	req, err := s.prepareFetchEncryptionKeyRequest(evt)
 	if err != nil {
 		return err
 	}
@@ -523,12 +525,18 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
+	optFieldName := immutable.None[string]()
+	if req.FieldName != "" {
+		optFieldName = immutable.Some(req.FieldName)
+	}
+
 	s.peer.bus.Publish(encryption.NewKeyRetrievedMessage(
-		string(req.DocID), cid, string(req.SchemaRoot), decryptedKey))
+		string(req.DocID), optFieldName, cid, string(req.SchemaRoot), decryptedKey))
 }
 
 func (s *server) verifyResponseSignature(res *pb.FetchEncryptionKeyReply, fromPeer peer.ID) (bool, error) {
-	pubKey := s.peer.host.Peerstore().PubKey(fromPeer)
+	peerStore := s.peer.host.Peerstore()
+	pubKey := peerStore.PubKey(fromPeer)
 
 	hash := sha256.New()
 	hash.Write(res.EncryptedKey)

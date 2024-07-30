@@ -86,21 +86,20 @@ func (mc *MerkleClock) AddDelta(
 	delta.SetPriority(height)
 	block := coreblock.New(delta, links, heads...)
 
-	isEncrypted, err := mc.checkIfBlockEncryptionEnabled(ctx, block.Delta.GetFieldName(), heads)
+	encryptionType, err := mc.checkIfBlockEncryptionEnabled(ctx, block.Delta.GetFieldName(), heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	dagBlock := block
-	if isEncrypted {
+	if encryptionType != coreblock.NotEncrypted {
 		if !block.Delta.IsComposite() {
 			dagBlock, err = encryptBlock(ctx, block)
 			if err != nil {
 				return cidlink.Link{}, nil, err
 			}
-		} else {
-			dagBlock.IsEncrypted = &isEncrypted
 		}
+		dagBlock.EncryptionType = &encryptionType
 	}
 
 	link, err := mc.putBlock(ctx, dagBlock)
@@ -126,26 +125,29 @@ func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 	ctx context.Context,
 	fieldName string,
 	heads []cid.Cid,
-) (bool, error) {
+) (coreblock.EncryptionType, error) {
 	if encryption.ShouldEncryptField(ctx, fieldName) {
-		return true, nil
+		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
+			return coreblock.FieldEncrypted, nil
+		}
+		return coreblock.DocumentEncrypted, nil
 	}
 
 	for _, headCid := range heads {
 		bytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
-			return false, NewErrCouldNotFindBlock(headCid, err)
+			return coreblock.NotEncrypted, NewErrCouldNotFindBlock(headCid, err)
 		}
 		prevBlock, err := coreblock.GetFromBytes(bytes)
 		if err != nil {
-			return false, err
+			return coreblock.NotEncrypted, err
 		}
-		if prevBlock.IsEncrypted != nil && *prevBlock.IsEncrypted {
-			return true, nil
+		if prevBlock.EncryptionType != nil {
+			return *prevBlock.EncryptionType, nil
 		}
 	}
 
-	return false, nil
+	return coreblock.NotEncrypted, nil
 }
 
 func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
@@ -156,8 +158,7 @@ func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	isEncrypted := true
-	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, IsEncrypted: &isEncrypted}, nil
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.

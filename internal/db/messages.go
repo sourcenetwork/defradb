@@ -83,7 +83,7 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 			case encryption.KeyRetrievedEvent:
 				go func() {
 					ctx = encryption.ContextWithStore(ctx, db.Encstore())
-					err := encryption.SaveDocKey(ctx, evt.DocID, evt.Key)
+					err := encryption.SaveDocKey(ctx, evt.DocID, evt.FieldName, evt.Key)
 
 					if err != nil {
 						log.ErrorContextE(

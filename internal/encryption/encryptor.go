@@ -176,11 +176,15 @@ func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldName string) ([]byt
 	return encryptionKey, nil
 }
 
-func (d *DocEncryptor) GetDocKey(docID string) ([]byte, error) {
+func (d *DocEncryptor) GetDocKey(docID string, optFieldName immutable.Option[string]) ([]byte, error) {
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
-	storeKey := core.NewEncStoreDocKey(docID, "")
+	fieldName := ""
+	if optFieldName.HasValue() {
+		fieldName = optFieldName.Value()
+	}
+	storeKey := core.NewEncStoreDocKey(docID, fieldName)
 	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return nil, err
@@ -223,7 +227,14 @@ func ShouldEncryptField(ctx context.Context, fieldName string) bool {
 	return shouldEncryptField(GetContextConfig(ctx), fieldName)
 }
 
-func SaveDocKey(ctx context.Context, docID string, encryptionKey []byte) error {
+// ShouldEncryptIndividualField returns true if the given field should be encrypted individually based on
+// the context config.
+func ShouldEncryptIndividualField(ctx context.Context, fieldName string) bool {
+	return shouldEncryptIndividualField(GetContextConfig(ctx), fieldName)
+}
+
+// SaveDocKey saves the given encryption key for the given docID and (optional) fieldName with encryptor in the context.
+func SaveDocKey(ctx context.Context, docID string, fieldName immutable.Option[string], encryptionKey []byte) error {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil
@@ -231,10 +242,11 @@ func SaveDocKey(ctx context.Context, docID string, encryptionKey []byte) error {
 	return enc.SaveDocKey(docID, encryptionKey)
 }
 
-func GetDocKey(ctx context.Context, docID string) ([]byte, error) {
+// GetDocKey returns the encryption key for the given docID and (optional) fieldName with encryptor in the context.
+func GetDocKey(ctx context.Context, docID string, fieldName immutable.Option[string]) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
 	}
-	return enc.GetDocKey(docID)
+	return enc.GetDocKey(docID, fieldName)
 }

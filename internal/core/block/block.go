@@ -97,15 +97,28 @@ func NewDAGLink(name string, link cidlink.Link) DAGLink {
 	}
 }
 
+type EncryptionType int
+
+const (
+	NotEncrypted EncryptionType = iota
+	DocumentEncrypted
+	FieldEncrypted
+)
+
 // Block is a block that contains a CRDT delta and links to other blocks.
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
 	Delta crdt.CRDT
 	// Links are the links to other blocks in the DAG.
 	Links []DAGLink
-	// IsEncrypted is a flag that indicates if the block's delta is encrypted.
-	// It needs to be a pointer so that it can be translated from and to `optional Bool` in the IPLD schema.
-	IsEncrypted *bool
+	// EncryptionType indicates if the block's delta is encrypted and on what level encryption is applied.
+	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
+	EncryptionType *EncryptionType
+}
+
+// IsEncrypted returns true if the block is encrypted.
+func (b *Block) IsEncrypted() bool {
+	return b.EncryptionType != nil && *b.EncryptionType != NotEncrypted
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.
@@ -113,11 +126,18 @@ type Block struct {
 // This needs to match the [Block] struct or [mustSetSchema] will panic on init.
 func (b Block) IPLDSchemaBytes() []byte {
 	return []byte(`
-	type Block struct {
-		delta				 CRDT
-		links				 [ DAGLink ]
-		isEncrypted optional Bool
-	}`)
+		type Block struct {
+			delta           CRDT
+			links           [DAGLink]
+			encryptionType  optional EncryptionType
+		}
+
+		type EncryptionType enum {
+			| NotEncrypted      ("0")
+			| DocumentEncrypted ("1")
+			| FieldEncrypted    ("2")
+		} representation int
+	`)
 }
 
 // New creates a new block with the given delta and links.
@@ -192,6 +212,9 @@ func (block *Block) Unmarshal(b []byte) error {
 	if err != nil {
 		return NewErrUnmarshallingBlock(err)
 	}
+	if err := block.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -237,4 +260,16 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 		MhType:   uint64(multicodec.Sha2_256),
 		MhLength: 32,
 	}}
+}
+
+func (b *Block) Validate() error {
+	if b.EncryptionType != nil {
+		switch *b.EncryptionType {
+		case NotEncrypted, DocumentEncrypted, FieldEncrypted:
+			// Valid values
+		default:
+			return ErrInvalidBlockEncryptionType
+		}
+	}
+	return nil
 }

@@ -52,18 +52,21 @@ message PeerInfo {
 // FetchEncryptionKeyRequest is a request to receive a doc encryption key
 // from a peer that holds it.
 message FetchEncryptionKeyRequest {
-    // docID is the ID of the document that is affected by the log.
+    // docID is the ID of the document that the key is being requested for.
     bytes docID = 1;
+    // fieldName if the name of the document field that the key is being requested for.
+    // If the fieldName is empty, the key is being requested for the whole document.
+    string fieldName = 2;
     // cid is the CID of the composite of the document.
-    bytes cid = 2;
+    bytes cid = 3;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
-    bytes schemaRoot = 3;
+    bytes schemaRoot = 4;
     // publicKey is a public of the requesting peer
-    crypto.pb.PublicKey publicKey = 4;
+    crypto.pb.PublicKey publicKey = 5;
     // peerInfo is peer information is the requesting peer
-    PeerInfo peerInfo = 5;
+    PeerInfo peerInfo = 6;
     // signature is the requesting peer's signature of the request
-    bytes signature = 6;
+    bytes signature = 7;
 }
 
 message GetHeadLogRequest {}

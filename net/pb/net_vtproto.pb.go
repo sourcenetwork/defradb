@@ -456,7 +456,7 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		copy(dAtA[i:], m.Signature)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Signature)))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x3a
 	}
 	if m.PeerInfo != nil {
 		size, err := m.PeerInfo.MarshalToSizedBufferVT(dAtA[:i])
@@ -466,7 +466,7 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x32
 	}
 	if m.PublicKey != nil {
 		if vtmsg, ok := interface{}(m.PublicKey).(interface {
@@ -488,19 +488,26 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
 		}
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x2a
 	}
 	if len(m.SchemaRoot) > 0 {
 		i -= len(m.SchemaRoot)
 		copy(dAtA[i:], m.SchemaRoot)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.SchemaRoot)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x22
 	}
 	if len(m.Cid) > 0 {
 		i -= len(m.Cid)
 		copy(dAtA[i:], m.Cid)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Cid)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.FieldName) > 0 {
+		i -= len(m.FieldName)
+		copy(dAtA[i:], m.FieldName)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.FieldName)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -819,6 +826,10 @@ func (m *FetchEncryptionKeyRequest) SizeVT() (n int) {
 	var l int
 	_ = l
 	l = len(m.DocID)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.FieldName)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -1789,6 +1800,38 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FieldName", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FieldName = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Cid", wireType)
 			}
 			var byteLen int
@@ -1821,7 +1864,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				m.Cid = []byte{}
 			}
 			iNdEx = postIndex
-		case 3:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SchemaRoot", wireType)
 			}
@@ -1855,7 +1898,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				m.SchemaRoot = []byte{}
 			}
 			iNdEx = postIndex
-		case 4:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
 			}
@@ -1899,7 +1942,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
-		case 5:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PeerInfo", wireType)
 			}
@@ -1935,7 +1978,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}

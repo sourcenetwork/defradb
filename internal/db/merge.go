@@ -230,7 +230,7 @@ func (mp *mergeProcessor) loadComposites(
 	if b, ok := mt.heads[blockCid]; ok {
 		// the head is already known, but the block might be encrypted
 		// if this time we try to decrypt it, we load the block
-		if b.IsEncrypted == nil || !*b.IsEncrypted || !willDecrypt {
+		if !b.IsEncrypted() || !willDecrypt {
 			// We've already processed this block.
 			return nil
 		}
@@ -309,7 +309,7 @@ func (mp *mergeProcessor) processBlock(
 ) error {
 	block := dagBlock
 	var skipMerge bool
-	if dagBlock.IsEncrypted != nil && *dagBlock.IsEncrypted {
+	if dagBlock.IsEncrypted() {
 		plainTextBlock, err := decryptBlock(ctx, dagBlock)
 		if err != nil {
 			return err
@@ -320,10 +320,15 @@ func (mp *mergeProcessor) processBlock(
 			skipMerge = true
 			block = dagBlock
 			// if we weren't able to decrypt the block we request the encryption key
-			if dagBlock.Delta.IsComposite() {
+			if (dagBlock.Delta.IsComposite() && *dagBlock.EncryptionType == coreblock.DocumentEncrypted) ||
+				*dagBlock.EncryptionType == coreblock.FieldEncrypted {
 				docID := string(dagBlock.Delta.GetDocID())
 				schemaRoot := mp.col.SchemaRoot()
-				mp.col.db.events.Publish(encryption.NewRequestKeyMessage(docID, blockLink.Cid, schemaRoot))
+				fieldName := immutable.None[string]()
+				if *dagBlock.EncryptionType == coreblock.FieldEncrypted {
+					fieldName = immutable.Some(dagBlock.Delta.GetFieldName())
+				}
+				mp.col.db.events.Publish(encryption.NewRequestKeyMessage(docID, blockLink.Cid, fieldName, schemaRoot))
 			}
 		}
 	}
@@ -369,9 +374,13 @@ func (mp *mergeProcessor) processBlock(
 
 func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
 	if block.Delta.IsComposite() {
+		optFieldName := immutable.None[string]()
+		if *block.EncryptionType == coreblock.FieldEncrypted {
+			optFieldName = immutable.Some(block.Delta.GetFieldName())
+		}
 		// for composite blocks there is nothing to decrypt
 		// so we just check if we have the encryption key for child blocks
-		bytes, err := encryption.GetDocKey(ctx, string(block.Delta.GetDocID()))
+		bytes, err := encryption.GetDocKey(ctx, string(block.Delta.GetDocID()), optFieldName)
 		if err != nil {
 			return nil, err
 		}

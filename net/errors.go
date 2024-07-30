@@ -22,6 +22,7 @@ const (
 	errPublishingToDocIDTopic   = "can't publish log %s for docID %s"
 	errPublishingToSchemaTopic  = "can't publish log %s for schema %s"
 	errCheckingForExistingBlock = "failed to check for existing block"
+	errRequestingEncryptionKey  = "failed to request encryption key with Cid %s for docID %s"
 )
 
 var (
@@ -51,4 +52,8 @@ func NewErrPublishingToSchemaTopic(inner error, cid, docID string, kv ...errors.
 
 func NewErrCheckingForExistingBlock(inner error, cid string) error {
 	return errors.Wrap(errCheckingForExistingBlock, inner, errors.NewKV("cid", cid))
+}
+
+func NewErrRequestingEncryptionKey(inner error, cid, docID string, kv ...errors.KV) error {
+	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKey, cid, docID), inner, kv...)
 }
