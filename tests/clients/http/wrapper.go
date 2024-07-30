@@ -170,9 +170,9 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
-	query string,
+	request client.GQLRequest,
 ) *client.RequestResult {
-	return w.client.ExecRequest(ctx, query)
+	return w.client.ExecRequest(ctx, request)
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {

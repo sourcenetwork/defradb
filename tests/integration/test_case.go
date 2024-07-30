@@ -535,6 +535,9 @@ type Request struct {
 	// The request to execute.
 	Request string
 
+	// Name of the operation within the request to execute.
+	OperationName string
+
 	// The expected (data) results of the issued request.
 	Results map[string]any
 

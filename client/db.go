@@ -246,7 +246,16 @@ type Store interface {
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(ctx context.Context, request string) *RequestResult
+	ExecRequest(ctx context.Context, request GQLRequest) *RequestResult
+}
+
+// GQLRequest represents a GraphQL request to execute.
+type GQLRequest struct {
+	// Query contains the GraphQL document that will be executed.
+	Query string `json:"query"`
+
+	// OperationName is the name of the operation in the parsed document to execute.
+	OperationName string `json:"operationName,omitempty"`
 }
 
 // GQLResult represents the immediate results of a GQL request.

@@ -25,7 +25,6 @@ var (
 	ErrDeltaMissingDocID                   = errors.New("commit Delta missing document ID")
 	ErrDeltaMissingFieldName               = errors.New("commit Delta missing field name")
 	ErrFailedToFindScanNode                = errors.New("failed to find original scan node in plan graph")
-	ErrMissingQueryOrMutation              = errors.New("request is missing query or mutation operation statements")
 	ErrOperationDefinitionMissingSelection = errors.New("operationDefinition is missing selections")
 	ErrFailedToFindGroupSource             = errors.New("failed to identify group source")
 	ErrCantExplainSubscriptionRequest      = errors.New("can not explain a subscription request")

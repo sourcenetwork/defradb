@@ -26,6 +26,9 @@ func parseSubscriptionOperationDefinition(
 	sdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
+	if def.Name != nil {
+		sdef.Name = def.Name.Value
+	}
 
 	for i, selection := range def.SelectionSet.Selections {
 		switch node := selection.(type) {

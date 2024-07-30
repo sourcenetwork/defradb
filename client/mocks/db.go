@@ -527,7 +527,7 @@ func (_c *DB_Events_Call) RunAndReturn(run func() *event.Bus) *DB_Events_Call {
 }
 
 // ExecRequest provides a mock function with given fields: ctx, request
-func (_m *DB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+func (_m *DB) ExecRequest(ctx context.Context, request client.GQLRequest) *client.RequestResult {
 	ret := _m.Called(ctx, request)
 
 	if len(ret) == 0 {
@@ -535,7 +535,7 @@ func (_m *DB) ExecRequest(ctx context.Context, request string) *client.RequestRe
 	}
 
 	var r0 *client.RequestResult
-	if rf, ok := ret.Get(0).(func(context.Context, string) *client.RequestResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.GQLRequest) *client.RequestResult); ok {
 		r0 = rf(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
@@ -553,14 +553,14 @@ type DB_ExecRequest_Call struct {
 
 // ExecRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request string
+//   - request client.GQLRequest
 func (_e *DB_Expecter) ExecRequest(ctx interface{}, request interface{}) *DB_ExecRequest_Call {
 	return &DB_ExecRequest_Call{Call: _e.mock.On("ExecRequest", ctx, request)}
 }
 
-func (_c *DB_ExecRequest_Call) Run(run func(ctx context.Context, request string)) *DB_ExecRequest_Call {
+func (_c *DB_ExecRequest_Call) Run(run func(ctx context.Context, request client.GQLRequest)) *DB_ExecRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(client.GQLRequest))
 	})
 	return _c
 }
@@ -570,7 +570,7 @@ func (_c *DB_ExecRequest_Call) Return(_a0 *client.RequestResult) *DB_ExecRequest
 	return _c
 }
 
-func (_c *DB_ExecRequest_Call) RunAndReturn(run func(context.Context, string) *client.RequestResult) *DB_ExecRequest_Call {
+func (_c *DB_ExecRequest_Call) RunAndReturn(run func(context.Context, client.GQLRequest) *client.RequestResult) *DB_ExecRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -498,15 +498,16 @@ func (p *Planner) RunSelection(
 			Selections: []request.Selection{sel},
 		}},
 	}
-	return p.RunRequest(ctx, req)
+	return p.RunRequest(ctx, req, "")
 }
 
 // RunRequest classifies the type of request to run, runs it, and then returns the result(s).
 func (p *Planner) RunRequest(
 	ctx context.Context,
 	req *request.Request,
+	operationName string,
 ) (map[string]any, error) {
-	planNode, err := p.MakePlan(req)
+	planNode, err := p.MakePlan(req, operationName)
 	if err != nil {
 		return nil, err
 	}
@@ -574,16 +575,10 @@ func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error)
 // resources of the returned plan.
 //
 // @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
-	// TODO handle multiple operation statements
-	// https://github.com/sourcenetwork/defradb/issues/1395
-	var operation *request.OperationDefinition
-	if len(req.Mutations) > 0 {
-		operation = req.Mutations[0]
-	} else if len(req.Queries) > 0 {
-		operation = req.Queries[0]
-	} else {
-		return nil, ErrMissingQueryOrMutation
+func (p *Planner) MakePlan(req *request.Request, operationName string) (planNode, error) {
+	operation, err := req.Operation(operationName)
+	if err != nil {
+		return nil, err
 	}
 	m, err := mapper.ToOperation(p.ctx, p.db, operation)
 	if err != nil {

@@ -21,7 +21,7 @@ import (
 )
 
 // ExecRequest executes a request against the database.
-func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *db) ExecRequest(ctx context.Context, request client.GQLRequest) *client.RequestResult {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}

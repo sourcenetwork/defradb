@@ -34,7 +34,7 @@ import (
 func TestCCIPGet_WithValidData(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	gqlData, err := json.Marshal(&GraphQLRequest{
+	gqlData, err := json.Marshal(&client.GQLRequest{
 		Query: `query {
 			User {
 				name
@@ -73,7 +73,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 func TestCCIPGet_WithSubscription(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	gqlData, err := json.Marshal(&GraphQLRequest{
+	gqlData, err := json.Marshal(&client.GQLRequest{
 		Query: `subscription {
 			User {
 				name
@@ -118,7 +118,7 @@ func TestCCIPGet_WithInvalidData(t *testing.T) {
 func TestCCIPPost_WithValidData(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	gqlJSON, err := json.Marshal(&GraphQLRequest{
+	gqlJSON, err := json.Marshal(&client.GQLRequest{
 		Query: `query {
 			User {
 				name

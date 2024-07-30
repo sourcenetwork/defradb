@@ -18,15 +18,15 @@ import (
 )
 
 // execRequest executes a request against the database.
-func (db *db) execRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *db) execRequest(ctx context.Context, request client.GQLRequest) *client.RequestResult {
 	res := &client.RequestResult{}
-	ast, err := db.parser.BuildRequestAST(request)
+	ast, err := db.parser.BuildRequestAST(request.Query)
 	if err != nil {
 		res.GQL.Errors = []error{err}
 		return res
 	}
 	if db.parser.IsIntrospection(ast) {
-		return db.parser.ExecuteIntrospection(request)
+		return db.parser.ExecuteIntrospection(request.Query)
 	}
 
 	parsedRequest, errors := db.parser.Parse(ast)
@@ -50,7 +50,7 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 	identity := GetContextIdentity(ctx)
 	planner := planner.New(ctx, identity, db.acp, db, txn)
 
-	results, err := planner.RunRequest(ctx, parsedRequest)
+	results, err := planner.RunRequest(ctx, parsedRequest, request.OperationName)
 	if err != nil {
 		res.GQL.Errors = []error{err}
 	}

@@ -133,7 +133,7 @@ func executeExplainRequest(
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.ExecRequest(
 			s.ctx,
-			action.Request,
+			client.GQLRequest{Query: action.Request},
 		)
 		assertExplainRequestResults(s, &result.GQL, action)
 	}

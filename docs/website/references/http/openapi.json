@@ -316,6 +316,9 @@
             },
             "graphql_request": {
                 "properties": {
+                    "operationName": {
+                        "type": "string"
+                    },
                     "query": {
                         "type": "string"
                     }
@@ -1270,6 +1273,13 @@
                     {
                         "in": "query",
                         "name": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "operationName",
                         "schema": {
                             "type": "string"
                         }

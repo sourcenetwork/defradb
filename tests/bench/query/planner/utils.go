@@ -87,7 +87,7 @@ func runMakePlanBench(
 			d,
 			txn,
 		)
-		plan, err := planner.MakePlan(q)
+		plan, err := planner.MakePlan(q, "")
 		if err != nil {
 			return errors.Wrap("failed to make plan", err)
 		}
