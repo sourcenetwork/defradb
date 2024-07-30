@@ -79,9 +79,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			if err != nil {
 				res.Errors = []error{err}
 			}
-			if len(result) > 0 {
-				res.Data = result[0]
-			}
+			res.Data = result
 
 			select {
 			case <-ctx.Done():

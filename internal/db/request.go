@@ -54,9 +54,7 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 	if err != nil {
 		res.GQL.Errors = []error{err}
 	}
-	if len(results) > 0 {
-		res.GQL.Data = results[0]
-	}
+	res.GQL.Data = results
 	return res
 }
 

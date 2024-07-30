@@ -79,6 +79,9 @@ func ToOperation(
 			}
 			operation.Mutations = append(operation.Mutations, m)
 			operation.addSelection(i, t.Field, m.Select)
+
+		default:
+			return nil, ErrInvalidSelect
 		}
 	}
 

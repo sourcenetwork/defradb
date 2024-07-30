@@ -24,9 +24,8 @@ type operationNode struct {
 	documentIterator
 	docMapper
 
-	children     []planNode
-	childIndexes []int
-	isDone       bool
+	children map[int]planNode
+	isDone   bool
 }
 
 func (n *operationNode) Spans(spans core.Spans) {
@@ -77,7 +76,11 @@ func (n *operationNode) Source() planNode {
 }
 
 func (p *operationNode) Children() []planNode {
-	return p.children
+	children := make([]planNode, 0, len(p.children))
+	for _, child := range p.children {
+		children = append(children, child)
+	}
+	return children
 }
 
 func (n *operationNode) Next() (bool, error) {
@@ -96,7 +99,7 @@ func (n *operationNode) Next() (bool, error) {
 			if !hasChild {
 				return false, ErrMissingChildValue
 			}
-			n.currentValue.Fields[n.childIndexes[i]] = child.Value().Fields[0]
+			n.currentValue.Fields[i] = child.Value().Fields[0]
 
 		default:
 			var docs []core.Doc
@@ -110,7 +113,7 @@ func (n *operationNode) Next() (bool, error) {
 				}
 				docs = append(docs, child.Value())
 			}
-			n.currentValue.Fields[n.childIndexes[i]] = docs
+			n.currentValue.Fields[i] = docs
 		}
 	}
 
@@ -120,8 +123,7 @@ func (n *operationNode) Next() (bool, error) {
 
 // Operation creates a new operationNode using the given Selects.
 func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error) {
-	var children []planNode
-	var childIndexes []int
+	children := make(map[int]planNode)
 
 	for _, s := range operation.Selects {
 		if _, isAgg := request.Aggregates[s.Name]; isAgg {
@@ -132,15 +134,13 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 			if err != nil {
 				return nil, err
 			}
-			children = append(children, child)
-			childIndexes = append(childIndexes, s.Index)
+			children[s.Index] = child
 		} else {
 			child, err := p.Select(s)
 			if err != nil {
 				return nil, err
 			}
-			children = append(children, child)
-			childIndexes = append(childIndexes, s.Index)
+			children[s.Index] = child
 		}
 	}
 
@@ -149,8 +149,7 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 		if err != nil {
 			return nil, err
 		}
-		children = append(children, child)
-		childIndexes = append(childIndexes, m.Index)
+		children[m.Index] = child
 	}
 
 	for _, s := range operation.CommitSelects {
@@ -158,17 +157,11 @@ func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error)
 		if err != nil {
 			return nil, err
 		}
-		children = append(children, child)
-		childIndexes = append(childIndexes, s.Index)
-	}
-
-	if len(children) == 0 {
-		return nil, ErrOperationDefinitionMissingSelection
+		children[s.Index] = child
 	}
 
 	return &operationNode{
-		docMapper:    docMapper{operation.DocumentMapping},
-		children:     children,
-		childIndexes: childIndexes,
+		docMapper: docMapper{operation.DocumentMapping},
+		children:  children,
 	}, nil
 }

@@ -492,7 +492,7 @@ func (p *Planner) executeRequest(
 func (p *Planner) RunSelection(
 	ctx context.Context,
 	sel *request.Select,
-) ([]map[string]any, error) {
+) (map[string]any, error) {
 	req := &request.Request{
 		Queries: []*request.OperationDefinition{{
 			Selections: []request.Selection{sel},
@@ -505,7 +505,7 @@ func (p *Planner) RunSelection(
 func (p *Planner) RunRequest(
 	ctx context.Context,
 	req *request.Request,
-) ([]map[string]any, error) {
+) (map[string]any, error) {
 	planNode, err := p.MakePlan(req)
 	if err != nil {
 		return nil, err
@@ -536,15 +536,22 @@ func (p *Planner) RunRequest(
 	}
 
 	// This won't / should NOT execute if it's any kind of explain request.
-	return p.executeRequest(ctx, planNode)
+	res, err := p.executeRequest(ctx, planNode)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res) > 0 {
+		return res[0], nil
+	}
+
+	return nil, nil
 }
 
 // MakeSelectionPlan makes a plan for a single selection.
 //
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
-//
-// @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error) {
 	s, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, selection)
 	if err != nil {
