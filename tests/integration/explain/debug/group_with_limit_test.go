@@ -19,12 +19,16 @@ import (
 
 var debugGroupLimitPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"limitNode": dataMap{
-				"groupNode": dataMap{
-					"selectNode": dataMap{
-						"pipeNode": dataMap{
-							"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"limitNode": dataMap{
+						"groupNode": dataMap{
+							"selectNode": dataMap{
+								"pipeNode": dataMap{
+									"scanNode": dataMap{},
+								},
+							},
 						},
 					},
 				},
@@ -56,7 +60,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupLimitPattern},
+				ExpectedPatterns: debugGroupLimitPattern,
 			},
 		},
 	}
@@ -86,7 +90,7 @@ func TestDebugExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *te
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupLimitPattern},
+				ExpectedPatterns: debugGroupLimitPattern,
 			},
 		},
 	}

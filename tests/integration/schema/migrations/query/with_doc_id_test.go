@@ -74,10 +74,12 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Shahzad",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Shahzad",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -180,10 +182,12 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Shahzad",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Shahzad",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -194,10 +198,12 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Fred",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Fred",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -208,10 +214,12 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Chris",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Chris",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -222,10 +230,12 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -236,10 +246,12 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Islam",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Islam",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -250,10 +262,12 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Dave",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Dave",
+							"verified": true,
+						},
 					},
 				},
 			},

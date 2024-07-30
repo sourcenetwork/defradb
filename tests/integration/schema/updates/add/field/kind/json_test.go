@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,10 +82,12 @@ func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  "{}",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  "{}",
+						},
 					},
 				},
 			},
@@ -124,10 +128,12 @@ func TestSchemaUpdatesAddFieldKindJSONSubstitutionWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  "{}",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  "{}",
+						},
 					},
 				},
 			},

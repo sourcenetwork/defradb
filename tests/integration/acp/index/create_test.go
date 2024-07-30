@@ -56,7 +56,9 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 						}
 					}`,
 
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -95,6 +97,9 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 							age
 						}
 					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

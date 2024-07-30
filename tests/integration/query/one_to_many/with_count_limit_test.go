@@ -63,22 +63,24 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-				"published": []map[string]any{
-					{
-						"name": "Theif Lord",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 1,
+					"published": []map[string]any{
+						{
+							"name": "Theif Lord",
+						},
 					},
 				},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 2,
-				"published": []map[string]any{
-					{
-						"name": "Painted House",
+				{
+					"name":   "John Grisham",
+					"_count": 2,
+					"published": []map[string]any{
+						{
+							"name": "Painted House",
+						},
 					},
 				},
 			},
@@ -140,22 +142,24 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-				"published": []map[string]any{
-					{
-						"name": "Theif Lord",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 1,
+					"published": []map[string]any{
+						{
+							"name": "Theif Lord",
+						},
 					},
 				},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 2,
-				"published": []map[string]any{
-					{
-						"name": "The Associate",
+				{
+					"name":   "John Grisham",
+					"_count": 2,
+					"published": []map[string]any{
+						{
+							"name": "The Associate",
+						},
 					},
 				},
 			},
@@ -209,14 +213,16 @@ func TestQueryOneToManyWithCountWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 1,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 1,
+				},
+				{
+					"name":   "John Grisham",
+					"_count": 1,
+				},
 			},
 		},
 	}

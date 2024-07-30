@@ -57,9 +57,11 @@ func TestView_SimpleWithFilter(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -122,10 +124,12 @@ func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  31,
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+							"age":  31,
+						},
 					},
 				},
 			},

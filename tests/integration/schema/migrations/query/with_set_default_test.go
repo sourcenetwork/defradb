@@ -69,10 +69,12 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -143,11 +145,13 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// The inverse lens migration has been applied, clearing the verified field
-						"verified": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// The inverse lens migration has been applied, clearing the verified field
+							"verified": nil,
+						},
 					},
 				},
 			},
@@ -215,11 +219,13 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// The inverse lens migration has not been applied, the document is returned as it was defined
-						"verified": false,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// The inverse lens migration has not been applied, the document is returned as it was defined
+							"verified": false,
+						},
 					},
 				},
 			},

@@ -39,7 +39,7 @@ func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}
@@ -73,7 +73,7 @@ func TestDebugExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}

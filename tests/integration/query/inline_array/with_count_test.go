@@ -33,10 +33,12 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "John",
-				"_count": 0,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name":   "John",
+					"_count": 0,
+				},
 			},
 		},
 	}
@@ -61,10 +63,12 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "John",
-				"_count": 0,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name":   "John",
+					"_count": 0,
+				},
 			},
 		},
 	}
@@ -89,10 +93,12 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Shahzad",
-				"_count": 5,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name":   "Shahzad",
+					"_count": 5,
+				},
 			},
 		},
 	}
@@ -117,10 +123,12 @@ func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "John",
-				"_count": 4,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name":   "John",
+					"_count": 4,
+				},
 			},
 		},
 	}

@@ -86,18 +86,20 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Cornelia Funke",
-				"_sum": 4.8,
-			},
-			{
-				"name": "John Grisham",
-				"_sum": 20.8,
-			},
-			{
-				"name": "Not a Writer",
-				"_sum": 0.0,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Cornelia Funke",
+					"_sum": 4.8,
+				},
+				{
+					"name": "John Grisham",
+					"_sum": 20.8,
+				},
+				{
+					"name": "Not a Writer",
+					"_sum": 0.0,
+				},
 			},
 		},
 	}
@@ -175,18 +177,20 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Not a Writer",
-				"_sum": 0.0,
-			},
-			{
-				"name": "John Grisham",
-				"_sum": 20.8,
-			},
-			{
-				"name": "Cornelia Funke",
-				"_sum": 4.8,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Not a Writer",
+					"_sum": 0.0,
+				},
+				{
+					"name": "John Grisham",
+					"_sum": 20.8,
+				},
+				{
+					"name": "Cornelia Funke",
+					"_sum": 4.8,
+				},
 			},
 		},
 	}
@@ -265,26 +269,28 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Little Kid",
-				"sum1": 0.0,
-				"sum2": 0.0,
-			},
-			{
-				"name": "Not a Writer",
-				"sum1": 0.0,
-				"sum2": 0.0,
-			},
-			{
-				"name": "Cornelia Funke",
-				"sum1": 4.8,
-				"sum2": 4.8,
-			},
-			{
-				"name": "John Grisham",
-				"sum1": 20.8,
-				"sum2": 4.9 + 4.5,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Little Kid",
+					"sum1": 0.0,
+					"sum2": 0.0,
+				},
+				{
+					"name": "Not a Writer",
+					"sum1": 0.0,
+					"sum2": 0.0,
+				},
+				{
+					"name": "Cornelia Funke",
+					"sum1": 4.8,
+					"sum2": 4.8,
+				},
+				{
+					"name": "John Grisham",
+					"sum1": 20.8,
+					"sum2": 4.9 + 4.5,
+				},
 			},
 		},
 	}
@@ -363,26 +369,28 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Little Kid",
-				"sum1": 0.0,
-				"sum2": 0.0,
-			},
-			{
-				"name": "Not a Writer",
-				"sum1": 0.0,
-				"sum2": 0.0,
-			},
-			{
-				"name": "Cornelia Funke",
-				"sum1": 4.8,
-				"sum2": 4.8,
-			},
-			{
-				"name": "John Grisham",
-				"sum1": 20.8,
-				"sum2": 4.0 + 3.2,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Little Kid",
+					"sum1": 0.0,
+					"sum2": 0.0,
+				},
+				{
+					"name": "Not a Writer",
+					"sum1": 0.0,
+					"sum2": 0.0,
+				},
+				{
+					"name": "Cornelia Funke",
+					"sum1": 4.8,
+					"sum2": 4.8,
+				},
+				{
+					"name": "John Grisham",
+					"sum1": 20.8,
+					"sum2": 4.0 + 3.2,
+				},
 			},
 		},
 	}
@@ -462,31 +470,33 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"LimitOrderSum":    0.0,
-				"LimitOrderFields": []map[string]any{},
-			},
-			{
-				"LimitOrderSum":    0.0,
-				"LimitOrderFields": []map[string]any{},
-			},
-			{
-				"LimitOrderSum": 4.8,
-				"LimitOrderFields": []map[string]any{
-					{
-						"name": "Theif Lord",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"LimitOrderSum":    0.0,
+					"LimitOrderFields": []map[string]any{},
+				},
+				{
+					"LimitOrderSum":    0.0,
+					"LimitOrderFields": []map[string]any{},
+				},
+				{
+					"LimitOrderSum": 4.8,
+					"LimitOrderFields": []map[string]any{
+						{
+							"name": "Theif Lord",
+						},
 					},
 				},
-			},
-			{
-				"LimitOrderSum": 3.2 + 4.0,
-				"LimitOrderFields": []map[string]any{
-					{
-						"name": "Sooley",
-					},
-					{
-						"name": "The Rooster Bar",
+				{
+					"LimitOrderSum": 3.2 + 4.0,
+					"LimitOrderFields": []map[string]any{
+						{
+							"name": "Sooley",
+						},
+						{
+							"name": "The Rooster Bar",
+						},
 					},
 				},
 			},
@@ -568,31 +578,33 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"LimitOrderSum":    0.0,
-				"LimitOrderFields": []map[string]any{},
-			},
-			{
-				"LimitOrderSum":    0.0,
-				"LimitOrderFields": []map[string]any{},
-			},
-			{
-				"LimitOrderSum": 4.8,
-				"LimitOrderFields": []map[string]any{
-					{
-						"name": "Theif Lord",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"LimitOrderSum":    0.0,
+					"LimitOrderFields": []map[string]any{},
+				},
+				{
+					"LimitOrderSum":    0.0,
+					"LimitOrderFields": []map[string]any{},
+				},
+				{
+					"LimitOrderSum": 4.8,
+					"LimitOrderFields": []map[string]any{
+						{
+							"name": "Theif Lord",
+						},
 					},
 				},
-			},
-			{
-				"LimitOrderSum": 4.9 + 4.5,
-				"LimitOrderFields": []map[string]any{
-					{
-						"name": "Painted House",
-					},
-					{
-						"name": "A Time for Mercy",
+				{
+					"LimitOrderSum": 4.9 + 4.5,
+					"LimitOrderFields": []map[string]any{
+						{
+							"name": "Painted House",
+						},
+						{
+							"name": "A Time for Mercy",
+						},
 					},
 				},
 			},

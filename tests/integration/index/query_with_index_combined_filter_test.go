@@ -40,8 +40,10 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -80,8 +82,10 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Islam"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -119,9 +123,11 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegularCaseInsensitive_ShouldF
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Andy"},
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -157,8 +163,10 @@ func TestQueryWithIndex_FilterOnNonIndexedField_ShouldIgnoreIndex(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{

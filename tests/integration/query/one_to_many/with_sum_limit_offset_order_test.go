@@ -107,16 +107,18 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"_sum": float64(0),
-					},
-					{
-						"name": "John Grisham",
-						// 4.9 + 3.2
-						// ...00001 is float math artifact
-						"_sum": 8.100000000000001,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"_sum": float64(0),
+						},
+						{
+							"name": "John Grisham",
+							// 4.9 + 3.2
+							// ...00001 is float math artifact
+							"_sum": 8.100000000000001,
+						},
 					},
 				},
 			},
@@ -217,15 +219,17 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 						_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"_sum": float64(0),
-					},
-					{
-						"name": "John Grisham",
-						// 4.2 + 3.2
-						"_sum": 7.4,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"_sum": float64(0),
+						},
+						{
+							"name": "John Grisham",
+							// 4.2 + 3.2
+							"_sum": 7.4,
+						},
 					},
 				},
 			},
@@ -327,19 +331,21 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 						desc: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"asc":  float64(0),
-						"desc": float64(0),
-					},
-					{
-						"name": "John Grisham",
-						// 4.9 + 3.2
-						// ...00001 is float math artifact
-						"asc": 8.100000000000001,
-						// 4.2 + 3.2
-						"desc": 7.4,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"asc":  float64(0),
+							"desc": float64(0),
+						},
+						{
+							"name": "John Grisham",
+							// 4.9 + 3.2
+							// ...00001 is float math artifact
+							"asc": 8.100000000000001,
+							// 4.2 + 3.2
+							"desc": 7.4,
+						},
 					},
 				},
 			},
@@ -441,18 +447,20 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 						byRating: _sum(published: {field: rating, offset: 1, limit: 2, order: {rating: DESC}})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "Cornelia Funke",
-						"byName":   float64(0),
-						"byRating": float64(0),
-					},
-					{
-						"name": "John Grisham",
-						// 4.2 + 3.2
-						"byName": 7.4,
-						// 4.5 + 4.2
-						"byRating": 8.7,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":     "Cornelia Funke",
+							"byName":   float64(0),
+							"byRating": float64(0),
+						},
+						{
+							"name": "John Grisham",
+							// 4.2 + 3.2
+							"byName": 7.4,
+							// 4.5 + 4.2
+							"byRating": 8.7,
+						},
 					},
 				},
 			},
@@ -556,22 +564,24 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":      "Cornelia Funke",
-						"_sum":      float64(0),
-						"published": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						// 4.2 + 3.2
-						"_sum": 7.4,
-						"published": []map[string]any{
-							{
-								"name": "Painted House",
-							},
-							{
-								"name": "Sooley",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":      "Cornelia Funke",
+							"_sum":      float64(0),
+							"published": []map[string]any{},
+						},
+						{
+							"name": "John Grisham",
+							// 4.2 + 3.2
+							"_sum": 7.4,
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
+								{
+									"name": "Sooley",
+								},
 							},
 						},
 					},

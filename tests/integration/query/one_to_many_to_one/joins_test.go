@@ -165,65 +165,67 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-489b4e01-4764-56f6-913f-b3c92dffcaa3",
-						"book":   []map[string]any{},
-						"name":   "Not a Writer",
-					},
-					{
-						"name":   "John Grisham",
-						"_docID": "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
-						"book": []map[string]any{
-							{
-								"_docID": "bae-1d0dcbed-300a-567a-9b48-c23cd026d165",
-								"name":   "A Time for Mercy",
-								"publisher": map[string]any{
-									"_docID": "bae-2bad7de3-0f1a-56c0-b499-a552debef4b8",
-									"name":   "Only Publisher of A Time for Mercy",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"_docID": "bae-489b4e01-4764-56f6-913f-b3c92dffcaa3",
+							"book":   []map[string]any{},
+							"name":   "Not a Writer",
+						},
+						{
+							"name":   "John Grisham",
+							"_docID": "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+							"book": []map[string]any{
+								{
+									"_docID": "bae-1d0dcbed-300a-567a-9b48-c23cd026d165",
+									"name":   "A Time for Mercy",
+									"publisher": map[string]any{
+										"_docID": "bae-2bad7de3-0f1a-56c0-b499-a552debef4b8",
+										"name":   "Only Publisher of A Time for Mercy",
+									},
 								},
-							},
-							{
-								"_docID":    "bae-374998e0-e84d-5f6b-9e87-5edaaa2d9c7d",
-								"name":      "The Associate",
-								"publisher": nil,
-							},
-							{
-								"_docID": "bae-7697f14d-7b32-5884-8677-344e183c14bf",
-								"name":   "Theif Lord",
-								"publisher": map[string]any{
-									"_docID": "bae-d43823c0-0bb6-58a9-a098-1826dffa4e4a",
-									"name":   "Only Publisher of Theif Lord",
+								{
+									"_docID":    "bae-374998e0-e84d-5f6b-9e87-5edaaa2d9c7d",
+									"name":      "The Associate",
+									"publisher": nil,
 								},
-							},
-							{
-								"_docID": "bae-aef1d940-5ac1-5924-a87f-63ac40758b22",
-								"name":   "Painted House",
-								"publisher": map[string]any{
-									"_docID": "bae-a104397b-7804-5cd0-93e5-c3986b4e5e71",
-									"name":   "Only Publisher of Painted House",
+								{
+									"_docID": "bae-7697f14d-7b32-5884-8677-344e183c14bf",
+									"name":   "Theif Lord",
+									"publisher": map[string]any{
+										"_docID": "bae-d43823c0-0bb6-58a9-a098-1826dffa4e4a",
+										"name":   "Only Publisher of Theif Lord",
+									},
 								},
-							},
-							{
-								"_docID": "bae-ee6b8339-8a9e-58a9-9a0d-dbd8d44fa149",
-								"name":   "Sooley",
-								"publisher": map[string]any{
-									"_docID": "bae-efeca601-cce1-5289-b392-85fa5b7bc0f7",
-									"name":   "Only Publisher of Sooley",
+								{
+									"_docID": "bae-aef1d940-5ac1-5924-a87f-63ac40758b22",
+									"name":   "Painted House",
+									"publisher": map[string]any{
+										"_docID": "bae-a104397b-7804-5cd0-93e5-c3986b4e5e71",
+										"name":   "Only Publisher of Painted House",
+									},
+								},
+								{
+									"_docID": "bae-ee6b8339-8a9e-58a9-9a0d-dbd8d44fa149",
+									"name":   "Sooley",
+									"publisher": map[string]any{
+										"_docID": "bae-efeca601-cce1-5289-b392-85fa5b7bc0f7",
+										"name":   "Only Publisher of Sooley",
+									},
 								},
 							},
 						},
-					},
-					{
-						"name":   "Cornelia Funke",
-						"_docID": "bae-fb2a1852-3951-5ce9-a3bf-6825202f201b",
-						"book": []map[string]any{
-							{
-								"_docID": "bae-1867d7cb-01b3-572f-a993-1c3f22f46526",
-								"name":   "The Rooster Bar",
-								"publisher": map[string]any{
-									"_docID": "bae-09af7e39-8596-584f-8825-cb430c4156b3",
-									"name":   "Only Publisher of The Rooster Bar",
+						{
+							"name":   "Cornelia Funke",
+							"_docID": "bae-fb2a1852-3951-5ce9-a3bf-6825202f201b",
+							"book": []map[string]any{
+								{
+									"_docID": "bae-1867d7cb-01b3-572f-a993-1c3f22f46526",
+									"name":   "The Rooster Bar",
+									"publisher": map[string]any{
+										"_docID": "bae-09af7e39-8596-584f-8825-cb430c4156b3",
+										"name":   "Only Publisher of The Rooster Bar",
+									},
 								},
 							},
 						},

@@ -61,16 +61,18 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
-						"boss": map[string]any{
-							"name": "John",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Fred",
+							"boss": map[string]any{
+								"name": "John",
+							},
 						},
-					},
-					{
-						"name": "John",
-						"boss": nil,
+						{
+							"name": "John",
+							"boss": nil,
+						},
 					},
 				},
 			},
@@ -84,15 +86,17 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name":      "Fred",
-						"underling": nil,
-					},
-					{
-						"name": "John",
-						"underling": map[string]any{
-							"name": "Fred",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name":      "Fred",
+							"underling": nil,
+						},
+						{
+							"name": "John",
+							"underling": map[string]any{
+								"name": "Fred",
+							},
 						},
 					},
 				},
@@ -148,15 +152,17 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"boss": nil,
-					},
-					{
-						"name": "Fred",
-						"boss": map[string]any{
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
 							"name": "John",
+							"boss": nil,
+						},
+						{
+							"name": "Fred",
+							"boss": map[string]any{
+								"name": "John",
+							},
 						},
 					},
 				},
@@ -171,16 +177,18 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"underling": map[string]any{
-							"name": "Fred",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"underling": map[string]any{
+								"name": "Fred",
+							},
 						},
-					},
-					{
-						"name":      "Fred",
-						"underling": nil,
+						{
+							"name":      "Fred",
+							"underling": nil,
+						},
 					},
 				},
 			},

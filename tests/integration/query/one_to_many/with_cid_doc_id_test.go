@@ -113,11 +113,13 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -189,12 +191,14 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(22),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(22),
+							},
 						},
 					},
 				},
@@ -262,12 +266,14 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": float64(4.9),
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": float64(4.9),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -335,12 +341,14 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": float64(4.5),
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": float64(4.5),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},

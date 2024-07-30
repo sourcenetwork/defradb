@@ -46,9 +46,11 @@ func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"My_User": []map[string]any{
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},

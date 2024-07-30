@@ -38,9 +38,11 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}
@@ -70,9 +72,11 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}
@@ -102,7 +106,9 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{},
+		Results: map[string]any{
+			"Users": []map[string]any{},
+		},
 	}
 
 	executeTestCase(t, test)
@@ -127,9 +133,11 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}

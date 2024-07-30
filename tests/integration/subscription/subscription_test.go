@@ -28,19 +28,23 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 						age
 					}
 				}`,
-				Results: [][]map[string]any{
+				Results: []map[string]any{
 					{
-						{
-							"_docID": "bae-b3ce089b-f543-5984-be9f-ad7d08969f4e",
-							"age":    int64(27),
-							"name":   "John",
+						"User": []map[string]any{
+							{
+								"_docID": "bae-b3ce089b-f543-5984-be9f-ad7d08969f4e",
+								"age":    int64(27),
+								"name":   "John",
+							},
 						},
 					},
 					{
-						{
-							"_docID": "bae-bc20b854-10b3-5408-b28c-f273ddda9434",
-							"age":    int64(31),
-							"name":   "Addo",
+						"User": []map[string]any{
+							{
+								"_docID": "bae-bc20b854-10b3-5408-b28c-f273ddda9434",
+								"age":    int64(31),
+								"name":   "Addo",
+							},
 						},
 					},
 				},
@@ -51,9 +55,11 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -63,9 +69,11 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Addo",
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "Addo",
+						},
 					},
 				},
 			},
@@ -86,11 +94,13 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 						age
 					}
 				}`,
-				Results: [][]map[string]any{
+				Results: []map[string]any{
 					{
-						{
-							"age":  int64(27),
-							"name": "John",
+						"User": []map[string]any{
+							{
+								"age":  int64(27),
+								"name": "John",
+							},
 						},
 					},
 				},
@@ -101,9 +111,11 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -125,7 +137,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 						age
 					}
 				}`,
-				Results: [][]map[string]any{},
+				Results: []map[string]any{},
 			},
 			testUtils.Request{
 				Request: `mutation {
@@ -133,9 +145,11 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -156,11 +170,13 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 						age
 					}
 				}`,
-				Results: [][]map[string]any{
+				Results: []map[string]any{
 					{
-						{
-							"age":  int64(27),
-							"name": "John",
+						"User": []map[string]any{
+							{
+								"age":  int64(27),
+								"name": "John",
+							},
 						},
 					},
 				},
@@ -171,9 +187,11 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -183,9 +201,11 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Addo",
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "Addo",
+						},
 					},
 				},
 			},
@@ -225,12 +245,14 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 						points
 					}
 				}`,
-				Results: [][]map[string]any{
+				Results: []map[string]any{
 					{
-						{
-							"age":    int64(27),
-							"name":   "John",
-							"points": float64(45),
+						"User": []map[string]any{
+							{
+								"age":    int64(27),
+								"name":   "John",
+								"points": float64(45),
+							},
 						},
 					},
 				},
@@ -241,9 +263,11 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"update_User": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -283,19 +307,23 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 						points
 					}
 				}`,
-				Results: [][]map[string]any{
+				Results: []map[string]any{
 					{
-						{
-							"age":    int64(31),
-							"name":   "Addo",
-							"points": float64(55),
+						"User": []map[string]any{
+							{
+								"age":    int64(31),
+								"name":   "Addo",
+								"points": float64(55),
+							},
 						},
 					},
 					{
-						{
-							"age":    int64(27),
-							"name":   "John",
-							"points": float64(55),
+						"User": []map[string]any{
+							{
+								"age":    int64(27),
+								"name":   "John",
+								"points": float64(55),
+							},
 						},
 					},
 				},
@@ -306,12 +334,14 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Addo",
-					},
-					{
-						"name": "John",
+				Results: map[string]any{
+					"update_User": []map[string]any{
+						{
+							"name": "Addo",
+						},
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

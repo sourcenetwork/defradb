@@ -66,14 +66,16 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"age":  int64(65),
-				"published": []map[string]any{
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "John Grisham",
+					"age":  int64(65),
+					"published": []map[string]any{
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
 					},
 				},
 			},
@@ -133,14 +135,16 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortDescend
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"age":  int64(65),
-				"published": []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "John Grisham",
+					"age":  int64(65),
+					"published": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
 					},
 				},
 			},

@@ -65,15 +65,17 @@ func TestQueryOneToManyWithSumWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Cornelia Funke",
-				"_sum": 4.8,
-			},
-			{
-				"name": "John Grisham",
-				// .00...1 is float math thing
-				"_sum": 9.100000000000001,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "Cornelia Funke",
+					"_sum": 4.8,
+				},
+				{
+					"name": "John Grisham",
+					// .00...1 is float math thing
+					"_sum": 9.100000000000001,
+				},
 			},
 		},
 	}

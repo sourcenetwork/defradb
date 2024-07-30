@@ -70,10 +70,12 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -135,10 +137,12 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},

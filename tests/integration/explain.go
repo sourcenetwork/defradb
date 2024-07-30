@@ -57,6 +57,7 @@ var (
 		"valuesNode":    {},
 		"viewNode":      {},
 		"lensNode":      {},
+		"operationNode": {},
 	}
 )
 
@@ -86,12 +87,12 @@ type ExplainRequest struct {
 
 	// The raw expected explain graph with everything (helpful for debugging purposes).
 	// Note: This is not always asserted (i.e. ignored from the comparison if not provided).
-	ExpectedFullGraph []map[string]any
+	ExpectedFullGraph map[string]any
 
 	// Pattern is used to assert that the plan nodes are in the correct order (attributes are omitted).
 	// Note: - Explain requests of type 'debug' will only have Pattern (as they don't have attributes).
 	//       - This is not always asserted (i.e. ignored from the comparison if not provided).
-	ExpectedPatterns []map[string]any
+	ExpectedPatterns map[string]any
 
 	// Every target helps assert an individual node somewhere in the explain graph (node's position is omitted).
 	// Each target assertion is only responsible to check if the node's attributes are correct.
@@ -156,42 +157,33 @@ func assertExplainRequestResults(
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
-	resultantData := actualResult.Data.([]map[string]any)
+	resultantData := actualResult.Data.(map[string]any)
 	log.InfoContext(s.ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
-	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
-		require.Equal(s.t, lengthOfExpectedFullGraph, len(resultantData), s.testCase.Description)
-		for index, actualResult := range resultantData {
-			if lengthOfExpectedFullGraph > index {
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					action.ExpectedFullGraph[index],
-					actualResult,
-					s.testCase.Description,
-				)
-			}
-		}
+	if action.ExpectedFullGraph != nil {
+		assertResultsEqual(
+			s.t,
+			s.clientType,
+			action.ExpectedFullGraph,
+			resultantData,
+			s.testCase.Description,
+		)
 	}
 
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
 	if action.ExpectedPatterns != nil {
-		require.Equal(s.t, len(action.ExpectedPatterns), len(resultantData), s.testCase.Description)
-
-		for index, actualResult := range resultantData {
-			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-			actualResultWithoutAttributes := trimExplainAttributes(s.t, s.testCase.Description, actualResult)
-			assertResultsEqual(
-				s.t,
-				s.clientType,
-				action.ExpectedPatterns[index],
-				actualResultWithoutAttributes,
-				s.testCase.Description,
-			)
-		}
+		// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
+		actualResultWithoutAttributes := trimExplainAttributes(s.t, s.testCase.Description, resultantData)
+		assertResultsEqual(
+			s.t,
+			s.clientType,
+			action.ExpectedPatterns,
+			actualResultWithoutAttributes,
+			s.testCase.Description,
+		)
 	}
 
 	// Match the targeted node's attributes (subset assertions), with the expected attributes.
@@ -206,7 +198,7 @@ func assertExplainRequestResults(
 func assertExplainTargetCase(
 	s *state,
 	targetCase PlanNodeTargetCase,
-	actualResults []map[string]any,
+	actualResults map[string]any,
 ) {
 	for _, actualResult := range actualResults {
 		foundActualTarget, _, isFound := findTargetNode(

@@ -51,12 +51,14 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": limitTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": limitTypeJoinPattern,
+									},
 								},
 							},
 						},
@@ -99,12 +101,14 @@ func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": limitTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": limitTypeJoinPattern,
+									},
 								},
 							},
 						},
@@ -147,12 +151,14 @@ func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": limitTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": limitTypeJoinPattern,
+									},
 								},
 							},
 						},
@@ -195,13 +201,15 @@ func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnPare
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"limitNode": dataMap{
-									"selectNode": dataMap{
-										"typeIndexJoin": limitTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"limitNode": dataMap{
+										"selectNode": dataMap{
+											"typeIndexJoin": limitTypeJoinPattern,
+										},
 									},
 								},
 							},

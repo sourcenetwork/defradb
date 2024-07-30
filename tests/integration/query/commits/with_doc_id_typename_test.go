@@ -35,18 +35,20 @@ func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 							__typename
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid":        "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"__typename": "Commit",
-					},
-					{
-						"cid":        "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"__typename": "Commit",
-					},
-					{
-						"cid":        "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-						"__typename": "Commit",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid":        "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"__typename": "Commit",
+						},
+						{
+							"cid":        "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"__typename": "Commit",
+						},
+						{
+							"cid":        "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"__typename": "Commit",
+						},
 					},
 				},
 			},

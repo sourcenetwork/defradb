@@ -59,21 +59,23 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"docIDs": nil,
-									"filter": nil,
-									"scanNode": dataMap{
-										"filter":         nil,
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"docIDs": nil,
+										"filter": nil,
+										"scanNode": dataMap{
+											"filter":         nil,
+											"collectionID":   "3",
+											"collectionName": "Author",
+											"spans": []dataMap{
+												{
+													"start": "/3",
+													"end":   "/4",
+												},
 											},
 										},
 									},
@@ -106,7 +108,7 @@ func TestDefaultExplainWithAlias(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}

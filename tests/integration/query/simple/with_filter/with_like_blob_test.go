@@ -45,7 +45,11 @@ func TestQuerySimple_WithLikeOpOnBlobField_ShouldFilter(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{{"name": "John"}},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John"},
+					},
+				},
 			},
 		},
 	}

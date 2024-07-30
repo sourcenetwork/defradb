@@ -153,31 +153,33 @@ It returns a structure similar to the following, which contains the update paylo
 
 ```json
 {
-  "data": [
-    {
-      "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
-      "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
-      "height": 1,
-      "links": [
-        {
-          "cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
-          "name": "age"
-        },
-        {
-          "cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
-          "name": "name"
-        },
-        {
-          "cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
-          "name": "points"
-        },
-        {
-          "cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
-          "name": "verified"
-        }
-      ]
-    }
-  ]
+  "data": {
+    "latestCommits": [
+      {
+        "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
+        "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
+        "height": 1,
+        "links": [
+          {
+            "cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
+            "name": "age"
+          },
+          {
+            "cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
+            "name": "name"
+          },
+          {
+            "cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
+            "name": "points"
+          },
+          {
+            "cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
+            "name": "verified"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 

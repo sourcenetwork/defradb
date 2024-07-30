@@ -47,9 +47,11 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"preferredStrings": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"preferredStrings": nil,
+						},
 					},
 				},
 			},
@@ -90,9 +92,11 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"preferredStrings": []string{},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"preferredStrings": []string{},
+						},
 					},
 				},
 			},
@@ -133,9 +137,11 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"preferredStrings": []string{"zeroth", "the previous", "the first", "null string"},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"preferredStrings": []string{"zeroth", "the previous", "the first", "null string"},
+						},
 					},
 				},
 			},
@@ -176,9 +182,11 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"preferredStrings": []string{"", "the first"},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"preferredStrings": []string{"", "the first"},
+						},
 					},
 				},
 			},
@@ -219,15 +227,17 @@ func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"preferredStrings": []string{
-							"",
-							"the previous",
-							"the first",
-							"empty string",
-							"blank string",
-							"hitchi",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"preferredStrings": []string{
+								"",
+								"the previous",
+								"the first",
+								"empty string",
+								"blank string",
+								"hitchi",
+							},
 						},
 					},
 				},

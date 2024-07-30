@@ -99,9 +99,11 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -141,9 +143,11 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -183,9 +187,11 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Johnn",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Johnn",
+						},
 					},
 				},
 			},
@@ -230,9 +236,11 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Johnn",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Johnn",
+						},
 					},
 				},
 			},
@@ -275,12 +283,14 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"_version": []map[string]any{
-							{
-								"schemaVersionId": "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"_version": []map[string]any{
+								{
+									"schemaVersionId": "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+								},
 							},
 						},
 					},
@@ -331,10 +341,12 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(10),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(10),
+						},
 					},
 				},
 			},
@@ -383,10 +395,12 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": 10.2,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": 10.2,
+						},
 					},
 				},
 			},
@@ -430,10 +444,12 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(10),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(10),
+						},
 					},
 				},
 			},
@@ -477,10 +493,12 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": 10.2,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": 10.2,
+						},
 					},
 				},
 			},

@@ -73,21 +73,23 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":      "Cornelia Funke",
-				"_count":    1,
-				"published": []map[string]any{},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 4,
-				"published": []map[string]any{
-					{
-						"name": "Painted House",
-					},
-					{
-						"name": "The Pelican Brief",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":      "Cornelia Funke",
+					"_count":    1,
+					"published": []map[string]any{},
+				},
+				{
+					"name":   "John Grisham",
+					"_count": 4,
+					"published": []map[string]any{
+						{
+							"name": "Painted House",
+						},
+						{
+							"name": "The Pelican Brief",
+						},
 					},
 				},
 			},
@@ -149,25 +151,27 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 0,
-				"published": []map[string]any{
-					{
-						"name": "Theif Lord",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 0,
+					"published": []map[string]any{
+						{
+							"name": "Theif Lord",
+						},
 					},
 				},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 2,
-				"published": []map[string]any{
-					{
-						"name": "The Associate",
-					},
-					{
-						"name": "Painted House",
+				{
+					"name":   "John Grisham",
+					"_count": 2,
+					"published": []map[string]any{
+						{
+							"name": "The Associate",
+						},
+						{
+							"name": "Painted House",
+						},
 					},
 				},
 			},
@@ -221,14 +225,16 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 0,
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 1,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 0,
+				},
+				{
+					"name":   "John Grisham",
+					"_count": 1,
+				},
 			},
 		},
 	}

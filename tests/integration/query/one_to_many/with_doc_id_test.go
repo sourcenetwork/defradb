@@ -52,12 +52,14 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"published": []map[string]any{
-					{
-						"name": "Painted House",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name": "John Grisham",
+					"published": []map[string]any{
+						{
+							"name": "Painted House",
+						},
 					},
 				},
 			},

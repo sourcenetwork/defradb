@@ -487,13 +487,13 @@ type GetIndexes struct {
 // assertions.
 type ResultAsserter interface {
 	// Assert will be called with the test and the result of the request.
-	Assert(t testing.TB, result []map[string]any)
+	Assert(t testing.TB, result map[string]any)
 }
 
 // ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(testing.TB, []map[string]any) (bool, string)
+type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
 
-func (f ResultAsserterFunc) Assert(t testing.TB, result []map[string]any) {
+func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
 	f(t, result)
 }
 
@@ -536,7 +536,7 @@ type Request struct {
 	Request string
 
 	// The expected (data) results of the issued request.
-	Results []map[string]any
+	Results map[string]any
 
 	// Asserter is an optional custom result asserter.
 	Asserter ResultAsserter
@@ -616,7 +616,7 @@ type SubscriptionRequest struct {
 	Request string
 
 	// The expected (data) results yielded through the subscription across its lifetime.
-	Results [][]map[string]any
+	Results []map[string]any
 
 	// Any error expected from the action. Optional.
 	//

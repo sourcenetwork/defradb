@@ -60,14 +60,16 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 0,
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 1,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 0,
+				},
+				{
+					"name":   "John Grisham",
+					"_count": 1,
+				},
 			},
 		},
 	}
@@ -126,25 +128,27 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-				"published": []map[string]any{
-					{
-						"name": "Theif Lord",
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"name":   "Cornelia Funke",
+					"_count": 1,
+					"published": []map[string]any{
+						{
+							"name": "Theif Lord",
+						},
 					},
 				},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 2,
-				"published": []map[string]any{
-					{
-						"name": "Painted House",
-					},
-					{
-						"name": "A Time for Mercy",
+				{
+					"name":   "John Grisham",
+					"_count": 2,
+					"published": []map[string]any{
+						{
+							"name": "Painted House",
+						},
+						{
+							"name": "A Time for Mercy",
+						},
 					},
 				},
 			},

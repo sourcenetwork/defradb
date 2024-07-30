@@ -40,7 +40,9 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,9 +82,11 @@ func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) 
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

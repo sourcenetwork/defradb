@@ -58,14 +58,16 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": float64(59),
-					},
-					{
-						"name":   "Fred",
-						"points": float64(59),
+				Results: map[string]any{
+					"update_Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": float64(59),
+						},
+						{
+							"name":   "Fred",
+							"points": float64(59),
+						},
 					},
 				},
 			},

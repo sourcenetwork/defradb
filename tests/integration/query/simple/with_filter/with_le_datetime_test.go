@@ -38,9 +38,11 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}
@@ -70,9 +72,11 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}
@@ -101,9 +105,11 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Bob",
+				},
 			},
 		},
 	}

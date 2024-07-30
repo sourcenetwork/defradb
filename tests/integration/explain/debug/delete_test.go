@@ -19,10 +19,14 @@ import (
 
 var deletePattern = dataMap{
 	"explain": dataMap{
-		"deleteNode": dataMap{
-			"selectTopNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"deleteNode": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -45,7 +49,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 			},
 		},
 	}
@@ -69,7 +73,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *te
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 			},
 		},
 	}
@@ -93,7 +97,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 			},
 		},
 	}
@@ -120,7 +124,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 			},
 		},
 	}
@@ -144,7 +148,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 			},
 		},
 	}
@@ -176,7 +180,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 			},
 		},
 	}

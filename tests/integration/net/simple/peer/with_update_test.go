@@ -58,9 +58,11 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -110,9 +112,11 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -168,9 +172,11 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": testUtils.AnyOf{int64(45), int64(60)},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": testUtils.AnyOf{int64(45), int64(60)},
+						},
 					},
 				},
 			},
@@ -221,9 +227,11 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -234,9 +242,11 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -248,9 +258,11 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -303,9 +315,11 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -317,9 +331,11 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -330,9 +346,11 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -410,9 +428,11 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": testUtils.AnyOf{int64(47), int64(62)},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": testUtils.AnyOf{int64(47), int64(62)},
+						},
 					},
 				},
 			},
@@ -473,12 +493,14 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
-					},
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -589,12 +611,14 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": testUtils.AnyOf{int64(47), int64(62)},
-					},
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": testUtils.AnyOf{int64(47), int64(62)},
+						},
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},

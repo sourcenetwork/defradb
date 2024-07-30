@@ -61,12 +61,14 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"points": int64(0),
-					},
-					{
-						"points": int64(3000),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"points": int64(0),
+						},
+						{
+							"points": int64(3000),
+						},
 					},
 				},
 			},
@@ -77,9 +79,11 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"points": int64(0),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"points": int64(0),
+						},
 					},
 				},
 			},
@@ -90,12 +94,14 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"points": int64(0),
-					},
-					{
-						"points": int64(3000),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"points": int64(0),
+						},
+						{
+							"points": int64(3000),
+						},
 					},
 				},
 			},
@@ -147,9 +153,11 @@ func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"points": int64(20),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"points": int64(20),
+						},
 					},
 				},
 			},

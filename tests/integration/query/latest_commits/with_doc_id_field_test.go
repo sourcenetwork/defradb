@@ -38,7 +38,9 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{},
+		Results: map[string]any{
+			"latestCommits": []map[string]any{},
+		},
 	}
 
 	executeTestCase(t, test)
@@ -66,10 +68,12 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-				"links": []map[string]any{},
+		Results: map[string]any{
+			"latestCommits": []map[string]any{
+				{
+					"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+					"links": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -99,17 +103,19 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-				"links": []map[string]any{
-					{
-						"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"name": "name",
-					},
-					{
-						"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"name": "age",
+		Results: map[string]any{
+			"latestCommits": []map[string]any{
+				{
+					"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+					"links": []map[string]any{
+						{
+							"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"name": "name",
+						},
+						{
+							"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"name": "age",
+						},
 					},
 				},
 			},

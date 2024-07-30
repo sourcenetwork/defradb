@@ -49,13 +49,15 @@ func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteFloats": []immutable.Option[float64]{
-							immutable.Some(3.1425),
-							immutable.Some(-0.00000000001),
-							immutable.None[float64](),
-							immutable.Some[float64](10),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteFloats": []immutable.Option[float64]{
+								immutable.Some(3.1425),
+								immutable.Some(-0.00000000001),
+								immutable.None[float64](),
+								immutable.Some[float64](10),
+							},
 						},
 					},
 				},

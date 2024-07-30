@@ -259,15 +259,7 @@ func (c *collection) makeSelectionPlan(
 		txn,
 	)
 
-	return planner.MakePlan(&request.Request{
-		Queries: []*request.OperationDefinition{
-			{
-				Selections: []request.Selection{
-					slct,
-				},
-			},
-		},
-	})
+	return planner.MakeSelectionPlan(slct)
 }
 
 func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {

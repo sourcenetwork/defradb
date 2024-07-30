@@ -33,10 +33,12 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_sum": int64(7),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					"_sum": int64(7),
+				},
 			},
 		},
 	}

@@ -38,9 +38,11 @@ func TestMutationDeletion_WithFilter(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},
@@ -86,12 +88,14 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"age": int64(2),
-					},
-					{
-						"age": int64(1),
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"age": int64(2),
+						},
+						{
+							"age": int64(1),
+						},
 					},
 				},
 			},
@@ -133,15 +137,17 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-					{
-						"name": "Shahzad",
-					},
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Shahzad",
+						},
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},
@@ -173,7 +179,9 @@ func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -198,7 +206,9 @@ func TestMutationDeletion_WithFilterOnEmptyCollection(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 		},
 	}

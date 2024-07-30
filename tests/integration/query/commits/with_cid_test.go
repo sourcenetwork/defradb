@@ -43,9 +43,11 @@ func TestQueryCommitsWithCid(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+						},
 					},
 				},
 			},
@@ -76,9 +78,11 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+						},
 					},
 				},
 			},
@@ -108,7 +112,9 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 							delta
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -136,7 +142,9 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 							delta
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -164,7 +172,9 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 							delta
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}

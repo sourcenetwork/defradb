@@ -88,38 +88,40 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"age": int64(327),
-					"_group": []map[string]any{
-						{
-							"name": "Voltaire",
-							"published": []map[string]any{
-								{
-									"name":   "Candide",
-									"rating": 4.95,
-								},
-								{
-									"name":   "Zadig",
-									"rating": 4.91,
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"age": int64(327),
+						"_group": []map[string]any{
+							{
+								"name": "Voltaire",
+								"published": []map[string]any{
+									{
+										"name":   "Candide",
+										"rating": 4.95,
+									},
+									{
+										"name":   "Zadig",
+										"rating": 4.91,
+									},
 								},
 							},
-						},
-						{
-							"name":      "Simon Pelloutier",
-							"published": []map[string]any{},
+							{
+								"name":      "Simon Pelloutier",
+								"published": []map[string]any{},
+							},
 						},
 					},
-				},
-				{
-					"age": int64(65),
-					"_group": []map[string]any{
-						{
-							"name": "John Grisham",
-							"published": []map[string]any{
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
+					{
+						"age": int64(65),
+						"_group": []map[string]any{
+							{
+								"name": "John Grisham",
+								"published": []map[string]any{
+									{
+										"name":   "Painted House",
+										"rating": 4.9,
+									},
 								},
 							},
 						},
@@ -206,42 +208,44 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"age": int64(327),
-					"_group": []map[string]any{
-						{
-							"name": "Voltaire",
-							"published": []map[string]any{
-								{
-									"name":   "Candide",
-									"rating": 4.95,
-								},
-								{
-									"name":   "Zadig",
-									"rating": 4.91,
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"age": int64(327),
+						"_group": []map[string]any{
+							{
+								"name": "Voltaire",
+								"published": []map[string]any{
+									{
+										"name":   "Candide",
+										"rating": 4.95,
+									},
+									{
+										"name":   "Zadig",
+										"rating": 4.91,
+									},
 								},
 							},
 						},
 					},
-				},
-				{
-					"age": int64(65),
-					"_group": []map[string]any{
-						{
-							"name": "John Grisham",
-							"published": []map[string]any{
-								{
-									"name":   "The Client",
-									"rating": 4.5,
-								},
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
-								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
+					{
+						"age": int64(65),
+						"_group": []map[string]any{
+							{
+								"name": "John Grisham",
+								"published": []map[string]any{
+									{
+										"name":   "The Client",
+										"rating": 4.5,
+									},
+									{
+										"name":   "Painted House",
+										"rating": 4.9,
+									},
+									{
+										"name":   "A Time for Mercy",
+										"rating": 4.5,
+									},
 								},
 							},
 						},
@@ -328,22 +332,24 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"age": int64(327),
-					"_group": []map[string]any{
-						{
-							"name": "Voltaire",
-							"published": []map[string]any{
-								{
-									"name":   "Candide",
-									"rating": 4.95,
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"age": int64(327),
+						"_group": []map[string]any{
+							{
+								"name": "Voltaire",
+								"published": []map[string]any{
+									{
+										"name":   "Candide",
+										"rating": 4.95,
+									},
 								},
 							},
-						},
-						{
-							"name":      "Simon Pelloutier",
-							"published": []map[string]any{},
+							{
+								"name":      "Simon Pelloutier",
+								"published": []map[string]any{},
+							},
 						},
 					},
 				},

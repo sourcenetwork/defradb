@@ -185,78 +185,80 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": testUtils.NewDocIndex(0, 2),
-						"book":   []map[string]any{},
-						"name":   "Not a Writer",
-					},
-					{
-						"name":   "Cornelia Funke",
-						"_docID": testUtils.NewDocIndex(0, 1),
-						"book": []map[string]any{
-							{
-								"_docID": testUtils.NewDocIndex(1, 0),
-								"name":   "The Rooster Bar",
-								"publisher": []map[string]any{
-									{
-										"_docID": testUtils.NewDocIndex(2, 0),
-										"name":   "Only Publisher of The Rooster Bar",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"_docID": testUtils.NewDocIndex(0, 2),
+							"book":   []map[string]any{},
+							"name":   "Not a Writer",
+						},
+						{
+							"name":   "Cornelia Funke",
+							"_docID": testUtils.NewDocIndex(0, 1),
+							"book": []map[string]any{
+								{
+									"_docID": testUtils.NewDocIndex(1, 0),
+									"name":   "The Rooster Bar",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 0),
+											"name":   "Only Publisher of The Rooster Bar",
+										},
 									},
 								},
 							},
 						},
-					},
-					{
-						"name":   "John Grisham",
-						"_docID": testUtils.NewDocIndex(0, 0),
-						"book": []map[string]any{
-							{
-								"_docID": testUtils.NewDocIndex(1, 1),
-								"name":   "Theif Lord",
-								"publisher": []map[string]any{
-									{
-										"_docID": testUtils.NewDocIndex(2, 1),
-										"name":   "Only Publisher of Theif Lord",
+						{
+							"name":   "John Grisham",
+							"_docID": testUtils.NewDocIndex(0, 0),
+							"book": []map[string]any{
+								{
+									"_docID": testUtils.NewDocIndex(1, 1),
+									"name":   "Theif Lord",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 1),
+											"name":   "Only Publisher of Theif Lord",
+										},
 									},
 								},
-							},
-							{
-								"_docID":    testUtils.NewDocIndex(1, 2),
-								"name":      "The Associate",
-								"publisher": []map[string]any{},
-							},
-							{
-								"_docID": testUtils.NewDocIndex(1, 3),
-								"name":   "Painted House",
-								"publisher": []map[string]any{
-									{
-										"_docID": testUtils.NewDocIndex(2, 2),
-										"name":   "Only Publisher of Painted House",
+								{
+									"_docID":    testUtils.NewDocIndex(1, 2),
+									"name":      "The Associate",
+									"publisher": []map[string]any{},
+								},
+								{
+									"_docID": testUtils.NewDocIndex(1, 3),
+									"name":   "Painted House",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 2),
+											"name":   "Only Publisher of Painted House",
+										},
 									},
 								},
-							},
-							{
-								"_docID": testUtils.NewDocIndex(1, 4),
-								"name":   "A Time for Mercy",
-								"publisher": []map[string]any{
-									{
-										"_docID": testUtils.NewDocIndex(2, 3),
-										"name":   "Only Publisher of A Time for Mercy",
+								{
+									"_docID": testUtils.NewDocIndex(1, 4),
+									"name":   "A Time for Mercy",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 3),
+											"name":   "Only Publisher of A Time for Mercy",
+										},
 									},
 								},
-							},
-							{
-								"_docID": testUtils.NewDocIndex(1, 5),
-								"name":   "Sooley",
-								"publisher": []map[string]any{
-									{
-										"_docID": testUtils.NewDocIndex(2, 5),
-										"name":   "Second of Two Publishers of Sooley",
-									},
-									{
-										"_docID": testUtils.NewDocIndex(2, 4),
-										"name":   "First of Two Publishers of Sooley",
+								{
+									"_docID": testUtils.NewDocIndex(1, 5),
+									"name":   "Sooley",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 5),
+											"name":   "Second of Two Publishers of Sooley",
+										},
+										{
+											"_docID": testUtils.NewDocIndex(2, 4),
+											"name":   "First of Two Publishers of Sooley",
+										},
 									},
 								},
 							},

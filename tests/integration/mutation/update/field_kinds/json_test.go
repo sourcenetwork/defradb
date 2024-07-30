@@ -45,9 +45,11 @@ func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"custom": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"custom": nil,
+						},
 					},
 				},
 			},

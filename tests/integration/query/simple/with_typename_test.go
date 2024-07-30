@@ -32,10 +32,12 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":       "John",
-				"__typename": "Users",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":       "John",
+					"__typename": "Users",
+				},
 			},
 		},
 	}
@@ -60,11 +62,13 @@ func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":       "John",
-				"__typename": "Users",
-				"t1":         "Users",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":       "John",
+					"__typename": "Users",
+					"t1":         "Users",
+				},
 			},
 		},
 	}

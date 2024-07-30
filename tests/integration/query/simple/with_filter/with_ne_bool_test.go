@@ -39,12 +39,14 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Fred",
-			},
-			{
-				"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Fred",
+				},
+				{
+					"Name": "Bob",
+				},
 			},
 		},
 	}
@@ -75,12 +77,14 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-			{
-				"Name": "Fred",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
+				{
+					"Name": "Fred",
+				},
 			},
 		},
 	}
@@ -111,12 +115,14 @@ func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-			{
-				"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+				},
+				{
+					"Name": "Bob",
+				},
 			},
 		},
 	}

@@ -94,10 +94,8 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 						{_not: {author: {age: {_gt: 30}}} }
 					]}})
 				}`,
-				Results: []map[string]any{
-					{
-						"_count": int(2),
-					},
+				Results: map[string]any{
+					"_count": int(2),
 				},
 			},
 		},

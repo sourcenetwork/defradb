@@ -23,6 +23,7 @@ var (
 	ErrFailedToFindHostField    = errors.New("failed to find host field")
 	ErrInvalidFieldIndex        = errors.New("given field doesn't have any indexes")
 	ErrMissingSelect            = errors.New("missing target select field")
+	ErrInvalidSelect            = errors.New("select type is invalid")
 )
 
 func NewErrInvalidFieldToGroupBy(field string) error {

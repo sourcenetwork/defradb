@@ -77,18 +77,20 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"age":  int64(65),
-						"published": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
-							},
-							{
-								"name":   "A Time for Mercy",
-								"rating": 4.5,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"published": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
 							},
 						},
 					},
@@ -156,9 +158,11 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},
@@ -229,14 +233,16 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"age":  int64(65),
-						"published": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"published": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
 							},
 						},
 					},
@@ -313,31 +319,33 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-						"p1": []map[string]any{
-							{
-								"name":   "Theif Lord",
-								"rating": 4.8,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+							"p1": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
+								},
 							},
+							"p2": []map[string]any{},
 						},
-						"p2": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						"age":  int64(65),
-						"p1": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"p1": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
 							},
-						},
-						"p2": []map[string]any{
-							{
-								"name":   "A Time for Mercy",
-								"rating": 4.5,
+							"p2": []map[string]any{
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
 							},
 						},
 					},
@@ -430,12 +438,14 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-					},
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+						},
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},
@@ -448,9 +458,11 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{{
-					"name": "Cornelia Funke",
-				}},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{"name": "Cornelia Funke"},
+					},
+				},
 			},
 		},
 	}
@@ -535,12 +547,14 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-					},
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+						},
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},

@@ -122,14 +122,16 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 							_sum(books: {field: score}, articles: {field: rating})
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"_sum": int64(7),
-					},
-					{
-						"name": "John Grisham",
-						"_sum": int64(9),
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"_sum": int64(7),
+						},
+						{
+							"name": "John Grisham",
+							"_sum": int64(9),
+						},
 					},
 				},
 			},

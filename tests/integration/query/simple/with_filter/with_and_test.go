@@ -45,14 +45,16 @@ func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(21),
-			},
-			{
-				"Name": "Bob",
-				"Age":  int64(32),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"Age":  int64(21),
+				},
+				{
+					"Name": "Bob",
+					"Age":  int64(32),
+				},
 			},
 		},
 	}

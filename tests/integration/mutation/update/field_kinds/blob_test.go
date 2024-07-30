@@ -47,9 +47,11 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"data": "00FF",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"data": "00FF",
+						},
 					},
 				},
 			},
@@ -88,9 +90,11 @@ func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"data": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"data": nil,
+						},
 					},
 				},
 			},

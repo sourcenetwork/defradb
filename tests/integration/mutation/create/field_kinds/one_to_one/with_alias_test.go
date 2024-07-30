@@ -60,9 +60,11 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_Creat
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},
@@ -114,11 +116,13 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -132,11 +136,13 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
 						},
 					},
 				},
@@ -173,11 +179,13 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondaryS
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
 						},
 					},
 				},
@@ -191,11 +199,13 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondaryS
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},

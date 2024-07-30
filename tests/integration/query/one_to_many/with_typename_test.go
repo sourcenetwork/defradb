@@ -47,13 +47,15 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":       "Painted House",
-				"__typename": "Book",
-				"author": map[string]any{
-					"name":       "John Grisham",
-					"__typename": "Author",
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":       "Painted House",
+					"__typename": "Book",
+					"author": map[string]any{
+						"name":       "John Grisham",
+						"__typename": "Author",
+					},
 				},
 			},
 		},

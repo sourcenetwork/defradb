@@ -86,30 +86,32 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 			},
 		},
 
-		Results: []map[string]any{
-			{
-				"name":      "The Client",
-				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
-			},
-			{
-				"name":      "Painted House",
-				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
-			},
-			{
-				"name":      "A Time for Mercy",
-				"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
-			},
-			{
-				"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-				"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
-			},
-			{
-				"name":      "Candide",
-				"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
-			},
-			{
-				"name":      "Zadig",
-				"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+		Results: map[string]any{
+			"Book": []map[string]any{
+				{
+					"name":      "The Client",
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+				},
+				{
+					"name":      "Painted House",
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+				},
+				{
+					"name":      "A Time for Mercy",
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
+				},
+				{
+					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+				},
+				{
+					"name":      "Candide",
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+				},
+				{
+					"name":      "Zadig",
+					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+				},
 			},
 		},
 	}

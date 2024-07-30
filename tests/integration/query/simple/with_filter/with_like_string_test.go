@@ -36,9 +36,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -66,9 +68,11 @@ func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -96,9 +100,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Viserys I Targaryen, King of the Andals",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Viserys I Targaryen, King of the Andals",
+				},
 			},
 		},
 	}
@@ -126,9 +132,11 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *te
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Viserys I Targaryen, King of the Andals",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Viserys I Targaryen, King of the Andals",
+				},
 			},
 		},
 	}
@@ -156,9 +164,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Viserys I Targaryen, King of the Andals",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Viserys I Targaryen, King of the Andals",
+				},
 			},
 		},
 	}
@@ -186,9 +196,11 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *te
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Viserys I Targaryen, King of the Andals",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Viserys I Targaryen, King of the Andals",
+				},
 			},
 		},
 	}
@@ -216,9 +228,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -246,9 +260,11 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *tes
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -276,12 +292,14 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Viserys I Targaryen, King of the Andals",
-			},
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Viserys I Targaryen, King of the Andals",
+				},
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -309,9 +327,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -339,7 +359,9 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{},
+		Results: map[string]any{
+			"Users": []map[string]any{},
+		},
 	}
 
 	executeTestCase(t, test)
@@ -365,9 +387,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+				},
 			},
 		},
 	}
@@ -398,9 +422,11 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockPropNotSet(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Viserys I Targaryen, King of the Andals",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Viserys I Targaryen, King of the Andals",
+				},
 			},
 		},
 	}

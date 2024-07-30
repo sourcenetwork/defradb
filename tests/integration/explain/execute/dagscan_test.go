@@ -37,18 +37,20 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     5,
-							"planExecutions":   uint64(6),
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"iterations":    uint64(6),
-									"filterMatches": uint64(5),
-									"dagScanNode": dataMap{
-										"iterations": uint64(6),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"iterations":    uint64(6),
+										"filterMatches": uint64(5),
+										"dagScanNode": dataMap{
+											"iterations": uint64(6),
+										},
 									},
 								},
 							},
@@ -83,18 +85,20 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"iterations":    uint64(2),
-									"filterMatches": uint64(1),
-									"dagScanNode": dataMap{
-										"iterations": uint64(2),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"iterations":    uint64(2),
+										"filterMatches": uint64(1),
+										"dagScanNode": dataMap{
+											"iterations": uint64(2),
+										},
 									},
 								},
 							},

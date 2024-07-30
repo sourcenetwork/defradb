@@ -33,11 +33,13 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 0 + 1 + 2
-				"_sum": int64(3),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 0 + 1 + 2
+					"_sum": int64(3),
+				},
 			},
 		},
 	}
@@ -62,11 +64,13 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 5 + 2 + 1
-				"_sum": int64(8),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 5 + 2 + 1
+					"_sum": int64(8),
+				},
 			},
 		},
 	}
@@ -91,11 +95,13 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 0 + 1 + 2
-				"_sum": int64(3),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 0 + 1 + 2
+					"_sum": int64(3),
+				},
 			},
 		},
 	}
@@ -120,11 +126,13 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 5 + 2 + 1
-				"_sum": int64(8),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 5 + 2 + 1
+					"_sum": int64(8),
+				},
 			},
 		},
 	}
@@ -149,11 +157,13 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 0.577 + 2.718 + 3.1425
-				"_sum": float64(6.4375),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 0.577 + 2.718 + 3.1425
+					"_sum": float64(6.4375),
+				},
 			},
 		},
 	}
@@ -178,11 +188,13 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 6.283 + 3.1425 + 2.718
-				"_sum": float64(12.1435),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 6.283 + 3.1425 + 2.718
+					"_sum": float64(12.1435),
+				},
 			},
 		},
 	}
@@ -207,11 +219,13 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 0.577 + 2.718 + 3.1425
-				"_sum": float64(6.4375),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 0.577 + 2.718 + 3.1425
+					"_sum": float64(6.4375),
+				},
 			},
 		},
 	}
@@ -236,11 +250,13 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				// 6.283 + 3.1425 + 2.718
-				"_sum": float64(12.1435),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "Shahzad",
+					// 6.283 + 3.1425 + 2.718
+					"_sum": float64(12.1435),
+				},
 			},
 		},
 	}

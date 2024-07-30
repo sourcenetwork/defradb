@@ -58,9 +58,11 @@ func TestP2POneToOneReplicatorUpdate_PNCounter_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"points": int64(20),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"points": int64(20),
+						},
 					},
 				},
 			},

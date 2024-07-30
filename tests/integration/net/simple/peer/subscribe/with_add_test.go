@@ -60,12 +60,14 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+						// Peer sync should not sync new documents to nodes that is not subscribed
+						// to the P2P collection.
 					},
-					// Peer sync should not sync new documents to nodes that is not subscribed
-					// to the P2P collection.
 				},
 			},
 			testUtils.Request{
@@ -75,12 +77,14 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
-					},
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -144,9 +148,11 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -159,7 +165,9 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Giraffes": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				// Bjorn the Bear has been synced.
@@ -168,9 +176,11 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Bjorn",
+				Results: map[string]any{
+					"Bears": []map[string]any{
+						{
+							"name": "Bjorn",
+						},
 					},
 				},
 			},
@@ -216,7 +226,9 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -261,7 +273,9 @@ func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -309,9 +323,11 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -355,7 +371,9 @@ func TestP2PSubscribeAddNone(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

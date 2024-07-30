@@ -53,9 +53,7 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []error{err}
-		return res
 	}
-
 	res.GQL.Data = results
 	return res
 }

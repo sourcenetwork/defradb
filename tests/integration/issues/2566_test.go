@@ -83,11 +83,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						// Node 0 overflows before subtraction, and because subtracting from infinity
-						// results in infinity the value remains infinate
-						"Age": math.Inf(1),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// Node 0 overflows before subtraction, and because subtracting from infinity
+							// results in infinity the value remains infinate
+							"Age": math.Inf(1),
+						},
 					},
 				},
 			},
@@ -98,11 +100,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						// Node 1 subtracts before adding, meaning no overflow is achieved and the value
-						// remains finate
-						"Age": float64(1.7976931348623155e+307),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// Node 1 subtracts before adding, meaning no overflow is achieved and the value
+							// remains finate
+							"Age": float64(1.7976931348623155e+307),
+						},
 					},
 				},
 			},
@@ -175,11 +179,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						// Node 0 overflows before addition, and because adding to infinity
-						// results in infinity the value remains infinate
-						"Age": math.Inf(-1),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// Node 0 overflows before addition, and because adding to infinity
+							// results in infinity the value remains infinate
+							"Age": math.Inf(-1),
+						},
 					},
 				},
 			},
@@ -190,11 +196,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						// Node 1 adds before subtracting, meaning no overflow is achieved and the value
-						// remains finate
-						"Age": float64(-1.7976931348623155e+307),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// Node 1 adds before subtracting, meaning no overflow is achieved and the value
+							// remains finate
+							"Age": float64(-1.7976931348623155e+307),
+						},
 					},
 				},
 			},

@@ -46,10 +46,12 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
 					},
 				},
 			},
@@ -93,10 +95,12 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(21),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
 					},
 				},
 			},
