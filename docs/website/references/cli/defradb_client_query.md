@@ -24,14 +24,15 @@ with the database more conveniently.
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.
 
 ```
-defradb client query [-i --identity] [request] [flags]
+defradb client query [-i --identity] [request] [--operation <name>] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File containing the query request
-  -h, --help          help for query
+  -f, --file string        File containing the query request
+  -h, --help               help for query
+  -o, --operation string   Name of the operation to execute
 ```
 
 ### Options inherited from parent commands
