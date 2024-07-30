@@ -54,13 +54,13 @@ func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	var request GraphQLRequest
+	var request client.GQLRequest
 	if err := json.Unmarshal(data, &request); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	result := store.ExecRequest(req.Context(), request.Query)
+	result := store.ExecRequest(req.Context(), request)
 	if result.Subscription != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
 		return

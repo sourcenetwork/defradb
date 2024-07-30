@@ -36,6 +36,7 @@ func parseMutationOperationDefinition(
 	def *ast.OperationDefinition,
 ) (*request.OperationDefinition, error) {
 	qdef := &request.OperationDefinition{
+		Name:       def.Name.Value,
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
 

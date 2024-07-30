@@ -23,7 +23,9 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrSelectOfNonGroupField = errors.New(errSelectOfNonGroupField)
+	ErrSelectOfNonGroupField  = errors.New(errSelectOfNonGroupField)
+	ErrMissingOperationName   = errors.New("request with multiple operations must have an operationName")
+	ErrMissingQueryOrMutation = errors.New("request is missing query or mutation operation statements")
 )
 
 // NewErrSelectOfNonGroupField returns an error indicating that a non-group-by field

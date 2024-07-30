@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -26,8 +27,9 @@ const (
 
 func MakeRequestCommand() *cobra.Command {
 	var filePath string
+	var operationName string
 	var cmd = &cobra.Command{
-		Use:   "query [-i --identity] [request]",
+		Use:   "query [-i --identity] [request] [--operation <name>]",
 		Short: "Send a DefraDB GraphQL query request",
 		Long: `Send a DefraDB GraphQL query request to the database.
 
@@ -48,27 +50,28 @@ with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var request string
+			var request client.GQLRequest
 			switch {
 			case filePath != "":
 				data, err := os.ReadFile(filePath)
 				if err != nil {
 					return err
 				}
-				request = string(data)
+				request.Query = string(data)
 			case len(args) > 0 && args[0] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
 					return err
 				}
-				request = string(data)
+				request.Query = string(data)
 			case len(args) > 0:
-				request = string(args[0])
+				request.Query = string(args[0])
 			}
 
-			if request == "" {
-				return errors.New("request cannot be empty")
+			if request.Query == "" {
+				return errors.New("query cannot be empty")
 			}
+			request.OperationName = operationName
 
 			store := mustGetContextStore(cmd)
 			result := store.ExecRequest(cmd.Context(), request)
@@ -88,7 +91,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			return nil
 		},
 	}
-
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "File containing the query request")
+	cmd.Flags().StringVarP(&operationName, "operation", "o", "", "Name of the operation to execute")
 	return cmd
 }

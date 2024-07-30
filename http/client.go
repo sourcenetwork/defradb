@@ -339,12 +339,12 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 
 func (c *Client) ExecRequest(
 	ctx context.Context,
-	query string,
+	request client.GQLRequest,
 ) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
-	body, err := json.Marshal(&GraphQLRequest{query})
+	body, err := json.Marshal(&request)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result

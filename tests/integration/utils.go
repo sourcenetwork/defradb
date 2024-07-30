@@ -15,8 +15,9 @@ import (
 )
 
 type RequestTestCase struct {
-	Description string
-	Request     string
+	Description   string
+	Request       string
+	OperationName string
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -59,6 +60,7 @@ func ExecuteRequestTestCase(
 				ExpectedError: test.ExpectedError,
 				Request:       test.Request,
 				Results:       test.Results,
+				OperationName: test.OperationName,
 			},
 		)
 	}

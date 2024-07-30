@@ -241,10 +241,6 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-type GraphQLRequest struct {
-	Query string `json:"query"`
-}
-
 type GraphQLResponse struct {
 	Data   any     `json:"data"`
 	Errors []error `json:"errors,omitempty"`
@@ -285,10 +281,11 @@ func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(dbContextKey).(client.Store)
 
-	var request GraphQLRequest
+	var request client.GQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
 		request.Query = req.URL.Query().Get("query")
+		request.OperationName = req.URL.Query().Get("operationName")
 	case req.Body != nil:
 		if err := requestJSON(req, &request); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -299,7 +296,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := store.ExecRequest(req.Context(), request.Query)
+	result := store.ExecRequest(req.Context(), request)
 
 	if result.Subscription == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})
@@ -587,12 +584,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	graphQLQueryParam := openapi3.NewQueryParameter("query").
 		WithSchema(openapi3.NewStringSchema())
+	graphQLOperationNameParam := openapi3.NewQueryParameter("operationName").
+		WithSchema(openapi3.NewStringSchema())
 
 	graphQLGet := openapi3.NewOperation()
 	graphQLGet.Description = "GraphQL GET endpoint"
 	graphQLGet.OperationID = "graphql_get"
 	graphQLGet.Tags = []string{"graphql"}
 	graphQLGet.AddParameter(graphQLQueryParam)
+	graphQLGet.AddParameter(graphQLOperationNameParam)
 	graphQLGet.AddResponse(200, graphQLResponse)
 	graphQLGet.Responses.Set("400", errorResponse)
 

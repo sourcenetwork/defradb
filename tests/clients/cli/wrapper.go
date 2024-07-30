@@ -395,10 +395,13 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
-	query string,
+	request client.GQLRequest,
 ) *client.RequestResult {
 	args := []string{"client", "query"}
-	args = append(args, query)
+	args = append(args, request.Query)
+	if request.OperationName != "" {
+		args = append(args, "--operation", request.OperationName)
+	}
 
 	result := &client.RequestResult{}
 

@@ -1278,7 +1278,7 @@ func createDocViaGQL(
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
 
-	result := node.ExecRequest(ctx, req)
+	result := node.ExecRequest(ctx, client.GQLRequest{Query: req})
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -1456,7 +1456,7 @@ func updateDocViaGQL(
 	identity := getIdentity(s, nodeIndex, action.Identity)
 	ctx := db.SetContextIdentity(s.ctx, identity)
 
-	result := node.ExecRequest(ctx, request)
+	result := node.ExecRequest(ctx, client.GQLRequest{Query: request})
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -1705,7 +1705,10 @@ func executeRequest(
 		identity := getIdentity(s, nodeID, action.Identity)
 		ctx = db.SetContextIdentity(ctx, identity)
 
-		result := node.ExecRequest(ctx, action.Request)
+		result := node.ExecRequest(ctx, client.GQLRequest{
+			Query:         action.Request,
+			OperationName: action.OperationName,
+		})
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
@@ -1737,7 +1740,7 @@ func executeSubscriptionRequest(
 	subscriptionAssert := make(chan func())
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, client.GQLRequest{Query: action.Request})
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
@@ -1992,7 +1995,7 @@ func assertIntrospectionResults(
 	action IntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, client.GQLRequest{Query: action.Request})
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -2023,7 +2026,7 @@ func assertClientIntrospectionResults(
 	action ClientIntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, client.GQLRequest{Query: action.Request})
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
