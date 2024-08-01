@@ -45,7 +45,6 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"

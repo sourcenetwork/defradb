@@ -171,6 +171,19 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	return &pb.PushLogReply{}, nil
 }
 
+func (s *server) getEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) ([]byte, error) {
+	docID, err := client.NewDocIDFromString(string(req.DocID))
+	if err != nil {
+		return nil, err
+	}
+
+	optFieldName := immutable.None[string]()
+	if req.FieldName != "" {
+		optFieldName = immutable.Some(req.FieldName)
+	}
+	return encryption.GetKey(encryption.ContextWithStore(ctx, s.peer.encstore), docID.String(), optFieldName)
+}
+
 func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) (*pb.FetchEncryptionKeyReply, error) {
 	isValid, err := s.verifyRequestSignature(req)
 	if err != nil {

@@ -119,3 +119,107 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeysAndDecrypt(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID:          immutable.Some(0),
+				Doc:             john21Doc,
+				IsDocEncrypted:  true,
+				EncryptedFields: []string{"age"},
+			},
+			testUtils.WaitForSync{
+				Event:   immutable.Some(encryption.KeyRetrievedEventName),
+				NodeIDs: []int{1},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						"age":  int64(21),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypted_ShouldFetchKeysAndDecrypt(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID:          immutable.Some(0),
+				Doc:             john21Doc,
+				IsDocEncrypted:  true,
+				EncryptedFields: []string{"name", "age"},
+			},
+			testUtils.WaitForSync{
+				Event:   immutable.Some(encryption.KeyRetrievedEventName),
+				NodeIDs: []int{1},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						"age":  int64(21),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+

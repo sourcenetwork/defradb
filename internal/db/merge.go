@@ -284,14 +284,14 @@ func (mp *mergeProcessor) loadComposites(
 	return nil
 }
 
-func (mp *mergeProcessor) mergeComposites(ctx context.Context, skipHeads bool) error {
+func (mp *mergeProcessor) mergeComposites(ctx context.Context, withDecryption bool) error {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
 			return err
 		}
-		err = mp.processBlock(ctx, block, link, skipHeads)
+		err = mp.processBlock(ctx, block, link, withDecryption)
 		if err != nil {
 			return err
 		}
@@ -299,28 +299,26 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context, skipHeads bool) e
 	return nil
 }
 
-// processBlock merges the block and its children to the datastore and sets the head accordingly.
-// If onlyHeads is true, it will skip merging and update only the heads.
-func (mp *mergeProcessor) processBlock(
+// processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
+// If the block is encrypted and we were not able to decrypt it, it returns true as the second return value
+// which indicates that the we should skip merging of the block.
+// If we were able to decrypt the block, we return the decrypted block and false as the second return value.
+func (mp *mergeProcessor) processEncryptedBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
-	skipHeads bool,
-) error {
-	block := dagBlock
-	var skipMerge bool
+	withDecryption bool,
+) (*coreblock.Block, bool, error) {
 	if dagBlock.IsEncrypted() {
 		plainTextBlock, err := decryptBlock(ctx, dagBlock)
 		if err != nil {
-			return err
+			return nil, false, err
 		}
 		if plainTextBlock != nil {
-			block = plainTextBlock
+			return plainTextBlock, false, nil
 		} else {
-			skipMerge = true
-			block = dagBlock
-			// if we weren't able to decrypt the block we request the encryption key
-			if (dagBlock.Delta.IsComposite() && *dagBlock.EncryptionType == coreblock.DocumentEncrypted) ||
+			// if we weren't able to decrypt the block we request the encryption key unless it's a decryption pass
+			if !withDecryption && (dagBlock.Delta.IsComposite() && *dagBlock.EncryptionType == coreblock.DocumentEncrypted) ||
 				*dagBlock.EncryptionType == coreblock.FieldEncrypted {
 				docID := string(dagBlock.Delta.GetDocID())
 				schemaRoot := mp.col.SchemaRoot()
@@ -330,7 +328,23 @@ func (mp *mergeProcessor) processBlock(
 				}
 				mp.col.db.events.Publish(encryption.NewRequestKeyMessage(docID, blockLink.Cid, fieldName, schemaRoot))
 			}
+			return dagBlock, true, nil
 		}
+	}
+	return dagBlock, false, nil
+}
+
+// processBlock merges the block and its children to the datastore and sets the head accordingly.
+// If onlyHeads is true, it will skip merging and update only the heads.
+func (mp *mergeProcessor) processBlock(
+	ctx context.Context,
+	dagBlock *coreblock.Block,
+	blockLink cidlink.Link,
+	withDecryption bool,
+) error {
+	block, skipMerge, err := mp.processEncryptedBlock(ctx, dagBlock, blockLink, withDecryption)
+	if err != nil {
+		return err
 	}
 
 	crdt, err := mp.initCRDTForType(dagBlock.Delta.GetFieldName())
@@ -344,7 +358,7 @@ func (mp *mergeProcessor) processBlock(
 		return nil
 	}
 
-	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, skipMerge, skipHeads)
+	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, skipMerge, withDecryption)
 	if err != nil {
 		return err
 	}
@@ -364,7 +378,13 @@ func (mp *mergeProcessor) processBlock(
 			return err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link, skipHeads); err != nil {
+		// if this is a decryption pass we skip processing for the field block as field blocks
+		// should have a dedicated decryption pass (and not as part of the composite block)
+		if withDecryption && childBlock.EncryptionType != nil && *childBlock.EncryptionType == coreblock.FieldEncrypted {
+			continue
+		}
+
+		if err := mp.processBlock(ctx, childBlock, link.Link, withDecryption); err != nil {
 			return err
 		}
 	}
@@ -373,14 +393,15 @@ func (mp *mergeProcessor) processBlock(
 }
 
 func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
+	optFieldName := immutable.None[string]()
+	if *block.EncryptionType == coreblock.FieldEncrypted {
+		optFieldName = immutable.Some(block.Delta.GetFieldName())
+	}
+
 	if block.Delta.IsComposite() {
-		optFieldName := immutable.None[string]()
-		if *block.EncryptionType == coreblock.FieldEncrypted {
-			optFieldName = immutable.Some(block.Delta.GetFieldName())
-		}
 		// for composite blocks there is nothing to decrypt
 		// so we just check if we have the encryption key for child blocks
-		bytes, err := encryption.GetDocKey(ctx, string(block.Delta.GetDocID()), optFieldName)
+		bytes, err := encryption.GetKey(ctx, string(block.Delta.GetDocID()), optFieldName)
 		if err != nil {
 			return nil, err
 		}
@@ -389,9 +410,9 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 		}
 		return block, nil
 	}
+
 	clonedCRDT := block.Delta.Clone()
-	bytes, err := encryption.DecryptDoc(ctx, string(clonedCRDT.GetDocID()),
-		clonedCRDT.GetFieldName(), clonedCRDT.GetData())
+	bytes, err := encryption.DecryptDoc(ctx, string(clonedCRDT.GetDocID()), optFieldName, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}
@@ -402,9 +423,7 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(
-	field string,
-) (merklecrdt.MerkleCRDT, error) {
+func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, error) {
 	mcrdt, exists := mp.mCRDTs[field]
 	if exists {
 		return mcrdt, nil

@@ -31,7 +31,7 @@ const keyLength = 32 // 32 bytes for AES-256
 const testEncryptionKey = "examplekey1234567890examplekey12"
 
 // generateEncryptionKey generates a random AES key.
-func generateEncryptionKey(_, _ string) ([]byte, error) {
+func generateEncryptionKey(_ string, _ immutable.Option[string]) ([]byte, error) {
 	key := make([]byte, keyLength)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
 		return nil, err
@@ -42,8 +42,8 @@ func generateEncryptionKey(_, _ string) ([]byte, error) {
 // generateTestEncryptionKey generates a deterministic encryption key for testing.
 // While testing, we also want to make sure different keys are generated for different docs and fields
 // and that's why we use the docID and fieldName to generate the key.
-func generateTestEncryptionKey(docID, fieldName string) ([]byte, error) {
-	return []byte(fieldName + docID + testEncryptionKey)[0:keyLength], nil
+func generateTestEncryptionKey(docID string, fieldName immutable.Option[string]) ([]byte, error) {
+	return []byte(fieldName.Value() + docID + testEncryptionKey)[0:keyLength], nil
 }
 
 // DocEncryptor is a document encryptor that encrypts and decrypts individual document fields.
@@ -53,10 +53,11 @@ type DocEncryptor struct {
 	conf  immutable.Option[DocEncConfig]
 	ctx   context.Context
 	store datastore.DSReaderWriter
+	cache map[core.EncStoreDocKey][]byte
 }
 
 func newDocEncryptor(ctx context.Context) *DocEncryptor {
-	return &DocEncryptor{ctx: ctx}
+	return &DocEncryptor{ctx: ctx, cache: make(map[core.EncStoreDocKey][]byte)}
 }
 
 // SetConfig sets the configuration for the document encryptor.
@@ -69,30 +70,30 @@ func (d *DocEncryptor) SetStore(store datastore.DSReaderWriter) {
 	d.store = store
 }
 
-func shouldEncryptIndividualField(conf immutable.Option[DocEncConfig], fieldName string) bool {
-	if !conf.HasValue() || fieldName == "" {
+func shouldEncryptIndividualField(conf immutable.Option[DocEncConfig], fieldName immutable.Option[string]) bool {
+	if !conf.HasValue() || !fieldName.HasValue() {
 		return false
 	}
 	for _, field := range conf.Value().EncryptedFields {
-		if field == fieldName {
+		if field == fieldName.Value() {
 			return true
 		}
 	}
 	return false
 }
 
-func shouldEncryptField(conf immutable.Option[DocEncConfig], fieldName string) bool {
+func shouldEncryptDocField(conf immutable.Option[DocEncConfig], fieldName immutable.Option[string]) bool {
 	if !conf.HasValue() {
 		return false
 	}
 	if conf.Value().IsDocEncrypted {
 		return true
 	}
-	if fieldName == "" {
+	if !fieldName.HasValue() {
 		return false
 	}
 	for _, field := range conf.Value().EncryptedFields {
-		if field == fieldName {
+		if field == fieldName.Value() {
 			return true
 		}
 	}
@@ -102,7 +103,7 @@ func shouldEncryptField(conf immutable.Option[DocEncConfig], fieldName string) b
 // Encrypt encrypts the given plainText that is associated with the given docID and fieldName.
 // If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
 // Otherwise, it will use document-level encryption key.
-func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byte, error) {
+func (d *DocEncryptor) Encrypt(docID string, fieldName immutable.Option[string], plainText []byte) ([]byte, error) {
 	encryptionKey, err := d.fetchEncryptionKey(docID, fieldName)
 	if err != nil {
 		return nil, err
@@ -110,10 +111,10 @@ func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byt
 
 	if len(encryptionKey) == 0 {
 		if !shouldEncryptIndividualField(d.conf, fieldName) {
-			fieldName = ""
+			fieldName = immutable.None[string]()
 		}
 
-		if !shouldEncryptField(d.conf, fieldName) {
+		if !shouldEncryptDocField(d.conf, fieldName) {
 			return plainText, nil
 		}
 
@@ -122,8 +123,7 @@ func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byt
 			return nil, err
 		}
 
-		storeKey := core.NewEncStoreDocKey(docID, fieldName)
-		err = d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
+		err = d.storeByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName), encryptionKey)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func (d *DocEncryptor) Encrypt(docID, fieldName string, plainText []byte) ([]byt
 
 // Decrypt decrypts the given cipherText that is associated with the given docID and fieldName.
 // If the corresponding encryption key is not found, it returns nil.
-func (d *DocEncryptor) Decrypt(docID, fieldName string, cipherText []byte) ([]byte, error) {
+func (d *DocEncryptor) Decrypt(docID string, fieldName immutable.Option[string], cipherText []byte) ([]byte, error) {
 	encKey, err := d.fetchEncryptionKey(docID, fieldName)
 	if err != nil {
 		return nil, err
@@ -144,22 +144,43 @@ func (d *DocEncryptor) Decrypt(docID, fieldName string, cipherText []byte) ([]by
 	return DecryptAES(cipherText, encKey)
 }
 
+func (d *DocEncryptor) fetchByEncStoreKey(storeKey core.EncStoreDocKey) ([]byte, error) {
+	if encryptionKey, ok := d.cache[storeKey]; ok {
+		return encryptionKey, nil
+	}
+	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
+	isNotFound := errors.Is(err, ds.ErrNotFound)
+	if err != nil {
+		if isNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	d.cache[storeKey] = encryptionKey
+	return encryptionKey, nil
+}
+
+func (d *DocEncryptor) storeByEncStoreKey(storeKey core.EncStoreDocKey, encryptionKey []byte) error {
+	d.cache[storeKey] = encryptionKey
+	return d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
+}
+
 // fetchEncryptionKey fetches the encryption key for the given docID and fieldName.
 // If the key is not found, it returns an empty key.
-func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldName string) ([]byte, error) {
+func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldName immutable.Option[string]) ([]byte, error) {
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
 	// first we try to find field-level key
 	storeKey := core.NewEncStoreDocKey(docID, fieldName)
-	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
-	isNotFound := errors.Is(err, ds.ErrNotFound)
+	encryptionKey, err := d.fetchByEncStoreKey(storeKey)
 	if err != nil {
-		if !isNotFound {
-			return nil, err
-		}
+		return nil, err
+	}
+	if len(encryptionKey) == 0 {
 		// if previous fetch was for doc-level, there is nothing else to look for
-		if fieldName == "" {
+		if !fieldName.HasValue() {
 			return nil, nil
 		}
 		if shouldEncryptIndividualField(d.conf, fieldName) {
@@ -167,44 +188,39 @@ func (d *DocEncryptor) fetchEncryptionKey(docID string, fieldName string) ([]byt
 		}
 		// try to find doc-level key
 		storeKey.FieldName = ""
-		encryptionKey, err = d.store.Get(d.ctx, storeKey.ToDS())
-		isNotFound = errors.Is(err, ds.ErrNotFound)
-		if err != nil && !isNotFound {
-			return nil, err
-		}
+		encryptionKey, err = d.fetchByEncStoreKey(storeKey)
 	}
-	return encryptionKey, nil
+	return encryptionKey, err
 }
 
-func (d *DocEncryptor) GetDocKey(docID string, optFieldName immutable.Option[string]) ([]byte, error) {
+func (d *DocEncryptor) GetKey(docID string, fieldName immutable.Option[string]) ([]byte, error) {
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
-	fieldName := ""
-	if optFieldName.HasValue() {
-		fieldName = optFieldName.Value()
-	}
-	storeKey := core.NewEncStoreDocKey(docID, fieldName)
-	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	encryptionKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName))
+	if err != nil {
 		return nil, err
 	}
 	return encryptionKey, nil
 }
 
-func (d *DocEncryptor) SaveDocKey(docID string, encryptionKey []byte) error {
+func (d *DocEncryptor) SaveKey(docID string, fieldName immutable.Option[string], encryptionKey []byte) error {
 	if d.store == nil {
 		return ErrNoStorageProvided
 	}
-	storeKey := core.NewEncStoreDocKey(docID, "")
-	return d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
+	return d.storeByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName), encryptionKey)
 }
 
 // EncryptDoc encrypts the given plainText that is associated with the given docID and fieldName with
 // encryptor in the context.
 // If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
 // Otherwise, it will use document-level encryption key.
-func EncryptDoc(ctx context.Context, docID string, fieldName string, plainText []byte) ([]byte, error) {
+func EncryptDoc(
+	ctx context.Context,
+	docID string,
+	fieldName immutable.Option[string],
+	plainText []byte,
+) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
@@ -214,7 +230,14 @@ func EncryptDoc(ctx context.Context, docID string, fieldName string, plainText [
 
 // DecryptDoc decrypts the given cipherText that is associated with the given docID and fieldName with
 // encryptor in the context.
-func DecryptDoc(ctx context.Context, docID string, fieldName string, cipherText []byte) ([]byte, error) {
+// If fieldName is not provided, it will try to decrypt with the document-level key. Otherwise, it will try to
+// decrypt with the field-level key.
+func DecryptDoc(
+	ctx context.Context,
+	docID string,
+	fieldName immutable.Option[string],
+	cipherText []byte,
+) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
@@ -222,31 +245,31 @@ func DecryptDoc(ctx context.Context, docID string, fieldName string, cipherText 
 	return enc.Decrypt(docID, fieldName, cipherText)
 }
 
-// ShouldEncryptField returns true if the given field should be encrypted based on the context config.
-func ShouldEncryptField(ctx context.Context, fieldName string) bool {
-	return shouldEncryptField(GetContextConfig(ctx), fieldName)
+// ShouldEncryptDocField returns true if the given field should be encrypted based on the context config.
+func ShouldEncryptDocField(ctx context.Context, fieldName immutable.Option[string]) bool {
+	return shouldEncryptDocField(GetContextConfig(ctx), fieldName)
 }
 
 // ShouldEncryptIndividualField returns true if the given field should be encrypted individually based on
 // the context config.
-func ShouldEncryptIndividualField(ctx context.Context, fieldName string) bool {
+func ShouldEncryptIndividualField(ctx context.Context, fieldName immutable.Option[string]) bool {
 	return shouldEncryptIndividualField(GetContextConfig(ctx), fieldName)
 }
 
-// SaveDocKey saves the given encryption key for the given docID and (optional) fieldName with encryptor in the context.
-func SaveDocKey(ctx context.Context, docID string, fieldName immutable.Option[string], encryptionKey []byte) error {
+// SaveKey saves the given encryption key for the given docID and (optional) fieldName with encryptor in the context.
+func SaveKey(ctx context.Context, docID string, fieldName immutable.Option[string], encryptionKey []byte) error {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil
 	}
-	return enc.SaveDocKey(docID, encryptionKey)
+	return enc.SaveKey(docID, fieldName, encryptionKey)
 }
 
-// GetDocKey returns the encryption key for the given docID and (optional) fieldName with encryptor in the context.
-func GetDocKey(ctx context.Context, docID string, fieldName immutable.Option[string]) ([]byte, error) {
+// GetKey returns the encryption key for the given docID and (optional) fieldName with encryptor in the context.
+func GetKey(ctx context.Context, docID string, fieldName immutable.Option[string]) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
 	}
-	return enc.GetDocKey(docID, fieldName)
+	return enc.GetKey(docID, fieldName)
 }

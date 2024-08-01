@@ -21,6 +21,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -86,7 +87,11 @@ func (mc *MerkleClock) AddDelta(
 	delta.SetPriority(height)
 	block := coreblock.New(delta, links, heads...)
 
-	encryptionType, err := mc.checkIfBlockEncryptionEnabled(ctx, block.Delta.GetFieldName(), heads)
+	fieldName := immutable.None[string]()
+	if block.Delta.GetFieldName() != "" {
+		fieldName = immutable.Some(block.Delta.GetFieldName())
+	}
+	encryptionType, err := mc.checkIfBlockEncryptionEnabled(ctx, fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -94,7 +99,7 @@ func (mc *MerkleClock) AddDelta(
 	dagBlock := block
 	if encryptionType != coreblock.NotEncrypted {
 		if !block.Delta.IsComposite() {
-			dagBlock, err = encryptBlock(ctx, block)
+			dagBlock, err = encryptBlock(ctx, block, encryptionType == coreblock.FieldEncrypted)
 			if err != nil {
 				return cidlink.Link{}, nil, err
 			}
@@ -123,10 +128,10 @@ func (mc *MerkleClock) AddDelta(
 
 func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 	ctx context.Context,
-	fieldName string,
+	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (coreblock.EncryptionType, error) {
-	if encryption.ShouldEncryptField(ctx, fieldName) {
+	if encryption.ShouldEncryptDocField(ctx, fieldName) {
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
 			return coreblock.FieldEncrypted, nil
 		}
@@ -150,10 +155,14 @@ func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
 	return coreblock.NotEncrypted, nil
 }
 
-func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
+func encryptBlock(ctx context.Context, block *coreblock.Block, isFieldOnly bool) (*coreblock.Block, error) {
 	clonedCRDT := block.Delta.Clone()
+	fieldName := immutable.None[string]()
+	if isFieldOnly {
+		fieldName = immutable.Some(clonedCRDT.GetFieldName())
+	}
 	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()),
-		clonedCRDT.GetFieldName(), clonedCRDT.GetData())
+		fieldName, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}

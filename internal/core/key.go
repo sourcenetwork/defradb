@@ -802,11 +802,12 @@ type EncStoreDocKey struct {
 var _ Key = (*EncStoreDocKey)(nil)
 
 // NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-func NewEncStoreDocKey(docID string, fieldName string) EncStoreDocKey {
-	return EncStoreDocKey{
-		DocID:     docID,
-		FieldName: fieldName,
+func NewEncStoreDocKey(docID string, fieldName immutable.Option[string]) EncStoreDocKey {
+	key := EncStoreDocKey{DocID: docID}
+	if fieldName.HasValue() {
+		key.FieldName = fieldName.Value()
 	}
+	return key
 }
 
 func (k EncStoreDocKey) ToString() string {
