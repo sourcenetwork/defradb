@@ -17,31 +17,35 @@ import (
 )
 
 func TestQuerySimpleWithFloatEqualsFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic float filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {HeightM: {_eq: 2.1}}) {
 						Name
 						HeightM
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"HeightM": 2.1
-				}`,
-				`{
-					"Name": "Bob",
-					"HeightM": 1.82
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name":    "John",
-					"HeightM": float64(2.1),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":    "John",
+							"HeightM": float64(2.1),
+						},
+					},
 				},
 			},
 		},
@@ -51,34 +55,40 @@ func TestQuerySimpleWithFloatEqualsFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic float nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {HeightM: {_eq: null}}) {
 						Name
 						HeightM
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"HeightM": 2.1
-				}`,
-				`{
-					"Name": "Bob",
-					"HeightM": 1.82
-				}`,
-				`{
-					"Name": "Fred"
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name":    "Fred",
-					"HeightM": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":    "Fred",
+							"HeightM": nil,
+						},
+					},
 				},
 			},
 		},

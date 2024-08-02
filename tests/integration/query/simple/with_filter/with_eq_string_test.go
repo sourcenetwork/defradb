@@ -17,31 +17,35 @@ import (
 )
 
 func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic filter (Name)",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Name: {_eq: "John"}}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
 				},
 			},
 		},
@@ -51,34 +55,40 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic string nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Age": 60
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Name: {_eq: null}}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Age": 60
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": nil,
-					"Age":  int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": nil,
+							"Age":  int64(60),
+						},
+					},
 				},
 			},
 		},
@@ -88,79 +98,89 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
+	tests := []testUtils.TestCase{
 		{
 			Description: "Simple query with basic filter and selection",
-			Request: `query {
-						Users(filter: {Name: {_eq: "John"}}) {
-							Name
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
-					`{
+				},
+				testUtils.CreateDoc{
+					Doc: `{
 						"Name": "Bob",
 						"Age": 32
 					}`,
 				},
-			},
-			Results: map[string]any{
-				"Users": []map[string]any{
-					{
-						"Name": "John",
+				testUtils.Request{
+					Request: `query {
+						Users(filter: {Name: {_eq: "John"}}) {
+							Name
+						}
+					}`,
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "John",
+							},
+						},
 					},
 				},
 			},
 		},
 		{
 			Description: "Simple query with basic filter and selection (diff from filter)",
-			Request: `query {
-						Users(filter: {Name: {_eq: "John"}}) {
-							Age
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
-					`{
+				},
+				testUtils.CreateDoc{
+					Doc: `{
 						"Name": "Bob",
 						"Age": 32
 					}`,
 				},
-			},
-			Results: map[string]any{
-				"Users": []map[string]any{
-					{
-						"Age": int64(21),
+				testUtils.Request{
+					Request: `query {
+						Users(filter: {Name: {_eq: "John"}}) {
+							Age
+						}
+					}`,
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Age": int64(21),
+							},
+						},
 					},
 				},
 			},
 		},
 		{
 			Description: "Simple query with basic filter(name), no results",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(filter: {Name: {_eq: "Bob"}}) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
+					Results: map[string]any{
+						"Users": []map[string]any{},
+					},
 				},
-			},
-			Results: map[string]any{
-				"Users": []map[string]any{},
 			},
 		},
 	}

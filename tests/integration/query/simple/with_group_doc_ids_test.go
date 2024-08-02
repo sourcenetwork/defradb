@@ -17,9 +17,35 @@ import (
 )
 
 func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with docIDs filter on _group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Shahzad",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_group(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-19b16890-5f24-5e5b-8822-ed2a97ebcc24"]) {
@@ -27,44 +53,24 @@ func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				// bae-19b16890-5f24-5e5b-8822-ed2a97ebcc24
-				`{
-					"Name": "Fred",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Shahzad",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(21),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Fred",
+							"Age": int64(21),
+							"_group": []map[string]any{
+								{
+									"Name": "Fred",
+								},
+								{
+									"Name": "John",
+								},
+							},
 						},
 						{
-							"Name": "John",
+							"Age":    int64(32),
+							"_group": []map[string]any{},
 						},
 					},
-				},
-				{
-					"Age":    int64(32),
-					"_group": []map[string]any{},
 				},
 			},
 		},

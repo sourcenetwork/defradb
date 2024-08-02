@@ -17,89 +17,101 @@ import (
 )
 
 func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
+	tests := []testUtils.TestCase{
 		{
 			Description: "Simple query with basic filter(age), greater than",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 19
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(filter: {Age: {_gt: 20}}) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 19
-					}`,
-				},
-			},
-			Results: map[string]any{
-				"Users": []map[string]any{
-					{
-						"Name": "John",
-						"Age":  int64(21),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "John",
+								"Age":  int64(21),
+							},
+						},
 					},
 				},
 			},
 		},
 		{
 			Description: "Simple query with basic filter(age), no results",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(filter: {Age: {_gt: 40}}) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
+					Results: map[string]any{
+						"Users": []map[string]any{},
+					},
 				},
-			},
-			Results: map[string]any{
-				"Users": []map[string]any{},
 			},
 		},
 		{
 			Description: "Simple query with basic filter(age), multiple results",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(filter: {Age: {_gt: 20}}) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-				},
-			},
-			Results: map[string]any{
-				"Users": []map[string]any{
-					{
-						"Name": "John",
-						"Age":  int64(21),
-					},
-					{
-						"Name": "Bob",
-						"Age":  int64(32),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "John",
+								"Age":  int64(21),
+							},
+							{
+								"Name": "Bob",
+								"Age":  int64(32),
+							},
+						},
 					},
 				},
 			},
@@ -112,28 +124,32 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic int greater than filter, with null filter value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_gt: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},

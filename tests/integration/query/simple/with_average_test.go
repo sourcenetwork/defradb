@@ -17,37 +17,49 @@ import (
 )
 
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, average on undefined object",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					_avg
 				}`,
-		ExpectedError: "aggregate must be provided with a property to aggregate",
+				ExpectedError: "aggregate must be provided with a property to aggregate",
+			},
+		},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, average on undefined field",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					_avg(Users: {})
 				}`,
-		ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
+				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
+			},
+		},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, average on empty",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					_avg(Users: {field: Age})
 				}`,
-		Results: map[string]any{
-			"_avg": float64(0),
+				Results: map[string]any{
+					"_avg": float64(0),
+				},
+			},
 		},
 	}
 
@@ -55,25 +67,29 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 }
 
 func TestQuerySimpleWithAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, average",
-		Request: `query {
-					_avg(Users: {field: Age})
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 28
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"_avg": float64(29),
+			testUtils.Request{
+				Request: `query {
+					_avg(Users: {field: Age})
+				}`,
+				Results: map[string]any{
+					"_avg": float64(29),
+				},
+			},
 		},
 	}
 
