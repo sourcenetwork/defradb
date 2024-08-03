@@ -42,7 +42,7 @@ func EncryptAES(plainText, key []byte) ([]byte, error) {
 // DecryptAES decrypts AES-GCM encrypted data with a provided key.
 // The nonce is expected to be prepended to the cipherText.
 func DecryptAES(cipherText, key []byte) ([]byte, error) {
-	if len(cipherText) < nonceLength {
+	if len(cipherText) < AESNonceSize {
 		// TODO return typed error
 		return nil, fmt.Errorf("cipherText too short")
 	}
@@ -52,8 +52,8 @@ func DecryptAES(cipherText, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce := cipherText[:nonceLength]
-	cipherText = cipherText[nonceLength:]
+	nonce := cipherText[:AESNonceSize]
+	cipherText = cipherText[AESNonceSize:]
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {

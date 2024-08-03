@@ -227,7 +227,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.Wrap("failed to unmarshal ephemeral public key", err)
 	}
 
-	encryptedKey, err := crypto.EncryptECDH(encKey, reqEphPubKey)
+	encryptedKey, err := crypto.EncryptECIES(encKey, reqEphPubKey)
 	if err != nil {
 		return nil, errors.Wrap("failed to encrypt key for requester", err)
 	}
@@ -542,7 +542,7 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	decryptedKey, err := crypto.DecryptECDH(keyResp.EncryptedKey, session.privateKey)
+	decryptedKey, err := crypto.DecryptECIES(keyResp.EncryptedKey, session.privateKey)
 	if err != nil {
 		log.ErrorContextE(s.peer.ctx, "Failed to decrypt encryption key", err)
 		return
