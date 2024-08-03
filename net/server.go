@@ -202,7 +202,9 @@ func (s *server) getEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKe
 }
 
 func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) (*pb.FetchEncryptionKeyReply, error) {
-	isValid, err := s.verifyRequestSignature(req)
+	reqPubKey := s.peer.host.Peerstore().PubKey(libpeer.ID(req.PeerInfo.Id))
+
+	isValid, err := s.verifyRequestSignature(req, reqPubKey)
 	if err != nil {
 		return nil, errors.Wrap("invalid signature", err)
 	}
@@ -211,13 +213,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.New("invalid signature")
 	}
 
-	// TODO: check if pubkey can be fetched from peerstore
-	pubKey, err := libp2pCrypto.PublicKeyFromProto(req.PublicKey)
-	if err != nil {
-		return nil, errors.Wrap("failed to unmarshal public key", err)
-	}
-
-	if err := s.verifyPeerInfo(libpeer.ID(req.PeerInfo.Id), pubKey); err != nil {
+	if err := s.verifyPeerInfo(libpeer.ID(req.PeerInfo.Id), reqPubKey); err != nil {
 		return nil, errors.Wrap("invalid peer info", err)
 	}
 
@@ -251,12 +247,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 	return res, nil
 }
 
-func (s *server) verifyRequestSignature(req *pb.FetchEncryptionKeyRequest) (bool, error) {
-	pubKey, err := libp2pCrypto.PublicKeyFromProto(req.PublicKey)
-	if err != nil {
-		return false, err
-	}
-
+func (s *server) verifyRequestSignature(req *pb.FetchEncryptionKeyRequest, pubKey libp2pCrypto.PubKey) (bool, error) {
 	return pubKey.Verify(hashFetchEncryptionKeyRequest(req), req.Signature)
 }
 
@@ -449,17 +440,10 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 	evt encryption.RequestKeyEvent,
 	ephemeralPublicKey []byte,
 ) (*pb.FetchEncryptionKeyRequest, error) {
-	publicKey := s.peer.host.Peerstore().PubKey(s.peer.host.ID())
-	protoPublicKey, err := libp2pCrypto.PublicKeyToProto(publicKey)
-	if err != nil {
-		return nil, errors.Wrap("failed to marshal public key", err)
-	}
-
 	req := &pb.FetchEncryptionKeyRequest{
 		DocID:              []byte(evt.DocID),
 		Cid:                evt.Cid.Bytes(),
 		SchemaRoot:         []byte(evt.SchemaRoot),
-		PublicKey:          protoPublicKey,
 		EphemeralPublicKey: ephemeralPublicKey,
 		PeerInfo:           toProtoPeerInfo(s.peer.PeerInfo()),
 	}
@@ -468,10 +452,12 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 		req.FieldName = evt.FieldName.Value()
 	}
 
-	req.Signature, err = s.signRequest(req)
+	signature, err := s.signRequest(req)
 	if err != nil {
 		return nil, errors.Wrap("failed to sign request", err)
 	}
+
+	req.Signature = signature
 
 	return req, nil
 }
@@ -520,8 +506,6 @@ func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	hash.Write(req.DocID)
 	hash.Write(req.Cid)
 	hash.Write(req.SchemaRoot)
-	hash.Write([]byte(req.PublicKey.Type.String()))
-	hash.Write(req.PublicKey.Data)
 	hash.Write(req.EphemeralPublicKey)
 	hash.Write([]byte(req.PeerInfo.String()))
 	return hash.Sum(nil)

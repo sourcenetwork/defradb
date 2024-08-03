@@ -6,9 +6,7 @@ package net_pb
 
 import (
 	fmt "fmt"
-	pb "github.com/libp2p/go-libp2p/core/crypto/pb"
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
-	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
 )
@@ -456,7 +454,7 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		copy(dAtA[i:], m.Signature)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Signature)))
 		i--
-		dAtA[i] = 0x42
+		dAtA[i] = 0x3a
 	}
 	if m.PeerInfo != nil {
 		size, err := m.PeerInfo.MarshalToSizedBufferVT(dAtA[:i])
@@ -466,34 +464,12 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x32
 	}
 	if len(m.EphemeralPublicKey) > 0 {
 		i -= len(m.EphemeralPublicKey)
 		copy(dAtA[i:], m.EphemeralPublicKey)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.EphemeralPublicKey)))
-		i--
-		dAtA[i] = 0x32
-	}
-	if m.PublicKey != nil {
-		if vtmsg, ok := interface{}(m.PublicKey).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.PublicKey)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
-		}
 		i--
 		dAtA[i] = 0x2a
 	}
@@ -853,16 +829,6 @@ func (m *FetchEncryptionKeyRequest) SizeVT() (n int) {
 	}
 	l = len(m.SchemaRoot)
 	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	if m.PublicKey != nil {
-		if size, ok := interface{}(m.PublicKey).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.PublicKey)
-		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	l = len(m.EphemeralPublicKey)
@@ -1922,50 +1888,6 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.PublicKey == nil {
-				m.PublicKey = &pb.PublicKey{}
-			}
-			if unmarshal, ok := interface{}(m.PublicKey).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.PublicKey); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EphemeralPublicKey", wireType)
 			}
 			var byteLen int
@@ -1998,7 +1920,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				m.EphemeralPublicKey = []byte{}
 			}
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PeerInfo", wireType)
 			}
@@ -2034,7 +1956,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 8:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}

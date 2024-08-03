@@ -1,8 +1,6 @@
 syntax = "proto3";
 package net.pb;
 
-import "core/crypto/pb/crypto.proto";
-
 option go_package = "/;net_pb";
 
 // Log represents a thread log.
@@ -61,14 +59,12 @@ message FetchEncryptionKeyRequest {
     bytes cid = 3;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
     bytes schemaRoot = 4;
-    // publicKey is a public of the requesting peer for signature verification
-    crypto.pb.PublicKey publicKey = 5;
     // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
-    bytes ephemeralPublicKey = 6;
+    bytes ephemeralPublicKey = 5;
     // peerInfo is peer information is the requesting peer
-    PeerInfo peerInfo = 7;
+    PeerInfo peerInfo = 6;
     // signature is the requesting peer's signature of the request
-    bytes signature = 8;
+    bytes signature = 7;
 }
 
 message GetHeadLogRequest {}
