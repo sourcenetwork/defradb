@@ -15,11 +15,14 @@ import (
 	"crypto/rand"
 	"errors"
 	"io"
+	"os"
+	"strings"
 
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 )
@@ -128,7 +131,7 @@ func (d *DocEncryptor) Encrypt(docID string, fieldName immutable.Option[string],
 			return nil, err
 		}
 	}
-	return EncryptAES(plainText, encryptionKey)
+	return crypto.EncryptAES(plainText, encryptionKey)
 }
 
 // Decrypt decrypts the given cipherText that is associated with the given docID and fieldName.
@@ -141,7 +144,7 @@ func (d *DocEncryptor) Decrypt(docID string, fieldName immutable.Option[string],
 	if len(encKey) == 0 {
 		return nil, nil
 	}
-	return DecryptAES(cipherText, encKey)
+	return crypto.DecryptAES(cipherText, encKey)
 }
 
 func (d *DocEncryptor) fetchByEncStoreKey(storeKey core.EncStoreDocKey) ([]byte, error) {
@@ -272,4 +275,13 @@ func GetKey(ctx context.Context, docID string, fieldName immutable.Option[string
 		return nil, nil
 	}
 	return enc.GetKey(docID, fieldName)
+}
+
+func init() {
+	arg := os.Args[0]
+	// If the binary is a test binary, use a deterministic nonce.
+	// TODO: We should try to find a better way to detect this https://github.com/sourcenetwork/defradb/issues/2801
+	if strings.HasSuffix(arg, ".test") || strings.Contains(arg, "/defradb/tests/") {
+		generateEncryptionKeyFunc = generateTestEncryptionKey
+	}
 }

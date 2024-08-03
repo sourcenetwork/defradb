@@ -61,12 +61,14 @@ message FetchEncryptionKeyRequest {
     bytes cid = 3;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
     bytes schemaRoot = 4;
-    // publicKey is a public of the requesting peer
+    // publicKey is a public of the requesting peer for signature verification
     crypto.pb.PublicKey publicKey = 5;
+    // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
+    bytes ephemeralPublicKey = 6;
     // peerInfo is peer information is the requesting peer
-    PeerInfo peerInfo = 6;
+    PeerInfo peerInfo = 7;
     // signature is the requesting peer's signature of the request
-    bytes signature = 7;
+    bytes signature = 8;
 }
 
 message GetHeadLogRequest {}
@@ -76,13 +78,17 @@ message PushLogReply {}
 // FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
 // by a peer that holds the requested doc encryption key.
 message FetchEncryptionKeyReply {
+    // encryptedKey is array or bytes representing encrypted doc encryption key
+    // It is prepended with the responder's ephemeral public key and a nonce for AES-GCM
     bytes encryptedKey = 1;
     // cid is the CID of the composite of the document.
     bytes cid = 2;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
     bytes schemaRoot = 3;
+    // reqEphemeralPublicKey is an ephemeral public of the requesting peer to be used as session id
+    bytes reqEphemeralPublicKey = 4;
     // signature is the responding peer's signature of the reply
-    bytes signature = 4;
+    bytes signature = 5;
 }
 
 message GetHeadLogReply {}

@@ -14,6 +14,7 @@ package net
 
 import (
 	"context"
+	"crypto/ecdh"
 	"crypto/sha256"
 	"fmt"
 	"sync"
@@ -59,6 +60,13 @@ type server struct {
 	conns map[libpeer.ID]*grpc.ClientConn
 
 	pb.UnimplementedServiceServer
+
+	sessions []session
+}
+
+type session struct {
+	id         string
+	privateKey *ecdh.PrivateKey
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -87,6 +95,15 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s.opts = append(defaultOpts, opts...)
 
 	return s, nil
+}
+
+func (s *server) findSession(id string) *session {
+	for _, sess := range s.sessions {
+		if sess.id == id {
+			return &sess
+		}
+	}
+	return nil
 }
 
 // GetDocGraph receives a get graph request
@@ -194,6 +211,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.New("invalid signature")
 	}
 
+	// TODO: check if pubkey can be fetched from peerstore
 	pubKey, err := libp2pCrypto.PublicKeyFromProto(req.PublicKey)
 	if err != nil {
 		return nil, errors.Wrap("failed to unmarshal public key", err)
@@ -208,20 +226,21 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, err
 	}
 
-	pubKeyBytes, err := pubKey.Raw()
+	reqEphPubKey, err := crypto.X25519PublicKeyFromBytes(req.EphemeralPublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get raw Ed25519 public key: %w", err)
+		return nil, errors.Wrap("failed to unmarshal ephemeral public key", err)
 	}
 
-	encryptedKey, err := crypto.EncryptWithEphemeralKey(encKey, pubKeyBytes)
+	encryptedKey, err := crypto.EncryptECDH(encKey, reqEphPubKey)
 	if err != nil {
 		return nil, errors.Wrap("failed to encrypt key for requester", err)
 	}
 
 	res := &pb.FetchEncryptionKeyReply{
-		EncryptedKey: encryptedKey,
-		Cid:          req.Cid,
-		SchemaRoot:   req.SchemaRoot,
+		EncryptedKey:          encryptedKey,
+		Cid:                   req.Cid,
+		SchemaRoot:            req.SchemaRoot,
+		ReqEphemeralPublicKey: req.EphemeralPublicKey,
 	}
 
 	res.Signature, err = s.signResponse(res)
@@ -254,14 +273,18 @@ func (s *server) verifyPeerInfo(peerID libpeer.ID, pubKey libp2pCrypto.PubKey) e
 	return nil
 }
 
-func (s *server) signResponse(res *pb.FetchEncryptionKeyReply) ([]byte, error) {
+func hashFetchEncryptionKeyReply(res *pb.FetchEncryptionKeyReply) []byte {
 	hash := sha256.New()
 	hash.Write(res.EncryptedKey)
 	hash.Write(res.Cid)
 	hash.Write(res.SchemaRoot)
+	hash.Write(res.ReqEphemeralPublicKey)
+	return hash.Sum(nil)
+}
 
+func (s *server) signResponse(res *pb.FetchEncryptionKeyReply) ([]byte, error) {
 	privKey := s.peer.host.Peerstore().PrivKey(s.peer.host.ID())
-	return privKey.Sign(hash.Sum(nil))
+	return privKey.Sign(hashFetchEncryptionKeyReply(res))
 }
 
 // GetHeadLog receives a get head log request
@@ -424,6 +447,7 @@ func toProtoPeerInfo(peerInfo libpeer.AddrInfo) *pb.PeerInfo {
 
 func (s *server) prepareFetchEncryptionKeyRequest(
 	evt encryption.RequestKeyEvent,
+	ephemeralPublicKey []byte,
 ) (*pb.FetchEncryptionKeyRequest, error) {
 	publicKey := s.peer.host.Peerstore().PubKey(s.peer.host.ID())
 	protoPublicKey, err := libp2pCrypto.PublicKeyToProto(publicKey)
@@ -432,11 +456,12 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 	}
 
 	req := &pb.FetchEncryptionKeyRequest{
-		DocID:      []byte(evt.DocID),
-		Cid:        evt.Cid.Bytes(),
-		SchemaRoot: []byte(evt.SchemaRoot),
-		PublicKey:  protoPublicKey,
-		PeerInfo:   toProtoPeerInfo(s.peer.PeerInfo()),
+		DocID:              []byte(evt.DocID),
+		Cid:                evt.Cid.Bytes(),
+		SchemaRoot:         []byte(evt.SchemaRoot),
+		PublicKey:          protoPublicKey,
+		EphemeralPublicKey: ephemeralPublicKey,
+		PeerInfo:           toProtoPeerInfo(s.peer.PeerInfo()),
 	}
 
 	if evt.FieldName.HasValue() {
@@ -457,7 +482,13 @@ func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.Reques
 		return nil
 	}
 
-	req, err := s.prepareFetchEncryptionKeyRequest(evt)
+	ephPrivKey, err := crypto.GenerateX25519()
+	if err != nil {
+		return err
+	}
+
+	ephPubKeyBytes := ephPrivKey.PublicKey().Bytes()
+	req, err := s.prepareFetchEncryptionKeyRequest(evt, ephPubKeyBytes)
 	if err != nil {
 		return err
 	}
@@ -475,6 +506,8 @@ func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.Reques
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", encryptionTopic), err)
 	}
 
+	s.sessions = append(s.sessions, session{id: string(ephPubKeyBytes), privateKey: ephPrivKey})
+
 	go func() {
 		s.handleFetchEncryptionKeyResponse(<-respChan, req)
 	}()
@@ -489,6 +522,7 @@ func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	hash.Write(req.SchemaRoot)
 	hash.Write([]byte(req.PublicKey.Type.String()))
 	hash.Write(req.PublicKey.Data)
+	hash.Write(req.EphemeralPublicKey)
 	hash.Write([]byte(req.PeerInfo.String()))
 	return hash.Sum(nil)
 }
@@ -517,16 +551,14 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	privateKey := s.peer.host.Peerstore().PrivKey(s.peer.host.ID())
-
-	// Use the private key to get the public key bytes
-	ed25519PubKeyBytes, err := privateKey.GetPublic().Raw()
-	if err != nil {
-		log.ErrorContextE(s.peer.ctx, "failed to get raw Ed25519 public key", err)
+	// TODO: properly handle sessions. At least remove used or old ones
+	session := s.findSession(string(keyResp.ReqEphemeralPublicKey))
+	if session == nil {
+		log.ErrorContext(s.peer.ctx, "Failed to find session for ephemeral public key")
 		return
 	}
 
-	decryptedKey, err := crypto.DecryptWithEphemeralKey(keyResp.EncryptedKey, ed25519PubKeyBytes)
+	decryptedKey, err := crypto.DecryptECDH(keyResp.EncryptedKey, session.privateKey)
 	if err != nil {
 		log.ErrorContextE(s.peer.ctx, "Failed to decrypt encryption key", err)
 		return
@@ -548,15 +580,8 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 }
 
 func (s *server) verifyResponseSignature(res *pb.FetchEncryptionKeyReply, fromPeer peer.ID) (bool, error) {
-	peerStore := s.peer.host.Peerstore()
-	pubKey := peerStore.PubKey(fromPeer)
-
-	hash := sha256.New()
-	hash.Write(res.EncryptedKey)
-	hash.Write(res.Cid)
-	hash.Write(res.SchemaRoot)
-
-	return pubKey.Verify(hash.Sum(nil), res.Signature)
+	pubKey := s.peer.host.Peerstore().PubKey(fromPeer)
+	return pubKey.Verify(hashFetchEncryptionKeyReply(res), res.Signature)
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.

@@ -456,7 +456,7 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		copy(dAtA[i:], m.Signature)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Signature)))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x42
 	}
 	if m.PeerInfo != nil {
 		size, err := m.PeerInfo.MarshalToSizedBufferVT(dAtA[:i])
@@ -465,6 +465,13 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		}
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.EphemeralPublicKey) > 0 {
+		i -= len(m.EphemeralPublicKey)
+		copy(dAtA[i:], m.EphemeralPublicKey)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.EphemeralPublicKey)))
 		i--
 		dAtA[i] = 0x32
 	}
@@ -621,6 +628,13 @@ func (m *FetchEncryptionKeyReply) MarshalToSizedBufferVT(dAtA []byte) (int, erro
 		i -= len(m.Signature)
 		copy(dAtA[i:], m.Signature)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Signature)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.ReqEphemeralPublicKey) > 0 {
+		i -= len(m.ReqEphemeralPublicKey)
+		copy(dAtA[i:], m.ReqEphemeralPublicKey)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ReqEphemeralPublicKey)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -851,6 +865,10 @@ func (m *FetchEncryptionKeyRequest) SizeVT() (n int) {
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	l = len(m.EphemeralPublicKey)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	if m.PeerInfo != nil {
 		l = m.PeerInfo.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
@@ -898,6 +916,10 @@ func (m *FetchEncryptionKeyReply) SizeVT() (n int) {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	l = len(m.SchemaRoot)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.ReqEphemeralPublicKey)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -1944,6 +1966,40 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EphemeralPublicKey", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EphemeralPublicKey = append(m.EphemeralPublicKey[:0], dAtA[iNdEx:postIndex]...)
+			if m.EphemeralPublicKey == nil {
+				m.EphemeralPublicKey = []byte{}
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PeerInfo", wireType)
 			}
 			var msglen int
@@ -1978,7 +2034,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}
@@ -2268,6 +2324,40 @@ func (m *FetchEncryptionKeyReply) UnmarshalVT(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReqEphemeralPublicKey", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ReqEphemeralPublicKey = append(m.ReqEphemeralPublicKey[:0], dAtA[iNdEx:postIndex]...)
+			if m.ReqEphemeralPublicKey == nil {
+				m.ReqEphemeralPublicKey = []byte{}
+			}
+			iNdEx = postIndex
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}
