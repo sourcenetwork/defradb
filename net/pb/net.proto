@@ -56,10 +56,6 @@ message FetchEncryptionKeyRequest {
     bytes signature = 6;
 }
 
-message GetHeadLogRequest {}
-
-message PushLogReply {}
-
 // FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
 // by a peer that holds the requested doc encryption key.
 message FetchEncryptionKeyReply {
@@ -75,6 +71,10 @@ message FetchEncryptionKeyReply {
     // signature is the responding peer's signature of the reply
     bytes signature = 5;
 }
+
+message GetHeadLogRequest {}
+
+message PushLogReply {}
 
 message GetHeadLogReply {}
 

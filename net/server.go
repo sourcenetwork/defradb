@@ -251,19 +251,6 @@ func (s *server) verifyRequestSignature(req *pb.FetchEncryptionKeyRequest, pubKe
 	return pubKey.Verify(hashFetchEncryptionKeyRequest(req), req.Signature)
 }
 
-func (s *server) verifyPeerInfo(peerID libpeer.ID, pubKey libp2pCrypto.PubKey) error {
-	derivedID, err := peer.IDFromPublicKey(pubKey)
-	if err != nil {
-		return err
-	}
-
-	if peerID != derivedID {
-		return errors.New("peer ID does not match public key")
-	}
-
-	return nil
-}
-
 func hashFetchEncryptionKeyReply(res *pb.FetchEncryptionKeyReply) []byte {
 	hash := sha256.New()
 	hash.Write(res.EncryptedKey)
