@@ -202,7 +202,11 @@ func (s *server) getEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKe
 }
 
 func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) (*pb.FetchEncryptionKeyReply, error) {
-	reqPubKey := s.peer.host.Peerstore().PubKey(libpeer.ID(req.PeerInfo.Id))
+	peerID, err := peerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	reqPubKey := s.peer.host.Peerstore().PubKey(peerID)
 
 	isValid, err := s.verifyRequestSignature(req, reqPubKey)
 	if err != nil {
@@ -211,10 +215,6 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 
 	if !isValid {
 		return nil, errors.New("invalid signature")
-	}
-
-	if err := s.verifyPeerInfo(libpeer.ID(req.PeerInfo.Id), reqPubKey); err != nil {
-		return nil, errors.Wrap("invalid peer info", err)
 	}
 
 	encKey, err := s.getEncryptionKey(ctx, req)
@@ -426,16 +426,6 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	return nil
 }
 
-func toProtoPeerInfo(peerInfo libpeer.AddrInfo) *pb.PeerInfo {
-	protoPeerInfo := new(pb.PeerInfo)
-	protoPeerInfo.Id = []byte(peerInfo.ID)
-	protoPeerInfo.Addresses = make([]string, len(peerInfo.Addrs))
-	for i, addr := range peerInfo.Addrs {
-		protoPeerInfo.Addresses[i] = addr.String()
-	}
-	return protoPeerInfo
-}
-
 func (s *server) prepareFetchEncryptionKeyRequest(
 	evt encryption.RequestKeyEvent,
 	ephemeralPublicKey []byte,
@@ -445,7 +435,6 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 		Cid:                evt.Cid.Bytes(),
 		SchemaRoot:         []byte(evt.SchemaRoot),
 		EphemeralPublicKey: ephemeralPublicKey,
-		PeerInfo:           toProtoPeerInfo(s.peer.PeerInfo()),
 	}
 
 	if evt.FieldName.HasValue() {
@@ -507,7 +496,6 @@ func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	hash.Write(req.Cid)
 	hash.Write(req.SchemaRoot)
 	hash.Write(req.EphemeralPublicKey)
-	hash.Write([]byte(req.PeerInfo.String()))
 	return hash.Sum(nil)
 }
 

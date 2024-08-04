@@ -38,15 +38,6 @@ message PushLogRequest {
     }
 }
 
-// PeerInfo contains information about a specific peer
-message PeerInfo {
-    // id is a libp2p peer identity.
-    bytes id = 1;
-    // addresses is a list of peer's address in multiaddr format
-    // Learn more here https://github.com/multiformats/multiadd
-    repeated string addresses = 2;
-}
-
 // FetchEncryptionKeyRequest is a request to receive a doc encryption key
 // from a peer that holds it.
 message FetchEncryptionKeyRequest {
@@ -61,10 +52,8 @@ message FetchEncryptionKeyRequest {
     bytes schemaRoot = 4;
     // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
     bytes ephemeralPublicKey = 5;
-    // peerInfo is peer information is the requesting peer
-    PeerInfo peerInfo = 6;
     // signature is the requesting peer's signature of the request
-    bytes signature = 7;
+    bytes signature = 6;
 }
 
 message GetHeadLogRequest {}
