@@ -29,6 +29,8 @@ const X25519PublicKeySize = 32
 const HMACSize = 32
 const AESKeySize = 32
 
+const minCipherTextSize = 16
+
 func GenerateX25519() (*ecdh.PrivateKey, error) {
 	return ecdh.X25519().GenerateKey(rand.Reader)
 }
@@ -49,7 +51,6 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey) ([]byte, error) {
 		return nil, fmt.Errorf("ECDH failed: %w", err)
 	}
 
-	// Key Derivation
 	kdf := hkdf.New(sha256.New, sharedSecret, nil, nil)
 	aesKey := make([]byte, AESKeySize)
 	hmacKey := make([]byte, HMACSize)
@@ -76,7 +77,7 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey) ([]byte, error) {
 }
 
 func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey) ([]byte, error) {
-	if len(cipherText) < X25519PublicKeySize+AESNonceSize+HMACSize+16 { // public key + min nonce size + HMAC size + min cipherText size
+	if len(cipherText) < X25519PublicKeySize+AESNonceSize+HMACSize+minCipherTextSize {
 		return nil, fmt.Errorf("ciphertext too short")
 	}
 
