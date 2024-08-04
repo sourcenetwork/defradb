@@ -46,10 +46,8 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 		Request: `query {
 					_sum(Users: {field: Age})
 				}`,
-		Results: []map[string]any{
-			{
-				"_sum": int64(0),
-			},
+		Results: map[string]any{
+			"_sum": int64(0),
 		},
 	}
 
@@ -74,10 +72,8 @@ func TestQuerySimpleWithSum(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_sum": int64(51),
-			},
+		Results: map[string]any{
+			"_sum": int64(51),
 		},
 	}
 

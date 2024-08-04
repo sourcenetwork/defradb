@@ -58,9 +58,11 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Johnnn",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Johnnn",
+						},
 					},
 				},
 			},
@@ -71,14 +73,16 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 						schemaVersionId
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						// Update commit
-						"schemaVersionId": schemaVersionID,
-					},
-					{
-						// Create commit
-						"schemaVersionId": schemaVersionID,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							// Update commit
+							"schemaVersionId": schemaVersionID,
+						},
+						{
+							// Create commit
+							"schemaVersionId": schemaVersionID,
+						},
 					},
 				},
 			},

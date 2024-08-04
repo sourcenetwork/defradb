@@ -19,9 +19,13 @@ import (
 
 var dagScanPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"dagScanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"dagScanNode": dataMap{},
+					},
+				},
 			},
 		},
 	},
@@ -45,7 +49,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{dagScanPattern},
+				ExpectedFullGraph: dagScanPattern,
 			},
 		},
 	}
@@ -71,7 +75,7 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{dagScanPattern},
+				ExpectedFullGraph: dagScanPattern,
 			},
 		},
 	}
@@ -98,7 +102,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{dagScanPattern},
+				ExpectedFullGraph: dagScanPattern,
 			},
 		},
 	}
@@ -125,7 +129,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{dagScanPattern},
+				ExpectedFullGraph: dagScanPattern,
 			},
 		},
 	}

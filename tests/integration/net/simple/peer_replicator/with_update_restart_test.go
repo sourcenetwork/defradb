@@ -65,9 +65,11 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},

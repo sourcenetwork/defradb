@@ -62,36 +62,38 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
-						"docID":     userDocID,
-						"fieldName": "name",
-					},
-					{
-						"delta":     nil,
-						"docID":     userDocID,
-						"fieldName": nil,
-					},
-					{
-						"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
-						"docID":     deviceDocID,
-						"fieldName": "manufacturer",
-					},
-					{
-						"delta":     encrypt(testUtils.CBORValue("Walkman"), deviceDocID, ""),
-						"docID":     deviceDocID,
-						"fieldName": "model",
-					},
-					{
-						"delta":     encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
-						"docID":     deviceDocID,
-						"fieldName": "owner_id",
-					},
-					{
-						"delta":     nil,
-						"docID":     deviceDocID,
-						"fieldName": nil,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
+							"docID":     userDocID,
+							"fieldName": "name",
+						},
+						{
+							"delta":     nil,
+							"docID":     userDocID,
+							"fieldName": nil,
+						},
+						{
+							"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
+							"docID":     deviceDocID,
+							"fieldName": "manufacturer",
+						},
+						{
+							"delta":     encrypt(testUtils.CBORValue("Walkman"), deviceDocID, ""),
+							"docID":     deviceDocID,
+							"fieldName": "model",
+						},
+						{
+							"delta":     encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
+							"docID":     deviceDocID,
+							"fieldName": "owner_id",
+						},
+						{
+							"delta":     nil,
+							"docID":     deviceDocID,
+							"fieldName": nil,
+						},
 					},
 				},
 			},

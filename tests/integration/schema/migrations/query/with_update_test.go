@@ -67,12 +67,14 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Johnnnn",
-						// We need to assert that the migration has been run within the context
-						// of the update
-						"verified": true,
+				Results: map[string]any{
+					"update_Users": []map[string]any{
+						{
+							"name": "Johnnnn",
+							// We need to assert that the migration has been run within the context
+							// of the update
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -83,12 +85,14 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Johnnnn",
-						// We need to assert that the effects of the migration executed within the
-						// update have been persisted
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Johnnnn",
+							// We need to assert that the effects of the migration executed within the
+							// update have been persisted
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -151,12 +155,14 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Johnnnn",
-						// As the document was updated before the migration was registered
-						// the migration will not have been run
-						"verified": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Johnnnn",
+							// As the document was updated before the migration was registered
+							// the migration will not have been run
+							"verified": nil,
+						},
 					},
 				},
 			},

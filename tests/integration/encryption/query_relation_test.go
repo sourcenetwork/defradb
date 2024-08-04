@@ -59,13 +59,15 @@ func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *tes
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Chris",
-						"devices": []map[string]any{
-							{
-								"model":        "Walkman",
-								"manufacturer": "Sony",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Chris",
+							"devices": []map[string]any{
+								{
+									"model":        "Walkman",
+									"manufacturer": "Sony",
+								},
 							},
 						},
 					},
@@ -119,13 +121,15 @@ func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Chris",
-						"devices": []map[string]any{
-							{
-								"model":        "Walkman",
-								"manufacturer": "Sony",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Chris",
+							"devices": []map[string]any{
+								{
+									"model":        "Walkman",
+									"manufacturer": "Sony",
+								},
 							},
 						},
 					},
@@ -179,13 +183,15 @@ func TestDocEncryption_WithEncryptionOnSecondaryRelations_ShouldFetchDecrypted(t
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Chris",
-						"devices": []map[string]any{
-							{
-								"model":        "Walkman",
-								"manufacturer": "Sony",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Chris",
+							"devices": []map[string]any{
+								{
+									"model":        "Walkman",
+									"manufacturer": "Sony",
+								},
 							},
 						},
 					},

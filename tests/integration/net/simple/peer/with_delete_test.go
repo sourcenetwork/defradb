@@ -64,11 +64,13 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": false,
+							"Name":     "Andy",
+							"Age":      int64(74),
+						},
 					},
 				},
 			},
@@ -122,16 +124,18 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"Name":     "John",
-						"Age":      int64(43),
-					},
-					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(43),
+						},
+						{
+							"_deleted": false,
+							"Name":     "Andy",
+							"Age":      int64(74),
+						},
 					},
 				},
 			},
@@ -193,16 +197,18 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"Name":     "John",
-						"Age":      int64(60),
-					},
-					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(60),
+						},
+						{
+							"_deleted": false,
+							"Name":     "Andy",
+							"Age":      int64(74),
+						},
 					},
 				},
 			},
@@ -272,16 +278,18 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"Name":     "John",
-						"Age":      int64(62),
-					},
-					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(62),
+						},
+						{
+							"_deleted": false,
+							"Name":     "Andy",
+							"Age":      int64(74),
+						},
 					},
 				},
 			},
@@ -360,16 +368,18 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"Name":     "John",
-						"Age":      int64(62),
-					},
-					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(62),
+						},
+						{
+							"_deleted": false,
+							"Name":     "Andy",
+							"Age":      int64(74),
+						},
 					},
 				},
 			},
@@ -384,16 +394,18 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": false,
-						"Name":     "John",
-						"Age":      int64(66),
-					},
-					{
-						"_deleted": false,
-						"Name":     "Andy",
-						"Age":      int64(74),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": false,
+							"Name":     "John",
+							"Age":      int64(66),
+						},
+						{
+							"_deleted": false,
+							"Name":     "Andy",
+							"Age":      int64(74),
+						},
 					},
 				},
 			},

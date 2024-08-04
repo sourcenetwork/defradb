@@ -108,30 +108,32 @@ func TestQueryOneToOneRelations(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "The Rooster Bar",
-						"author": map[string]any{
-							"name": "Cornelia Funke",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "The Rooster Bar",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+							"publisher": map[string]any{
+								"name": "Only Publisher of The Rooster Bar",
+							},
 						},
-						"publisher": map[string]any{
-							"name": "Only Publisher of The Rooster Bar",
+						{
+							"name": "The Associate",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"publisher": nil,
 						},
-					},
-					{
-						"name": "The Associate",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"publisher": nil,
-					},
-					{
-						"name": "Theif Lord",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"publisher": map[string]any{
-							"name": "Only Publisher of Theif Lord",
+						{
+							"name": "Theif Lord",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"publisher": map[string]any{
+								"name": "Only Publisher of Theif Lord",
+							},
 						},
 					},
 				},

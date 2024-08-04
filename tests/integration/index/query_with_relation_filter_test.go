@@ -54,10 +54,12 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Islam"},
-					{"name": "Shahzad"},
-					{"name": "Keenan"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Shahzad"},
+						{"name": "Keenan"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -66,8 +68,10 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -118,10 +122,12 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Islam"},
-					{"name": "Shahzad"},
-					{"name": "Keenan"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Shahzad"},
+						{"name": "Keenan"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -130,8 +136,10 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -182,8 +190,10 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Islam"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -192,10 +202,12 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "John"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -247,8 +259,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Andy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -260,10 +274,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "John"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -318,8 +334,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Andy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -331,10 +349,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "John"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -381,8 +401,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Andy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -461,22 +483,24 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Chris",
-						"devices": []map[string]any{
-							{
-								"model":        "Walkman",
-								"manufacturer": "The Proclaimers",
-							},
-							{
-								"model":        "Walkman",
-								"manufacturer": "Sony",
-							},
-							// The filter is on User, so all devices belonging to it will be returned
-							{
-								"model":        "Running Man",
-								"manufacturer": "Braveworld Productions",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Chris",
+							"devices": []map[string]any{
+								{
+									"model":        "Walkman",
+									"manufacturer": "The Proclaimers",
+								},
+								{
+									"model":        "Walkman",
+									"manufacturer": "Sony",
+								},
+								// The filter is on User, so all devices belonging to it will be returned
+								{
+									"model":        "Running Man",
+									"manufacturer": "Braveworld Productions",
+								},
 							},
 						},
 					},
@@ -549,21 +573,23 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{
-						"name": "Chris",
-						"devices": []map[string]any{
-							{
-								"model":        "Walkman",
-								"manufacturer": "The Proclaimers",
-							},
-							{
-								"model":        "Walkman",
-								"manufacturer": "Sony",
-							},
-							{
-								"model":        "Running Man",
-								"manufacturer": "Braveworld Productions",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Chris",
+							"devices": []map[string]any{
+								{
+									"model":        "Walkman",
+									"manufacturer": "The Proclaimers",
+								},
+								{
+									"model":        "Walkman",
+									"manufacturer": "Sony",
+								},
+								{
+									"model":        "Running Man",
+									"manufacturer": "Braveworld Productions",
+								},
 							},
 						},
 					},
@@ -612,11 +638,13 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{
-						"name": "Islam",
-						"address": map[string]any{
-							"city": "Munich",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Islam",
+							"address": map[string]any{
+								"city": "Munich",
+							},
 						},
 					},
 				},
@@ -666,23 +694,25 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{
-						"model": "Playstation 5",
-						"owner": map[string]any{
-							"name": "Addo",
+				Results: map[string]any{
+					"Device": []map[string]any{
+						{
+							"model": "Playstation 5",
+							"owner": map[string]any{
+								"name": "Addo",
+							},
 						},
-					},
-					{
-						"model": "iPhone 10",
-						"owner": map[string]any{
-							"name": "Addo",
+						{
+							"model": "iPhone 10",
+							"owner": map[string]any{
+								"name": "Addo",
+							},
 						},
-					},
-					{
-						"model": "Playstation 5",
-						"owner": map[string]any{
-							"name": "Islam",
+						{
+							"model": "Playstation 5",
+							"owner": map[string]any{
+								"name": "Islam",
+							},
 						},
 					},
 				},
@@ -731,10 +761,12 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"model": "MacBook Pro"},
-					{"model": "iPad Mini"},
-					{"model": "iPhone 13"},
+				Results: map[string]any{
+					"Device": []map[string]any{
+						{"model": "MacBook Pro"},
+						{"model": "iPad Mini"},
+						{"model": "iPhone 13"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -813,9 +845,11 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"model": "Walkman"},
-					{"model": "iPhone"},
+				Results: map[string]any{
+					"Device": []map[string]any{
+						{"model": "Walkman"},
+						{"model": "iPhone"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -894,9 +928,11 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"model": "PlayStation 5"},
-					{"model": "Running Man"},
+				Results: map[string]any{
+					"Device": []map[string]any{
+						{"model": "PlayStation 5"},
+						{"model": "Running Man"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -963,12 +999,14 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"devices": []map[string]any{
-							{
-								"owner_id":        testUtils.NewDocIndex(0, 0),
-								"manufacturer_id": testUtils.NewDocIndex(2, 0),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"devices": []map[string]any{
+								{
+									"owner_id":        testUtils.NewDocIndex(0, 0),
+									"manufacturer_id": testUtils.NewDocIndex(2, 0),
+								},
 							},
 						},
 					},

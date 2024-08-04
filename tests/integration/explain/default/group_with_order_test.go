@@ -19,11 +19,15 @@ import (
 
 var groupOrderPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"orderNode": dataMap{
-				"groupNode": dataMap{
-					"selectNode": dataMap{
-						"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"orderNode": dataMap{
+						"groupNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
 					},
 				},
 			},
@@ -53,7 +57,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupOrderPattern},
+				ExpectedPatterns: groupOrderPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -108,7 +112,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupOrderPattern},
+				ExpectedPatterns: groupOrderPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -163,7 +167,7 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupOrderPattern},
+				ExpectedPatterns: groupOrderPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

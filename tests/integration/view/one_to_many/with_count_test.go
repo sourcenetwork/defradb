@@ -143,10 +143,12 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name":          "Harper Lee",
-						"numberOfBooks": 2,
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name":          "Harper Lee",
+							"numberOfBooks": 2,
+						},
 					},
 				},
 			},
@@ -199,9 +201,11 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "Harper Lee",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Harper Lee",
+						},
 					},
 				},
 			},

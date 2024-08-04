@@ -47,9 +47,11 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteFloats": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteFloats": nil,
+						},
 					},
 				},
 			},
@@ -90,9 +92,11 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteFloats": []float64{},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteFloats": []float64{},
+						},
 					},
 				},
 			},
@@ -133,9 +137,11 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteFloats": []float64{3.1425, -0.00000000001, 1000000},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteFloats": []float64{3.1425, -0.00000000001, 1000000},
+						},
 					},
 				},
 			},
@@ -176,9 +182,11 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteFloats": []float64{3.14},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteFloats": []float64{3.14},
+						},
 					},
 				},
 			},
@@ -219,9 +227,11 @@ func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteFloats": []float64{3.1425, 0.00000000001, -10, 6.626070},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteFloats": []float64{3.1425, 0.00000000001, -10, 6.626070},
+						},
 					},
 				},
 			},

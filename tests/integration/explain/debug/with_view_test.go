@@ -18,12 +18,16 @@ import (
 
 var viewPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"viewNode": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"viewNode": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"scanNode": dataMap{},
+								},
+							},
 						},
 					},
 				},
@@ -62,7 +66,7 @@ func TestDebugExplainRequestWithView(t *testing.T) {
 						name
 					}
 				}`,
-				ExpectedPatterns: []dataMap{viewPattern},
+				ExpectedPatterns: viewPattern,
 			},
 		},
 	}

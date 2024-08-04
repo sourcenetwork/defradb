@@ -35,18 +35,20 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 							_count(field: links)
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid":    "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"_count": 0,
-					},
-					{
-						"cid":    "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"_count": 0,
-					},
-					{
-						"cid":    "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-						"_count": 2,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid":    "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"_count": 0,
+						},
+						{
+							"cid":    "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"_count": 0,
+						},
+						{
+							"cid":    "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"_count": 2,
+						},
 					},
 				},
 			},

@@ -19,10 +19,14 @@ import (
 
 var deletePattern = dataMap{
 	"explain": dataMap{
-		"deleteNode": dataMap{
-			"selectTopNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"deleteNode": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -45,7 +49,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -104,7 +108,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -155,7 +159,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -211,7 +215,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -269,7 +273,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -323,7 +327,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{deletePattern},
+				ExpectedPatterns: deletePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

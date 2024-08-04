@@ -56,9 +56,11 @@ func TestIndexP2P_IfPeerCreatedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},
@@ -113,9 +115,11 @@ func TestIndexP2P_IfPeerUpdateDoc_ListeningPeerShouldUpdateIndex(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Islam",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Islam",
+						},
 					},
 				},
 			},
@@ -177,9 +181,11 @@ func TestIndexP2P_IfPeerDeleteDoc_ListeningPeerShouldDeleteIndex(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"age": int64(30),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"age": int64(30),
+						},
 					},
 				},
 			},

@@ -46,14 +46,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithL
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": int64(70),
-			},
-			{
-				"Name": "Alice",
-				"_sum": int64(0),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": int64(70),
+				},
+				{
+					"Name": "Alice",
+					"_sum": int64(0),
+				},
 			},
 		},
 	}

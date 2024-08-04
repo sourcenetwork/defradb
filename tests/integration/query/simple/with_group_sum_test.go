@@ -48,7 +48,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 						_sum(_group: {field: Age})
 					}
 				}`,
-		Results: []map[string]any{},
+		Results: map[string]any{
+			"Users": []map[string]any{},
+		},
 	}
 
 	executeTestCase(t, test)
@@ -80,14 +82,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": int64(70),
-			},
-			{
-				"Name": "Alice",
-				"_sum": int64(-19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": int64(70),
+				},
+				{
+					"Name": "Alice",
+					"_sum": int64(-19),
+				},
 			},
 		},
 	}
@@ -120,14 +124,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": int64(32),
-			},
-			{
-				"Name": "Alice",
-				"_sum": int64(19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": int64(32),
+				},
+				{
+					"Name": "Alice",
+					"_sum": int64(19),
+				},
 			},
 		},
 	}
@@ -177,38 +183,40 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": int64(91),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_sum":     int64(57),
-					},
-					{
-						"Verified": false,
-						"_sum":     int64(34),
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_sum": int64(55),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_sum":     int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": int64(91),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_sum":     int64(57),
+						},
+						{
+							"Verified": false,
+							"_sum":     int64(34),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_sum": int64(19),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_sum":     int64(19),
+				{
+					"Name": "Carlo",
+					"_sum": int64(55),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_sum":     int64(55),
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_sum": int64(19),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_sum":     int64(19),
+						},
 					},
 				},
 			},
@@ -242,14 +250,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": float64(3.71),
-			},
-			{
-				"Name": "Alice",
-				"_sum": float64(0),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": float64(3.71),
+				},
+				{
+					"Name": "Alice",
+					"_sum": float64(0),
+				},
 			},
 		},
 	}
@@ -282,14 +292,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": float64(3.71),
-			},
-			{
-				"Name": "Alice",
-				"_sum": float64(2.04),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": float64(3.71),
+				},
+				{
+					"Name": "Alice",
+					"_sum": float64(2.04),
+				},
 			},
 		},
 	}
@@ -339,38 +351,40 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Alice",
-				"_sum": float64(2.04),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_sum":     float64(2.04),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Alice",
+					"_sum": float64(2.04),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_sum":     float64(2.04),
+						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_sum": float64(5.65),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_sum":     float64(3.43),
-					},
-					{
-						"Verified": false,
-						"_sum":     float64(2.22),
+				{
+					"Name": "John",
+					"_sum": float64(5.65),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_sum":     float64(3.43),
+						},
+						{
+							"Verified": false,
+							"_sum":     float64(2.22),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Carlo",
-				"_sum": float64(1.74),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_sum":     float64(1.74),
+				{
+					"Name": "Carlo",
+					"_sum": float64(1.74),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_sum":     float64(1.74),
+						},
 					},
 				},
 			},
@@ -431,64 +445,66 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_sum": float64(1.74),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_sum":     float64(1.74),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(55),
-								"_sum": float64(1.74),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"_sum": float64(1.74),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_sum":     float64(1.74),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(55),
+									"_sum": float64(1.74),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_sum": float64(2.04),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_sum":     float64(2.04),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(19),
-								"_sum": float64(2.04),
+				{
+					"Name": "Alice",
+					"_sum": float64(2.04),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_sum":     float64(2.04),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(19),
+									"_sum": float64(2.04),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_sum": float64(5.65),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_sum":     float64(3.43),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(32),
-								"_sum": float64(1.61),
-							},
-							{
-								"Age":  int64(25),
-								"_sum": float64(1.82),
+				{
+					"Name": "John",
+					"_sum": float64(5.65),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_sum":     float64(3.43),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(32),
+									"_sum": float64(1.61),
+								},
+								{
+									"Age":  int64(25),
+									"_sum": float64(1.82),
+								},
 							},
 						},
-					},
-					{
-						"Verified": false,
-						"_sum":     float64(2.22),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(34),
-								"_sum": float64(2.22),
+						{
+							"Verified": false,
+							"_sum":     float64(2.22),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(34),
+									"_sum": float64(2.22),
+								},
 							},
 						},
 					},

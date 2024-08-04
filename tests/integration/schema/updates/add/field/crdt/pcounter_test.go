@@ -41,7 +41,9 @@ func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

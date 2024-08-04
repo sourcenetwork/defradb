@@ -58,38 +58,40 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": float64(62.5),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(28.5),
-					},
-					{
-						"Verified": false,
-						"_avg":     float64(34),
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_sum": float64(55),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": float64(62.5),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(28.5),
+						},
+						{
+							"Verified": false,
+							"_avg":     float64(34),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_sum": float64(19),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_avg":     float64(19),
+				{
+					"Name": "Carlo",
+					"_sum": float64(55),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(55),
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_sum": float64(19),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_avg":     float64(19),
+						},
 					},
 				},
 			},
@@ -130,16 +132,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(35),
-				"_sum": int64(70),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(-19),
-				"_sum": int64(-19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(35),
+					"_sum": int64(70),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(-19),
+					"_sum": int64(-19),
+				},
 			},
 		},
 	}

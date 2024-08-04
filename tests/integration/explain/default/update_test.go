@@ -19,10 +19,14 @@ import (
 
 var updatePattern = dataMap{
 	"explain": dataMap{
-		"updateNode": dataMap{
-			"selectTopNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"updateNode": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -54,7 +58,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -123,7 +127,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -188,7 +192,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -256,7 +260,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

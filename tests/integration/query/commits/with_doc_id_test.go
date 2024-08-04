@@ -34,7 +34,9 @@ func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -60,15 +62,17 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-					},
-					{
-						"cid": "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-					},
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+						},
+						{
+							"cid": "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+						},
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+						},
 					},
 				},
 			},
@@ -100,25 +104,27 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"links": []map[string]any{},
-					},
-					{
-						"cid":   "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"links": []map[string]any{},
-					},
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-						"links": []map[string]any{
-							{
-								"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-								"name": "name",
-							},
-							{
-								"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-								"name": "age",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"links": []map[string]any{},
+						},
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+									"name": "name",
+								},
+								{
+									"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+									"name": "age",
+								},
 							},
 						},
 					},
@@ -156,26 +162,28 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 							height
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid":    "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
-						"height": int64(2),
-					},
-					{
-						"cid":    "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
-						"height": int64(2),
-					},
-					{
-						"cid":    "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-						"height": int64(1),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid":    "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
+							"height": int64(2),
+						},
+						{
+							"cid":    "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"height": int64(1),
+						},
+						{
+							"cid":    "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"height": int64(1),
+						},
+						{
+							"cid":    "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+							"height": int64(2),
+						},
+						{
+							"cid":    "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"height": int64(1),
+						},
 					},
 				},
 			},
@@ -217,47 +225,49 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
-						"links": []map[string]any{
-							{
-								"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-								"name": "_head",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+									"name": "_head",
+								},
 							},
 						},
-					},
-					{
-						"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"links": []map[string]any{},
-					},
-					{
-						"cid":   "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"links": []map[string]any{},
-					},
-					{
-						"cid": "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
-						"links": []map[string]any{
-							{
-								"cid":  "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-								"name": "_head",
-							},
-							{
-								"cid":  "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
-								"name": "age",
+						{
+							"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"links": []map[string]any{},
+						},
+						{
+							"cid": "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+									"name": "_head",
+								},
+								{
+									"cid":  "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
+									"name": "age",
+								},
 							},
 						},
-					},
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-						"links": []map[string]any{
-							{
-								"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-								"name": "name",
-							},
-							{
-								"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-								"name": "age",
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+									"name": "name",
+								},
+								{
+									"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+									"name": "age",
+								},
 							},
 						},
 					},

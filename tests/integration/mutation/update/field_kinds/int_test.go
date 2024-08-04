@@ -45,9 +45,11 @@ func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"age": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"age": nil,
+						},
 					},
 				},
 			},

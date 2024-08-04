@@ -58,38 +58,40 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_sum": int64(3),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_count":   int(2),
-					},
-					{
-						"Verified": false,
-						"_count":   int(1),
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_sum": int64(1),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_count":   int(1),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_sum": int64(3),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_count":   int(2),
+						},
+						{
+							"Verified": false,
+							"_count":   int(1),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_sum": int64(1),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_count":   int(1),
+				{
+					"Name": "Carlo",
+					"_sum": int64(1),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_count":   int(1),
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_sum": int64(1),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_count":   int(1),
+						},
 					},
 				},
 			},

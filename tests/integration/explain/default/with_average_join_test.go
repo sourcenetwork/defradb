@@ -21,12 +21,16 @@ import (
 
 var averageTypeIndexJoinPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"averageNode": dataMap{
-				"countNode": dataMap{
-					"sumNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": normalTypeJoinPattern,
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"averageNode": dataMap{
+						"countNode": dataMap{
+							"sumNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": normalTypeJoinPattern,
+								},
+							},
 						},
 					},
 				},
@@ -52,7 +56,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{averageTypeIndexJoinPattern},
+				ExpectedPatterns: averageTypeIndexJoinPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -166,20 +170,22 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"averageNode": dataMap{
-									"countNode": dataMap{
-										"sumNode": dataMap{
-											"selectNode": dataMap{
-												"parallelNode": []dataMap{
-													{
-														"typeIndexJoin": normalTypeJoinPattern,
-													},
-													{
-														"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"averageNode": dataMap{
+										"countNode": dataMap{
+											"sumNode": dataMap{
+												"selectNode": dataMap{
+													"parallelNode": []dataMap{
+														{
+															"typeIndexJoin": normalTypeJoinPattern,
+														},
+														{
+															"typeIndexJoin": normalTypeJoinPattern,
+														},
 													},
 												},
 											},
@@ -372,15 +378,17 @@ func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinF
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"averageNode": dataMap{
-									"countNode": dataMap{
-										"sumNode": dataMap{
-											"selectNode": dataMap{
-												"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"averageNode": dataMap{
+										"countNode": dataMap{
+											"sumNode": dataMap{
+												"selectNode": dataMap{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
 											},
 										},
 									},

@@ -104,7 +104,9 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 					}
 				`,
 
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -199,7 +201,9 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 						}
 					}
 				`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -294,7 +298,9 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -389,11 +395,13 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-						"name":   "Shahzad",
-						"age":    int64(28),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad",
+							"age":    int64(28),
+						},
 					},
 				},
 			},
@@ -492,11 +500,13 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-						"name":   "Shahzad",
-						"age":    int64(28),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad",
+							"age":    int64(28),
+						},
 					},
 				},
 			},

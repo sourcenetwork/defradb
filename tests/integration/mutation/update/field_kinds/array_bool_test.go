@@ -47,9 +47,11 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"likedIndexes": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"likedIndexes": nil,
+						},
 					},
 				},
 			},
@@ -90,9 +92,11 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"likedIndexes": []bool{},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"likedIndexes": []bool{},
+						},
 					},
 				},
 			},
@@ -133,9 +137,11 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"likedIndexes": []bool{true, false, true, false},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"likedIndexes": []bool{true, false, true, false},
+						},
 					},
 				},
 			},
@@ -176,9 +182,11 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"likedIndexes": []bool{false, true},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"likedIndexes": []bool{false, true},
+						},
 					},
 				},
 			},
@@ -219,9 +227,11 @@ func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"likedIndexes": []bool{true, false, true, false, true, true},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"likedIndexes": []bool{true, false, true, false, true, true},
+						},
 					},
 				},
 			},

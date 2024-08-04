@@ -63,9 +63,11 @@ func TestP2PSubscribeAddAndRemoveSingle(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},
@@ -125,7 +127,9 @@ func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				// Gillian the Giraffe has still been synced, as it was not removed from the subscription set.
@@ -135,9 +139,11 @@ func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Gillian",
+				Results: map[string]any{
+					"Giraffes": []map[string]any{
+						{
+							"name": "Gillian",
+						},
 					},
 				},
 			},
@@ -187,9 +193,11 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -237,9 +245,11 @@ func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

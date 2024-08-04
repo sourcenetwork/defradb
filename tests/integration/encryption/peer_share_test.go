@@ -56,9 +56,11 @@ func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) 
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"age": int64(21),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"age": int64(21),
+						},
 					},
 				},
 			},
@@ -106,10 +108,12 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(21),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
 					},
 				},
 			},
@@ -158,10 +162,12 @@ func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeys
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(21),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
 					},
 				},
 			},
@@ -210,10 +216,12 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(21),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
 					},
 				},
 			},
@@ -222,4 +230,3 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 
 	testUtils.ExecuteTestCase(t, test)
 }
-

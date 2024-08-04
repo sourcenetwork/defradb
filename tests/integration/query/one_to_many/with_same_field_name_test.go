@@ -59,11 +59,13 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name": "Painted House",
-					"relationship1": map[string]any{
-						"name": "John Grisham",
+			Results: map[string]any{
+				"Book": []map[string]any{
+					{
+						"name": "Painted House",
+						"relationship1": map[string]any{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},
@@ -93,12 +95,14 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name": "John Grisham",
-					"relationship1": []map[string]any{
-						{
-							"name": "Painted House",
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"name": "John Grisham",
+						"relationship1": []map[string]any{
+							{
+								"name": "Painted House",
+							},
 						},
 					},
 				},

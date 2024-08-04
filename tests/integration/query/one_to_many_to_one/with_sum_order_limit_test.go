@@ -32,30 +32,32 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":                 "Not a Writer",
-						"s1":                   0.0,
-						"NewestPublishersBook": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						"s1":   4.8 + 4.5, // Because in descending order years for John are [2020, 2013].
-						"NewestPublishersBook": []map[string]any{
-							{
-								"name": "Theif Lord",
-							},
-							{
-								"name": "A Time for Mercy",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"NewestPublishersBook": []map[string]any{},
+						},
+						{
+							"name": "John Grisham",
+							"s1":   4.8 + 4.5, // Because in descending order years for John are [2020, 2013].
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
+								{
+									"name": "A Time for Mercy",
+								},
 							},
 						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"s1":   4.0,
-						"NewestPublishersBook": []map[string]any{
-							{
-								"name": "The Rooster Bar",
+						{
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
 							},
 						},
 					},
@@ -82,32 +84,34 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":                 "Not a Writer",
-						"s1":                   0.0,
-						"NewestPublishersBook": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						// Because in ascending order years for John are:
-						// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
-						"s1": float64(4.2) + float64(4.9),
-						"NewestPublishersBook": []map[string]any{
-							{
-								"name": "The Associate",
-							},
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"NewestPublishersBook": []map[string]any{},
+						},
+						{
+							"name": "John Grisham",
+							// Because in ascending order years for John are:
+							// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+							"s1": float64(4.2) + float64(4.9),
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Associate",
+								},
+								{
+									"name": "Painted House",
+								},
 							},
 						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"s1":   4.0,
-						"NewestPublishersBook": []map[string]any{
-							{
-								"name": "The Rooster Bar",
+						{
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
 							},
 						},
 					},
@@ -133,23 +137,25 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 						s2: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Not a Writer",
-						"s1":   0.0,
-						"s2":   0.0,
-					},
-					{
-						"name": "John Grisham",
-						// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
-						"s1": 4.8 + 4.5,
-						// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
-						"s2": float64(4.2) + float64(4.9),
-					},
-					{
-						"name": "Cornelia Funke",
-						"s1":   4.0,
-						"s2":   4.0,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Not a Writer",
+							"s1":   0.0,
+							"s2":   0.0,
+						},
+						{
+							"name": "John Grisham",
+							// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
+							"s1": 4.8 + 4.5,
+							// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+							"s2": float64(4.2) + float64(4.9),
+						},
+						{
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"s2":   4.0,
+						},
 					},
 				},
 			},
@@ -175,31 +181,33 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":                 "Not a Writer",
-						"s1":                   0.0,
-						"OldestPublishersBook": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
-						"s1": 4.8 + 4.5,
-						"OldestPublishersBook": []map[string]any{
-							{
-								"name": "The Associate",
-							},
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"OldestPublishersBook": []map[string]any{},
+						},
+						{
+							"name": "John Grisham",
+							// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
+							"s1": 4.8 + 4.5,
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Associate",
+								},
+								{
+									"name": "Painted House",
+								},
 							},
 						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"s1":   4.0,
-						"OldestPublishersBook": []map[string]any{
-							{
-								"name": "The Rooster Bar",
+						{
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
 							},
 						},
 					},

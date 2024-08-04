@@ -163,15 +163,17 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  nil,
-					},
-					{
-						"name": "Keenan",
-						"foo": map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
 							"name": "John",
+							"foo":  nil,
+						},
+						{
+							"name": "Keenan",
+							"foo": map[string]any{
+								"name": "John",
+							},
 						},
 					},
 				},

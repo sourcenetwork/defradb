@@ -19,10 +19,14 @@ import (
 
 var createPattern = dataMap{
 	"explain": dataMap{
-		"createNode": dataMap{
-			"selectTopNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"createNode": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -45,7 +49,7 @@ func TestDebugExplainMutationRequestWithCreate(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{createPattern},
+				ExpectedPatterns: createPattern,
 			},
 		},
 	}
@@ -69,7 +73,7 @@ func TestDebugExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{createPattern},
+				ExpectedPatterns: createPattern,
 			},
 		},
 	}

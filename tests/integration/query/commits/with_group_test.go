@@ -41,12 +41,14 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 							height
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"height": int64(2),
-					},
-					{
-						"height": int64(1),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"height": int64(2),
+						},
+						{
+							"height": int64(1),
+						},
 					},
 				},
 			},
@@ -84,29 +86,31 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"height": int64(2),
-						"_group": []map[string]any{
-							{
-								"cid": "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
-							},
-							{
-								"cid": "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"height": int64(2),
+							"_group": []map[string]any{
+								{
+									"cid": "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
+								},
+								{
+									"cid": "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+								},
 							},
 						},
-					},
-					{
-						"height": int64(1),
-						"_group": []map[string]any{
-							{
-								"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-							},
-							{
-								"cid": "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-							},
-							{
-								"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+						{
+							"height": int64(1),
+							"_group": []map[string]any{
+								{
+									"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+								},
+								{
+									"cid": "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+								},
+								{
+									"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+								},
 							},
 						},
 					},
@@ -140,28 +144,30 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-						"_group": []map[string]any{
-							{
-								"height": int64(1),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"_group": []map[string]any{
+								{
+									"height": int64(1),
+								},
 							},
 						},
-					},
-					{
-						"cid": "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-						"_group": []map[string]any{
-							{
-								"height": int64(1),
+						{
+							"cid": "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+							"_group": []map[string]any{
+								{
+									"height": int64(1),
+								},
 							},
 						},
-					},
-					{
-						"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-						"_group": []map[string]any{
-							{
-								"height": int64(1),
+						{
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"_group": []map[string]any{
+								{
+									"height": int64(1),
+								},
 							},
 						},
 					},
@@ -212,12 +218,14 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 							docID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"docID": "bae-a839588e-e2e5-5ede-bb91-ffe6871645cb",
-					},
-					{
-						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"docID": "bae-a839588e-e2e5-5ede-bb91-ffe6871645cb",
+						},
+						{
+							"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+						},
 					},
 				},
 			},
@@ -252,15 +260,17 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 							fieldName
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"fieldName": "age",
-					},
-					{
-						"fieldName": "name",
-					},
-					{
-						"fieldName": nil,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldName": "age",
+						},
+						{
+							"fieldName": "name",
+						},
+						{
+							"fieldName": nil,
+						},
 					},
 				},
 			},
@@ -298,34 +308,36 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"fieldName": "age",
-						"_group": []map[string]any{
-							{
-								"height": int64(2),
-							},
-							{
-								"height": int64(1),
-							},
-						},
-					},
-					{
-						"fieldName": "name",
-						"_group": []map[string]any{
-							{
-								"height": int64(1),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"_group": []map[string]any{
+								{
+									"height": int64(2),
+								},
+								{
+									"height": int64(1),
+								},
 							},
 						},
-					},
-					{
-						"fieldName": nil,
-						"_group": []map[string]any{
-							{
-								"height": int64(2),
+						{
+							"fieldName": "name",
+							"_group": []map[string]any{
+								{
+									"height": int64(1),
+								},
 							},
-							{
-								"height": int64(1),
+						},
+						{
+							"fieldName": nil,
+							"_group": []map[string]any{
+								{
+									"height": int64(2),
+								},
+								{
+									"height": int64(1),
+								},
 							},
 						},
 					},
@@ -362,15 +374,17 @@ func TestQueryCommitsWithGroupByFieldID(t *testing.T) {
 							fieldId
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"fieldId": "1",
-					},
-					{
-						"fieldId": "2",
-					},
-					{
-						"fieldId": "C",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldId": "1",
+						},
+						{
+							"fieldId": "2",
+						},
+						{
+							"fieldId": "C",
+						},
 					},
 				},
 			},
@@ -408,34 +422,36 @@ func TestQueryCommitsWithGroupByFieldIDWithChild(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"fieldId": "1",
-						"_group": []map[string]any{
-							{
-								"height": int64(2),
-							},
-							{
-								"height": int64(1),
-							},
-						},
-					},
-					{
-						"fieldId": "2",
-						"_group": []map[string]any{
-							{
-								"height": int64(1),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldId": "1",
+							"_group": []map[string]any{
+								{
+									"height": int64(2),
+								},
+								{
+									"height": int64(1),
+								},
 							},
 						},
-					},
-					{
-						"fieldId": "C",
-						"_group": []map[string]any{
-							{
-								"height": int64(2),
+						{
+							"fieldId": "2",
+							"_group": []map[string]any{
+								{
+									"height": int64(1),
+								},
 							},
-							{
-								"height": int64(1),
+						},
+						{
+							"fieldId": "C",
+							"_group": []map[string]any{
+								{
+									"height": int64(2),
+								},
+								{
+									"height": int64(1),
+								},
 							},
 						},
 					},

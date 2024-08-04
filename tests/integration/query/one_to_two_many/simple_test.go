@@ -95,38 +95,40 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"reviewedBy": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
+							},
 						},
-						"reviewedBy": map[string]any{
-							"name": "Cornelia Funke",
-							"age":  int64(62),
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"reviewedBy": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
+							},
 						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"reviewedBy": map[string]any{
-							"name": "Cornelia Funke",
-							"age":  int64(62),
-						},
-					},
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
-						"author": map[string]any{
-							"name": "Cornelia Funke",
-						},
-						"reviewedBy": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(65),
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+							"reviewedBy": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
 						},
 					},
 				},
@@ -216,41 +218,43 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-						"reviewed": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+							"reviewed": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
 							},
-							{
-								"name":   "A Time for Mercy",
-								"rating": 4.5,
-							},
-						},
-						"written": []map[string]any{
-							{
-								"name": "Theif Lord",
-							},
-						},
-					},
-					{
-						"name": "John Grisham",
-						"age":  int64(65),
-						"reviewed": []map[string]any{
-							{
-								"name":   "Theif Lord",
-								"rating": 4.8,
+							"written": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
 							},
 						},
-						"written": []map[string]any{
-							{
-								"name": "Painted House",
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"reviewed": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
+								},
 							},
-							{
-								"name": "A Time for Mercy",
+							"written": []map[string]any{
+								{
+									"name": "Painted House",
+								},
+								{
+									"name": "A Time for Mercy",
+								},
 							},
 						},
 					},
@@ -369,50 +373,52 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"reviewedBy": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
+							},
+							"price": map[string]any{
+								"currency": "GBP",
+								"value":    12.99,
+							},
 						},
-						"reviewedBy": map[string]any{
-							"name": "Cornelia Funke",
-							"age":  int64(62),
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"reviewedBy": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
+							},
+							"price": map[string]any{
+								"currency": "SEK",
+								"value":    float64(129),
+							},
 						},
-						"price": map[string]any{
-							"currency": "GBP",
-							"value":    12.99,
-						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"reviewedBy": map[string]any{
-							"name": "Cornelia Funke",
-							"age":  int64(62),
-						},
-						"price": map[string]any{
-							"currency": "SEK",
-							"value":    float64(129),
-						},
-					},
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
-						"author": map[string]any{
-							"name": "Cornelia Funke",
-						},
-						"reviewedBy": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(65),
-						},
-						"price": map[string]any{
-							"currency": "GBP",
-							"value":    12.99,
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+							"reviewedBy": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
+							"price": map[string]any{
+								"currency": "GBP",
+								"value":    12.99,
+							},
 						},
 					},
 				},
@@ -529,49 +535,51 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"age":  int64(62),
-						"reviewed": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+							"reviewed": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
 							},
-							{
-								"name":   "A Time for Mercy",
-								"rating": 4.5,
-							},
-						},
-						"written": []map[string]any{
-							{
-								"name": "Theif Lord",
-								"price": map[string]any{
-									"value": 12.99,
+							"written": []map[string]any{
+								{
+									"name": "Theif Lord",
+									"price": map[string]any{
+										"value": 12.99,
+									},
 								},
 							},
 						},
-					},
-					{
-						"name": "John Grisham",
-						"age":  int64(65),
-						"reviewed": []map[string]any{
-							{
-								"name":   "Theif Lord",
-								"rating": 4.8,
-							},
-						},
-						"written": []map[string]any{
-							{
-								"name": "Painted House",
-								"price": map[string]any{
-									"value": 12.99,
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"reviewed": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
 								},
 							},
-							{
-								"name": "A Time for Mercy",
-								"price": map[string]any{
-									"value": float64(129),
+							"written": []map[string]any{
+								{
+									"name": "Painted House",
+									"price": map[string]any{
+										"value": 12.99,
+									},
+								},
+								{
+									"name": "A Time for Mercy",
+									"price": map[string]any{
+										"value": float64(129),
+									},
 								},
 							},
 						},

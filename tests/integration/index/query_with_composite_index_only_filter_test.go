@@ -51,8 +51,10 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Islam", "age": 32},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam", "age": 32},
+					},
 				},
 			},
 			testUtils.Request{
@@ -61,8 +63,10 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Islam", "age": 32},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam", "age": 32},
+					},
 				},
 			},
 			testUtils.Request{
@@ -71,7 +75,9 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req3,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -101,8 +107,10 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -137,8 +145,10 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -173,9 +183,11 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Roy"},
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Roy"},
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -210,9 +222,11 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -247,8 +261,10 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -283,8 +299,10 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -319,9 +337,11 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -356,9 +376,11 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Fred"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -393,15 +415,17 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
-					{"name": "Bruno"},
-					{"name": "Chris"},
-					{"name": "John"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+						{"name": "Bruno"},
+						{"name": "Chris"},
+						{"name": "John"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -436,9 +460,11 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Andy"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -473,10 +499,12 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Islam"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -540,8 +568,10 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -550,8 +580,10 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -560,8 +592,10 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req3,
-				Results: []map[string]any{
-					{"name": "Keenan"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Keenan"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -570,8 +604,10 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req4,
-				Results: []map[string]any{
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -580,8 +616,10 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req5,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -590,11 +628,15 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req6,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				Request: req7,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -623,11 +665,13 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
-					{"name": "Islam"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+						{"name": "Islam"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -704,8 +748,10 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": nil, "age": 32},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": nil, "age": 32},
+					},
 				},
 			},
 		},
@@ -756,10 +802,12 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alice",
-						"age":  nil,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  nil,
+						},
 					},
 				},
 			},
@@ -815,9 +863,11 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alan",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+						},
 					},
 				},
 			},
@@ -907,11 +957,13 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			},
 			testUtils.Request{
 				Request: reqWithName,
-				Results: []map[string]any{
-					{"about": "bob3"},
-					{"about": "bob2"},
-					{"about": "bob1"},
-					{"about": "bob4"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob3"},
+						{"about": "bob2"},
+						{"about": "bob1"},
+						{"about": "bob4"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -920,10 +972,12 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			},
 			testUtils.Request{
 				Request: reqWithNameAge,
-				Results: []map[string]any{
-					{"about": "bob3"},
-					{"about": "bob2"},
-					{"about": "bob1"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob3"},
+						{"about": "bob2"},
+						{"about": "bob1"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -932,9 +986,11 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			},
 			testUtils.Request{
 				Request: reqWithNameAgeNumChildren,
-				Results: []map[string]any{
-					{"about": "bob2"},
-					{"about": "bob1"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob2"},
+						{"about": "bob1"},
+					},
 				},
 			},
 			testUtils.Request{

@@ -47,16 +47,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name":   "John",
-				"_avg":   float64(35),
-				"_count": int(2),
-			},
-			{
-				"Name":   "Alice",
-				"_avg":   float64(-19),
-				"_count": int(1),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name":   "John",
+					"_avg":   float64(35),
+					"_count": int(2),
+				},
+				{
+					"Name":   "Alice",
+					"_avg":   float64(-19),
+					"_count": int(1),
+				},
 			},
 		},
 	}

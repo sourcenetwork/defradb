@@ -35,13 +35,15 @@ func TestDebugExplainRequestWithAOneToOneJoin(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": dataMap{
-										"typeJoinOne": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": dataMap{
+											"typeJoinOne": normalTypeJoinPattern,
+										},
 									},
 								},
 							},
@@ -77,21 +79,23 @@ func TestDebugExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": dataMap{
-										"typeJoinOne": dataMap{
-											"root": dataMap{
-												"scanNode": dataMap{},
-											},
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"selectNode": dataMap{
-														"typeIndexJoin": dataMap{
-															"typeJoinOne": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": dataMap{
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"typeIndexJoin": dataMap{
+																"typeJoinOne": normalTypeJoinPattern,
+															},
 														},
 													},
 												},

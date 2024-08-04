@@ -37,7 +37,9 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -73,7 +75,9 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -109,9 +113,11 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreicsavx5oblk6asfoqyssz4ge2gf5ekfouvi7o6l7adly275op5oje",
+						},
 					},
 				},
 			},

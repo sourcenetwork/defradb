@@ -21,10 +21,14 @@ import (
 
 var sumTypeIndexJoinPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"sumNode": dataMap{
-				"selectNode": dataMap{
-					"typeIndexJoin": normalTypeJoinPattern,
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"sumNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": normalTypeJoinPattern,
+						},
+					},
 				},
 			},
 		},
@@ -51,7 +55,7 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{sumTypeIndexJoinPattern},
+				ExpectedPatterns: sumTypeIndexJoinPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -142,7 +146,7 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{sumTypeIndexJoinPattern},
+				ExpectedPatterns: sumTypeIndexJoinPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -235,18 +239,20 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *te
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"sumNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
-											},
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"sumNode": dataMap{
+										"selectNode": dataMap{
+											"parallelNode": []dataMap{
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
 											},
 										},
 									},

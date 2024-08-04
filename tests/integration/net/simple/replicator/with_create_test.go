@@ -51,9 +51,11 @@ func TestP2POneToOneReplicator(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -96,9 +98,11 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -142,7 +146,9 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -190,7 +196,9 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -235,9 +243,11 @@ func TestP2POneToManyReplicator(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -282,9 +292,11 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -295,9 +307,11 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -309,7 +323,9 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 					}
 				}`,
 				// As node[2] was not configured, John should not be synced to it
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -357,12 +373,14 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(22),
-					},
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(22),
+						},
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -417,12 +435,14 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(22),
-					},
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(22),
+						},
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -483,14 +503,16 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-						"age":    int64(21),
-						"name":   "John",
-						"_version": []map[string]any{
-							{
-								"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"age":    int64(21),
+							"name":   "John",
+							"_version": []map[string]any{
+								{
+									"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+								},
 							},
 						},
 					},
@@ -545,12 +567,14 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-						"_version": []map[string]any{
-							{
-								"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"_version": []map[string]any{
+								{
+									"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+								},
 							},
 						},
 					},

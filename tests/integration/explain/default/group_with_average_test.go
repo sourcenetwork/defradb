@@ -19,13 +19,17 @@ import (
 
 var groupAveragePattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"averageNode": dataMap{
-				"countNode": dataMap{
-					"sumNode": dataMap{
-						"groupNode": dataMap{
-							"selectNode": dataMap{
-								"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"averageNode": dataMap{
+						"countNode": dataMap{
+							"sumNode": dataMap{
+								"groupNode": dataMap{
+									"selectNode": dataMap{
+										"scanNode": dataMap{},
+									},
+								},
 							},
 						},
 					},
@@ -52,7 +56,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupAveragePattern},
+				ExpectedPatterns: groupAveragePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -143,7 +147,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupAveragePattern},
+				ExpectedPatterns: groupAveragePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -225,7 +229,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupAveragePattern},
+				ExpectedPatterns: groupAveragePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -308,7 +312,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupAveragePattern},
+				ExpectedPatterns: groupAveragePattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

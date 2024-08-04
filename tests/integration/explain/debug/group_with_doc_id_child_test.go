@@ -38,7 +38,7 @@ func TestDebugExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}

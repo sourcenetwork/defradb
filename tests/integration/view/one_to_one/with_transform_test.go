@@ -92,11 +92,13 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"fullName": "Ferdowsi",
-						"book": map[string]any{
-							"name": "Shahnameh",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"fullName": "Ferdowsi",
+							"book": map[string]any{
+								"name": "Shahnameh",
+							},
 						},
 					},
 				},

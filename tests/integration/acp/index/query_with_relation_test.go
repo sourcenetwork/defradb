@@ -111,12 +111,14 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_Shou
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": []map[string]any{
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
 					},
@@ -146,23 +148,25 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": []map[string]any{
-							{
-								"name": "Painted House",
-							},
-							{
-								"name": "A Time for Mercy",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
+								{
+									"name": "A Time for Mercy",
+								},
 							},
 						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"published": []map[string]any{
-							{
-								"name": "Theif Lord",
+						{
+							"name": "Cornelia Funke",
+							"published": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
 							},
 						},
 					},
@@ -192,12 +196,14 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_Sh
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": []map[string]any{
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
 					},
@@ -226,11 +232,13 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_Shou
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -259,23 +267,25 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Theif Lord",
-						"author": map[string]any{
-							"name": "Cornelia Funke",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Theif Lord",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
 						},
-					},
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
-					},
-					{
-						"name": "A Time for Mercy",
-						"author": map[string]any{
-							"name": "John Grisham",
+						{
+							"name": "A Time for Mercy",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -304,11 +314,13 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithWrongIdentity_Sh
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},

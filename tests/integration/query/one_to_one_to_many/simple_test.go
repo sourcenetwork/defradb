@@ -71,13 +71,15 @@ func TestQueryOneToOneToMany(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Observation1",
-						"observable": map[string]any{
-							"name": "Observable1",
-							"indicator": map[string]any{
-								"name": "Indicator1",
+				Results: map[string]any{
+					"Observation": []map[string]any{
+						{
+							"name": "Observation1",
+							"observable": map[string]any{
+								"name": "Observable1",
+								"indicator": map[string]any{
+									"name": "Indicator1",
+								},
 							},
 						},
 					},
@@ -144,14 +146,16 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Indicator1",
-						"observable": map[string]any{
-							"name": "Observable1",
-							"observations": []map[string]any{
-								{
-									"name": "Observation1",
+				Results: map[string]any{
+					"Indicator": []map[string]any{
+						{
+							"name": "Indicator1",
+							"observable": map[string]any{
+								"name": "Observable1",
+								"observations": []map[string]any{
+									{
+										"name": "Observation1",
+									},
 								},
 							},
 						},
@@ -219,13 +223,15 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Observation1",
-						"observable": map[string]any{
-							"name": "Observable1",
-							"indicator": map[string]any{
-								"name": "Indicator1",
+				Results: map[string]any{
+					"Observation": []map[string]any{
+						{
+							"name": "Observation1",
+							"observable": map[string]any{
+								"name": "Observable1",
+								"indicator": map[string]any{
+									"name": "Indicator1",
+								},
 							},
 						},
 					},
@@ -292,14 +298,16 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Indicator1",
-						"observable": map[string]any{
-							"name": "Observable1",
-							"observations": []map[string]any{
-								{
-									"name": "Observation1",
+				Results: map[string]any{
+					"Indicator": []map[string]any{
+						{
+							"name": "Indicator1",
+							"observable": map[string]any{
+								"name": "Observable1",
+								"observations": []map[string]any{
+									{
+										"name": "Observation1",
+									},
 								},
 							},
 						},

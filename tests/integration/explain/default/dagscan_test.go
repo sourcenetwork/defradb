@@ -19,9 +19,13 @@ import (
 
 var dagScanPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"dagScanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"dagScanNode": dataMap{},
+					},
+				},
 			},
 		},
 	},
@@ -45,7 +49,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{dagScanPattern},
+				ExpectedPatterns: dagScanPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -88,7 +92,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{dagScanPattern},
+				ExpectedPatterns: dagScanPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -132,7 +136,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{dagScanPattern},
+				ExpectedPatterns: dagScanPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -176,7 +180,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{dagScanPattern},
+				ExpectedPatterns: dagScanPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

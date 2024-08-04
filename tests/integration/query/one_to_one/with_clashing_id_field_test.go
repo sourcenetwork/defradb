@@ -59,12 +59,14 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":      "Painted House",
-						"author_id": "bae-1a0405fa-e17d-5b0f-8fe2-eb966938df1c",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":      "Painted House",
+							"author_id": "bae-1a0405fa-e17d-5b0f-8fe2-eb966938df1c",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},

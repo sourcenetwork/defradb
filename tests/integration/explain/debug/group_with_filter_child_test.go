@@ -36,7 +36,7 @@ func TestDebugExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}
@@ -66,7 +66,7 @@ func TestDebugExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *t
 			}
 		}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}

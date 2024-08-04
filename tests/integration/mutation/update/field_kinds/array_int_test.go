@@ -47,9 +47,11 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": nil,
+						},
 					},
 				},
 			},
@@ -90,9 +92,11 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": []int64{},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []int64{},
+						},
 					},
 				},
 			},
@@ -133,9 +137,11 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": []int64{8, 5, 3, 2, 1},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []int64{8, 5, 3, 2, 1},
+						},
 					},
 				},
 			},
@@ -176,9 +182,11 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": []int64{-1, 2, -3, 5, -8},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []int64{-1, 2, -3, 5, -8},
+						},
 					},
 				},
 			},
@@ -219,9 +227,11 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": []int64{1, 2, 3},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []int64{1, 2, 3},
+						},
 					},
 				},
 			},
@@ -262,9 +272,11 @@ func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) 
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"favouriteIntegers": []int64{1, 2, 3, 5, 8, 13, 21},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []int64{1, 2, 3, 5, 8, 13, 21},
+						},
 					},
 				},
 			},

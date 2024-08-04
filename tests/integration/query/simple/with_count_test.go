@@ -34,10 +34,8 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 		Request: `query {
 					_count(Users: {})
 				}`,
-		Results: []map[string]any{
-			{
-				"_count": 0,
-			},
+		Results: map[string]any{
+			"_count": 0,
 		},
 	}
 
@@ -62,10 +60,8 @@ func TestQuerySimpleWithCount(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_count": 2,
-			},
+		Results: map[string]any{
+			"_count": 2,
 		},
 	}
 

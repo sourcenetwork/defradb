@@ -54,44 +54,46 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 					)
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"topLevelNode": []dataMap{
-								{
-									"selectTopNode": dataMap{
-										"selectNode": dataMap{
-											"iterations":    uint64(3),
-											"filterMatches": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
-												"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"topLevelNode": []dataMap{
+									{
+										"selectTopNode": dataMap{
+											"selectNode": dataMap{
+												"iterations":    uint64(3),
+												"filterMatches": uint64(2),
+												"scanNode": dataMap{
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
+												},
 											},
 										},
 									},
-								},
 
-								{
-									"sumNode": dataMap{
-										"iterations": uint64(1),
+									{
+										"sumNode": dataMap{
+											"iterations": uint64(1),
+										},
 									},
-								},
 
-								{
-									"countNode": dataMap{
-										"iterations": uint64(1),
+									{
+										"countNode": dataMap{
+											"iterations": uint64(1),
+										},
 									},
-								},
 
-								{
-									"averageNode": dataMap{
+									{
+										"averageNode": dataMap{
 
-										"iterations": uint64(1),
+											"iterations": uint64(1),
+										},
 									},
 								},
 							},
@@ -138,31 +140,33 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 					_count(Author: {})
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"topLevelNode": []dataMap{
-								{
-									"selectTopNode": dataMap{
-										"selectNode": dataMap{
-											"iterations":    uint64(3),
-											"filterMatches": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"topLevelNode": []dataMap{
+									{
+										"selectTopNode": dataMap{
+											"selectNode": dataMap{
+												"iterations":    uint64(3),
+												"filterMatches": uint64(2),
+												"scanNode": dataMap{
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(4),
+													"indexFetches": uint64(0),
+												},
 											},
 										},
 									},
-								},
 
-								{
-									"countNode": dataMap{
-										"iterations": uint64(1),
+									{
+										"countNode": dataMap{
+											"iterations": uint64(1),
+										},
 									},
 								},
 							},
@@ -213,31 +217,33 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 					)
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"topLevelNode": []dataMap{
-								{
-									"selectTopNode": dataMap{
-										"selectNode": dataMap{
-											"iterations":    uint64(3),
-											"filterMatches": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
-												"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"topLevelNode": []dataMap{
+									{
+										"selectTopNode": dataMap{
+											"selectNode": dataMap{
+												"iterations":    uint64(3),
+												"filterMatches": uint64(2),
+												"scanNode": dataMap{
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
+												},
 											},
 										},
 									},
-								},
 
-								{
-									"sumNode": dataMap{
-										"iterations": uint64(1),
+									{
+										"sumNode": dataMap{
+											"iterations": uint64(1),
+										},
 									},
 								},
 							},

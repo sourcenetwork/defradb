@@ -19,11 +19,15 @@ import (
 
 var groupLimitPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"limitNode": dataMap{
-				"groupNode": dataMap{
-					"selectNode": dataMap{
-						"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"limitNode": dataMap{
+						"groupNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
 					},
 				},
 			},
@@ -54,7 +58,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupLimitPattern},
+				ExpectedPatterns: groupLimitPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -105,7 +109,7 @@ func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupLimitPattern},
+				ExpectedPatterns: groupLimitPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

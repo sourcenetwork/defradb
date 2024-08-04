@@ -34,7 +34,7 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -86,7 +86,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -143,7 +143,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -205,7 +205,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -268,7 +268,7 @@ func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

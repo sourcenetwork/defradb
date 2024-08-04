@@ -19,12 +19,16 @@ import (
 
 var averagePattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"averageNode": dataMap{
-				"countNode": dataMap{
-					"sumNode": dataMap{
-						"selectNode": dataMap{
-							"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"averageNode": dataMap{
+						"countNode": dataMap{
+							"sumNode": dataMap{
+								"selectNode": dataMap{
+									"scanNode": dataMap{},
+								},
+							},
 						},
 					},
 				},
@@ -50,7 +54,7 @@ func TestDebugExplainRequestWithAverageOnArrayField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{averagePattern},
+				ExpectedFullGraph: averagePattern,
 			},
 		},
 	}

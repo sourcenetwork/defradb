@@ -50,10 +50,12 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(21),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
 					},
 				},
 			},

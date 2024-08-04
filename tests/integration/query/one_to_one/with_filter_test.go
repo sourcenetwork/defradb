@@ -50,13 +50,15 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(65),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
 						},
 					},
 				},
@@ -103,13 +105,15 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(65),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
 						},
 					},
 				},
@@ -156,13 +160,15 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(65),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
 						},
 					},
 				},
@@ -223,13 +229,15 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"author": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(65),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
 						},
 					},
 				},
@@ -270,10 +278,14 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 						rating
 					}
 				}`,
-				Results: []map[string]any{{
-					"name":   "Painted House",
-					"rating": 4.9,
-				}},
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -346,10 +358,14 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 						rating
 					}
 				}`,
-				Results: []map[string]any{{
-					"name":   "Painted House",
-					"rating": 4.9,
-				}},
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -443,12 +459,14 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Some Book",
-					},
-					{
-						"name": "Some Other Book",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Some Book",
+						},
+						{
+							"name": "Some Other Book",
+						},
 					},
 				},
 			},
@@ -461,12 +479,14 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Yet Another Book",
-					},
-					{
-						"name": "Painted House",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Yet Another Book",
+						},
+						{
+							"name": "Painted House",
+						},
 					},
 				},
 			},
@@ -541,14 +561,16 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 						rating
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-					},
-					{
-						"name":   "Some Other Book",
-						"rating": 3.0,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "Some Other Book",
+							"rating": 3.0,
+						},
 					},
 				},
 			},
@@ -562,10 +584,12 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 						rating
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Some Book",
-						"rating": 4.0,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Some Book",
+							"rating": 4.0,
+						},
 					},
 				},
 			},
@@ -580,14 +604,16 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 						rating
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-					},
-					{
-						"name":   "Some Other Book",
-						"rating": 3.0,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "Some Other Book",
+							"rating": 3.0,
+						},
 					},
 				},
 			},

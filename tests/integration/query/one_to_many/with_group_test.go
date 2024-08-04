@@ -72,41 +72,43 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
-					"published": []map[string]any{
-						{
-							"rating": 4.8,
-							"_group": []map[string]any{
-								{
-									"name": "Theif Lord",
+			Results: map[string]any{
+				"Author": []map[string]any{
+					{
+						"name": "Cornelia Funke",
+						"age":  int64(62),
+						"published": []map[string]any{
+							{
+								"rating": 4.8,
+								"_group": []map[string]any{
+									{
+										"name": "Theif Lord",
+									},
 								},
 							},
 						},
 					},
-				},
-				{
-					"name": "John Grisham",
-					"age":  int64(65),
-					"published": []map[string]any{
-						{
-							"rating": 4.5,
-							"_group": []map[string]any{
-								{
-									"name": "The Client",
-								},
-								{
-									"name": "A Time for Mercy",
+					{
+						"name": "John Grisham",
+						"age":  int64(65),
+						"published": []map[string]any{
+							{
+								"rating": 4.5,
+								"_group": []map[string]any{
+									{
+										"name": "The Client",
+									},
+									{
+										"name": "A Time for Mercy",
+									},
 								},
 							},
-						},
-						{
-							"rating": 4.9,
-							"_group": []map[string]any{
-								{
-									"name": "Painted House",
+							{
+								"rating": 4.9,
+								"_group": []map[string]any{
+									{
+										"name": "Painted House",
+									},
 								},
 							},
 						},
@@ -192,51 +194,53 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 					}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"age": int64(327),
-				"_group": []map[string]any{
-					{
-						"name": "Voltaire",
-						"published": []map[string]any{
-							{
-								"name":   "Candide",
-								"rating": 4.95,
-							},
-							{
-								"name":   "Zadig",
-								"rating": 4.91,
+		Results: map[string]any{
+			"Author": []map[string]any{
+				{
+					"age": int64(327),
+					"_group": []map[string]any{
+						{
+							"name": "Voltaire",
+							"published": []map[string]any{
+								{
+									"name":   "Candide",
+									"rating": 4.95,
+								},
+								{
+									"name":   "Zadig",
+									"rating": 4.91,
+								},
 							},
 						},
-					},
-					{
-						"name": "Simon Pelloutier",
-						"published": []map[string]any{
-							{
-								"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-								"rating": float64(2),
+						{
+							"name": "Simon Pelloutier",
+							"published": []map[string]any{
+								{
+									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+									"rating": float64(2),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"age": int64(65),
-				"_group": []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": []map[string]any{
-							{
-								"name":   "The Client",
-								"rating": 4.5,
-							},
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
-							},
-							{
-								"name":   "A Time for Mercy",
-								"rating": 4.5,
+				{
+					"age": int64(65),
+					"_group": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": []map[string]any{
+								{
+									"name":   "The Client",
+									"rating": 4.5,
+								},
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
 							},
 						},
 					},

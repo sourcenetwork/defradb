@@ -19,10 +19,14 @@ import (
 
 var updatePattern = dataMap{
 	"explain": dataMap{
-		"updateNode": dataMap{
-			"selectTopNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"updateNode": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -54,7 +58,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 			},
 		},
 	}
@@ -86,7 +90,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 			},
 		},
 	}
@@ -115,7 +119,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 			},
 		},
 	}
@@ -152,7 +156,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{updatePattern},
+				ExpectedPatterns: updatePattern,
 			},
 		},
 	}

@@ -82,9 +82,11 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+						},
 					},
 				},
 			},
@@ -109,9 +111,11 @@ func TestMutationCreateOneToMany_AliasedRelationNameInvalidIDManySide_CreatedDoc
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+						},
 					},
 				},
 			},
@@ -146,12 +150,14 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": []map[string]any{
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
 					},
@@ -166,11 +172,13 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -207,9 +215,11 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 						_docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": bookID, // Must be same as below.
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"_docID": bookID, // Must be same as below.
+						},
 					},
 				},
 			},
@@ -242,9 +252,11 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 						_docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": bookID, // Must be same as below.
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"_docID": bookID, // Must be same as below.
+						},
 					},
 				},
 			},

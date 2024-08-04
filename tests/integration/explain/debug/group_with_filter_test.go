@@ -39,7 +39,7 @@ func TestDebugExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}

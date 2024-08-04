@@ -36,7 +36,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testin
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -88,7 +88,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -146,7 +146,7 @@ func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsIn
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

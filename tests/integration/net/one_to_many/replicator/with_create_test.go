@@ -68,11 +68,13 @@ func TestP2POneToManyReplicator(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "Gulistan",
-						"Author": map[string]any{
-							"Name": "Saadi",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"Name": "Gulistan",
+							"Author": map[string]any{
+								"Name": "Saadi",
+							},
 						},
 					},
 				},

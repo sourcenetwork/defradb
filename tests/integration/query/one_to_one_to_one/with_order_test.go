@@ -91,22 +91,24 @@ func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "New Publisher",
-						"printed": map[string]any{
-							"name": "Theif Lord",
-							"author": map[string]any{
-								"name": "Cornelia Funke",
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"name": "New Publisher",
+							"printed": map[string]any{
+								"name": "Theif Lord",
+								"author": map[string]any{
+									"name": "Cornelia Funke",
+								},
 							},
 						},
-					},
-					{
-						"name": "Old Publisher",
-						"printed": map[string]any{
-							"name": "Painted House",
-							"author": map[string]any{
-								"name": "John Grisham",
+						{
+							"name": "Old Publisher",
+							"printed": map[string]any{
+								"name": "Painted House",
+								"author": map[string]any{
+									"name": "John Grisham",
+								},
 							},
 						},
 					},

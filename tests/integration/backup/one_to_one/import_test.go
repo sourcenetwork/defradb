@@ -40,18 +40,20 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(30),
-					},
-					{
-						"name": "Bob",
-						"age":  int64(32),
-					},
-					{
-						"name": "Smith",
-						"age":  int64(31),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+						{
+							"name": "Bob",
+							"age":  int64(32),
+						},
+						{
+							"name": "Smith",
+							"age":  int64(31),
+						},
 					},
 				},
 			},
@@ -62,12 +64,14 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Game of chains",
-					},
-					{
-						"name": "John and the sourcerers' stone",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Game of chains",
+						},
+						{
+							"name": "John and the sourcerers' stone",
+						},
 					},
 				},
 			},
@@ -114,14 +118,16 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(31),
-					},
-					{
-						"name": "Bob",
-						"age":  int64(31),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(31),
+						},
+						{
+							"name": "Bob",
+							"age":  int64(31),
+						},
 					},
 				},
 			},
@@ -135,11 +141,13 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John and the sourcerers' stone",
-						"author": map[string]any{
-							"_docID": "bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"_docID": "bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
+							},
 						},
 					},
 				},
@@ -226,19 +234,21 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John and the sourcerers' stone",
-						"author": map[string]any{
-							"name": "John",
-							"favouriteBook": map[string]any{
-								"name": "John and the sourcerers' stone",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"name": "John",
+								"favouriteBook": map[string]any{
+									"name": "John and the sourcerers' stone",
+								},
 							},
 						},
-					},
-					{
-						"name":   "Game of chains",
-						"author": nil,
+						{
+							"name":   "Game of chains",
+							"author": nil,
+						},
 					},
 				},
 			},

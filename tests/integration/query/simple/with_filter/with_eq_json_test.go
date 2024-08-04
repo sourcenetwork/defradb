@@ -46,7 +46,11 @@ func TestQuerySimple_WithEqOpOnJSONField_ShouldFilter(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{{"name": "Andy"}},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
 			},
 		},
 	}

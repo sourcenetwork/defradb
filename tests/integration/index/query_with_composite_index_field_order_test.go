@@ -67,22 +67,24 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alan",
-						"age":  29,
-					},
-					{
-						"name": "Alice",
-						"age":  22,
-					},
-					{
-						"name": "Alice",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  38,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
 					},
 				},
 			},
@@ -143,22 +145,24 @@ func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDe
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alan",
-						"age":  29,
-					},
-					{
-						"name": "Alice",
-						"age":  22,
-					},
-					{
-						"name": "Alice",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  38,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
 					},
 				},
 			},
@@ -227,26 +231,28 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Andy",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  22,
-					},
-					{
-						"name": "Alice",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  38,
-					},
-					{
-						"name": "Alan",
-						"age":  29,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Andy",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
 					},
 				},
 			},
@@ -315,26 +321,28 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_Sh
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Andy",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  22,
-					},
-					{
-						"name": "Alice",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  38,
-					},
-					{
-						"name": "Alan",
-						"age":  29,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Andy",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
 					},
 				},
 			},
@@ -395,22 +403,24 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRev
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alan",
-						"age":  29,
-					},
-					{
-						"name": "Alice",
-						"age":  38,
-					},
-					{
-						"name": "Alice",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  22,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
 					},
 				},
 			},
@@ -473,22 +483,24 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alan",
-						"age":  29,
-					},
-					{
-						"name": "Alice",
-						"age":  38,
-					},
-					{
-						"name": "Alice",
-						"age":  24,
-					},
-					{
-						"name": "Alice",
-						"age":  22,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
 					},
 				},
 			},
@@ -541,10 +553,12 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alice",
-						"age":  22,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  22,
+						},
 					},
 				},
 			},
@@ -597,10 +611,12 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alice",
-						"age":  22,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  22,
+						},
 					},
 				},
 			},
@@ -631,10 +647,12 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+						{"name": "Fred"},
+					},
 				},
 			},
 		},
@@ -664,10 +682,12 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "Andy"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Andy"},
+						{"name": "Fred"},
+					},
 				},
 			},
 		},

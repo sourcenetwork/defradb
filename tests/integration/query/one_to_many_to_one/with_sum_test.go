@@ -95,16 +95,18 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 						TotalRating: _sum(book: {field: rating})
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":                        "John Grisham",
-						"ThisMakesNoSenseToSumButHey": int64(-1 + 2 + -1 + 1 + 0),
-						"TotalRating":                 float64(4.8 + 4.2),
-					},
-					{
-						"name":                        "Cornelia Funke",
-						"ThisMakesNoSenseToSumButHey": int64(0),
-						"TotalRating":                 float64(4),
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":                        "John Grisham",
+							"ThisMakesNoSenseToSumButHey": int64(-1 + 2 + -1 + 1 + 0),
+							"TotalRating":                 float64(4.8 + 4.2),
+						},
+						{
+							"name":                        "Cornelia Funke",
+							"ThisMakesNoSenseToSumButHey": int64(0),
+							"TotalRating":                 float64(4),
+						},
 					},
 				},
 			},

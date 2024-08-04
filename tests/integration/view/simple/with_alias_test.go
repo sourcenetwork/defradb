@@ -52,9 +52,11 @@ func TestView_SimpleWithAlias(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"fullname": "John",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"fullname": "John",
+						},
 					},
 				},
 			},

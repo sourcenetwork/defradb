@@ -34,7 +34,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -81,7 +81,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -128,7 +128,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -175,7 +175,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -231,7 +231,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -287,7 +287,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

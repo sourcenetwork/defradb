@@ -38,10 +38,8 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_avg": float64(31),
-			},
+		Results: map[string]any{
+			"_avg": float64(31),
 		},
 	}
 
@@ -73,10 +71,8 @@ func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_avg": float64(31),
-			},
+		Results: map[string]any{
+			"_avg": float64(31),
 		},
 	}
 

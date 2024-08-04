@@ -117,8 +117,10 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{"name": "John"},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John"},
+					},
 				},
 			},
 		},
@@ -149,8 +151,10 @@ func TestUpdateWithFilter_Succeeds(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{"name": "Eric"},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Eric"},
+					},
 				},
 			},
 		},

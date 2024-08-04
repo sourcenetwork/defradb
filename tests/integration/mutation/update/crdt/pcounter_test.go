@@ -52,10 +52,12 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(0),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(0),
+						},
 					},
 				},
 			},
@@ -102,10 +104,12 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(20),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(20),
+						},
 					},
 				},
 			},
@@ -154,10 +158,12 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(math.MinInt64),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(math.MinInt64),
+						},
 					},
 				},
 			},
@@ -204,11 +210,13 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// Note the lack of precision of float types.
-						"points": 20.299999999999997,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// Note the lack of precision of float types.
+							"points": 20.299999999999997,
+						},
 					},
 				},
 			},
@@ -251,10 +259,12 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": math.MaxFloat64,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": math.MaxFloat64,
+						},
 					},
 				},
 			},

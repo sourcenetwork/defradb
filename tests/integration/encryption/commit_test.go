@@ -45,43 +45,45 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"cid":          "bafyreicuxrw3lnccwdzvfgmqwlg67eolma6oyspyejfkxagtuukjrymxlu",
-						"collectionID": int64(1),
-						"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
-						"docID":        john21DocID,
-						"fieldId":      "1",
-						"fieldName":    "age",
-						"height":       int64(1),
-						"links":        []map[string]any{},
-					},
-					{
-						"cid":          "bafyreic76n53ygh5ljaoa2njmllalgtozfquhzbjonz5d4sdrjza2kmvle",
-						"collectionID": int64(1),
-						"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
-						"docID":        john21DocID,
-						"fieldId":      "2",
-						"fieldName":    "name",
-						"height":       int64(1),
-						"links":        []map[string]any{},
-					},
-					{
-						"cid":          "bafyreia6fqubivj2ms4xwounxsyjr6coxeb2wkcmzaa7yzk3h5cwsj5g6a",
-						"collectionID": int64(1),
-						"delta":        nil,
-						"docID":        john21DocID,
-						"fieldId":      "C",
-						"fieldName":    nil,
-						"height":       int64(1),
-						"links": []map[string]any{
-							{
-								"cid":  "bafyreic76n53ygh5ljaoa2njmllalgtozfquhzbjonz5d4sdrjza2kmvle",
-								"name": "name",
-							},
-							{
-								"cid":  "bafyreicuxrw3lnccwdzvfgmqwlg67eolma6oyspyejfkxagtuukjrymxlu",
-								"name": "age",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid":          "bafyreicuxrw3lnccwdzvfgmqwlg67eolma6oyspyejfkxagtuukjrymxlu",
+							"collectionID": int64(1),
+							"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
+							"docID":        john21DocID,
+							"fieldId":      "1",
+							"fieldName":    "age",
+							"height":       int64(1),
+							"links":        []map[string]any{},
+						},
+						{
+							"cid":          "bafyreic76n53ygh5ljaoa2njmllalgtozfquhzbjonz5d4sdrjza2kmvle",
+							"collectionID": int64(1),
+							"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
+							"docID":        john21DocID,
+							"fieldId":      "2",
+							"fieldName":    "name",
+							"height":       int64(1),
+							"links":        []map[string]any{},
+						},
+						{
+							"cid":          "bafyreia6fqubivj2ms4xwounxsyjr6coxeb2wkcmzaa7yzk3h5cwsj5g6a",
+							"collectionID": int64(1),
+							"delta":        nil,
+							"docID":        john21DocID,
+							"fieldId":      "C",
+							"fieldName":    nil,
+							"height":       int64(1),
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreic76n53ygh5ljaoa2njmllalgtozfquhzbjonz5d4sdrjza2kmvle",
+									"name": "name",
+								},
+								{
+									"cid":  "bafyreicuxrw3lnccwdzvfgmqwlg67eolma6oyspyejfkxagtuukjrymxlu",
+									"name": "age",
+								},
 							},
 						},
 					},
@@ -114,12 +116,14 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
-					},
-					{
-						"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
+						},
 					},
 				},
 			},
@@ -161,22 +165,24 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
-						"docID": john21DocID,
-					},
-					{
-						"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
-						"docID": john21DocID,
-					},
-					{
-						"delta": testUtils.CBORValue(34),
-						"docID": islam33DocID,
-					},
-					{
-						"delta": testUtils.CBORValue(33),
-						"docID": islam33DocID,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
+							"docID": john21DocID,
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
+							"docID": john21DocID,
+						},
+						{
+							"delta": testUtils.CBORValue(34),
+							"docID": islam33DocID,
+						},
+						{
+							"delta": testUtils.CBORValue(33),
+							"docID": islam33DocID,
+						},
 					},
 				},
 			},
@@ -210,14 +216,16 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta": encrypt(testUtils.CBORValue(5), docID, ""),
-						"docID": docID,
-					},
-					{
-						"delta": nil,
-						"docID": docID,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta": encrypt(testUtils.CBORValue(5), docID, ""),
+							"docID": docID,
+						},
+						{
+							"delta": nil,
+							"docID": docID,
+						},
 					},
 				},
 			},
@@ -255,12 +263,14 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta": encrypt(testUtils.CBORValue(3), docID, ""),
-					},
-					{
-						"delta": encrypt(testUtils.CBORValue(5), docID, ""),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta": encrypt(testUtils.CBORValue(3), docID, ""),
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue(5), docID, ""),
+						},
 					},
 				},
 			},
@@ -287,30 +297,32 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
-						"docID": testUtils.NewDocIndex(0, 0),
-					},
-					{
-						"delta": encrypt(testUtils.CBORValue("John"), john21DocID, ""),
-						"docID": testUtils.NewDocIndex(0, 0),
-					},
-					{
-						"delta": nil,
-						"docID": testUtils.NewDocIndex(0, 0),
-					},
-					{
-						"delta": encrypt(testUtils.CBORValue(33), islam33DocID, ""),
-						"docID": testUtils.NewDocIndex(0, 1),
-					},
-					{
-						"delta": encrypt(testUtils.CBORValue("Islam"), islam33DocID, ""),
-						"docID": testUtils.NewDocIndex(0, 1),
-					},
-					{
-						"delta": nil,
-						"docID": testUtils.NewDocIndex(0, 1),
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
+							"docID": testUtils.NewDocIndex(0, 0),
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue("John"), john21DocID, ""),
+							"docID": testUtils.NewDocIndex(0, 0),
+						},
+						{
+							"delta": nil,
+							"docID": testUtils.NewDocIndex(0, 0),
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue(33), islam33DocID, ""),
+							"docID": testUtils.NewDocIndex(0, 1),
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue("Islam"), islam33DocID, ""),
+							"docID": testUtils.NewDocIndex(0, 1),
+						},
+						{
+							"delta": nil,
+							"docID": testUtils.NewDocIndex(0, 1),
+						},
 					},
 				},
 			},
@@ -347,11 +359,12 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 						}
 					}
 				`,
-				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result []map[string]any) (bool, string) {
-					require.Equal(t, 2, len(result), "Expected 2 commits")
-					require.Equal(t, result[0]["fieldName"], "age")
-					delta1 := result[0]["delta"]
-					delta2 := result[1]["delta"]
+				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
+					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
+					require.Equal(t, 2, len(commits), "Expected 2 commits")
+					require.Equal(t, commits[0]["fieldName"], "age")
+					delta1 := commits[0]["delta"]
+					delta2 := commits[1]["delta"]
 					assert.NotEqual(t, delta1, delta2, "docs should be encrypted with different encryption keys")
 					return true, ""
 				}),

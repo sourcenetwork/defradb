@@ -48,10 +48,12 @@ func TestMutationUpdate_WithId(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": float64(59),
+				Results: map[string]any{
+					"update_Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": float64(59),
+						},
 					},
 				},
 			},
@@ -88,7 +90,9 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"update_Users": []map[string]any{},
+				},
 			},
 		},
 	}

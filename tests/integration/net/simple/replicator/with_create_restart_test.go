@@ -51,9 +51,11 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},

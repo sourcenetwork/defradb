@@ -36,12 +36,14 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-			},
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Bob",
+				},
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}
@@ -71,10 +73,12 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "Bob",
-					"Age":  int64(32),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "Bob",
+						"Age":  int64(32),
+					},
 				},
 			},
 		},
@@ -106,14 +110,16 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "Carlo",
-					"Age":  int64(55),
-				},
-				{
-					"Name": "Bob",
-					"Age":  int64(32),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "Carlo",
+						"Age":  int64(55),
+					},
+					{
+						"Name": "Bob",
+						"Age":  int64(32),
+					},
 				},
 			},
 		},
@@ -146,10 +152,12 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "John",
+						"Age":  int64(21),
+					},
 				},
 			},
 		},
@@ -181,14 +189,16 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "John",
+						"Age":  int64(21),
+					},
+					{
+						"Name": "Alice",
+						"Age":  int64(19),
+					},
 				},
 			},
 		},
@@ -221,10 +231,12 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "John",
+						"Age":  int64(21),
+					},
 				},
 			},
 		},
@@ -260,18 +272,20 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Name": "Melynda",
-					"Age":  int64(30),
-				},
-				{
-					"Name": "John",
-					"Age":  int64(21),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"Name": "Melynda",
+						"Age":  int64(30),
+					},
+					{
+						"Name": "John",
+						"Age":  int64(21),
+					},
+					{
+						"Name": "Alice",
+						"Age":  int64(19),
+					},
 				},
 			},
 		},

@@ -36,10 +36,12 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":         "John",
-					"likedIndexes": nil,
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":         "John",
+						"likedIndexes": nil,
+					},
 				},
 			},
 		},
@@ -59,10 +61,12 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":         "John",
-					"likedIndexes": []bool{},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":         "John",
+						"likedIndexes": []bool{},
+					},
 				},
 			},
 		},
@@ -82,10 +86,12 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":         "John",
-					"likedIndexes": []bool{true, true, false, true},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":         "John",
+						"likedIndexes": []bool{true, true, false, true},
+					},
 				},
 			},
 		},
@@ -113,14 +119,16 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"indexLikesDislikes": []immutable.Option[bool]{
-					immutable.Some(true),
-					immutable.Some(true),
-					immutable.Some(false),
-					immutable.None[bool](),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "John",
+					"indexLikesDislikes": []immutable.Option[bool]{
+						immutable.Some(true),
+						immutable.Some(true),
+						immutable.Some(false),
+						immutable.None[bool](),
+					},
 				},
 			},
 		},
@@ -146,10 +154,12 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":              "John",
-					"favouriteIntegers": nil,
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":              "John",
+						"favouriteIntegers": nil,
+					},
 				},
 			},
 		},
@@ -169,10 +179,12 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":              "John",
-					"favouriteIntegers": nil,
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":              "John",
+						"favouriteIntegers": nil,
+					},
 				},
 			},
 		},
@@ -192,10 +204,12 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":              "John",
-					"favouriteIntegers": []int64{},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":              "John",
+						"favouriteIntegers": []int64{},
+					},
 				},
 			},
 		},
@@ -215,10 +229,12 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":              "John",
-					"favouriteIntegers": []int64{1, 2, 3, 5, 8},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":              "John",
+						"favouriteIntegers": []int64{1, 2, 3, 5, 8},
+					},
 				},
 			},
 		},
@@ -238,10 +254,12 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":              "Andy",
-					"favouriteIntegers": []int64{-1, -2, -3, -5, -8},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":              "Andy",
+						"favouriteIntegers": []int64{-1, -2, -3, -5, -8},
+					},
 				},
 			},
 		},
@@ -261,10 +279,12 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":              "Shahzad",
-					"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":              "Shahzad",
+						"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+					},
 				},
 			},
 		},
@@ -292,15 +312,17 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"testScores": []immutable.Option[int64]{
-					immutable.Some[int64](-1),
-					immutable.None[int64](),
-					immutable.Some[int64](-1),
-					immutable.Some[int64](2),
-					immutable.Some[int64](0),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "John",
+					"testScores": []immutable.Option[int64]{
+						immutable.Some[int64](-1),
+						immutable.None[int64](),
+						immutable.Some[int64](-1),
+						immutable.Some[int64](2),
+						immutable.Some[int64](0),
+					},
 				},
 			},
 		},
@@ -327,10 +349,12 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":            "John",
-					"favouriteFloats": nil,
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":            "John",
+						"favouriteFloats": nil,
+					},
 				},
 			},
 		},
@@ -350,10 +374,12 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":            "John",
-					"favouriteFloats": []float64{},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":            "John",
+						"favouriteFloats": []float64{},
+					},
 				},
 			},
 		},
@@ -373,10 +399,12 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":            "John",
-					"favouriteFloats": []float64{3.1425, 0.00000000001, 10},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":            "John",
+						"favouriteFloats": []float64{3.1425, 0.00000000001, 10},
+					},
 				},
 			},
 		},
@@ -404,14 +432,16 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"pageRatings": []immutable.Option[float64]{
-					immutable.Some(3.1425),
-					immutable.None[float64](),
-					immutable.Some(-0.00000000001),
-					immutable.Some[float64](10),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "John",
+					"pageRatings": []immutable.Option[float64]{
+						immutable.Some(3.1425),
+						immutable.None[float64](),
+						immutable.Some(-0.00000000001),
+						immutable.Some[float64](10),
+					},
 				},
 			},
 		},
@@ -438,10 +468,12 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":             "John",
-					"preferredStrings": nil,
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":             "John",
+						"preferredStrings": nil,
+					},
 				},
 			},
 		},
@@ -461,10 +493,12 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":             "John",
-					"preferredStrings": []string{},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":             "John",
+						"preferredStrings": []string{},
+					},
 				},
 			},
 		},
@@ -484,10 +518,12 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]any{
-				{
-					"name":             "John",
-					"preferredStrings": []string{"", "the previous", "the first", "empty string"},
+			Results: map[string]any{
+				"Users": []map[string]any{
+					{
+						"name":             "John",
+						"preferredStrings": []string{"", "the previous", "the first", "empty string"},
+					},
 				},
 			},
 		},
@@ -515,15 +551,17 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"pageHeaders": []immutable.Option[string]{
-					immutable.Some(""),
-					immutable.Some("the previous"),
-					immutable.Some("the first"),
-					immutable.Some("empty string"),
-					immutable.None[string](),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name": "John",
+					"pageHeaders": []immutable.Option[string]{
+						immutable.Some(""),
+						immutable.Some("the previous"),
+						immutable.Some("the first"),
+						immutable.Some("empty string"),
+						immutable.None[string](),
+					},
 				},
 			},
 		},

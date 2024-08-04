@@ -1272,15 +1272,8 @@ func createDocViaGQL(
 			strings.Join(action.EncryptedFields, ", ") + "]"
 	}
 
-	req := fmt.Sprintf(
-		`mutation {
-			create_%s(%s) {
-				_docID
-			}
-		}`,
-		collection.Name().Value(),
-		params,
-	)
+	key := fmt.Sprintf("create_%s", collection.Name().Value())
+	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
@@ -1290,13 +1283,11 @@ func createDocViaGQL(
 		return nil, result.GQL.Errors[0]
 	}
 
-	resultantDocs, ok := result.GQL.Data.([]map[string]any)
-	if !ok || len(resultantDocs) == 0 {
-		return nil, nil
-	}
+	resultData := result.GQL.Data.(map[string]any)
+	resultDocs := ConvertToArrayOfMaps(s.t, resultData[key])
 
-	docIDs := make([]client.DocID, len(resultantDocs))
-	for i, docMap := range resultantDocs {
+	docIDs := make([]client.DocID, len(resultDocs))
+	for i, docMap := range resultDocs {
 		docIDString := docMap[request.DocIDFieldName].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
 		require.NoError(s.t, err)
@@ -1842,7 +1833,7 @@ type docFieldKey struct {
 func assertRequestResults(
 	s *state,
 	result *client.GQLResult,
-	expectedResults []map[string]any,
+	expectedResults map[string]any,
 	expectedError string,
 	asserter ResultAsserter,
 	nodeID int,
@@ -1858,16 +1849,51 @@ func assertRequestResults(
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.([]map[string]any)
+	resultantData := result.Data.(map[string]any)
+	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
 
 	if asserter != nil {
 		asserter.Assert(s.t, resultantData)
 		return true
 	}
 
-	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
+	// merge all keys so we can check for missing values
+	keys := make(map[string]struct{})
+	for key := range resultantData {
+		keys[key] = struct{}{}
+	}
+	for key := range expectedResults {
+		keys[key] = struct{}{}
+	}
 
-	return assertRequestResultDocs(s, nodeID, expectedResults, resultantData, anyOfByField)
+	for key := range keys {
+		expect, ok := expectedResults[key]
+		require.True(s.t, ok, "expected key not found: %s", key)
+
+		actual, ok := resultantData[key]
+		require.True(s.t, ok, "result key not found: %s", key)
+
+		expectDocs, ok := expect.([]map[string]any)
+		if ok {
+			actualDocs := ConvertToArrayOfMaps(s.t, actual)
+			assertRequestResultDocs(
+				s,
+				nodeID,
+				expectDocs,
+				actualDocs,
+				anyOfByField)
+		} else {
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expect,
+				actual,
+				fmt.Sprintf("node: %v, key: %v", nodeID, key),
+			)
+		}
+	}
+
+	return false
 }
 
 func assertRequestResultDocs(
@@ -1914,7 +1940,7 @@ func assertRequestResultDocs(
 					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
 				)
 			case []map[string]any:
-				actualValueMap := convertToArrayOfMaps(s.t, actualValue)
+				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
 
 				assertRequestResultDocs(
 					s,
@@ -1939,7 +1965,7 @@ func assertRequestResultDocs(
 	return false
 }
 
-func convertToArrayOfMaps(t testing.TB, value any) []map[string]any {
+func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {
 	valueArrayMap, ok := value.([]map[string]any)
 	if ok {
 		return valueArrayMap

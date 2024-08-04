@@ -34,7 +34,7 @@ func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -59,7 +59,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -89,7 +89,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *test
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -119,7 +119,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}
@@ -150,7 +150,7 @@ func TestDebugExplainRequestWithMatchingIDFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{basicPattern},
+				ExpectedPatterns: basicPattern,
 			},
 		},
 	}

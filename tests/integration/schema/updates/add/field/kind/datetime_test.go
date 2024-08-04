@@ -41,7 +41,9 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -80,10 +82,12 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+						},
 					},
 				},
 			},
@@ -124,10 +128,12 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo":  testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo":  testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+						},
 					},
 				},
 			},
