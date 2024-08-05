@@ -358,7 +358,7 @@ func waitForKeyRetrievedEvent(s *state, nodeIDs []int) {
 		}
 
 		select {
-		case _, ok := <-s.nodeEvents[nodeID].encKeyRetrieved.Message():
+		case _, ok := <-s.nodeEvents[nodeID].encKeysRetrieved.Message():
 			if !ok {
 				require.Fail(s.t, "subscription closed waiting for key retrieved event")
 			}
