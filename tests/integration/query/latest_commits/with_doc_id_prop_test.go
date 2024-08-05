@@ -20,13 +20,12 @@ func TestQueryLastCommitsWithDocIDProperty(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple latest commits query with docID property",
 		Actions: []any{
-			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
+					"name":	"John",
+					"age":	21
+				}`,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -45,5 +44,5 @@ func TestQueryLastCommitsWithDocIDProperty(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }

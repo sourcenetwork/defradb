@@ -17,9 +17,29 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, rendered, limited group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_group(limit: 1) {
@@ -27,37 +47,23 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(32),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Age": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+							},
 						},
-					},
-				},
-				{
-					"Age": int64(19),
-					"_group": []map[string]any{
 						{
-							"Name": "Alice",
+							"Age": int64(19),
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
 						},
 					},
 				},
@@ -69,9 +75,29 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, multiple rendered, limited groups",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						G1: _group(limit: 1) {
@@ -82,50 +108,36 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(32),
-					"G1": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-						},
-					},
-					"G2": []map[string]any{
-						{
-							"Name": "Bob",
+							"Age": int64(32),
+							"G1": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+							},
+							"G2": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
 						},
 						{
-							"Name": "John",
-						},
-					},
-				},
-				{
-					"Age": int64(19),
-					"G1": []map[string]any{
-						{
-							"Name": "Alice",
-						},
-					},
-					"G2": []map[string]any{
-						{
-							"Name": "Alice",
+							"Age": int64(19),
+							"G1": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
+							"G2": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
 						},
 					},
 				},
@@ -137,9 +149,29 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 }
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number and limit, no children, rendered, limited group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age], limit: 1) {
 						Age
 						_group(limit: 2) {
@@ -147,32 +179,18 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(32),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-						},
-						{
-							"Name": "John",
+							"Age": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
 						},
 					},
 				},
@@ -184,9 +202,35 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 }
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number and limit, no children, rendered, limited group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 42
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age], limit: 2) {
 						Age
 						_group(limit: 1) {
@@ -194,41 +238,23 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 42
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(32),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Age": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+							},
 						},
-					},
-				},
-				{
-					"Age": int64(42),
-					"_group": []map[string]any{
 						{
-							"Name": "Alice",
+							"Age": int64(42),
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
 						},
 					},
 				},

@@ -17,37 +17,49 @@ import (
 )
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, sum on undefined object",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					_sum
 				}`,
-		ExpectedError: "aggregate must be provided with a property to aggregate",
+				ExpectedError: "aggregate must be provided with a property to aggregate",
+			},
+		},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, sum on undefined field",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					_sum(Users: {})
 				}`,
-		ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
+				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
+			},
+		},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, sum on empty",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					_sum(Users: {field: Age})
 				}`,
-		Results: map[string]any{
-			"_sum": int64(0),
+				Results: map[string]any{
+					"_sum": int64(0),
+				},
+			},
 		},
 	}
 
@@ -55,25 +67,29 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 }
 
 func TestQuerySimpleWithSum(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query, sum",
-		Request: `query {
-					_sum(Users: {field: Age})
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"_sum": int64(51),
+			testUtils.Request{
+				Request: `query {
+					_sum(Users: {field: Age})
+				}`,
+				Results: map[string]any{
+					"_sum": int64(51),
+				},
+			},
 		},
 	}
 

@@ -19,9 +19,17 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (it looks totally broken to me).
 func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple latest commits query with docID and field name",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "age") {
 						cid
 						links {
@@ -30,16 +38,10 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
+				Results: map[string]any{
+					"latestCommits": []map[string]any{},
+				},
 			},
-		},
-		Results: map[string]any{
-			"latestCommits": []map[string]any{},
 		},
 	}
 
@@ -49,9 +51,17 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple latest commits query with docID and field id",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "1") {
 						cid
 						links {
@@ -60,19 +70,13 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"latestCommits": []map[string]any{
-				{
-					"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-					"links": []map[string]any{},
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
+						{
+							"cid":   "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+							"links": []map[string]any{},
+						},
+					},
 				},
 			},
 		},
@@ -84,9 +88,17 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple latest commits query with docID and composite field id",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "C") {
 						cid
 						links {
@@ -95,26 +107,20 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"latestCommits": []map[string]any{
-				{
-					"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
-					"links": []map[string]any{
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
 						{
-							"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
-							"name": "name",
-						},
-						{
-							"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
-							"name": "age",
+							"cid": "bafyreihv7jqe32wsuff5vwzlp7izoo6pqg6kgqf5edknp3mqm3344gu35q",
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreic2sba5sffkfnt32wfeoaw4qsqozjb5acwwtouxuzllb3aymjwute",
+									"name": "name",
+								},
+								{
+									"cid":  "bafyreifzyy7bmpx2eywj4lznxzrzrvh6vrz6l7bhthkpexdq3wtho3vz6i",
+									"name": "age",
+								},
+							},
 						},
 					},
 				},

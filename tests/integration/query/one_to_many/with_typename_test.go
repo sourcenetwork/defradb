@@ -17,9 +17,27 @@ import (
 )
 
 func TestQueryOneToManyWithTypeName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from one side with typename",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Book {
 						name
 						__typename
@@ -29,32 +47,16 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-			},
-			//authors
-			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Book": []map[string]any{
-				{
-					"name":       "Painted House",
-					"__typename": "Book",
-					"author": map[string]any{
-						"name":       "John Grisham",
-						"__typename": "Author",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":       "Painted House",
+							"__typename": "Book",
+							"author": map[string]any{
+								"name":       "John Grisham",
+								"__typename": "Author",
+							},
+						},
 					},
 				},
 			},

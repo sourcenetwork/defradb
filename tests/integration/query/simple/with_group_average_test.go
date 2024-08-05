@@ -17,39 +17,45 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with average on unspecified field",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users (groupBy: [Name]) {
 						Name
 						_avg
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
 		},
-		ExpectedError: "aggregate must be provided with a property to aggregate",
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageOnEmptyCollection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, average on non-rendered group, empty collection",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_avg(_group: {field: Age})
 					}
 				}`,
-		Results: map[string]any{
-			"Users": []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
 		},
 	}
 
@@ -57,40 +63,46 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageO
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average on non-rendered group integer value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				// It is important to test negative values here, due to the auto-typing of numbers
+				Doc: `{
+					"Name": "Alice",
+					"Age": -19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"Age": 32
-			}`,
-				`{
-				"Name": "John",
-				"Age": 38
-			}`,
-				// It is important to test negative values here, due to the auto-typing of numbers
-				`{
-				"Name": "Alice",
-				"Age": -19
-			}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(35),
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(-19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_avg": float64(35),
+						},
+						{
+							"Name": "Alice",
+							"_avg": float64(-19),
+						},
+					},
 				},
 			},
 		},
@@ -100,39 +112,45 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average on non-rendered group nil and integer values",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				// Age is undefined here and must be ignored
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"Age": 32
-			}`,
-				// Age is undefined here and must be ignored
-				`{
-				"Name": "John"
-			}`,
-				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(32),
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_avg": float64(32),
+						},
+						{
+							"Name": "Alice",
+							"_avg": float64(19),
+						},
+					},
 				},
 			},
 		},
@@ -142,9 +160,46 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *t
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfInt(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, with child group by boolean, and average of average on int",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 34,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: _avg})
@@ -154,68 +209,41 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"Age": 25,
-				"Verified": true
-			}`,
-				`{
-				"Name": "John",
-				"Age": 32,
-				"Verified": true
-			}`,
-				`{
-				"Name": "John",
-				"Age": 34,
-				"Verified": false
-			}`,
-				`{
-				"Name": "Carlo",
-				"Age": 55,
-				"Verified": true
-			}`,
-				`{
-				"Name": "Alice",
-				"Age": 19,
-				"Verified": false
-			}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(31.25),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Verified": true,
-							"_avg":     float64(28.5),
+							"Name": "John",
+							"_avg": float64(31.25),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(28.5),
+								},
+								{
+									"Verified": false,
+									"_avg":     float64(34),
+								},
+							},
 						},
 						{
-							"Verified": false,
-							"_avg":     float64(34),
+							"Name": "Carlo",
+							"_avg": float64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(55),
+								},
+							},
 						},
-					},
-				},
-				{
-					"Name": "Carlo",
-					"_avg": float64(55),
-					"_group": []map[string]any{
 						{
-							"Verified": true,
-							"_avg":     float64(55),
-						},
-					},
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(19),
-					"_group": []map[string]any{
-						{
-							"Verified": false,
-							"_avg":     float64(19),
+							"Name": "Alice",
+							"_avg": float64(19),
+							"_group": []map[string]any{
+								{
+									"Verified": false,
+									"_avg":     float64(19),
+								},
+							},
 						},
 					},
 				},
@@ -227,38 +255,44 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average on non-rendered group float (default) value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.82
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.89
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: HeightM})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"HeightM": 1.82
-			}`,
-				`{
-				"Name": "John",
-				"HeightM": 1.89
-			}`,
-				`{
-				"Name": "Alice"
-			}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(1.855),
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(0),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_avg": float64(1.855),
+						},
+						{
+							"Name": "Alice",
+							"_avg": float64(0),
+						},
+					},
 				},
 			},
 		},
@@ -268,39 +302,45 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAvera
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average on non-rendered group float value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.82
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.89
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"HeightM": 2.04
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: HeightM})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"HeightM": 1.82
-			}`,
-				`{
-				"Name": "John",
-				"HeightM": 1.89
-			}`,
-				`{
-				"Name": "Alice",
-				"HeightM": 2.04
-			}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(1.855),
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(2.04),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_avg": float64(1.855),
+						},
+						{
+							"Name": "Alice",
+							"_avg": float64(2.04),
+						},
+					},
 				},
 			},
 		},
@@ -310,9 +350,46 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t 
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfFloat(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, with child group by boolean, and average of average on float",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.82,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.61,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.22,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"HeightM": 1.74,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"HeightM": 2.04,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: _avg})
@@ -322,68 +399,41 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"HeightM": 1.82,
-				"Verified": true
-			}`,
-				`{
-				"Name": "John",
-				"HeightM": 1.61,
-				"Verified": true
-			}`,
-				`{
-				"Name": "John",
-				"HeightM": 2.22,
-				"Verified": false
-			}`,
-				`{
-				"Name": "Carlo",
-				"HeightM": 1.74,
-				"Verified": true
-			}`,
-				`{
-				"Name": "Alice",
-				"HeightM": 2.04,
-				"Verified": false
-			}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Alice",
-					"_avg": float64(2.04),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Verified": false,
-							"_avg":     float64(2.04),
-						},
-					},
-				},
-				{
-					"Name": "John",
-					"_avg": float64(1.9675000000000002),
-					"_group": []map[string]any{
-						{
-							"Verified": true,
-							"_avg":     float64(1.715),
+							"Name": "Alice",
+							"_avg": float64(2.04),
+							"_group": []map[string]any{
+								{
+									"Verified": false,
+									"_avg":     float64(2.04),
+								},
+							},
 						},
 						{
-							"Verified": false,
-							"_avg":     float64(2.22),
+							"Name": "John",
+							"_avg": float64(1.9675000000000002),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(1.715),
+								},
+								{
+									"Verified": false,
+									"_avg":     float64(2.22),
+								},
+							},
 						},
-					},
-				},
-				{
-					"Name": "Carlo",
-					"_avg": float64(1.74),
-					"_group": []map[string]any{
 						{
-							"Verified": true,
-							"_avg":     float64(1.74),
+							"Name": "Carlo",
+							"_avg": float64(1.74),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(1.74),
+								},
+							},
 						},
 					},
 				},
@@ -395,9 +445,51 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfAverageOfFloat(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, with child group by boolean, and average of average of average of float",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.82,
+					"Age": 25,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 1.61,
+					"Age": 32,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.22,
+					"Age": 34,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"HeightM": 1.74,
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"HeightM": 2.04,
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: _avg})
@@ -411,99 +503,67 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"HeightM": 1.82,
-					"Age": 25,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"HeightM": 1.61,
-					"Age": 32,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"HeightM": 2.22,
-					"Age": 34,
-					"Verified": false
-				}`,
-				`{
-					"Name": "Carlo",
-					"HeightM": 1.74,
-					"Age": 55,
-					"Verified": true
-				}`,
-				`{
-					"Name": "Alice",
-					"HeightM": 2.04,
-					"Age": 19,
-					"Verified": false
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Carlo",
-					"_avg": float64(1.74),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Verified": true,
-							"_avg":     float64(1.74),
+							"Name": "Carlo",
+							"_avg": float64(1.74),
 							"_group": []map[string]any{
 								{
-									"Age":  int64(55),
-									"_avg": float64(1.74),
-								},
-							},
-						},
-					},
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(2.04),
-					"_group": []map[string]any{
-						{
-							"Verified": false,
-							"_avg":     float64(2.04),
-							"_group": []map[string]any{
-								{
-									"Age":  int64(19),
-									"_avg": float64(2.04),
-								},
-							},
-						},
-					},
-				},
-				{
-					"Name": "John",
-					"_avg": float64(1.9675000000000002),
-					"_group": []map[string]any{
-						{
-							"Verified": true,
-							"_avg":     float64(1.715),
-							"_group": []map[string]any{
-								{
-									"Age":  int64(32),
-									"_avg": float64(1.61),
-								},
-								{
-									"Age":  int64(25),
-									"_avg": float64(1.82),
+									"Verified": true,
+									"_avg":     float64(1.74),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(55),
+											"_avg": float64(1.74),
+										},
+									},
 								},
 							},
 						},
 						{
-							"Verified": false,
-							"_avg":     float64(2.22),
+							"Name": "Alice",
+							"_avg": float64(2.04),
 							"_group": []map[string]any{
 								{
-									"Age":  int64(34),
-									"_avg": float64(2.22),
+									"Verified": false,
+									"_avg":     float64(2.04),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(19),
+											"_avg": float64(2.04),
+										},
+									},
+								},
+							},
+						},
+						{
+							"Name": "John",
+							"_avg": float64(1.9675000000000002),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(1.715),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(32),
+											"_avg": float64(1.61),
+										},
+										{
+											"Age":  int64(25),
+											"_avg": float64(1.82),
+										},
+									},
+								},
+								{
+									"Verified": false,
+									"_avg":     float64(2.22),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(34),
+											"_avg": float64(2.22),
+										},
+									},
 								},
 							},
 						},
