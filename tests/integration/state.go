@@ -80,8 +80,8 @@ type eventState struct {
 	// p2pTopic is the `event.P2PTopicCompletedName` subscription
 	p2pTopic *event.Subscription
 
-	// encKeyRetrieved is the `encryption.KeyRetrieved` subscription
-	encKeyRetrieved *event.Subscription
+	// encKeysRetrieved is the `encryption.KeyRetrieved` subscription
+	encKeysRetrieved *event.Subscription
 }
 
 // newEventState returns an eventState with all required subscriptions.
@@ -102,16 +102,16 @@ func newEventState(bus *event.Bus) (*eventState, error) {
 	if err != nil {
 		return nil, err
 	}
-	encKeyRetrieved, err := bus.Subscribe(encryption.KeyRetrievedEventName)
+	encKeysRetrieved, err := bus.Subscribe(encryption.KeysRetrievedEventName)
 	if err != nil {
 		return nil, err
 	}
 	return &eventState{
-		merge:           merge,
-		update:          update,
-		replicator:      replicator,
-		p2pTopic:        p2pTopic,
-		encKeyRetrieved: encKeyRetrieved,
+		merge:            merge,
+		update:           update,
+		replicator:       replicator,
+		p2pTopic:         p2pTopic,
+		encKeysRetrieved: encKeysRetrieved,
 	}, nil
 }
 

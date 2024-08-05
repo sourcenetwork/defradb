@@ -13,80 +13,61 @@ package encryption
 import (
 	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
-const RequestKeyEventName = event.Name("enc-key-request")
-const KeyRetrievedEventName = event.Name("enc-key-retrieved")
+const RequestKeysEventName = event.Name("enc-keys-request")
+const KeysRetrievedEventName = event.Name("enc-keys-retrieved")
 
-// RequestKeyEvent represents a request of a node to fetch an encryption key for a specific
+// RequestKeysEvent represents a request of a node to fetch an encryption key for a specific
 // docID/field
 //
 // It must only contain public elements not protected by ACP.
-type RequestKeyEvent struct {
-	// DocID is the unique immutable identifier of the document that the key is being requested for.
-	DocID string
-
-	// FieldName is the name of the field for which the key is being requested.
-	// If not given, the key is for the whole document.
-	FieldName immutable.Option[string]
-
-	// Cid is the id of the composite commit that formed this update in the DAG.
-	Cid cid.Cid
-
+type RequestKeysEvent struct {
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
 	SchemaRoot string
+
+	// Keys is a map of the keys that are being requested.
+	Keys map[core.EncStoreDocKey]cid.Cid
 }
 
-// KeyRetrievedEvent represents a key that was retrieved.
-type KeyRetrievedEvent struct {
-	// DocID is the unique immutable identifier of the document that was updated.
-	DocID string
-
-	// FieldName is the name of the field for which the key was retrieved.
-	// If not given, the key is for the whole document.
-	FieldName immutable.Option[string]
-
+// RequestedKeyEventData represents the data that was retrieved for a specific key.
+type RequestedKeyEventData struct {
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
 
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
-
-	// TODO: should be encrypted
 	// Key is the encryption key that was retrieved.
 	Key []byte
 }
 
-// NewRequestKeyMessage creates a new event message for a request of a node to fetch an encryption key
+// KeyRetrievedEvent represents a key that was retrieved.
+type KeyRetrievedEvent struct {
+	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
+	SchemaRoot string
+
+	// Data is a map of the requested keys to the data that was retrieved.
+	Data map[core.EncStoreDocKey]RequestedKeyEventData
+}
+
+// NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
-func NewRequestKeyMessage(
-	docID string,
-	cid cid.Cid,
-	fieldName immutable.Option[string],
+func NewRequestKeysMessage(
 	schemaRoot string,
+	keys map[core.EncStoreDocKey]cid.Cid,
 ) event.Message {
-	return event.NewMessage(RequestKeyEventName, RequestKeyEvent{
-		DocID:      docID,
-		FieldName:  fieldName,
-		Cid:        cid,
+	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
 		SchemaRoot: schemaRoot,
+		Keys:       keys,
 	})
 }
 
-// NewKeyRetrievedMessage creates a new event message for a key that was retrieved
-func NewKeyRetrievedMessage(
-	docID string,
-	fieldName immutable.Option[string],
-	cid cid.Cid,
+// NewKeysRetrievedMessage creates a new event message for a key that was retrieved
+func NewKeysRetrievedMessage(
 	schemaRoot string,
-	key []byte,
+	data map[core.EncStoreDocKey]RequestedKeyEventData,
 ) event.Message {
-	return event.NewMessage(KeyRetrievedEventName, KeyRetrievedEvent{
-		DocID:      docID,
-		FieldName:  fieldName,
-		Cid:        cid,
+	return event.NewMessage(KeysRetrievedEventName, KeyRetrievedEvent{
 		SchemaRoot: schemaRoot,
-		Key:        key,
+		Data:       data,
 	})
 }

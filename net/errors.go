@@ -13,7 +13,9 @@ package net
 import (
 	"fmt"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 const (
@@ -22,7 +24,7 @@ const (
 	errPublishingToDocIDTopic   = "can't publish log %s for docID %s"
 	errPublishingToSchemaTopic  = "can't publish log %s for schema %s"
 	errCheckingForExistingBlock = "failed to check for existing block"
-	errRequestingEncryptionKey  = "failed to request encryption key with Cid %s for docID %s"
+	errRequestingEncryptionKeys = "failed to request encryption keys with %v"
 )
 
 var (
@@ -54,6 +56,6 @@ func NewErrCheckingForExistingBlock(inner error, cid string) error {
 	return errors.Wrap(errCheckingForExistingBlock, inner, errors.NewKV("cid", cid))
 }
 
-func NewErrRequestingEncryptionKey(inner error, cid, docID string, kv ...errors.KV) error {
-	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKey, cid, docID), inner, kv...)
+func NewErrRequestingEncryptionKeys(inner error, keys map[core.EncStoreDocKey]cid.Cid) error {
+	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKeys, keys), inner)
 }

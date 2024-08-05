@@ -64,7 +64,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	err = mp.loadComposites(ctx, dagMerge.Cid, mt, false)
+	err = mp.loadBlocks(ctx, dagMerge.Cid, mt, false)
 	if err != nil {
 		return err
 	}
@@ -73,6 +73,8 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	if err != nil {
 		return err
 	}
+
+	mp.sendPendingEncryptionRequest()
 
 	err = syncIndexedDoc(ctx, docID, col)
 	if err != nil {
@@ -89,7 +91,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	return nil
 }
 
-func (db *db) mergeEncryptedBlock(ctx context.Context, keyEvent encryption.KeyRetrievedEvent) error {
+func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyRetrievedEvent) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -104,35 +106,53 @@ func (db *db) mergeEncryptedBlock(ctx context.Context, keyEvent encryption.KeyRe
 	ls := cidlink.DefaultLinkSystem()
 	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
 
-	docID, err := client.NewDocIDFromString(keyEvent.DocID)
-	if err != nil {
-		return err
-	}
-	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
+	mergedDocs := make(map[string]struct{})
 
-	mp, err := db.newMergeProcessor(txn, ls, col, dsKey)
-	if err != nil {
-		return err
-	}
+	for encStoreKey := range keyEvent.Data {
+		if _, ok := mergedDocs[encStoreKey.DocID]; ok {
+			continue
+		}
 
-	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey)
-	if err != nil {
-		return err
-	}
+		mergedDocs[encStoreKey.DocID] = struct{}{}
 
-	err = mp.loadComposites(ctx, keyEvent.Cid, mt, true)
-	if err != nil {
-		return err
-	}
+		docID, err := client.NewDocIDFromString(encStoreKey.DocID)
+		if err != nil {
+			return err
+		}
+		dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
 
-	err = mp.mergeComposites(ctx, true)
-	if err != nil {
-		return err
-	}
+		mp, err := db.newMergeProcessor(txn, ls, col, dsKey)
+		if err != nil {
+			return err
+		}
 
-	err = syncIndexedDoc(ctx, docID, col)
-	if err != nil {
-		return err
+		mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey)
+		if err != nil {
+			return err
+		}
+
+		for encStoreKey2, data := range keyEvent.Data {
+			// load all blocks related to the document
+			if encStoreKey2.DocID == encStoreKey.DocID {
+				// TODO: check if it's really necessary to pass cid here and over the wire
+				// Looks like once a key is retrieved, we should traverse the DAG from the head
+				// and decrypt all the blocks that are encrypted with this key. CID should not matter.
+				err = mp.loadBlocks(ctx, data.Cid, mt, true)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		err = mp.mergeComposites(ctx, true)
+		if err != nil {
+			return err
+		}
+
+		err = syncIndexedDoc(ctx, docID, col)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = txn.Commit(ctx)
@@ -184,12 +204,13 @@ func (m *mergeQueue) done(docID string) {
 }
 
 type mergeProcessor struct {
-	txn        datastore.Txn
-	lsys       linking.LinkSystem
-	mCRDTs     map[string]merklecrdt.MerkleCRDT
-	col        *collection
-	dsKey      core.DataStoreKey
-	composites *list.List
+	txn                          datastore.Txn
+	lsys                         linking.LinkSystem
+	mCRDTs                       map[string]merklecrdt.MerkleCRDT
+	col                          *collection
+	dsKey                        core.DataStoreKey
+	blocks                       *list.List
+	pendingEncryptionKeyRequests map[core.EncStoreDocKey]cid.Cid
 }
 
 func (db *db) newMergeProcessor(
@@ -199,12 +220,13 @@ func (db *db) newMergeProcessor(
 	dsKey core.DataStoreKey,
 ) (*mergeProcessor, error) {
 	return &mergeProcessor{
-		txn:        txn,
-		lsys:       lsys,
-		mCRDTs:     make(map[string]merklecrdt.MerkleCRDT),
-		col:        col,
-		dsKey:      dsKey,
-		composites: list.New(),
+		txn:                          txn,
+		lsys:                         lsys,
+		mCRDTs:                       make(map[string]merklecrdt.MerkleCRDT),
+		col:                          col,
+		dsKey:                        dsKey,
+		blocks:                       list.New(),
+		pendingEncryptionKeyRequests: make(map[core.EncStoreDocKey]cid.Cid),
 	}, nil
 }
 
@@ -219,9 +241,9 @@ func newMergeTarget() mergeTarget {
 	}
 }
 
-// loadComposites retrieves and stores into the merge processor the composite blocks for the given
-// document until it reaches a block that has already been merged or until we reach the genesis block.
-func (mp *mergeProcessor) loadComposites(
+// loadBlocks retrieves and stores into the merge processor the blocks for the given
+// CID until it reaches a block that has already been merged or until we reach the genesis block.
+func (mp *mergeProcessor) loadBlocks(
 	ctx context.Context,
 	blockCid cid.Cid,
 	mt mergeTarget,
@@ -250,10 +272,10 @@ func (mp *mergeProcessor) loadComposites(
 	// of the composite DAG. However, the new block and its children might have branched off from an older block.
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
-		mp.composites.PushFront(block)
+		mp.blocks.PushFront(block)
 		for _, link := range block.Links {
 			if link.Name == core.HEAD {
-				err := mp.loadComposites(ctx, link.Cid, mt, willDecrypt)
+				err := mp.loadBlocks(ctx, link.Cid, mt, willDecrypt)
 				if err != nil {
 					return err
 				}
@@ -279,13 +301,13 @@ func (mp *mergeProcessor) loadComposites(
 				}
 			}
 		}
-		return mp.loadComposites(ctx, blockCid, newMT, willDecrypt)
+		return mp.loadBlocks(ctx, blockCid, newMT, willDecrypt)
 	}
 	return nil
 }
 
 func (mp *mergeProcessor) mergeComposites(ctx context.Context, withDecryption bool) error {
-	for e := mp.composites.Front(); e != nil; e = e.Next() {
+	for e := mp.blocks.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
@@ -321,17 +343,25 @@ func (mp *mergeProcessor) processEncryptedBlock(
 			if !withDecryption && (dagBlock.Delta.IsComposite() && *dagBlock.EncryptionType == coreblock.DocumentEncrypted) ||
 				*dagBlock.EncryptionType == coreblock.FieldEncrypted {
 				docID := string(dagBlock.Delta.GetDocID())
-				schemaRoot := mp.col.SchemaRoot()
 				fieldName := immutable.None[string]()
 				if *dagBlock.EncryptionType == coreblock.FieldEncrypted {
 					fieldName = immutable.Some(dagBlock.Delta.GetFieldName())
 				}
-				mp.col.db.events.Publish(encryption.NewRequestKeyMessage(docID, blockLink.Cid, fieldName, schemaRoot))
+				mp.addPendingEncryptionRequest(docID, blockLink.Cid, fieldName)
 			}
 			return dagBlock, true, nil
 		}
 	}
 	return dagBlock, false, nil
+}
+
+func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, blockCid cid.Cid, fieldName immutable.Option[string]) {
+	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName)] = blockCid
+}
+
+func (mp *mergeProcessor) sendPendingEncryptionRequest() {
+	schemaRoot := mp.col.SchemaRoot()
+	mp.col.db.events.Publish(encryption.NewRequestKeysMessage(schemaRoot, mp.pendingEncryptionKeyRequests))
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.

@@ -38,9 +38,8 @@ message PushLogRequest {
     }
 }
 
-// FetchEncryptionKeyRequest is a request to receive a doc encryption key
-// from a peer that holds it.
-message FetchEncryptionKeyRequest {
+// EncryptionKeyTarget is a struct containing information about required doc encryption key.
+message EncryptionKeyTarget {
     // docID is the ID of the document that the key is being requested for.
     bytes docID = 1;
     // fieldName if the name of the document field that the key is being requested for.
@@ -48,22 +47,30 @@ message FetchEncryptionKeyRequest {
     string fieldName = 2;
     // cid is the CID of the composite of the document.
     bytes cid = 3;
+}
+
+// FetchEncryptionKeyRequest is a request to receive a doc encryption key
+// from a peer that holds it.
+message FetchEncryptionKeyRequest {
+    // targets is the list of docs/fields for which encryption keys are being requested.
+    repeated EncryptionKeyTarget targets = 1;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
-    bytes schemaRoot = 4;
+    bytes schemaRoot = 2;
     // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
-    bytes ephemeralPublicKey = 5;
+    bytes ephemeralPublicKey = 3;
     // signature is the requesting peer's signature of the request
-    bytes signature = 6;
+    bytes signature = 4;
 }
 
 // FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
 // by a peer that holds the requested doc encryption key.
 message FetchEncryptionKeyReply {
-    // encryptedKey is array or bytes representing encrypted doc encryption key
+    // targets is the list of docs/fields for which encryption keys are being requested.
+    repeated EncryptionKeyTarget targets = 1;
+    // encryptedKeys is an encrypted list of doc encryption keys.
     // It is prepended with the responder's ephemeral public key and a nonce for AES-GCM
-    bytes encryptedKey = 1;
-    // cid is the CID of the composite of the document.
-    bytes cid = 2;
+    // Each encryption key in the decrypted list corresponds to the key requested in the same index in the targets list.
+    bytes encryptedKeys = 2;
     // schemaRoot is the SchemaRoot of the collection that the document resides in.
     bytes schemaRoot = 3;
     // reqEphemeralPublicKey is an ephemeral public of the requesting peer to be used as session id

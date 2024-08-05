@@ -263,7 +263,8 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
-		sub, err := p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName, encryption.RequestKeyEventName)
+		sub, err := p.bus.Subscribe(event.UpdateName, event.P2PTopicName,
+			event.ReplicatorName, encryption.RequestKeysEventName)
 		if err != nil {
 			return err
 		}
@@ -362,7 +363,7 @@ func (p *Peer) handleMessageLoop() {
 
 		case event.Replicator:
 			p.server.updateReplicators(evt)
-		case encryption.RequestKeyEvent:
+		case encryption.RequestKeysEvent:
 			err := p.handleEncryptionKeyRequest(evt)
 			if err != nil {
 				log.ErrorContextE(p.ctx, "Error while handling broadcast log", err)
@@ -460,13 +461,9 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 	return nil
 }
 
-func (p *Peer) handleEncryptionKeyRequest(evt encryption.RequestKeyEvent) error {
+func (p *Peer) handleEncryptionKeyRequest(evt encryption.RequestKeysEvent) error {
 	if err := p.server.requestEncryptionKey(p.ctx, evt); err != nil {
-		kvs := []errors.KV{}
-		if evt.FieldName.HasValue() {
-			kvs = append(kvs, errors.NewKV("FieldName", evt.FieldName))
-		}
-		return NewErrRequestingEncryptionKey(err, evt.Cid.String(), evt.DocID, kvs...)
+		return NewErrRequestingEncryptionKeys(err, evt.Keys)
 	}
 
 	return nil

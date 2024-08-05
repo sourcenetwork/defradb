@@ -36,7 +36,9 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -188,17 +190,36 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	return &pb.PushLogReply{}, nil
 }
 
-func (s *server) getEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) ([]byte, error) {
-	docID, err := client.NewDocIDFromString(string(req.DocID))
-	if err != nil {
-		return nil, err
-	}
+func (s *server) getEncryptionKeys(
+	ctx context.Context,
+	req *pb.FetchEncryptionKeyRequest,
+) ([]byte, []*pb.EncryptionKeyTarget, error) {
+	encryptionKeys := make([]byte, 0)
+	targets := make([]*pb.EncryptionKeyTarget, 0)
+	for _, target := range req.Targets {
+		docID, err := client.NewDocIDFromString(string(target.DocID))
+		if err != nil {
+			return nil, nil, err
+		}
 
-	optFieldName := immutable.None[string]()
-	if req.FieldName != "" {
-		optFieldName = immutable.Some(req.FieldName)
+		optFieldName := immutable.None[string]()
+		if target.FieldName != "" {
+			optFieldName = immutable.Some(target.FieldName)
+		}
+		encKey, err := encryption.GetKey(
+			encryption.ContextWithStore(ctx, s.peer.encstore), docID.String(), optFieldName)
+		if err != nil {
+			return nil, nil, err
+		}
+		// TODO: we should test it somehow. For this this one peer should have some keys and
+		// another one should have the others
+		if len(encKey) == 0 {
+			continue
+		}
+		targets = append(targets, target)
+		encryptionKeys = encoding.EncodeBytesAscending(encryptionKeys, encKey)
 	}
-	return encryption.GetKey(encryption.ContextWithStore(ctx, s.peer.encstore), docID.String(), optFieldName)
+	return encryptionKeys, targets, nil
 }
 
 func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) (*pb.FetchEncryptionKeyReply, error) {
@@ -217,7 +238,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.New("invalid signature")
 	}
 
-	encKey, err := s.getEncryptionKey(ctx, req)
+	encKey, targets, err := s.getEncryptionKeys(ctx, req)
 	if err != nil || len(encKey) == 0 {
 		return nil, err
 	}
@@ -233,10 +254,10 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 	}
 
 	res := &pb.FetchEncryptionKeyReply{
-		EncryptedKey:          encryptedKey,
-		Cid:                   req.Cid,
 		SchemaRoot:            req.SchemaRoot,
 		ReqEphemeralPublicKey: req.EphemeralPublicKey,
+		Targets:               targets,
+		EncryptedKeys:         encryptedKey,
 	}
 
 	res.Signature, err = s.signResponse(res)
@@ -253,10 +274,14 @@ func (s *server) verifyRequestSignature(req *pb.FetchEncryptionKeyRequest, pubKe
 
 func hashFetchEncryptionKeyReply(res *pb.FetchEncryptionKeyReply) []byte {
 	hash := sha256.New()
-	hash.Write(res.EncryptedKey)
-	hash.Write(res.Cid)
+	hash.Write(res.EncryptedKeys)
 	hash.Write(res.SchemaRoot)
 	hash.Write(res.ReqEphemeralPublicKey)
+	for _, target := range res.Targets {
+		hash.Write(target.DocID)
+		hash.Write([]byte(target.FieldName))
+		hash.Write(target.Cid)
+	}
 	return hash.Sum(nil)
 }
 
@@ -414,18 +439,21 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 }
 
 func (s *server) prepareFetchEncryptionKeyRequest(
-	evt encryption.RequestKeyEvent,
+	evt encryption.RequestKeysEvent,
 	ephemeralPublicKey []byte,
 ) (*pb.FetchEncryptionKeyRequest, error) {
 	req := &pb.FetchEncryptionKeyRequest{
-		DocID:              []byte(evt.DocID),
-		Cid:                evt.Cid.Bytes(),
 		SchemaRoot:         []byte(evt.SchemaRoot),
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
-	if evt.FieldName.HasValue() {
-		req.FieldName = evt.FieldName.Value()
+	for key, cid := range evt.Keys {
+		encKey := &pb.EncryptionKeyTarget{
+			DocID:     []byte(key.DocID),
+			FieldName: key.FieldName,
+			Cid:       cid.Bytes(),
+		}
+		req.Targets = append(req.Targets, encKey)
 	}
 
 	signature, err := s.signRequest(req)
@@ -439,7 +467,7 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 }
 
 // requestEncryptionKey publishes the given FetchEncryptionKeyRequest object on the PubSub network
-func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.RequestKeyEvent) error {
+func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.RequestKeysEvent) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
@@ -479,10 +507,13 @@ func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.Reques
 
 func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	hash := sha256.New()
-	hash.Write(req.DocID)
-	hash.Write(req.Cid)
 	hash.Write(req.SchemaRoot)
 	hash.Write(req.EphemeralPublicKey)
+	for _, target := range req.Targets {
+		hash.Write(target.DocID)
+		hash.Write([]byte(target.FieldName))
+		hash.Write(target.Cid)
+	}
 	return hash.Sum(nil)
 }
 
@@ -517,25 +548,37 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	decryptedKey, err := crypto.DecryptECIES(keyResp.EncryptedKey, session.privateKey)
+	decryptedData, err := crypto.DecryptECIES(keyResp.EncryptedKeys, session.privateKey)
 	if err != nil {
 		log.ErrorContextE(s.peer.ctx, "Failed to decrypt encryption key", err)
 		return
 	}
 
-	cid, err := cid.Cast(req.Cid)
-	if err != nil {
-		log.ErrorContextE(s.peer.ctx, "Failed to parse CID", err)
-		return
+	eventData := make(map[core.EncStoreDocKey]encryption.RequestedKeyEventData)
+	for _, target := range keyResp.Targets {
+		cid, err := cid.Cast(target.Cid)
+		if err != nil {
+			log.ErrorContextE(s.peer.ctx, "Failed to parse CID", err)
+			return
+		}
+
+		optFieldName := immutable.None[string]()
+		if target.FieldName != "" {
+			optFieldName = immutable.Some(target.FieldName)
+		}
+
+		var encKey []byte
+		decryptedData, encKey, err = encoding.DecodeBytesAscending(decryptedData)
+		if err != nil {
+			log.ErrorContextE(s.peer.ctx, "Failed to decode encrypted key", err)
+			return
+		}
+
+		d := encryption.RequestedKeyEventData{Cid: cid, Key: encKey}
+		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName)] = d
 	}
 
-	optFieldName := immutable.None[string]()
-	if req.FieldName != "" {
-		optFieldName = immutable.Some(req.FieldName)
-	}
-
-	s.peer.bus.Publish(encryption.NewKeyRetrievedMessage(
-		string(req.DocID), optFieldName, cid, string(req.SchemaRoot), decryptedKey))
+	s.peer.bus.Publish(encryption.NewKeysRetrievedMessage(string(req.SchemaRoot), eventData))
 }
 
 func (s *server) verifyResponseSignature(res *pb.FetchEncryptionKeyReply, fromPeer peer.ID) (bool, error) {
