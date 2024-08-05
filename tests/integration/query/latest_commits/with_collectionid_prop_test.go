@@ -71,5 +71,5 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
