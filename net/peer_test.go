@@ -16,10 +16,12 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
 	badger "github.com/sourcenetwork/badger/v4"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -539,5 +541,27 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
+	n.Close()
+}
+
+func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
+	ctx := context.Background()
+	store := memory.NewDatastore(ctx)
+	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	require.NoError(t, err)
+	defer db.Close()
+
+	n, err := NewPeer(
+		context.Background(),
+		db.Blockstore(),
+		db.Events(),
+		WithBootstrapPeers("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"),
+	)
+	require.NoError(t, err)
+
+	actual, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ")
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []peer.AddrInfo{*actual}, n.bootConfig.BootstrapPeers())
 	n.Close()
 }
