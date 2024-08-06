@@ -16,7 +16,6 @@ import (
 	"fmt"
 	gohttp "net/http"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -40,7 +39,6 @@ type Option any
 
 // Options contains start configuration values.
 type Options struct {
-	peers      []peer.AddrInfo
 	disableP2P bool
 	disableAPI bool
 }
@@ -64,13 +62,6 @@ func WithDisableP2P(disable bool) NodeOpt {
 func WithDisableAPI(disable bool) NodeOpt {
 	return func(o *Options) {
 		o.disableAPI = disable
-	}
-}
-
-// WithPeers sets the bootstrap peers.
-func WithPeers(peers ...peer.AddrInfo) NodeOpt {
-	return func(o *Options) {
-		o.peers = peers
 	}
 }
 
@@ -141,12 +132,9 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 	var peer *net.Peer
 	if !options.disableP2P {
 		// setup net node
-		peer, err = net.NewPeer(ctx, db.Rootstore(), db.Blockstore(), db.Events(), netOpts...)
+		peer, err = net.NewPeer(ctx, db.Blockstore(), db.Events(), netOpts...)
 		if err != nil {
 			return nil, err
-		}
-		if len(options.peers) > 0 {
-			peer.Bootstrap(options.peers)
 		}
 	}
 

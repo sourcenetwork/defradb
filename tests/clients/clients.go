@@ -11,6 +11,8 @@
 package clients
 
 import (
+	"context"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -20,5 +22,5 @@ import (
 // required for testing.
 type Client interface {
 	client.DB
-	Bootstrap([]peer.AddrInfo)
+	Connect(context.Context, peer.AddrInfo) error
 }

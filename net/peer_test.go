@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
 	badger "github.com/sourcenetwork/badger/v4"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -31,7 +30,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"
-	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
 func emptyBlock() []byte {
@@ -75,7 +73,6 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithListenAddresses(randomMultiaddr),
@@ -91,7 +88,7 @@ func TestNewPeer_NoError(t *testing.T) {
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
-	p, err := NewPeer(ctx, db.Rootstore(), db.Blockstore(), db.Events())
+	p, err := NewPeer(ctx, db.Blockstore(), db.Events())
 	require.NoError(t, err)
 	p.Close()
 }
@@ -126,28 +123,23 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Rootstore(),
 		db2.Blockstore(),
 		db2.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
 
-	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n2.Bootstrap(addrs)
+	err = n2.Connect(ctx, n1.PeerInfo())
+	require.NoError(t, err)
 
 	err = n2.Start()
 	require.NoError(t, err)
@@ -167,28 +159,24 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Rootstore(),
 		db2.Blockstore(),
 		db2.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
 
-	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n2.Bootstrap(addrs)
+	err = n2.Connect(ctx, n1.PeerInfo())
+	require.NoError(t, err)
+
 	n1.Close()
 
 	// give time for n1 to close
@@ -475,30 +463,12 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithEnableRelay(true),
 	)
 	require.NoError(t, err)
 	n.Close()
-}
-
-func TestNewPeer_WithDBClosed_NoError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-	db.Close()
-
-	_, err = NewPeer(
-		context.Background(),
-		db.Rootstore(),
-		db.Blockstore(),
-		db.Events(),
-	)
-	require.ErrorContains(t, err, "datastore closed")
 }
 
 func TestNewPeer_NoPubSub_NoError(t *testing.T) {
@@ -510,7 +480,6 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithEnablePubSub(false),
@@ -529,7 +498,6 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 		WithEnablePubSub(true),
@@ -549,97 +517,11 @@ func TestNodeClose_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
 	)
 	require.NoError(t, err)
 	n.Close()
-}
-
-func TestNewPeer_BootstrapWithNoPeer_NoError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-	defer db.Close()
-
-	n1, err := NewPeer(
-		ctx,
-		db.Rootstore(),
-		db.Blockstore(),
-		db.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
-	)
-	require.NoError(t, err)
-	n1.Bootstrap([]peer.AddrInfo{})
-	n1.Close()
-}
-
-func TestNewPeer_BootstrapWithOnePeer_NoError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-	defer db.Close()
-	n1, err := NewPeer(
-		ctx,
-		db.Rootstore(),
-		db.Blockstore(),
-		db.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
-	)
-	require.NoError(t, err)
-	defer n1.Close()
-	n2, err := NewPeer(
-		ctx,
-		db.Rootstore(),
-		db.Blockstore(),
-		db.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
-	)
-	require.NoError(t, err)
-	defer n2.Close()
-	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n2.Bootstrap(addrs)
-}
-
-func TestNewPeer_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-	defer db.Close()
-
-	n1, err := NewPeer(
-		ctx,
-		db.Rootstore(),
-		db.Blockstore(),
-		db.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
-	)
-	require.NoError(t, err)
-	defer n1.Close()
-	n2, err := NewPeer(
-		ctx,
-		db.Rootstore(),
-		db.Blockstore(),
-		db.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
-	)
-	require.NoError(t, err)
-	defer n2.Close()
-	addrs, err := netutils.ParsePeers([]string{
-		n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String(),
-		"/ip4/0.0.0.0/tcp/1234/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci6",
-		"/ip4/0.0.0.0/tcp/1235/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci5",
-		"/ip4/0.0.0.0/tcp/1236/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci4",
-	})
-	require.NoError(t, err)
-	n2.Bootstrap(addrs)
 }
 
 func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
@@ -651,10 +533,9 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Rootstore(),
 		db.Blockstore(),
 		db.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")

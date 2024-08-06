@@ -709,7 +709,7 @@ func restartNodes(
 		nodeOpts := s.nodeConfigs[i]
 		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
-		p, err := net.NewPeer(s.ctx, node.DB.Rootstore(), node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
+		p, err := net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
 		require.NoError(s.t, err)
 
 		if err := p.Start(); err != nil {
@@ -733,6 +733,7 @@ func restartNodes(
 	// will reference the old (closed) database instances.
 	refreshCollections(s)
 	refreshIndexes(s)
+	reconnectPeers(s)
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
@@ -783,7 +784,7 @@ func configureNode(
 	nodeOpts := action()
 	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
 
-	p, err := net.NewPeer(s.ctx, node.DB.Rootstore(), node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
+	p, err := net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
 	require.NoError(s.t, err)
 
 	log.InfoContext(s.ctx, "Starting P2P node", corelog.Any("P2P address", p.PeerInfo()))
