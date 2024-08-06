@@ -41,14 +41,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(33),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(0),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(33),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(0),
+				},
 			},
 		},
 	}
@@ -84,25 +86,27 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(33),
-				"_group": []map[string]any{
-					{
-						"Age": int64(34),
-					},
-					{
-						"Age": int64(32),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(33),
+					"_group": []map[string]any{
+						{
+							"Age": int64(34),
+						},
+						{
+							"Age": int64(32),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(0),
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Alice",
+					"_avg": float64(0),
+					"_group": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
 			},
@@ -143,25 +147,27 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(33),
-				"_group": []map[string]any{
-					{
-						"Age": int64(32),
-					},
-					{
-						"Age": int64(34),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(33),
+					"_group": []map[string]any{
+						{
+							"Age": int64(32),
+						},
+						{
+							"Age": int64(34),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(0),
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Alice",
+					"_avg": float64(0),
+					"_group": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
 			},
@@ -199,20 +205,22 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(34),
-				"_group": []map[string]any{
-					{
-						"Age": int64(34),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(34),
+					"_group": []map[string]any{
+						{
+							"Age": int64(34),
+						},
 					},
 				},
-			},
-			{
-				"Name":   "Alice",
-				"_avg":   float64(0),
-				"_group": []map[string]any{},
+				{
+					"Name":   "Alice",
+					"_avg":   float64(0),
+					"_group": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -251,20 +259,22 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(34),
-				"_group": []map[string]any{
-					{
-						"Age": int64(34),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(34),
+					"_group": []map[string]any{
+						{
+							"Age": int64(34),
+						},
 					},
 				},
-			},
-			{
-				"Name":   "Alice",
-				"_avg":   float64(0),
-				"_group": []map[string]any{},
+				{
+					"Name":   "Alice",
+					"_avg":   float64(0),
+					"_group": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -300,22 +310,24 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(34),
-				"_group": []map[string]any{
-					{
-						"Age": int64(32),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(34),
+					"_group": []map[string]any{
+						{
+							"Age": int64(32),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(0),
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Alice",
+					"_avg": float64(0),
+					"_group": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
 			},
@@ -351,16 +363,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"A1":   float64(33),
-				"A2":   float64(0),
-			},
-			{
-				"Name": "Alice",
-				"A1":   float64(0),
-				"A2":   float64(19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"A1":   float64(33),
+					"A2":   float64(0),
+				},
+				{
+					"Name": "Alice",
+					"A1":   float64(0),
+					"A2":   float64(19),
+				},
 			},
 		},
 	}
@@ -401,14 +415,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(31),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(31),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(19),
+				},
 			},
 		},
 	}

@@ -36,11 +36,13 @@ func TestMutationCreate_WithJSONFieldGivenValidJSON_NoError(t *testing.T) {
 						custom
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-84ae4ef8-ca0c-5f32-bc85-cee97e731bc0",
-						"custom": "{\"tree\":\"maple\",\"age\":250}",
-						"name":   "John",
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"_docID": "bae-84ae4ef8-ca0c-5f32-bc85-cee97e731bc0",
+							"custom": "{\"tree\":\"maple\",\"age\":250}",
+							"name":   "John",
+						},
 					},
 				},
 			},

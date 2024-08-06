@@ -43,13 +43,15 @@ func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": dataMap{
-										"typeJoinMany": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": dataMap{
+											"typeJoinMany": normalTypeJoinPattern,
+										},
 									},
 								},
 							},
@@ -87,20 +89,22 @@ func TestDebugExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"parallelNode": []dataMap{
-										{
-											"typeIndexJoin": dataMap{
-												"typeJoinMany": debugTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": dataMap{
+													"typeJoinMany": debugTypeJoinPattern,
+												},
 											},
-										},
-										{
-											"typeIndexJoin": dataMap{
-												"typeJoinMany": debugTypeJoinPattern,
+											{
+												"typeIndexJoin": dataMap{
+													"typeJoinMany": debugTypeJoinPattern,
+												},
 											},
 										},
 									},

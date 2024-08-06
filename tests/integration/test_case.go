@@ -360,6 +360,43 @@ type UpdateDoc struct {
 	SkipLocalUpdateEvent bool
 }
 
+// UpdateWithFilter will update the set of documents that match the given filter.
+type UpdateWithFilter struct {
+	// NodeID may hold the ID (index) of a node to apply this update to.
+	//
+	// If a value is not provided the update will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only update public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then
+	// can also update private document(s) that are owned by this Identity.
+	Identity immutable.Option[int]
+
+	// The collection in which this document exists.
+	CollectionID int
+
+	// The filter to match documents against.
+	Filter any
+
+	// The update to apply to matched documents.
+	Updater string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+
+	// Skip waiting for an update event on the local event bus.
+	//
+	// This should only be used for tests that do not correctly
+	// publish an update event to the local event bus.
+	SkipLocalUpdateEvent bool
+}
+
 // IndexField describes a field to be indexed.
 type IndexedField struct {
 	// Name contains the name of the field.
@@ -450,13 +487,13 @@ type GetIndexes struct {
 // assertions.
 type ResultAsserter interface {
 	// Assert will be called with the test and the result of the request.
-	Assert(t testing.TB, result []map[string]any)
+	Assert(t testing.TB, result map[string]any)
 }
 
 // ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(testing.TB, []map[string]any) (bool, string)
+type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
 
-func (f ResultAsserterFunc) Assert(t testing.TB, result []map[string]any) {
+func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
 	f(t, result)
 }
 
@@ -499,7 +536,7 @@ type Request struct {
 	Request string
 
 	// The expected (data) results of the issued request.
-	Results []map[string]any
+	Results map[string]any
 
 	// Asserter is an optional custom result asserter.
 	Asserter ResultAsserter

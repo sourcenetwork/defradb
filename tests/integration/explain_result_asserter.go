@@ -55,9 +55,8 @@ func readNumberProp(t testing.TB, val any, prop string) uint64 {
 	return 0
 }
 
-func (a *ExplainResultAsserter) Assert(t testing.TB, result []dataMap) {
-	require.Len(t, result, 1, "Expected len(result) = 1, got %d", len(result))
-	explainNode, ok := result[0]["explain"].(dataMap)
+func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
+	explainNode, ok := result["explain"].(dataMap)
 	require.True(t, ok, "Expected explain none")
 	assert.Equal(t, true, explainNode["executionSuccess"], "Expected executionSuccess property")
 	if a.sizeOfResults.HasValue() {
@@ -70,7 +69,9 @@ func (a *ExplainResultAsserter) Assert(t testing.TB, result []dataMap) {
 		assert.Equal(t, a.planExecutions.Value(), actual,
 			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
 	}
-	selectTopNode, ok := explainNode["selectTopNode"].(dataMap)
+	operationNode := ConvertToArrayOfMaps(t, explainNode["operationNode"])
+	require.Len(t, operationNode, 1)
+	selectTopNode, ok := operationNode[0]["selectTopNode"].(dataMap)
 	require.True(t, ok, "Expected selectTopNode")
 	selectNode, ok := selectTopNode["selectNode"].(dataMap)
 	require.True(t, ok, "Expected selectNode")

@@ -76,12 +76,14 @@ func TestView_SimpleWithTransform(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"fullName": "John",
-					},
-					{
-						"fullName": "Fred",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"fullName": "John",
+						},
+						{
+							"fullName": "Fred",
+						},
 					},
 				},
 			},
@@ -157,14 +159,16 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"fullName": "John",
-						"age":      23,
-					},
-					{
-						"fullName": "Fred",
-						"age":      23,
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"fullName": "John",
+							"age":      23,
+						},
+						{
+							"fullName": "Fred",
+							"age":      23,
+						},
 					},
 				},
 			},
@@ -227,15 +231,17 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "Fred",
-					},
-					{
-						"name": "Shahzad",
-					},
-					{
-						"name": "John",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "Fred",
+						},
+						{
+							"name": "Shahzad",
+						},
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -307,12 +313,14 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},

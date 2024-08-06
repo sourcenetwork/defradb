@@ -43,12 +43,14 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
-					},
-					{
-						"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+						},
+						{
+							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+						},
 					},
 				},
 			},
@@ -85,7 +87,9 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				// Make sure no documents have been deleted
@@ -94,12 +98,14 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},
@@ -126,7 +132,9 @@ func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -151,7 +159,9 @@ func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -181,9 +191,11 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+						},
 					},
 				},
 			},

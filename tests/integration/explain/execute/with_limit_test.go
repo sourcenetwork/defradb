@@ -34,23 +34,25 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"selectTopNode": dataMap{
-								"limitNode": dataMap{
-									"iterations": uint64(2),
-									"selectNode": dataMap{
-										"iterations":    uint64(2),
-										"filterMatches": uint64(2),
-										"scanNode": dataMap{
-											"iterations":   uint64(2),
-											"docFetches":   uint64(2),
-											"fieldFetches": uint64(2),
-											"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"limitNode": dataMap{
+										"iterations": uint64(2),
+										"selectNode": dataMap{
+											"iterations":    uint64(2),
+											"filterMatches": uint64(2),
+											"scanNode": dataMap{
+												"iterations":   uint64(2),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(2),
+												"indexFetches": uint64(0),
+											},
 										},
 									},
 								},
@@ -86,31 +88,33 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"planExecutions":   uint64(2),
-							"sizeOfResult":     1,
-							"selectTopNode": dataMap{
-								"limitNode": dataMap{
-									"iterations": uint64(2),
-									"selectNode": dataMap{
-										"iterations":    uint64(2),
-										"filterMatches": uint64(2),
-										"typeIndexJoin": dataMap{
-											"iterations": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(3),
-												"fieldFetches": uint64(5),
-												"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"planExecutions":   uint64(2),
+						"sizeOfResult":     1,
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"limitNode": dataMap{
+										"iterations": uint64(2),
+										"selectNode": dataMap{
+											"iterations":    uint64(2),
+											"filterMatches": uint64(2),
+											"typeIndexJoin": dataMap{
+												"iterations": uint64(2),
+												"scanNode": dataMap{
+													"iterations":   uint64(2),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
+												},
+												"subTypeScanNode": dataMap{
+													"iterations":   uint64(2),
+													"docFetches":   uint64(3),
+													"fieldFetches": uint64(5),
+													"indexFetches": uint64(0),
+												},
 											},
 										},
 									},

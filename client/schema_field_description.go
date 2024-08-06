@@ -33,9 +33,6 @@ type FieldKind interface {
 	// IsObject returns true if this FieldKind is an object type, or an array of object types.
 	IsObject() bool
 
-	// IsObjectArray returns true if this FieldKind is an object array type.
-	IsObjectArray() bool
-
 	// IsArray returns true if this FieldKind is an array type which includes inline arrays as well
 	// as relation arrays.
 	IsArray() bool
@@ -111,10 +108,6 @@ func (k ScalarKind) IsObject() bool {
 	return false
 }
 
-func (k ScalarKind) IsObjectArray() bool {
-	return false
-}
-
 func (k ScalarKind) IsArray() bool {
 	return false
 }
@@ -154,10 +147,6 @@ func (k ScalarArrayKind) IsObject() bool {
 	return false
 }
 
-func (k ScalarArrayKind) IsObjectArray() bool {
-	return false
-}
-
 func (k ScalarArrayKind) IsArray() bool {
 	return true
 }
@@ -178,10 +167,6 @@ func (k ObjectKind) IsObject() bool {
 	return true
 }
 
-func (k ObjectKind) IsObjectArray() bool {
-	return false
-}
-
 func (k ObjectKind) IsArray() bool {
 	return false
 }
@@ -199,10 +184,6 @@ func (k ObjectArrayKind) IsNillable() bool {
 }
 
 func (k ObjectArrayKind) IsObject() bool {
-	return true
-}
-
-func (k ObjectArrayKind) IsObjectArray() bool {
 	return true
 }
 

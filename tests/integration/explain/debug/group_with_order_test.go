@@ -19,12 +19,16 @@ import (
 
 var debugGroupOrderPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"orderNode": dataMap{
-				"groupNode": dataMap{
-					"selectNode": dataMap{
-						"pipeNode": dataMap{
-							"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"orderNode": dataMap{
+						"groupNode": dataMap{
+							"selectNode": dataMap{
+								"pipeNode": dataMap{
+									"scanNode": dataMap{},
+								},
+							},
 						},
 					},
 				},
@@ -55,7 +59,7 @@ func TestDebugExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupOrderPattern},
+				ExpectedPatterns: debugGroupOrderPattern,
 			},
 		},
 	}
@@ -85,7 +89,7 @@ func TestDebugExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupOrderPattern},
+				ExpectedPatterns: debugGroupOrderPattern,
 			},
 		},
 	}
@@ -115,7 +119,7 @@ func TestDebugExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugGroupOrderPattern},
+				ExpectedPatterns: debugGroupOrderPattern,
 			},
 		},
 	}

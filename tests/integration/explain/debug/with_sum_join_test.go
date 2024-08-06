@@ -19,11 +19,15 @@ import (
 
 var debugSumTypeIndexJoinManyPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"sumNode": dataMap{
-				"selectNode": dataMap{
-					"typeIndexJoin": dataMap{
-						"typeJoinMany": normalTypeJoinPattern,
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"sumNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": dataMap{
+								"typeJoinMany": normalTypeJoinPattern,
+							},
+						},
 					},
 				},
 			},
@@ -51,7 +55,7 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugSumTypeIndexJoinManyPattern},
+				ExpectedPatterns: debugSumTypeIndexJoinManyPattern,
 			},
 		},
 	}
@@ -85,7 +89,7 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugSumTypeIndexJoinManyPattern},
+				ExpectedPatterns: debugSumTypeIndexJoinManyPattern,
 			},
 		},
 	}
@@ -113,21 +117,23 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *test
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"sumNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": dataMap{
-													"typeJoinMany": debugTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"sumNode": dataMap{
+										"selectNode": dataMap{
+											"parallelNode": []dataMap{
+												{
+													"typeIndexJoin": dataMap{
+														"typeJoinMany": debugTypeJoinPattern,
+													},
 												},
-											},
-											{
-												"typeIndexJoin": dataMap{
-													"typeJoinMany": debugTypeJoinPattern,
+												{
+													"typeIndexJoin": dataMap{
+														"typeJoinMany": debugTypeJoinPattern,
+													},
 												},
 											},
 										},

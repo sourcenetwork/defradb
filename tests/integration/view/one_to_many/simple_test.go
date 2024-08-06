@@ -73,12 +73,14 @@ func TestView_OneToMany(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Harper Lee",
-						"books": []map[string]any{
-							{
-								"name": "To Kill a Mockingbird",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Harper Lee",
+							"books": []map[string]any{
+								{
+									"name": "To Kill a Mockingbird",
+								},
 							},
 						},
 					},
@@ -291,9 +293,11 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 								name
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Harper Lee",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Harper Lee",
+						},
 					},
 				},
 			},
@@ -439,12 +443,14 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "Harper Lee",
-						"books": []map[string]any{
-							{
-								"name": "To Kill a Mockingbird",
+				Results: map[string]any{
+					"AuthorViewView": []map[string]any{
+						{
+							"name": "Harper Lee",
+							"books": []map[string]any{
+								{
+									"name": "To Kill a Mockingbird",
+								},
 							},
 						},
 					},

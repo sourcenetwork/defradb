@@ -66,9 +66,11 @@ func TestColDescrUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				}`,
 				// If the view was still querying `Books` there would be no results
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"View": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},
@@ -128,9 +130,11 @@ func TestColDescrUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				}`,
 				// If the view was still querying `Books` there would be no results
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"View": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},

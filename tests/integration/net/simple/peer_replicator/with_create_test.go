@@ -61,12 +61,14 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(3000),
-					},
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(3000),
+						},
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -77,9 +79,11 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},
@@ -90,12 +94,14 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(3000),
-					},
-					{
-						"Age": int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(3000),
+						},
+						{
+							"Age": int64(21),
+						},
 					},
 				},
 			},

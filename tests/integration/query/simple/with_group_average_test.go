@@ -48,7 +48,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageO
 						_avg(_group: {field: Age})
 					}
 				}`,
-		Results: []map[string]any{},
+		Results: map[string]any{
+			"Users": []map[string]any{},
+		},
 	}
 
 	executeTestCase(t, test)
@@ -80,14 +82,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(35),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(-19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(35),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(-19),
+				},
 			},
 		},
 	}
@@ -120,14 +124,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *t
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(32),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(19),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(32),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(19),
+				},
 			},
 		},
 	}
@@ -177,38 +183,40 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(31.25),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(28.5),
-					},
-					{
-						"Verified": false,
-						"_avg":     float64(34),
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_avg": float64(55),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(31.25),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(28.5),
+						},
+						{
+							"Verified": false,
+							"_avg":     float64(34),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(19),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_avg":     float64(19),
+				{
+					"Name": "Carlo",
+					"_avg": float64(55),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(55),
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(19),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_avg":     float64(19),
+						},
 					},
 				},
 			},
@@ -242,14 +250,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAvera
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(1.855),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(0),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(1.855),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(0),
+				},
 			},
 		},
 	}
@@ -282,14 +292,16 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t 
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_avg": float64(1.855),
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(2.04),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_avg": float64(1.855),
+				},
+				{
+					"Name": "Alice",
+					"_avg": float64(2.04),
+				},
 			},
 		},
 	}
@@ -339,38 +351,40 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 			}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Alice",
-				"_avg": float64(2.04),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_avg":     float64(2.04),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Alice",
+					"_avg": float64(2.04),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_avg":     float64(2.04),
+						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_avg": float64(1.9675000000000002),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(1.715),
-					},
-					{
-						"Verified": false,
-						"_avg":     float64(2.22),
+				{
+					"Name": "John",
+					"_avg": float64(1.9675000000000002),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(1.715),
+						},
+						{
+							"Verified": false,
+							"_avg":     float64(2.22),
+						},
 					},
 				},
-			},
-			{
-				"Name": "Carlo",
-				"_avg": float64(1.74),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(1.74),
+				{
+					"Name": "Carlo",
+					"_avg": float64(1.74),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(1.74),
+						},
 					},
 				},
 			},
@@ -431,64 +445,66 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_avg": float64(1.74),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(1.74),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(55),
-								"_avg": float64(1.74),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"_avg": float64(1.74),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(1.74),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(55),
+									"_avg": float64(1.74),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_avg": float64(2.04),
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_avg":     float64(2.04),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(19),
-								"_avg": float64(2.04),
+				{
+					"Name": "Alice",
+					"_avg": float64(2.04),
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_avg":     float64(2.04),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(19),
+									"_avg": float64(2.04),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_avg": float64(1.9675000000000002),
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_avg":     float64(1.715),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(32),
-								"_avg": float64(1.61),
-							},
-							{
-								"Age":  int64(25),
-								"_avg": float64(1.82),
+				{
+					"Name": "John",
+					"_avg": float64(1.9675000000000002),
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_avg":     float64(1.715),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(32),
+									"_avg": float64(1.61),
+								},
+								{
+									"Age":  int64(25),
+									"_avg": float64(1.82),
+								},
 							},
 						},
-					},
-					{
-						"Verified": false,
-						"_avg":     float64(2.22),
-						"_group": []map[string]any{
-							{
-								"Age":  int64(34),
-								"_avg": float64(2.22),
+						{
+							"Verified": false,
+							"_avg":     float64(2.22),
+							"_group": []map[string]any{
+								{
+									"Age":  int64(34),
+									"_avg": float64(2.22),
+								},
 							},
 						},
 					},

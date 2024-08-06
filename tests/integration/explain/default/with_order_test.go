@@ -19,10 +19,14 @@ import (
 
 var orderPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"orderNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"orderNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -46,7 +50,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{orderPattern},
+				ExpectedPatterns: orderPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -88,7 +92,7 @@ func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{orderPattern},
+				ExpectedPatterns: orderPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

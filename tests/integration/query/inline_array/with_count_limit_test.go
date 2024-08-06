@@ -33,10 +33,12 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Shahzad",
-				"_count": 2,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name":   "Shahzad",
+					"_count": 2,
+				},
 			},
 		},
 	}
@@ -61,10 +63,12 @@ func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"name":   "Shahzad",
-				"_count": 3,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"name":   "Shahzad",
+					"_count": 3,
+				},
 			},
 		},
 	}

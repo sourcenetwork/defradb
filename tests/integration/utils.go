@@ -22,7 +22,7 @@ type RequestTestCase struct {
 	// of docs in stringified JSON format
 	Docs map[int][]string
 
-	Results []map[string]any
+	Results map[string]any
 
 	// The expected content of an expected error
 	ExpectedError string

@@ -41,14 +41,16 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 1,
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 1,
+				},
+				{
+					"Age":    int64(19),
+					"_count": 1,
+				},
 			},
 		},
 	}
@@ -88,25 +90,27 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "Shahzad",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Age":    int64(32),
+					"_count": 1,
+					"_group": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "Shahzad",
+						},
 					},
 				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				{
+					"Age":    int64(19),
+					"_count": 1,
+					"_group": []map[string]any{
+						{
+							"Name": "Alice",
+						},
 					},
 				},
 			},

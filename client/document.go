@@ -186,11 +186,11 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		}
 	}
 
-	if field.Kind.IsObjectArray() {
-		return nil, NewErrFieldNotExist(field.Name)
-	}
-
 	if field.Kind.IsObject() {
+		if field.Kind.IsArray() {
+			return nil, NewErrFieldNotExist(field.Name)
+		}
+
 		v, err := getString(val)
 		if err != nil {
 			return nil, err
@@ -592,7 +592,7 @@ func (doc *Document) Set(field string, value any) error {
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.Kind.IsObject() && !fd.Kind.IsObjectArray() {
+	if fd.Kind.IsObject() && !fd.Kind.IsArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}

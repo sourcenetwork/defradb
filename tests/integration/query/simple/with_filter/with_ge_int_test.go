@@ -36,9 +36,11 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Bob",
+				},
 			},
 		},
 	}
@@ -66,9 +68,11 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Bob",
+				},
 			},
 		},
 	}
@@ -95,12 +99,14 @@ func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-			},
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Bob",
+				},
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}

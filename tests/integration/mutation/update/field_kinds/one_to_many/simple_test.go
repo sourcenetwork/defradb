@@ -116,10 +116,12 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
  						}
  					}
  				}`,
-				Results: []map[string]any{
-					{
-						"name":      "John Grisham",
-						"published": []map[string]any{},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":      "John Grisham",
+							"published": []map[string]any{},
+						},
 					},
 				},
 			},
@@ -132,10 +134,12 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"author": nil, // Linked to incorrect id
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"author": nil, // Linked to incorrect id
+						},
 					},
 				},
 			},
@@ -246,18 +250,20 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
  						}
  					}
  				}`,
-				Results: []map[string]any{
-					{
-						"name": "New Shahzad",
-						"published": []map[string]any{
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "New Shahzad",
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
-					},
-					{
-						"name":      "John Grisham",
-						"published": []map[string]any{},
+						{
+							"name":      "John Grisham",
+							"published": []map[string]any{},
+						},
 					},
 				},
 			},
@@ -270,11 +276,13 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "New Shahzad",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "New Shahzad",
+							},
 						},
 					},
 				},

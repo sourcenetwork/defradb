@@ -71,26 +71,28 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"author_id": "bae-077b5e8d-5a86-5ae7-a321-ac7e423bb260",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"_group": []map[string]any{
-							{
-								"name": "Painted House",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"author_id": "bae-077b5e8d-5a86-5ae7-a321-ac7e423bb260",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"_group": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
-					},
-					{
-						"author_id": "bae-b11e00fc-340f-558b-909d-2ab94601570b",
-						"author": map[string]any{
-							"name": "Andrew Lone",
-						},
-						"_group": []map[string]any{
-							{
-								"name": "Go Guide for Rust developers",
+						{
+							"author_id": "bae-b11e00fc-340f-558b-909d-2ab94601570b",
+							"author": map[string]any{
+								"name": "Andrew Lone",
+							},
+							"_group": []map[string]any{
+								{
+									"name": "Go Guide for Rust developers",
+								},
 							},
 						},
 					},
@@ -151,12 +153,14 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *t
 						author_id
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
-					},
-					{
-						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+						},
+						{
+							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+						},
 					},
 				},
 			},
@@ -218,17 +222,19 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJ
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
-						"author": map[string]any{
-							"name": "Andrew Lone",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+							"author": map[string]any{
+								"name": "Andrew Lone",
+							},
 						},
-					},
-					{
-						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
-						"author": map[string]any{
-							"name": "John Grisham",
+						{
+							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -291,20 +297,22 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
-						"_group": []map[string]any{
-							{
-								"name": "Go Guide for Rust developers",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+							"_group": []map[string]any{
+								{
+									"name": "Go Guide for Rust developers",
+								},
 							},
 						},
-					},
-					{
-						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
-						"_group": []map[string]any{
-							{
-								"name": "Painted House",
+						{
+							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"_group": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
 					},
@@ -371,26 +379,28 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
-						"author": map[string]any{
-							"name": "Andrew Lone",
-						},
-						"_group": []map[string]any{
-							{
-								"name": "Go Guide for Rust developers",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+							"author": map[string]any{
+								"name": "Andrew Lone",
+							},
+							"_group": []map[string]any{
+								{
+									"name": "Go Guide for Rust developers",
+								},
 							},
 						},
-					},
-					{
-						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-						"_group": []map[string]any{
-							{
-								"name": "Painted House",
+						{
+							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"_group": []map[string]any{
+								{
+									"name": "Painted House",
+								},
 							},
 						},
 					},

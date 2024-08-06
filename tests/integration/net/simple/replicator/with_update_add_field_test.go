@@ -72,10 +72,12 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 						Email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "Shahzad",
-						"Email": "imnotyourbuddyguy@source.ca",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "Shahzad",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
 					},
 				},
 			},
@@ -87,9 +89,11 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Shahzad",
+						},
 					},
 				},
 			},
@@ -146,10 +150,12 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 						Email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "Shahzad",
-						"Email": "imnotyourbuddyguy@source.ca",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "Shahzad",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
 					},
 				},
 			},
@@ -160,9 +166,11 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Shahzad",
+						},
 					},
 				},
 			},

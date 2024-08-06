@@ -38,9 +38,11 @@ func TestMutationDeletion_WithIDAndAlias(t *testing.T) {
 						fancyKey: _docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"fancyKey": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"fancyKey": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+						},
 					},
 				},
 			},

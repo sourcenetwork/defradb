@@ -67,7 +67,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	resHex, err := hex.DecodeString(strings.TrimPrefix(ccipRes.Data, "0x"))
 	require.NoError(t, err)
 
-	assert.JSONEq(t, `{"data": [{"name": "bob"}]}`, string(resHex))
+	assert.JSONEq(t, `{"data": {"User": [{"name": "bob"}]}}`, string(resHex))
 }
 
 func TestCCIPGet_WithSubscription(t *testing.T) {
@@ -153,7 +153,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	resHex, err := hex.DecodeString(strings.TrimPrefix(ccipRes.Data, "0x"))
 	require.NoError(t, err)
 
-	assert.JSONEq(t, `{"data": [{"name": "bob"}]}`, string(resHex))
+	assert.JSONEq(t, `{"data": {"User": [{"name": "bob"}]}}`, string(resHex))
 }
 
 func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {

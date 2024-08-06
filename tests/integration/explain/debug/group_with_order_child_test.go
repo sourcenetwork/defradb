@@ -36,7 +36,7 @@ func TestDebugExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}
@@ -63,7 +63,7 @@ func TestDebugExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}
@@ -96,7 +96,7 @@ func TestDebugExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInne
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}

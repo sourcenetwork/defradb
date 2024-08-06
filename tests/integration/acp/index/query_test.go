@@ -60,9 +60,9 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Shahzad"},
 					},
 				},
 			},
@@ -115,12 +115,14 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Islam",
-					},
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Islam",
+						},
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},
@@ -173,9 +175,11 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},

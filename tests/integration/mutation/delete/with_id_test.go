@@ -33,7 +33,9 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -63,7 +65,9 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 						_docID
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"delete_User": []map[string]any{},
+				},
 			},
 		},
 	}

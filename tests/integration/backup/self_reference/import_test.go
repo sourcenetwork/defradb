@@ -48,15 +48,17 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"boss": nil,
-					},
-					{
-						"name": "Bob",
-						"boss": map[string]any{
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
 							"name": "John",
+							"boss": nil,
+						},
+						{
+							"name": "Bob",
+							"boss": map[string]any{
+								"name": "John",
+							},
 						},
 					},
 				},
@@ -120,11 +122,13 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Bob",
-						"boss": map[string]any{
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
 							"name": "Bob",
+							"boss": map[string]any{
+								"name": "Bob",
+							},
 						},
 					},
 				},
@@ -181,13 +185,15 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John and the sourcerers' stone",
-						"author": map[string]any{
-							"name": "John",
-							"reviewed": map[string]any{
-								"name": "John and the sourcerers' stone",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"name": "John",
+								"reviewed": map[string]any{
+									"name": "John and the sourcerers' stone",
+								},
 							},
 						},
 					},
@@ -245,13 +251,15 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John and the sourcerers' stone",
-						"author": map[string]any{
-							"name": "John",
-							"reviewed": map[string]any{
-								"name": "John and the sourcerers' stone",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"name": "John",
+								"reviewed": map[string]any{
+									"name": "John and the sourcerers' stone",
+								},
 							},
 						},
 					},
@@ -355,12 +363,14 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John and the sourcerers' stone",
-						"author": map[string]any{
-							"name":     "John",
-							"reviewed": nil,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"name":     "John",
+								"reviewed": nil,
+							},
 						},
 					},
 				},

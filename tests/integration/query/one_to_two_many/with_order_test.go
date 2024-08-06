@@ -95,39 +95,41 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"reviewed": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"reviewed": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+							},
+							"written": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
 							},
 						},
-						"written": []map[string]any{
-							{
-								"name": "Theif Lord",
+						{
+							"name": "John Grisham",
+							"reviewed": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
 							},
-						},
-					},
-					{
-						"name": "John Grisham",
-						"reviewed": []map[string]any{
-							{
-								"name":   "Theif Lord",
-								"rating": 4.8,
-							},
-							{
-								"name":   "A Time for Mercy",
-								"rating": 4.5,
-							},
-						},
-						"written": []map[string]any{
-							{
-								"name": "A Time for Mercy",
-							},
-							{
-								"name": "Painted House",
+							"written": []map[string]any{
+								{
+									"name": "A Time for Mercy",
+								},
+								{
+									"name": "Painted House",
+								},
 							},
 						},
 					},

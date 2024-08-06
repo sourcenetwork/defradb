@@ -57,10 +57,12 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(20),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(20),
+						},
 					},
 				},
 			},
@@ -109,10 +111,12 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(math.MinInt64),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": int64(math.MinInt64),
+						},
 					},
 				},
 			},
@@ -159,11 +163,13 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						// Note the lack of precision of float types.
-						"points": 20.299999999999997,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// Note the lack of precision of float types.
+							"points": 20.299999999999997,
+						},
 					},
 				},
 			},
@@ -212,10 +218,12 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": math.Inf(1),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": math.Inf(1),
+						},
 					},
 				},
 			},
@@ -264,10 +272,12 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": math.Inf(-1),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": math.Inf(-1),
+						},
 					},
 				},
 			},
@@ -309,10 +319,12 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": math.MaxFloat64 / 10,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": math.MaxFloat64 / 10,
+						},
 					},
 				},
 			},

@@ -49,9 +49,11 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},
@@ -98,11 +100,13 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -117,11 +121,13 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
 						},
 					},
 				},
@@ -170,11 +176,13 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -189,11 +197,13 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
 						},
 					},
 				},

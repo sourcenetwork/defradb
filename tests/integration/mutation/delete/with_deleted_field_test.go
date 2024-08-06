@@ -39,10 +39,12 @@ func TestMutationDeletion_WithDeletedField(t *testing.T) {
 							_docID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"_docID":   "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"_deleted": true,
+							"_docID":   "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+						},
 					},
 				},
 			},

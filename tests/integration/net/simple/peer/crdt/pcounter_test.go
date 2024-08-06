@@ -56,9 +56,11 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"points": int64(20),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"points": int64(20),
+						},
 					},
 				},
 			},
@@ -111,9 +113,11 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(90),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(90),
+						},
 					},
 				},
 			},

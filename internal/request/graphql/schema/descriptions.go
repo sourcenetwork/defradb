@@ -102,7 +102,7 @@ An optional value that specifies as to whether deleted documents may be
  returned. This argument will propagate down through any child selects/joins.
 `
 	createDocumentDescription string = `
-Creates a single document of this type using the data provided.
+Creates one or more documents of this type using the data provided.
 `
 	updateDocumentsDescription string = `
 Updates documents in this collection using the data provided. Only documents

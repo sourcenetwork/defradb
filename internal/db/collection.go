@@ -641,7 +641,7 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
-			relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fieldDescription)
+			relationFieldDescription, isSecondaryRelationID := fieldDescription.GetSecondaryRelationField(c.Definition())
 			if isSecondaryRelationID {
 				primaryId := val.Value().(string)
 
@@ -948,7 +948,7 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 func (c *collection) tryGetFieldID(fieldName string) (uint32, bool) {
 	for _, field := range c.Definition().GetFields() {
 		if field.Name == fieldName {
-			if field.Kind.IsObject() || field.Kind.IsObjectArray() {
+			if field.Kind.IsObject() {
 				// We do not wish to match navigational properties, only
 				// fields directly on the collection.
 				return uint32(0), false

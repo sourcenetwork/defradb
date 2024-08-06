@@ -91,23 +91,25 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"publisher": map[string]any{
-							"name": "Old Publisher",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"publisher": map[string]any{
+								"name": "Old Publisher",
+							},
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name": "Theif Lord",
-						"publisher": map[string]any{
-							"name": "New Publisher",
-						},
-						"author": map[string]any{
-							"name": "Cornelia Funke",
+						{
+							"name": "Theif Lord",
+							"publisher": map[string]any{
+								"name": "New Publisher",
+							},
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
 						},
 					},
 				},
@@ -193,23 +195,25 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Theif Lord",
-						"publisher": map[string]any{
-							"name": "New Publisher",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Theif Lord",
+							"publisher": map[string]any{
+								"name": "New Publisher",
+							},
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
 						},
-						"author": map[string]any{
-							"name": "Cornelia Funke",
-						},
-					},
-					{
-						"name": "Painted House",
-						"publisher": map[string]any{
-							"name": "Old Publisher",
-						},
-						"author": map[string]any{
-							"name": "John Grisham",
+						{
+							"name": "Painted House",
+							"publisher": map[string]any{
+								"name": "Old Publisher",
+							},
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -295,23 +299,25 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"publisher": map[string]any{
-							"name": "Old Publisher",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"publisher": map[string]any{
+								"name": "Old Publisher",
+							},
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
-					{
-						"name": "Theif Lord",
-						"publisher": map[string]any{
-							"name": "New Publisher",
-						},
-						"author": map[string]any{
-							"name": "Cornelia Funke",
+						{
+							"name": "Theif Lord",
+							"publisher": map[string]any{
+								"name": "New Publisher",
+							},
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
 						},
 					},
 				},

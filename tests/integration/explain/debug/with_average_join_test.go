@@ -19,13 +19,17 @@ import (
 
 var debugAverageTypeIndexJoinManyPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"averageNode": dataMap{
-				"countNode": dataMap{
-					"sumNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": dataMap{
-								"typeJoinMany": normalTypeJoinPattern,
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"averageNode": dataMap{
+						"countNode": dataMap{
+							"sumNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": dataMap{
+										"typeJoinMany": normalTypeJoinPattern,
+									},
+								},
 							},
 						},
 					},
@@ -52,7 +56,7 @@ func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{debugAverageTypeIndexJoinManyPattern},
+				ExpectedPatterns: debugAverageTypeIndexJoinManyPattern,
 			},
 		},
 	}
@@ -80,23 +84,25 @@ func TestDebugExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testi
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"averageNode": dataMap{
-									"countNode": dataMap{
-										"sumNode": dataMap{
-											"selectNode": dataMap{
-												"parallelNode": []dataMap{
-													{
-														"typeIndexJoin": dataMap{
-															"typeJoinMany": debugTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"averageNode": dataMap{
+										"countNode": dataMap{
+											"sumNode": dataMap{
+												"selectNode": dataMap{
+													"parallelNode": []dataMap{
+														{
+															"typeIndexJoin": dataMap{
+																"typeJoinMany": debugTypeJoinPattern,
+															},
 														},
-													},
-													{
-														"typeIndexJoin": dataMap{
-															"typeJoinMany": debugTypeJoinPattern,
+														{
+															"typeIndexJoin": dataMap{
+																"typeJoinMany": debugTypeJoinPattern,
+															},
 														},
 													},
 												},

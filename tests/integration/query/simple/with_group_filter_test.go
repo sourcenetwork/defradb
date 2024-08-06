@@ -47,26 +47,28 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Age": int64(55),
+						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(32),
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Age": int64(32),
+						},
 					},
 				},
-			},
-			{
-				"Name":   "Alice",
-				"_group": []map[string]any{},
+				{
+					"Name":   "Alice",
+					"_group": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -105,20 +107,22 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Age": int64(55),
+						},
 					},
 				},
-			},
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(32),
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Age": int64(32),
+						},
 					},
 				},
 			},
@@ -156,12 +160,14 @@ func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-			},
-			{
-				"Name": "John",
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+				},
+				{
+					"Name": "John",
+				},
 			},
 		},
 	}
@@ -214,35 +220,37 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group":   []map[string]any{},
-					},
-					{
-						"Verified": false,
-						"_group":   []map[string]any{},
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group":   []map[string]any{},
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "John",
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_group":   []map[string]any{},
+						},
+						{
+							"Verified": false,
+							"_group":   []map[string]any{},
+						},
 					},
 				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_group":   []map[string]any{},
+				{
+					"Name": "Carlo",
+					"_group": []map[string]any{
+						{
+							"Verified": true,
+							"_group":   []map[string]any{},
+						},
+					},
+				},
+				{
+					"Name": "Alice",
+					"_group": []map[string]any{
+						{
+							"Verified": false,
+							"_group":   []map[string]any{},
+						},
 					},
 				},
 			},
@@ -286,35 +294,37 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"G1": []map[string]any{
-					{
-						"Age": int64(55),
+		Results: map[string]any{
+			"Users": []map[string]any{
+				{
+					"Name": "Carlo",
+					"G1": []map[string]any{
+						{
+							"Age": int64(55),
+						},
+					},
+					"G2": []map[string]any{},
+				},
+				{
+					"Name": "John",
+					"G1": []map[string]any{
+						{
+							"Age": int64(32),
+						},
+					},
+					"G2": []map[string]any{
+						{
+							"Age": int64(25),
+						},
 					},
 				},
-				"G2": []map[string]any{},
-			},
-			{
-				"Name": "John",
-				"G1": []map[string]any{
-					{
-						"Age": int64(32),
-					},
-				},
-				"G2": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-				},
-			},
-			{
-				"Name": "Alice",
-				"G1":   []map[string]any{},
-				"G2": []map[string]any{
-					{
-						"Age": int64(19),
+				{
+					"Name": "Alice",
+					"G1":   []map[string]any{},
+					"G2": []map[string]any{
+						{
+							"Age": int64(19),
+						},
 					},
 				},
 			},

@@ -34,35 +34,37 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":                 "Not a Writer",
-						"NewestPublishersBook": []map[string]any{},
-						"OldestPublishersBook": []map[string]any{},
-					},
-					{
-						"name": "John Grisham",
-						"NewestPublishersBook": []map[string]any{
-							{
-								"name": "Theif Lord",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":                 "Not a Writer",
+							"NewestPublishersBook": []map[string]any{},
+							"OldestPublishersBook": []map[string]any{},
+						},
+						{
+							"name": "John Grisham",
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
+							},
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Associate", // oldest because has no Publisher.
+								},
 							},
 						},
-						"OldestPublishersBook": []map[string]any{
-							{
-								"name": "The Associate", // oldest because has no Publisher.
+						{
+							"name": "Cornelia Funke",
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
 							},
-						},
-					},
-					{
-						"name": "Cornelia Funke",
-						"NewestPublishersBook": []map[string]any{
-							{
-								"name": "The Rooster Bar",
-							},
-						},
-						"OldestPublishersBook": []map[string]any{
-							{
-								"name": "The Rooster Bar",
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
 							},
 						},
 					},

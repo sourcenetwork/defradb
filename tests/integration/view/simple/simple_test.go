@@ -50,9 +50,11 @@ func TestView_Simple(t *testing.T) {
 								name
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -101,12 +103,14 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 								name
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},
@@ -198,9 +202,11 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 								name
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -249,9 +255,11 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},
@@ -309,9 +317,11 @@ func TestView_SimpleViewOfView(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
+				Results: map[string]any{
+					"UserViewView": []map[string]any{
+						{
+							"name": "John",
+						},
 					},
 				},
 			},

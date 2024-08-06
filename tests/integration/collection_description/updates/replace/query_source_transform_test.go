@@ -100,9 +100,11 @@ func TestColDescrUpdateReplaceQuerySourceTransform(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"fullName": "S",
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"fullName": "S",
+						},
 					},
 				},
 			},

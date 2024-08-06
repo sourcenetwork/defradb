@@ -11,11 +11,13 @@
 package tests
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -148,51 +150,43 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 // update event to the local event bus.
 //
 // Expected document heads will be updated for any connected nodes.
-func waitForUpdateEvents(s *state, nodeID immutable.Option[int], collectionID int) {
+func waitForUpdateEvents(
+	s *state,
+	nodeID immutable.Option[int],
+	docIDs map[string]struct{},
+) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
 		}
 
-		var evt event.Update
-		select {
-		case msg, ok := <-s.nodeEvents[i].update.Message():
-			if !ok {
-				require.Fail(s.t, "subscription closed waiting for update event")
+		expect := make(map[string]struct{}, len(docIDs))
+		for k := range docIDs {
+			expect[k] = struct{}{}
+		}
+
+		for len(expect) > 0 {
+			var evt event.Update
+			select {
+			case msg, ok := <-s.nodeEvents[i].update.Message():
+				if !ok {
+					require.Fail(s.t, "subscription closed waiting for update event")
+				}
+				evt = msg.Data.(event.Update)
+
+			case <-time.After(eventTimeout):
+				require.Fail(s.t, "timeout waiting for update event")
 			}
-			evt = msg.Data.(event.Update)
 
-		case <-time.After(eventTimeout):
-			require.Fail(s.t, "timeout waiting for update event")
-		}
+			// make sure the event is expected
+			_, ok := expect[evt.DocID]
+			require.True(s.t, ok, "unexpected document update")
+			delete(expect, evt.DocID)
 
-		if i >= len(s.nodeConfigs) {
-			return // not testing network state
-		}
-
-		// make sure the event is published on the network before proceeding
-		// this prevents nodes from missing messages that are sent before
-		// subscriptions are setup
-		time.Sleep(100 * time.Millisecond)
-
-		// update the actual document head on the node that updated it
-		s.nodeP2P[i].actualDocHeads[evt.DocID] = evt.Cid
-
-		// update the expected document heads of replicator targets
-		for id := range s.nodeP2P[i].replicators {
-			// replicator target nodes push updates to source nodes
-			s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
-		}
-
-		// update the expected document heads of connected nodes
-		for id := range s.nodeP2P[i].connections {
-			// connected nodes share updates of documents they have in common
-			if _, ok := s.nodeP2P[id].actualDocHeads[evt.DocID]; ok {
-				s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
-			}
-			// peer collection subscribers receive updates from any other subscriber node
-			if _, ok := s.nodeP2P[id].peerCollections[collectionID]; ok {
-				s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+			// we only need to update the network state if the nodes
+			// are configured for networking
+			if i < len(s.nodeConfigs) {
+				updateNetworkState(s, i, evt)
 			}
 		}
 	}
@@ -239,4 +233,161 @@ func waitForMergeEvents(s *state) {
 			}
 		}
 	}
+}
+
+// updateNetworkState updates the network state by checking which
+// nodes should receive the updated document in the given update event.
+func updateNetworkState(s *state, nodeID int, evt event.Update) {
+	// find the correct collection index for this update
+	collectionID := -1
+	for i, c := range s.collections[nodeID] {
+		if c.SchemaRoot() == evt.SchemaRoot {
+			collectionID = i
+		}
+	}
+
+	// update the actual document head on the node that updated it
+	s.nodeP2P[nodeID].actualDocHeads[evt.DocID] = evt.Cid
+
+	// update the expected document heads of replicator targets
+	for id := range s.nodeP2P[nodeID].replicators {
+		// replicator target nodes push updates to source nodes
+		s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+	}
+
+	// update the expected document heads of connected nodes
+	for id := range s.nodeP2P[nodeID].connections {
+		// connected nodes share updates of documents they have in common
+		if _, ok := s.nodeP2P[id].actualDocHeads[evt.DocID]; ok {
+			s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+		}
+		// peer collection subscribers receive updates from any other subscriber node
+		if _, ok := s.nodeP2P[id].peerCollections[collectionID]; ok {
+			s.nodeP2P[id].expectedDocHeads[evt.DocID] = evt.Cid
+		}
+	}
+
+	// make sure the event is published on the network before proceeding
+	// this prevents nodes from missing messages that are sent before
+	// subscriptions are setup
+	time.Sleep(100 * time.Millisecond)
+}
+
+// getEventsForUpdateDoc returns a map of docIDs that should be
+// published to the local event bus after an UpdateDoc action.
+//
+// This will take into account any primary documents that are patched as a result
+// of the create or update.
+func getEventsForUpdateDoc(s *state, action UpdateDoc) map[string]struct{} {
+	var collection client.Collection
+	if action.NodeID.HasValue() {
+		collection = s.collections[action.NodeID.Value()][action.CollectionID]
+	} else {
+		collection = s.collections[0][action.CollectionID]
+	}
+
+	docID := s.docIDs[action.CollectionID][action.DocID]
+	def := collection.Definition()
+
+	docMap := make(map[string]any)
+	err := json.Unmarshal([]byte(action.Doc), &docMap)
+	require.NoError(s.t, err)
+
+	expect := make(map[string]struct{})
+	expect[docID.String()] = struct{}{}
+
+	// check for any secondary relation fields that could publish an event
+	for name, value := range docMap {
+		field, ok := def.GetFieldByName(name)
+		if !ok {
+			continue // ignore unknown field
+		}
+		_, ok = field.GetSecondaryRelationField(def)
+		if ok {
+			expect[value.(string)] = struct{}{}
+		}
+	}
+
+	return expect
+}
+
+// getEventsForCreateDoc returns a map of docIDs that should be
+// published to the local event bus after a CreateDoc action.
+//
+// This will take into account any primary documents that are patched as a result
+// of the create or update.
+func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
+	var collection client.Collection
+	if action.NodeID.HasValue() {
+		collection = s.collections[action.NodeID.Value()][action.CollectionID]
+	} else {
+		collection = s.collections[0][action.CollectionID]
+	}
+
+	docs, err := parseCreateDocs(action, collection)
+	require.NoError(s.t, err)
+
+	def := collection.Definition()
+	expect := make(map[string]struct{})
+
+	for _, doc := range docs {
+		expect[doc.ID().String()] = struct{}{}
+
+		// check for any secondary relation fields that could publish an event
+		for f, v := range doc.Values() {
+			field, ok := def.GetFieldByName(f.Name())
+			if !ok {
+				continue // ignore unknown field
+			}
+			_, ok = field.GetSecondaryRelationField(def)
+			if ok {
+				expect[v.Value().(string)] = struct{}{}
+			}
+		}
+	}
+
+	return expect
+}
+
+// getEventsForUpdateWithFilter returns a map of docIDs that should be
+// published to the local event bus after a UpdateWithFilter action.
+//
+// This will take into account any primary documents that are patched as a result
+// of the create or update.
+func getEventsForUpdateWithFilter(
+	s *state,
+	action UpdateWithFilter,
+	result *client.UpdateResult,
+) map[string]struct{} {
+	var collection client.Collection
+	if action.NodeID.HasValue() {
+		collection = s.collections[action.NodeID.Value()][action.CollectionID]
+	} else {
+		collection = s.collections[0][action.CollectionID]
+	}
+
+	var docPatch map[string]any
+	err := json.Unmarshal([]byte(action.Updater), &docPatch)
+	require.NoError(s.t, err)
+
+	def := collection.Definition()
+	expect := make(map[string]struct{})
+
+	for _, docID := range result.DocIDs {
+		expect[docID] = struct{}{}
+
+		// check for any secondary relation fields that could publish an event
+		for name, value := range docPatch {
+			field, ok := def.GetFieldByName(name)
+			if !ok {
+				continue // ignore unknown field
+			}
+			_, ok = field.GetSecondaryRelationField(def)
+			if ok {
+				expect[value.(string)] = struct{}{}
+			}
+		}
+	}
+
+	return expect
 }

@@ -56,16 +56,22 @@ func TestQueryWithIndex_IfIntFieldInDescOrder_ShouldFetchInRevertedOrder(t *test
 							age
 						}
 					}`,
-				Results: []map[string]any{{
-					"name": "Bob",
-					"age":  24,
-				}, {
-					"name": "Kate",
-					"age":  23,
-				}, {
-					"name": "Alice",
-					"age":  22,
-				}},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  24,
+						},
+						{
+							"name": "Kate",
+							"age":  23,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -113,16 +119,22 @@ func TestQueryWithIndex_IfFloatFieldInDescOrder_ShouldFetchInRevertedOrder(t *te
 							iq
 						}
 					}`,
-				Results: []map[string]any{{
-					"name": "Bob",
-					"iq":   0.4,
-				}, {
-					"name": "Kate",
-					"iq":   0.3,
-				}, {
-					"name": "Alice",
-					"iq":   0.2,
-				}},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"iq":   0.4,
+						},
+						{
+							"name": "Kate",
+							"iq":   0.3,
+						},
+						{
+							"name": "Alice",
+							"iq":   0.2,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -165,13 +177,19 @@ func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *t
 							name
 						}
 					}`,
-				Results: []map[string]any{{
-					"name": "Andy",
-				}, {
-					"name": "Alice",
-				}, {
-					"name": "Aaron",
-				}},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Andy",
+						},
+						{
+							"name": "Alice",
+						},
+						{
+							"name": "Aaron",
+						},
+					},
+				},
 			},
 		},
 	}

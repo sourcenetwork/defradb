@@ -30,10 +30,12 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(30),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
 					},
 				},
 			},
@@ -100,10 +102,12 @@ func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(30),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
 					},
 				},
 			},
@@ -131,18 +135,20 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"age":  int64(30),
-					},
-					{
-						"name": "Bob",
-						"age":  int64(32),
-					},
-					{
-						"name": "Smith",
-						"age":  int64(31),
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+						{
+							"name": "Bob",
+							"age":  int64(32),
+						},
+						{
+							"name": "Smith",
+							"age":  int64(31),
+						},
 					},
 				},
 			},
@@ -165,9 +171,11 @@ func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": nil,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": nil,
+						},
 					},
 				},
 			},
@@ -197,7 +205,9 @@ func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 						}
 					}`,
 				// No documents should have been commited
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}

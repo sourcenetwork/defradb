@@ -39,11 +39,13 @@ func TestDocEncryptionField_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                             age
                         }
                     }`,
-				Results: []map[string]any{
-					{
-						"_docID": testUtils.NewDocIndex(0, 0),
-						"name":   "John",
-						"age":    int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": testUtils.NewDocIndex(0, 0),
+							"name":   "John",
+							"age":    int64(21),
+						},
 					},
 				},
 			},

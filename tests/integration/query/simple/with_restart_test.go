@@ -43,10 +43,12 @@ func TestQuerySimpleWithRestart(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
-						"age":  int64(30),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"age":  int64(30),
+						},
 					},
 				},
 			},

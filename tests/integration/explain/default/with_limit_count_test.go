@@ -36,18 +36,20 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T)
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"countNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": limitTypeJoinPattern,
-											},
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"countNode": dataMap{
+										"selectNode": dataMap{
+											"parallelNode": []dataMap{
+												{
+													"typeIndexJoin": limitTypeJoinPattern,
+												},
+												{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
 											},
 										},
 									},
@@ -105,19 +107,21 @@ func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *t
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"limitNode": dataMap{
-									"countNode": dataMap{
-										"selectNode": dataMap{
-											"parallelNode": []dataMap{
-												{
-													"typeIndexJoin": limitTypeJoinPattern,
-												},
-												{
-													"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"limitNode": dataMap{
+										"countNode": dataMap{
+											"selectNode": dataMap{
+												"parallelNode": []dataMap{
+													{
+														"typeIndexJoin": limitTypeJoinPattern,
+													},
+													{
+														"typeIndexJoin": normalTypeJoinPattern,
+													},
 												},
 											},
 										},

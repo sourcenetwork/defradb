@@ -471,18 +471,15 @@ func (g *Generator) buildTypes(
 				}
 
 				var ttype gql.Type
-				if field.Kind.IsObject() && !field.Kind.IsArray() {
+				if field.Kind.IsObject() {
 					var ok bool
 					ttype, ok = g.manager.schema.TypeMap()[field.Kind.Underlying()]
 					if !ok {
 						return nil, NewErrTypeNotFound(field.Kind.Underlying())
 					}
-				} else if field.Kind.IsObjectArray() {
-					t, ok := g.manager.schema.TypeMap()[field.Kind.Underlying()]
-					if !ok {
-						return nil, NewErrTypeNotFound(field.Kind.Underlying())
+					if field.Kind.IsArray() {
+						ttype = gql.NewList(ttype)
 					}
-					ttype = gql.NewList(t)
 				} else {
 					var ok bool
 					ttype, ok = fieldKindToGQLType[field.Kind]
@@ -576,10 +573,12 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 				}
 
 				var ttype gql.Type
-				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					ttype = gql.ID
-				} else if field.Kind.IsObjectArray() {
-					ttype = gql.NewList(gql.ID)
+				if field.Kind.IsObject() {
+					if field.Kind.IsArray() {
+						ttype = gql.NewList(gql.ID)
+					} else {
+						ttype = gql.ID
+					}
 				} else {
 					var ok bool
 					ttype, ok = fieldKindToGQLType[field.Kind]
@@ -1058,7 +1057,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 	create := &gql.Field{
 		Name:        "create_" + obj.Name(),
 		Description: createDocumentDescription,
-		Type:        obj,
+		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.Input: schemaTypes.NewArgConfig(mutationInput, "Create a "+obj.Name()+" document"),
 			request.Inputs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),

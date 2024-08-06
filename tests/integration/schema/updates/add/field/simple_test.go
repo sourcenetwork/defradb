@@ -47,7 +47,9 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 			testUtils.GetSchema{
 				VersionID: immutable.Some(schemaVersion2ID),
@@ -195,7 +197,9 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -229,7 +233,9 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 						city
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -269,7 +275,9 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 						city
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -338,7 +346,9 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

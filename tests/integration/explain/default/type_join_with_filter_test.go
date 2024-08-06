@@ -39,12 +39,14 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": normalTypeJoinPattern,
+									},
 								},
 							},
 						},
@@ -115,17 +117,19 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"parallelNode": []dataMap{
-										{
-											"typeIndexJoin": normalTypeJoinPattern,
-										},
-										{
-											"typeIndexJoin": normalTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
 										},
 									},
 								},

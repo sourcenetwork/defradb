@@ -49,14 +49,16 @@ func TestQuerySimple_WithDeletedField(t *testing.T) {
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"name":     "John",
-					},
-					{
-						"_deleted": true,
-						"name":     "Andy",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_deleted": true,
+							"name":     "John",
+						},
+						{
+							"_deleted": true,
+							"name":     "Andy",
+						},
 					},
 				},
 			},

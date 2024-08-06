@@ -38,10 +38,8 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_count": 2,
-			},
+		Results: map[string]any{
+			"_count": 2,
 		},
 	}
 
@@ -73,10 +71,8 @@ func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]any{
-			{
-				"_count": 2,
-			},
+		Results: map[string]any{
+			"_count": 2,
 		},
 	}
 

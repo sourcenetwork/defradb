@@ -58,9 +58,11 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t 
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
 			},
@@ -109,9 +111,11 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
 			},
@@ -161,10 +165,12 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 						Email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "John",
-						"Email": "imnotyourbuddyguy@source.ca",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "John",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
 					},
 				},
 			},
