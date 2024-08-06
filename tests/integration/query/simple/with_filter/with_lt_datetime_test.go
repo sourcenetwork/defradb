@@ -17,31 +17,35 @@ import (
 )
 
 func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic lt DateTime filter with equal value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_lt: "2017-07-25T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_lt: "2017-07-25T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -51,28 +55,32 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic lt DateTime filter with null value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_lt: null}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_lt: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
 		},
 	}
 

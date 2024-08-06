@@ -17,9 +17,17 @@ import (
 )
 
 func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Embedded latest commits query within object query",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						Age
@@ -32,30 +40,24 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
-					"_version": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"cid": "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
-							"links": []map[string]any{
+							"Name": "John",
+							"Age":  int64(21),
+							"_version": []map[string]any{
 								{
-									"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
-									"name": "Age",
-								},
-								{
-									"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
-									"name": "Name",
+									"cid": "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+									"links": []map[string]any{
+										{
+											"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
+											"name": "Age",
+										},
+										{
+											"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
+											"name": "Name",
+										},
+									},
 								},
 							},
 						},
@@ -69,9 +71,17 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 }
 
 func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Embedded commits query within object query with schema version id",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						_version {
@@ -79,21 +89,15 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_version": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"schemaVersionId": "bafkreigqmcqzkbg3elpe24vfza4rjle2r6cxu7ihzvg56aov57crhaebry",
+							"Name": "John",
+							"_version": []map[string]any{
+								{
+									"schemaVersionId": "bafkreigqmcqzkbg3elpe24vfza4rjle2r6cxu7ihzvg56aov57crhaebry",
+								},
+							},
 						},
 					},
 				},
@@ -107,9 +111,17 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Embedded commits query within object query with document ID",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						_docID
@@ -118,22 +130,16 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name":   "John",
-					"_docID": docID,
-					"_version": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"docID": docID,
+							"Name":   "John",
+							"_docID": docID,
+							"_version": []map[string]any{
+								{
+									"docID": docID,
+								},
+							},
 						},
 					},
 				},
@@ -145,9 +151,17 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 }
 
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						Age
@@ -163,38 +177,32 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
-					"_version": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"cid": "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
-							"L1": []map[string]any{
+							"Name": "John",
+							"Age":  int64(21),
+							"_version": []map[string]any{
 								{
-									"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
-									"name": "Age",
-								},
-								{
-									"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
-									"name": "Name",
-								},
-							},
-							"L2": []map[string]any{
-								{
-									"name": "Age",
-								},
-								{
-									"name": "Name",
+									"cid": "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+									"L1": []map[string]any{
+										{
+											"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
+											"name": "Age",
+										},
+										{
+											"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
+											"name": "Name",
+										},
+									},
+									"L2": []map[string]any{
+										{
+											"name": "Age",
+										},
+										{
+											"name": "Name",
+										},
+									},
 								},
 							},
 						},

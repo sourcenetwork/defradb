@@ -17,44 +17,52 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageWithLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, limited average on non-rendered group integer value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 28
+				}`,
+			},
+			testUtils.CreateDoc{
+				// It is important to test negative values here, due to the auto-typing of numbers
+				Doc: `{
+					"Name": "Alice",
+					"Age": -19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, limit: 2})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "John",
-					"Age": 38
-				}`,
-				`{
-					"Name": "John",
-					"Age": 28
-				}`,
-				// It is important to test negative values here, due to the auto-typing of numbers
-				`{
-					"Name": "Alice",
-					"Age": -19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(33),
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(-19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_avg": float64(33),
+						},
+						{
+							"Name": "Alice",
+							"_avg": float64(-19),
+						},
+					},
 				},
 			},
 		},

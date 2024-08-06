@@ -765,147 +765,185 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 }
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many query with groupBy on related id field alias (from single side).",
-		Request: `query {
-			Author(groupBy: [published]) {
-				_group {
-					name
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
 					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
 					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
 					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
-			//authors
-			1: {
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Simon Pelloutier",
 					"age": 327,
 					"verified": true
 				}`,
 			},
+			testUtils.Request{
+				Request: `query {
+					Author(groupBy: [published]) {
+						_group {
+							name
+						}
+					}
+				}`,
+				ExpectedError: "invalid field value to groupBy. Field: published",
+			},
 		},
-
-		ExpectedError: "invalid field value to groupBy. Field: published",
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSideUsingAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many query with groupBy on related id field alias, with id selection (from single side).",
-		Request: `query {
-			Author(groupBy: [published]) {
-				published_id
-				_group {
-					name
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
 					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
 					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
 					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
 				}`,
 			},
-			//authors
-			1: {
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Voltaire",
 					"age": 327,
 					"verified": true
 				}`,
-				// bae-34a9bd41-1f0d-5748-8446-48fc36ef2614
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Simon Pelloutier",
 					"age": 327,
 					"verified": true
 				}`,
 			},
+			testUtils.Request{
+				Request: `query {
+					Author(groupBy: [published]) {
+						published_id
+						_group {
+							name
+						}
+					}
+				}`,
+				ExpectedError: "Cannot query field \"published_id\" on type \"Author\". ",
+			},
 		},
-
-		ExpectedError: "Cannot query field \"published_id\" on type \"Author\". ",
 	}
 
 	executeTestCase(t, test)

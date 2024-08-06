@@ -17,39 +17,45 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, unfiltered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":    int64(32),
-					"_count": 2,
-				},
-				{
-					"Age":    int64(19),
-					"_count": 0,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":    int64(32),
+							"_count": 2,
+						},
+						{
+							"Age":    int64(19),
+							"_count": 0,
+						},
+					},
 				},
 			},
 		},
@@ -59,9 +65,29 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, filtered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
@@ -70,42 +96,28 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":    int64(32),
-					"_count": 2,
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Age":    int64(32),
+							"_count": 2,
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
 						},
 						{
-							"Name": "John",
-						},
-					},
-				},
-				{
-					"Age":    int64(19),
-					"_count": 0,
-					"_group": []map[string]any{
-						{
-							"Name": "Alice",
+							"Age":    int64(19),
+							"_count": 0,
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
 						},
 					},
 				},
@@ -117,9 +129,29 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithMatchingFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, matching filtered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Name: {_eq: "John"}}})
@@ -128,37 +160,23 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":    int64(32),
-					"_count": 1,
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Age":    int64(32),
+							"_count": 1,
+							"_group": []map[string]any{
+								{
+									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age":    int64(19),
+							"_count": 0,
+							"_group": []map[string]any{},
 						},
 					},
-				},
-				{
-					"Age":    int64(19),
-					"_count": 0,
-					"_group": []map[string]any{},
 				},
 			},
 		},
@@ -168,9 +186,29 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithDifferentFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, different group filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
@@ -179,37 +217,23 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":    int64(32),
-					"_count": 2,
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Age":    int64(32),
+							"_count": 2,
+							"_group": []map[string]any{
+								{
+									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age":    int64(19),
+							"_count": 0,
+							"_group": []map[string]any{},
 						},
 					},
-				},
-				{
-					"Age":    int64(19),
-					"_count": 0,
-					"_group": []map[string]any{},
 				},
 			},
 		},
@@ -219,42 +243,48 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDifferentFilters(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, multiple counts on non-rendered, unfiltered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						C1: _count(_group: {filter: {Age: {_gt: 26}}})
 						C2: _count(_group: {filter: {Age: {_lt: 26}}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(32),
-					"C1":  2,
-					"C2":  0,
-				},
-				{
-					"Age": int64(19),
-					"C1":  0,
-					"C2":  1,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(32),
+							"C1":  2,
+							"C2":  0,
+						},
+						{
+							"Age": int64(19),
+							"C1":  0,
+							"C2":  1,
+						},
+					},
 				},
 			},
 		},

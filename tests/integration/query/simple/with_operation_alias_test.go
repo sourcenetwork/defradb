@@ -17,29 +17,31 @@ import (
 )
 
 func TestQuerySimpleWithOperationAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with operation alias",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					allUsers: Users {
 						_docID
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"allUsers": []map[string]any{
-				{
-					"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
-					"Name":   "John",
-					"Age":    int64(21),
+				Results: map[string]any{
+					"allUsers": []map[string]any{
+						{
+							"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
+							"Name":   "John",
+							"Age":    int64(21),
+						},
+					},
 				},
 			},
 		},

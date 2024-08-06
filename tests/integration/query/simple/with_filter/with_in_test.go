@@ -17,43 +17,51 @@ import (
 )
 
 func TestQuerySimpleWithIntInFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with special filter (or)",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_in: [19, 40, 55]}}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Carlo",
-					"Age":  int64(55),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
+						},
+					},
 				},
 			},
 		},
@@ -63,40 +71,48 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with _in filter on float",
-		Request: `query {
-					Users(filter: {HeightM: {_in: [21, 21.2]}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 21.0
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 21.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Carlo",
 					"HeightM": 21.2
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Alice",
 					"HeightM": 21.3
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Carlo",
-				},
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_in: [21, 21.2]}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+						},
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -106,50 +122,60 @@ func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with special filter (or)",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_in: [19, 40, 55, null]}}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-				`{
-					"Name": "Fred"
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Fred",
-					"Age":  nil,
-				},
-				{
-					"Name": "Carlo",
-					"Age":  int64(55),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Fred",
+							"Age":  nil,
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
+						},
+					},
 				},
 			},
 		},

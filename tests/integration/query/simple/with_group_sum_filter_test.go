@@ -17,39 +17,45 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":  int64(32),
-					"_sum": int64(64),
-				},
-				{
-					"Age":  int64(19),
-					"_sum": int64(0),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":  int64(32),
+							"_sum": int64(64),
+						},
+						{
+							"Age":  int64(19),
+							"_sum": int64(0),
+						},
+					},
 				},
 			},
 		},
@@ -59,9 +65,29 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, sum on rendered, unfiltered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
@@ -70,42 +96,28 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":  int64(32),
-					"_sum": int64(64),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Age":  int64(32),
+							"_sum": int64(64),
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
 						},
 						{
-							"Name": "John",
-						},
-					},
-				},
-				{
-					"Age":  int64(19),
-					"_sum": int64(0),
-					"_group": []map[string]any{
-						{
-							"Name": "Alice",
+							"Age":  int64(19),
+							"_sum": int64(0),
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
 						},
 					},
 				},
@@ -117,9 +129,29 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithMatchingFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, sum on rendered, matching filtered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Name: {_eq: "John"}}})
@@ -128,37 +160,23 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":  int64(32),
-					"_sum": int64(32),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Age":  int64(32),
+							"_sum": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age":    int64(19),
+							"_sum":   int64(0),
+							"_group": []map[string]any{},
 						},
 					},
-				},
-				{
-					"Age":    int64(19),
-					"_sum":   int64(0),
-					"_group": []map[string]any{},
 				},
 			},
 		},
@@ -168,9 +186,29 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithDifferentFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, different filtered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
@@ -179,37 +217,23 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age":  int64(32),
-					"_sum": int64(64),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Age":  int64(32),
+							"_sum": int64(64),
+							"_group": []map[string]any{
+								{
+									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age":    int64(19),
+							"_sum":   int64(0),
+							"_group": []map[string]any{},
 						},
 					},
-				},
-				{
-					"Age":    int64(19),
-					"_sum":   int64(0),
-					"_group": []map[string]any{},
 				},
 			},
 		},
@@ -219,42 +243,48 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDifferentFilters(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						S1: _sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						S2: _sum(_group: {field: Age, filter: {Age: {_lt: 26}}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Age": int64(32),
-					"S1":  int64(64),
-					"S2":  int64(0),
-				},
-				{
-					"Age": int64(19),
-					"S1":  int64(0),
-					"S2":  int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(32),
+							"S1":  int64(64),
+							"S2":  int64(0),
+						},
+						{
+							"Age": int64(19),
+							"S1":  int64(0),
+							"S2":  int64(19),
+						},
+					},
 				},
 			},
 		},

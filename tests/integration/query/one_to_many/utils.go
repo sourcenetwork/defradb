@@ -31,6 +31,19 @@ var bookAuthorGQLSchema = (`
 	}
 `)
 
-func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, bookAuthorGQLSchema, []string{"Book", "Author"}, test)
+func executeTestCase(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
+		t,
+		testUtils.TestCase{
+			Description: test.Description,
+			Actions: append(
+				[]any{
+					testUtils.SchemaUpdate{
+						Schema: bookAuthorGQLSchema,
+					},
+				},
+				test.Actions...,
+			),
+		},
+	)
 }
