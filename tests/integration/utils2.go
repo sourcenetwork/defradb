@@ -1866,7 +1866,9 @@ func assertRequestResults(
 		keys[key] = struct{}{}
 	}
 
+	stack := &assertStack{}
 	for key := range keys {
+		stack.pushMap(key)
 		expect, ok := expectedResults[key]
 		require.True(s.t, ok, "expected key not found: %s", key)
 
@@ -1881,16 +1883,19 @@ func assertRequestResults(
 				nodeID,
 				expectDocs,
 				actualDocs,
-				anyOfByField)
+				anyOfByField,
+				stack,
+			)
 		} else {
 			assertResultsEqual(
 				s.t,
 				s.clientType,
 				expect,
 				actual,
-				fmt.Sprintf("node: %v, key: %v", nodeID, key),
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 			)
 		}
+		stack.pop()
 	}
 
 	return false
@@ -1902,12 +1907,14 @@ func assertRequestResultDocs(
 	expectedResults []map[string]any,
 	actualResults []map[string]any,
 	anyOfByField map[docFieldKey][]any,
+	stack *assertStack,
 ) bool {
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(actualResults),
 		s.testCase.Description+" \n(number of results don't match)")
 
 	for actualDocIndex, actualDoc := range actualResults {
+		stack.pushArray(actualDocIndex)
 		expectedDoc := expectedResults[actualDocIndex]
 
 		require.Equal(
@@ -1922,6 +1929,7 @@ func assertRequestResultDocs(
 		)
 
 		for field, actualValue := range actualDoc {
+			stack.pushMap(field)
 			switch expectedValue := expectedDoc[field].(type) {
 			case AnyOf:
 				assertResultsAnyOf(s.t, s.clientType, expectedValue, actualValue)
@@ -1937,7 +1945,7 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedDocID,
 					actualValue,
-					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			case []map[string]any:
 				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
@@ -1948,6 +1956,7 @@ func assertRequestResultDocs(
 					expectedValue,
 					actualValueMap,
 					anyOfByField,
+					stack,
 				)
 
 			default:
@@ -1956,10 +1965,12 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedValue,
 					actualValue,
-					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			}
+			stack.pop()
 		}
+		stack.pop()
 	}
 
 	return false
