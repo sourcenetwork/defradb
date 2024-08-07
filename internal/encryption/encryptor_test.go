@@ -44,7 +44,7 @@ func getEncKey(fieldName immutable.Option[string]) []byte {
 }
 
 func getCipherText(t *testing.T, fieldName immutable.Option[string]) []byte {
-	cipherText, err := crypto.EncryptAES(getPlainText(), getEncKey(fieldName))
+	cipherText, _, err := crypto.EncryptAES(getPlainText(), getEncKey(fieldName), nil, true)
 	assert.NoError(t, err)
 	return cipherText
 }
