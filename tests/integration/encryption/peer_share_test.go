@@ -405,4 +405,3 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 
 	testUtils.ExecuteTestCase(t, test)
 }
-

@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -69,7 +70,10 @@ func (s *server) getEncryptionKeys(
 	return encryptionKeys, targets, nil
 }
 
-func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptionKeyRequest) (*pb.FetchEncryptionKeyReply, error) {
+func (s *server) TryGenEncryptionKey(
+	ctx context.Context,
+	req *pb.FetchEncryptionKeyRequest,
+) (*pb.FetchEncryptionKeyReply, error) {
 	peerID, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -176,10 +180,10 @@ func (s *server) pubSubEncryptionMessageHandler(from libpeer.ID, topic string, m
 	})
 	res, err := s.TryGenEncryptionKey(ctx, req)
 	if err != nil {
-		return nil, errors.Wrap("Failed attempt to get encryption key", err)
+		log.ErrorContextE(s.peer.ctx, "failed attempt to get encryption key", err)
+		return nil, errors.Wrap("failed attempt to get encryption key", err)
 	}
 	return res.MarshalVT()
-	//return proto.Marshal(res)
 }
 
 func (s *server) prepareFetchEncryptionKeyRequest(

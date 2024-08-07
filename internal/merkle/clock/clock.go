@@ -164,7 +164,11 @@ func (mc *MerkleClock) determineBlockEncryptionData(
 	return nil, nil
 }
 
-func encryptBlock(ctx context.Context, block *coreblock.Block, blockEnc *coreblock.Encryption) (*coreblock.Block, error) {
+func encryptBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockEnc *coreblock.Encryption,
+) (*coreblock.Block, error) {
 	clonedCRDT := block.Delta.Clone()
 	fieldName := immutable.None[string]()
 	if blockEnc.Type == coreblock.FieldEncrypted {

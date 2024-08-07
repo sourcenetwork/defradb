@@ -65,17 +65,17 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 
 	sharedSecret, err := ephemeralPrivate.ECDH(publicKey)
 	if err != nil {
-		return nil, fmt.Errorf("ECDH failed: %w", err)
+		return nil, fmt.Errorf("failed ECDH operation: %w", err)
 	}
 
 	kdf := hkdf.New(sha256.New, sharedSecret, nil, nil)
 	aesKey := make([]byte, AESKeySize)
 	hmacKey := make([]byte, HMACSize)
 	if _, err := kdf.Read(aesKey); err != nil {
-		return nil, fmt.Errorf("KDF failed for AES key: %w", err)
+		return nil, fmt.Errorf("failed KDF operation for AES key: %w", err)
 	}
 	if _, err := kdf.Read(hmacKey); err != nil {
-		return nil, fmt.Errorf("KDF failed for HMAC key: %w", err)
+		return nil, fmt.Errorf("failed KDF operation for HMAC key: %w", err)
 	}
 
 	fullAssociatedData := append(ephemeralPublic.Bytes(), associatedData...)
@@ -126,17 +126,17 @@ func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData
 
 	sharedSecret, err := privateKey.ECDH(ephemeralPublic)
 	if err != nil {
-		return nil, fmt.Errorf("ECDH failed: %w", err)
+		return nil, fmt.Errorf("failed ECDH operation: %w", err)
 	}
 
 	kdf := hkdf.New(sha256.New, sharedSecret, nil, nil)
 	aesKey := make([]byte, AESKeySize)
 	hmacKey := make([]byte, HMACSize)
 	if _, err := kdf.Read(aesKey); err != nil {
-		return nil, fmt.Errorf("KDF failed for AES key: %w", err)
+		return nil, fmt.Errorf("failed KDF operation for AES key: %w", err)
 	}
 	if _, err := kdf.Read(hmacKey); err != nil {
-		return nil, fmt.Errorf("KDF failed for HMAC key: %w", err)
+		return nil, fmt.Errorf("failed KDF operation for HMAC key: %w", err)
 	}
 
 	macSum := cipherText[len(cipherText)-HMACSize:]
@@ -146,7 +146,7 @@ func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData
 	mac.Write(cipherTextWithNonce)
 	expectedMAC := mac.Sum(nil)
 	if !hmac.Equal(macSum, expectedMAC) {
-		return nil, fmt.Errorf("HMAC verification failed")
+		return nil, fmt.Errorf("verification with HMAC failed")
 	}
 
 	fullAssociatedData := append(ephemeralPublicBytes, associatedData...)

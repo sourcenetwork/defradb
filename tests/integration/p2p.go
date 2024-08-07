@@ -13,10 +13,11 @@ package tests
 import (
 	"time"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"

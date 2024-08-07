@@ -23,9 +23,10 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/multiformats/go-multicodec"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/immutable"
 )
 
 // Schema is the IPLD schema type that represents a `Block`.

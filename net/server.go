@@ -106,7 +106,8 @@ func (s *server) extractSessionAndRemoveOldOnes(id string) *session {
 	}
 	for i, session := range s.sessions {
 		if session.id == id {
-			result = &session
+			tmpSession := session
+			result = &tmpSession
 			swapLast(i)
 		} else if time.Since(session.t) > sessionTimeout {
 			swapLast(i)

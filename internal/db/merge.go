@@ -175,7 +175,7 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 		}
 
 		for _, block := range blocks {
-					mp.blocks.PushFront(block)
+			mp.blocks.PushFront(block)
 		}
 		err = mp.mergeBlocks(ctx, true)
 		if err != nil {
@@ -310,8 +310,8 @@ func (mp *mergeProcessor) loadBlocks(
 		prevCid := block.GetPrevBlockCid()
 		if prevCid.HasValue() {
 			err := mp.loadBlocks(ctx, prevCid.Value(), mt, willDecrypt)
-				if err != nil {
-					return err
+			if err != nil {
+				return err
 			}
 		}
 	} else {
