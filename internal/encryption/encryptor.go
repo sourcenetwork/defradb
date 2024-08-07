@@ -136,7 +136,8 @@ func (d *DocEncryptor) Encrypt(
 			return nil, err
 		}
 	}
-	return crypto.EncryptAES(plainText, encryptionKey)
+	cipherText, _, err := crypto.EncryptAES(plainText, encryptionKey, nil, true)
+	return cipherText, err
 }
 
 // Decrypt decrypts the given cipherText that is associated with the given docID and fieldName.
@@ -154,7 +155,7 @@ func (d *DocEncryptor) Decrypt(
 	if len(encKey) == 0 {
 		return nil, nil
 	}
-	return crypto.DecryptAES(cipherText, encKey)
+	return crypto.DecryptAES(nil, cipherText, encKey, nil)
 }
 
 func (d *DocEncryptor) fetchByEncStoreKey(storeKey core.EncStoreDocKey) ([]byte, error) {

@@ -50,6 +50,6 @@ func updateUserCollectionSchema() testUtils.SchemaUpdate {
 func encrypt(plaintext []byte, docID, fieldName string) []byte {
 	const keyLength = 32
 	const testEncKey = "examplekey1234567890examplekey12"
-	val, _ := crypto.EncryptAES(plaintext, []byte(fieldName + docID + testEncKey)[0:keyLength])
+	val, _, _ := crypto.EncryptAES(plaintext, []byte(fieldName + docID + testEncKey)[0:keyLength], nil, true)
 	return val
 }

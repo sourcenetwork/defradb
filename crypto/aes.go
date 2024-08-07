@@ -18,33 +18,42 @@ import (
 
 // EncryptAES encrypts data using AES-GCM with a provided key.
 // The nonce is prepended to the cipherText.
-func EncryptAES(plainText, key []byte) ([]byte, error) {
+func EncryptAES(plainText, key, additionalData []byte, prependNonce bool) ([]byte, []byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	nonce, err := generateNonceFunc()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	cipherText := aesGCM.Seal(nonce, nonce, plainText, nil)
+	var cipherText []byte
+	if prependNonce {
+		cipherText = aesGCM.Seal(nonce, nonce, plainText, additionalData)
+	} else {
+		cipherText = aesGCM.Seal(nil, nonce, plainText, additionalData)
+	}
 
-	return cipherText, nil
+	return cipherText, nonce, nil
 }
 
 // DecryptAES decrypts AES-GCM encrypted data with a provided key.
 // The nonce is expected to be prepended to the cipherText.
-func DecryptAES(cipherText, key []byte) ([]byte, error) {
-	if len(cipherText) < AESNonceSize {
-		// TODO return typed error
-		return nil, fmt.Errorf("cipherText too short")
+func DecryptAES(nonce, cipherText, key, additionalData []byte) ([]byte, error) {
+	if len(nonce) == 0 {
+		if len(cipherText) < AESNonceSize {
+			// TODO return typed error
+			return nil, fmt.Errorf("cipherText too short")
+		}
+		nonce = cipherText[:AESNonceSize]
+		cipherText = cipherText[AESNonceSize:]
 	}
 
 	block, err := aes.NewCipher(key)
@@ -52,15 +61,12 @@ func DecryptAES(cipherText, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce := cipherText[:AESNonceSize]
-	cipherText = cipherText[AESNonceSize:]
-
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
 
-	plainText, err := aesGCM.Open(nil, nonce, cipherText, nil)
+	plainText, err := aesGCM.Open(nil, nonce, cipherText, additionalData)
 	if err != nil {
 		return nil, err
 	}

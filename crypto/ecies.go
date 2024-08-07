@@ -61,7 +61,7 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey) ([]byte, error) {
 		return nil, fmt.Errorf("KDF failed for HMAC key: %w", err)
 	}
 
-	cipherText, err := EncryptAES(plainText, aesKey)
+	cipherText, _, err := EncryptAES(plainText, aesKey, nil, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt: %w", err)
 	}
@@ -112,7 +112,7 @@ func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey) ([]byte, error
 		return nil, fmt.Errorf("HMAC verification failed")
 	}
 
-	plainText, err := DecryptAES(cipherText[X25519PublicKeySize:], aesKey)
+	plainText, err := DecryptAES(nil, cipherText[X25519PublicKeySize:], aesKey, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt: %w", err)
 	}
