@@ -13,6 +13,7 @@
 package net
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdh"
 	"crypto/sha256"
@@ -39,7 +40,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -218,7 +218,7 @@ func (s *server) getEncryptionKeys(
 			continue
 		}
 		targets = append(targets, target)
-		encryptionKeys = encoding.EncodeBytesAscending(encryptionKeys, encKey)
+		encryptionKeys = append(encryptionKeys, encKey...)
 	}
 	return encryptionKeys, targets, nil
 }
@@ -239,8 +239,8 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.New("invalid signature")
 	}
 
-	encKey, targets, err := s.getEncryptionKeys(ctx, req)
-	if err != nil || len(encKey) == 0 {
+	encryptionKeys, targets, err := s.getEncryptionKeys(ctx, req)
+	if err != nil || len(encryptionKeys) == 0 {
 		return nil, err
 	}
 
@@ -249,7 +249,7 @@ func (s *server) TryGenEncryptionKey(ctx context.Context, req *pb.FetchEncryptio
 		return nil, errors.Wrap("failed to unmarshal ephemeral public key", err)
 	}
 
-	encryptedKey, err := crypto.EncryptECIES(encKey, reqEphPubKey)
+	encryptedKey, err := crypto.EncryptECIES(encryptionKeys, reqEphPubKey, makeAssociatedData(req, s.peer.PeerID()))
 	if err != nil {
 		return nil, errors.Wrap("failed to encrypt key for requester", err)
 	}
@@ -555,9 +555,19 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	decryptedData, err := crypto.DecryptECIES(keyResp.EncryptedKeys, session.privateKey)
+	decryptedData, err := crypto.DecryptECIES(
+		keyResp.EncryptedKeys,
+		session.privateKey,
+		makeAssociatedData(req, resp.From),
+	)
+
 	if err != nil {
 		log.ErrorContextE(s.peer.ctx, "Failed to decrypt encryption key", err)
+		return
+	}
+
+	if len(decryptedData) != crypto.AESKeySize*len(keyResp.Targets) {
+		log.ErrorContext(s.peer.ctx, "Invalid decrypted data length")
 		return
 	}
 
@@ -568,17 +578,22 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 			optFieldName = immutable.Some(target.FieldName)
 		}
 
-		var encKey []byte
-		decryptedData, encKey, err = encoding.DecodeBytesAscending(decryptedData)
-		if err != nil {
-			log.ErrorContextE(s.peer.ctx, "Failed to decode encrypted key", err)
-			return
-		}
+		encKey := decryptedData[:crypto.AESKeySize]
+		decryptedData = decryptedData[crypto.AESKeySize:]
 
 		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName, target.Height)] = encKey
 	}
 
 	s.peer.bus.Publish(encryption.NewKeysRetrievedMessage(string(req.SchemaRoot), eventData))
+}
+
+// makeAssociatedData creates the associated data for the encryption key request
+func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
+	return bytes.Join([][]byte{
+		[]byte(req.SchemaRoot),
+		[]byte(req.EphemeralPublicKey),
+		[]byte(peerID),
+	}, []byte{})
 }
 
 func (s *server) verifyResponseSignature(res *pb.FetchEncryptionKeyReply, fromPeer peer.ID) (bool, error) {
