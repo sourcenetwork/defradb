@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -147,9 +146,12 @@ func connectPeers(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
-	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
-	sourceNode.Bootstrap(addrs)
+	log.InfoContext(s.ctx, "Connect peers",
+		corelog.Any("Source", sourceNode.PeerInfo()),
+		corelog.Any("Target", targetNode.PeerInfo()))
+
+	err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
+	require.NoError(s.t, err)
 
 	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
 	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
@@ -285,6 +287,23 @@ func getAllP2PCollections(
 	require.NoError(s.t, err)
 
 	assert.Equal(s.t, expectedCollections, cols)
+}
+
+// reconnectPeers makes sure that all peers are connected after a node restart action.
+func reconnectPeers(s *state) {
+	for i, n := range s.nodeP2P {
+		for j := range n.connections {
+			sourceNode := s.nodes[i]
+			targetNode := s.nodes[j]
+
+			log.InfoContext(s.ctx, "Connect peers",
+				corelog.Any("Source", sourceNode.PeerInfo()),
+				corelog.Any("Target", targetNode.PeerInfo()))
+
+			err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
+			require.NoError(s.t, err)
+		}
+	}
 }
 
 func RandomNetworkingConfig() ConfigureNode {
