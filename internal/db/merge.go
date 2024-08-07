@@ -107,8 +107,8 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
 
 	type mergeGroup struct {
-		includeComposite bool
-		fields           []string
+		compositeKey core.EncStoreDocKey
+		fieldsKeys   []core.EncStoreDocKey
 	}
 
 	mergeGroups := make(map[string]mergeGroup)
@@ -117,9 +117,9 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 		g := mergeGroups[encStoreKey.DocID]
 
 		if encStoreKey.FieldName.HasValue() {
-			g.fields = append(g.fields, encStoreKey.FieldName.Value())
+			g.fieldsKeys = append(g.fieldsKeys, encStoreKey)
 		} else {
-			g.includeComposite = true
+			g.compositeKey = encStoreKey
 		}
 
 		mergeGroups[encStoreKey.DocID] = g
@@ -137,39 +137,46 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 			return err
 		}
 
-		// if we need to process the composite block, we load only it
-		// as the children will be loaded by the merge processor
+		var blocks []*coreblock.Block
+		// if merge ground includes composite, we process only the composite block and skip the field
+		// blocks, as they will be processed as part of the composite block anyway.
 		// Otherwise, we load the blocks for each field
-		if mergeGroup.includeComposite {
-			mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey.WithFieldId(core.COMPOSITE_NAMESPACE))
+		if mergeGroup.compositeKey.DocID != "" {
+			cids, err := getHeads(ctx, txn, dsKey.WithFieldId(core.COMPOSITE_NAMESPACE))
 			if err != nil {
 				return err
 			}
 
-			for _, block := range mt.heads {
-				mp.blocks.PushFront(block)
-				break
+			blocks, err = loadBlocksChainFromBlockstoreTillHeight(ctx, txn, cids, mergeGroup.compositeKey.BlockHeight)
+			if err != nil {
+				return err
 			}
 		} else {
-			for _, fieldName := range mergeGroup.fields {
-				fd, ok := mp.col.Definition().GetFieldByName(fieldName)
+			for _, fieldStoreKey := range mergeGroup.fieldsKeys {
+				fd, ok := mp.col.Definition().GetFieldByName(fieldStoreKey.FieldName.Value())
 				if !ok {
-					return client.NewErrFieldNotExist(fieldName)
+					return client.NewErrFieldNotExist(fieldStoreKey.FieldName.Value())
 				}
 
 				fieldDsKey := dsKey.WithFieldId(fd.ID.String())
-				mt, err := getHeadsAsMergeTarget(ctx, txn, fieldDsKey)
+
+				cids, err := getHeads(ctx, txn, fieldDsKey)
 				if err != nil {
 					return err
 				}
 
-				for _, block := range mt.heads {
-					mp.blocks.PushFront(block)
-					break
+				fieldBlocks, err := loadBlocksChainFromBlockstoreTillHeight(ctx, txn, cids, fieldStoreKey.BlockHeight)
+				if err != nil {
+					return err
 				}
+
+				blocks = append(blocks, fieldBlocks...)
 			}
 		}
 
+		for _, block := range blocks {
+					mp.blocks.PushFront(block)
+		}
 		err = mp.mergeBlocks(ctx, true)
 		if err != nil {
 			return err
@@ -300,12 +307,11 @@ func (mp *mergeProcessor) loadBlocks(
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.blocks.PushFront(block)
-		for _, link := range block.Links {
-			if link.Name == core.HEAD {
-				err := mp.loadBlocks(ctx, link.Cid, mt, willDecrypt)
+		prevCid := block.GetPrevBlockCid()
+		if prevCid.HasValue() {
+			err := mp.loadBlocks(ctx, prevCid.Value(), mt, willDecrypt)
 				if err != nil {
 					return err
-				}
 			}
 		}
 	} else {
@@ -545,21 +551,15 @@ func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string)
 // getHeadsAsMergeTarget retrieves the heads of the composite DAG for the given document
 // and returns them as a merge target.
 func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.DataStoreKey) (mergeTarget, error) {
-	headset := clock.NewHeadSet(txn.Headstore(), dsKey.ToHeadStoreKey())
+	cids, err := getHeads(ctx, txn, dsKey)
 
-	cids, _, err := headset.List(ctx)
 	if err != nil {
 		return mergeTarget{}, err
 	}
 
 	mt := newMergeTarget()
 	for _, cid := range cids {
-		b, err := txn.Blockstore().Get(ctx, cid)
-		if err != nil {
-			return mergeTarget{}, err
-		}
-
-		block, err := coreblock.GetFromBytes(b.RawData())
+		block, err := loadBlockFromBlockStore(ctx, txn, cid)
 		if err != nil {
 			return mergeTarget{}, err
 		}
@@ -569,6 +569,64 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.Da
 		mt.headHeight = block.Delta.GetPriority()
 	}
 	return mt, nil
+}
+
+// getHeads retrieves the heads associated with the given datastore key.
+func getHeads(ctx context.Context, txn datastore.Txn, dsKey core.DataStoreKey) ([]cid.Cid, error) {
+	headset := clock.NewHeadSet(txn.Headstore(), dsKey.ToHeadStoreKey())
+
+	cids, _, err := headset.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return cids, nil
+}
+
+// loadBlockFromBlockStore loads a block from the blockstore.
+func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid) (*coreblock.Block, error) {
+	b, err := txn.Blockstore().Get(ctx, cid)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := coreblock.GetFromBytes(b.RawData())
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
+}
+
+// loadBlocksChainFromBlockstoreTillHeight loads the blocks from the blockstore starting from the given CIDs
+// until it reaches a block with a height equal to the given height (including that block).
+// The returned blocks are ordered from the highest height to the lowest.
+func loadBlocksChainFromBlockstoreTillHeight(
+	ctx context.Context,
+	txn datastore.Txn,
+	cids []cid.Cid,
+	height uint64,
+) ([]*coreblock.Block, error) {
+	var blocks []*coreblock.Block
+	for len(cids) > 0 {
+		cid := cids[0]
+		block, err := loadBlockFromBlockStore(ctx, txn, cid)
+		if err != nil {
+			return nil, err
+		}
+
+		if block.Delta.GetPriority() >= height {
+			blocks = append(blocks, block)
+			if block.Delta.GetPriority() != height {
+				prevCid := block.GetPrevBlockCid()
+				if prevCid.HasValue() {
+					cids = append(cids, prevCid.Value())
+				}
+			}
+		}
+		cids = cids[1:]
+	}
+	return blocks, nil
 }
 
 func syncIndexedDoc(

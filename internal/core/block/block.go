@@ -25,6 +25,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/immutable"
 )
 
 // Schema is the IPLD schema type that represents a `Block`.
@@ -126,6 +127,16 @@ type Block struct {
 // IsEncrypted returns true if the block is encrypted.
 func (b *Block) IsEncrypted() bool {
 	return b.Encryption != nil && (*b.Encryption).Type != NotEncrypted
+}
+
+// GetPrevBlockCid returns the CID of the previous block.
+func (b *Block) GetPrevBlockCid() immutable.Option[cid.Cid] {
+	for _, link := range b.Links {
+		if link.Name == core.HEAD {
+			return immutable.Some(link.Cid)
+		}
+	}
+	return immutable.None[cid.Cid]()
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.

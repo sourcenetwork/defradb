@@ -283,3 +283,126 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.CreateDoc{
+				NodeID:          immutable.Some(0),
+				Doc:             john21Doc,
+				EncryptedFields: []string{"age"},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"age": 3}`,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"age": 2}`,
+			},
+			testUtils.WaitForSync{
+				Event:   immutable.Some(encryption.KeysRetrievedEventName),
+				NodeIDs: []int{1},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(26),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int @crdt(type: "pcounter")
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.CreateDoc{
+				NodeID:         immutable.Some(0),
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"age": 3}`,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"age": 2}`,
+			},
+			testUtils.WaitForSync{
+				Event:   immutable.Some(encryption.KeysRetrievedEventName),
+				NodeIDs: []int{1},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(26),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
