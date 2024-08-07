@@ -1,17 +1,12 @@
-// Current Implementation Analysis:
-// 1. Key Generation: Correctly uses X25519 for key generation.
-// 2. ECDH: Properly performs the ECDH operation.
-// 3. Key Derivation: Uses SHA-256 on the shared secret, which is simplistic.
-// 4. Encryption: Uses AES (implementation not shown).
-// 5. MAC: Not implemented.
-
-// Improvements Needed:
-// 1. Use a proper Key Derivation Function (KDF)
-// 2. Implement HMAC for message authentication
-// 3. Use authenticated encryption (e.g., AES-GCM) instead of AES
-// 4. Standardize the output format
-
-// Here's an improved version of the EncryptECDH and DecryptECDH functions:
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
 
 package crypto
 

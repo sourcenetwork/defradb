@@ -16,8 +16,19 @@ import (
 	"fmt"
 )
 
-// EncryptAES encrypts data using AES-GCM with a provided key.
-// The nonce is prepended to the cipherText.
+// EncryptAES encrypts data using AES-GCM with a provided key and additional data.
+// It generates a nonce internally and optionally prepends it to the cipherText.
+//
+// Parameters:
+//   - plainText: The data to be encrypted
+//   - key: The AES encryption key
+//   - additionalData: Additional authenticated data (AAD) to be used in the encryption
+//   - prependNonce: If true, the nonce is prepended to the returned cipherText
+//
+// Returns:
+//   - cipherText: The encrypted data, with the nonce prepended if prependNonce is true
+//   - nonce: The generated nonce
+//   - error: Any error encountered during the encryption process
 func EncryptAES(plainText, key, additionalData []byte, prependNonce bool) ([]byte, []byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -44,12 +55,21 @@ func EncryptAES(plainText, key, additionalData []byte, prependNonce bool) ([]byt
 	return cipherText, nonce, nil
 }
 
-// DecryptAES decrypts AES-GCM encrypted data with a provided key.
-// The nonce is expected to be prepended to the cipherText.
+// DecryptAES decrypts AES-GCM encrypted data with a provided key and additional data.
+// If no separate nonce is provided, it assumes the nonce is prepended to the cipherText.
+//
+// Parameters:
+//   - nonce: The nonce used for decryption. If empty, it's assumed to be prepended to cipherText
+//   - cipherText: The data to be decrypted
+//   - key: The AES decryption key
+//   - additionalData: Additional authenticated data (AAD) used during encryption
+//
+// Returns:
+//   - plainText: The decrypted data
+//   - error: Any error encountered during the decryption process, including authentication failures
 func DecryptAES(nonce, cipherText, key, additionalData []byte) ([]byte, error) {
 	if len(nonce) == 0 {
 		if len(cipherText) < AESNonceSize {
-			// TODO return typed error
 			return nil, fmt.Errorf("cipherText too short")
 		}
 		nonce = cipherText[:AESNonceSize]
