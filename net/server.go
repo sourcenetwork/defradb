@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"sync"
+	"time"
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -67,9 +68,16 @@ type server struct {
 	sessions []session
 }
 
+const sessionTimeout = 5 * time.Second
+
 type session struct {
 	id         string
 	privateKey *ecdh.PrivateKey
+	t          time.Time
+}
+
+func newSession(id string, privateKey *ecdh.PrivateKey) session {
+	return session{id: id, privateKey: privateKey, t: time.Now()}
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -100,13 +108,21 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	return s, nil
 }
 
-func (s *server) findSession(id string) *session {
-	for _, sess := range s.sessions {
-		if sess.id == id {
-			return &sess
+func (s *server) extractSessionAndRemoveOldOnes(id string) *session {
+	var result *session
+	swapLast := func(i int) {
+		s.sessions[i] = s.sessions[len(s.sessions)-1]
+		s.sessions = s.sessions[:len(s.sessions)-1]
+	}
+	for i, session := range s.sessions {
+		if session.id == id {
+			result = &session
+			swapLast(i)
+		} else if time.Since(session.t) > sessionTimeout {
+			swapLast(i)
 		}
 	}
-	return nil
+	return result
 }
 
 // GetDocGraph receives a get graph request
@@ -501,7 +517,7 @@ func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.Reques
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", encryptionTopic), err)
 	}
 
-	s.sessions = append(s.sessions, session{id: string(ephPubKeyBytes), privateKey: ephPrivKey})
+	s.sessions = append(s.sessions, newSession(string(ephPubKeyBytes), ephPrivKey))
 
 	go func() {
 		s.handleFetchEncryptionKeyResponse(<-respChan, req)
@@ -548,8 +564,7 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	// TODO: properly handle sessions. At least remove used or old ones
-	session := s.findSession(string(keyResp.ReqEphemeralPublicKey))
+	session := s.extractSessionAndRemoveOldOnes(string(keyResp.ReqEphemeralPublicKey))
 	if session == nil {
 		log.ErrorContext(s.peer.ctx, "Failed to find session for ephemeral public key")
 		return
