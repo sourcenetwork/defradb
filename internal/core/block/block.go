@@ -99,6 +99,7 @@ func NewDAGLink(name string, link cidlink.Link) DAGLink {
 	}
 }
 
+// EncryptionType represents the type (or level) of encryption applied to the block.
 type EncryptionType int
 
 const (
@@ -107,6 +108,7 @@ const (
 	FieldEncrypted
 )
 
+// Encryption contains the encryption information for the block's delta.
 type Encryption struct {
 	// Type indicates on what level encryption is applied.
 	Type EncryptionType

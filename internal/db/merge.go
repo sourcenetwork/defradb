@@ -91,6 +91,29 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	return nil
 }
 
+type encryptionMergeGroup struct {
+	compositeKey core.EncStoreDocKey
+	fieldsKeys   []core.EncStoreDocKey
+}
+
+func createMergeGroups(keyEvent encryption.KeyRetrievedEvent) map[string]encryptionMergeGroup {
+	mergeGroups := make(map[string]encryptionMergeGroup)
+
+	for encStoreKey := range keyEvent.Keys {
+		g := mergeGroups[encStoreKey.DocID]
+
+		if encStoreKey.FieldName.HasValue() {
+			g.fieldsKeys = append(g.fieldsKeys, encStoreKey)
+		} else {
+			g.compositeKey = encStoreKey
+		}
+
+		mergeGroups[encStoreKey.DocID] = g
+	}
+
+	return mergeGroups
+}
+
 func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyRetrievedEvent) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -106,26 +129,7 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 	ls := cidlink.DefaultLinkSystem()
 	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
 
-	type mergeGroup struct {
-		compositeKey core.EncStoreDocKey
-		fieldsKeys   []core.EncStoreDocKey
-	}
-
-	mergeGroups := make(map[string]mergeGroup)
-
-	for encStoreKey := range keyEvent.Keys {
-		g := mergeGroups[encStoreKey.DocID]
-
-		if encStoreKey.FieldName.HasValue() {
-			g.fieldsKeys = append(g.fieldsKeys, encStoreKey)
-		} else {
-			g.compositeKey = encStoreKey
-		}
-
-		mergeGroups[encStoreKey.DocID] = g
-	}
-
-	for docID, mergeGroup := range mergeGroups {
+	for docID, mergeGroup := range createMergeGroups(keyEvent) {
 		docID, err := client.NewDocIDFromString(docID)
 		if err != nil {
 			return err

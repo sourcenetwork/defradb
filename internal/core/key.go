@@ -798,7 +798,7 @@ type EncStoreDocKey struct {
 	// DocID is the ID of the document that the key is for.
 	DocID string
 	// FieldName is the name of the field that the key is for.
-	// If unset, it indicates the key is for the whole document.
+	// If unset, it indicates that the key is for the whole document.
 	FieldName immutable.Option[string]
 	// BlockHeight is the height of the block that the key is for.
 	// It is used to differentiate keys that are used in different point in time.
@@ -808,7 +808,7 @@ type EncStoreDocKey struct {
 var _ Key = (*EncStoreDocKey)(nil)
 
 // NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-// Unset fieldName indicates the key is for the whole document.
+// Unset fieldName indicates that the key is for the whole document.
 // blockHeight is the height of the block that the key is for.
 func NewEncStoreDocKey(docID string, fieldName immutable.Option[string], blockHeight uint64) EncStoreDocKey {
 	return EncStoreDocKey{DocID: docID, FieldName: fieldName, BlockHeight: blockHeight}
