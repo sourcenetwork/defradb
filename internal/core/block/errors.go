@@ -22,6 +22,7 @@ const (
 	errUnmarshallingBlock         string = "failed to unmarshal block"
 	errGeneratingLink             string = "failed to generate link"
 	errInvalidBlockEncryptionType string = "invalid block encryption type"
+	errInvalidBlockEncryptionFrom string = "invalid block encryption from parameter"
 )
 
 // Errors returnable from this package.
@@ -34,6 +35,7 @@ var (
 	ErrUnmarshallingBlock         = errors.New(errUnmarshallingBlock)
 	ErrGeneratingLink             = errors.New(errGeneratingLink)
 	ErrInvalidBlockEncryptionType = errors.New(errInvalidBlockEncryptionType)
+	ErrInvalidBlockEncryptionFrom = errors.New(errInvalidBlockEncryptionFrom)
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.

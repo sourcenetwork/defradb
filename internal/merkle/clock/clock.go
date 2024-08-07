@@ -91,20 +91,21 @@ func (mc *MerkleClock) AddDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encryptionType, err := mc.checkIfBlockEncryptionEnabled(ctx, fieldName, heads)
+	blockEnc, err := mc.determineBlockEncryptionData(ctx, fieldName, height, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	dagBlock := block
-	if encryptionType != coreblock.NotEncrypted {
+	if blockEnc != nil && blockEnc.Type != coreblock.NotEncrypted {
 		if !block.Delta.IsComposite() {
-			dagBlock, err = encryptBlock(ctx, block, encryptionType == coreblock.FieldEncrypted)
+			dagBlock, err = encryptBlock(ctx, block, blockEnc)
 			if err != nil {
 				return cidlink.Link{}, nil, err
 			}
+		} else {
+			dagBlock.Encryption = blockEnc
 		}
-		dagBlock.EncryptionType = &encryptionType
 	}
 
 	link, err := mc.putBlock(ctx, dagBlock)
@@ -126,48 +127,56 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
-func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
+func (mc *MerkleClock) determineBlockEncryptionData(
 	ctx context.Context,
 	fieldName immutable.Option[string],
+	height uint64,
 	heads []cid.Cid,
-) (coreblock.EncryptionType, error) {
+) (*coreblock.Encryption, error) {
+	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
+		blockEnc := &coreblock.Encryption{From: height}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
-			return coreblock.FieldEncrypted, nil
+			blockEnc.Type = coreblock.FieldEncrypted
+		} else {
+			blockEnc.Type = coreblock.DocumentEncrypted
 		}
-		return coreblock.DocumentEncrypted, nil
+		return blockEnc, nil
 	}
 
+	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
 		bytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
-			return coreblock.NotEncrypted, NewErrCouldNotFindBlock(headCid, err)
+			return nil, NewErrCouldNotFindBlock(headCid, err)
 		}
 		prevBlock, err := coreblock.GetFromBytes(bytes)
 		if err != nil {
-			return coreblock.NotEncrypted, err
+			return nil, err
 		}
-		if prevBlock.EncryptionType != nil {
-			return *prevBlock.EncryptionType, nil
+		if prevBlock.Encryption != nil {
+			blockEnc := &coreblock.Encryption{Type: (*prevBlock.Encryption).Type}
+			blockEnc.From = prevBlock.Encryption.From
+			return blockEnc, nil
 		}
 	}
 
-	return coreblock.NotEncrypted, nil
+	return nil, nil
 }
 
-func encryptBlock(ctx context.Context, block *coreblock.Block, isFieldOnly bool) (*coreblock.Block, error) {
+func encryptBlock(ctx context.Context, block *coreblock.Block, blockEnc *coreblock.Encryption) (*coreblock.Block, error) {
 	clonedCRDT := block.Delta.Clone()
 	fieldName := immutable.None[string]()
-	if isFieldOnly {
+	if blockEnc.Type == coreblock.FieldEncrypted {
 		fieldName = immutable.Some(clonedCRDT.GetFieldName())
 	}
 	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()),
-		fieldName, clonedCRDT.GetData())
+		fieldName, blockEnc.From, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, Encryption: blockEnc}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.

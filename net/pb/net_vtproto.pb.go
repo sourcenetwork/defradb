@@ -400,12 +400,10 @@ func (m *EncryptionKeyTarget) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Cid) > 0 {
-		i -= len(m.Cid)
-		copy(dAtA[i:], m.Cid)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Cid)))
+	if m.Height != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Height))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x18
 	}
 	if len(m.FieldName) > 0 {
 		i -= len(m.FieldName)
@@ -794,9 +792,8 @@ func (m *EncryptionKeyTarget) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Cid)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if m.Height != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Height))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1687,10 +1684,10 @@ func (m *EncryptionKeyTarget) UnmarshalVT(dAtA []byte) error {
 			m.FieldName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Cid", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
 			}
-			var byteLen int
+			m.Height = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -1700,26 +1697,11 @@ func (m *EncryptionKeyTarget) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				m.Height |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Cid = append(m.Cid[:0], dAtA[iNdEx:postIndex]...)
-			if m.Cid == nil {
-				m.Cid = []byte{}
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

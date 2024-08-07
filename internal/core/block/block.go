@@ -105,20 +105,27 @@ const (
 	FieldEncrypted
 )
 
+type Encryption struct {
+	// Type indicates on what level encryption is applied.
+	Type EncryptionType
+	// From specifies the block height from which the encryption is applied.
+	From uint64
+}
+
 // Block is a block that contains a CRDT delta and links to other blocks.
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
 	Delta crdt.CRDT
 	// Links are the links to other blocks in the DAG.
 	Links []DAGLink
-	// EncryptionType indicates if the block's delta is encrypted and on what level encryption is applied.
+	// Encryption contains the encryption information for the block's delta.
 	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
-	EncryptionType *EncryptionType
+	Encryption *Encryption
 }
 
 // IsEncrypted returns true if the block is encrypted.
 func (b *Block) IsEncrypted() bool {
-	return b.EncryptionType != nil && *b.EncryptionType != NotEncrypted
+	return b.Encryption != nil && (*b.Encryption).Type != NotEncrypted
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.
@@ -127,9 +134,14 @@ func (b *Block) IsEncrypted() bool {
 func (b Block) IPLDSchemaBytes() []byte {
 	return []byte(`
 		type Block struct {
-			delta           CRDT
-			links           [DAGLink]
-			encryptionType  optional EncryptionType
+			delta       CRDT
+			links       [DAGLink]
+			encryption  optional Encryption
+		}
+		
+		type Encryption struct {
+			type  EncryptionType
+			from  Int
 		}
 
 		type EncryptionType enum {
@@ -263,12 +275,16 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 }
 
 func (b *Block) Validate() error {
-	if b.EncryptionType != nil {
-		switch *b.EncryptionType {
+	if b.Encryption != nil {
+		switch (*b.Encryption).Type {
 		case NotEncrypted, DocumentEncrypted, FieldEncrypted:
 			// Valid values
 		default:
 			return ErrInvalidBlockEncryptionType
+		}
+
+		if (*b.Encryption).From == 0 {
+			return ErrInvalidBlockEncryptionFrom
 		}
 	}
 	return nil

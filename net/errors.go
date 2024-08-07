@@ -13,7 +13,6 @@ package net
 import (
 	"fmt"
 
-	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 )
@@ -56,6 +55,6 @@ func NewErrCheckingForExistingBlock(inner error, cid string) error {
 	return errors.Wrap(errCheckingForExistingBlock, inner, errors.NewKV("cid", cid))
 }
 
-func NewErrRequestingEncryptionKeys(inner error, keys map[core.EncStoreDocKey]cid.Cid) error {
+func NewErrRequestingEncryptionKeys(inner error, keys []core.EncStoreDocKey) error {
 	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKeys, keys), inner)
 }

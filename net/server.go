@@ -16,6 +16,7 @@ import (
 	"context"
 	"crypto/ecdh"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"sync"
 
@@ -207,7 +208,7 @@ func (s *server) getEncryptionKeys(
 			optFieldName = immutable.Some(target.FieldName)
 		}
 		encKey, err := encryption.GetKey(
-			encryption.ContextWithStore(ctx, s.peer.encstore), docID.String(), optFieldName)
+			encryption.ContextWithStore(ctx, s.peer.encstore), docID.String(), optFieldName, target.Height)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -280,7 +281,9 @@ func hashFetchEncryptionKeyReply(res *pb.FetchEncryptionKeyReply) []byte {
 	for _, target := range res.Targets {
 		hash.Write(target.DocID)
 		hash.Write([]byte(target.FieldName))
-		hash.Write(target.Cid)
+		heightBytes := make([]byte, 8)
+		binary.BigEndian.PutUint64(heightBytes, target.Height)
+		hash.Write(heightBytes)
 	}
 	return hash.Sum(nil)
 }
@@ -447,11 +450,13 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
-	for key, cid := range evt.Keys {
+	for _, encStoreKey := range evt.Keys {
 		encKey := &pb.EncryptionKeyTarget{
-			DocID:     []byte(key.DocID),
-			FieldName: key.FieldName,
-			Cid:       cid.Bytes(),
+			DocID:  []byte(encStoreKey.DocID),
+			Height: encStoreKey.BlockHeight,
+		}
+		if encStoreKey.FieldName.HasValue() {
+			encKey.FieldName = encStoreKey.FieldName.Value()
 		}
 		req.Targets = append(req.Targets, encKey)
 	}
@@ -512,7 +517,9 @@ func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	for _, target := range req.Targets {
 		hash.Write(target.DocID)
 		hash.Write([]byte(target.FieldName))
-		hash.Write(target.Cid)
+		heightBytes := make([]byte, 8)
+		binary.BigEndian.PutUint64(heightBytes, target.Height)
+		hash.Write(heightBytes)
 	}
 	return hash.Sum(nil)
 }
@@ -554,14 +561,8 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	eventData := make(map[core.EncStoreDocKey]encryption.RequestedKeyEventData)
+	eventData := make(map[core.EncStoreDocKey][]byte)
 	for _, target := range keyResp.Targets {
-		cid, err := cid.Cast(target.Cid)
-		if err != nil {
-			log.ErrorContextE(s.peer.ctx, "Failed to parse CID", err)
-			return
-		}
-
 		optFieldName := immutable.None[string]()
 		if target.FieldName != "" {
 			optFieldName = immutable.Some(target.FieldName)
@@ -574,8 +575,7 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 			return
 		}
 
-		d := encryption.RequestedKeyEventData{Cid: cid, Key: encKey}
-		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName)] = d
+		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName, target.Height)] = encKey
 	}
 
 	s.peer.bus.Publish(encryption.NewKeysRetrievedMessage(string(req.SchemaRoot), eventData))

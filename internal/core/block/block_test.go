@@ -231,48 +231,49 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 
 func TestBlock_Validate(t *testing.T) {
 	tests := []struct {
-		name           string
-		encryptionType *EncryptionType
-		expectedError  error
+		name          string
+		encryption    *Encryption
+		expectedError error
 	}{
 		{
-			name:           "NotEncrypted is valid",
-			encryptionType: ptr(NotEncrypted),
-			expectedError:  nil,
+			name:          "NotEncrypted type is valid",
+			encryption:    &Encryption{Type: NotEncrypted, From: 1},
+			expectedError: nil,
 		},
 		{
-			name:           "DocumentEncrypted is valid",
-			encryptionType: ptr(DocumentEncrypted),
-			expectedError:  nil,
+			name:          "DocumentEncrypted type is valid",
+			encryption:    &Encryption{Type: DocumentEncrypted, From: 1},
+			expectedError: nil,
 		},
 		{
-			name:           "FieldEncrypted is valid",
-			encryptionType: ptr(FieldEncrypted),
-			expectedError:  nil,
+			name:          "FieldEncrypted type is valid",
+			encryption:    &Encryption{Type: FieldEncrypted, From: 1},
+			expectedError: nil,
 		},
 		{
-			name:           "Nil EncryptionType is valid",
-			encryptionType: nil,
-			expectedError:  nil,
+			name:          "Nil Encryption is valid",
+			encryption:    nil,
+			expectedError: nil,
 		},
 		{
-			name:           "Invalid EncryptionType",
-			encryptionType: ptr(EncryptionType(99)),
-			expectedError:  ErrInvalidBlockEncryptionType,
+			name:          "Invalid encryption type",
+			encryption:    &Encryption{Type: EncryptionType(99), From: 1},
+			expectedError: ErrInvalidBlockEncryptionType,
+		},
+		{
+			name:          "Invalid encryption from parameter",
+			encryption:    &Encryption{Type: DocumentEncrypted},
+			expectedError: ErrInvalidBlockEncryptionFrom,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &Block{
-				EncryptionType: tt.encryptionType,
+				Encryption: tt.encryption,
 			}
 			err := b.Validate()
 			require.Equal(t, tt.expectedError, err)
 		})
 	}
-}
-
-func ptr(e EncryptionType) *EncryptionType {
-	return &e
 }

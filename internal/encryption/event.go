@@ -11,7 +11,6 @@
 package encryption
 
 import (
-	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 )
@@ -27,15 +26,12 @@ type RequestKeysEvent struct {
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
 	SchemaRoot string
 
-	// Keys is a map of the keys that are being requested.
-	Keys map[core.EncStoreDocKey]cid.Cid
+	// Keys is a list of the keys that are being requested.
+	Keys []core.EncStoreDocKey
 }
 
 // RequestedKeyEventData represents the data that was retrieved for a specific key.
 type RequestedKeyEventData struct {
-	// Cid is the id of the composite commit that formed this update in the DAG.
-	Cid cid.Cid
-
 	// Key is the encryption key that was retrieved.
 	Key []byte
 }
@@ -45,15 +41,15 @@ type KeyRetrievedEvent struct {
 	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
 	SchemaRoot string
 
-	// Data is a map of the requested keys to the data that was retrieved.
-	Data map[core.EncStoreDocKey]RequestedKeyEventData
+	// Keys is a map of the requested keys to the corresponding raw encryption keys.
+	Keys map[core.EncStoreDocKey][]byte
 }
 
 // NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
 func NewRequestKeysMessage(
 	schemaRoot string,
-	keys map[core.EncStoreDocKey]cid.Cid,
+	keys []core.EncStoreDocKey,
 ) event.Message {
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
 		SchemaRoot: schemaRoot,
@@ -64,10 +60,10 @@ func NewRequestKeysMessage(
 // NewKeysRetrievedMessage creates a new event message for a key that was retrieved
 func NewKeysRetrievedMessage(
 	schemaRoot string,
-	data map[core.EncStoreDocKey]RequestedKeyEventData,
+	data map[core.EncStoreDocKey][]byte,
 ) event.Message {
 	return event.NewMessage(KeysRetrievedEventName, KeyRetrievedEvent{
 		SchemaRoot: schemaRoot,
-		Data:       data,
+		Keys:       data,
 	})
 }

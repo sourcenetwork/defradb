@@ -48,7 +48,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          "bafyreicuxrw3lnccwdzvfgmqwlg67eolma6oyspyejfkxagtuukjrymxlu",
+							"cid":          "bafyreiapgmaxzdyvhmpoh3oibsem5xsl2hpl7wtfalzfv37ikcfjsmt5d4",
 							"collectionID": int64(1),
 							"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":        john21DocID,
@@ -58,7 +58,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreic76n53ygh5ljaoa2njmllalgtozfquhzbjonz5d4sdrjza2kmvle",
+							"cid":          "bafyreid7f742ai5fyhvofwn5ortiqcx3jtwahkxcvfb5kspufndfq6iqeu",
 							"collectionID": int64(1),
 							"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":        john21DocID,
@@ -68,7 +68,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreia6fqubivj2ms4xwounxsyjr6coxeb2wkcmzaa7yzk3h5cwsj5g6a",
+							"cid":          "bafyreibdoxaj6yeybokybtjl3mprzryjzufoxzhiumibuvtvpsylf5hufi",
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        john21DocID,
@@ -77,12 +77,12 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreic76n53ygh5ljaoa2njmllalgtozfquhzbjonz5d4sdrjza2kmvle",
-									"name": "name",
+									"cid":  "bafyreiapgmaxzdyvhmpoh3oibsem5xsl2hpl7wtfalzfv37ikcfjsmt5d4",
+									"name": "age",
 								},
 								{
-									"cid":  "bafyreicuxrw3lnccwdzvfgmqwlg67eolma6oyspyejfkxagtuukjrymxlu",
-									"name": "age",
+									"cid":  "bafyreid7f742ai5fyhvofwn5ortiqcx3jtwahkxcvfb5kspufndfq6iqeu",
+									"name": "name",
 								},
 							},
 						},

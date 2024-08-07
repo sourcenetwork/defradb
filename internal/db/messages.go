@@ -15,7 +15,6 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
@@ -84,12 +83,14 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 			case encryption.KeyRetrievedEvent:
 				go func() {
 					ctx = encryption.ContextWithStore(ctx, db.Encstore())
-					for encStoreKey, data := range evt.Data {
-						optFieldName := immutable.None[string]()
-						if encStoreKey.FieldName != "" {
-							optFieldName = immutable.Some(encStoreKey.FieldName)
-						}
-						err := encryption.SaveKey(ctx, encStoreKey.DocID, optFieldName, data.Key)
+					for encStoreKey, encKey := range evt.Keys {
+						err := encryption.SaveKey(
+							ctx,
+							encStoreKey.DocID,
+							encStoreKey.FieldName,
+							encStoreKey.BlockHeight,
+							encKey,
+						)
 
 						if err != nil {
 							log.ErrorContextE(
