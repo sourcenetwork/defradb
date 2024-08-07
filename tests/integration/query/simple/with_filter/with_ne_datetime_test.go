@@ -17,31 +17,35 @@ import (
 )
 
 func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with ne DateTime filter",
-		Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
 				},
 			},
 		},
@@ -51,38 +55,44 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with ne DateTime nil filter",
-		Request: `query {
-					Users(filter: {CreatedAt: {_ne: null}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Fred",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Bob",
-				},
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_ne: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},

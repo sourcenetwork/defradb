@@ -17,43 +17,51 @@ import (
 )
 
 func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with logical compound filter (or)",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {_or: [{Age: {_eq: 55}}, {Age: {_eq: 19}}]}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "Carlo",
-					"Age":  int64(55),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
+						},
+					},
 				},
 			},
 		},

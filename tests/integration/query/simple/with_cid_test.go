@@ -17,22 +17,24 @@ import (
 )
 
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with cid",
-		Request: `query {
-					Users (cid: "any non-nil string value - this will be ignored") {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
+			testUtils.Request{
+				Request: `query {
+					Users (cid: "any non-nil string value - this will be ignored") {
+						Name
+					}
+				}`,
+				ExpectedError: "invalid cid: selected encoding not supported",
+			},
 		},
-		ExpectedError: "invalid cid: selected encoding not supported",
 	}
 
 	executeTestCase(t, test)

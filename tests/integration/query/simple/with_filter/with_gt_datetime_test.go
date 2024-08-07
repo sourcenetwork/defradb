@@ -17,31 +17,35 @@ import (
 )
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic gt datetime filter with equal value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_gt: "2017-07-20T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_gt: "2017-07-20T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -51,31 +55,35 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic gt DateTime filter with equal value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_gt: "2017-07-22T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_gt: "2017-07-22T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -85,29 +93,33 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic gt datetime filter with lesser value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_gt: "2017-07-25T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_gt: "2017-07-25T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
 		},
 	}
 
@@ -115,28 +127,32 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic gt datetime nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {CreatedAt: {_gt: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"CreatedAt": "2010-07-23T03:46:56-05:00"
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},

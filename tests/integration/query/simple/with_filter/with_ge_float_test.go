@@ -17,29 +17,33 @@ import (
 )
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with equal value",
-		Request: `query {
-					Users(filter: {HeightM: {_ge: 2.1}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_ge: 2.1}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -49,29 +53,33 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with lesser value",
-		Request: `query {
-					Users(filter: {HeightM: {_ge: 2.0999999999999}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_ge: 2.0999999999999}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -81,29 +89,33 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with lesser int value",
-		Request: `query {
-					Users(filter: {HeightM: {_ge: 2}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_ge: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -113,31 +125,35 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge float nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {HeightM: {_ge: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"HeightM": 2.1
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-				},
-				{
-					"Name": "Bob",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+						{
+							"Name": "Bob",
+						},
+					},
 				},
 			},
 		},

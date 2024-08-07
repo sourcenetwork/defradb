@@ -17,9 +17,46 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of average on int",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 34,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: _avg})
@@ -29,68 +66,41 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 25,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 32,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 34,
-					"Verified": false
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55,
-					"Verified": true
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19,
-					"Verified": false
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_sum": float64(62.5),
-					"_group": []map[string]any{
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Verified": true,
-							"_avg":     float64(28.5),
+							"Name": "John",
+							"_sum": float64(62.5),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(28.5),
+								},
+								{
+									"Verified": false,
+									"_avg":     float64(34),
+								},
+							},
 						},
 						{
-							"Verified": false,
-							"_avg":     float64(34),
+							"Name": "Carlo",
+							"_sum": float64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(55),
+								},
+							},
 						},
-					},
-				},
-				{
-					"Name": "Carlo",
-					"_sum": float64(55),
-					"_group": []map[string]any{
 						{
-							"Verified": true,
-							"_avg":     float64(55),
-						},
-					},
-				},
-				{
-					"Name": "Alice",
-					"_sum": float64(19),
-					"_group": []map[string]any{
-						{
-							"Verified": false,
-							"_avg":     float64(19),
+							"Name": "Alice",
+							"_sum": float64(19),
+							"_group": []map[string]any{
+								{
+									"Verified": false,
+									"_avg":     float64(19),
+								},
+							},
 						},
 					},
 				},
@@ -106,43 +116,49 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 // verify that that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndSum(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				// It is important to test negative values here, due to the auto-typing of numbers
+				Doc: `{
+					"Name": "Alice",
+					"Age": -19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})
 						_sum(_group: {field: Age})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "John",
-					"Age": 38
-				}`,
-				// It is important to test negative values here, due to the auto-typing of numbers
-				`{
-					"Name": "Alice",
-					"Age": -19
-				}`,
-			},
-		},
-		Results: map[string]any{
-			"Users": []map[string]any{
-				{
-					"Name": "John",
-					"_avg": float64(35),
-					"_sum": int64(70),
-				},
-				{
-					"Name": "Alice",
-					"_avg": float64(-19),
-					"_sum": int64(-19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_avg": float64(35),
+							"_sum": int64(70),
+						},
+						{
+							"Name": "Alice",
+							"_avg": float64(-19),
+							"_sum": int64(-19),
+						},
+					},
 				},
 			},
 		},
