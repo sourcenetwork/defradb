@@ -11,7 +11,7 @@
 package encryption
 
 import (
-	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/crypto"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -50,6 +50,6 @@ func updateUserCollectionSchema() testUtils.SchemaUpdate {
 func encrypt(plaintext []byte, docID, fieldName string) []byte {
 	const keyLength = 32
 	const testEncKey = "examplekey1234567890examplekey12"
-	val, _ := encryption.EncryptAES(plaintext, []byte(fieldName + docID + testEncKey)[0:keyLength])
+	val, _, _ := crypto.EncryptAES(plaintext, []byte(fieldName + docID + testEncKey)[0:keyLength], nil, true)
 	return val
 }

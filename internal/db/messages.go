@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
@@ -78,6 +79,38 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 						log.ErrorContextE(ctx, "Failed to load replicators", err)
 					}
 				})
+
+			case encryption.KeyRetrievedEvent:
+				go func() {
+					ctx = encryption.ContextWithStore(ctx, db.Encstore())
+					for encStoreKey, encKey := range evt.Keys {
+						err := encryption.SaveKey(
+							ctx,
+							encStoreKey.DocID,
+							encStoreKey.FieldName,
+							encStoreKey.BlockHeight,
+							encKey,
+						)
+
+						if err != nil {
+							log.ErrorContextE(
+								ctx,
+								"Failed to save doc encryption key",
+								err,
+								corelog.Any("Event", evt))
+						}
+					}
+
+					err := db.mergeEncryptedBlocks(ctx, evt)
+
+					if err != nil {
+						log.ErrorContextE(
+							ctx,
+							"Failed to merge encrypted block",
+							err,
+							corelog.Any("Event", evt))
+					}
+				}()
 			}
 		}
 	}

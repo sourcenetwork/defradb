@@ -36,6 +36,7 @@ func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
 
 func setConfig(ctx context.Context, enc *DocEncryptor) {
 	enc.SetConfig(GetContextConfig(ctx))
+	enc.ctx = ctx
 }
 
 func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
@@ -49,9 +50,9 @@ func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncrypto
 
 // ContextWithStore sets the store on the doc encryptor in the context.
 // If the doc encryptor is not present, it will be created.
-func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
+func ContextWithStore(ctx context.Context, encstore datastore.DSReaderWriter) context.Context {
 	ctx, encryptor := ensureContextWithDocEnc(ctx)
-	encryptor.SetStore(txn.Encstore())
+	encryptor.SetStore(encstore)
 	return ctx
 }
 

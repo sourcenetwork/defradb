@@ -228,3 +228,52 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	_, err = GetFromNode(nd)
 	require.NoError(t, err)
 }
+
+func TestBlock_Validate(t *testing.T) {
+	tests := []struct {
+		name          string
+		encryption    *Encryption
+		expectedError error
+	}{
+		{
+			name:          "NotEncrypted type is valid",
+			encryption:    &Encryption{Type: NotEncrypted, From: 1},
+			expectedError: nil,
+		},
+		{
+			name:          "DocumentEncrypted type is valid",
+			encryption:    &Encryption{Type: DocumentEncrypted, From: 1},
+			expectedError: nil,
+		},
+		{
+			name:          "FieldEncrypted type is valid",
+			encryption:    &Encryption{Type: FieldEncrypted, From: 1},
+			expectedError: nil,
+		},
+		{
+			name:          "Nil Encryption is valid",
+			encryption:    nil,
+			expectedError: nil,
+		},
+		{
+			name:          "Invalid encryption type",
+			encryption:    &Encryption{Type: EncryptionType(99), From: 1},
+			expectedError: ErrInvalidBlockEncryptionType,
+		},
+		{
+			name:          "Invalid encryption from parameter",
+			encryption:    &Encryption{Type: DocumentEncrypted},
+			expectedError: ErrInvalidBlockEncryptionFrom,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Block{
+				Encryption: tt.encryption,
+			}
+			err := b.Validate()
+			require.Equal(t, tt.expectedError, err)
+		})
+	}
+}

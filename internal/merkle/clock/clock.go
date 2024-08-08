@@ -21,6 +21,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -86,20 +87,24 @@ func (mc *MerkleClock) AddDelta(
 	delta.SetPriority(height)
 	block := coreblock.New(delta, links, heads...)
 
-	isEncrypted, err := mc.checkIfBlockEncryptionEnabled(ctx, block.Delta.GetFieldName(), heads)
+	fieldName := immutable.None[string]()
+	if block.Delta.GetFieldName() != "" {
+		fieldName = immutable.Some(block.Delta.GetFieldName())
+	}
+	blockEnc, err := mc.determineBlockEncryptionData(ctx, fieldName, height, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	dagBlock := block
-	if isEncrypted {
+	if blockEnc != nil && blockEnc.Type != coreblock.NotEncrypted {
 		if !block.Delta.IsComposite() {
-			dagBlock, err = encryptBlock(ctx, block)
+			dagBlock, err = encryptBlock(ctx, block, blockEnc)
 			if err != nil {
 				return cidlink.Link{}, nil, err
 			}
 		} else {
-			dagBlock.IsEncrypted = &isEncrypted
+			dagBlock.Encryption = blockEnc
 		}
 	}
 
@@ -109,12 +114,7 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	// merge the delta and update the state
-	err = mc.ProcessBlock(
-		ctx,
-		block,
-		link,
-		false,
-	)
+	err = mc.ProcessBlock(ctx, block, link, false, false)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -127,60 +127,83 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
-func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
+func (mc *MerkleClock) determineBlockEncryptionData(
 	ctx context.Context,
-	fieldName string,
+	fieldName immutable.Option[string],
+	height uint64,
 	heads []cid.Cid,
-) (bool, error) {
-	if encryption.ShouldEncryptField(ctx, fieldName) {
-		return true, nil
+) (*coreblock.Encryption, error) {
+	// if new encryption was requested by the user
+	if encryption.ShouldEncryptDocField(ctx, fieldName) {
+		blockEnc := &coreblock.Encryption{From: height}
+		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
+			blockEnc.Type = coreblock.FieldEncrypted
+		} else {
+			blockEnc.Type = coreblock.DocumentEncrypted
+		}
+		return blockEnc, nil
 	}
 
+	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
 		bytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
-			return false, NewErrCouldNotFindBlock(headCid, err)
+			return nil, NewErrCouldNotFindBlock(headCid, err)
 		}
 		prevBlock, err := coreblock.GetFromBytes(bytes)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-		if prevBlock.IsEncrypted != nil && *prevBlock.IsEncrypted {
-			return true, nil
+		if prevBlock.Encryption != nil {
+			blockEnc := &coreblock.Encryption{Type: (*prevBlock.Encryption).Type}
+			blockEnc.From = prevBlock.Encryption.From
+			return blockEnc, nil
 		}
 	}
 
-	return false, nil
+	return nil, nil
 }
 
-func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
+func encryptBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockEnc *coreblock.Encryption,
+) (*coreblock.Block, error) {
 	clonedCRDT := block.Delta.Clone()
+	fieldName := immutable.None[string]()
+	if blockEnc.Type == coreblock.FieldEncrypted {
+		fieldName = immutable.Some(clonedCRDT.GetFieldName())
+	}
 	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()),
-		clonedCRDT.GetFieldName(), clonedCRDT.GetData())
+		fieldName, blockEnc.From, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	isEncrypted := true
-	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, IsEncrypted: &isEncrypted}, nil
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, Encryption: blockEnc}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
-// If onlyHeads is true, it will skip merging and update only the heads.
+// If skipMerge is true, it will skip merging and update only the heads.
+// If skipHeads is true, it will skip updating the heads.
 func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
-	onlyHeads bool,
+	skipMerge bool,
+	skipHeads bool,
 ) error {
-	if !onlyHeads {
+	if !skipMerge {
 		err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
 		if err != nil {
 			return NewErrMergingDelta(blockLink.Cid, err)
 		}
 	}
 
-	return mc.updateHeads(ctx, block, blockLink)
+	if !skipHeads {
+		return mc.updateHeads(ctx, block, blockLink)
+	}
+	return nil
 }
 
 func (mc *MerkleClock) updateHeads(

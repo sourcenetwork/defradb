@@ -14,8 +14,10 @@ package net
 
 import (
 	"context"
+	"crypto/ecdh"
 	"fmt"
 	"sync"
+	"time"
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -52,6 +54,20 @@ type server struct {
 	conns map[libpeer.ID]*grpc.ClientConn
 
 	pb.UnimplementedServiceServer
+
+	sessions []session
+}
+
+const sessionTimeout = 5 * time.Second
+
+type session struct {
+	id         string
+	privateKey *ecdh.PrivateKey
+	t          time.Time
+}
+
+func newSession(id string, privateKey *ecdh.PrivateKey) session {
+	return session{id: id, privateKey: privateKey, t: time.Now()}
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -80,6 +96,24 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s.opts = append(defaultOpts, opts...)
 
 	return s, nil
+}
+
+func (s *server) extractSessionAndRemoveOldOnes(id string) *session {
+	var result *session
+	swapLast := func(i int) {
+		s.sessions[i] = s.sessions[len(s.sessions)-1]
+		s.sessions = s.sessions[:len(s.sessions)-1]
+	}
+	for i, session := range s.sessions {
+		if session.id == id {
+			tmpSession := session
+			result = &tmpSession
+			swapLast(i)
+		} else if time.Since(session.t) > sessionTimeout {
+			swapLast(i)
+		}
+	}
+	return result
 }
 
 // GetDocGraph receives a get graph request
@@ -145,7 +179,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		corelog.Any("DocID", docID.String()))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-	// suscribe to the collection.
+	// subscribed to the collection.
 	if !s.hasPubSubTopic(string(req.Body.SchemaRoot)) {
 		err = s.addPubSubTopic(docID.String(), true)
 		if err != nil {
@@ -279,7 +313,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 
 	data, err := req.MarshalVT()
 	if err != nil {
-		return errors.Wrap("failed marshling pubsub message", err)
+		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {

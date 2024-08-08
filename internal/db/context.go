@@ -63,7 +63,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	if err != nil {
 		return nil, txn, err
 	}
-	ctx = encryption.ContextWithStore(ctx, txn)
+	ctx = encryption.ContextWithStore(ctx, txn.Encstore())
 	return SetContextTxn(ctx, txn), txn, nil
 }
 

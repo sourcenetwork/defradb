@@ -23,6 +23,8 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/multiformats/go-multicodec"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
@@ -97,15 +99,47 @@ func NewDAGLink(name string, link cidlink.Link) DAGLink {
 	}
 }
 
+// EncryptionType represents the type (or level) of encryption applied to the block.
+type EncryptionType int
+
+const (
+	NotEncrypted EncryptionType = iota
+	DocumentEncrypted
+	FieldEncrypted
+)
+
+// Encryption contains the encryption information for the block's delta.
+type Encryption struct {
+	// Type indicates on what level encryption is applied.
+	Type EncryptionType
+	// From specifies the block height from which the encryption is applied.
+	From uint64
+}
+
 // Block is a block that contains a CRDT delta and links to other blocks.
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
 	Delta crdt.CRDT
 	// Links are the links to other blocks in the DAG.
 	Links []DAGLink
-	// IsEncrypted is a flag that indicates if the block's delta is encrypted.
-	// It needs to be a pointer so that it can be translated from and to `optional Bool` in the IPLD schema.
-	IsEncrypted *bool
+	// Encryption contains the encryption information for the block's delta.
+	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
+	Encryption *Encryption
+}
+
+// IsEncrypted returns true if the block is encrypted.
+func (b *Block) IsEncrypted() bool {
+	return b.Encryption != nil && (*b.Encryption).Type != NotEncrypted
+}
+
+// GetPrevBlockCid returns the CID of the previous block.
+func (b *Block) GetPrevBlockCid() immutable.Option[cid.Cid] {
+	for _, link := range b.Links {
+		if link.Name == core.HEAD {
+			return immutable.Some(link.Cid)
+		}
+	}
+	return immutable.None[cid.Cid]()
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.
@@ -113,11 +147,23 @@ type Block struct {
 // This needs to match the [Block] struct or [mustSetSchema] will panic on init.
 func (b Block) IPLDSchemaBytes() []byte {
 	return []byte(`
-	type Block struct {
-		delta				 CRDT
-		links				 [ DAGLink ]
-		isEncrypted optional Bool
-	}`)
+		type Block struct {
+			delta       CRDT
+			links       [DAGLink]
+			encryption  optional Encryption
+		}
+		
+		type Encryption struct {
+			type  EncryptionType
+			from  Int
+		}
+
+		type EncryptionType enum {
+			| NotEncrypted      ("0")
+			| DocumentEncrypted ("1")
+			| FieldEncrypted    ("2")
+		} representation int
+	`)
 }
 
 // New creates a new block with the given delta and links.
@@ -192,6 +238,9 @@ func (block *Block) Unmarshal(b []byte) error {
 	if err != nil {
 		return NewErrUnmarshallingBlock(err)
 	}
+	if err := block.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -237,4 +286,21 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 		MhType:   uint64(multicodec.Sha2_256),
 		MhLength: 32,
 	}}
+}
+
+// Validate checks if the block is valid.
+func (b *Block) Validate() error {
+	if b.Encryption != nil {
+		switch (*b.Encryption).Type {
+		case NotEncrypted, DocumentEncrypted, FieldEncrypted:
+			// Valid values
+		default:
+			return ErrInvalidBlockEncryptionType
+		}
+
+		if (*b.Encryption).From == 0 {
+			return ErrInvalidBlockEncryptionFrom
+		}
+	}
+	return nil
 }
