@@ -112,7 +112,7 @@ func (d *DocEncryptor) Encrypt(
 	blockHeight uint64,
 	plainText []byte,
 ) ([]byte, error) {
-	encryptionKey, err := d.fetchEncryptionKey(docID, fieldName, blockHeight)
+	encryptionKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (d *DocEncryptor) Decrypt(
 	blockHeight uint64,
 	cipherText []byte,
 ) ([]byte, error) {
-	encKey, err := d.fetchEncryptionKey(docID, fieldName, blockHeight)
+	encKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
 	if err != nil {
 		return nil, err
 	}
@@ -178,38 +178,6 @@ func (d *DocEncryptor) fetchByEncStoreKey(storeKey core.EncStoreDocKey) ([]byte,
 func (d *DocEncryptor) storeByEncStoreKey(storeKey core.EncStoreDocKey, encryptionKey []byte) error {
 	d.cache[storeKey] = encryptionKey
 	return d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
-}
-
-// fetchEncryptionKey fetches the encryption key for the given docID and fieldName.
-// If the key is not found, it returns an empty key.
-func (d *DocEncryptor) fetchEncryptionKey(
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
-) ([]byte, error) {
-	if d.store == nil {
-		return nil, ErrNoStorageProvided
-	}
-	// first we try to find field-level key
-	storeKey := core.NewEncStoreDocKey(docID, fieldName, blockHeight)
-	encryptionKey, err := d.fetchByEncStoreKey(storeKey)
-	if err != nil {
-		return nil, err
-	}
-	// TODO: check if it's still needed to try to find doc-level key if field-level key is not found
-	if len(encryptionKey) == 0 {
-		// if previous fetch was for doc-level, there is nothing else to look for
-		if !fieldName.HasValue() {
-			return nil, nil
-		}
-		if shouldEncryptIndividualField(d.conf, fieldName) {
-			return nil, nil
-		}
-		// try to find doc-level key
-		storeKey.FieldName = immutable.None[string]()
-		encryptionKey, err = d.fetchByEncStoreKey(storeKey)
-	}
-	return encryptionKey, err
 }
 
 // GetKey returns the encryption key for the given docID, (optional) fieldName and block height.

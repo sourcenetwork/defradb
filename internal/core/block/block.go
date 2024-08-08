@@ -288,6 +288,7 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 	}}
 }
 
+// Validate checks if the block is valid.
 func (b *Block) Validate() error {
 	if b.Encryption != nil {
 		switch (*b.Encryption).Type {
