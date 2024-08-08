@@ -144,6 +144,8 @@ type WaitForSync struct {
 	// NodeIDs are the node IDs (indexes) of the nodes to wait for sync on.
 	// If not provided then the action will wait for sync on all nodes.
 	NodeIDs []int
+	// Count is the number of times the event should be received.
+	Count uint
 }
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel

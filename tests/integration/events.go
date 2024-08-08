@@ -370,12 +370,18 @@ func waitForKeyRetrievedEvent(s *state, nodeIDs []int) {
 }
 
 func waitForSync(s *state, action WaitForSync) {
-	if !action.Event.HasValue() || action.Event.Value() == event.MergeCompleteName {
-		waitForMergeEvents(s)
-	} else if action.Event.Value() == encryption.KeysRetrievedEventName {
-		waitForKeyRetrievedEvent(s, action.NodeIDs)
-	} else {
-		require.Fail(s.t, "unsupported event type: %s", action.Event.Value())
+	count := int(action.Count)
+	if count == 0 {
+		count = 1
+	}
+	for i := 0; i < count; i++ {
+		if !action.Event.HasValue() || action.Event.Value() == event.MergeCompleteName {
+			waitForMergeEvents(s)
+		} else if action.Event.Value() == encryption.KeysRetrievedEventName {
+			waitForKeyRetrievedEvent(s, action.NodeIDs)
+		} else {
+			require.Fail(s.t, "unsupported event type: %s", action.Event.Value())
+		}
 	}
 }
 

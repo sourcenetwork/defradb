@@ -76,9 +76,11 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 
 	mp.sendPendingEncryptionRequest()
 
-	err = syncIndexedDoc(ctx, docID, col)
-	if err != nil {
-		return err
+	if !mp.hasPendingCompositeBlock {
+		err = syncIndexedDoc(ctx, docID, col)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = txn.Commit(ctx)
@@ -249,6 +251,7 @@ type mergeProcessor struct {
 	dsKey                        core.DataStoreKey
 	blocks                       *list.List
 	pendingEncryptionKeyRequests map[core.EncStoreDocKey]struct{}
+	hasPendingCompositeBlock     bool
 }
 
 func (db *db) newMergeProcessor(
@@ -394,6 +397,9 @@ func (mp *mergeProcessor) processEncryptedBlock(
 
 func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName immutable.Option[string], height uint64) {
 	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName, height)] = struct{}{}
+	if !fieldName.HasValue() {
+		mp.hasPendingCompositeBlock = true
+	}
 }
 
 func (mp *mergeProcessor) sendPendingEncryptionRequest() {
