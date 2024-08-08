@@ -71,17 +71,6 @@ func TestEncryptorEncrypt_IfStorageReturnsError_Error(t *testing.T) {
 	assert.ErrorIs(t, err, testErr)
 }
 
-func TestEncryptorEncrypt_IfStorageReturnsErrorOnSecondCall_Error(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound).Once()
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, testErr)
-
-	_, err := enc.Encrypt(docID, fieldName, height, []byte("test"))
-
-	assert.ErrorIs(t, err, testErr)
-}
-
 func TestEncryptorEncrypt_WithEmptyFieldNameIfNoKeyFoundInStorage_ShouldGenerateKeyStoreItAndReturnCipherText(t *testing.T) {
 	enc, st := newDefaultEncryptor(t)
 
@@ -103,7 +92,6 @@ func TestEncryptorEncrypt_IfNoFieldEncRequestedAndNoKeyInStorage_GenerateKeyStor
 	fieldStoreKey := core.NewEncStoreDocKey(docID, fieldName, height).ToDS()
 
 	st.EXPECT().Get(mock.Anything, fieldStoreKey).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Get(mock.Anything, docStoreKey).Return(nil, ds.ErrNotFound)
 	st.EXPECT().Put(mock.Anything, docStoreKey, getEncKey(noFieldName)).Return(nil)
 
 	cipherText, err := enc.Encrypt(docID, fieldName, height, getPlainText())

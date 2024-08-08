@@ -112,6 +112,9 @@ func (d *DocEncryptor) Encrypt(
 	blockHeight uint64,
 	plainText []byte,
 ) ([]byte, error) {
+	if d.store == nil {
+		return nil, ErrNoStorageProvided
+	}
 	encryptionKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
 	if err != nil {
 		return nil, err
@@ -148,6 +151,9 @@ func (d *DocEncryptor) Decrypt(
 	blockHeight uint64,
 	cipherText []byte,
 ) ([]byte, error) {
+	if d.store == nil {
+		return nil, ErrNoStorageProvided
+	}
 	encKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
 	if err != nil {
 		return nil, err
