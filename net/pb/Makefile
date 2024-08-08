@@ -25,4 +25,4 @@ clean:
 	rm -f *.pb.go
 	rm -f *pb_test.go
 
-.PHONY: clean deps debug
+.PHONY: clean deps 

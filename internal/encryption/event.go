@@ -60,10 +60,10 @@ func NewRequestKeysMessage(
 // NewKeysRetrievedMessage creates a new event message for a key that was retrieved
 func NewKeysRetrievedMessage(
 	schemaRoot string,
-	data map[core.EncStoreDocKey][]byte,
+	keys map[core.EncStoreDocKey][]byte,
 ) event.Message {
 	return event.NewMessage(KeysRetrievedEventName, KeyRetrievedEvent{
 		SchemaRoot: schemaRoot,
-		Keys:       data,
+		Keys:       keys,
 	})
 }

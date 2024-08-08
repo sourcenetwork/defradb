@@ -36,14 +36,14 @@ import (
 
 const encryptionTopic = "encryption"
 
-// Server is the request/response instance for all P2P RPC communication.
-// Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
+// getEncryptionKeys retrieves the encryption keys for the given targets.
+// It returns the encryption keys and the targets for which the keys were found.
 func (s *server) getEncryptionKeys(
 	ctx context.Context,
 	req *pb.FetchEncryptionKeyRequest,
 ) ([]byte, []*pb.EncryptionKeyTarget, error) {
 	encryptionKeys := make([]byte, 0)
-	targets := make([]*pb.EncryptionKeyTarget, 0)
+	targets := make([]*pb.EncryptionKeyTarget, 0, len(req.Targets))
 	for _, target := range req.Targets {
 		docID, err := client.NewDocIDFromString(string(target.DocID))
 		if err != nil {

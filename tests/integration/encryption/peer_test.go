@@ -18,43 +18,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-/*func TestDocEncryptionPeer_IfPeerHasNoKey_ShouldNotFetch(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			updateUserCollectionSchema(),
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
-			},
-			testUtils.CreateDoc{
-				NodeID:         immutable.Some(0),
-				Doc:            john21Doc,
-				IsDocEncrypted: true,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						age
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}*/
-
 func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
