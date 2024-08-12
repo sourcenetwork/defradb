@@ -84,13 +84,7 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 				go func() {
 					ctx = encryption.ContextWithStore(ctx, db.Encstore())
 					for encStoreKey, encKey := range evt.Keys {
-						err := encryption.SaveKey(
-							ctx,
-							encStoreKey.DocID,
-							encStoreKey.FieldName,
-							encStoreKey.BlockHeight,
-							encKey,
-						)
+						err := encryption.SaveKey(ctx, encStoreKey, encKey)
 
 						if err != nil {
 							log.ErrorContextE(

@@ -174,8 +174,11 @@ func encryptBlock(
 	if blockEnc.Type == coreblock.FieldEncrypted {
 		fieldName = immutable.Some(clonedCRDT.GetFieldName())
 	}
-	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()),
-		fieldName, blockEnc.From, clonedCRDT.GetData())
+	bytes, err := encryption.EncryptDoc(
+		ctx,
+		core.NewEncStoreDocKey(string(clonedCRDT.GetDocID()), fieldName, blockEnc.From),
+		clonedCRDT.GetData(),
+	)
 	if err != nil {
 		return nil, err
 	}

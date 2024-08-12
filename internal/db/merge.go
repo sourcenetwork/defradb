@@ -470,10 +470,12 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 		optFieldName = immutable.Some(block.Delta.GetFieldName())
 	}
 
+	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), optFieldName, blockEnc.From)
+
 	if block.Delta.IsComposite() {
 		// for composite blocks there is nothing to decrypt
 		// so we just check if we have the encryption key for child blocks
-		bytes, err := encryption.GetKey(ctx, string(block.Delta.GetDocID()), optFieldName, blockEnc.From)
+		bytes, err := encryption.GetKey(ctx, encStoreKey)
 		if err != nil {
 			return nil, err
 		}
@@ -484,8 +486,7 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 	}
 
 	clonedCRDT := block.Delta.Clone()
-	bytes, err := encryption.DecryptDoc(ctx, string(clonedCRDT.GetDocID()), optFieldName,
-		blockEnc.From, clonedCRDT.GetData())
+	bytes, err := encryption.DecryptDoc(ctx, encStoreKey, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}

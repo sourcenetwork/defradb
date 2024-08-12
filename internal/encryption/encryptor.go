@@ -107,34 +107,32 @@ func shouldEncryptDocField(conf immutable.Option[DocEncConfig], fieldName immuta
 // If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
 // Otherwise, it will use document-level encryption key.
 func (d *DocEncryptor) Encrypt(
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
+	encStoreKey core.EncStoreDocKey,
 	plainText []byte,
 ) ([]byte, error) {
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
-	encryptionKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
+	encryptionKey, err := d.fetchByEncStoreKey(encStoreKey)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(encryptionKey) == 0 {
-		if !shouldEncryptIndividualField(d.conf, fieldName) {
-			fieldName = immutable.None[string]()
+		if !shouldEncryptIndividualField(d.conf, encStoreKey.FieldName) {
+			encStoreKey.FieldName = immutable.None[string]()
 		}
 
-		if !shouldEncryptDocField(d.conf, fieldName) {
+		if !shouldEncryptDocField(d.conf, encStoreKey.FieldName) {
 			return plainText, nil
 		}
 
-		encryptionKey, err = generateEncryptionKeyFunc(docID, fieldName)
+		encryptionKey, err = generateEncryptionKeyFunc(encStoreKey.DocID, encStoreKey.FieldName)
 		if err != nil {
 			return nil, err
 		}
 
-		err = d.storeByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight), encryptionKey)
+		err = d.storeByEncStoreKey(encStoreKey, encryptionKey)
 		if err != nil {
 			return nil, err
 		}
@@ -146,15 +144,13 @@ func (d *DocEncryptor) Encrypt(
 // Decrypt decrypts the given cipherText that is associated with the given docID and fieldName.
 // If the corresponding encryption key is not found, it returns nil.
 func (d *DocEncryptor) Decrypt(
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
+	encStoreKey core.EncStoreDocKey,
 	cipherText []byte,
 ) ([]byte, error) {
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
-	encKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
+	encKey, err := d.fetchByEncStoreKey(encStoreKey)
 	if err != nil {
 		return nil, err
 	}
@@ -187,11 +183,11 @@ func (d *DocEncryptor) storeByEncStoreKey(storeKey core.EncStoreDocKey, encrypti
 }
 
 // GetKey returns the encryption key for the given docID, (optional) fieldName and block height.
-func (d *DocEncryptor) GetKey(docID string, fieldName immutable.Option[string], blockHeight uint64) ([]byte, error) {
+func (d *DocEncryptor) GetKey(encStoreKey core.EncStoreDocKey) ([]byte, error) {
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
-	encryptionKey, err := d.fetchByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight))
+	encryptionKey, err := d.fetchByEncStoreKey(encStoreKey)
 	if err != nil {
 		return nil, err
 	}
@@ -199,16 +195,11 @@ func (d *DocEncryptor) GetKey(docID string, fieldName immutable.Option[string], 
 }
 
 // SaveKey saves the given encryption key for the given docID, (optional) fieldName and block height.
-func (d *DocEncryptor) SaveKey(
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
-	encryptionKey []byte,
-) error {
+func (d *DocEncryptor) SaveKey(encStoreKey core.EncStoreDocKey, encryptionKey []byte) error {
 	if d.store == nil {
 		return ErrNoStorageProvided
 	}
-	return d.storeByEncStoreKey(core.NewEncStoreDocKey(docID, fieldName, blockHeight), encryptionKey)
+	return d.storeByEncStoreKey(encStoreKey, encryptionKey)
 }
 
 // EncryptDoc encrypts the given plainText that is associated with the given docID, fieldName and block height with
@@ -217,16 +208,14 @@ func (d *DocEncryptor) SaveKey(
 // Otherwise, it will use document-level encryption key.
 func EncryptDoc(
 	ctx context.Context,
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
+	encStoreKey core.EncStoreDocKey,
 	plainText []byte,
 ) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
 	}
-	return enc.Encrypt(docID, fieldName, blockHeight, plainText)
+	return enc.Encrypt(encStoreKey, plainText)
 }
 
 // DecryptDoc decrypts the given cipherText that is associated with the given docID and fieldName with
@@ -235,16 +224,14 @@ func EncryptDoc(
 // decrypt with the field-level key.
 func DecryptDoc(
 	ctx context.Context,
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
+	encStoreKey core.EncStoreDocKey,
 	cipherText []byte,
 ) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
 	}
-	return enc.Decrypt(docID, fieldName, blockHeight, cipherText)
+	return enc.Decrypt(encStoreKey, cipherText)
 }
 
 // ShouldEncryptDocField returns true if the given field should be encrypted based on the context config.
@@ -260,28 +247,22 @@ func ShouldEncryptIndividualField(ctx context.Context, fieldName immutable.Optio
 
 // SaveKey saves the given encryption key for the given docID, (optional) fieldName and block height with
 // encryptor in the context.
-func SaveKey(
-	ctx context.Context,
-	docID string,
-	fieldName immutable.Option[string],
-	blockHeight uint64,
-	encryptionKey []byte,
-) error {
+func SaveKey(ctx context.Context, encStoreKey core.EncStoreDocKey, encryptionKey []byte) error {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil
 	}
-	return enc.SaveKey(docID, fieldName, blockHeight, encryptionKey)
+	return enc.SaveKey(encStoreKey, encryptionKey)
 }
 
 // GetKey returns the encryption key for the given docID, (optional) fieldName and block height with encryptor
 // in the context.
-func GetKey(ctx context.Context, docID string, fieldName immutable.Option[string], blockHeight uint64) ([]byte, error) {
+func GetKey(ctx context.Context, encStoreKey core.EncStoreDocKey) ([]byte, error) {
 	enc, ok := TryGetContextEncryptor(ctx)
 	if !ok {
 		return nil, nil
 	}
-	return enc.GetKey(docID, fieldName, blockHeight)
+	return enc.GetKey(encStoreKey)
 }
 
 func init() {
