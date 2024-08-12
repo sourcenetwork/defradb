@@ -6,7 +6,7 @@
 FROM docker.io/node:20 AS PLAYGROUND_BUILD
 WORKDIR /repo/
 COPY playground/ ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Stage: BUILD
