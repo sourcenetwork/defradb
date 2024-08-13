@@ -106,3 +106,52 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			updateUserCollectionSchema(),
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID:         immutable.Some(0),
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
+			},
+			testUtils.WaitForSync{},
+			// Do not wait for the key sync and request the document as soon as the dag has synced
+			// The document will be returned if the key-sync has taken place already, if not, the set will
+			// be empty.
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": testUtils.AnyOf{
+						// The key-sync has not yet completed
+						[]map[string]any{},
+						// The key-sync has completed
+						[]map[string]any{
+							{
+								"age": int64(21),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
