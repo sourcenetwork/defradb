@@ -150,7 +150,7 @@ func ExecuteTestCase(
 		clients = append(clients, HTTPClientType)
 	}
 	if goClient {
-	clients = append(clients, GoClientType)
+		clients = append(clients, GoClientType)
 	}
 	if cliClient {
 		clients = append(clients, CLIClientType)
@@ -161,7 +161,7 @@ func ExecuteTestCase(
 		databases = append(databases, badgerIMType)
 	}
 	if badgerFile {
-	databases = append(databases, badgerFileType)
+		databases = append(databases, badgerFileType)
 	}
 	if inMemoryStore {
 		databases = append(databases, defraIMType)
