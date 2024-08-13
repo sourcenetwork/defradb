@@ -13,6 +13,7 @@ package tests
 import (
 	"encoding/json"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -378,7 +379,8 @@ func waitForSync(s *state, action WaitForSync) {
 	if count == 0 {
 		count = 1
 	}
-	for i := 0; i < count; i++ {
+
+	syncFunc := func(s *state, action WaitForSync) {
 		if !action.Event.HasValue() || action.Event.Value() == event.MergeCompleteName {
 			waitForMergeEvents(s)
 		} else if action.Event.Value() == encryption.KeysRetrievedEventName {
@@ -386,6 +388,20 @@ func waitForSync(s *state, action WaitForSync) {
 		} else {
 			require.Fail(s.t, "unsupported event type: %s", action.Event.Value())
 		}
+	}
+
+	if count == 1 {
+		syncFunc(s, action)
+	} else {
+		var wg sync.WaitGroup
+		wg.Add(count)
+		for i := 0; i < count; i++ {
+			go func(s *state, action WaitForSync) {
+				defer wg.Done()
+				syncFunc(s, action)
+			}(s, action)
+		}
+		wg.Wait()
 	}
 }
 
