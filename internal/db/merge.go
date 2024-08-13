@@ -404,8 +404,12 @@ func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName im
 }
 
 func (mp *mergeProcessor) sendPendingEncryptionRequest() {
+	n := len(mp.pendingEncryptionKeyRequests)
+	if n == 0 {
+		return
+	}
 	schemaRoot := mp.col.SchemaRoot()
-	storeKeys := make([]core.EncStoreDocKey, 0, len(mp.pendingEncryptionKeyRequests))
+	storeKeys := make([]core.EncStoreDocKey, 0, n)
 	for k := range mp.pendingEncryptionKeyRequests {
 		storeKeys = append(storeKeys, k)
 	}
