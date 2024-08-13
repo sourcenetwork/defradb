@@ -63,7 +63,7 @@ func (s *server) getEncryptionKeys(
 			return nil, nil, err
 		}
 		// TODO: we should test it somehow. For this this one peer should have some keys and
-		// another one should have the others
+		// another one should have the others. https://github.com/sourcenetwork/defradb/issues/2895
 		if len(encKey) == 0 {
 			continue
 		}

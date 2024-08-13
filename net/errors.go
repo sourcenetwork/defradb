@@ -51,10 +51,6 @@ func NewErrPublishingToSchemaTopic(inner error, cid, docID string, kv ...errors.
 	return errors.Wrap(fmt.Sprintf(errPublishingToSchemaTopic, cid, docID), inner, kv...)
 }
 
-func NewErrCheckingForExistingBlock(inner error, cid string) error {
-	return errors.Wrap(errCheckingForExistingBlock, inner, errors.NewKV("cid", cid))
-}
-
 func NewErrRequestingEncryptionKeys(inner error, keys []core.EncStoreDocKey) error {
 	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKeys, keys), inner)
 }
