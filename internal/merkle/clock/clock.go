@@ -91,20 +91,16 @@ func (mc *MerkleClock) AddDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	blockEnc, err := mc.determineBlockEncryptionData(ctx, fieldName, height, heads)
+	blockEnc, err := mc.determineBlockEncryptionData(ctx, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	dagBlock := block
 	if blockEnc != nil && blockEnc.Type != coreblock.NotEncrypted {
-		if !block.Delta.IsComposite() {
-			dagBlock, err = encryptBlock(ctx, block, blockEnc)
-			if err != nil {
-				return cidlink.Link{}, nil, err
-			}
-		} else {
-			dagBlock.Encryption = blockEnc
+		dagBlock, err = encryptBlock(ctx, block, blockEnc)
+		if err != nil {
+			return cidlink.Link{}, nil, err
 		}
 	}
 
@@ -129,17 +125,24 @@ func (mc *MerkleClock) AddDelta(
 
 func (mc *MerkleClock) determineBlockEncryptionData(
 	ctx context.Context,
+	docID string,
 	fieldName immutable.Option[string],
-	height uint64,
 	heads []cid.Cid,
 ) (*coreblock.Encryption, error) {
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		blockEnc := &coreblock.Encryption{From: height}
+		blockEnc := &coreblock.Encryption{}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
 			blockEnc.Type = coreblock.FieldEncrypted
 		} else {
 			blockEnc.Type = coreblock.DocumentEncrypted
+		}
+		encStoreKey, _, err := encryption.GetOrGenerateEncryptionKey(ctx, docID, fieldName)
+		if err != nil {
+			return nil, err
+		}
+		if encStoreKey.HasValue() {
+			blockEnc.KeyID = []byte(encStoreKey.Value().KeyID)
 		}
 		return blockEnc, nil
 	}
@@ -155,9 +158,10 @@ func (mc *MerkleClock) determineBlockEncryptionData(
 			return nil, err
 		}
 		if prevBlock.Encryption != nil {
-			blockEnc := &coreblock.Encryption{Type: (*prevBlock.Encryption).Type}
-			blockEnc.From = prevBlock.Encryption.From
-			return blockEnc, nil
+			return &coreblock.Encryption{
+				Type:  prevBlock.Encryption.Type,
+				KeyID: prevBlock.Encryption.KeyID,
+			}, nil
 		}
 	}
 
@@ -169,16 +173,20 @@ func encryptBlock(
 	block *coreblock.Block,
 	blockEnc *coreblock.Encryption,
 ) (*coreblock.Block, error) {
-	clonedCRDT := block.Delta.Clone()
 	fieldName := immutable.None[string]()
 	if blockEnc.Type == coreblock.FieldEncrypted {
-		fieldName = immutable.Some(clonedCRDT.GetFieldName())
+		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	bytes, err := encryption.EncryptDoc(
-		ctx,
-		core.NewEncStoreDocKey(string(clonedCRDT.GetDocID()), fieldName, blockEnc.From),
-		clonedCRDT.GetData(),
-	)
+
+	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), fieldName, string(blockEnc.KeyID))
+	blockEnc.KeyID = []byte(encStoreKey.KeyID)
+	if block.Delta.IsComposite() {
+		block.Encryption = blockEnc
+		return block, nil
+	}
+
+	clonedCRDT := block.Delta.Clone()
+	bytes, err := encryption.EncryptDoc(ctx, encStoreKey, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}

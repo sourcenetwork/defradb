@@ -14,8 +14,9 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
+
+	"encoding/base64"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
@@ -42,7 +43,7 @@ func (s *server) getEncryptionKeys(
 	ctx context.Context,
 	req *pb.FetchEncryptionKeyRequest,
 ) ([]byte, []*pb.EncryptionKeyTarget, error) {
-	encryptionKeys := make([]byte, 0)
+	encryptionKeys := make([]byte, 0, len(req.Targets))
 	targets := make([]*pb.EncryptionKeyTarget, 0, len(req.Targets))
 	for _, target := range req.Targets {
 		docID, err := client.NewDocIDFromString(string(target.DocID))
@@ -56,7 +57,7 @@ func (s *server) getEncryptionKeys(
 		}
 		encKey, err := encryption.GetKey(
 			encryption.ContextWithStore(ctx, s.peer.encstore),
-			core.NewEncStoreDocKey(docID.String(), optFieldName, target.Height),
+			core.NewEncStoreDocKey(docID.String(), optFieldName, string(target.KeyID)),
 		)
 		if err != nil {
 			return nil, nil, err
@@ -133,9 +134,7 @@ func hashFetchEncryptionKeyReply(res *pb.FetchEncryptionKeyReply) []byte {
 	for _, target := range res.Targets {
 		hash.Write(target.DocID)
 		hash.Write([]byte(target.FieldName))
-		heightBytes := make([]byte, 8)
-		binary.BigEndian.PutUint64(heightBytes, target.Height)
-		hash.Write(heightBytes)
+		hash.Write([]byte(target.KeyID))
 	}
 	return hash.Sum(nil)
 }
@@ -199,8 +198,8 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 
 	for _, encStoreKey := range evt.Keys {
 		encKey := &pb.EncryptionKeyTarget{
-			DocID:  []byte(encStoreKey.DocID),
-			Height: encStoreKey.BlockHeight,
+			DocID: []byte(encStoreKey.DocID),
+			KeyID: []byte(encStoreKey.KeyID),
 		}
 		if encStoreKey.FieldName.HasValue() {
 			encKey.FieldName = encStoreKey.FieldName.Value()
@@ -264,9 +263,7 @@ func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	for _, target := range req.Targets {
 		hash.Write(target.DocID)
 		hash.Write([]byte(target.FieldName))
-		heightBytes := make([]byte, 8)
-		binary.BigEndian.PutUint64(heightBytes, target.Height)
-		hash.Write(heightBytes)
+		hash.Write([]byte(target.KeyID))
 	}
 	return hash.Sum(nil)
 }
@@ -327,19 +324,25 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		encKey := decryptedData[:crypto.AESKeySize]
 		decryptedData = decryptedData[crypto.AESKeySize:]
 
-		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName, target.Height)] = encKey
+		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName, string(target.KeyID))] = encKey
 	}
 
 	s.peer.bus.Publish(encryption.NewKeysRetrievedMessage(string(req.SchemaRoot), eventData))
 }
 
+func encodeToBase64(data []byte) []byte {
+	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+	base64.StdEncoding.Encode(encoded, data)
+	return encoded
+}
+
 // makeAssociatedData creates the associated data for the encryption key request
 func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
-	return bytes.Join([][]byte{
+	return encodeToBase64(bytes.Join([][]byte{
 		[]byte(req.SchemaRoot),
 		[]byte(req.EphemeralPublicKey),
 		[]byte(peerID),
-	}, []byte{})
+	}, []byte{}))
 }
 
 func (s *server) verifyResponseSignature(res *pb.FetchEncryptionKeyReply, fromPeer peer.ID) (bool, error) {

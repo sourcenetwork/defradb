@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"container/list"
 	"context"
 	"sync"
@@ -153,7 +154,7 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 				return err
 			}
 
-			blocks, err = loadBlocksChainFromBlockstoreTillHeight(ctx, txn, cids, mergeGroup.compositeKey.BlockHeight)
+			blocks, err = loadBlocksWithKeyIDFromBlockstore(ctx, txn, cids, mergeGroup.compositeKey.KeyID)
 			if err != nil {
 				return err
 			}
@@ -171,7 +172,7 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 					return err
 				}
 
-				fieldBlocks, err := loadBlocksChainFromBlockstoreTillHeight(ctx, txn, cids, fieldStoreKey.BlockHeight)
+				fieldBlocks, err := loadBlocksWithKeyIDFromBlockstore(ctx, txn, cids, fieldStoreKey.KeyID)
 				if err != nil {
 					return err
 				}
@@ -387,7 +388,7 @@ func (mp *mergeProcessor) processEncryptedBlock(
 				if blockEnc.Type == coreblock.FieldEncrypted {
 					fieldName = immutable.Some(dagBlock.Delta.GetFieldName())
 				}
-				mp.addPendingEncryptionRequest(docID, fieldName, blockEnc.From)
+				mp.addPendingEncryptionRequest(docID, fieldName, string(blockEnc.KeyID))
 			}
 			return dagBlock, true, nil
 		}
@@ -395,8 +396,8 @@ func (mp *mergeProcessor) processEncryptedBlock(
 	return dagBlock, false, nil
 }
 
-func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName immutable.Option[string], height uint64) {
-	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName, height)] = struct{}{}
+func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName immutable.Option[string], keyID string) {
+	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName, keyID)] = struct{}{}
 	if !fieldName.HasValue() {
 		mp.hasPendingCompositeBlock = true
 	}
@@ -470,7 +471,7 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 		optFieldName = immutable.Some(block.Delta.GetFieldName())
 	}
 
-	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), optFieldName, blockEnc.From)
+	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), optFieldName, string(blockEnc.KeyID))
 
 	if block.Delta.IsComposite() {
 		// for composite blocks there is nothing to decrypt
@@ -609,14 +610,14 @@ func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid
 	return block, nil
 }
 
-// loadBlocksChainFromBlockstoreTillHeight loads the blocks from the blockstore starting from the given CIDs
-// until it reaches a block with a height equal to the given height (including that block).
-// The returned blocks are ordered from the highest height to the lowest.
-func loadBlocksChainFromBlockstoreTillHeight(
+// loadBlocksWithKeyIDFromBlockstore loads the blocks from the blockstore that have given encryption
+// keyID until it reaches a block with a different keyID or without any.
+// The returned blocks are ordered from the newest to the oldest.
+func loadBlocksWithKeyIDFromBlockstore(
 	ctx context.Context,
 	txn datastore.Txn,
 	cids []cid.Cid,
-	height uint64,
+	keyID string,
 ) ([]*coreblock.Block, error) {
 	var blocks []*coreblock.Block
 	for len(cids) > 0 {
@@ -626,13 +627,11 @@ func loadBlocksChainFromBlockstoreTillHeight(
 			return nil, err
 		}
 
-		if block.Delta.GetPriority() >= height {
+		if block.Encryption != nil && bytes.Equal(block.Encryption.KeyID, []byte(keyID)) {
 			blocks = append(blocks, block)
-			if block.Delta.GetPriority() != height {
-				prevCid := block.GetPrevBlockCid()
-				if prevCid.HasValue() {
-					cids = append(cids, prevCid.Value())
-				}
+			prevCid := block.GetPrevBlockCid()
+			if prevCid.HasValue() {
+				cids = append(cids, prevCid.Value())
 			}
 		}
 		cids = cids[1:]

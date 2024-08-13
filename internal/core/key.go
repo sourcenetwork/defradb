@@ -800,9 +800,8 @@ type EncStoreDocKey struct {
 	// FieldName is the name of the field that the key is for.
 	// If unset, it indicates that the key is for the whole document.
 	FieldName immutable.Option[string]
-	// BlockHeight is the height of the block that the key is for.
-	// It is used to differentiate keys that are used in different point in time.
-	BlockHeight uint64
+	// KeyID is a hash (Cid) of the of the encryption key.
+	KeyID string
 }
 
 var _ Key = (*EncStoreDocKey)(nil)
@@ -810,15 +809,15 @@ var _ Key = (*EncStoreDocKey)(nil)
 // NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
 // Unset fieldName indicates that the key is for the whole document.
 // blockHeight is the height of the block that the key is for.
-func NewEncStoreDocKey(docID string, fieldName immutable.Option[string], blockHeight uint64) EncStoreDocKey {
-	return EncStoreDocKey{DocID: docID, FieldName: fieldName, BlockHeight: blockHeight}
+func NewEncStoreDocKey(docID string, fieldName immutable.Option[string], keyID string) EncStoreDocKey {
+	return EncStoreDocKey{DocID: docID, FieldName: fieldName, KeyID: keyID}
 }
 
 func (k EncStoreDocKey) ToString() string {
 	if k.FieldName.HasValue() {
-		return fmt.Sprintf("%s/%s/%d", k.DocID, k.FieldName.Value(), k.BlockHeight)
+		return fmt.Sprintf("%s/%s/%s", k.DocID, k.FieldName.Value(), k.KeyID)
 	}
-	return fmt.Sprintf("%s/%d", k.DocID, k.BlockHeight)
+	return fmt.Sprintf("%s/%s", k.DocID, k.KeyID)
 }
 
 func (k EncStoreDocKey) Bytes() []byte {

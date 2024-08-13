@@ -15,7 +15,6 @@ import (
 	"errors"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -29,7 +28,6 @@ import (
 var testErr = errors.New("test error")
 
 const docID = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"
-const height = 1
 
 var fieldName = immutable.Some("name")
 var noFieldName = immutable.None[string]()
@@ -41,6 +39,16 @@ func getPlainText() []byte {
 func getEncKey(fieldName immutable.Option[string]) []byte {
 	key, _ := generateTestEncryptionKey(docID, fieldName)
 	return key
+}
+
+func getKeyID(fieldName immutable.Option[string]) string {
+	key := getEncKey(fieldName)
+	cid, _ := crypto.GenerateCid(key)
+	return cid.String()
+}
+
+func makeStoreKey(docID string, fieldName immutable.Option[string]) core.EncStoreDocKey {
+	return core.NewEncStoreDocKey(docID, fieldName, getKeyID(fieldName))
 }
 
 func getCipherText(t *testing.T, fieldName immutable.Option[string]) []byte {
@@ -66,7 +74,7 @@ func TestEncryptorEncrypt_IfStorageReturnsError_Error(t *testing.T) {
 
 	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, testErr)
 
-	_, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), []byte("test"))
+	_, err := enc.Encrypt(makeStoreKey(docID, fieldName), []byte("test"))
 
 	assert.ErrorIs(t, err, testErr)
 }
@@ -74,53 +82,26 @@ func TestEncryptorEncrypt_IfStorageReturnsError_Error(t *testing.T) {
 func TestEncryptorEncrypt_WithEmptyFieldNameIfNoKeyFoundInStorage_ShouldGenerateKeyStoreItAndReturnCipherText(t *testing.T) {
 	enc, st := newDefaultEncryptor(t)
 
-	storeKey := core.NewEncStoreDocKey(docID, noFieldName, height)
+	storeKey := makeStoreKey(docID, noFieldName)
 
-	st.EXPECT().Get(mock.Anything, storeKey.ToDS()).Return(nil, ds.ErrNotFound)
 	st.EXPECT().Put(mock.Anything, storeKey.ToDS(), getEncKey(noFieldName)).Return(nil)
 
-	cipherText, err := enc.Encrypt(core.NewEncStoreDocKey(docID, noFieldName, height), getPlainText())
+	_, _, err := enc.GetOrGenerateEncryptionKey(docID, noFieldName)
+	assert.NoError(t, err)
+
+	cipherText, err := enc.Encrypt(makeStoreKey(docID, noFieldName), getPlainText())
 
 	assert.NoError(t, err)
 	assert.Equal(t, getCipherText(t, noFieldName), cipherText)
-}
-
-func TestEncryptorEncrypt_IfNoFieldEncRequestedAndNoKeyInStorage_GenerateKeyStoreItAndReturnCipherText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	docStoreKey := core.NewEncStoreDocKey(docID, noFieldName, height).ToDS()
-	fieldStoreKey := core.NewEncStoreDocKey(docID, fieldName, height).ToDS()
-
-	st.EXPECT().Get(mock.Anything, fieldStoreKey).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Put(mock.Anything, docStoreKey, getEncKey(noFieldName)).Return(nil)
-
-	cipherText, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
-
-	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, noFieldName), cipherText)
-}
-
-func TestEncryptorEncrypt_IfNoKeyWithFieldFoundInStorage_ShouldGenerateKeyStoreItAndReturnCipherText(t *testing.T) {
-	enc, st := newEncryptorWithConfig(t, DocEncConfig{EncryptedFields: []string{fieldName.Value()}})
-
-	storeKey := core.NewEncStoreDocKey(docID, fieldName, height)
-
-	st.EXPECT().Get(mock.Anything, storeKey.ToDS()).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Put(mock.Anything, storeKey.ToDS(), getEncKey(fieldName)).Return(nil)
-
-	cipherText, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
-
-	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, fieldName), cipherText)
 }
 
 func TestEncryptorEncrypt_IfKeyWithFieldFoundInStorage_ShouldUseItToReturnCipherText(t *testing.T) {
 	enc, st := newEncryptorWithConfig(t, DocEncConfig{EncryptedFields: []string{fieldName.Value()}})
 
-	storeKey := core.NewEncStoreDocKey(docID, fieldName, height)
+	storeKey := makeStoreKey(docID, fieldName)
 	st.EXPECT().Get(mock.Anything, storeKey.ToDS()).Return(getEncKey(fieldName), nil)
 
-	cipherText, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
+	cipherText, err := enc.Encrypt(makeStoreKey(docID, fieldName), getPlainText())
 
 	assert.NoError(t, err)
 	assert.Equal(t, getCipherText(t, fieldName), cipherText)
@@ -131,7 +112,7 @@ func TestEncryptorEncrypt_IfKeyFoundInStorage_ShouldUseItToReturnCipherText(t *t
 
 	st.EXPECT().Get(mock.Anything, mock.Anything).Return(getEncKey(noFieldName), nil)
 
-	cipherText, err := enc.Encrypt(core.NewEncStoreDocKey(docID, noFieldName, height), getPlainText())
+	cipherText, err := enc.Encrypt(makeStoreKey(docID, noFieldName), getPlainText())
 
 	assert.NoError(t, err)
 	assert.Equal(t, getCipherText(t, noFieldName), cipherText)
@@ -140,32 +121,27 @@ func TestEncryptorEncrypt_IfKeyFoundInStorage_ShouldUseItToReturnCipherText(t *t
 func TestEncryptorEncrypt_IfStorageFailsToStoreEncryptionKey_ReturnError(t *testing.T) {
 	enc, st := newDefaultEncryptor(t)
 
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound)
-
 	st.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(testErr)
 
-	_, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
-
+	_, _, err := enc.GetOrGenerateEncryptionKey(docID, noFieldName)
 	assert.ErrorIs(t, err, testErr)
 }
 
 func TestEncryptorEncrypt_IfKeyGenerationIsNotEnabled_ShouldReturnPlainText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
+	enc, _ := newDefaultEncryptor(t)
 	enc.SetConfig(immutable.None[DocEncConfig]())
 
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound)
-
-	cipherText, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
-
+	encStoreKey, encryptionKey, err := enc.GetOrGenerateEncryptionKey(docID, noFieldName)
 	assert.NoError(t, err)
-	assert.Equal(t, getPlainText(), cipherText)
+	assert.Len(t, encryptionKey, 0)
+	assert.Equal(t, encStoreKey, immutable.None[core.EncStoreDocKey]())
 }
 
 func TestEncryptorEncrypt_IfNoStorageProvided_Error(t *testing.T) {
 	enc, _ := newDefaultEncryptor(t)
 	enc.SetStore(nil)
 
-	_, err := enc.Encrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
+	_, err := enc.Encrypt(makeStoreKey(docID, fieldName), getPlainText())
 
 	assert.ErrorIs(t, err, ErrNoStorageProvided)
 }
@@ -174,7 +150,7 @@ func TestEncryptorDecrypt_IfNoStorageProvided_Error(t *testing.T) {
 	enc, _ := newDefaultEncryptor(t)
 	enc.SetStore(nil)
 
-	_, err := enc.Decrypt(core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
+	_, err := enc.Decrypt(makeStoreKey(docID, fieldName), getPlainText())
 
 	assert.ErrorIs(t, err, ErrNoStorageProvided)
 }
@@ -184,7 +160,7 @@ func TestEncryptorDecrypt_IfStorageReturnsError_Error(t *testing.T) {
 
 	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, testErr)
 
-	_, err := enc.Decrypt(core.NewEncStoreDocKey(docID, fieldName, height), []byte("test"))
+	_, err := enc.Decrypt(makeStoreKey(docID, fieldName), []byte("test"))
 
 	assert.ErrorIs(t, err, testErr)
 }
@@ -194,14 +170,14 @@ func TestEncryptorDecrypt_IfKeyFoundInStorage_ShouldUseItToReturnPlainText(t *te
 
 	st.EXPECT().Get(mock.Anything, mock.Anything).Return(getEncKey(noFieldName), nil)
 
-	plainText, err := enc.Decrypt(core.NewEncStoreDocKey(docID, fieldName, height), getCipherText(t, noFieldName))
+	plainText, err := enc.Decrypt(makeStoreKey(docID, fieldName), getCipherText(t, noFieldName))
 
 	assert.NoError(t, err)
 	assert.Equal(t, getPlainText(), plainText)
 }
 
 func TestEncryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
-	data, err := EncryptDoc(context.Background(), core.NewEncStoreDocKey(docID, fieldName, height), getPlainText())
+	data, err := EncryptDoc(context.Background(), makeStoreKey(docID, fieldName), getPlainText())
 	assert.Nil(t, data, "data should be nil")
 	assert.NoError(t, err, "error should be nil")
 }
@@ -209,7 +185,7 @@ func TestEncryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
 func TestDecryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
 	data, err := DecryptDoc(
 		context.Background(),
-		core.NewEncStoreDocKey(docID, fieldName, height),
+		makeStoreKey(docID, fieldName),
 		getCipherText(t, fieldName),
 	)
 	assert.Nil(t, data, "data should be nil")

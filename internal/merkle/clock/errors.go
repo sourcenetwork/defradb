@@ -26,6 +26,7 @@ const (
 	errReplacingHead          = "error replacing head"
 	errCouldNotFindBlock      = "error checking for known block "
 	errFailedToGetNextQResult = "failed to get next query result"
+	errCouldNotGetEncKey      = "could not get encryption key"
 )
 
 var (
@@ -39,6 +40,7 @@ var (
 	ErrCouldNotFindBlock      = errors.New(errCouldNotFindBlock)
 	ErrFailedToGetNextQResult = errors.New(errFailedToGetNextQResult)
 	ErrDecodingHeight         = errors.New("error decoding height")
+	ErrCouldNotGetEncKey      = errors.New(errCouldNotGetEncKey)
 )
 
 func NewErrCreatingBlock(inner error) error {

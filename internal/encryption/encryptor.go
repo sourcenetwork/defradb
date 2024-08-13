@@ -53,10 +53,11 @@ func generateTestEncryptionKey(docID string, fieldName immutable.Option[string])
 // It acts based on the configuration [DocEncConfig] provided and data stored in the provided store.
 // It uses [core.EncStoreDocKey] to store and retrieve encryption keys.
 type DocEncryptor struct {
-	conf  immutable.Option[DocEncConfig]
-	ctx   context.Context
-	store datastore.DSReaderWriter
-	cache map[core.EncStoreDocKey][]byte
+	conf          immutable.Option[DocEncConfig]
+	ctx           context.Context
+	store         datastore.DSReaderWriter
+	cache         map[core.EncStoreDocKey][]byte
+	generatedKeys []core.EncStoreDocKey
 }
 
 func newDocEncryptor(ctx context.Context) *DocEncryptor {
@@ -103,9 +104,8 @@ func shouldEncryptDocField(conf immutable.Option[DocEncConfig], fieldName immuta
 	return false
 }
 
-// Encrypt encrypts the given plainText that is associated with the given docID, fieldName and block height.
-// If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
-// Otherwise, it will use document-level encryption key.
+// Encrypt encrypts the given plainText with the encryption key that is associated with the given docID,
+// fieldName and key id.
 func (d *DocEncryptor) Encrypt(
 	encStoreKey core.EncStoreDocKey,
 	plainText []byte,
@@ -113,31 +113,17 @@ func (d *DocEncryptor) Encrypt(
 	if d.store == nil {
 		return nil, ErrNoStorageProvided
 	}
+
 	encryptionKey, err := d.fetchByEncStoreKey(encStoreKey)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(encryptionKey) == 0 {
-		if !shouldEncryptIndividualField(d.conf, encStoreKey.FieldName) {
-			encStoreKey.FieldName = immutable.None[string]()
-		}
-
-		if !shouldEncryptDocField(d.conf, encStoreKey.FieldName) {
-			return plainText, nil
-		}
-
-		encryptionKey, err = generateEncryptionKeyFunc(encStoreKey.DocID, encStoreKey.FieldName)
-		if err != nil {
-			return nil, err
-		}
-
-		err = d.storeByEncStoreKey(encStoreKey, encryptionKey)
-		if err != nil {
-			return nil, err
-		}
+	var cipherText []byte
+	if len(plainText) > 0 {
+		cipherText, _, err = crypto.EncryptAES(plainText, encryptionKey, nil, true)
 	}
-	cipherText, _, err := crypto.EncryptAES(plainText, encryptionKey, nil, true)
+
 	return cipherText, err
 }
 
@@ -192,6 +178,68 @@ func (d *DocEncryptor) GetKey(encStoreKey core.EncStoreDocKey) ([]byte, error) {
 		return nil, err
 	}
 	return encryptionKey, nil
+}
+
+// getGeneratedKeyFor returns the generated key for the given docID and fieldName.
+func (d *DocEncryptor) getGeneratedKeyFor(
+	docID string,
+	fieldName immutable.Option[string],
+) (immutable.Option[core.EncStoreDocKey], []byte) {
+	for _, key := range d.generatedKeys {
+		if key.DocID == docID && key.FieldName == fieldName {
+			return immutable.Some(key), d.cache[key]
+		}
+	}
+	return immutable.None[core.EncStoreDocKey](), nil
+}
+
+// GetOrGenerateEncryptionKey returns the generated encryption key for the given docID, (optional) fieldName.
+// If the key is not generated before, it generates a new key and stores it.
+func (d *DocEncryptor) GetOrGenerateEncryptionKey(
+	docID string,
+	fieldName immutable.Option[string],
+) (immutable.Option[core.EncStoreDocKey], []byte, error) {
+	encStoreKey, encryptionKey := d.getGeneratedKeyFor(docID, fieldName)
+	if encStoreKey.HasValue() {
+		return encStoreKey, encryptionKey, nil
+	}
+
+	return d.generateEncryptionKey(docID, fieldName)
+}
+
+// generateEncryptionKey generates a new encryption key for the given docID and fieldName.
+func (d *DocEncryptor) generateEncryptionKey(
+	docID string,
+	fieldName immutable.Option[string],
+) (immutable.Option[core.EncStoreDocKey], []byte, error) {
+	encStoreKey := core.NewEncStoreDocKey(docID, fieldName, "")
+	if !shouldEncryptIndividualField(d.conf, fieldName) {
+		encStoreKey.FieldName = immutable.None[string]()
+	}
+
+	if !shouldEncryptDocField(d.conf, encStoreKey.FieldName) {
+		return immutable.None[core.EncStoreDocKey](), nil, nil
+	}
+
+	encryptionKey, err := generateEncryptionKeyFunc(encStoreKey.DocID, encStoreKey.FieldName)
+	if err != nil {
+		return immutable.None[core.EncStoreDocKey](), nil, err
+	}
+
+	keyID, err := crypto.GenerateCid(encryptionKey)
+	if err != nil {
+		return immutable.None[core.EncStoreDocKey](), nil, err
+	}
+	encStoreKey.KeyID = keyID.String()
+
+	err = d.storeByEncStoreKey(encStoreKey, encryptionKey)
+	if err != nil {
+		return immutable.None[core.EncStoreDocKey](), nil, err
+	}
+
+	d.generatedKeys = append(d.generatedKeys, encStoreKey)
+
+	return immutable.Some(encStoreKey), encryptionKey, nil
 }
 
 // SaveKey saves the given encryption key for the given docID, (optional) fieldName and block height.
@@ -265,11 +313,27 @@ func GetKey(ctx context.Context, encStoreKey core.EncStoreDocKey) ([]byte, error
 	return enc.GetKey(encStoreKey)
 }
 
+// GetOrGenerateEncryptionKey returns the generated encryption key for the given docID, (optional) fieldName.
+// If the key is not generated before, it generates a new key and stores it.
+func GetOrGenerateEncryptionKey(
+	ctx context.Context,
+	docID string,
+	fieldName immutable.Option[string],
+) (immutable.Option[core.EncStoreDocKey], []byte, error) {
+	enc, ok := TryGetContextEncryptor(ctx)
+	if !ok {
+		return immutable.None[core.EncStoreDocKey](), nil, nil
+	}
+	return enc.GetOrGenerateEncryptionKey(docID, fieldName)
+}
+
 func init() {
 	arg := os.Args[0]
 	// If the binary is a test binary, use a deterministic nonce.
 	// TODO: We should try to find a better way to detect this https://github.com/sourcenetwork/defradb/issues/2801
-	if strings.HasSuffix(arg, ".test") || strings.Contains(arg, "/defradb/tests/") {
+	if strings.HasSuffix(arg, ".test") ||
+		strings.Contains(arg, "/defradb/tests/") ||
+		strings.Contains(arg, "/__debug_bin") {
 		generateEncryptionKeyFunc = generateTestEncryptionKey
 	}
 }

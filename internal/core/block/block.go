@@ -112,8 +112,8 @@ const (
 type Encryption struct {
 	// Type indicates on what level encryption is applied.
 	Type EncryptionType
-	// From specifies the block height from which the encryption is applied.
-	From uint64
+	// CID of the key used for encryption.
+	KeyID []byte
 }
 
 // Block is a block that contains a CRDT delta and links to other blocks.
@@ -129,7 +129,7 @@ type Block struct {
 
 // IsEncrypted returns true if the block is encrypted.
 func (b *Block) IsEncrypted() bool {
-	return b.Encryption != nil && (*b.Encryption).Type != NotEncrypted
+	return b.Encryption != nil && b.Encryption.Type != NotEncrypted
 }
 
 // GetPrevBlockCid returns the CID of the previous block.
@@ -155,7 +155,7 @@ func (b Block) IPLDSchemaBytes() []byte {
 		
 		type Encryption struct {
 			type  EncryptionType
-			from  Int
+			keyID Bytes
 		}
 
 		type EncryptionType enum {
@@ -298,8 +298,8 @@ func (b *Block) Validate() error {
 			return ErrInvalidBlockEncryptionType
 		}
 
-		if (*b.Encryption).From == 0 {
-			return ErrInvalidBlockEncryptionFrom
+		if len(b.Encryption.KeyID) == 0 {
+			return ErrInvalidBlockEncryptionKeyID
 		}
 	}
 	return nil

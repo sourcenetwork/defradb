@@ -237,17 +237,17 @@ func TestBlock_Validate(t *testing.T) {
 	}{
 		{
 			name:          "NotEncrypted type is valid",
-			encryption:    &Encryption{Type: NotEncrypted, From: 1},
+			encryption:    &Encryption{Type: NotEncrypted, KeyID: []byte{1}},
 			expectedError: nil,
 		},
 		{
 			name:          "DocumentEncrypted type is valid",
-			encryption:    &Encryption{Type: DocumentEncrypted, From: 1},
+			encryption:    &Encryption{Type: DocumentEncrypted, KeyID: []byte{1}},
 			expectedError: nil,
 		},
 		{
 			name:          "FieldEncrypted type is valid",
-			encryption:    &Encryption{Type: FieldEncrypted, From: 1},
+			encryption:    &Encryption{Type: FieldEncrypted, KeyID: []byte{1}},
 			expectedError: nil,
 		},
 		{
@@ -257,13 +257,13 @@ func TestBlock_Validate(t *testing.T) {
 		},
 		{
 			name:          "Invalid encryption type",
-			encryption:    &Encryption{Type: EncryptionType(99), From: 1},
+			encryption:    &Encryption{Type: EncryptionType(99), KeyID: []byte{1}},
 			expectedError: ErrInvalidBlockEncryptionType,
 		},
 		{
-			name:          "Invalid encryption from parameter",
-			encryption:    &Encryption{Type: DocumentEncrypted},
-			expectedError: ErrInvalidBlockEncryptionFrom,
+			name:          "Invalid encryption key id parameter",
+			encryption:    &Encryption{Type: DocumentEncrypted, KeyID: []byte{}},
+			expectedError: ErrInvalidBlockEncryptionKeyID,
 		},
 	}
 

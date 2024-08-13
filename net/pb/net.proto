@@ -45,8 +45,8 @@ message EncryptionKeyTarget {
     // fieldName if the name of the document field that the key is being requested for.
     // If the fieldName is empty, the key is being requested for the whole document.
     string fieldName = 2;
-    // height is the height of the block the encryption key is being requested for.
-    uint64 height = 3;
+    // keyID is the hash (Cid) of the key that is being requested.
+    bytes keyID = 3;
 }
 
 // FetchEncryptionKeyRequest is a request to receive a doc encryption key
