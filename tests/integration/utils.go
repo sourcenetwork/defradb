@@ -106,6 +106,7 @@ func init() {
 	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
 		skipNetworkTests, _ = strconv.ParseBool(value)
 	}
+	mutationType = GQLRequestMutationType
 }
 
 // AssertPanic asserts that the code inside the specified PanicTestFunc panics.
