@@ -150,7 +150,7 @@ func ExecuteTestCase(
 		clients = append(clients, HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, GoClientType)
+	clients = append(clients, GoClientType)
 	}
 	if cliClient {
 		clients = append(clients, CLIClientType)
@@ -161,7 +161,7 @@ func ExecuteTestCase(
 		databases = append(databases, badgerIMType)
 	}
 	if badgerFile {
-		databases = append(databases, badgerFileType)
+	databases = append(databases, badgerFileType)
 	}
 	if inMemoryStore {
 		databases = append(databases, defraIMType)
@@ -1709,7 +1709,6 @@ func executeRequest(
 
 		result := node.ExecRequest(ctx, action.Request)
 
-		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
 			s,
 			&result.GQL,
@@ -1717,7 +1716,6 @@ func executeRequest(
 			action.ExpectedError,
 			action.Asserter,
 			nodeID,
-			anyOfByFieldKey,
 		)
 	}
 
@@ -1767,9 +1765,7 @@ func executeSubscriptionRequest(
 						r,
 						action.ExpectedError,
 						nil,
-						// anyof is not yet supported by subscription requests
 						0,
-						map[docFieldKey][]any{},
 					)
 
 					assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1826,12 +1822,6 @@ func AssertErrors(
 	return false
 }
 
-// docFieldKey is an internal key type that wraps docIndex and fieldName
-type docFieldKey struct {
-	docIndex  int
-	fieldName string
-}
-
 func assertRequestResults(
 	s *state,
 	result *client.GQLResult,
@@ -1839,7 +1829,6 @@ func assertRequestResults(
 	expectedError string,
 	asserter ResultAsserter,
 	nodeID int,
-	anyOfByField map[docFieldKey][]any,
 ) bool {
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
@@ -1877,18 +1866,19 @@ func assertRequestResults(
 		actual, ok := resultantData[key]
 		require.True(s.t, ok, "result key not found: %s", key)
 
-		expectDocs, ok := expect.([]map[string]any)
-		if ok {
+		switch exp := expect.(type) {
+		case []map[string]any:
 			actualDocs := ConvertToArrayOfMaps(s.t, actual)
 			assertRequestResultDocs(
 				s,
 				nodeID,
-				expectDocs,
+				exp,
 				actualDocs,
-				anyOfByField,
 				stack,
 			)
-		} else {
+		case AnyOf:
+			assertResultsAnyOf(s.t, s.clientType, exp, actual)
+		default:
 			assertResultsEqual(
 				s.t,
 				s.clientType,
@@ -1908,7 +1898,6 @@ func assertRequestResultDocs(
 	nodeID int,
 	expectedResults []map[string]any,
 	actualResults []map[string]any,
-	anyOfByField map[docFieldKey][]any,
 	stack *assertStack,
 ) bool {
 	// compare results
@@ -1935,11 +1924,6 @@ func assertRequestResultDocs(
 			switch expectedValue := expectedDoc[field].(type) {
 			case AnyOf:
 				assertResultsAnyOf(s.t, s.clientType, expectedValue, actualValue)
-
-				dfk := docFieldKey{actualDocIndex, field}
-				valueSet := anyOfByField[dfk]
-				valueSet = append(valueSet, actualValue)
-				anyOfByField[dfk] = valueSet
 			case DocIndex:
 				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
 				assertResultsEqual(
@@ -1957,7 +1941,6 @@ func assertRequestResultDocs(
 					nodeID,
 					expectedValue,
 					actualValueMap,
-					anyOfByField,
 					stack,
 				)
 
