@@ -160,11 +160,6 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	if n.Peer != nil {
-		if err := n.Peer.Start(); err != nil {
-			return err
-		}
-	}
 	if n.Server != nil {
 		err := n.Server.SetListener()
 		if err != nil {

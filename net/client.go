@@ -50,7 +50,7 @@ func (s *server) pushLog(evt event.Update, pid peer.ID) error {
 		return NewErrPushLog(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), PushTimeout)
+	ctx, cancel := context.WithTimeout(s.peer.ctx, PushTimeout)
 	defer cancel()
 
 	if _, err := client.PushLog(ctx, req); err != nil {

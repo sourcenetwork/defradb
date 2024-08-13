@@ -50,6 +50,9 @@ type Peer struct {
 	bus       *event.Bus
 	updateSub *event.Subscription
 
+	ctx    context.Context
+	cancel context.CancelFunc
+
 	host host.Host
 	dht  routing.Routing
 	ps   *pubsub.PubSub
@@ -61,7 +64,6 @@ type Peer struct {
 	exch  exchange.Interface
 	bserv blockservice.BlockService
 
-	bootConfig bootstrap.BootstrapConfig
 	bootCloser io.Closer
 }
 
@@ -72,6 +74,15 @@ func NewPeer(
 	bus *event.Bus,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if p == nil {
+			cancel()
+		} else if err != nil {
+			p.Close()
+		}
+	}()
+
 	if blockstore == nil {
 		return nil, ErrNilDB
 	}
@@ -102,9 +113,23 @@ func NewPeer(
 		corelog.Any("Address", options.ListenAddresses),
 	)
 
-	var ps *pubsub.PubSub
+	bswapnet := network.NewFromIpfsHost(h, ddht)
+	bswap := bitswap.New(ctx, bswapnet, blockstore)
+
+	p = &Peer{
+		host:       h,
+		dht:        ddht,
+		blockstore: blockstore,
+		ctx:        ctx,
+		cancel:     cancel,
+		bus:        bus,
+		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
+		bserv:      blockservice.New(blockstore, bswap),
+		exch:       bswap,
+	}
+
 	if options.EnablePubSub {
-		ps, err = pubsub.NewGossipSub(
+		p.ps, err = pubsub.NewGossipSub(
 			ctx,
 			h,
 			pubsub.WithPeerExchange(true),
@@ -113,54 +138,28 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	bswapnet := network.NewFromIpfsHost(h, ddht)
-	bswap := bitswap.New(ctx, bswapnet, blockstore)
-
-	p = &Peer{
-		host:       h,
-		dht:        ddht,
-		ps:         ps,
-		blockstore: blockstore,
-		bus:        bus,
-		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
-		bserv:      blockservice.New(blockstore, bswap),
-		exch:       bswap,
-		bootConfig: bootstrap.BootstrapConfigWithPeers(peers),
+		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("Starting internal broadcaster for pubsub network")
+		go p.handleMessageLoop()
 	}
 
 	p.server, err = newServer(p, options.GRPCDialOptions...)
 	if err != nil {
 		return nil, err
 	}
-	return p, nil
-}
 
-// Start all the internal workers/goroutines/loops that manage the P2P state.
-func (p *Peer) Start() error {
-	p2plistener, err := gostream.Listen(p.host, corenet.Protocol)
+	p2plistener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	p.bootCloser, err = bootstrap.Bootstrap(p.PeerID(), p.host, p.dht, p.bootConfig)
+	p.bootCloser, err = bootstrap.Bootstrap(p.PeerID(), h, ddht, bootstrap.BootstrapConfigWithPeers(peers))
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	if p.ps != nil {
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
-		if err != nil {
-			return err
-		}
-		log.Info("Starting internal broadcaster for pubsub network")
-		go p.handleMessageLoop()
-	}
-
-	log.Info(
-		"Starting P2P node",
-		corelog.Any("P2P addresses", p.host.Addrs()))
 
 	// register the P2P gRPC server
 	go func() {
@@ -171,29 +170,33 @@ func (p *Peer) Start() error {
 		}
 	}()
 
-	p.bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
+	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
-	return nil
+	return p, nil
 }
 
 // Close the peer node and all its internal workers/goroutines/loops.
 func (p *Peer) Close() {
-	// close bootstrap service
+	defer p.cancel()
+
 	if p.bootCloser != nil {
+		// close bootstrap service
 		if err := p.bootCloser.Close(); err != nil {
 			log.ErrorE("Error closing bootstrap", err)
 		}
 	}
 
-	// close topics
-	if err := p.server.removeAllPubsubTopics(); err != nil {
-		log.ErrorE("Error closing pubsub topics", err)
-	}
+	if p.server != nil {
+		// close topics
+		if err := p.server.removeAllPubsubTopics(); err != nil {
+			log.ErrorE("Error closing pubsub topics", err)
+		}
 
-	// stop gRPC server
-	for _, c := range p.server.conns {
-		if err := c.Close(); err != nil {
-			log.ErrorE("Failed closing server RPC connections", err)
+		// stop gRPC server
+		for _, c := range p.server.conns {
+			if err := c.Close(); err != nil {
+				log.ErrorE("Failed closing server RPC connections", err)
+			}
 		}
 	}
 
@@ -267,7 +270,8 @@ func (p *Peer) RegisterNewDocument(
 	schemaRoot string,
 ) error {
 	// register topic
-	if err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot)); err != nil {
+	err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot))
+	if err != nil {
 		log.ErrorE(
 			"Failed to create new pubsub topic",
 			err,
@@ -289,7 +293,7 @@ func (p *Peer) RegisterNewDocument(
 		},
 	}
 
-	return p.server.publishLog(schemaRoot, req)
+	return p.server.publishLog(ctx, schemaRoot, req)
 }
 
 func (p *Peer) handleDocCreateLog(evt event.Update) error {
@@ -300,7 +304,7 @@ func (p *Peer) handleDocCreateLog(evt event.Update) error {
 
 	// We need to register the document before pushing to the replicators if we want to
 	// ensure that we have subscribed to the topic.
-	err = p.RegisterNewDocument(context.Background(), docID, evt.Cid, evt.Block, evt.SchemaRoot)
+	err = p.RegisterNewDocument(p.ctx, docID, evt.Cid, evt.Block, evt.SchemaRoot)
 	if err != nil {
 		return err
 	}
@@ -332,11 +336,11 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(evt)
 
-	if err := p.server.publishLog(evt.DocID, req); err != nil {
+	if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
 		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 	}
 
-	if err := p.server.publishLog(evt.SchemaRoot, req); err != nil {
+	if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
 		return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
 	}
 

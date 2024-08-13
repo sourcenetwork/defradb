@@ -177,7 +177,7 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 		return nil
 	}
 
-	log.Info("Adding pubsub topic",
+	log.InfoContext(s.peer.ctx, "Adding pubsub topic",
 		corelog.String("PeerID", s.peer.PeerID().String()),
 		corelog.String("Topic", topic))
 
@@ -195,7 +195,7 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 		}
 	}
 
-	t, err := rpc.NewTopic(context.Background(), s.peer.ps, s.peer.host.ID(), topic, subscribe)
+	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topic, subscribe)
 	if err != nil {
 		return err
 	}
@@ -257,8 +257,8 @@ func (s *server) removeAllPubsubTopics() error {
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // corresponding topic
-func (s *server) publishLog(topic string, req *pb.PushLogRequest) error {
-	log.Info("Publish log",
+func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRequest) error {
+	log.InfoContext(ctx, "Publish log",
 		corelog.String("PeerID", s.peer.PeerID().String()),
 		corelog.String("Topic", topic))
 
@@ -273,7 +273,7 @@ func (s *server) publishLog(topic string, req *pb.PushLogRequest) error {
 		if err != nil {
 			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
 		}
-		return s.publishLog(topic, req)
+		return s.publishLog(ctx, topic, req)
 	}
 
 	data, err := req.MarshalVT()
@@ -281,7 +281,7 @@ func (s *server) publishLog(topic string, req *pb.PushLogRequest) error {
 		return errors.Wrap("failed marshling pubsub message", err)
 	}
 
-	_, err = t.Publish(context.Background(), data, rpc.WithIgnoreResponse(true))
+	_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
 	if err != nil {
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
 	}
@@ -300,7 +300,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		log.ErrorE("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
-	ctx := grpcpeer.NewContext(context.Background(), &grpcpeer.Peer{
+	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
 		Addr: addr{from},
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
@@ -370,7 +370,7 @@ func (s *server) updateReplicators(evt event.Replicator) {
 		// add peer to store
 		s.peer.host.Peerstore().AddAddrs(evt.Info.ID, evt.Info.Addrs, peerstore.PermanentAddrTTL)
 		// connect to the peer
-		if err := s.peer.Connect(context.Background(), evt.Info); err != nil {
+		if err := s.peer.Connect(s.peer.ctx, evt.Info); err != nil {
 			log.ErrorE("Failed to connect to replicator peer", err)
 		}
 	}

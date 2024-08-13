@@ -13,15 +13,12 @@ package net
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
 	badger "github.com/sourcenetwork/badger/v4"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -101,16 +98,6 @@ func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
-func TestStartAndClose_NoError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	err := p.Start()
-	require.NoError(t, err)
-}
-
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
@@ -141,50 +128,6 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	defer n2.Close()
 
 	err = n2.Connect(ctx, n1.PeerInfo())
-	require.NoError(t, err)
-
-	err = n2.Start()
-	require.NoError(t, err)
-}
-
-func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, acp.NoACP, nil)
-	require.NoError(t, err)
-	defer db1.Close()
-
-	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, acp.NoACP, nil)
-	require.NoError(t, err)
-	defer db2.Close()
-
-	n1, err := NewPeer(
-		ctx,
-		db1.Blockstore(),
-		db1.Events(),
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
-	)
-	require.NoError(t, err)
-	defer n1.Close()
-	n2, err := NewPeer(
-		ctx,
-		db2.Blockstore(),
-		db2.Events(),
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
-	)
-	require.NoError(t, err)
-	defer n2.Close()
-
-	err = n2.Connect(ctx, n1.PeerInfo())
-	require.NoError(t, err)
-
-	n1.Close()
-
-	// give time for n1 to close
-	time.Sleep(100 * time.Millisecond)
-
-	err = n2.Start()
 	require.NoError(t, err)
 }
 
@@ -559,9 +502,5 @@ func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	actual, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ")
-	require.NoError(t, err)
-
-	assert.ElementsMatch(t, []peer.AddrInfo{*actual}, n.bootConfig.BootstrapPeers())
 	n.Close()
 }

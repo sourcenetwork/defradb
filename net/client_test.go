@@ -100,11 +100,9 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	db1, p1 := newTestPeer(ctx, t)
 	defer db1.Close()
 	defer p1.Close()
-	p1.Start()
 	db2, p2 := newTestPeer(ctx, t)
 	defer p2.Close()
 	defer db2.Close()
-	p2.Start()
 
 	err := p1.host.Connect(ctx, p2.PeerInfo())
 	require.NoError(t, err)

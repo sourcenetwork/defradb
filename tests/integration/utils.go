@@ -709,14 +709,8 @@ func restartNodes(
 		nodeOpts := s.nodeConfigs[i]
 		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
-		p, err := net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
+		node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
 		require.NoError(s.t, err)
-
-		if err := p.Start(); err != nil {
-			p.Close()
-			require.NoError(s.t, err)
-		}
-		node.Peer = p
 
 		c, err := setupClient(s, node)
 		require.NoError(s.t, err)
@@ -784,19 +778,11 @@ func configureNode(
 	nodeOpts := action()
 	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
 
-	p, err := net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
+	node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
 	require.NoError(s.t, err)
 
-	log.InfoContext(s.ctx, "Starting P2P node", corelog.Any("P2P address", p.PeerInfo()))
-	if err := p.Start(); err != nil {
-		p.Close()
-		require.NoError(s.t, err)
-	}
-
-	s.nodeAddresses = append(s.nodeAddresses, p.PeerInfo())
+	s.nodeAddresses = append(s.nodeAddresses, node.Peer.PeerInfo())
 	s.nodeConfigs = append(s.nodeConfigs, nodeOpts)
-
-	node.Peer = p
 
 	c, err := setupClient(s, node)
 	require.NoError(s.t, err)
