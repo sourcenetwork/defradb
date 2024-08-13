@@ -351,9 +351,13 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	return expect
 }
 
-func waitForKeyRetrievedEvent(s *state, nodeIDs []int) {
+// waitForKeyRetrievedEvent waits for nodes to receive a key retrieved event.
+// If targetNodeIDs is empty, all nodes will be waiting on the event sync.
+// Otherwise, only the nodes with the specified IDs will be checked.
+func waitForKeyRetrievedEvent(s *state, targetNodeIDs []int) {
 	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
-		if len(nodeIDs) > 0 && !slices.Contains(nodeIDs, nodeID) {
+		// if we have target nodes and the current node is not in the list, skip it
+		if len(targetNodeIDs) > 0 && !slices.Contains(targetNodeIDs, nodeID) {
 			continue
 		}
 

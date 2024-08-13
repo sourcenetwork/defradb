@@ -82,30 +82,25 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 
 			case encryption.KeyRetrievedEvent:
 				go func() {
-					ctx = encryption.ContextWithStore(ctx, db.Encstore())
-					for encStoreKey, encKey := range evt.Keys {
-						err := encryption.SaveKey(ctx, encStoreKey, encKey)
-
-						if err != nil {
-							log.ErrorContextE(
-								ctx,
-								"Failed to save doc encryption key",
-								err,
-								corelog.Any("Event", evt))
-						}
-					}
-
-					err := db.mergeEncryptedBlocks(ctx, evt)
-
-					if err != nil {
-						log.ErrorContextE(
-							ctx,
-							"Failed to merge encrypted block",
-							err,
-							corelog.Any("Event", evt))
+					if err := db.handleEncryptionKeysRetrievedEvent(ctx, evt); err != nil {
+						log.ErrorContextE(ctx, errFailedToHandleEncKeysReceivedEvent, err, corelog.Any("Event", evt))
 					}
 				}()
 			}
 		}
 	}
+}
+
+// handleEncryptionKeysRetrievedEvent handles the event when requested encryption keys are retrieved from other peers.
+func (db *db) handleEncryptionKeysRetrievedEvent(ctx context.Context, evt encryption.KeyRetrievedEvent) error {
+	ctx = encryption.ContextWithStore(ctx, db.Encstore())
+	for encStoreKey, encKey := range evt.Keys {
+		err := encryption.SaveKey(ctx, encStoreKey, encKey)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return db.mergeEncryptedBlocks(ctx, evt)
 }

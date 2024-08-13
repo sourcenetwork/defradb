@@ -98,7 +98,9 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	return s, nil
 }
 
-func (s *server) extractSessionAndRemoveOldOnes(id string) *session {
+// extractSessionAndRemoveOld extracts a session with the given id from the server's session list
+// and removes any old sessions by comparing their timestamps.
+func (s *server) extractSessionAndRemoveOld(id string) *session {
 	var result *session
 	swapLast := func(i int) {
 		s.sessions[i] = s.sessions[len(s.sessions)-1]

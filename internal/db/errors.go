@@ -101,6 +101,7 @@ const (
 	errReplicatorCollections                    string = "failed to get collections for replicator"
 	errReplicatorNotFound                       string = "replicator not found"
 	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
+	errFailedToHandleEncKeysReceivedEvent       string = "failed to handle encryption-keys-received event"
 )
 
 var (

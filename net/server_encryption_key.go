@@ -292,7 +292,7 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		return
 	}
 
-	session := s.extractSessionAndRemoveOldOnes(string(keyResp.ReqEphemeralPublicKey))
+	session := s.extractSessionAndRemoveOld(string(keyResp.ReqEphemeralPublicKey))
 	if session == nil {
 		log.ErrorContext(s.peer.ctx, "Failed to find session for ephemeral public key")
 		return

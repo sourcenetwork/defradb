@@ -15,6 +15,10 @@ import (
 	"strings"
 )
 
+// assertStack keeps track of the current assertion path.
+// GraphQL response can be traversed by a key of a map and/or an index of an array.
+// So whenever we have a mismatch in a large response, we can use this stack to find the exact path.
+// Example output: "commits[2].links[1].cid"
 type assertStack struct {
 	stack []string
 	isMap []bool
