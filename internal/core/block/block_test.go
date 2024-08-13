@@ -229,6 +229,91 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	require.NoError(t, err)
 }
 
+func TestBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
+	validBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+	}
+
+	marshaledData, err := validBlock.Marshal()
+	require.NoError(t, err)
+
+	var unmarshaledBlock Block
+	err = unmarshaledBlock.Unmarshal(marshaledData)
+	require.NoError(t, err)
+
+	require.Equal(t, validBlock, unmarshaledBlock)
+}
+
+func TestBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
+	invalidData := []byte("invalid CBOR data")
+	var block Block
+	err := block.Unmarshal(invalidData)
+	require.Error(t, err)
+}
+
+func TestBlockUnmarshal_WithValidEncryption_Succeed(t *testing.T) {
+	encryptedBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+		Encryption: &Encryption{
+			Type:  FieldEncrypted,
+			KeyID: []byte("keyID"),
+		},
+	}
+
+	marshaledData, err := encryptedBlock.Marshal()
+	require.NoError(t, err)
+
+	var unmarshaledBlock Block
+	err = unmarshaledBlock.Unmarshal(marshaledData)
+	require.NoError(t, err)
+
+	require.Equal(t, encryptedBlock, unmarshaledBlock)
+	require.NotNil(t, unmarshaledBlock.Encryption)
+	require.Equal(t, FieldEncrypted, unmarshaledBlock.Encryption.Type)
+	require.Equal(t, []byte("keyID"), unmarshaledBlock.Encryption.KeyID)
+}
+
+func TestBlockUnmarshal_WithInvalidEncryption_Error(t *testing.T) {
+	encryptedBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+		Encryption: &Encryption{
+			Type:  FieldEncrypted,
+			KeyID: []byte{},
+		},
+	}
+
+	marshaledData, err := encryptedBlock.Marshal()
+	require.NoError(t, err)
+
+	var unmarshaledBlock Block
+	err = unmarshaledBlock.Unmarshal(marshaledData)
+	require.Error(t, err)
+}
+
 func TestBlock_Validate(t *testing.T) {
 	tests := []struct {
 		name          string
