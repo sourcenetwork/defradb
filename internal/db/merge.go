@@ -659,10 +659,15 @@ func syncIndexedDoc(
 		return err
 	}
 
-	if isDeletedDoc {
-		return col.deleteIndexedDoc(ctx, oldDoc)
-	} else if isNewDoc {
+	// this can happen we received an encrypted document that we haven't decrypted yet
+	if isNewDoc && isDeletedDoc {
+		return nil
+	}
+
+	if isNewDoc {
 		return col.indexNewDoc(ctx, doc)
+	} else if isDeletedDoc {
+		return col.deleteIndexedDoc(ctx, oldDoc)
 	} else {
 		return col.updateDocIndex(ctx, oldDoc, doc)
 	}
