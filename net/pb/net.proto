@@ -54,12 +54,10 @@ message EncryptionKeyTarget {
 message FetchEncryptionKeyRequest {
     // targets is the list of docs/fields for which encryption keys are being requested.
     repeated EncryptionKeyTarget targets = 1;
-    // schemaRoot is the SchemaRoot of the collection that the document resides in.
-    bytes schemaRoot = 2;
     // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
-    bytes ephemeralPublicKey = 3;
+    bytes ephemeralPublicKey = 2;
     // signature is the requesting peer's signature of the request
-    bytes signature = 4;
+    bytes signature = 3;
 }
 
 // FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
@@ -71,12 +69,10 @@ message FetchEncryptionKeyReply {
     // It is prepended with the responder's ephemeral public key and a nonce for AES-GCM
     // Each encryption key in the decrypted list corresponds to the key requested in the same index in the targets list.
     bytes encryptedKeys = 2;
-    // schemaRoot is the SchemaRoot of the collection that the document resides in.
-    bytes schemaRoot = 3;
     // reqEphemeralPublicKey is an ephemeral public of the requesting peer to be used as session id
-    bytes reqEphemeralPublicKey = 4;
+    bytes reqEphemeralPublicKey = 3;
     // signature is the responding peer's signature of the reply
-    bytes signature = 5;
+    bytes signature = 4;
 }
 
 message GetHeadLogRequest {}

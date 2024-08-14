@@ -459,19 +459,12 @@ func (m *FetchEncryptionKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		copy(dAtA[i:], m.Signature)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Signature)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.EphemeralPublicKey) > 0 {
 		i -= len(m.EphemeralPublicKey)
 		copy(dAtA[i:], m.EphemeralPublicKey)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.EphemeralPublicKey)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.SchemaRoot) > 0 {
-		i -= len(m.SchemaRoot)
-		copy(dAtA[i:], m.SchemaRoot)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.SchemaRoot)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -525,19 +518,12 @@ func (m *FetchEncryptionKeyReply) MarshalToSizedBufferVT(dAtA []byte) (int, erro
 		copy(dAtA[i:], m.Signature)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Signature)))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x22
 	}
 	if len(m.ReqEphemeralPublicKey) > 0 {
 		i -= len(m.ReqEphemeralPublicKey)
 		copy(dAtA[i:], m.ReqEphemeralPublicKey)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ReqEphemeralPublicKey)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.SchemaRoot) > 0 {
-		i -= len(m.SchemaRoot)
-		copy(dAtA[i:], m.SchemaRoot)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.SchemaRoot)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -814,10 +800,6 @@ func (m *FetchEncryptionKeyRequest) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
-	l = len(m.SchemaRoot)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	l = len(m.EphemeralPublicKey)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
@@ -843,10 +825,6 @@ func (m *FetchEncryptionKeyReply) SizeVT() (n int) {
 		}
 	}
 	l = len(m.EncryptedKeys)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	l = len(m.SchemaRoot)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -1807,40 +1785,6 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SchemaRoot", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.SchemaRoot = append(m.SchemaRoot[:0], dAtA[iNdEx:postIndex]...)
-			if m.SchemaRoot == nil {
-				m.SchemaRoot = []byte{}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EphemeralPublicKey", wireType)
 			}
 			var byteLen int
@@ -1873,7 +1817,7 @@ func (m *FetchEncryptionKeyRequest) UnmarshalVT(dAtA []byte) error {
 				m.EphemeralPublicKey = []byte{}
 			}
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}
@@ -2028,40 +1972,6 @@ func (m *FetchEncryptionKeyReply) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SchemaRoot", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.SchemaRoot = append(m.SchemaRoot[:0], dAtA[iNdEx:postIndex]...)
-			if m.SchemaRoot == nil {
-				m.SchemaRoot = []byte{}
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ReqEphemeralPublicKey", wireType)
 			}
 			var byteLen int
@@ -2094,7 +2004,7 @@ func (m *FetchEncryptionKeyReply) UnmarshalVT(dAtA []byte) error {
 				m.ReqEphemeralPublicKey = []byte{}
 			}
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}

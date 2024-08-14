@@ -108,7 +108,6 @@ func (s *server) TryGenEncryptionKey(
 	}
 
 	res := &pb.FetchEncryptionKeyReply{
-		SchemaRoot:            req.SchemaRoot,
 		ReqEphemeralPublicKey: req.EphemeralPublicKey,
 		Targets:               targets,
 		EncryptedKeys:         encryptedKey,
@@ -129,7 +128,6 @@ func (s *server) verifyRequestSignature(req *pb.FetchEncryptionKeyRequest, pubKe
 func hashFetchEncryptionKeyReply(res *pb.FetchEncryptionKeyReply) []byte {
 	hash := sha256.New()
 	hash.Write(res.EncryptedKeys)
-	hash.Write(res.SchemaRoot)
 	hash.Write(res.ReqEphemeralPublicKey)
 	for _, target := range res.Targets {
 		hash.Write(target.DocID)
@@ -192,7 +190,6 @@ func (s *server) prepareFetchEncryptionKeyRequest(
 	ephemeralPublicKey []byte,
 ) (*pb.FetchEncryptionKeyRequest, error) {
 	req := &pb.FetchEncryptionKeyRequest{
-		SchemaRoot:         []byte(evt.SchemaRoot),
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
@@ -247,7 +244,7 @@ func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.Reques
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", encryptionTopic), err)
 	}
 
-	s.sessions = append(s.sessions, newSession(string(ephPubKeyBytes), ephPrivKey))
+	s.sessions = append(s.sessions, newSession(string(ephPubKeyBytes), evt.SchemaRoot, ephPrivKey))
 
 	go func() {
 		s.handleFetchEncryptionKeyResponse(<-respChan, req)
@@ -258,7 +255,6 @@ func (s *server) requestEncryptionKey(ctx context.Context, evt encryption.Reques
 
 func hashFetchEncryptionKeyRequest(req *pb.FetchEncryptionKeyRequest) []byte {
 	hash := sha256.New()
-	hash.Write(req.SchemaRoot)
 	hash.Write(req.EphemeralPublicKey)
 	for _, target := range req.Targets {
 		hash.Write(target.DocID)
@@ -327,7 +323,7 @@ func (s *server) handleFetchEncryptionKeyResponse(resp rpc.Response, req *pb.Fet
 		eventData[core.NewEncStoreDocKey(string(target.DocID), optFieldName, string(target.KeyID))] = encKey
 	}
 
-	s.peer.bus.Publish(encryption.NewKeysRetrievedMessage(string(req.SchemaRoot), eventData))
+	s.peer.bus.Publish(encryption.NewKeysRetrievedMessage(session.schemaRoot, eventData))
 }
 
 func encodeToBase64(data []byte) []byte {
@@ -339,8 +335,7 @@ func encodeToBase64(data []byte) []byte {
 // makeAssociatedData creates the associated data for the encryption key request
 func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
 	return encodeToBase64(bytes.Join([][]byte{
-		[]byte(req.SchemaRoot),
-		[]byte(req.EphemeralPublicKey),
+		req.EphemeralPublicKey,
 		[]byte(peerID),
 	}, []byte{}))
 }

@@ -63,11 +63,12 @@ const sessionTimeout = 5 * time.Second
 type session struct {
 	id         string
 	privateKey *ecdh.PrivateKey
+	schemaRoot string
 	t          time.Time
 }
 
-func newSession(id string, privateKey *ecdh.PrivateKey) session {
-	return session{id: id, privateKey: privateKey, t: time.Now()}
+func newSession(id string, schemaRoot string, privateKey *ecdh.PrivateKey) session {
+	return session{id: id, schemaRoot: schemaRoot, privateKey: privateKey, t: time.Now()}
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
