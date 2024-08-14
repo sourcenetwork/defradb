@@ -23,8 +23,6 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/multiformats/go-multicodec"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
@@ -132,14 +130,15 @@ func (b *Block) IsEncrypted() bool {
 	return b.Encryption != nil && b.Encryption.Type != NotEncrypted
 }
 
-// GetPrevBlockCid returns the CID of the previous block.
-func (b *Block) GetPrevBlockCid() immutable.Option[cid.Cid] {
+// GetPrevBlockCids returns the CIDs of the previous blocks. It can be more than 1 with multiple heads.
+func (b *Block) GetPrevBlockCids() []cid.Cid {
+	var heads []cid.Cid
 	for _, link := range b.Links {
 		if link.Name == core.HEAD {
-			return immutable.Some(link.Cid)
+			heads = append(heads, link.Cid)
 		}
 	}
-	return immutable.None[cid.Cid]()
+	return heads
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.

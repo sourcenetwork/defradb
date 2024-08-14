@@ -315,9 +315,8 @@ func (mp *mergeProcessor) loadBlocks(
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.blocks.PushFront(block)
-		prevCid := block.GetPrevBlockCid()
-		if prevCid.HasValue() {
-			err := mp.loadBlocks(ctx, prevCid.Value(), mt, willDecrypt)
+		for _, prevCid := range block.GetPrevBlockCids() {
+			err := mp.loadBlocks(ctx, prevCid, mt, willDecrypt)
 			if err != nil {
 				return err
 			}
@@ -633,10 +632,7 @@ func loadBlocksWithKeyIDFromBlockstore(
 
 		if block.Encryption != nil && bytes.Equal(block.Encryption.KeyID, []byte(keyID)) {
 			blocks = append(blocks, block)
-			prevCid := block.GetPrevBlockCid()
-			if prevCid.HasValue() {
-				cids = append(cids, prevCid.Value())
-			}
+			cids = append(cids, block.GetPrevBlockCids()...)
 		}
 		cids = cids[1:]
 	}
