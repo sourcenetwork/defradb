@@ -56,12 +56,11 @@ type DocEncryptor struct {
 	conf          immutable.Option[DocEncConfig]
 	ctx           context.Context
 	store         datastore.DSReaderWriter
-	cache         map[core.EncStoreDocKey][]byte
 	generatedKeys []core.EncStoreDocKey
 }
 
 func newDocEncryptor(ctx context.Context) *DocEncryptor {
-	return &DocEncryptor{ctx: ctx, cache: make(map[core.EncStoreDocKey][]byte)}
+	return &DocEncryptor{ctx: ctx}
 }
 
 // SetConfig sets the configuration for the document encryptor.
@@ -147,9 +146,6 @@ func (d *DocEncryptor) Decrypt(
 }
 
 func (d *DocEncryptor) fetchByEncStoreKey(storeKey core.EncStoreDocKey) ([]byte, error) {
-	if encryptionKey, ok := d.cache[storeKey]; ok {
-		return encryptionKey, nil
-	}
 	encryptionKey, err := d.store.Get(d.ctx, storeKey.ToDS())
 	isNotFound := errors.Is(err, ds.ErrNotFound)
 	if err != nil {
@@ -159,12 +155,10 @@ func (d *DocEncryptor) fetchByEncStoreKey(storeKey core.EncStoreDocKey) ([]byte,
 		return nil, err
 	}
 
-	d.cache[storeKey] = encryptionKey
 	return encryptionKey, nil
 }
 
 func (d *DocEncryptor) storeByEncStoreKey(storeKey core.EncStoreDocKey, encryptionKey []byte) error {
-	d.cache[storeKey] = encryptionKey
 	return d.store.Put(d.ctx, storeKey.ToDS(), encryptionKey)
 }
 
@@ -187,7 +181,11 @@ func (d *DocEncryptor) getGeneratedKeyFor(
 ) (immutable.Option[core.EncStoreDocKey], []byte) {
 	for _, key := range d.generatedKeys {
 		if key.DocID == docID && key.FieldName == fieldName {
-			return immutable.Some(key), d.cache[key]
+			fetchByEncStoreKey, err := d.fetchByEncStoreKey(key)
+			if err != nil {
+				return immutable.None[core.EncStoreDocKey](), nil
+			}
+			return immutable.Some(key), fetchByEncStoreKey
 		}
 	}
 	return immutable.None[core.EncStoreDocKey](), nil
