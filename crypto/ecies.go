@@ -78,8 +78,7 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 		return nil, fmt.Errorf("failed KDF operation for HMAC key: %w", err)
 	}
 
-	fullAssociatedData := append(ephemeralPublic.Bytes(), associatedData...)
-	cipherText, _, err := EncryptAES(plainText, aesKey, fullAssociatedData, true)
+	cipherText, _, err := EncryptAES(plainText, aesKey, makeAAD(ephemeralPrivate.Bytes(), associatedData), true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt: %w", err)
 	}
@@ -149,11 +148,19 @@ func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData
 		return nil, fmt.Errorf("verification with HMAC failed")
 	}
 
-	fullAssociatedData := append(ephemeralPublicBytes, associatedData...)
-	plainText, err := DecryptAES(nil, cipherTextWithNonce, aesKey, fullAssociatedData)
+	plainText, err := DecryptAES(nil, cipherTextWithNonce, aesKey, makeAAD(ephemeralPublicBytes, associatedData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt: %w", err)
 	}
 
 	return plainText, nil
+}
+
+// makeAAD concatenates the ephemeral public key and associated data for use as additional authenticated data.
+func makeAAD(ephemeralPublicBytes, associatedData []byte) []byte {
+	l := len(ephemeralPublicBytes) + len(associatedData)
+	aad := make([]byte, l)
+	copy(aad, ephemeralPublicBytes)
+	copy(aad[len(ephemeralPublicBytes):], associatedData)
+	return aad
 }
