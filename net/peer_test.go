@@ -250,10 +250,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), doc.ID().String(), true)
+	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-7fca96a2-5f01-5558-a81f-09b47587f26d", true)
 	require.NoError(t, err)
 
 	err = p.handleDocCreateLog(event.Update{
@@ -281,20 +278,13 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	headCID, err := getHead(ctx, db, doc.ID())
-	require.NoError(t, err)
-
-	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	cid, err := createCID(doc)
 	require.NoError(t, err)
 
 	err = p.handleDocUpdateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        headCID,
+		Cid:        cid,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      b,
 	})
 	require.NoError(t, err)
 }
@@ -329,23 +319,16 @@ func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	headCID, err := getHead(ctx, db, doc.ID())
-	require.NoError(t, err)
-
-	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
-	require.NoError(t, err)
-
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), doc.ID().String(), true)
+	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-7fca96a2-5f01-5558-a81f-09b47587f26d", true)
 	require.NoError(t, err)
 
 	err = p.handleDocUpdateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        headCID,
+		Cid:        cid,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -368,23 +351,16 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	headCID, err := getHead(ctx, db, doc.ID())
-	require.NoError(t, err)
-
-	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
-	require.NoError(t, err)
-
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), col.SchemaRoot(), true)
+	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bafkreia7ljiy5oief4dp5xsk7t7zlgfjzqh3537hw7rtttjzchybfxtn4u", true)
 	require.NoError(t, err)
 
 	err = p.handleDocUpdateLog(event.Update{
 		DocID:      doc.ID().String(),
-		Cid:        headCID,
+		Cid:        cid,
 		SchemaRoot: col.SchemaRoot(),
-		Block:      b,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
