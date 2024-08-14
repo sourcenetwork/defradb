@@ -389,6 +389,11 @@ func (db *db) updateSchema(
 		return err
 	}
 
+	existingCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schema.VersionID)
+	if err != nil {
+		return err
+	}
+
 	colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
@@ -396,11 +401,6 @@ func (db *db) updateSchema(
 
 	for _, col := range cols {
 		previousID := col.ID
-
-		existingCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schema.VersionID)
-		if err != nil {
-			return err
-		}
 
 		// The collection version may exist before the schema version was created locally.  This is
 		// because migrations for the globally known schema version may have been registered locally
