@@ -241,9 +241,8 @@ func (n *dagScanNode) Next() (bool, error) {
 		// so that the last new cid will be at the front of the slice
 		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
 
-		for i, h := range heads {
-			link := h // TODO remove when Go 1.22 #2431
-			n.queuedCids[len(heads)-i-1] = &link.Cid
+		for i, head := range heads {
+			n.queuedCids[len(heads)-i-1] = &head.Cid
 		}
 	}
 
