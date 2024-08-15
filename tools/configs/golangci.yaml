@@ -105,15 +105,11 @@ linters:
 
   enable-all: false
 
-  disable:
-    # - prealloc
-
   disable-all: true
 
   enable:
     - errcheck
     - errorlint
-    - exportloopref
     - forbidigo
     - goconst
     - gofmt
