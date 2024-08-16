@@ -245,14 +245,18 @@ func (m *mergeQueue) done(docID string) {
 }
 
 type mergeProcessor struct {
-	txn                          datastore.Txn
-	lsys                         linking.LinkSystem
-	mCRDTs                       map[string]merklecrdt.MerkleCRDT
-	col                          *collection
-	dsKey                        core.DataStoreKey
-	blocks                       *list.List
+	txn    datastore.Txn
+	lsys   linking.LinkSystem
+	mCRDTs map[string]merklecrdt.MerkleCRDT
+	col    *collection
+	dsKey  core.DataStoreKey
+	// blocks is a list of blocks that need to be merged.
+	blocks *list.List
+	// pendingEncryptionKeyRequests is a set of encryption keys that the node encountered during the merge
+	// and doesn't have locally, so they need to be requested from the network.
 	pendingEncryptionKeyRequests map[core.EncStoreDocKey]struct{}
-	hasPendingCompositeBlock     bool
+	// hasPendingCompositeBlock is a flag that indicates if there are any composite blocks that need encryption keys.
+	hasPendingCompositeBlock bool
 }
 
 func (db *db) newMergeProcessor(
@@ -659,7 +663,7 @@ func syncIndexedDoc(
 		return err
 	}
 
-	// this can happen we received an encrypted document that we haven't decrypted yet
+	// this can happen if we received an encrypted document that we haven't decrypted yet
 	if isNewDoc && isDeletedDoc {
 		return nil
 	}
