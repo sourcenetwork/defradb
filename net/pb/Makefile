@@ -7,6 +7,7 @@ PROTOC_GEN_GO_VTPROTO := $(shell which protoc-gen-go-vtproto)
 
 all: $(GO)
 
+.PHONY: deps
 deps:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
@@ -21,8 +22,7 @@ deps:
     --go-vtproto_opt=features=marshal+unmarshal+size \
 	$< # This line specifies the input file
 
+.PHONY: clean 
 clean:
 	rm -f *.pb.go
 	rm -f *pb_test.go
-
-.PHONY: clean deps 
