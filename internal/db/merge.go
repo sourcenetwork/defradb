@@ -60,7 +60,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey.WithFieldId(core.COMPOSITE_NAMESPACE))
+	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey.WithFieldID(core.COMPOSITE_NAMESPACE))
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 		// blocks, as they will be processed as part of the composite block anyway.
 		// Otherwise, we load the blocks for each field
 		if mergeGroup.compositeKey.DocID != "" {
-			cids, err := getHeads(ctx, txn, dsKey.WithFieldId(core.COMPOSITE_NAMESPACE))
+			cids, err := getHeads(ctx, txn, dsKey.WithFieldID(core.COMPOSITE_NAMESPACE))
 			if err != nil {
 				return err
 			}
@@ -165,7 +165,7 @@ func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyR
 					return client.NewErrFieldNotExist(fieldStoreKey.FieldName.Value())
 				}
 
-				fieldDsKey := dsKey.WithFieldId(fd.ID.String())
+				fieldDsKey := dsKey.WithFieldID(fd.ID.String())
 
 				cids, err := getHeads(ctx, txn, fieldDsKey)
 				if err != nil {
@@ -516,7 +516,7 @@ func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, 
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			mp.txn,
 			schemaVersionKey,
-			mp.dsKey.WithFieldId(core.COMPOSITE_NAMESPACE),
+			mp.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
 			"",
 		)
 		mp.mCRDTs[field] = mcrdt
@@ -534,7 +534,7 @@ func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, 
 		schemaVersionKey,
 		fd.Typ,
 		fd.Kind,
-		mp.dsKey.WithFieldId(fd.ID.String()),
+		mp.dsKey.WithFieldID(fd.ID.String()),
 		field,
 	)
 	if err != nil {

@@ -73,7 +73,7 @@ func (n *dagScanNode) Init() error {
 
 			if n.commitSelect.FieldID.HasValue() {
 				field := n.commitSelect.FieldID.Value()
-				dsKey = dsKey.WithFieldId(field)
+				dsKey = dsKey.WithFieldID(field)
 			}
 
 			n.spans = core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
@@ -104,16 +104,16 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	}
 	copy(headSetSpans.Value, spans.Value)
 
-	var fieldId string
+	var fieldID string
 	if n.commitSelect.FieldID.HasValue() {
-		fieldId = n.commitSelect.FieldID.Value()
+		fieldID = n.commitSelect.FieldID.Value()
 	} else {
-		fieldId = core.COMPOSITE_NAMESPACE
+		fieldID = core.COMPOSITE_NAMESPACE
 	}
 
 	for i, span := range headSetSpans.Value {
-		if span.Start().FieldID != fieldId {
-			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldId(fieldId), core.DataStoreKey{})
+		if span.Start().FieldID != fieldID {
+			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldID(fieldID), core.DataStoreKey{})
 		}
 	}
 

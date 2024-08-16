@@ -900,7 +900,7 @@ func (c *collection) saveCompositeToMerkleCRDT(
 	status client.DocumentStatus,
 ) (cidlink.Link, []byte, error) {
 	txn := mustGetContextTxn(ctx)
-	dsKey = dsKey.WithFieldId(core.COMPOSITE_NAMESPACE)
+	dsKey = dsKey.WithFieldID(core.COMPOSITE_NAMESPACE)
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,
 		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),

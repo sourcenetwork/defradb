@@ -698,7 +698,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	fieldKeyString := core.DataStoreKey{
 		CollectionRootID: f.users.Description().RootID,
 	}.WithDocID(doc.ID().String()).
-		WithFieldId("1").
+		WithFieldID("1").
 		WithValueFlag().
 		ToString()
 

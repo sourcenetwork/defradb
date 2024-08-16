@@ -161,7 +161,7 @@ func (db *db) getDocsHeads(
 				docID := core.DataStoreKeyFromDocID(docIDResult.ID)
 				headset := clock.NewHeadSet(
 					txn.Headstore(),
-					docID.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
+					docID.WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 				)
 				cids, _, err := headset.List(ctx)
 				if err != nil {

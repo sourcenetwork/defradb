@@ -408,9 +408,9 @@ func (k DataStoreKey) WithInstanceInfo(key DataStoreKey) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
+func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 	newKey := k
-	newKey.FieldID = fieldId
+	newKey.FieldID = fieldID
 	return newKey
 }
 
