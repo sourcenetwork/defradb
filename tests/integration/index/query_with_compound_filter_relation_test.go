@@ -196,10 +196,10 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 				Results: map[string]any{
 					"Program": []map[string]any{
 						{
-							"name": "LensVM",
+							"name": "DefraDB",
 						},
 						{
-							"name": "DefraDB",
+							"name": "LensVM",
 						},
 					},
 				},
@@ -280,13 +280,13 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 				Results: map[string]any{
 					"Program": []map[string]any{
 						{
-							"name": "Zanzi",
+							"name": "DefraDB",
 						},
 						{
 							"name": "LensVM",
 						},
 						{
-							"name": "DefraDB",
+							"name": "Zanzi",
 						},
 					},
 				},

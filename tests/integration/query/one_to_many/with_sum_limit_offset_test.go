@@ -83,7 +83,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 9.4,
+							"_sum": 8.7,
 						},
 					},
 				},

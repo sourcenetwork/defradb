@@ -117,8 +117,8 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 				ExpectedResults: []client.SchemaDescription{
 					{
 						Name:      "User",
-						Root:      "bafkreiabowhib7ym6wumgywbc6f747e4u665ddxa5q43povrmjk4rmkzfi",
-						VersionID: "bafkreiabowhib7ym6wumgywbc6f747e4u665ddxa5q43povrmjk4rmkzfi",
+						Root:      "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
+						VersionID: "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
 						Fields: []client.SchemaFieldDescription{
 							{
 								Name: request.DocIDFieldName,

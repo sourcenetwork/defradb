@@ -76,7 +76,8 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Author
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
 			testUtils.ExplainRequest{

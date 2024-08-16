@@ -25,11 +25,9 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Authors
-			create2AuthorDocuments(),
-
-			// Contacts
+			create2AddressDocuments(),
 			create2AuthorContactDocuments(),
+			create2AuthorDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -87,11 +85,9 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Authors
-			create2AuthorDocuments(),
-
-			// Contacts
+			create2AddressDocuments(),
 			create2AuthorContactDocuments(),
+			create2AuthorDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {

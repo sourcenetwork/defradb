@@ -98,10 +98,10 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 							"_count": 4,
 							"published": []map[string]any{
 								{
-									"name": "Painted House",
+									"name": "The Pelican Brief",
 								},
 								{
-									"name": "The Pelican Brief",
+									"name": "The Firm",
 								},
 							},
 						},
@@ -192,10 +192,10 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 							"_count": 2,
 							"published": []map[string]any{
 								{
-									"name": "The Associate",
+									"name": "Painted House",
 								},
 								{
-									"name": "Painted House",
+									"name": "The Associate",
 								},
 							},
 						},

@@ -80,23 +80,21 @@ func create2AuthorDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{
 		{
 			CollectionID: 2,
-			// _docID: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
-			Doc: `{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"contact_id": "bae-819c9c03-9d49-5fd5-aaee-0dc5a70bbe44"
-				}`,
+			DocMap: map[string]any{
+				"name":       "John Grisham",
+				"age":        65,
+				"verified":   true,
+				"contact_id": testUtils.NewDocIndex(3, 0),
+			},
 		},
 		{
 			CollectionID: 2,
-			// _docID: "bae-68cb395d-df73-5bcb-b623-615a140dee12"
-			Doc: `{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"contact_id": "bae-9bf0272a-c521-5bef-a7ba-642e8be6e433"
-				}`,
+			DocMap: map[string]any{
+				"name":       "Cornelia Funke",
+				"age":        62,
+				"verified":   false,
+				"contact_id": testUtils.NewDocIndex(3, 1),
+			},
 		},
 	}
 }
@@ -105,23 +103,19 @@ func create2AuthorContactDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{
 		{
 			CollectionID: 3,
-			// "author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
-			// _docID: "bae-819c9c03-9d49-5fd5-aaee-0dc5a70bbe44"
-			Doc: `{
-					"cell": "5197212301",
-					"email": "john_grisham@example.com",
-					"address_id": "bae-14f20db7-3654-58de-9156-596ef2cfd790"
-				}`,
+			DocMap: map[string]any{
+				"cell":       "5197212301",
+				"email":      "john_grisham@example.com",
+				"address_id": testUtils.NewDocIndex(4, 0),
+			},
 		},
 		{
 			CollectionID: 3,
-			// "author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12",
-			// _docID: "bae-9bf0272a-c521-5bef-a7ba-642e8be6e433"
-			Doc: `{
-					"cell": "5197212302",
-					"email": "cornelia_funke@example.com",
-					"address_id": "bae-49f715e7-7f01-5509-a213-ed98cb81583f"
-				}`,
+			DocMap: map[string]any{
+				"cell":       "5197212302",
+				"email":      "cornelia_funke@example.com",
+				"address_id": testUtils.NewDocIndex(4, 1),
+			},
 		},
 	}
 }
