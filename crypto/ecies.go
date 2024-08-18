@@ -78,7 +78,7 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 		return nil, fmt.Errorf("failed KDF operation for HMAC key: %w", err)
 	}
 
-	cipherText, _, err := EncryptAES(plainText, aesKey, makeAAD(ephemeralPrivate.Bytes(), associatedData), true)
+	cipherText, _, err := EncryptAES(plainText, aesKey, makeAAD(ephemeralPublic.Bytes(), associatedData), true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt: %w", err)
 	}
