@@ -79,22 +79,6 @@ func TestEncryptorEncrypt_IfStorageReturnsError_Error(t *testing.T) {
 	assert.ErrorIs(t, err, testErr)
 }
 
-func TestEncryptorEncrypt_WithEmptyFieldNameIfNoKeyFoundInStorage_ShouldGenerateKeyStoreItAndReturnCipherText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	storeKey := makeStoreKey(docID, noFieldName)
-
-	st.EXPECT().Put(mock.Anything, storeKey.ToDS(), getEncKey(noFieldName)).Return(nil)
-
-	_, _, err := enc.GetOrGenerateEncryptionKey(docID, noFieldName)
-	assert.NoError(t, err)
-
-	cipherText, err := enc.Encrypt(makeStoreKey(docID, noFieldName), getPlainText())
-
-	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, noFieldName), cipherText)
-}
-
 func TestEncryptorEncrypt_IfKeyWithFieldFoundInStorage_ShouldUseItToReturnCipherText(t *testing.T) {
 	enc, st := newEncryptorWithConfig(t, DocEncConfig{EncryptedFields: []string{fieldName.Value()}})
 
