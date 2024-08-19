@@ -51,7 +51,9 @@ func generateTestEncryptionKey(docID string, fieldName immutable.Option[string])
 
 // DocEncryptor is a document encryptor that encrypts and decrypts individual document fields.
 // It acts based on the configuration [DocEncConfig] provided and data stored in the provided store.
-// It uses [core.EncStoreDocKey] to store and retrieve encryption keys.
+// DocEncryptor is a session-bound, i.e. once a user requests to create (or update) a document or a node
+// receives an UpdateEvent on a document (or any other event) a new DocEncryptor is created and stored
+// in the context, so that the same DocEncryptor can be used by other object down the call chain.
 type DocEncryptor struct {
 	conf          immutable.Option[DocEncConfig]
 	ctx           context.Context
