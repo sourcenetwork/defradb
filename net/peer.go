@@ -22,7 +22,6 @@ import (
 	"github.com/ipfs/boxo/bitswap"
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
-	exchange "github.com/ipfs/boxo/exchange"
 	"github.com/ipfs/boxo/ipns"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
@@ -74,7 +73,6 @@ type Peer struct {
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
-	exch  exchange.Interface
 	bserv blockservice.BlockService
 
 	ctx      context.Context
@@ -516,7 +514,6 @@ func (p *Peer) setupBlockService() {
 	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
 	bswap := bitswap.New(p.ctx, bswapnet, p.blockstore)
 	p.bserv = blockservice.New(p.blockstore, bswap)
-	p.exch = bswap
 }
 
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {
