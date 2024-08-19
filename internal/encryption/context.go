@@ -24,14 +24,14 @@ type docEncContextKey struct{}
 // configContextKey is the key type for encryption context values.
 type configContextKey struct{}
 
-// TryGetContextDocEnc returns a document encryption and a bool indicating if
-// it was retrieved from the given context.
-func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
+// GetEncryptorFromContext returns a document encryptor from the given context.
+// It returns nil if no encryptor exists in the context.
+func GetEncryptorFromContext(ctx context.Context) *DocEncryptor {
 	enc, ok := ctx.Value(docEncContextKey{}).(*DocEncryptor)
 	if ok {
 		setConfig(ctx, enc)
 	}
-	return enc, ok
+	return enc
 }
 
 func setConfig(ctx context.Context, enc *DocEncryptor) {
@@ -40,20 +40,20 @@ func setConfig(ctx context.Context, enc *DocEncryptor) {
 }
 
 func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
+	enc := GetEncryptorFromContext(ctx)
+	if enc == nil {
 		enc = newDocEncryptor(ctx)
 		ctx = context.WithValue(ctx, docEncContextKey{}, enc)
 	}
 	return ctx, enc
 }
 
-// ContextWithStore sets the store on the doc encryptor in the context.
-// If the doc encryptor is not present, it will be created.
-func ContextWithStore(ctx context.Context, encstore datastore.DSReaderWriter) context.Context {
+// ContextWithStore sets the store on the doc encryptor in the context and returns the updated
+// context and doc encryptor. If the doc encryptor is not present, it will be created.
+func ContextWithStore(ctx context.Context, encstore datastore.DSReaderWriter) (context.Context, *DocEncryptor) {
 	ctx, encryptor := ensureContextWithDocEnc(ctx)
 	encryptor.SetStore(encstore)
-	return ctx
+	return ctx, encryptor
 }
 
 // GetContextConfig returns the doc encryption config from the given context.

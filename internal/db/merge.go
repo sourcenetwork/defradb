@@ -480,10 +480,15 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 
 	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), optFieldName, string(blockEnc.KeyID))
 
+	encryptor := encryption.GetEncryptorFromContext(ctx)
+	if encryptor == nil {
+		return nil, encryption.ErrContextHasNoEncryptor
+	}
+
 	if block.Delta.IsComposite() {
 		// for composite blocks there is nothing to decrypt
 		// so we just check if we have the encryption key for child blocks
-		bytes, err := encryption.GetKey(ctx, encStoreKey)
+		bytes, err := encryptor.GetKey(encStoreKey)
 		if err != nil {
 			return nil, err
 		}
@@ -494,7 +499,7 @@ func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block
 	}
 
 	clonedCRDT := block.Delta.Clone()
-	bytes, err := encryption.DecryptDoc(ctx, encStoreKey, clonedCRDT.GetData())
+	bytes, err := encryptor.Decrypt(encStoreKey, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}

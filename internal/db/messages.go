@@ -93,10 +93,13 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 
 // handleEncryptionKeysRetrievedEvent handles the event when requested encryption keys are retrieved from other peers.
 func (db *db) handleEncryptionKeysRetrievedEvent(ctx context.Context, evt encryption.KeyRetrievedEvent) error {
-	ctx = encryption.ContextWithStore(ctx, db.Encstore())
+	var encryptor *encryption.DocEncryptor
+	ctx, encryptor = encryption.ContextWithStore(ctx, db.Encstore())
+	if encryptor == nil {
+		return encryption.ErrContextHasNoEncryptor
+	}
 	for encStoreKey, encKey := range evt.Keys {
-		err := encryption.SaveKey(ctx, encStoreKey, encKey)
-
+		err := encryptor.SaveKey(encStoreKey, encKey)
 		if err != nil {
 			return err
 		}

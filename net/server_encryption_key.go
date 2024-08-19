@@ -55,8 +55,11 @@ func (s *server) getEncryptionKeys(
 		if target.FieldName != "" {
 			optFieldName = immutable.Some(target.FieldName)
 		}
-		encKey, err := encryption.GetKey(
-			encryption.ContextWithStore(ctx, s.peer.encstore),
+		_, encryptor := encryption.ContextWithStore(ctx, s.peer.encstore)
+		if encryptor == nil {
+			return nil, nil, encryption.ErrContextHasNoEncryptor
+		}
+		encKey, err := encryptor.GetKey(
 			core.NewEncStoreDocKey(docID.String(), optFieldName, string(target.KeyID)),
 		)
 		if err != nil {

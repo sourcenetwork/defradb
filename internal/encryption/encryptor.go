@@ -248,38 +248,6 @@ func (d *DocEncryptor) SaveKey(encStoreKey core.EncStoreDocKey, encryptionKey []
 	return d.storeByEncStoreKey(encStoreKey, encryptionKey)
 }
 
-// EncryptDoc encrypts the given plainText that is associated with the given docID, fieldName and block height with
-// encryptor in the context.
-// If the current configuration is set to encrypt the given key individually, it will encrypt it with a new key.
-// Otherwise, it will use document-level encryption key.
-func EncryptDoc(
-	ctx context.Context,
-	encStoreKey core.EncStoreDocKey,
-	plainText []byte,
-) ([]byte, error) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return nil, nil
-	}
-	return enc.Encrypt(encStoreKey, plainText)
-}
-
-// DecryptDoc decrypts the given cipherText that is associated with the given docID and fieldName with
-// encryptor in the context.
-// If fieldName is not provided, it will try to decrypt with the document-level key. Otherwise, it will try to
-// decrypt with the field-level key.
-func DecryptDoc(
-	ctx context.Context,
-	encStoreKey core.EncStoreDocKey,
-	cipherText []byte,
-) ([]byte, error) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return nil, nil
-	}
-	return enc.Decrypt(encStoreKey, cipherText)
-}
-
 // ShouldEncryptDocField returns true if the given field should be encrypted based on the context config.
 func ShouldEncryptDocField(ctx context.Context, fieldName immutable.Option[string]) bool {
 	return shouldEncryptDocField(GetContextConfig(ctx), fieldName)
@@ -289,40 +257,6 @@ func ShouldEncryptDocField(ctx context.Context, fieldName immutable.Option[strin
 // the context config.
 func ShouldEncryptIndividualField(ctx context.Context, fieldName immutable.Option[string]) bool {
 	return shouldEncryptIndividualField(GetContextConfig(ctx), fieldName)
-}
-
-// SaveKey saves the given encryption key for the given docID, (optional) fieldName and block height with
-// encryptor in the context.
-func SaveKey(ctx context.Context, encStoreKey core.EncStoreDocKey, encryptionKey []byte) error {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return nil
-	}
-	return enc.SaveKey(encStoreKey, encryptionKey)
-}
-
-// GetKey returns the encryption key for the given docID, (optional) fieldName and block height with encryptor
-// in the context.
-func GetKey(ctx context.Context, encStoreKey core.EncStoreDocKey) ([]byte, error) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return nil, nil
-	}
-	return enc.GetKey(encStoreKey)
-}
-
-// GetOrGenerateEncryptionKey returns the generated encryption key for the given docID, (optional) fieldName.
-// If the key is not generated before, it generates a new key and stores it.
-func GetOrGenerateEncryptionKey(
-	ctx context.Context,
-	docID string,
-	fieldName immutable.Option[string],
-) (immutable.Option[core.EncStoreDocKey], []byte, error) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
-		return immutable.None[core.EncStoreDocKey](), nil, nil
-	}
-	return enc.GetOrGenerateEncryptionKey(docID, fieldName)
 }
 
 func init() {

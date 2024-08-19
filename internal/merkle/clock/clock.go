@@ -137,7 +137,11 @@ func (mc *MerkleClock) determineBlockEncryptionData(
 		} else {
 			blockEnc.Type = coreblock.DocumentEncrypted
 		}
-		encStoreKey, _, err := encryption.GetOrGenerateEncryptionKey(ctx, docID, fieldName)
+		encryptor := encryption.GetEncryptorFromContext(ctx)
+		if encryptor == nil {
+			return nil, encryption.ErrContextHasNoEncryptor
+		}
+		encStoreKey, _, err := encryptor.GetOrGenerateEncryptionKey(docID, fieldName)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +190,11 @@ func encryptBlock(
 	}
 
 	clonedCRDT := block.Delta.Clone()
-	bytes, err := encryption.EncryptDoc(ctx, encStoreKey, clonedCRDT.GetData())
+	encryptor := encryption.GetEncryptorFromContext(ctx)
+	if encryptor == nil {
+		return nil, encryption.ErrContextHasNoEncryptor
+	}
+	bytes, err := encryptor.Encrypt(encStoreKey, clonedCRDT.GetData())
 	if err != nil {
 		return nil, err
 	}
