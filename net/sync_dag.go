@@ -63,39 +63,40 @@ func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblo
 	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
 	defer cancel()
 
+	var wg sync.WaitGroup
 	var asyncErr error
 	var asyncErrOnce sync.Once
-	wg := &sync.WaitGroup{}
+
+	setAsyncErr := func(err error) {
+		asyncErr = err
+		cancel()
+	}
+
 	for _, lnk := range block.Links {
 		wg.Add(1)
 		go func(lnk coreblock.DAGLink) {
 			defer wg.Done()
+			if ctx.Err() != nil {
+				return
+			}
 			nd, err := lsys.Load(linking.LinkContext{Ctx: ctx}, lnk, coreblock.SchemaPrototype)
 			if err != nil {
-				asyncErrOnce.Do(func() {
-					asyncErr = err
-				})
-				cancel()
+				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
 			linkBlock, err := coreblock.GetFromNode(nd)
 			if err != nil {
-				asyncErrOnce.Do(func() {
-					asyncErr = err
-				})
-				cancel()
+				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
 			err = loadBlockLinks(ctx, lsys, linkBlock)
 			if err != nil {
-				asyncErrOnce.Do(func() {
-					asyncErr = err
-				})
-				cancel()
+				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
 		}(lnk)
 	}
+
 	wg.Wait()
 
 	return asyncErr
