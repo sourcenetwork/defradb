@@ -538,6 +538,11 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, err
 	}
 
+	// this can happen if a query contains an empty condition like User(filter: {name: {}})
+	if len(fieldConditions) == 0 {
+		return nil, nil
+	}
+
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
 		return nil, err
