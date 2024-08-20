@@ -40,6 +40,7 @@ require (
 	github.com/multiformats/go-multicodec v0.9.0
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/pelletier/go-toml v1.9.5
+	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
 	github.com/sourcenetwork/corelog v0.0.8
@@ -304,7 +305,6 @@ require (
 	github.com/pion/turn/v2 v2.1.6 // indirect
 	github.com/pion/webrtc/v3 v3.2.50 // indirect
 	github.com/piprate/json-gold v0.5.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polydawn/refmt v0.89.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect

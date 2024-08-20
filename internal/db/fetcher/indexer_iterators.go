@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 
@@ -331,6 +332,37 @@ func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
 	return false, NewErrUnexpectedTypeValue[string](value)
 }
 
+type timeMatcher struct {
+	op    string
+	value time.Time
+}
+
+func (m *timeMatcher) Match(value client.NormalValue) (bool, error) {
+	timeVal, ok := value.Time()
+	if !ok {
+		if timeOptVal, ok := value.NillableTime(); ok {
+			timeVal = timeOptVal.Value()
+		} else {
+			return false, NewErrUnexpectedTypeValue[time.Time](value)
+		}
+	}
+	switch m.op {
+	case opEq:
+		return timeVal.Equal(m.value), nil
+	case opGt:
+		return timeVal.After(m.value), nil
+	case opGe:
+		return !timeVal.Before(m.value), nil
+	case opLt:
+		return timeVal.Before(m.value), nil
+	case opLe:
+		return !timeVal.After(m.value), nil
+	case opNe:
+		return !timeVal.Equal(m.value), nil
+	}
+	return false, NewErrInvalidFilterOperator(m.op)
+}
+
 type nilMatcher struct {
 	matchNil bool
 }
@@ -607,6 +639,12 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		}
 		if v, ok := condition.val.NillableString(); ok {
 			return &stringMatcher{value: v.Value(), evalFunc: getCompareValsFunc[string](condition.op)}, nil
+		}
+		if v, ok := condition.val.Time(); ok {
+			return &timeMatcher{value: v, op: condition.op}, nil
+		}
+		if v, ok := condition.val.NillableTime(); ok {
+			return &timeMatcher{value: v.Value(), op: condition.op}, nil
 		}
 	case opIn, opNin:
 		inVals, err := client.ToArrayOfNormalValues(condition.val)

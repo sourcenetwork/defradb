@@ -315,3 +315,35 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						birthday: DateTime @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Fred",
+						"birthday": "2000-07-23T03:00:00-00:00"
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Andy",
+						"birthday": "2000-07-23T03:00:00-00:00"
+					}`,
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
+					"bae-2000529a-8b27-539b-91e9-c35f431fb78e",
+					errors.NewKV("birthday", testUtils.MustParseTime("2000-07-23T03:00:00-00:00")),
+				).Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
