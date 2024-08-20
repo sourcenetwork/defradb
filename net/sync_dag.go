@@ -12,20 +12,13 @@ package net
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/ipfs/boxo/blockservice"
-	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipld/go-ipld-prime/linking/preload"
-	basicnode "github.com/ipld/go-ipld-prime/node/basic"
-	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
-	"github.com/ipld/go-ipld-prime/traversal"
-	"github.com/ipld/go-ipld-prime/traversal/selector"
-	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
@@ -40,9 +33,6 @@ var syncDAGTimeout = 60 * time.Second
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
 func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *coreblock.Block) error {
-	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
-	defer cancel()
-
 	// use a session to make remote fetches more efficient
 	ctx = blockservice.ContextWithSession(ctx, bserv)
 	store := &bsrvadapter.Adapter{Wrapped: bserv}
@@ -58,37 +48,48 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 		return err
 	}
 
-	ssb := builder.NewSelectorSpecBuilder(basicnode.Prototype.Any)
-	matchAllSelector, err := ssb.ExploreRecursive(selector.RecursionLimitNone(), ssb.ExploreUnion(
-		ssb.Matcher(),
-		ssb.ExploreAll(ssb.ExploreRecursiveEdge()),
-	)).Selector()
+	err = loadBlockLinks(ctx, lsys, block)
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	// prototypeChooser returns the node prototype to use when traversing
-	prototypeChooser := func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
-		if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
-			return tlnkNd.LinkTargetNodePrototype(), nil
-		}
-		return basicnode.Prototype.Any, nil
+// loadBlockLinks loads the links of a block recursively.
+//
+// If it encounters errors in the concurrent loading of links, it will return
+// the first error it encountered.
+func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblock.Block) error {
+	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
+	defer cancel()
+
+	var asyncErr error
+	var asyncErrOnce sync.Once
+	wg := &sync.WaitGroup{}
+	for _, lnk := range block.Links {
+		wg.Add(1)
+		go func(lnk coreblock.DAGLink) {
+			defer wg.Done()
+			nd, err := lsys.Load(linking.LinkContext{Ctx: ctx}, lnk, coreblock.SchemaPrototype)
+			if err != nil {
+				asyncErrOnce.Do(func() {
+					asyncErr = err
+				})
+				cancel()
+				return
+			}
+			linkBlock, err := coreblock.GetFromNode(nd)
+			if err != nil {
+				asyncErrOnce.Do(func() {
+					asyncErr = err
+				})
+				cancel()
+				return
+			}
+			loadBlockLinks(ctx, lsys, linkBlock)
+		}(lnk)
 	}
-	// preloader is used to asynchronously load blocks before traversing
-	//
-	// any errors encountered during preload are ignored
-	preloader := func(pctx preload.PreloadContext, l preload.Link) {
-		go lsys.Load(linking.LinkContext{Ctx: pctx.Ctx}, l.Link, coreblock.SchemaPrototype) //nolint:errcheck
-	}
-	config := traversal.Config{
-		Ctx:                            ctx,
-		LinkSystem:                     lsys,
-		LinkVisitOnlyOnce:              true,
-		LinkTargetNodePrototypeChooser: prototypeChooser,
-		Preloader:                      preloader,
-	}
-	visit := func(p traversal.Progress, n datamodel.Node) error {
-		return nil
-	}
-	return traversal.Progress{Cfg: &config}.WalkMatching(block.GenerateNode(), matchAllSelector, visit)
+	wg.Wait()
+
+	return asyncErr
 }
