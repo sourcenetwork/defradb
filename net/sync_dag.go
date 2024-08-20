@@ -86,7 +86,14 @@ func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblo
 				cancel()
 				return
 			}
-			loadBlockLinks(ctx, lsys, linkBlock)
+			err = loadBlockLinks(ctx, lsys, linkBlock)
+			if err != nil {
+				asyncErrOnce.Do(func() {
+					asyncErr = err
+				})
+				cancel()
+				return
+			}
 		}(lnk)
 	}
 	wg.Wait()
