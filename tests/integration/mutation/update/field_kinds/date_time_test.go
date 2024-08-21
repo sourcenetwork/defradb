@@ -95,11 +95,11 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 				Results: map[string]any{
 					"update_Users": []map[string]any{
 						{
-							"name":       "Fred",
+							"name":       "John",
 							"created_at": testUtils.MustParseTime("2031-07-23T03:23:23Z"),
 						},
 						{
-							"name":       "John",
+							"name":       "Fred",
 							"created_at": testUtils.MustParseTime("2031-07-23T03:23:23Z"),
 						},
 					},

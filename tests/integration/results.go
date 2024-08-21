@@ -147,7 +147,7 @@ func areResultsEqual(expected any, actual any) bool {
 	case []immutable.Option[string]:
 		return areResultArraysEqual(expectedVal, actual)
 	case time.Time:
-		return areResultsEqual(expectedVal.Format(time.RFC3339), actual)
+		return areResultsEqual(expectedVal.Format(time.RFC3339Nano), actual)
 	default:
 		return assert.ObjectsAreEqualValues(expected, actual)
 	}
