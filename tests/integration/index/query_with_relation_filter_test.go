@@ -1017,3 +1017,41 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndex_UniqueIndexOnChildWithEmptyParentCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Action {
+						key: String @index(unique: true)
+						playerActions: [PlayerAction]
+					}
+
+					type PlayerAction {
+						deleted: Boolean
+						action: Action
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"key": "ACTION_KEY",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					PlayerAction(filter: {action: {key: {_eq: "ACTION_KEY"}}}) {
+						deleted
+					}
+				}`,
+				Results: map[string]any{
+					"PlayerAction": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
