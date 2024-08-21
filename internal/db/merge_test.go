@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -286,7 +285,7 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 }
 
 func encodeValue(val any) []byte {
-	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	em, err := client.CborEncodingOptions().EncMode()
 	if err != nil {
 		// safe to panic here as this is a test
 		panic(err)

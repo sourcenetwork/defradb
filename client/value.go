@@ -11,7 +11,6 @@
 package client
 
 import (
-	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -60,7 +59,7 @@ func (val *FieldValue) SetType(t CType) {
 }
 
 func (val FieldValue) Bytes() ([]byte, error) {
-	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	em, err := CborEncodingOptions().EncMode()
 	if err != nil {
 		return nil, err
 	}
