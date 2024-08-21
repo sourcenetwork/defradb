@@ -687,6 +687,13 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		} else {
 			join.docsToYield = append(join.docsToYield, secondaryDoc)
 		}
+
+		// If we reach this line and there are no docs to yield, it likely means that a child
+		// document was found but not a parent - this can happen when inverting the join, for
+		// example when working with a secondary index.
+		if len(join.docsToYield) == 0 {
+			return false, nil
+		}
 	}
 
 	return true, nil
