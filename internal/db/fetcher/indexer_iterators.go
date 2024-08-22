@@ -64,13 +64,41 @@ type indexIterResult struct {
 	value    []byte
 }
 
-type queryResultIterator struct {
-	resultIter    query.Results
+// indexPrefixIterator is an iterator over index keys with a specific prefix.
+type indexPrefixIterator struct {
 	indexDesc     client.IndexDescription
 	indexedFields []client.FieldDefinition
+	indexKey      core.IndexDataStoreKey
+	matchers      []valueMatcher
+	execInfo      *ExecInfo
+	resultIter    query.Results
+	ctx           context.Context
+	store         datastore.DSReaderWriter
 }
 
-func (iter *queryResultIterator) Next() (indexIterResult, error) {
+var _ indexIterator = (*indexPrefixIterator)(nil)
+
+func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter.ctx = ctx
+	iter.store = store
+	iter.resultIter = nil
+	return nil
+}
+
+func (iter *indexPrefixIterator) checkResultIterator() error {
+	if iter.resultIter == nil {
+		resultIter, err := iter.store.Query(iter.ctx, query.Query{
+			Prefix: iter.indexKey.ToString(),
+		})
+		if err != nil {
+			return err
+		}
+		iter.resultIter = resultIter
+	}
+	return nil
+}
+
+func (iter *indexPrefixIterator) nextResult() (indexIterResult, error) {
 	res, hasVal := iter.resultIter.NextSync()
 	if res.Error != nil {
 		return indexIterResult{}, res.Error
@@ -86,44 +114,29 @@ func (iter *queryResultIterator) Next() (indexIterResult, error) {
 	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
 }
 
-func (iter *queryResultIterator) Close() error {
-	return iter.resultIter.Close()
-}
-
-type eqPrefixIndexIterator struct {
-	queryResultIterator
-	indexKey core.IndexDataStoreKey
-	execInfo *ExecInfo
-	matchers []valueMatcher
-}
-
-func (iter *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	resultIter, err := store.Query(ctx, query.Query{
-		Prefix: iter.indexKey.ToString(),
-	})
-	if err != nil {
-		return err
+func (iter *indexPrefixIterator) Next() (indexIterResult, error) {
+	if err := iter.checkResultIterator(); err != nil {
+		return indexIterResult{}, err
 	}
-	iter.resultIter = resultIter
-	return nil
-}
 
-func (iter *eqPrefixIndexIterator) Next() (indexIterResult, error) {
 	for {
-		res, err := iter.queryResultIterator.Next()
+		res, err := iter.nextResult()
 		if err != nil || !res.foundKey {
 			return res, err
 		}
 		iter.execInfo.IndexesFetched++
-		doesMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
+		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 		if err != nil {
 			return indexIterResult{}, err
 		}
-		if !doesMatch {
-			continue
+		if didMatch {
+			return res, nil
 		}
-		return res, err
 	}
+}
+
+func (iter *indexPrefixIterator) Close() error {
+	return iter.resultIter.Close()
 }
 
 type eqSingleIndexIterator struct {
@@ -182,7 +195,7 @@ func (iter *inIndexIterator) nextIterator() (bool, error) {
 	}
 
 	switch fieldIter := iter.indexIterator.(type) {
-	case *eqPrefixIndexIterator:
+	case *indexPrefixIterator:
 		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	case *eqSingleIndexIterator:
 		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
@@ -236,41 +249,6 @@ func executeValueMatchers(matchers []valueMatcher, fields []core.IndexedField) (
 		}
 	}
 	return true, nil
-}
-
-type scanningIndexIterator struct {
-	queryResultIterator
-	indexKey core.IndexDataStoreKey
-	matchers []valueMatcher
-	execInfo *ExecInfo
-}
-
-func (iter *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	resultIter, err := store.Query(ctx, query.Query{
-		Prefix: iter.indexKey.ToString(),
-	})
-	if err != nil {
-		return err
-	}
-	iter.resultIter = resultIter
-
-	return nil
-}
-
-func (iter *scanningIndexIterator) Next() (indexIterResult, error) {
-	for {
-		res, err := iter.queryResultIterator.Next()
-		if err != nil || !res.foundKey {
-			return indexIterResult{}, err
-		}
-		iter.execInfo.IndexesFetched++
-
-		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
-
-		if didMatch {
-			return res, err
-		}
-	}
 }
 
 // checks if the value satisfies the condition
@@ -468,7 +446,7 @@ func (m *anyMatcher) Match(client.NormalValue) (bool, error) { return true, nil 
 func (f *IndexFetcher) newPrefixIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
-) (*eqPrefixIndexIterator, error) {
+) (*indexPrefixIterator, error) {
 	keyFieldValues := make([]client.NormalValue, 0, len(fieldConditions))
 	for i := range fieldConditions {
 		if fieldConditions[i].op != opEq {
@@ -488,16 +466,21 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 
 	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
 
-	return &eqPrefixIndexIterator{
-		queryResultIterator: f.newQueryResultIterator(),
-		indexKey:            key,
-		execInfo:            &f.execInfo,
-		matchers:            matchers,
-	}, nil
+	return f.newQueryResultIterator(key, matchers, &f.execInfo), nil
 }
 
-func (f *IndexFetcher) newQueryResultIterator() queryResultIterator {
-	return queryResultIterator{indexDesc: f.indexDesc, indexedFields: f.indexedFields}
+func (f *IndexFetcher) newQueryResultIterator(
+	indexKey core.IndexDataStoreKey,
+	matchers []valueMatcher,
+	execInfo *ExecInfo,
+) *indexPrefixIterator {
+	return &indexPrefixIterator{
+		indexDesc:     f.indexDesc,
+		indexedFields: f.indexedFields,
+		indexKey:      indexKey,
+		matchers:      matchers,
+		execInfo:      execInfo,
+	}
 }
 
 // newInIndexIterator creates a new inIndexIterator for fetching indexed data.
@@ -537,12 +520,7 @@ func (f *IndexFetcher) newInIndexIterator(
 		indexKey := f.newIndexDataStoreKey()
 		indexKey.Fields = []core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
-		iter = &eqPrefixIndexIterator{
-			queryResultIterator: f.newQueryResultIterator(),
-			indexKey:            indexKey,
-			execInfo:            &f.execInfo,
-			matchers:            matchers,
-		}
+		iter = f.newQueryResultIterator(indexKey, matchers, &f.execInfo)
 	}
 	return &inIndexIterator{
 		indexIterator: iter,
@@ -600,12 +578,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	case opIn:
 		return f.newInIndexIterator(fieldConditions, matchers)
 	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike, opILike, opNILike:
-		return &scanningIndexIterator{
-			queryResultIterator: f.newQueryResultIterator(),
-			indexKey:            f.newIndexDataStoreKey(),
-			matchers:            matchers,
-			execInfo:            &f.execInfo,
-		}, nil
+		return f.newQueryResultIterator(f.newIndexDataStoreKey(), matchers, &f.execInfo), nil
 	}
 
 	return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
