@@ -190,10 +190,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ github.actor }}/defradb:latest
-            ${{ github.actor }}/defradb:${{ github.event.inputs.tag }}
-            ghcr.io/${{ github.actor }}/defradb:latest
-            ghcr.io/${{ github.actor }}/defradb:${{ github.event.inputs.tag }}
+            ${{ github.repository_owner }}/defradb:latest
+            ${{ github.repository_owner }}/defradb:${{ github.event.inputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/defradb:latest
+            ghcr.io/${{ github.repository_owner }}/defradb:${{ github.event.inputs.tag }}
 
   pull-docker-image:
     name: Pull docker image job
@@ -204,8 +204,8 @@ jobs:
       fail-fast: false
       matrix:
         image_tag:
-          - ${{ github.actor }}/defradb:latest
-          - ghcr.io/${{ github.actor }}/defradb:latest
+          - ${{ github.repository_owner }}/defradb:latest
+          - ghcr.io/${{ github.repository_owner }}/defradb:latest
 
     steps:
       - name: Log in to Docker Hub
