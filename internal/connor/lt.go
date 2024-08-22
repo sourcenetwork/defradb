@@ -26,6 +26,8 @@ func lt(condition, data any) (bool, error) {
 				return false, err
 			}
 			return dt.Before(c), nil
+		case nil:
+			return false, nil
 		default:
 			return false, client.NewErrUnhandledType("data", d)
 		}
