@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -322,38 +322,70 @@ func (p *Planner) Scan(
 // If we have two readers on our multiScanNode, then
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
+//
+// NOTE: calling Init() on multiScanNode is subject to counting as well and as such
+// doesn't not provide idempotency guarantees. Counting is purely for performance
+// reasons and removing it should be safe.
 type multiScanNode struct {
 	scanNode   *scanNode
 	numReaders int
-	numCalls   int
+	nextCount  int
+	initCount  int
+	startCount int
+	closeCount int
 
-	lastBool bool
-	lastErr  error
+	nextResult bool
+	err        error
 }
 
+// Init initializes the multiScanNode.
+// NOTE: this function is subject to counting based on the number of readers and as such
+// doesn't not provide idempotency guarantees. Counting is purely for performance
+// reasons and removing it should be safe.
 func (n *multiScanNode) Init() error {
-	return n.scanNode.Init()
+	n.countAndCall(&n.initCount, func() error {
+		return n.scanNode.Init()
+	})
+	return n.err
 }
 
 func (n *multiScanNode) Start() error {
-	return n.scanNode.Start()
+	n.countAndCall(&n.startCount, func() error {
+		return n.scanNode.Start()
+	})
+	return n.err
+}
+
+// countAndCall keeps track of number of requests to call a given function by checking a
+// function's count.
+// The function is only called when the count is 0.
+// If the count is equal to the number of readers, the count is reset.
+// If the function returns an error, the error is stored in the multiScanNode.
+func (n *multiScanNode) countAndCall(count *int, f func() error) {
+	if *count == 0 {
+		err := f()
+		if err != nil {
+			n.err = err
+		}
+	}
+	*count++
+
+	// if the number of calls equals the numbers of readers
+	// reset the counter, so our next call actually executes the function
+	if *count == n.numReaders {
+		*count = 0
+	}
 }
 
 // Next only calls Next() on the underlying
 // scanNode every numReaders.
 func (n *multiScanNode) Next() (bool, error) {
-	if n.numCalls == 0 {
-		n.lastBool, n.lastErr = n.scanNode.Next()
-	}
-	n.numCalls++
+	n.countAndCall(&n.nextCount, func() (err error) {
+		n.nextResult, err = n.scanNode.Next()
+		return
+	})
 
-	// if the number of calls equals the numbers of readers
-	// reset the counter, so our next call actually executes the Next()
-	if n.numCalls == n.numReaders {
-		n.numCalls = 0
-	}
-
-	return n.lastBool, n.lastErr
+	return n.nextResult, n.err
 }
 
 func (n *multiScanNode) Value() core.Doc {
@@ -373,7 +405,10 @@ func (n *multiScanNode) Kind() string {
 }
 
 func (n *multiScanNode) Close() error {
-	return n.scanNode.Close()
+	n.countAndCall(&n.closeCount, func() error {
+		return n.scanNode.Close()
+	})
+	return n.err
 }
 
 func (n *multiScanNode) DocumentMap() *core.DocumentMapping {
