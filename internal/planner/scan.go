@@ -322,6 +322,10 @@ func (p *Planner) Scan(
 // If we have two readers on our multiScanNode, then
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
+//
+// NOTE: calling Init() on multiScanNode is subject to counting as well and as such
+// doesn't not provide idempotency guarantees. Counting is purely for performance
+// reasons and removing it should be safe.
 type multiScanNode struct {
 	scanNode   *scanNode
 	numReaders int
@@ -334,6 +338,10 @@ type multiScanNode struct {
 	err        error
 }
 
+// Init initializes the multiScanNode.
+// NOTE: this function is subject to counting based on the number of readers and as such
+// doesn't not provide idempotency guarantees. Counting is purely for performance
+// reasons and removing it should be safe.
 func (n *multiScanNode) Init() error {
 	n.countAndCall(&n.initCount, func() error {
 		return n.scanNode.Init()
