@@ -19,7 +19,7 @@ import (
 // This test was added during https://github.com/sourcenetwork/defradb/issues/2924
 // The issue was that [multiScanNode] that keeps track of how many calls to [Next()] should
 // be made, would call [Init()] and [Start()] every time without tracking, which would result
-// child nodes being initialized and started multiple times, which in turn created
+// in child nodes being initialized and started multiple times, which in turn created
 // index iterators without closing them.
 func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
