@@ -81,6 +81,11 @@ var _ indexIterator = (*indexPrefixIterator)(nil)
 func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
+	if iter.resultIter != nil {
+		if err := iter.resultIter.Close(); err != nil {
+			return err
+		}
+	}
 	iter.resultIter = nil
 	return nil
 }
