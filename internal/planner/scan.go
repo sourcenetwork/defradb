@@ -331,29 +331,34 @@ type multiScanNode struct {
 	closeCount int
 
 	nextResult bool
-	nextErr    error
-	initErr    error
-	startErr   error
-	closeErr   error
+	err        error
 }
 
 func (n *multiScanNode) Init() error {
-	n.countAndCall(&n.initCount, func() {
-		n.initErr = n.scanNode.Init()
+	n.countAndCall(&n.initCount, func() error {
+		return n.scanNode.Init()
 	})
-	return n.initErr
+	return n.err
 }
 
 func (n *multiScanNode) Start() error {
-	n.countAndCall(&n.startCount, func() {
-		n.startErr = n.scanNode.Start()
+	n.countAndCall(&n.startCount, func() error {
+		return n.scanNode.Start()
 	})
-	return n.startErr
+	return n.err
 }
 
-func (n *multiScanNode) countAndCall(count *int, f func()) {
+// countAndCall keeps track of number of requests to call a given function by checking a
+// function's count.
+// The function is only called when the count is 0.
+// If the count is equal to the number of readers, the count is reset.
+// If the function returns an error, the error is stored in the multiScanNode.
+func (n *multiScanNode) countAndCall(count *int, f func() error) {
 	if *count == 0 {
-		f()
+		err := f()
+		if err != nil {
+			n.err = err
+		}
 	}
 	*count++
 
@@ -367,11 +372,12 @@ func (n *multiScanNode) countAndCall(count *int, f func()) {
 // Next only calls Next() on the underlying
 // scanNode every numReaders.
 func (n *multiScanNode) Next() (bool, error) {
-	n.countAndCall(&n.nextCount, func() {
-		n.nextResult, n.nextErr = n.scanNode.Next()
+	n.countAndCall(&n.nextCount, func() (err error) {
+		n.nextResult, err = n.scanNode.Next()
+		return
 	})
 
-	return n.nextResult, n.nextErr
+	return n.nextResult, n.err
 }
 
 func (n *multiScanNode) Value() core.Doc {
@@ -391,10 +397,10 @@ func (n *multiScanNode) Kind() string {
 }
 
 func (n *multiScanNode) Close() error {
-	n.countAndCall(&n.closeCount, func() {
-		n.closeErr = n.scanNode.Close()
+	n.countAndCall(&n.closeCount, func() error {
+		return n.scanNode.Close()
 	})
-	return n.closeErr
+	return n.err
 }
 
 func (n *multiScanNode) DocumentMap() *core.DocumentMapping {
