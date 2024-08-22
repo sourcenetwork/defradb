@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -325,35 +325,53 @@ func (p *Planner) Scan(
 type multiScanNode struct {
 	scanNode   *scanNode
 	numReaders int
-	numCalls   int
+	nextCount  int
+	initCount  int
+	startCount int
+	closeCount int
 
-	lastBool bool
-	lastErr  error
+	nextResult bool
+	nextErr    error
+	initErr    error
+	startErr   error
+	closeErr   error
 }
 
 func (n *multiScanNode) Init() error {
-	return n.scanNode.Init()
+	n.countAndCall(&n.initCount, func() {
+		n.initErr = n.scanNode.Init()
+	})
+	return n.initErr
 }
 
 func (n *multiScanNode) Start() error {
-	return n.scanNode.Start()
+	n.countAndCall(&n.startCount, func() {
+		n.startErr = n.scanNode.Start()
+	})
+	return n.startErr
+}
+
+func (n *multiScanNode) countAndCall(count *int, f func()) {
+	if *count == 0 {
+		f()
+	}
+	*count++
+
+	// if the number of calls equals the numbers of readers
+	// reset the counter, so our next call actually executes the function
+	if *count == n.numReaders {
+		*count = 0
+	}
 }
 
 // Next only calls Next() on the underlying
 // scanNode every numReaders.
 func (n *multiScanNode) Next() (bool, error) {
-	if n.numCalls == 0 {
-		n.lastBool, n.lastErr = n.scanNode.Next()
-	}
-	n.numCalls++
+	n.countAndCall(&n.nextCount, func() {
+		n.nextResult, n.nextErr = n.scanNode.Next()
+	})
 
-	// if the number of calls equals the numbers of readers
-	// reset the counter, so our next call actually executes the Next()
-	if n.numCalls == n.numReaders {
-		n.numCalls = 0
-	}
-
-	return n.lastBool, n.lastErr
+	return n.nextResult, n.nextErr
 }
 
 func (n *multiScanNode) Value() core.Doc {
@@ -373,7 +391,10 @@ func (n *multiScanNode) Kind() string {
 }
 
 func (n *multiScanNode) Close() error {
-	return n.scanNode.Close()
+	n.countAndCall(&n.closeCount, func() {
+		n.closeErr = n.scanNode.Close()
+	})
+	return n.closeErr
 }
 
 func (n *multiScanNode) DocumentMap() *core.DocumentMapping {
