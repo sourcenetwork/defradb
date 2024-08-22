@@ -43,29 +43,10 @@ jobs:
           cache: false
 
       - name: Apply tag
-        run: git tag ${{ github.event.inputs.tag }}
+        run: git tag v${{ github.event.inputs.tag }}
 
       - name: Build modules
         run: make deps:modules
-
-      - name: Set up QEMU
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/setup-qemu-action@v3
-
-      - name: Log in to Docker Hub
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Log in to the Container registry
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run command to get SHA environment
         shell: bash
@@ -114,7 +95,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply tag
-        run: git tag ${{ github.event.inputs.tag }}
+        run: git tag v${{ github.event.inputs.tag }}
 
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v5
@@ -122,12 +103,6 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: false
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Run command to get SHA environment
         shell: bash
@@ -179,17 +154,58 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
+  docker-build-push:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: tools/defradb.containerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ github.actor }}/defradb:latest
+            ${{ github.actor }}/defradb:${{ github.event.inputs.tag }}
+            ghcr.io/${{ github.actor }}/defradb:latest
+            ghcr.io/${{ github.actor }}/defradb:${{ github.event.inputs.tag }}
+
   pull-docker-image:
     name: Pull docker image job
     runs-on: ubuntu-latest
-    needs: prepare
+    needs: docker-build-push
 
     strategy:
       fail-fast: false
       matrix:
         image_tag:
-          - sourcenetwork/defradb:latest
-          - ghcr.io/sourcenetwork/defradb:latest
+          - ${{ github.actor }}/defradb:latest
+          - ghcr.io/${{ github.actor }}/defradb:latest
 
     steps:
       - name: Log in to Docker Hub

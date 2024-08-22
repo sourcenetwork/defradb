@@ -97,23 +97,3 @@ milestones:
   - close: true
     fail_on_error: false
     name_template: "DefraDB v{{ .Major }}.{{ .Minor }}"
-
-dockers:
-  - ids:
-      - "defradb_playground"
-    image_templates:
-      - "{{ .Env.GITHUB_REPOSITORY }}:latest"
-      - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
-      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest"
-      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.description=DefraDB is a Peer-to-Peer Edge Database."
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.name={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source={{ .GitURL }}"
-      - "--platform=linux/amd64"
-    dockerfile: ./tools/goreleaser.containerfile
