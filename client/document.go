@@ -27,6 +27,21 @@ import (
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
+// CborEncodingOptions returns the set of cbor encoding options to be used whenever
+// encoding defra documents.
+//
+// It is the canonical encoding options that ensure consistent serialization of
+// indeterministic datastructures, like Go Maps, plus nano-second precision for
+// time values (not canon).
+func CborEncodingOptions() cbor.EncOptions {
+	// Important: CanonicalEncOptions ensures consistent serialization of
+	// indeterministic datastructures, like Go Maps
+
+	opts := cbor.CanonicalEncOptions()
+	opts.Time = cbor.TimeRFC3339Nano
+	return opts
+}
+
 // This is the main implementation starting point for accessing the internal Document API
 // which provides API access to the various operations available for Documents, i.e. CRUD.
 //
@@ -118,7 +133,7 @@ func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinitio
 	return doc, nil
 }
 
-var jsonArrayPattern = regexp.MustCompile(`^\s*\[.*\]\s*$`)
+var jsonArrayPattern = regexp.MustCompile(`(?s)^\s*\[.*\]\s*$`)
 
 // IsJSONArray returns true if the given byte array is a JSON Array.
 func IsJSONArray(obj []byte) bool {
@@ -186,11 +201,11 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		}
 	}
 
-	if field.Kind.IsObjectArray() {
-		return nil, NewErrFieldNotExist(field.Name)
-	}
-
 	if field.Kind.IsObject() {
+		if field.Kind.IsArray() {
+			return nil, NewErrFieldNotExist(field.Name)
+		}
+
 		v, err := getString(val)
 		if err != nil {
 			return nil, err
@@ -592,7 +607,7 @@ func (doc *Document) Set(field string, value any) error {
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.Kind.IsObject() && !fd.Kind.IsObjectArray() {
+	if fd.Kind.IsObject() && !fd.Kind.IsArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
@@ -659,9 +674,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	// Important: CanonicalEncOptions ensures consistent serialization of
-	// indeterministic datastructures, like Go Maps
-	em, err := cbor.CanonicalEncOptions().EncMode()
+	em, err := CborEncodingOptions().EncMode()
 	if err != nil {
 		return nil, err
 	}

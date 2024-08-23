@@ -17,28 +17,34 @@ import (
 )
 
 func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with ne string filter",
-		Request: `query {
-					Users(filter: {Name: {_ne: "John"}}) {
-						Age
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Age": int64(32),
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Name: {_ne: "John"}}) {
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(32),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,34 +53,42 @@ func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithStringNotEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with ne string nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Age": 36
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Name: {_ne: null}}) {
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Age": 36
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age": int64(21),
-			},
-			{
-				"Age": int64(32),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
+						{
+							"Age": int64(32),
+						},
+					},
+				},
 			},
 		},
 	}

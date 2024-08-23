@@ -13,8 +13,9 @@ package test_acp
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
@@ -30,10 +31,8 @@ func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 						_count(Employee: {})
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_count": int(2),
-					},
+				Results: map[string]any{
+					"_count": int(2),
 				},
 			},
 		},
@@ -57,10 +56,12 @@ func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						// 1 of 2 companies is public and has 1 public employee out of 2
-						"_count": int(1),
+				Results: map[string]any{
+					"Company": []map[string]any{
+						{
+							// 1 of 2 companies is public and has 1 public employee out of 2
+							"_count": int(1),
+						},
 					},
 				},
 			},
@@ -78,16 +79,14 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						_count(Employee: {})
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_count": int(4),
-					},
+				Results: map[string]any{
+					"_count": int(4),
 				},
 			},
 		},
@@ -104,7 +103,7 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						Company {
@@ -112,12 +111,14 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_count": int(2),
-					},
-					{
-						"_count": int(2),
+				Results: map[string]any{
+					"Company": []map[string]any{
+						{
+							"_count": int(2),
+						},
+						{
+							"_count": int(2),
+						},
 					},
 				},
 			},
@@ -135,16 +136,14 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						_count(Employee: {})
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_count": int(2),
-					},
+				Results: map[string]any{
+					"_count": int(2),
 				},
 			},
 		},
@@ -161,7 +160,7 @@ func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						Company {
@@ -169,10 +168,12 @@ func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						// 1 of 2 companies is public and has 1 public employee out of 2
-						"_count": int(1),
+				Results: map[string]any{
+					"Company": []map[string]any{
+						{
+							// 1 of 2 companies is public and has 1 public employee out of 2
+							"_count": int(1),
+						},
 					},
 				},
 			},

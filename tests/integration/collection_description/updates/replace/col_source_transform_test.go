@@ -75,9 +75,11 @@ func TestColDescrUpdateReplaceCollectionSourceTransform(t *testing.T) {
 					}
 				}`,
 				// Without the new transform, `"Shahzad"` would have been returned
-				Results: []map[string]any{
-					{
-						"name": "Fred",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
 					},
 				},
 			},

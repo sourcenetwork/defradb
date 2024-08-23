@@ -93,7 +93,9 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 						email
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

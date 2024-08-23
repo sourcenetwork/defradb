@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -131,7 +131,7 @@ func (p *parallelNode) Next() (bool, error) {
 	return orNext, nil
 }
 
-func (p *parallelNode) nextMerge(index int, plan planNode) (bool, error) {
+func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 	if next, err := plan.Next(); !next {
 		return false, err
 	}
@@ -214,22 +214,22 @@ func (s *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 		if err := s.planner.walkAndReplacePlan(s.source, origScan, multiscan); err != nil {
 			return err
 		}
-		// create multinode
-		multinode := &parallelNode{
+		// create parallelNode
+		parallelNode := &parallelNode{
 			p:         s.planner,
 			multiscan: multiscan,
 			docMapper: docMapper{s.source.DocumentMap()},
 		}
-		multinode.addChild(-1, s.source)
+		parallelNode.addChild(-1, s.source)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
 		if err := s.planner.walkAndReplacePlan(newPlan, origScan, multiscan); err != nil {
 			return err
 		}
 		// add our newly updated plan to the multinode
-		multinode.addChild(fieldIndex, newPlan)
+		parallelNode.addChild(fieldIndex, newPlan)
 		multiscan.addReader()
-		s.source = multinode
+		s.source = parallelNode
 
 	// we already have an existing parallelNode as our source
 	case *parallelNode:

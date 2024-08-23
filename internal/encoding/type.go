@@ -23,6 +23,7 @@ const (
 	Float     Type = 4
 	Bytes     Type = 6
 	BytesDesc Type = 7
+	Time      Type = 8
 )
 
 // PeekType peeks at the type of the value encoded at the start of b.
@@ -40,6 +41,8 @@ func PeekType(b []byte) Type {
 			return Int
 		case m >= floatNaN && m <= floatNaNDesc:
 			return Float
+		case m == timeMarker:
+			return Time
 		}
 	}
 	return Unknown

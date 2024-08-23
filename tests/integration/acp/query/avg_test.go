@@ -13,8 +13,9 @@ package test_acp
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
@@ -30,11 +31,9 @@ func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 						_avg(Employee: {field: salary})
 					}
 				`,
-				Results: []map[string]any{
-					{
-						// 2 public employees, 1 with salary 10k, 1 with salary 20k
-						"_avg": int(15000),
-					},
+				Results: map[string]any{
+					// 2 public employees, 1 with salary 10k, 1 with salary 20k
+					"_avg": int(15000),
 				},
 			},
 		},
@@ -51,17 +50,15 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query {
 						_avg(Employee: {field: salary})
 					}
 				`,
-				Results: []map[string]any{
-					{
-						// 4 employees with salaries 10k, 20k, 30k, 40k
-						"_avg": int(25000),
-					},
+				Results: map[string]any{
+					// 4 employees with salaries 10k, 20k, 30k, 40k
+					"_avg": int(25000),
 				},
 			},
 		},
@@ -78,17 +75,15 @@ func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query {
 						_avg(Employee: {field: salary})
 					}
 				`,
-				Results: []map[string]any{
-					{
-						// 2 public employees, 1 with salary 10k, 1 with salary 20k
-						"_avg": int(15000),
-					},
+				Results: map[string]any{
+					// 2 public employees, 1 with salary 10k, 1 with salary 20k
+					"_avg": int(15000),
 				},
 			},
 		},

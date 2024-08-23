@@ -31,7 +31,6 @@ type IndexFetcher struct {
 	col           client.Collection
 	txn           datastore.Txn
 	indexFilter   *mapper.Filter
-	docFilter     *mapper.Filter
 	doc           *encodedDocument
 	mapping       *core.DocumentMapping
 	indexedFields []client.FieldDefinition
@@ -68,8 +67,9 @@ func (f *IndexFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
+	f.resetState()
+
 	f.col = col
-	f.docFilter = filter
 	f.doc = &encodedDocument{}
 	f.mapping = docMapper
 	f.txn = txn
@@ -98,7 +98,12 @@ outer:
 	}
 	f.indexIter = iter
 
-	if f.docFetcher != nil && len(f.docFields) > 0 {
+	// if it turns out that we can't use the index, we need to fall back to the document fetcher
+	if f.indexIter == nil {
+		f.docFields = fields
+	}
+
+	if len(f.docFields) > 0 {
 		err = f.docFetcher.Init(
 			ctx,
 			identity,
@@ -106,7 +111,7 @@ outer:
 			acp,
 			f.col,
 			f.docFields,
-			f.docFilter,
+			filter,
 			f.mapping,
 			false,
 			false,
@@ -117,14 +122,16 @@ outer:
 }
 
 func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
-	err := f.indexIter.Init(ctx, f.txn.Datastore())
-	if err != nil {
-		return err
+	if f.indexIter == nil {
+		return f.docFetcher.Start(ctx, spans)
 	}
-	return nil
+	return f.indexIter.Init(ctx, f.txn.Datastore())
 }
 
 func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
+	if f.indexIter == nil {
+		return f.docFetcher.FetchNext(ctx)
+	}
 	totalExecInfo := f.execInfo
 	defer func() { f.execInfo.Add(totalExecInfo) }()
 	f.execInfo.Reset()
@@ -174,7 +181,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			}
 		}
 
-		if f.docFetcher != nil && len(f.docFields) > 0 {
+		if len(f.docFields) > 0 {
 			targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), string(f.doc.id))
 			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
 			err := f.docFetcher.Start(ctx, spans)
@@ -202,8 +209,23 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 }
 
 func (f *IndexFetcher) Close() error {
-	if f.indexIter != nil {
-		return f.indexIter.Close()
+	if f.indexIter == nil {
+		return f.docFetcher.Close()
 	}
-	return nil
+	return f.indexIter.Close()
+}
+
+// resetState resets the mutable state of this IndexFetcher, returning the state to how it
+// was immediately after construction.
+func (f *IndexFetcher) resetState() {
+	// WARNING: Do not reset properties set in the constructor!
+
+	f.col = nil
+	f.txn = nil
+	f.doc = nil
+	f.mapping = nil
+	f.indexedFields = nil
+	f.docFields = nil
+	f.indexIter = nil
+	f.execInfo.Reset()
 }

@@ -35,11 +35,13 @@ func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"_version": []map[string]any{
-							{
-								"cid": "bafyreia5ph2hvwebdsxe7m2f6bwuq7ngwxzqp7esiuzjihtcz2jswma6xu",
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"_version": []map[string]any{
+								{
+									"cid": "bafyreia5ph2hvwebdsxe7m2f6bwuq7ngwxzqp7esiuzjihtcz2jswma6xu",
+								},
 							},
 						},
 					},

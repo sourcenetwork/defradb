@@ -43,7 +43,9 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Program": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -78,7 +80,9 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Program": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -113,7 +117,9 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Program": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -187,12 +193,14 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "LensVM",
-					},
-					{
-						"name": "DefraDB",
+				Results: map[string]any{
+					"Program": []map[string]any{
+						{
+							"name": "LensVM",
+						},
+						{
+							"name": "DefraDB",
+						},
 					},
 				},
 			},
@@ -269,15 +277,17 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Zanzi",
-					},
-					{
-						"name": "LensVM",
-					},
-					{
-						"name": "DefraDB",
+				Results: map[string]any{
+					"Program": []map[string]any{
+						{
+							"name": "Zanzi",
+						},
+						{
+							"name": "LensVM",
+						},
+						{
+							"name": "DefraDB",
+						},
 					},
 				},
 			},
@@ -346,12 +356,14 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Zanzi",
-					},
-					{
-						"name": "Horizon",
+				Results: map[string]any{
+					"Program": []map[string]any{
+						{
+							"name": "Zanzi",
+						},
+						{
+							"name": "Horizon",
+						},
 					},
 				},
 			},

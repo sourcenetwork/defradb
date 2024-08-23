@@ -19,9 +19,17 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all latest commits).
 func TestQueryLatestCommits(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple latest commits query",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					latestCommits {
 						cid
 						links {
@@ -30,15 +38,9 @@ func TestQueryLatestCommits(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
-		ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 	}
 
 	executeTestCase(t, test)

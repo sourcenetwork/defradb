@@ -45,9 +45,11 @@ func TestMutationUpdate_IfFloatFieldSetToNull_ShouldBeNil(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"rate": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"rate": nil,
+						},
 					},
 				},
 			},

@@ -33,50 +33,52 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 				}
 			}
 		}`,
-				Results: []map[string]any{
-					{
-						"name":   "Sooley",
-						"rating": 3.2,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of Sooley",
-							"yearOpened": int64(1999),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Sooley",
+							"rating": 3.2,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of Sooley",
+								"yearOpened": int64(1999),
+							},
 						},
-					},
-					{
-						"name":   "The Rooster Bar",
-						"rating": 4.0,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of The Rooster Bar",
-							"yearOpened": int64(2022),
+						{
+							"name":   "The Rooster Bar",
+							"rating": 4.0,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of The Rooster Bar",
+								"yearOpened": int64(2022),
+							},
 						},
-					},
-					{
-						"name":      "The Associate",
-						"rating":    4.2,
-						"publisher": nil,
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of A Time for Mercy",
-							"yearOpened": int64(2013),
+						{
+							"name":      "The Associate",
+							"rating":    4.2,
+							"publisher": nil,
 						},
-					},
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of Theif Lord",
-							"yearOpened": int64(2020),
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of A Time for Mercy",
+								"yearOpened": int64(2013),
+							},
 						},
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of Painted House",
-							"yearOpened": int64(1995),
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of Theif Lord",
+								"yearOpened": int64(2020),
+							},
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of Painted House",
+								"yearOpened": int64(1995),
+							},
 						},
 					},
 				},
@@ -104,51 +106,53 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 				}
 			}
 		}`,
-				Results: []map[string]any{
-					{
-						"name":   "The Rooster Bar",
-						"rating": 4.0,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of The Rooster Bar",
-							"yearOpened": int64(2022),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "The Rooster Bar",
+							"rating": 4.0,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of The Rooster Bar",
+								"yearOpened": int64(2022),
+							},
 						},
-					},
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of Theif Lord",
-							"yearOpened": int64(2020),
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of Theif Lord",
+								"yearOpened": int64(2020),
+							},
 						},
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of A Time for Mercy",
-							"yearOpened": int64(2013),
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of A Time for Mercy",
+								"yearOpened": int64(2013),
+							},
 						},
-					},
-					{
-						"name":   "Sooley",
-						"rating": 3.2,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of Sooley",
-							"yearOpened": int64(1999),
+						{
+							"name":   "Sooley",
+							"rating": 3.2,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of Sooley",
+								"yearOpened": int64(1999),
+							},
 						},
-					},
-					{
-						"name":   "Painted House",
-						"rating": 4.9,
-						"publisher": map[string]any{
-							"name":       "Only Publisher of Painted House",
-							"yearOpened": int64(1995),
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"publisher": map[string]any{
+								"name":       "Only Publisher of Painted House",
+								"yearOpened": int64(1995),
+							},
 						},
-					},
-					{
-						"name":      "The Associate",
-						"rating":    4.2,
-						"publisher": nil,
+						{
+							"name":      "The Associate",
+							"rating":    4.2,
+							"publisher": nil,
+						},
 					},
 				},
 			},

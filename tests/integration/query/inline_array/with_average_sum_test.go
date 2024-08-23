@@ -21,28 +21,32 @@ import (
 // verify that that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array with no filter, average and sum of populated integer array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"favouriteIntegers": [-1, 0, 9, 0]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [name]) {
 						name
 						_avg(favouriteIntegers: {})
 						_sum(favouriteIntegers: {})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"favouriteIntegers": [-1, 0, 9, 0]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"_avg": float64(2),
-				"_sum": int64(8),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"_avg": float64(2),
+							"_sum": int64(8),
+						},
+					},
+				},
 			},
 		},
 	}

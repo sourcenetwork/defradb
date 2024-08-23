@@ -16,6 +16,7 @@ package clock
 import (
 	"context"
 
+	cid "github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var (
@@ -32,25 +34,24 @@ var (
 
 // MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
 type MerkleClock struct {
-	headstore datastore.DSReaderWriter
-	dagstore  datastore.DAGStore
-	// dagSyncer
-	headset *heads
-	crdt    core.ReplicatedData
+	headstore  datastore.DSReaderWriter
+	blockstore datastore.Blockstore
+	headset    *heads
+	crdt       core.ReplicatedData
 }
 
 // NewMerkleClock returns a new MerkleClock.
 func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
-	dagstore datastore.DAGStore,
+	blockstore datastore.Blockstore,
 	namespace core.HeadStoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{
-		headstore: headstore,
-		dagstore:  dagstore,
-		headset:   NewHeadSet(headstore, namespace),
-		crdt:      crdt,
+		headstore:  headstore,
+		blockstore: blockstore,
+		headset:    NewHeadSet(headstore, namespace),
+		crdt:       crdt,
 	}
 }
 
@@ -60,7 +61,7 @@ func (mc *MerkleClock) putBlock(
 ) (cidlink.Link, error) {
 	nd := block.GenerateNode()
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(mc.dagstore.AsIPLDStorage())
+	lsys.SetWriteStorage(mc.blockstore.AsIPLDStorage())
 	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), nd)
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
@@ -85,8 +86,24 @@ func (mc *MerkleClock) AddDelta(
 	delta.SetPriority(height)
 	block := coreblock.New(delta, links, heads...)
 
-	// Write the new block to the dag store.
-	link, err := mc.putBlock(ctx, block)
+	isEncrypted, err := mc.checkIfBlockEncryptionEnabled(ctx, block.Delta.GetFieldName(), heads)
+	if err != nil {
+		return cidlink.Link{}, nil, err
+	}
+
+	dagBlock := block
+	if isEncrypted {
+		if !block.Delta.IsComposite() {
+			dagBlock, err = encryptBlock(ctx, block)
+			if err != nil {
+				return cidlink.Link{}, nil, err
+			}
+		} else {
+			dagBlock.IsEncrypted = &isEncrypted
+		}
+	}
+
+	link, err := mc.putBlock(ctx, dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -96,12 +113,13 @@ func (mc *MerkleClock) AddDelta(
 		ctx,
 		block,
 		link,
+		false,
 	)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
-	b, err := block.Marshal()
+	b, err := dagBlock.Marshal()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -109,18 +127,68 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
+func (mc *MerkleClock) checkIfBlockEncryptionEnabled(
+	ctx context.Context,
+	fieldName string,
+	heads []cid.Cid,
+) (bool, error) {
+	if encryption.ShouldEncryptField(ctx, fieldName) {
+		return true, nil
+	}
+
+	for _, headCid := range heads {
+		bytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
+		if err != nil {
+			return false, NewErrCouldNotFindBlock(headCid, err)
+		}
+		prevBlock, err := coreblock.GetFromBytes(bytes)
+		if err != nil {
+			return false, err
+		}
+		if prevBlock.IsEncrypted != nil && *prevBlock.IsEncrypted {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func encryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
+	clonedCRDT := block.Delta.Clone()
+	bytes, err := encryption.EncryptDoc(ctx, string(clonedCRDT.GetDocID()),
+		clonedCRDT.GetFieldName(), clonedCRDT.GetData())
+	if err != nil {
+		return nil, err
+	}
+	clonedCRDT.SetData(bytes)
+	isEncrypted := true
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, IsEncrypted: &isEncrypted}, nil
+}
+
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
+// If onlyHeads is true, it will skip merging and update only the heads.
 func (mc *MerkleClock) ProcessBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+	onlyHeads bool,
+) error {
+	if !onlyHeads {
+		err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
+		if err != nil {
+			return NewErrMergingDelta(blockLink.Cid, err)
+		}
+	}
+
+	return mc.updateHeads(ctx, block, blockLink)
+}
+
+func (mc *MerkleClock) updateHeads(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
 	priority := block.Delta.GetPriority()
-
-	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
-	if err != nil {
-		return NewErrMergingDelta(blockLink.Cid, err)
-	}
 
 	// check if we have any HEAD links
 	hasHeads := false
@@ -155,7 +223,7 @@ func (mc *MerkleClock) ProcessBlock(
 			continue
 		}
 
-		known, err := mc.dagstore.Has(ctx, linkCid)
+		known, err := mc.blockstore.Has(ctx, linkCid)
 		if err != nil {
 			return NewErrCouldNotFindBlock(linkCid, err)
 		}

@@ -17,26 +17,30 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array, offsetted limited sum of integer array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, 5, 1, 0]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						name
 						_sum(favouriteIntegers: {offset: 1, limit: 2})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Shahzad",
-					"favouriteIntegers": [-1, 2, 5, 1, 0]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_sum": int64(7),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_sum": int64(7),
+						},
+					},
+				},
 			},
 		},
 	}

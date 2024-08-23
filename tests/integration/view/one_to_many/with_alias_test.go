@@ -73,12 +73,14 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 								}
 							}
 						}`,
-				Results: []map[string]any{
-					{
-						"fullName": "Harper Lee",
-						"books": []map[string]any{
-							{
-								"name": "To Kill a Mockingbird",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"fullName": "Harper Lee",
+							"books": []map[string]any{
+								{
+									"name": "To Kill a Mockingbird",
+								},
 							},
 						},
 					},
@@ -149,12 +151,14 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "Harper Lee",
-						"books": []map[string]any{
-							{
-								"fullName": "To Kill a Mockingbird",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Harper Lee",
+							"books": []map[string]any{
+								{
+									"fullName": "To Kill a Mockingbird",
+								},
 							},
 						},
 					},

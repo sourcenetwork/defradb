@@ -91,6 +91,10 @@ func (c *Transaction) Datastore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
 
+func (c *Transaction) Encstore() datastore.DSReaderWriter {
+	panic("client side transaction")
+}
+
 func (c *Transaction) Headstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
@@ -99,7 +103,7 @@ func (c *Transaction) Peerstore() datastore.DSBatching {
 	panic("client side transaction")
 }
 
-func (c *Transaction) DAGstore() datastore.DAGStore {
+func (c *Transaction) Blockstore() datastore.Blockstore {
 	panic("client side transaction")
 }
 

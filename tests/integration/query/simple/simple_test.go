@@ -17,28 +17,32 @@ import (
 )
 
 func TestQuerySimple(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with no filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						_docID
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
-				"Name":   "John",
-				"Age":    int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
+							"Name":   "John",
+							"Age":    int64(21),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,26 +51,30 @@ func TestQuerySimple(t *testing.T) {
 }
 
 func TestQuerySimpleWithAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with alias, no filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						username: Name
 						age: Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"username": "John",
-				"age":      int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"username": "John",
+							"age":      int64(21),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -75,34 +83,40 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 }
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with no filter, multiple rows",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 27
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-				"Name": "John",
-				"Age": 21
-			}`,
-				`{
-				"Name": "Bob",
-				"Age": 27
-			}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-				"Age":  int64(27),
-			},
-			{
-				"Name": "John",
-				"Age":  int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+							"Age":  int64(27),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -111,24 +125,35 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 }
 
 func TestQuerySimpleWithUndefinedField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query for undefined field",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						ThisFieldDoesNotExists
 					}
 				}`,
-		ExpectedError: "Cannot query field \"ThisFieldDoesNotExists\" on type \"Users\".",
+				ExpectedError: "Cannot query field \"ThisFieldDoesNotExists\" on type \"Users\".",
+			},
+		},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with some default-value fields",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						Email
@@ -137,20 +162,17 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 						Verified
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":     "John",
-				"Email":    nil,
-				"Age":      nil,
-				"HeightM":  nil,
-				"Verified": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":     "John",
+							"Email":    nil,
+							"Age":      nil,
+							"HeightM":  nil,
+							"Verified": nil,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -159,9 +181,14 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 }
 
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with default-value fields",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{ }`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						Email
@@ -170,18 +197,17 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 						Verified
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{ }`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":     nil,
-				"Email":    nil,
-				"Age":      nil,
-				"HeightM":  nil,
-				"Verified": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":     nil,
+							"Email":    nil,
+							"Age":      nil,
+							"HeightM":  nil,
+							"Verified": nil,
+						},
+					},
+				},
 			},
 		},
 	}

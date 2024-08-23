@@ -112,7 +112,7 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	}
 
 	for i, span := range headSetSpans.Value {
-		if span.Start().FieldId != fieldId {
+		if span.Start().FieldID != fieldId {
 			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldId(fieldId), core.DataStoreKey{})
 		}
 	}
@@ -184,7 +184,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	var currentCid *cid.Cid
-	store := n.planner.txn.DAGstore()
+	store := n.planner.txn.Blockstore()
 
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]

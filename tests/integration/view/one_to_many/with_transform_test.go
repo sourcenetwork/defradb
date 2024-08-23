@@ -92,12 +92,14 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"fullName": "Ferdowsi",
-						"books": []any{
-							map[string]any{
-								"name": "Shahnameh",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"fullName": "Ferdowsi",
+							"books": []any{
+								map[string]any{
+									"name": "Shahnameh",
+								},
 							},
 						},
 					},
@@ -171,15 +173,17 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "Ferdowsi",
-						"books": []any{
-							map[string]any{
-								"name": "The Tragedy of Sohrab and Rostam",
-							},
-							map[string]any{
-								"name": "The Legend of Seyavash",
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Ferdowsi",
+							"books": []any{
+								map[string]any{
+									"name": "The Tragedy of Sohrab and Rostam",
+								},
+								map[string]any{
+									"name": "The Legend of Seyavash",
+								},
 							},
 						},
 					},

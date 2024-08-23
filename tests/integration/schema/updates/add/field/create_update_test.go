@@ -47,12 +47,14 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"_version": []map[string]any{
-							{
-								"schemaVersionId": initialSchemaVersionID,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"_version": []map[string]any{
+								{
+									"schemaVersionId": initialSchemaVersionID,
+								},
 							},
 						},
 					},
@@ -82,18 +84,20 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":  "John",
-						"email": "ih8oraclelicensing@netscape.net",
-						"_version": []map[string]any{
-							{
-								// Update commit
-								"schemaVersionId": updatedSchemaVersionID,
-							},
-							{
-								// Create commit
-								"schemaVersionId": initialSchemaVersionID,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "John",
+							"email": "ih8oraclelicensing@netscape.net",
+							"_version": []map[string]any{
+								{
+									// Update commit
+									"schemaVersionId": updatedSchemaVersionID,
+								},
+								{
+									// Create commit
+									"schemaVersionId": initialSchemaVersionID,
+								},
 							},
 						},
 					},
@@ -144,14 +148,16 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 						schemaVersionId
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						// Update commit
-						"schemaVersionId": updatedSchemaVersionID,
-					},
-					{
-						// Create commit
-						"schemaVersionId": initialSchemaVersionID,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							// Update commit
+							"schemaVersionId": updatedSchemaVersionID,
+						},
+						{
+							// Create commit
+							"schemaVersionId": initialSchemaVersionID,
+						},
 					},
 				},
 			},

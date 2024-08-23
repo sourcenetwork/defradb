@@ -43,7 +43,9 @@ func TestSchemaUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -82,13 +84,15 @@ func TestSchemaUpdatesAddFieldKindNillableStringArrayWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo": []immutable.Option[string]{
-							immutable.Some("hello"),
-							immutable.Some("پدر سگ"),
-							immutable.None[string](),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo": []immutable.Option[string]{
+								immutable.Some("hello"),
+								immutable.Some("پدر سگ"),
+								immutable.None[string](),
+							},
 						},
 					},
 				},
@@ -130,13 +134,15 @@ func TestSchemaUpdatesAddFieldKindNillableStringArraySubstitutionWithCreate(t *t
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo": []immutable.Option[string]{
-							immutable.Some("hello"),
-							immutable.Some("پدر سگ"),
-							immutable.None[string](),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo": []immutable.Option[string]{
+								immutable.Some("hello"),
+								immutable.Some("پدر سگ"),
+								immutable.None[string](),
+							},
 						},
 					},
 				},

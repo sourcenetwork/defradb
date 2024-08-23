@@ -17,28 +17,34 @@ import (
 )
 
 func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le int filter with equal value",
-		Request: `query {
-					Users(filter: {Age: {_le: 21}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Age: {_le: 21}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,28 +53,34 @@ func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le int filter with greater value",
-		Request: `query {
-					Users(filter: {Age: {_le: 22}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Age: {_le: 22}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -77,27 +89,33 @@ func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le int filter with null value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_le: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}

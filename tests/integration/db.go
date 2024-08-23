@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
@@ -71,7 +73,7 @@ func init() {
 
 func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	opts := []node.Option{
-		node.WithInMemory(true),
+		node.WithBadgerInMemory(true),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -86,7 +88,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{
-		node.WithPath(path),
+		node.WithStorePath(path),
 	}
 
 	node, err := node.NewNode(ctx, opts...)
@@ -97,10 +99,10 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	return node.DB, err
 }
 
-// setupDatabase returns the database implementation for the current
+// setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupDatabase(s *state) (client.DB, string, error) {
+func setupNode(s *state) (*node.Node, string, error) {
 	opts := []node.Option{
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
@@ -121,13 +123,33 @@ func setupDatabase(s *state) (client.DB, string, error) {
 	}
 
 	if encryptionKey != nil {
-		opts = append(opts, node.WithEncryptionKey(encryptionKey))
+		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+	}
+
+	switch acpType {
+	case LocalACPType:
+		opts = append(opts, node.WithACPType(node.LocalACPType))
+
+	case SourceHubACPType:
+		if len(s.acpOptions) == 0 {
+			var err error
+			s.acpOptions, err = setupSourceHub(s)
+			require.NoError(s.t, err)
+		}
+
+		opts = append(opts, node.WithACPType(node.SourceHubACPType))
+		for _, opt := range s.acpOptions {
+			opts = append(opts, opt)
+		}
+
+	default:
+		// no-op, use the `node` package default
 	}
 
 	var path string
 	switch s.dbt {
 	case badgerIMType:
-		opts = append(opts, node.WithInMemory(true))
+		opts = append(opts, node.WithBadgerInMemory(true))
 
 	case badgerFileType:
 		switch {
@@ -144,10 +166,10 @@ func setupDatabase(s *state) (client.DB, string, error) {
 			path = s.t.TempDir()
 		}
 
-		opts = append(opts, node.WithPath(path), node.WithACPPath(path))
+		opts = append(opts, node.WithStorePath(path), node.WithACPPath(path))
 
 	case defraIMType:
-		opts = append(opts, node.WithDefraStore(true))
+		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:
 		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
@@ -158,5 +180,5 @@ func setupDatabase(s *state) (client.DB, string, error) {
 		return nil, "", err
 	}
 
-	return node.DB, path, nil
+	return node, path, nil
 }

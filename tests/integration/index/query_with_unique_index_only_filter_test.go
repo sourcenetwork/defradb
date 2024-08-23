@@ -36,8 +36,10 @@ func TestQueryWithUniqueIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Islam"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -71,8 +73,10 @@ func TestQueryWithUniqueIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -106,9 +110,11 @@ func TestQueryWithUniqueIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Keenan"},
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Keenan"},
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -142,8 +148,10 @@ func TestQueryWithUniqueIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -177,9 +185,11 @@ func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "Bruno"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Bruno"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -213,16 +223,18 @@ func TestQueryWithUniqueIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
-					{"name": "Bruno"},
-					{"name": "Chris"},
-					{"name": "Fred"},
-					{"name": "John"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+						{"name": "Bruno"},
+						{"name": "Chris"},
+						{"name": "Fred"},
+						{"name": "John"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -256,9 +268,11 @@ func TestQueryWithUniqueIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "Andy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Andy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -292,11 +306,13 @@ func TestQueryWithUniqueIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "John"},
-					{"name": "Islam"},
-					{"name": "Roy"},
-					{"name": "Keenan"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Islam"},
+						{"name": "Roy"},
+						{"name": "Keenan"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -355,9 +371,11 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -366,9 +384,11 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Fred"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -377,9 +397,11 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req3,
-				Results: []map[string]any{
-					{"name": "Fred"},
-					{"name": "Keenan"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+						{"name": "Keenan"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -388,8 +410,10 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req4,
-				Results: []map[string]any{
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -398,9 +422,11 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req5,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -409,7 +435,9 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req6,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req6),
@@ -442,14 +470,16 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
-					{"name": "Bruno"},
-					{"name": "Fred"},
-					{"name": "Islam"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+						{"name": "Bruno"},
+						{"name": "Fred"},
+						{"name": "Islam"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -483,15 +513,17 @@ func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *te
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
-					{"name": "Chris"},
-					{"name": "Fred"},
-					{"name": "Islam"},
-					{"name": "John"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+						{"name": "Chris"},
+						{"name": "Fred"},
+						{"name": "Islam"},
+						{"name": "John"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -529,7 +561,9 @@ func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -573,8 +607,10 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": "Alice"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Alice"},
+					},
 				},
 			},
 		},
@@ -624,8 +660,10 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": "Bob"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bob"},
+					},
 				},
 			},
 		},
@@ -675,9 +713,11 @@ func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testin
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": "Kate"},
-					{"name": "Bob"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Kate"},
+						{"name": "Bob"},
+					},
 				},
 			},
 		},
@@ -726,10 +766,59 @@ func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t 
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": "Alice"},
-					{"name": "Bob"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Alice"},
+						{"name": "Bob"},
+					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueIndex_WithDateTimeField_ShouldIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthday: {_eq: "2000-07-23T03:00:00-00:00"}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						birthday: DateTime @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Fred",
+						"birthday": "2000-07-23T03:00:00-00:00"
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Andy",
+						"birthday": "2001-08-23T03:00:00-00:00"
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
 			},
 		},
 	}

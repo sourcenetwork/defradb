@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -62,8 +63,7 @@ func (c *Collection) Create(
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
 
-	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args := makeDocCreateArgs(ctx, c)
 
 	document, err := doc.String()
 	if err != nil {
@@ -87,24 +87,19 @@ func (c *Collection) CreateMany(
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
 
-	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args := makeDocCreateArgs(ctx, c)
 
-	docMapList := make([]map[string]any, len(docs))
+	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
-		docMap, err := doc.ToMap()
+		docStr, err := doc.String()
 		if err != nil {
 			return err
 		}
-		docMapList[i] = docMap
+		docStrings[i] = docStr
 	}
-	documents, err := json.Marshal(docMapList)
-	if err != nil {
-		return err
-	}
-	args = append(args, string(documents))
+	args = append(args, "["+strings.Join(docStrings, ",")+"]")
 
-	_, err = c.cmd.execute(ctx, args)
+	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
 		return err
 	}
@@ -112,6 +107,26 @@ func (c *Collection) CreateMany(
 		doc.Clean()
 	}
 	return nil
+}
+
+func makeDocCreateArgs(
+	ctx context.Context,
+	c *Collection,
+) []string {
+	args := []string{"client", "collection", "create"}
+	args = append(args, "--name", c.Description().Name.Value())
+
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() {
+		if encConf.Value().IsDocEncrypted {
+			args = append(args, "--encrypt")
+		}
+		if len(encConf.Value().EncryptedFields) > 0 {
+			args = append(args, "--encrypt-fields", strings.Join(encConf.Value().EncryptedFields, ","))
+		}
+	}
+
+	return args
 }
 
 func (c *Collection) Update(

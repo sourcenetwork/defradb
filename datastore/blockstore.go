@@ -62,7 +62,7 @@ type bstore struct {
 }
 
 var _ blockstore.Blockstore = (*bstore)(nil)
-var _ DAGStore = (*bstore)(nil)
+var _ Blockstore = (*bstore)(nil)
 
 // AsIPLDStorage returns an IPLDStorage instance.
 //

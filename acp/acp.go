@@ -13,9 +13,10 @@ package acp
 import (
 	"context"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
 var (
@@ -47,7 +48,7 @@ type ACP interface {
 	// otherwise returns error.
 	//
 	// A policy can not be added without a creator identity (sourcehub address).
-	AddPolicy(ctx context.Context, creatorID string, policy string) (string, error)
+	AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error)
 
 	// ValidateResourceExistsOnValidDPI performs DPI validation of the resource (matching resource name)
 	// that is on the policy (matching policyID), returns an error upon validation failure.
@@ -68,7 +69,7 @@ type ACP interface {
 	// - actorID here is the identity of the actor registering the document object.
 	RegisterDocObject(
 		ctx context.Context,
-		actorID string,
+		indentity identity.Identity,
 		policyID string,
 		resourceName string,
 		docID string,
@@ -97,4 +98,7 @@ type ACP interface {
 		resourceName string,
 		docID string,
 	) (bool, error)
+
+	// SupportsP2P returns true if the implementation supports ACP across a peer network.
+	SupportsP2P() bool
 }

@@ -22,13 +22,17 @@ import (
 
 var transformViewPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"viewNode": dataMap{
-					"lensNode": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"viewNode": dataMap{
+							"lensNode": dataMap{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"scanNode": dataMap{},
+									},
+								},
 							},
 						},
 					},
@@ -79,7 +83,7 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 						fullName
 					}
 				}`,
-				ExpectedPatterns: []dataMap{transformViewPattern},
+				ExpectedPatterns: transformViewPattern,
 			},
 		},
 	}

@@ -17,28 +17,34 @@ import (
 )
 
 func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with equal value",
-		Request: `query {
-					Users(filter: {Age: {_ge: 32}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Age: {_ge: 32}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,28 +53,34 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with greater value",
-		Request: `query {
-					Users(filter: {Age: {_ge: 31}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Age: {_ge: 31}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -77,30 +89,36 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_ge: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-			},
-			{
-				"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
 	}

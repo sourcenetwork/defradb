@@ -121,9 +121,11 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 						name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+						},
 					},
 				},
 			},

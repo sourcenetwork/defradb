@@ -39,7 +39,7 @@ func NewMerkleCounter(
 	kind client.ScalarKind,
 ) *MerkleCounter {
 	register := crdt.NewCounter(store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement, kind)
-	clk := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), register)
+	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), key.ToHeadStoreKey(), register)
 	base := &baseMerkleCRDT{clock: clk, crdt: register}
 	return &MerkleCounter{
 		baseMerkleCRDT: base,
@@ -49,11 +49,11 @@ func NewMerkleCounter(
 
 // Save the value of the  Counter to the DAG.
 func (mc *MerkleCounter) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*client.FieldValue)
+	value, ok := data.(*DocField)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
 	}
-	bytes, err := value.Bytes()
+	bytes, err := value.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}

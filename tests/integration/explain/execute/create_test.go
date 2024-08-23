@@ -32,23 +32,25 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"createNode": dataMap{
-								"iterations": uint64(2),
-								"selectTopNode": dataMap{
-									"selectNode": dataMap{
-										"iterations":    uint64(1),
-										"filterMatches": uint64(1),
-										"scanNode": dataMap{
-											"iterations":   uint64(1),
-											"docFetches":   uint64(1),
-											"fieldFetches": uint64(1),
-											"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"createNode": dataMap{
+									"iterations": uint64(2),
+									"selectTopNode": dataMap{
+										"selectNode": dataMap{
+											"iterations":    uint64(2),
+											"filterMatches": uint64(1),
+											"scanNode": dataMap{
+												"iterations":   uint64(2),
+												"docFetches":   uint64(1),
+												"fieldFetches": uint64(1),
+												"indexFetches": uint64(0),
+											},
 										},
 									},
 								},

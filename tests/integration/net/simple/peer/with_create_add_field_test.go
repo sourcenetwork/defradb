@@ -63,10 +63,12 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 						Email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "John",
-						"Email": "imnotyourbuddyguy@source.ca",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "John",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
 					},
 				},
 			},
@@ -79,9 +81,11 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
 			},
@@ -136,9 +140,11 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
 			},
@@ -191,10 +197,12 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 						Email
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "John",
-						"Email": "imnotyourbuddyguy@source.ca",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "John",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
 					},
 				},
 			},
@@ -263,10 +271,12 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"Name":  "John",
-						"Email": "imnotyourbuddyguy@source.ca",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "John",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
 					},
 				},
 			},
@@ -280,11 +290,13 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"Name": "John",
-						// The email should be returned but it is not
-						"Email": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							// The email should be returned but it is not
+							"Email": nil,
+						},
 					},
 				},
 			},

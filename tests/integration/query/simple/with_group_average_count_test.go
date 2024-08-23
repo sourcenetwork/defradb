@@ -21,42 +21,49 @@ import (
 // verify that that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndCount(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": -19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})
 						_count(_group: {})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "John",
-					"Age": 38
-				}`,
-				// It is important to test negative values here, due to the auto-typing of numbers
-				`{
-					"Name": "Alice",
-					"Age": -19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":   "John",
-				"_avg":   float64(35),
-				"_count": int(2),
-			},
-			{
-				"Name":   "Alice",
-				"_avg":   float64(-19),
-				"_count": int(1),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":   "John",
+							"_avg":   float64(35),
+							"_count": int(2),
+						},
+						{
+							"Name":   "Alice",
+							"_avg":   float64(-19),
+							"_count": int(1),
+						},
+					},
+				},
 			},
 		},
 	}

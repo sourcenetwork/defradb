@@ -13,12 +13,10 @@ package update
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	testUtilsCol "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-var userCollectionGQLSchema = `
+var schema = `
 	type Users {
 		name: String
 		age: Int
@@ -27,19 +25,19 @@ var userCollectionGQLSchema = `
 	}
 `
 
-var colDefMap = make(map[string]client.CollectionDefinition)
-
-func init() {
-	c, err := testUtils.ParseSDL(userCollectionGQLSchema)
-	if err != nil {
-		panic(err)
-	}
-	u := c["Users"]
-	u.Schema.Root = "bafkreiclkqkxhq3xu3sz5fqcixykk2qfpva5asj3elcaqyxscax66ok4za"
-	c["Users"] = u
-	colDefMap = c
-}
-
-func executeTestCase(t *testing.T, test testUtilsCol.TestCase) {
-	testUtilsCol.ExecuteRequestTestCase(t, userCollectionGQLSchema, test)
+func executeTestCase(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
+		t,
+		testUtils.TestCase{
+			Description: test.Description,
+			Actions: append(
+				[]any{
+					testUtils.SchemaUpdate{
+						Schema: schema,
+					},
+				},
+				test.Actions...,
+			),
+		},
+	)
 }

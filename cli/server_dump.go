@@ -31,7 +31,7 @@ func MakeServerDumpCmd() *cobra.Command {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
 			storeOpts := []node.StoreOpt{
-				node.WithPath(cfg.GetString("datastore.badger.path")),
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
 			}
 			rootstore, err := node.NewStore(cmd.Context(), storeOpts...)
 			if err != nil {

@@ -13,6 +13,7 @@ package datastore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 
@@ -35,15 +36,13 @@ func DeserializePrefix[T any](
 	elements := make([]T, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
-			_ = q.Close()
-			return nil, nil, res.Error
+			return nil, nil, errors.Join(res.Error, q.Close())
 		}
 
 		var element T
 		err = json.Unmarshal(res.Value, &element)
 		if err != nil {
-			_ = q.Close()
-			return nil, nil, NewErrInvalidStoredValue(err)
+			return nil, nil, errors.Join(NewErrInvalidStoredValue(err), q.Close())
 		}
 		keys = append(keys, res.Key)
 		elements = append(elements, element)
@@ -68,8 +67,7 @@ func FetchKeysForPrefix(
 	keys := make([]ds.Key, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
-			_ = q.Close()
-			return nil, res.Error
+			return nil, errors.Join(res.Error, q.Close())
 		}
 		keys = append(keys, ds.NewKey(res.Key))
 	}

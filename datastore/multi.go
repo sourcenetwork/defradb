@@ -23,16 +23,18 @@ var (
 	headStoreKey   = rootStoreKey.ChildString("heads")
 	blockStoreKey  = rootStoreKey.ChildString("blocks")
 	peerStoreKey   = rootStoreKey.ChildString("ps")
+	encStoreKey    = rootStoreKey.ChildString("enc")
 )
 
 type multistore struct {
 	root   DSReaderWriter
 	data   DSReaderWriter
+	enc    DSReaderWriter
 	head   DSReaderWriter
 	peer   DSBatching
 	system DSReaderWriter
 	// block DSReaderWriter
-	dag DAGStore
+	dag Blockstore
 }
 
 var _ MultiStore = (*multistore)(nil)
@@ -43,6 +45,7 @@ func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 	ms := &multistore{
 		root:   rootRW,
 		data:   prefix(rootRW, dataStoreKey),
+		enc:    prefix(rootRW, encStoreKey),
 		head:   prefix(rootRW, headStoreKey),
 		peer:   namespace.Wrap(rootstore, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),
@@ -57,6 +60,11 @@ func (ms multistore) Datastore() DSReaderWriter {
 	return ms.data
 }
 
+// Encstore implements MultiStore.
+func (ms multistore) Encstore() DSReaderWriter {
+	return ms.enc
+}
+
 // Headstore implements MultiStore.
 func (ms multistore) Headstore() DSReaderWriter {
 	return ms.head
@@ -67,8 +75,8 @@ func (ms multistore) Peerstore() DSBatching {
 	return ms.peer
 }
 
-// DAGstore implements MultiStore.
-func (ms multistore) DAGstore() DAGStore {
+// Blockstore implements MultiStore.
+func (ms multistore) Blockstore() Blockstore {
 	return ms.dag
 }
 

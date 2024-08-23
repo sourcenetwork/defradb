@@ -19,10 +19,14 @@ import (
 
 var createPattern = dataMap{
 	"explain": dataMap{
-		"createNode": dataMap{
-			"selectTopNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"createNode": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -45,18 +49,18 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{createPattern},
+				ExpectedPatterns: createPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "createNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"input": dataMap{
+							"input": []dataMap{{
 								"age":      int32(27),
 								"name":     "Shahzad Lone",
 								"verified": true,
-							},
+							}},
 						},
 					},
 				},
@@ -83,17 +87,17 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{createPattern},
+				ExpectedPatterns: createPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "createNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"input": dataMap{
+							"input": []dataMap{{
 								"age":  int32(27),
 								"name": "Shahzad Lone",
-							},
+							}},
 						},
 					},
 				},

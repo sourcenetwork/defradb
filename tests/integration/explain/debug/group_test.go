@@ -19,11 +19,15 @@ import (
 
 var groupPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"groupNode": dataMap{
-				"selectNode": dataMap{
-					"pipeNode": dataMap{
-						"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"groupNode": dataMap{
+						"selectNode": dataMap{
+							"pipeNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
 					},
 				},
 			},
@@ -50,7 +54,7 @@ func TestDebugExplainRequestWithGroupByOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{groupPattern},
+				ExpectedFullGraph: groupPattern,
 			},
 		},
 	}
@@ -77,7 +81,7 @@ func TestDebugExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{groupPattern},
+				ExpectedFullGraph: groupPattern,
 			},
 		},
 	}

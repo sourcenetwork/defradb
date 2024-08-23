@@ -97,5 +97,10 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		cfg.GetBool(configFlags["no-keyring"]),
 		"Disable the keyring and generate ephemeral keys",
 	)
+	cmd.PersistentFlags().String(
+		"source-hub-address",
+		cfg.GetString(configFlags["source-hub-address"]),
+		"The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor",
+	)
 	return cmd
 }

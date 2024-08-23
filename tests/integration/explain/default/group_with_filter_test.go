@@ -39,7 +39,7 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

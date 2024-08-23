@@ -17,7 +17,7 @@ import (
 	"net/http"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func requestJSON(req *http.Request, out any) error {
@@ -44,8 +44,8 @@ func parseError(msg any) error {
 	switch msg {
 	case client.ErrDocumentNotFoundOrNotAuthorized.Error():
 		return client.ErrDocumentNotFoundOrNotAuthorized
-	case badger.ErrTxnConflict.Error():
-		return badger.ErrTxnConflict
+	case datastore.ErrTxnConflict.Error():
+		return datastore.ErrTxnConflict
 	default:
 		return fmt.Errorf("%s", msg)
 	}

@@ -17,38 +17,46 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count with limit on non-rendered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {limit: 1})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 1,
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":    int64(32),
+							"_count": 1,
+						},
+						{
+							"Age":    int64(19),
+							"_count": 1,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -57,9 +65,35 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, child limit, count with limit on rendered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Shahzad",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {limit: 1})
@@ -68,45 +102,29 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Shahzad",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "Shahzad",
-					},
-				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":    int64(32),
+							"_count": 1,
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "Shahzad",
+								},
+							},
+						},
+						{
+							"Age":    int64(19),
+							"_count": 1,
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
+						},
 					},
 				},
 			},

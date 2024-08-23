@@ -58,9 +58,11 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -110,9 +112,11 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},

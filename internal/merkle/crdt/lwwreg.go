@@ -37,7 +37,7 @@ func NewMerkleLWWRegister(
 	fieldName string,
 ) *MerkleLWWRegister {
 	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionKey, key, fieldName)
-	clk := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), register)
+	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), key.ToHeadStoreKey(), register)
 	base := &baseMerkleCRDT{clock: clk, crdt: register}
 	return &MerkleLWWRegister{
 		baseMerkleCRDT: base,
@@ -47,14 +47,15 @@ func NewMerkleLWWRegister(
 
 // Save the value of the register to the DAG.
 func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*client.FieldValue)
+	value, ok := data.(*DocField)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
 	}
-	bytes, err := value.Bytes()
+	bytes, err := value.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
+
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(bytes)

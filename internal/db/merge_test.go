@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -48,7 +47,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.DAGstore().AsIPLDStorage())
+	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -93,7 +92,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.DAGstore().AsIPLDStorage())
+	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -151,7 +150,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.DAGstore().AsIPLDStorage())
+	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -286,7 +285,7 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 }
 
 func encodeValue(val any) []byte {
-	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	em, err := client.CborEncodingOptions().EncMode()
 	if err != nil {
 		// safe to panic here as this is a test
 		panic(err)

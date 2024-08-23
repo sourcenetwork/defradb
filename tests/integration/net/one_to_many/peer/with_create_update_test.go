@@ -78,12 +78,14 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":      "Gulistan",
-						"Author_id": testUtils.NewDocIndex(0, 0),
-						"Author": map[string]any{
-							"Name": "Saadi",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"Name":      "Gulistan",
+							"Author_id": testUtils.NewDocIndex(0, 0),
+							"Author": map[string]any{
+								"Name": "Saadi",
+							},
 						},
 					},
 				},
@@ -99,14 +101,16 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name":      "Gulistan",
-						"Author_id": testUtils.NewDocIndex(0, 0),
-						// "Saadi" was not synced to node 1, the update did not
-						// result in an error and synced to relational id even though "Saadi"
-						// does not exist in this node.
-						"Author": nil,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"Name":      "Gulistan",
+							"Author_id": testUtils.NewDocIndex(0, 0),
+							// "Saadi" was not synced to node 1, the update did not
+							// result in an error and synced to relational id even though "Saadi"
+							// does not exist in this node.
+							"Author": nil,
+						},
 					},
 				},
 			},

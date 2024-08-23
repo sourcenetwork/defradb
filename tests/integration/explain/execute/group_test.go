@@ -38,28 +38,30 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 					}
 				}`,
 
-				ExpectedFullGraph: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     1,
-							"planExecutions":   uint64(2),
-							"selectTopNode": dataMap{
-								"groupNode": dataMap{
-									"iterations":            uint64(2),
-									"groups":                uint64(1),
-									"childSelections":       uint64(1),
-									"hiddenBeforeOffset":    uint64(0),
-									"hiddenAfterLimit":      uint64(0),
-									"hiddenChildSelections": uint64(0),
-									"selectNode": dataMap{
-										"iterations":    uint64(3),
-										"filterMatches": uint64(2),
-										"scanNode": dataMap{
-											"iterations":   uint64(4),
-											"docFetches":   uint64(2),
-											"fieldFetches": uint64(4),
-											"indexFetches": uint64(0),
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"groupNode": dataMap{
+										"iterations":            uint64(2),
+										"groups":                uint64(1),
+										"childSelections":       uint64(1),
+										"hiddenBeforeOffset":    uint64(0),
+										"hiddenAfterLimit":      uint64(0),
+										"hiddenChildSelections": uint64(0),
+										"selectNode": dataMap{
+											"iterations":    uint64(3),
+											"filterMatches": uint64(2),
+											"scanNode": dataMap{
+												"iterations":   uint64(4),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(4),
+												"indexFetches": uint64(0),
+											},
 										},
 									},
 								},

@@ -113,11 +113,13 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -189,12 +191,14 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
-							"age":  int64(22),
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(22),
+							},
 						},
 					},
 				},
@@ -262,12 +266,14 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": float64(4.9),
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": float64(4.9),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -325,7 +331,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreigyxgn2tss7objjzen5s77w6hijpe6wmmz4z3ercpxdcrq7uwnhl4",
+						cid: "bafyreihylh2iftquu5vukm2myjrfbkjnpr5vonlp5s5oo22bfrhddkju6e",
 						docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 					) {
 						name
@@ -335,12 +341,14 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "Painted House",
-						"rating": float64(4.5),
-						"author": map[string]any{
-							"name": "John Grisham",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": float64(4.5),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},

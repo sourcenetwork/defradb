@@ -77,11 +77,13 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "Left hand 1",
-						"heldBy": map[string]any{
-							"name": "Right hand 1",
+				Results: map[string]any{
+					"HandView": []map[string]any{
+						{
+							"name": "Left hand 1",
+							"heldBy": map[string]any{
+								"name": "Right hand 1",
+							},
 						},
 					},
 				},

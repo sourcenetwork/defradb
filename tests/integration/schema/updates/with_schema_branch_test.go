@@ -98,7 +98,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						phone
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 			testUtils.GetSchema{
 				// The third schema version is present in the system, with the phone field
@@ -220,7 +222,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						discordName
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 			testUtils.GetSchema{
 				// The fourth schema version is present in the system, with the phone and discordName field
@@ -351,7 +355,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 					}
 				}`,
 				// The email field is queriable
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -458,7 +464,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						discordName
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 			testUtils.GetSchema{
 				// The fourth schema version is present in the system, with the email and discordName field

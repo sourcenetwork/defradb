@@ -43,7 +43,9 @@ func TestSchemaUpdatesAddFieldKindNillableIntArray(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -82,13 +84,15 @@ func TestSchemaUpdatesAddFieldKindNillableIntArrayWithCreate(t *testing.T) {
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo": []immutable.Option[int64]{
-							immutable.Some[int64](3),
-							immutable.Some[int64](-5),
-							immutable.None[int64](),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo": []immutable.Option[int64]{
+								immutable.Some[int64](3),
+								immutable.Some[int64](-5),
+								immutable.None[int64](),
+							},
 						},
 					},
 				},
@@ -130,13 +134,15 @@ func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithCreate(t *test
 						foo
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-						"foo": []immutable.Option[int64]{
-							immutable.Some[int64](3),
-							immutable.Some[int64](-5),
-							immutable.None[int64](),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"foo": []immutable.Option[int64]{
+								immutable.Some[int64](3),
+								immutable.Some[int64](-5),
+								immutable.None[int64](),
+							},
 						},
 					},
 				},

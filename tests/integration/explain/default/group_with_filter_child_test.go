@@ -36,7 +36,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -105,7 +105,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 			}
 		}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

@@ -17,25 +17,29 @@ import (
 )
 
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query group by and parent typename",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						__typename
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":       "John",
-				"__typename": "Users",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":       "John",
+							"__typename": "Users",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -44,9 +48,16 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query group by and child typename",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_group {
@@ -54,19 +65,16 @@ func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"__typename": "Users",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_group": []map[string]any{
+								{
+									"__typename": "Users",
+								},
+							},
+						},
 					},
 				},
 			},

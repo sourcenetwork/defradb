@@ -35,6 +35,7 @@ jobs:
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         lens-type: [wasm-time]
+        acp-type: [local]
         database-encryption: [false]
         include:
           - os: ubuntu-latest
@@ -42,24 +43,49 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
+            acp-type: local
             database-encryption: true
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wazero
+            acp-type: local
             database-encryption: false
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasmer
+            acp-type: local
+            database-encryption: false
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wasm-time
+            acp-type: source-hub
+            database-encryption: false
+          - os: ubuntu-latest
+            client-type: http
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wasm-time
+            acp-type: source-hub
+            database-encryption: false
+          - os: ubuntu-latest
+            client-type: cli
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wasm-time
+            acp-type: source-hub
             database-encryption: false
           - os: macos-latest
             client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             lens-type: wasm-time
+            acp-type: local
             database-encryption: false
 ## TODO: https://github.com/sourcenetwork/defradb/issues/2080
 ## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
@@ -68,6 +94,7 @@ jobs:
 ##          database-type: badger-memory
 ##          mutation-type: collection-save
 ##          lens-type: wasm-time
+##          acp-type: local
 ##          database-encryption: false
 
     runs-on: ${{ matrix.os }}
@@ -87,6 +114,7 @@ jobs:
       DEFRA_BADGER_ENCRYPTION: ${{ matrix.database-encryption }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
+      DEFRA_ACP_TYPE: ${{ matrix.acp-type }}
 
     steps:
       - name: Checkout code into the directory
@@ -143,6 +171,23 @@ jobs:
           make deps:modules
           make deps:test
 
+      # We have to checkout the source-hub repo and install it ourselves because it
+      # contains replace commands in its go.mod file.
+      - name: Checkout sourcehub code into the directory
+        if: ${{ matrix.acp-type == 'source-hub' }}
+        uses: actions/checkout@v4
+        with:
+          repository: sourcenetwork/sourcehub
+          path: _sourceHub
+          # Lock the sourcehub version until the dev branch is stable
+          # remove this when closed https://github.com/sourcenetwork/defradb/issues/2865
+          ref: c232133c35c96924509a4d955a7b450eb3624a15
+
+      - name: Install SourceHub CLI
+        if: ${{ matrix.acp-type == 'source-hub' }}
+        working-directory: _sourceHub
+        run: make install
+
       - name: Run integration tests
         run: make test:coverage
 
@@ -158,6 +203,7 @@ jobs:
             _${{ matrix.database-type }}\
             _${{ matrix.mutation-type }}\
             _${{ matrix.lens-type }}\
+            _${{ matrix.acp-type }}\
             _${{ matrix.database-encryption }}\
           "
           path: coverage.txt

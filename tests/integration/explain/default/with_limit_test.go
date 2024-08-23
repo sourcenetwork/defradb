@@ -19,10 +19,14 @@ import (
 
 var limitPattern = dataMap{
 	"explain": dataMap{
-		"selectTopNode": dataMap{
-			"limitNode": dataMap{
-				"selectNode": dataMap{
-					"scanNode": dataMap{},
+		"operationNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"limitNode": dataMap{
+						"selectNode": dataMap{
+							"scanNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -45,7 +49,7 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{limitPattern},
+				ExpectedPatterns: limitPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -80,7 +84,7 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{limitPattern},
+				ExpectedPatterns: limitPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
@@ -115,7 +119,7 @@ func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{limitPattern},
+				ExpectedPatterns: limitPattern,
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{

@@ -22,12 +22,14 @@ import (
 )
 
 type cliWrapper struct {
-	address string
+	address          string
+	sourceHubAddress string
 }
 
-func newCliWrapper(address string) *cliWrapper {
+func newCliWrapper(address string, sourceHubAddress string) *cliWrapper {
 	return &cliWrapper{
-		address: strings.TrimPrefix(address, "http://"),
+		address:          strings.TrimPrefix(address, "http://"),
+		sourceHubAddress: sourceHubAddress,
 	}
 }
 
@@ -61,6 +63,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	id := db.GetContextIdentity(ctx)
 	if id.HasValue() && id.Value().PrivateKey != nil {
 		args = append(args, "--identity", hex.EncodeToString(id.Value().PrivateKey.Serialize()))
+		args = append(args, "--source-hub-address", w.sourceHubAddress)
 	}
 	args = append(args, "--url", w.address)
 

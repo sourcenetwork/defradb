@@ -20,9 +20,17 @@ import (
 // desired behaviour (should return all latest commits for given
 // field in the collection).
 func TestQueryLatestCommitsWithField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple latest commits query with field",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					latestCommits (fieldId: "Age") {
 						cid
 						links {
@@ -31,15 +39,9 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
-		ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 	}
 
 	executeTestCase(t, test)
@@ -49,9 +51,17 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 // desired behaviour (should return all latest commits for given
 // field in the collection).
 func TestQueryLatestCommitsWithFieldId(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple latest commits query with field",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					latestCommits (fieldId: "1") {
 						cid
 						links {
@@ -60,15 +70,9 @@ func TestQueryLatestCommitsWithFieldId(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
-		ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 	}
 
 	executeTestCase(t, test)

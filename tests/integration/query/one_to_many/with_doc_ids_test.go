@@ -17,9 +17,51 @@ import (
 )
 
 func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from one side with child docIDs",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "A Time for Mercy",
+					"rating": 4.5,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "The Associate",
+					"rating": 4.2,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "The Firm",
+					"rating": 4.5,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Author {
 						name
 						published (
@@ -29,50 +71,19 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-5366ba09-54e8-5381-8169-a770aa9282ae
-				`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-				// bae-1ccf3043-d760-543e-be1b-6691fa6aa7a8
-				`{
-					"name": "The Associate",
-					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-				`{
-					"name": "The Firm",
-					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-			},
-			//authors
-			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"published": []map[string]any{
-					{
-						"name": "The Associate",
-					},
-					{
-						"name": "Painted House",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": []map[string]any{
+								{
+									"name": "The Associate",
+								},
+								{
+									"name": "Painted House",
+								},
+							},
+						},
 					},
 				},
 			},

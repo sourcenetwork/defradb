@@ -11,13 +11,9 @@
 package http
 
 import (
-	"encoding/hex"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
@@ -33,67 +29,24 @@ const (
 	// authSchemaPrefix is the prefix added to the
 	// authorization header value.
 	authSchemaPrefix = "Bearer "
-	// authTokenExpiration is the default expiration time for auth tokens.
-	authTokenExpiration = time.Minute * 15
 )
-
-var authTokenSignatureScheme = jwa.ES256K
-
-// buildAuthToken returns a new jwt auth token with the subject and audience set
-// to the given values. Default expiration and not before values will also be set.
-func buildAuthToken(identity acpIdentity.Identity, audience string) (jwt.Token, error) {
-	if identity.PublicKey == nil {
-		return nil, ErrMissingIdentityPublicKey
-	}
-	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
-	now := time.Now()
-	return jwt.NewBuilder().
-		Subject(subject).
-		Audience([]string{audience}).
-		Expiration(now.Add(authTokenExpiration)).
-		NotBefore(now).
-		Build()
-}
-
-// signAuthToken returns a signed jwt auth token that can be used to authenticate the
-// actor identified by the given identity with a defraDB node identified by the given audience.
-func signAuthToken(identity acpIdentity.Identity, token jwt.Token) ([]byte, error) {
-	if identity.PrivateKey == nil {
-		return nil, ErrMissingIdentityPrivateKey
-	}
-	return jwt.Sign(token, jwt.WithKey(authTokenSignatureScheme, identity.PrivateKey.ToECDSA()))
-}
-
-// buildAndSignAuthToken returns a signed jwt auth token that can be used to authenticate the
-// actor identified by the given identity with a defraDB node identified by the given audience.
-func buildAndSignAuthToken(identity acpIdentity.Identity, audience string) ([]byte, error) {
-	token, err := buildAuthToken(identity, audience)
-	if err != nil {
-		return nil, err
-	}
-	return signAuthToken(identity, token)
-}
 
 // verifyAuthToken verifies that the jwt auth token is valid and that the signature
 // matches the identity of the subject.
-func verifyAuthToken(data []byte, audience string) (immutable.Option[acpIdentity.Identity], error) {
-	token, err := jwt.Parse(data, jwt.WithVerify(false), jwt.WithAudience(audience))
+func verifyAuthToken(identity acpIdentity.Identity, audience string) error {
+	_, err := jwt.Parse([]byte(identity.BearerToken), jwt.WithVerify(false), jwt.WithAudience(audience))
 	if err != nil {
-		return immutable.None[acpIdentity.Identity](), err
+		return err
 	}
-	subject, err := hex.DecodeString(token.Subject())
+
+	_, err = jws.Verify(
+		[]byte(identity.BearerToken),
+		jws.WithKey(acpIdentity.BearerTokenSignatureScheme, identity.PublicKey.ToECDSA()),
+	)
 	if err != nil {
-		return immutable.None[acpIdentity.Identity](), err
+		return err
 	}
-	pubKey, err := secp256k1.ParsePubKey(subject)
-	if err != nil {
-		return immutable.None[acpIdentity.Identity](), err
-	}
-	_, err = jws.Verify(data, jws.WithKey(authTokenSignatureScheme, pubKey.ToECDSA()))
-	if err != nil {
-		return immutable.None[acpIdentity.Identity](), err
-	}
-	return acpIdentity.FromPublicKey(pubKey)
+	return nil
 }
 
 // AuthMiddleware authenticates an actor and sets their identity for all subsequent actions.
@@ -104,12 +57,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(rw, req)
 			return
 		}
-		identity, err := verifyAuthToken([]byte(token), strings.ToLower(req.Host))
+
+		identity, err := acpIdentity.FromToken([]byte(token))
 		if err != nil {
 			http.Error(rw, "forbidden", http.StatusForbidden)
 			return
 		}
-		ctx := db.SetContextIdentity(req.Context(), identity)
+
+		err = verifyAuthToken(identity, strings.ToLower(req.Host))
+		if err != nil {
+			http.Error(rw, "forbidden", http.StatusForbidden)
+			return
+		}
+
+		ctx := db.SetContextIdentity(req.Context(), immutable.Some(identity))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

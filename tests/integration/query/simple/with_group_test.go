@@ -17,35 +17,41 @@ import (
 )
 
 func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by empty set, children",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: []) {
 						_group {
 							Name
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -56,42 +62,52 @@ func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByNumber(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children",
-		Request: `query {
-					Users(groupBy: [Age]) {
-						Age
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Age": int64(55),
-			},
-			{
-				"Age": int64(32),
-			},
-			{
-				"Age": int64(19),
+			testUtils.Request{
+				Request: `query {
+					Users(groupBy: [Age]) {
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(55),
+						},
+						{
+							"Age": int64(32),
+						},
+						{
+							"Age": int64(19),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -100,42 +116,52 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children",
-		Request: `query {
-					Users(groupBy: [CreatedAt]) {
-						CreatedAt
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Carlo",
 					"CreatedAt": "2012-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Alice",
 					"CreatedAt": "2013-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"CreatedAt": testUtils.MustParseTime("2011-07-23T03:46:56-05:00"),
-			},
-			{
-				"CreatedAt": testUtils.MustParseTime("2013-07-23T03:46:56-05:00"),
-			},
-			{
-				"CreatedAt": testUtils.MustParseTime("2012-07-23T03:46:56-05:00"),
+			testUtils.Request{
+				Request: `query {
+					Users(groupBy: [CreatedAt]) {
+						CreatedAt
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"CreatedAt": testUtils.MustParseTime("2011-07-23T03:46:56-05:00"),
+						},
+						{
+							"CreatedAt": testUtils.MustParseTime("2012-07-23T03:46:56-05:00"),
+						},
+						{
+							"CreatedAt": testUtils.MustParseTime("2013-07-23T03:46:56-05:00"),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -144,9 +170,35 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, child string",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_group {
@@ -154,51 +206,35 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age": int64(55),
-				"_group": []map[string]any{
-					{
-						"Name": "Carlo",
-					},
-				},
-			},
-			{
-				"Age": int64(32),
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "John",
-					},
-				},
-			},
-			{
-				"Age": int64(19),
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(55),
+							"_group": []map[string]any{
+								{
+									"Name": "Carlo",
+								},
+							},
+						},
+						{
+							"Age": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age": int64(19),
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -209,9 +245,35 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with groupBy without selecting field grouped by, with inner _group.",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_group {
@@ -219,51 +281,35 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 25
-				}`,
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
-					},
-				},
-			},
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-					{
-						"Age": int64(32),
-					},
-				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+						},
+						{
+							"Name": "John",
+							"_group": []map[string]any{
+								{
+									"Age": int64(25),
+								},
+								{
+									"Age": int64(32),
+								},
+							},
+						},
+						{
+							"Name": "Alice",
+							"_group": []map[string]any{
+								{
+									"Age": int64(19),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -274,9 +320,35 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 }
 
 func TestQuerySimpleWithGroupByString(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_group {
@@ -284,51 +356,35 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 25
-				}`,
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
-					},
-				},
-			},
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-					{
-						"Age": int64(32),
-					},
-				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+						},
+						{
+							"Name": "John",
+							"_group": []map[string]any{
+								{
+									"Age": int64(25),
+								},
+								{
+									"Age": int64(32),
+								},
+							},
+						},
+						{
+							"Name": "Alice",
+							"_group": []map[string]any{
+								{
+									"Age": int64(19),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -339,9 +395,46 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string, with child group by boolean",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 34,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified]){
@@ -352,81 +445,56 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 25,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 32,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 34,
-					"Verified": false
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55,
-					"Verified": true
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19,
-					"Verified": false
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group": []map[string]any{
-							{
-								"Age": int64(25),
-							},
-							{
-								"Age": int64(32),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_group": []map[string]any{
+										{
+											"Age": int64(25),
+										},
+										{
+											"Age": int64(32),
+										},
+									},
+								},
+								{
+									"Verified": false,
+									"_group": []map[string]any{
+										{
+											"Age": int64(34),
+										},
+									},
+								},
 							},
 						},
-					},
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(34),
+						{
+							"Name": "Carlo",
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_group": []map[string]any{
+										{
+											"Age": int64(55),
+										},
+									},
+								},
 							},
 						},
-					},
-				},
-			},
-			{
-				"Name": "Carlo",
-				"_group": []map[string]any{
-					{
-						"Verified": true,
-						"_group": []map[string]any{
-							{
-								"Age": int64(55),
-							},
-						},
-					},
-				},
-			},
-			{
-				"Name": "Alice",
-				"_group": []map[string]any{
-					{
-						"Verified": false,
-						"_group": []map[string]any{
-							{
-								"Age": int64(19),
+						{
+							"Name": "Alice",
+							"_group": []map[string]any{
+								{
+									"Verified": false,
+									"_group": []map[string]any{
+										{
+											"Age": int64(19),
+										},
+									},
+								},
 							},
 						},
 					},
@@ -439,9 +507,46 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by string then by boolean",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 34,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Name, Verified]) {
 						Name
 						Verified
@@ -450,72 +555,47 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 25,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 32,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 34,
-					"Verified": false
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55,
-					"Verified": true
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19,
-					"Verified": false
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":     "John",
-				"Verified": true,
-				"_group": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-					{
-						"Age": int64(32),
-					},
-				},
-			},
-			{
-				"Name":     "John",
-				"Verified": false,
-				"_group": []map[string]any{
-					{
-						"Age": int64(34),
-					},
-				},
-			},
-			{
-				"Name":     "Carlo",
-				"Verified": true,
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
-					},
-				},
-			},
-			{
-				"Name":     "Alice",
-				"Verified": false,
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":     "John",
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(25),
+								},
+								{
+									"Age": int64(32),
+								},
+							},
+						},
+						{
+							"Name":     "John",
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(34),
+								},
+							},
+						},
+						{
+							"Name":     "Carlo",
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+						},
+						{
+							"Name":     "Alice",
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(19),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -526,9 +606,46 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by boolean then by string",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 25,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 34,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Verified, Name]) {
 						Name
 						Verified
@@ -537,72 +654,47 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 25,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 32,
-					"Verified": true
-				}`,
-				`{
-					"Name": "John",
-					"Age": 34,
-					"Verified": false
-				}`,
-				`{
-					"Name": "Carlo",
-					"Age": 55,
-					"Verified": true
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19,
-					"Verified": false
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":     "John",
-				"Verified": true,
-				"_group": []map[string]any{
-					{
-						"Age": int64(25),
-					},
-					{
-						"Age": int64(32),
-					},
-				},
-			},
-			{
-				"Name":     "John",
-				"Verified": false,
-				"_group": []map[string]any{
-					{
-						"Age": int64(34),
-					},
-				},
-			},
-			{
-				"Name":     "Carlo",
-				"Verified": true,
-				"_group": []map[string]any{
-					{
-						"Age": int64(55),
-					},
-				},
-			},
-			{
-				"Name":     "Alice",
-				"Verified": false,
-				"_group": []map[string]any{
-					{
-						"Age": int64(19),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":     "John",
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(25),
+								},
+								{
+									"Age": int64(32),
+								},
+							},
+						},
+						{
+							"Name":     "John",
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(34),
+								},
+							},
+						},
+						{
+							"Name":     "Carlo",
+							"Verified": true,
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+						},
+						{
+							"Name":     "Alice",
+							"Verified": false,
+							"_group": []map[string]any{
+								{
+									"Age": int64(19),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -613,33 +705,41 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, undefined group value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-				`{
-					"Name": "Alice"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age": nil,
-			},
-			{
-				"Age": int64(32),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": nil,
+						},
+						{
+							"Age": int64(32),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -648,9 +748,27 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, with children, undefined group value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_group {
@@ -658,37 +776,27 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-				`{
-					"Name": "Alice"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age": nil,
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
-					},
-					{
-						"Name": "Bob",
-					},
-				},
-			},
-			{
-				"Age": int64(32),
-				"_group": []map[string]any{
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": nil,
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+								{
+									"Name": "Bob",
+								},
+							},
+						},
+						{
+							"Age": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "John",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -699,16 +807,19 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 }
 
 func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						Name
 					}
 				}`,
-		Docs:          map[int][]string{},
-		ExpectedError: "cannot select a non-group-by field at group-level",
+				ExpectedError: "cannot select a non-group-by field at group-level",
+			},
+		},
 	}
 
 	executeTestCase(t, test)

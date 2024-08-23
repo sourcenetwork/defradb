@@ -25,6 +25,8 @@ func gt(condition, data any) (bool, error) {
 				return false, err
 			}
 			return dt.After(c), nil
+		case nil:
+			return false, nil
 		default:
 			return false, client.NewErrUnhandledType("data", d)
 		}

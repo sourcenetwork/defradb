@@ -17,6 +17,8 @@ import (
 	"syscall"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -57,10 +59,12 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			opts := []node.Option{
-				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
+				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithACPType(node.LocalACPType),
+				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
 				node.WithPeers(peers...),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
@@ -100,7 +104,22 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
-				opts = append(opts, node.WithEncryptionKey(encryptionKey))
+
+				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+
+				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
+				if sourceHubKeyName != "" {
+					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
+					if err != nil {
+						return err
+					}
+					opts = append(opts, node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)))
+				}
+			}
+
+			acpType := cfg.GetString("acp.type")
+			if acpType != "" {
+				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
 			}
 
 			n, err := node.NewNode(cmd.Context(), opts...)

@@ -44,7 +44,9 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 					}
 				}`,
 				// As the record no longer matches the filter it is not returned
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"update_Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -93,14 +95,16 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 						points
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": float64(59),
-					},
-					{
-						"name":   "Fred",
-						"points": float64(59),
+				Results: map[string]any{
+					"update_Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": float64(59),
+						},
+						{
+							"name":   "Fred",
+							"points": float64(59),
+						},
 					},
 				},
 			},

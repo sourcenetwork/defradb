@@ -17,68 +17,79 @@ import (
 )
 
 func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with count and limit",
-		Request: `query {
-				Author {
-					name
-					_count(published: {})
-					published(limit: 1) {
-						name
-					}
-				}
-			}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-					}`,
-				`{
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
-			//authors
-			1: {
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-				"published": []map[string]any{
-					{
-						"name": "Theif Lord",
-					},
-				},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 2,
-				"published": []map[string]any{
-					{
-						"name": "Painted House",
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						_count(published: {})
+						published(limit: 1) {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":   "Cornelia Funke",
+							"_count": 1,
+							"published": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
+							},
+						},
+						{
+							"name":   "John Grisham",
+							"_count": 2,
+							"published": []map[string]any{
+								{
+									"name": "Painted House",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -89,73 +100,87 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with count and limit",
-		Request: `query {
-				Author {
-					name
-					_count(published: {limit: 2})
-					published(limit: 1) {
-						name
-					}
-				}
-			}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
-			//authors
-			1: {
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-				"published": []map[string]any{
-					{
-						"name": "Theif Lord",
-					},
-				},
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 2,
-				"published": []map[string]any{
-					{
-						"name": "The Associate",
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						_count(published: {limit: 2})
+						published(limit: 1) {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":   "Cornelia Funke",
+							"_count": 1,
+							"published": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
+							},
+						},
+						{
+							"name":   "John Grisham",
+							"_count": 2,
+							"published": []map[string]any{
+								{
+									"name": "The Associate",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -166,57 +191,68 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCountWithLimit(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with count with limit",
-		Request: `query {
-				Author {
-					name
-					_count(published: {limit: 1})
-				}
-			}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 					}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
-			//authors
-			1: {
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Cornelia Funke",
-				"_count": 1,
-			},
-			{
-				"name":   "John Grisham",
-				"_count": 1,
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						_count(published: {limit: 1})
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":   "Cornelia Funke",
+							"_count": 1,
+						},
+						{
+							"name":   "John Grisham",
+							"_count": 1,
+						},
+					},
+				},
 			},
 		},
 	}

@@ -51,7 +51,9 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -87,11 +89,13 @@ func TestMutationCreate(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-8c89a573-c287-5d8c-8ba6-c47c814c594d",
-						"name":   "John",
-						"age":    int64(27),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-8c89a573-c287-5d8c-8ba6-c47c814c594d",
+							"name":   "John",
+							"age":    int64(27),
+						},
 					},
 				},
 			},
@@ -155,9 +159,11 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-332de69b-47da-5175-863f-2480107f4884",
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"_docID": "bae-332de69b-47da-5175-863f-2480107f4884",
+						},
 					},
 				},
 			},

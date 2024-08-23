@@ -102,10 +102,12 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 						verified
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":     "John",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"verified": true,
+						},
 					},
 				},
 			},
@@ -121,13 +123,15 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						// name has been cleared by the inverse of the migration from version 1 to 2
-						"name": nil,
-						// phone has been set by the migration from version 1 to 3
-						"phone":    "1234567890",
-						"verified": true,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// name has been cleared by the inverse of the migration from version 1 to 2
+							"name": nil,
+							// phone has been set by the migration from version 1 to 3
+							"phone":    "1234567890",
+							"verified": true,
+						},
 					},
 				},
 			},

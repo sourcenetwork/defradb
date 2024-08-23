@@ -20,8 +20,13 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple latest commits query with collectionID property",
 		Actions: []any{
-			updateUserCollectionSchema(),
-			updateCompaniesCollectionSchema(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Companies {
+						name: String
+					}
+				`,
+			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -41,9 +46,11 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 							collectionID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"collectionID": int64(1),
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
+						{
+							"collectionID": int64(1),
+						},
 					},
 				},
 			},
@@ -53,14 +60,16 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 							collectionID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"collectionID": int64(2),
+				Results: map[string]any{
+					"latestCommits": []map[string]any{
+						{
+							"collectionID": int64(2),
+						},
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }

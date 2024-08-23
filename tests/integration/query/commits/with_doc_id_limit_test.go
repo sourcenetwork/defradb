@@ -48,12 +48,14 @@ func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"cid": "bafyreibpiyrugj4gku336wp5lvcw3fgyxqpjvugm3t4z7v5h3ulwxs3x2y",
-					},
-					{
-						"cid": "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreibpiyrugj4gku336wp5lvcw3fgyxqpjvugm3t4z7v5h3ulwxs3x2y",
+						},
+						{
+							"cid": "bafyreiay56ley5dvsptso37fsonfcrtbuphwlfhi67d2y52vzzexba6vua",
+						},
 					},
 				},
 			},

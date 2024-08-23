@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -135,10 +134,7 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct {
-	// ExpectedTimeout is the duration to wait when expecting a timeout to occur.
-	ExpectedTimeout time.Duration
-}
+type WaitForSync struct{}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
@@ -148,9 +144,6 @@ func connectPeers(
 	s *state,
 	cfg ConnectPeers,
 ) {
-	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
-	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
-	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
@@ -158,119 +151,13 @@ func connectPeers(
 	log.InfoContext(s.ctx, "Bootstrapping with peers", corelog.Any("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
 
+	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
+	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
+
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
-	setupPeerWaitSync(s, 0, cfg)
-}
-
-func setupPeerWaitSync(
-	s *state,
-	startIndex int,
-	cfg ConnectPeers,
-) {
-	sourceToTargetEvents := []int{0}
-	targetToSourceEvents := []int{0}
-
-	nodeCollections := map[int][]int{}
-	waitIndex := 0
-	for i := startIndex; i < len(s.testCase.Actions); i++ {
-		switch action := s.testCase.Actions[i].(type) {
-		case SubscribeToCollection:
-			if action.ExpectedError != "" {
-				// If the subscription action is expected to error, then we should do nothing here.
-				continue
-			}
-			// This is order dependent, items should be added in the same action-loop that reads them
-			// as 'stuff' done before collection subscription should not be synced.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
-
-		case UnsubscribeToCollection:
-			if action.ExpectedError != "" {
-				// If the unsubscribe action is expected to error, then we should do nothing here.
-				continue
-			}
-
-			// This is order dependent, items should be added in the same action-loop that reads them
-			// as 'stuff' done before collection subscription should not be synced.
-			existingCollectionIndexes := nodeCollections[action.NodeID]
-			for _, collectionIndex := range action.CollectionIDs {
-				for i, existingCollectionIndex := range existingCollectionIndexes {
-					if collectionIndex == existingCollectionIndex {
-						// Remove the matching collection index from the set:
-						existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
-					}
-				}
-			}
-			nodeCollections[action.NodeID] = existingCollectionIndexes
-
-		case CreateDoc:
-			sourceCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.SourceNodeID, action.CollectionID)
-			targetCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.TargetNodeID, action.CollectionID)
-
-			// Peers sync trigger sync events for documents that exist prior to configuration, even if they already
-			// exist at the destination, so we need to wait for documents created on all nodes, as well as those
-			// created on the target.
-			if (!action.NodeID.HasValue() ||
-				action.NodeID.Value() == cfg.TargetNodeID) &&
-				sourceCollectionSubscribed {
-				targetToSourceEvents[waitIndex] += 1
-			}
-
-			// Peers sync trigger sync events for documents that exist prior to configuration, even if they already
-			// exist at the destination, so we need to wait for documents created on all nodes, as well as those
-			// created on the source.
-			if (!action.NodeID.HasValue() ||
-				action.NodeID.Value() == cfg.SourceNodeID) &&
-				targetCollectionSubscribed {
-				sourceToTargetEvents[waitIndex] += 1
-			}
-
-		case DeleteDoc:
-			// Updates to existing docs should always sync (no-sub required)
-			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents[waitIndex] += 1
-			}
-			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents[waitIndex] += 1
-			}
-
-		case UpdateDoc:
-			// Updates to existing docs should always sync (no-sub required)
-			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents[waitIndex] += 1
-			}
-			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents[waitIndex] += 1
-			}
-
-		case WaitForSync:
-			waitIndex += 1
-			targetToSourceEvents = append(targetToSourceEvents, 0)
-			sourceToTargetEvents = append(sourceToTargetEvents, 0)
-		}
-	}
-
-	nodeSynced := make(chan struct{})
-	go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
-	s.syncChans = append(s.syncChans, nodeSynced)
-}
-
-// collectionSubscribedTo returns true if the collection on the given node
-// has been subscribed to.
-func collectionSubscribedTo(
-	nodeCollections map[int][]int,
-	nodeID int,
-	collectionID int,
-) bool {
-	targetSubscriptionCollections := nodeCollections[nodeID]
-	for _, collectionId := range targetSubscriptionCollections {
-		if collectionId == collectionID {
-			return true
-		}
-	}
-	return false
 }
 
 // configureReplicator configures a replicator relationship between two existing, started, nodes.
@@ -282,9 +169,6 @@ func configureReplicator(
 	s *state,
 	cfg ConfigureReplicator,
 ) {
-	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
-	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
-	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
@@ -294,8 +178,9 @@ func configureReplicator(
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
+
 	if err == nil {
-		setupReplicatorWaitSync(s, 0, cfg)
+		waitForReplicatorConfigureEvent(s, cfg)
 	}
 }
 
@@ -310,64 +195,7 @@ func deleteReplicator(
 		Info: targetNode.PeerInfo(),
 	})
 	require.NoError(s.t, err)
-}
-
-func setupReplicatorWaitSync(
-	s *state,
-	startIndex int,
-	cfg ConfigureReplicator,
-) {
-	sourceToTargetEvents := []int{0}
-	targetToSourceEvents := []int{0}
-
-	docIDsSyncedToSource := map[int]struct{}{}
-	waitIndex := 0
-	currentDocID := 0
-	for i := startIndex; i < len(s.testCase.Actions); i++ {
-		switch action := s.testCase.Actions[i].(type) {
-		case CreateDoc:
-			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
-				docIDsSyncedToSource[currentDocID] = struct{}{}
-			}
-
-			// A document created on the source or one that is created on all nodes will be sent to the target even
-			// it already has it. It will create a `received push log` event on the target which we need to wait for.
-			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents[waitIndex] += 1
-			}
-
-			currentDocID++
-
-		case DeleteDoc:
-			if _, shouldSyncFromTarget := docIDsSyncedToSource[action.DocID]; shouldSyncFromTarget &&
-				action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents[waitIndex] += 1
-			}
-
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents[waitIndex] += 1
-			}
-
-		case UpdateDoc:
-			if _, shouldSyncFromTarget := docIDsSyncedToSource[action.DocID]; shouldSyncFromTarget &&
-				action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents[waitIndex] += 1
-			}
-
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents[waitIndex] += 1
-			}
-
-		case WaitForSync:
-			waitIndex += 1
-			targetToSourceEvents = append(targetToSourceEvents, 0)
-			sourceToTargetEvents = append(sourceToTargetEvents, 0)
-		}
-	}
-
-	nodeSynced := make(chan struct{})
-	go waitForMerge(s, cfg.SourceNodeID, cfg.TargetNodeID, sourceToTargetEvents, targetToSourceEvents, nodeSynced)
-	s.syncChans = append(s.syncChans, nodeSynced)
+	waitForReplicatorDeleteEvent(s, cfg)
 }
 
 // subscribeToCollection sets up a collection subscription on the given node/collection.
@@ -391,6 +219,10 @@ func subscribeToCollection(
 	}
 
 	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	if err == nil {
+		waitForSubscribeToCollectionEvent(s, action)
+	}
+
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -421,6 +253,10 @@ func unsubscribeToCollection(
 	}
 
 	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	if err == nil {
+		waitForUnsubscribeToCollectionEvent(s, action)
+	}
+
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -449,83 +285,6 @@ func getAllP2PCollections(
 	require.NoError(s.t, err)
 
 	assert.Equal(s.t, expectedCollections, cols)
-}
-
-// waitForSync waits for all given wait channels to receive an item signaling completion.
-//
-// Will fail the test if an event is not received within the expected time interval to prevent tests
-// from running forever.
-func waitForSync(
-	s *state,
-	action WaitForSync,
-) {
-	var timeout time.Duration
-	if action.ExpectedTimeout != 0 {
-		timeout = action.ExpectedTimeout
-	} else {
-		timeout = subscriptionTimeout * 10
-	}
-
-	for _, resultsChan := range s.syncChans {
-		select {
-		case <-resultsChan:
-			assert.True(
-				s.t,
-				action.ExpectedTimeout == 0,
-				"unexpected document has been synced",
-				s.testCase.Description,
-			)
-
-		// a safety in case the stream hangs - we don't want the tests to run forever.
-		case <-time.After(timeout):
-			assert.True(
-				s.t,
-				action.ExpectedTimeout != 0,
-				"timeout occurred while waiting for data stream",
-				s.testCase.Description,
-			)
-		}
-	}
-}
-
-// waitForMerge waits for the source and target nodes to synchronize their state
-// by listening to merge events sent from the network subsystem on the event bus.
-//
-// sourceToTargetEvents and targetToSourceEvents are slices containing the number
-// of expected merge events to be received after each test action has executed.
-func waitForMerge(
-	s *state,
-	sourceNodeID int,
-	targetNodeID int,
-	sourceToTargetEvents []int,
-	targetToSourceEvents []int,
-	nodeSynced chan struct{},
-) {
-	sourceSub := s.eventSubs[sourceNodeID]
-	targetSub := s.eventSubs[targetNodeID]
-
-	sourcePeerInfo := s.nodeAddresses[sourceNodeID]
-	targetPeerInfo := s.nodeAddresses[targetNodeID]
-
-	for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
-		for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-			// wait for message or unsubscribe
-			msg, ok := <-sourceSub.Message()
-			if ok {
-				// ensure the message is sent from the target node
-				require.Equal(s.t, targetPeerInfo.ID, msg.Data.(event.Merge).ByPeer)
-			}
-		}
-		for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-			// wait for message or unsubscribe
-			msg, ok := <-targetSub.Message()
-			if ok {
-				// ensure the message is sent from the source node
-				require.Equal(s.t, sourcePeerInfo.ID, msg.Data.(event.Merge).ByPeer)
-			}
-		}
-		nodeSynced <- struct{}{}
-	}
 }
 
 func RandomNetworkingConfig() ConfigureNode {

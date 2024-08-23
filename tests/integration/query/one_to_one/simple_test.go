@@ -17,10 +17,28 @@ import (
 )
 
 func TestQueryOneToOne(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
+	tests := []testUtils.TestCase{
 		{
 			Description: "One-to-one relation query with no filter",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					CollectionID: 0,
+					Doc: `{
+						"name": "Painted House",
+						"rating": 4.9
+					}`,
+				},
+				testUtils.CreateDoc{
+					CollectionID: 1,
+					Doc: `{
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true,
+						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Book {
 							name
 							rating
@@ -30,38 +48,42 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-			Docs: map[int][]string{
-				//books
-				0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-					`{
-						"name": "Painted House",
-						"rating": 4.9
-					}`,
-				},
-				//authors
-				1: { // bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
-					`{
-						"name": "John Grisham",
-						"age": 65,
-						"verified": true,
-						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"name":   "Painted House",
-					"rating": 4.9,
-					"author": map[string]any{
-						"name": "John Grisham",
-						"age":  int64(65),
+					Results: map[string]any{
+						"Book": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+								"author": map[string]any{
+									"name": "John Grisham",
+									"age":  int64(65),
+								},
+							},
+						},
 					},
 				},
 			},
 		},
 		{
 			Description: "One-to-one relation secondary direction, no filter",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					CollectionID: 0,
+					Doc: `{
+						"name": "Painted House",
+						"rating": 4.9
+					}`,
+				},
+				testUtils.CreateDoc{
+					CollectionID: 1,
+					Doc: `{
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true,
+						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Author {
 							name
 							age
@@ -71,31 +93,17 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-			Docs: map[int][]string{
-				//books
-				0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-					`{
-						"name": "Painted House",
-						"rating": 4.9
-					}`,
-				},
-				//authors
-				1: { // bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
-					`{
-						"name": "John Grisham",
-						"age": 65,
-						"verified": true,
-						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"name": "John Grisham",
-					"age":  int64(65),
-					"published": map[string]any{
-						"name":   "Painted House",
-						"rating": 4.9,
+					Results: map[string]any{
+						"Author": []map[string]any{
+							{
+								"name": "John Grisham",
+								"age":  int64(65),
+								"published": map[string]any{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+							},
+						},
 					},
 				},
 			},
@@ -168,17 +176,19 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Go Guide for Rust developers",
-						"author": map[string]any{
-							"name": "Andrew Lone",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Go Guide for Rust developers",
+							"author": map[string]any{
+								"name": "Andrew Lone",
+							},
 						},
-					},
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
 						},
 					},
 				},
@@ -244,17 +254,19 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 						}
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name": "Cornelia Funke",
-						"published": map[string]any{
-							"name": "Theif Lord",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"published": map[string]any{
+								"name": "Theif Lord",
+							},
 						},
-					},
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
 						},
 					},
 				},
@@ -266,28 +278,32 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 }
 
 func TestQueryOneToOneWithNilChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, nil child",
-		Request: `query {
-			Author {
-				name
-				published {
-					name
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//authors
-			1: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":      "John Grisham",
-				"published": nil,
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						published {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":      "John Grisham",
+							"published": nil,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -296,28 +312,31 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 }
 
 func TestQueryOneToOneWithNilParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, nil parent",
-		Request: `query {
-			Book {
-				name
-				author {
-					name
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"author": nil,
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"author": nil,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -362,10 +381,12 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 						published_id
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":         "John Grisham",
-						"published_id": "bae-514f04b1-b218-5b8c-89ee-538f150a32b5",
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":         "John Grisham",
+							"published_id": "bae-514f04b1-b218-5b8c-89ee-538f150a32b5",
+						},
 					},
 				},
 			},
@@ -412,10 +433,12 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 						author_id
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":      "Painted House",
-						"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":      "Painted House",
+							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+						},
 					},
 				},
 			},

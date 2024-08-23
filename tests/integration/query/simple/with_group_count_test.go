@@ -17,32 +17,42 @@ import (
 )
 
 func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query without group by, no children, count on non-existant group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Age
 						_count(_group: {})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
+				ExpectedError: "_group may only be referenced when within a groupBy request",
 			},
 		},
-		ExpectedError: "_group may only be referenced when within a groupBy request",
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query without group by, no children, count on inner non-existant group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_group {
@@ -51,53 +61,55 @@ func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
+				ExpectedError: "_group may only be referenced when within a groupBy request",
 			},
 		},
-		ExpectedError: "_group may only be referenced when within a groupBy request",
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":    int64(32),
+							"_count": 2,
+						},
+						{
+							"Age":    int64(19),
+							"_count": 1,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -106,24 +118,50 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCollection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered group, empty collection",
-		Request: `query {
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {})
 					}
 				}`,
-		Results: []map[string]any{},
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, count on rendered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {})
@@ -132,41 +170,29 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"_count": 2,
-				"_group": []map[string]any{
-					{
-						"Name": "Bob",
-					},
-					{
-						"Name": "John",
-					},
-				},
-			},
-			{
-				"Age":    int64(19),
-				"_count": 1,
-				"_group": []map[string]any{
-					{
-						"Name": "Alice",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":    int64(32),
+							"_count": 2,
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
+								},
+								{
+									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age":    int64(19),
+							"_count": 1,
+							"_group": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -177,69 +203,83 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 }
 
 func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, count on undefined field",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						_count
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
+				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
 		},
-		ExpectedError: "aggregate must be provided with a property to aggregate",
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, aliased count on non-rendered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						Count: _count(_group: {})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age":   int64(32),
-				"Count": 2,
-			},
-			{
-				"Age":   int64(19),
-				"Count": 1,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":   int64(32),
+							"Count": 2,
+						},
+						{
+							"Age":   int64(19),
+							"Count": 1,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -250,41 +290,49 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChildCounts(
 	t *testing.T,
 ) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with group by number, no children, duplicated aliased count on non-rendered group",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
 						Count1: _count(_group: {})
 						Count2: _count(_group: {})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 19
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Age":    int64(32),
-				"Count1": 2,
-				"Count2": 2,
-			},
-			{
-				"Age":    int64(19),
-				"Count1": 1,
-				"Count2": 1,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age":    int64(32),
+							"Count1": 2,
+							"Count2": 2,
+						},
+						{
+							"Age":    int64(19),
+							"Count1": 1,
+							"Count2": 1,
+						},
+					},
+				},
 			},
 		},
 	}

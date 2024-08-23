@@ -17,25 +17,29 @@ import (
 )
 
 func TestQuerySimpleWithTypeName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with typename",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						__typename
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":       "John",
-				"__typename": "Users",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":       "John",
+							"__typename": "Users",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -44,27 +48,31 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 }
 
 func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with aliased typename",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						Name
 						__typename
 						t1: __typename
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name":       "John",
-				"__typename": "Users",
-				"t1":         "Users",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":       "John",
+							"__typename": "Users",
+							"t1":         "Users",
+						},
+					},
+				},
 			},
 		},
 	}

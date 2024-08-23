@@ -59,9 +59,11 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -116,9 +118,11 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 						Age
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Age": int64(60),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(60),
+						},
 					},
 				},
 			},
@@ -180,9 +184,11 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 						Name
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"Name": "John",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
 					},
 				},
 			},

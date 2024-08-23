@@ -65,9 +65,11 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 							_docID
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-b5c56d8f-b2f5-57f9-b371-4e9e04903e91",
+				Results: map[string]any{
+					"delete_Book": []map[string]any{
+						{
+							"_docID": "bae-b5c56d8f-b2f5-57f9-b371-4e9e04903e91",
+						},
 					},
 				},
 			},
@@ -84,21 +86,23 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 							}
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"_deleted": false,
-						"name":     "John",
-						"age":      int64(30),
-						"published": []map[string]any{
-							{
-								"_deleted": false,
-								"name":     "John has a chamber of secrets",
-								"rating":   9.9,
-							},
-							{
-								"_deleted": true,
-								"name":     "John and the philosopher are stoned",
-								"rating":   9.9,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"_deleted": false,
+							"name":     "John",
+							"age":      int64(30),
+							"published": []map[string]any{
+								{
+									"_deleted": false,
+									"name":     "John has a chamber of secrets",
+									"rating":   9.9,
+								},
+								{
+									"_deleted": true,
+									"name":     "John and the philosopher are stoned",
+									"rating":   9.9,
+								},
 							},
 						},
 					},

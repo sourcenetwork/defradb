@@ -67,10 +67,12 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Islam", "age": 32},
-					{"name": "Islam", "age": 40},
-					{"name": "Islam", "age": 50},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam", "age": 32},
+						{"name": "Islam", "age": 40},
+						{"name": "Islam", "age": 50},
+					},
 				},
 			},
 			testUtils.Request{
@@ -79,8 +81,10 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Islam", "age": 32},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam", "age": 32},
+					},
 				},
 			},
 			testUtils.Request{
@@ -89,7 +93,9 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request: req3,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -119,8 +125,10 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -155,8 +163,10 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -191,9 +201,11 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Roy"},
-					{"name": "Chris"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Roy"},
+						{"name": "Chris"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -228,9 +240,11 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Chris"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Chris"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -265,8 +279,10 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -301,8 +317,10 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -337,9 +355,11 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -374,9 +394,11 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Fred"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -411,15 +433,17 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Addo"},
-					{"name": "Andy"},
-					{"name": "Bruno"},
-					{"name": "Chris"},
-					{"name": "John"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
-					{"name": "Shahzad"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+						{"name": "Bruno"},
+						{"name": "Chris"},
+						{"name": "John"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -492,9 +516,11 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Addo", "age": 33},
-					{"name": "Andy", "age": 33},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo", "age": 33},
+						{"name": "Andy", "age": 33},
+					},
 				},
 			},
 			testUtils.Request{
@@ -545,9 +571,11 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Andy"},
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -582,10 +610,12 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Islam"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -649,8 +679,10 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req1,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -659,8 +691,10 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req2,
-				Results: []map[string]any{
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -669,8 +703,10 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req3,
-				Results: []map[string]any{
-					{"name": "Keenan"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Keenan"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -679,8 +715,10 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req4,
-				Results: []map[string]any{
-					{"name": "Fred"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -689,8 +727,10 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req5,
-				Results: []map[string]any{
-					{"name": "Addo"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -699,11 +739,15 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request: req6,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 			testUtils.Request{
 				Request: req7,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -732,11 +776,13 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
-					{"name": "Islam"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+						{"name": "Islam"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -770,12 +816,14 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bruno"},
-					{"name": "Chris"},
-					{"name": "Islam"},
-					{"name": "Keenan"},
-					{"name": "Roy"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+						{"name": "Chris"},
+						{"name": "Islam"},
+						{"name": "Keenan"},
+						{"name": "Roy"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -852,8 +900,10 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 							age
 						}
 					}`,
-				Results: []map[string]any{
-					{"name": nil, "age": 32},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": nil, "age": 32},
+					},
 				},
 			},
 		},
@@ -908,9 +958,11 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": nil, "age": 32, "email": "bob@gmail.com"},
-					{"name": nil, "age": 32, "email": "cate@gmail.com"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": nil, "age": 32, "email": "bob@gmail.com"},
+						{"name": nil, "age": 32, "email": "cate@gmail.com"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -968,10 +1020,12 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"age":   nil,
-						"about": "alice_nil",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"age":   nil,
+							"about": "alice_nil",
+						},
 					},
 				},
 			},
@@ -1036,9 +1090,11 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 			},
 			testUtils.Request{
 				Request: req,
-				Results: []map[string]any{
-					{"name": "Bob", "age": nil, "email": "bob1@gmail.com"},
-					{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bob", "age": nil, "email": "bob1@gmail.com"},
+						{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -1109,9 +1165,11 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{"about": "nil_nil_2"},
-					{"about": "nil_nil_1"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "nil_nil_2"},
+						{"about": "nil_nil_1"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -1121,10 +1179,12 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{"about": "nil_nil_2"},
-					{"about": "nil_nil_1"},
-					{"about": "nil_22"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "nil_nil_2"},
+						{"about": "nil_nil_1"},
+						{"about": "nil_22"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -1134,10 +1194,12 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{"about": "bob_nil"},
-					{"about": "nil_nil_2"},
-					{"about": "nil_nil_1"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob_nil"},
+						{"about": "nil_nil_2"},
+						{"about": "nil_nil_1"},
+					},
 				},
 			},
 		},
@@ -1245,8 +1307,10 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{"about": "bob_nil -> nil_nil"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob_nil -> nil_nil"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -1256,9 +1320,11 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{"about": "bob_nil -> nil_nil"},
-					{"about": "nil_nil -> nil_22"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob_nil -> nil_nil"},
+						{"about": "nil_nil -> nil_22"},
+					},
 				},
 			},
 			testUtils.Request{
@@ -1268,11 +1334,13 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 							about
 						}
 					}`,
-				Results: []map[string]any{
-					{"about": "bob_22 -> bob_nil"},
-					{"about": "nil_22 -> bob_nil"},
-					{"about": "bob_nil -> nil_nil"},
-					{"about": "nil_nil -> bob_nil"},
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"about": "bob_22 -> bob_nil"},
+						{"about": "nil_22 -> bob_nil"},
+						{"about": "bob_nil -> nil_nil"},
+						{"about": "nil_nil -> bob_nil"},
+					},
 				},
 			},
 		},
@@ -1327,9 +1395,11 @@ func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreVa
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Alan",
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+						},
 					},
 				},
 			},

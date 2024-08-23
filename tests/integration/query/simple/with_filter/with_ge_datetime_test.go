@@ -17,30 +17,36 @@ import (
 )
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with equal value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -49,30 +55,36 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with equal value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -81,58 +93,123 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge int filter with equal value",
-		Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
 		},
-		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic ge nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {CreatedAt: {_ge: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"CreatedAt": "2010-07-23T03:46:56-05:00"
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic filter with nil value and non-nil filter",
+		Actions: []any{
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name":      "John",
+					"Age":       int64(21),
+					"CreatedAt": "2017-07-23T03:46:56-05:00",
+				},
 			},
-			{
-				"Name": "John",
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name":      "Bob",
+					"Age":       int64(32),
+					"CreatedAt": "2016-07-23T03:46:56-05:00",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Fred",
+					"Age":  44,
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_ge: "2016-07-23T03:46:56-05:00"}}) {
+						Name
+						Age
+						CreatedAt
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":      "Bob",
+							"Age":       int64(32),
+							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
+						},
+						{
+							"Name":      "John",
+							"Age":       int64(21),
+							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+						},
+					},
+				},
 			},
 		},
 	}

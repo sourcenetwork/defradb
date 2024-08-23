@@ -42,13 +42,13 @@ type DB interface {
 	// can safely operate on it concurrently.
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 
-	// Root returns the underlying root store, within which all data managed by DefraDB is held.
-	Root() datastore.RootStore
+	// Rootstore returns the underlying root store, within which all data managed by DefraDB is held.
+	Rootstore() datastore.Rootstore
 
 	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	//
 	// It sits within the rootstore returned by [Root].
-	Blockstore() datastore.DAGStore
+	Blockstore() datastore.Blockstore
 
 	// Peerstore returns the peerstore where known host information is stored.
 	//
@@ -105,6 +105,11 @@ type DB interface {
 type Store interface {
 	// Backup holds the backup related methods that must be implemented by the database.
 	Backup
+
+	// P2P contains functions related to the P2P system.
+	//
+	// These functions are only useful if there is a configured network peer.
+	P2P
 
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.

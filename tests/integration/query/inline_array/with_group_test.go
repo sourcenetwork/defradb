@@ -17,9 +17,23 @@ import (
 )
 
 func TestQueryInlineArrayWithGroupByString(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array with no filter, mixed integers, group by string",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [1, -2, 1, -1, 0]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users (groupBy: [name]) {
 						name
 						_group {
@@ -27,27 +41,19 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Shahzad",
-					"favouriteIntegers": [-1, 2, -1, 1, 0]
-				}`,
-				`{
-					"name": "Shahzad",
-					"favouriteIntegers": [1, -2, 1, -1, 0]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_group": []map[string]any{
-					{
-						"favouriteIntegers": []int64{1, -2, 1, -1, 0},
-					},
-					{
-						"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_group": []map[string]any{
+								{
+									"favouriteIntegers": []int64{1, -2, 1, -1, 0},
+								},
+								{
+									"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -58,9 +64,29 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array with no filter, mixed integers, group by array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"favouriteIntegers": [1, 2, 3]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users (groupBy: [favouriteIntegers]) {
 						favouriteIntegers
 						_group {
@@ -68,40 +94,28 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Andy",
-					"favouriteIntegers": [-1, 2, -1, 1, 0]
-				}`,
-				`{
-					"name": "Shahzad",
-					"favouriteIntegers": [-1, 2, -1, 1, 0]
-				}`,
-				`{
-					"name": "John",
-					"favouriteIntegers": [1, 2, 3]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"favouriteIntegers": []int64{1, 2, 3},
-				"_group": []map[string]any{
-					{
-						"name": "John",
-					},
-				},
-			},
-			{
-				"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
-				"_group": []map[string]any{
-					{
-						"name": "Andy",
-					},
-					{
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"favouriteIntegers": []int64{1, 2, 3},
+							"_group": []map[string]any{
+								{
+									"name": "John",
+								},
+							},
+						},
+						{
+							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+							"_group": []map[string]any{
+								{
+									"name": "Andy",
+								},
+								{
 
-						"name": "Shahzad",
+									"name": "Shahzad",
+								},
+							},
+						},
 					},
 				},
 			},

@@ -17,62 +17,76 @@ import (
 )
 
 func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset",
-		Request: `query {
-				Author {
-					name
-					_sum(published: {field: rating, offset: 1, limit: 2})
-				}
-			}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
 				}`,
 			},
-			//authors
-			1: {
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
-				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Cornelia Funke",
-				"_sum": float64(0),
-			},
-			{
-				"name": "John Grisham",
-				"_sum": 9.4,
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						_sum(published: {field: rating, offset: 1, limit: 2})
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Cornelia Funke",
+							"_sum": float64(0),
+						},
+						{
+							"name": "John Grisham",
+							"_sum": 9.4,
+						},
+					},
+				},
 			},
 		},
 	}

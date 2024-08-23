@@ -16,12 +16,17 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
+
+const docEncryptParam = "encrypt"
+const docEncryptFieldsParam = "encryptFields"
 
 type collectionHandler struct{}
 
@@ -43,6 +48,19 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	ctx := req.Context()
+	q := req.URL.Query()
+	encConf := encryption.DocEncConfig{}
+	if q.Get(docEncryptParam) == "true" {
+		encConf.IsDocEncrypted = true
+	}
+	if q.Get(docEncryptFieldsParam) != "" {
+		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
+	}
+	if encConf.IsDocEncrypted || len(encConf.EncryptedFields) > 0 {
+		ctx = encryption.SetContextConfig(ctx, encConf)
+	}
+
 	switch {
 	case client.IsJSONArray(data):
 		docList, err := client.NewDocsFromJSON(data, col.Definition())
@@ -51,7 +69,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(req.Context(), docList); err != nil {
+		if err := col.CreateMany(ctx, docList); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -62,7 +80,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(req.Context(), doc); err != nil {
+		if err := col.Create(ctx, doc); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}

@@ -17,31 +17,37 @@ import (
 )
 
 func TestQuerySimpleWithLimit0(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with limit 0",
-		Request: `query {
-					Users(limit: 0) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
-			},
-			{
-				"Name": "John",
+			testUtils.Request{
+				Request: `query {
+					Users(limit: 0) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -50,70 +56,86 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 }
 
 func TestQuerySimpleWithLimit(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
+	tests := []testUtils.TestCase{
 		{
 			Description: "Simple query with basic limit",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(limit: 1) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"Name": "Bob",
-					"Age":  int64(32),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "Bob",
+								"Age":  int64(32),
+							},
+						},
+					},
 				},
 			},
 		},
 		{
 			Description: "Simple query with basic limit, more rows",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Carlo",
+						"Age": 55
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Alice",
+						"Age": 19
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(limit: 2) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-					`{
-						"Name": "Carlo",
-						"Age": 55
-					}`,
-					`{
-						"Name": "Alice",
-						"Age": 19
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"Name": "Carlo",
-					"Age":  int64(55),
-				},
-				{
-					"Name": "Bob",
-					"Age":  int64(32),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "Carlo",
+								"Age":  int64(55),
+							},
+							{
+								"Name": "Bob",
+								"Age":  int64(32),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -125,70 +147,86 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 }
 
 func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
+	tests := []testUtils.TestCase{
 		{
 			Description: "Simple query with basic limit & offset",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(limit: 1, offset: 1) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "John",
+								"Age":  int64(21),
+							},
+						},
+					},
 				},
 			},
 		},
 		{
 			Description: "Simple query with basic limit & offset, more rows",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Carlo",
+						"Age": 55
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Alice",
+						"Age": 19
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(limit: 2, offset: 2) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-					`{
-						"Name": "Carlo",
-						"Age": 55
-					}`,
-					`{
-						"Name": "Alice",
-						"Age": 19
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "John",
+								"Age":  int64(21),
+							},
+							{
+								"Name": "Alice",
+								"Age":  int64(19),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -200,78 +238,96 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 }
 
 func TestQuerySimpleWithOffset(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
+	tests := []testUtils.TestCase{
 		{
 			Description: "Simple query with offset only",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(offset: 1) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"Name": "John",
-					"Age":  int64(21),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "John",
+								"Age":  int64(21),
+							},
+						},
+					},
 				},
 			},
 		},
 		{
 			Description: "Simple query with offset only, more rows",
-			Request: `query {
+			Actions: []any{
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Carlo",
+						"Age": 55
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Alice",
+						"Age": 19
+					}`,
+				},
+				testUtils.CreateDoc{
+					Doc: `{
+						"Name": "Melynda",
+						"Age": 30
+					}`,
+				},
+				testUtils.Request{
+					Request: `query {
 						Users(offset: 2) {
 							Name
 							Age
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-					`{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-					`{
-						"Name": "Carlo",
-						"Age": 55
-					}`,
-					`{
-						"Name": "Alice",
-						"Age": 19
-					}`,
-					`{
-						"Name": "Melynda",
-						"Age": 30
-					}`,
-				},
-			},
-			Results: []map[string]any{
-				{
-					"Name": "Melynda",
-					"Age":  int64(30),
-				},
-				{
-					"Name": "John",
-					"Age":  int64(21),
-				},
-				{
-					"Name": "Alice",
-					"Age":  int64(19),
+					Results: map[string]any{
+						"Users": []map[string]any{
+							{
+								"Name": "Melynda",
+								"Age":  int64(30),
+							},
+							{
+								"Name": "John",
+								"Age":  int64(21),
+							},
+							{
+								"Name": "Alice",
+								"Age":  int64(19),
+							},
+						},
+					},
 				},
 			},
 		},

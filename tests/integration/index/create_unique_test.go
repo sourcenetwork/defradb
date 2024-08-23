@@ -110,7 +110,9 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 						name
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 			testUtils.GetIndexes{
 				CollectionID: 0,
@@ -307,6 +309,38 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 					{
 						"name":	"Andy"
 					}`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						birthday: DateTime @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Fred",
+						"birthday": "2000-07-23T03:00:00-00:00"
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Andy",
+						"birthday": "2000-07-23T03:00:00-00:00"
+					}`,
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
+					"bae-7e20b26e-5d93-572a-9724-d8f862efbe63",
+					errors.NewKV("birthday", testUtils.MustParseTime("2000-07-23T03:00:00-00:00")),
+				).Error(),
 			},
 		},
 	}

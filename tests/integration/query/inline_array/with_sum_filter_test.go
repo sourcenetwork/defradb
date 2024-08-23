@@ -17,26 +17,30 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered sum of integer array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						name
 						_sum(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Shahzad",
-					"favouriteIntegers": [-1, 2, -1, 1, 0]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_sum": int64(3),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_sum": int64(3),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -45,26 +49,30 @@ func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array with filter, sum of nillable integer array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"testScores": [-1, 2, null, 1, 0]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						name
 						_sum(testScores: {filter: {_gt: 0}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Shahzad",
-					"testScores": [-1, 2, null, 1, 0]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_sum": int64(3),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_sum": int64(3),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -73,26 +81,30 @@ func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered sum of float array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteFloats": [3.1425, 0.00000000001, 10]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						name
 						_sum(favouriteFloats: {filter: {_lt: 9}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Shahzad",
-					"favouriteFloats": [3.1425, 0.00000000001, 10]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_sum": 3.14250000001,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_sum": 3.14250000001,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -101,26 +113,30 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple inline array with filter, sum of nillable float array",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageRatings": [3.1425, 0.00000000001, 10, null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users {
 						name
 						_sum(pageRatings: {filter: {_lt: 9}})
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Shahzad",
-					"pageRatings": [3.1425, 0.00000000001, 10, null]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "Shahzad",
-				"_sum": float64(3.14250000001),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_sum": float64(3.14250000001),
+						},
+					},
+				},
 			},
 		},
 	}

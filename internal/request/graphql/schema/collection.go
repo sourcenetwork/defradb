@@ -494,11 +494,10 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 		}
 	}
 
-	if kind.IsObjectArray() {
-		return client.NONE_CRDT, nil
-	}
-
 	if kind.IsObject() {
+		if kind.IsArray() {
+			return client.NONE_CRDT, nil
+		}
 		return client.LWW_REGISTER, nil
 	}
 
@@ -667,15 +666,13 @@ func finalizeRelations(
 				continue
 			}
 
-			var otherColFieldDescription immutable.Option[client.CollectionFieldDescription]
-			for _, otherField := range otherColDefinition.Value().Description.Fields {
-				if otherField.RelationName.Value() == field.RelationName.Value() {
-					otherColFieldDescription = immutable.Some(otherField)
-					break
-				}
-			}
+			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().Description.GetFieldByRelation(
+				field.RelationName.Value(),
+				definition.GetName(),
+				field.Name,
+			)
 
-			if !otherColFieldDescription.HasValue() || otherColFieldDescription.Value().Kind.Value().IsArray() {
+			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.Value().IsArray() {
 				if _, exists := definition.Schema.GetFieldByName(field.Name); !exists {
 					// Relations only defined on one side of the object are possible, and so if this is one of them
 					// or if the other side is an array, we need to add the field to the schema (is primary side)

@@ -17,28 +17,34 @@ import (
 )
 
 func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le float filter with equal value",
-		Request: `query {
-					Users(filter: {HeightM: {_le: 1.82}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_le: 1.82}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,28 +53,34 @@ func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le float filter with greater value",
-		Request: `query {
-					Users(filter: {HeightM: {_le: 1.820000000001}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_le: 1.820000000001}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -77,28 +89,34 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le float filter with greater int value",
-		Request: `query {
-					Users(filter: {HeightM: {_le: 2}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_le: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -107,27 +125,33 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic le float filter with null value",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {HeightM: {_le: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"HeightM": 2.1
-				}`,
-				`{
-					"Name": "Bob"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}

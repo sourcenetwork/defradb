@@ -36,7 +36,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}
@@ -66,7 +66,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: groupPattern,
 			},
 		},
 	}

@@ -24,6 +24,7 @@ import (
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -78,6 +79,8 @@ func (c *Collection) Create(
 		return err
 	}
 
+	setDocEncryptionFlagIfNeeded(ctx, req)
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
@@ -114,6 +117,8 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
+	setDocEncryptionFlagIfNeeded(ctx, req)
+
 	_, err = c.http.request(req)
 	if err != nil {
 		return err
@@ -123,6 +128,20 @@ func (c *Collection) CreateMany(
 		doc.Clean()
 	}
 	return nil
+}
+
+func setDocEncryptionFlagIfNeeded(ctx context.Context, req *http.Request) {
+	encConf := encryption.GetContextConfig(ctx)
+	if encConf.HasValue() {
+		q := req.URL.Query()
+		if encConf.Value().IsDocEncrypted {
+			q.Set(docEncryptParam, "true")
+		}
+		if len(encConf.Value().EncryptedFields) > 0 {
+			q.Set(docEncryptFieldsParam, strings.Join(encConf.Value().EncryptedFields, ","))
+		}
+		req.URL.RawQuery = q.Encode()
+	}
 }
 
 func (c *Collection) Update(

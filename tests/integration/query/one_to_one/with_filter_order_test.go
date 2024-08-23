@@ -17,57 +17,63 @@ import (
 )
 
 func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one subtype descending order query with filter, no subtype child fields selected.",
-		Request: `query {
-			Book(
-				filter: {author: {age: {_gt: 5}}},
-				order: {author: {age: DESC}}
-			){
-				name
-				rating
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			//authors
-			1: {
-				// "bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6"
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				// "bae-08519989-280d-5a4d-90b2-915ea06df3c4"
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
 					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-			},
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
+			testUtils.Request{
+				Request: `query {
+					Book(
+						filter: {author: {age: {_gt: 5}}},
+						order: {author: {age: DESC}}
+					){
+						name
+						rating
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -76,57 +82,63 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 }
 
 func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one subtype ascending order query with filter, no subtype child fields selected.",
-		Request: `query {
-			Book(
-				filter: {author: {age: {_gt: 5}}},
-				order: {author: {age: ASC}}
-			){
-				name
-				rating
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			//authors
-			1: {
-				// "bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6"
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				// "bae-08519989-280d-5a4d-90b2-915ea06df3c4"
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
 					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-			},
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
+			testUtils.Request{
+				Request: `query {
+					Book(
+						filter: {author: {age: {_gt: 5}}},
+						order: {author: {age: ASC}}
+					){
+						name
+						rating
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+					},
+				},
 			},
 		},
 	}

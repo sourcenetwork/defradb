@@ -342,20 +342,18 @@ func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
 // Note: This function only fails if the collection of the datapoints goes wrong, otherwise
 // even if plan execution fails this function would return the collected datapoints.
 func (p *Planner) executeAndExplainRequest(
-	ctx context.Context,
+	_ context.Context,
 	plan planNode,
-) ([]map[string]any, error) {
+) (map[string]any, error) {
 	executionSuccess := false
 	planExecutions := uint64(0)
 
 	if err := plan.Start(); err != nil {
-		return []map[string]any{
-			{
-				request.ExplainLabel: map[string]any{
-					"executionSuccess": executionSuccess,
-					"executionErrors":  []string{"plan failed to start"},
-					"planExecutions":   planExecutions,
-				},
+		return map[string]any{
+			request.ExplainLabel: map[string]any{
+				"executionSuccess": executionSuccess,
+				"executionErrors":  []string{"plan failed to start"},
+				"planExecutions":   planExecutions,
 			},
 		}, nil
 	}
@@ -363,16 +361,14 @@ func (p *Planner) executeAndExplainRequest(
 	next, err := plan.Next()
 	planExecutions++
 	if err != nil {
-		return []map[string]any{
-			{
-				request.ExplainLabel: map[string]any{
-					"executionSuccess": executionSuccess,
-					"executionErrors": []string{
-						"failure at plan execution count: " + strconv.FormatUint(planExecutions, 10),
-						err.Error(),
-					},
-					"planExecutions": planExecutions,
+		return map[string]any{
+			request.ExplainLabel: map[string]any{
+				"executionSuccess": executionSuccess,
+				"executionErrors": []string{
+					"failure at plan execution count: " + strconv.FormatUint(planExecutions, 10),
+					err.Error(),
 				},
+				"planExecutions": planExecutions,
 			},
 		}, nil
 	}
@@ -388,17 +384,15 @@ func (p *Planner) executeAndExplainRequest(
 		planExecutions++
 
 		if err != nil {
-			return []map[string]any{
-				{
-					request.ExplainLabel: map[string]any{
-						"executionSuccess": executionSuccess,
-						"executionErrors": []string{
-							"failure at plan execution count: " + strconv.FormatUint(planExecutions, 10),
-							err.Error(),
-						},
-						"planExecutions":    planExecutions,
-						"sizeOfResultSoFar": len(docs),
+			return map[string]any{
+				request.ExplainLabel: map[string]any{
+					"executionSuccess": executionSuccess,
+					"executionErrors": []string{
+						"failure at plan execution count: " + strconv.FormatUint(planExecutions, 10),
+						err.Error(),
 					},
+					"planExecutions":    planExecutions,
+					"sizeOfResultSoFar": len(docs),
 				},
 			}, nil
 		}
@@ -414,10 +408,8 @@ func (p *Planner) executeAndExplainRequest(
 	executeExplain["planExecutions"] = planExecutions
 	executeExplain["sizeOfResult"] = len(docs)
 
-	return []map[string]any{
-		{
-			request.ExplainLabel: executeExplain,
-		},
+	return map[string]any{
+		request.ExplainLabel: executeExplain,
 	}, err
 }
 
@@ -426,7 +418,7 @@ func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
 	explainType request.ExplainType,
-) ([]map[string]any, error) {
+) (map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
 		// walks through the plan graph, and outputs the concrete planNodes that should
@@ -436,10 +428,8 @@ func (p *Planner) explainRequest(
 			return nil, err
 		}
 
-		explainResult := []map[string]any{
-			{
-				request.ExplainLabel: explainGraph,
-			},
+		explainResult := map[string]any{
+			request.ExplainLabel: explainGraph,
 		}
 
 		return explainResult, nil
@@ -452,10 +442,8 @@ func (p *Planner) explainRequest(
 			return nil, err
 		}
 
-		explainResult := []map[string]any{
-			{
-				request.ExplainLabel: explainGraph,
-			},
+		explainResult := map[string]any{
+			request.ExplainLabel: explainGraph,
 		}
 
 		return explainResult, nil

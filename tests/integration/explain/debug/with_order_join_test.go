@@ -51,13 +51,15 @@ func TestDebugExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"typeIndexJoin": dataMap{
-										"typeJoinMany": orderTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": dataMap{
+											"typeJoinMany": orderTypeJoinPattern,
+										},
 									},
 								},
 							},
@@ -90,14 +92,16 @@ func TestDebugExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) 
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"orderNode": dataMap{
-									"selectNode": dataMap{
-										"typeIndexJoin": dataMap{
-											"typeJoinMany": orderTypeJoinPattern,
+				ExpectedPatterns: dataMap{
+					"explain": dataMap{
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"orderNode": dataMap{
+										"selectNode": dataMap{
+											"typeIndexJoin": dataMap{
+												"typeJoinMany": orderTypeJoinPattern,
+											},
 										},
 									},
 								},

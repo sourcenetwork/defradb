@@ -37,6 +37,7 @@ var (
 
 	_ MultiNode = (*parallelNode)(nil)
 	_ MultiNode = (*topLevelNode)(nil)
+	_ MultiNode = (*operationNode)(nil)
 )
 
 // type joinNode struct {

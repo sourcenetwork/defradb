@@ -99,11 +99,13 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 						height
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"age":    nil,
-						"height": nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"age":    nil,
+							"height": nil,
+						},
 					},
 				},
 			},

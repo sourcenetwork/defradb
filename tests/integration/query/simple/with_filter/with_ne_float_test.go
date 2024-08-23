@@ -17,28 +17,34 @@ import (
 )
 
 func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with ne float filter",
-		Request: `query {
-					Users(filter: {HeightM: {_ne: 2.1}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 3.2
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_ne: 2.1}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,34 +53,42 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with ne float nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 3.2
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {HeightM: {_ne: null}}) {
 						Name
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"HeightM": 2.1
-				}`,
-				`{
-					"Name": "Bob",
-					"HeightM": 3.2
-				}`,
-				`{
-					"Name": "Fred"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-			},
-			{
-				"Name": "Bob",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}

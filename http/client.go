@@ -349,12 +349,16 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = []error{err}
 		return result
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
 	}
 	err = c.http.setDefaultHeaders(req)
+
+	setDocEncryptionFlagIfNeeded(ctx, req)
+
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
@@ -435,11 +439,11 @@ func (c *Client) Close() {
 	// do nothing
 }
 
-func (c *Client) Root() datastore.RootStore {
+func (c *Client) Rootstore() datastore.Rootstore {
 	panic("client side database")
 }
 
-func (c *Client) Blockstore() datastore.DAGStore {
+func (c *Client) Blockstore() datastore.Blockstore {
 	panic("client side database")
 }
 

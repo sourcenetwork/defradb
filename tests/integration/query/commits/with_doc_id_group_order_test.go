@@ -41,12 +41,14 @@ func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 						docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-					},
-					{
-						"docID": "bae-a839588e-e2e5-5ede-bb91-ffe6871645cb",
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"docID": "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+						},
+						{
+							"docID": "bae-a839588e-e2e5-5ede-bb91-ffe6871645cb",
+						},
 					},
 				},
 			},

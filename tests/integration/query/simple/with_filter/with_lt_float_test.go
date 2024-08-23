@@ -17,28 +17,34 @@ import (
 )
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic lt float filter with greater value",
-		Request: `query {
-					Users(filter: {HeightM: {_lt: 1.820000000001}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_lt: 1.820000000001}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -47,28 +53,34 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic lt float filter with greater int value",
-		Request: `query {
-					Users(filter: {HeightM: {_lt: 2}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Bob",
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_lt: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -77,26 +89,32 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 }
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic lt float filter with null value",
-		Request: `query {
-					Users(filter: {HeightM: {_lt: null}}) {
-						Name
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_lt: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
 		},
-		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

@@ -19,12 +19,10 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -33,50 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
-
-func (db *db) handleMerges(ctx context.Context, sub *event.Subscription) {
-	queue := newMergeQueue()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case msg, ok := <-sub.Message():
-			if !ok {
-				return
-			}
-			merge, ok := msg.Data.(event.Merge)
-			if !ok {
-				continue
-			}
-			go func() {
-				// ensure only one merge per docID
-				queue.add(merge.DocID)
-				defer queue.done(merge.DocID)
-
-				// retry the merge process if a conflict occurs
-				//
-				// conficts occur when a user updates a document
-				// while a merge is in progress.
-				var err error
-				for i := 0; i < db.MaxTxnRetries(); i++ {
-					err = db.executeMerge(ctx, merge)
-					if errors.Is(err, badger.ErrTxnConflict) {
-						continue // retry merge
-					}
-					break // merge success or error
-				}
-
-				if err != nil {
-					log.ErrorContextE(
-						ctx,
-						"Failed to execute merge",
-						err,
-						corelog.Any("Event", merge))
-				}
-			}()
-		}
-	}
-}
 
 func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
@@ -91,7 +45,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	}
 
 	ls := cidlink.DefaultLinkSystem()
-	ls.SetReadStorage(txn.DAGstore().AsIPLDStorage())
+	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
 
 	docID, err := client.NewDocIDFromString(dagMerge.DocID)
 	if err != nil {
@@ -273,11 +227,15 @@ func (mp *mergeProcessor) loadComposites(
 func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
+		var onlyHeads bool
+		if block.IsEncrypted != nil && *block.IsEncrypted {
+			onlyHeads = true
+		}
 		link, err := block.GenerateLink()
 		if err != nil {
 			return err
 		}
-		err = mp.processBlock(ctx, block, link)
+		err = mp.processBlock(ctx, block, link, onlyHeads)
 		if err != nil {
 			return err
 		}
@@ -286,10 +244,12 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
+// If onlyHeads is true, it will skip merging and update only the heads.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
+	onlyHeads bool,
 ) error {
 	crdt, err := mp.initCRDTForType(block.Delta.GetFieldName())
 	if err != nil {
@@ -302,7 +262,7 @@ func (mp *mergeProcessor) processBlock(
 		return nil
 	}
 
-	err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, onlyHeads)
 	if err != nil {
 		return err
 	}
@@ -322,7 +282,7 @@ func (mp *mergeProcessor) processBlock(
 			return err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
+		if err := mp.processBlock(ctx, childBlock, link.Link, onlyHeads); err != nil {
 			return err
 		}
 	}
@@ -409,7 +369,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.Da
 
 	mt := newMergeTarget()
 	for _, cid := range cids {
-		b, err := txn.DAGstore().Get(ctx, cid)
+		b, err := txn.Blockstore().Get(ctx, cid)
 		if err != nil {
 			return mergeTarget{}, err
 		}

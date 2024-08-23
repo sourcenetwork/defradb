@@ -17,30 +17,36 @@ import (
 )
 
 func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic filter(age)",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_eq: 21}}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "John",
-				"Age":  int64(21),
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -49,33 +55,41 @@ func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple query with basic int nil filter",
-		Request: `query {
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Users(filter: {Age: {_eq: null}}) {
 						Name
 						Age
 					}
 				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-				`{
-					"Name": "Fred"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"Name": "Fred",
-				"Age":  nil,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Fred",
+							"Age":  nil,
+						},
+					},
+				},
 			},
 		},
 	}

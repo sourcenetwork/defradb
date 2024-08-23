@@ -41,9 +41,11 @@ func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{
-					{
-						"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+						},
 					},
 				},
 			},
@@ -54,7 +56,9 @@ func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 						_docID
 					}
 				}`,
-				Results: []map[string]any{},
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
 			},
 		},
 	}

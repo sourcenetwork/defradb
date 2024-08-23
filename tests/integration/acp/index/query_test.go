@@ -13,8 +13,9 @@ package test_acp_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	acpUtils "github.com/sourcenetwork/defradb/tests/integration/acp"
 )
 
 func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *testing.T) {
@@ -22,7 +23,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 		Description: "Test acp, querying private doc without identity should not fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         acpUtils.Actor1Identity,
+				Identity:         immutable.Some(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -45,7 +46,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Doc: `
 					{
 						"name": "Islam"
@@ -59,9 +60,9 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Shahzad"},
 					},
 				},
 			},
@@ -76,7 +77,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 		Description: "Test acp, querying private doc with identity should  fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         acpUtils.Actor1Identity,
+				Identity:         immutable.Some(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -99,7 +100,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Doc: `
 					{
 						"name": "Islam"
@@ -107,19 +108,21 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				`,
 			},
 			testUtils.Request{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Request: `
 					query  {
 						Users {
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Islam",
-					},
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Islam",
+						},
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},
@@ -134,7 +137,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 		Description: "Test acp, querying private doc with wrong identity should not fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         acpUtils.Actor1Identity,
+				Identity:         immutable.Some(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -157,7 +160,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: acpUtils.Actor1Identity,
+				Identity: immutable.Some(1),
 				Doc: `
 					{
 						"name": "Islam"
@@ -165,16 +168,18 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				`,
 			},
 			testUtils.Request{
-				Identity: acpUtils.Actor2Identity,
+				Identity: immutable.Some(2),
 				Request: `
 					query  {
 						Users {
 							name
 						}
 					}`,
-				Results: []map[string]any{
-					{
-						"name": "Shahzad",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},

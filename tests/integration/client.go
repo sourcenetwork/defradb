@@ -15,7 +15,11 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
@@ -63,16 +67,16 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state, node *net.Node) (impl clients.Client, err error) {
+func setupClient(s *state, node *node.Node) (impl clients.Client, err error) {
 	switch s.clientType {
 	case HTTPClientType:
 		impl, err = http.NewWrapper(node)
 
 	case CLIClientType:
-		impl, err = cli.NewWrapper(node)
+		impl, err = cli.NewWrapper(node, s.sourcehubAddress)
 
 	case GoClientType:
-		impl = node
+		impl = newGoClientWrapper(node)
 
 	default:
 		err = fmt.Errorf("invalid client type: %v", s.dbt)
@@ -82,4 +86,29 @@ func setupClient(s *state, node *net.Node) (impl clients.Client, err error) {
 		return nil, err
 	}
 	return
+}
+
+type goClientWrapper struct {
+	client.DB
+	peer *net.Peer
+}
+
+func newGoClientWrapper(n *node.Node) *goClientWrapper {
+	return &goClientWrapper{
+		DB:   n.DB,
+		peer: n.Peer,
+	}
+}
+
+func (w *goClientWrapper) Bootstrap(addrs []peer.AddrInfo) {
+	if w.peer != nil {
+		w.peer.Bootstrap(addrs)
+	}
+}
+
+func (w *goClientWrapper) Close() {
+	if w.peer != nil {
+		w.peer.Close()
+	}
+	w.DB.Close()
 }

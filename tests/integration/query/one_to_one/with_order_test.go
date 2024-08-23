@@ -17,65 +17,71 @@ import (
 )
 
 func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation query with simple descending order by sub type",
-		Request: `query {
-			Book(order: {author: {verified: DESC}}) {
-				name
-				rating
-				author {
-					name
-					age
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			//authors
-			1: {
-				// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
 					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  int64(65),
-				},
-			},
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-				"author": map[string]any{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
+			testUtils.Request{
+				Request: `query {
+					Book(order: {author: {verified: DESC}}) {
+						name
+						rating
+						author {
+							name
+							age
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
+						},
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -85,65 +91,71 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 }
 
 func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation query with simple ascending order by sub type",
-		Request: `query {
-			Book(order: {author: {verified: ASC}}) {
-				name
-				rating
-				author {
-					name
-					age
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			//authors
-			1: {
-				// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
 					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-				"author": map[string]any{
-					"name": "Cornelia Funke",
-					"age":  int64(62),
-				},
-			},
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  int64(65),
+			testUtils.Request{
+				Request: `query {
+					Book(order: {author: {verified: ASC}}) {
+						name
+						rating
+						author {
+							name
+							age
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
+							},
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -153,54 +165,60 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 }
 
 func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Relation query with descending order by sub-type's int field, but only parent fields are selected.",
-		Request: `query {
-			Book(order: {author: {age: DESC}}) {
-				name
-				rating
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			//authors
-			1: {
-				// "bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6"
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				// "bae-08519989-280d-5a4d-90b2-915ea06df3c4"
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
 					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-			},
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
+			testUtils.Request{
+				Request: `query {
+					Book(order: {author: {age: DESC}}) {
+						name
+						rating
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -209,54 +227,60 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 }
 
 func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Relation query with ascending order by sub-type's int field, but only parent fields are selected.",
-		Request: `query {
-			Book(order: {author: {age: ASC}}) {
-				name
-				rating
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			//authors
-			1: {
-				// "bae-3bfe0092-e31f-5ebe-a3ba-fa18fac448a6"
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				// "bae-08519989-280d-5a4d-90b2-915ea06df3c4"
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
 					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Theif Lord",
-				"rating": 4.8,
-			},
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
+			testUtils.Request{
+				Request: `query {
+					Book(order: {author: {age: ASC}}) {
+						name
+						rating
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+					},
+				},
 			},
 		},
 	}
