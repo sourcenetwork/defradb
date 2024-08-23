@@ -164,7 +164,7 @@ deps\:mocks:
 
 .PHONY: deps\:playground
 deps\:playground:
-	cd $(PLAYGROUND_DIRECTORY) && npm install && npm run build
+	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
 
 .PHONY: deps
 deps:
