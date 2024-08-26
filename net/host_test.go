@@ -8,22 +8,22 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package node
+package net
 
 import (
+	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestWithDisableP2P(t *testing.T) {
-	options := &Options{}
-	WithDisableP2P(true)(options)
-	assert.Equal(t, true, options.disableP2P)
-}
+func TestSetupHostWithDefaultOptions(t *testing.T) {
+	h, dht, err := setupHost(context.Background(), DefaultOptions())
+	require.NoError(t, err)
 
-func TestWithDisableAPI(t *testing.T) {
-	options := &Options{}
-	WithDisableAPI(true)(options)
-	assert.Equal(t, true, options.disableAPI)
+	require.NotNil(t, h)
+	require.NotNil(t, dht)
+
+	err = h.Close()
+	require.NoError(t, err)
 }

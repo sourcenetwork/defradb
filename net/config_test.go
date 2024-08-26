@@ -34,3 +34,15 @@ func TestWithEnablePubSub(t *testing.T) {
 	WithEnablePubSub(true)(opts)
 	assert.Equal(t, true, opts.EnablePubSub)
 }
+
+func TestWithBootstrapPeers(t *testing.T) {
+	opts := &Options{}
+	WithBootstrapPeers("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ")(opts)
+	assert.ElementsMatch(t, []string{"/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"}, opts.BootstrapPeers)
+}
+
+func TestWithPrivateKey(t *testing.T) {
+	opts := &Options{}
+	WithPrivateKey([]byte("abc"))(opts)
+	assert.Equal(t, []byte("abc"), opts.PrivateKey)
+}
