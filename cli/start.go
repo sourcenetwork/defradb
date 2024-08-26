@@ -16,7 +16,6 @@ import (
 	"syscall"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -101,7 +100,7 @@ func MakeStartCommand() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					opts = append(opts, node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)))
+					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
 

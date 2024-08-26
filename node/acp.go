@@ -13,8 +13,8 @@ package node
 import (
 	"context"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 
 	"github.com/sourcenetwork/defradb/acp"
 )
@@ -36,10 +36,19 @@ type ACPOptions struct {
 	// This is only used for local acp.
 	path string
 
-	signer                   immutable.Option[sdk.TxSigner]
+	signer                   immutable.Option[TxSigner]
 	sourceHubChainID         string
 	sourceHubGRPCAddress     string
 	sourceHubCometRPCAddress string
+}
+
+// TxSigner models an entity capable of providing signatures for a Tx.
+//
+// Effectively, it can be either a secp256k1 cosmos-sdk key or a pointer to a
+// secp256k1 key in a cosmos-sdk like keyring.
+type TxSigner interface {
+	GetAccAddress() string
+	GetPrivateKey() cryptotypes.PrivKey
 }
 
 // DefaultACPOptions returns new options with default values.
@@ -71,7 +80,7 @@ func WithACPPath(path string) ACPOpt {
 // WithKeyring sets the txn signer for Defra to use.
 //
 // It is only required when SourceHub ACP is active.
-func WithTxnSigner(signer immutable.Option[sdk.TxSigner]) ACPOpt {
+func WithTxnSigner(signer immutable.Option[TxSigner]) ACPOpt {
 	return func(o *ACPOptions) {
 		o.signer = signer
 	}
