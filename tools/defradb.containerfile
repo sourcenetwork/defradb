@@ -11,7 +11,7 @@ RUN npm run build
 
 # Stage: build
 # Several steps are involved to enable caching and because of the behavior of COPY regarding directories.
-FROM docker.io/golang:1.21 AS build
+FROM docker.io/golang:1.22 AS build
 WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
