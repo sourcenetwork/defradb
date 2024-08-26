@@ -63,7 +63,7 @@ func TestPushlogWithDialFailure(t *testing.T) {
 		grpc.WithCredentialsBundle(nil),
 	)
 
-	err = p.server.pushLog(ctx, event.Update{
+	err = p.server.pushLog(event.Update{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
@@ -86,7 +86,7 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = p.server.pushLog(ctx, event.Update{
+	err = p.server.pushLog(event.Update{
 		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
@@ -100,11 +100,9 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	db1, p1 := newTestPeer(ctx, t)
 	defer db1.Close()
 	defer p1.Close()
-	p1.Start()
 	db2, p2 := newTestPeer(ctx, t)
 	defer p2.Close()
 	defer db2.Close()
-	p2.Start()
 
 	err := p1.host.Connect(ctx, p2.PeerInfo())
 	require.NoError(t, err)
@@ -139,7 +137,7 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	b, err := db1.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = p1.server.pushLog(ctx, event.Update{
+	err = p1.server.pushLog(event.Update{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),

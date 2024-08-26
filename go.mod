@@ -1,9 +1,9 @@
 module github.com/sourcenetwork/defradb
 
-go 1.21.3
+go 1.22
 
 require (
-	github.com/bits-and-blooms/bitset v1.13.0
+	github.com/bits-and-blooms/bitset v1.14.2
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/cosmos/cosmos-sdk v0.50.9
 	github.com/cosmos/gogoproto v1.7.0
@@ -200,7 +200,6 @@ require (
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
-	github.com/hashicorp/golang-lru/arc/v2 v2.0.7 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect

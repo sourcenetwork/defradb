@@ -16,8 +16,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/query"
-	"github.com/libp2p/go-libp2p/core/event"
-	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/stretchr/testify/require"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -33,55 +31,6 @@ func TestNewServerSimple(t *testing.T) {
 	defer db.Close()
 	defer p.Close()
 	_, err := newServer(p)
-	require.NoError(t, err)
-}
-
-var mockError = errors.New("mock error")
-
-type mockHost struct {
-	host.Host
-}
-
-func (mH *mockHost) EventBus() event.Bus {
-	return &mockBus{}
-}
-
-type mockBus struct {
-	event.Bus
-}
-
-func (mB *mockBus) Emitter(eventType any, opts ...event.EmitterOpt) (event.Emitter, error) {
-	return nil, mockError
-}
-
-func (mB *mockBus) Subscribe(eventType any, opts ...event.SubscriptionOpt) (event.Subscription, error) {
-	return nil, mockError
-}
-
-func TestNewServerWithEmitterError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	p.host = &mockHost{p.host}
-
-	_, err = newServer(p)
 	require.NoError(t, err)
 }
 
@@ -151,10 +100,8 @@ func TestPushLog(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	err := p.Start()
-	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err := db.AddSchema(ctx, `type User {
 		name: String
 		age: Int
 	}`)

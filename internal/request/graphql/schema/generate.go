@@ -420,11 +420,7 @@ func (g *Generator) buildTypes(
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
 
-	for _, c := range collections {
-		// Copy the loop variable before usage within the loop or it
-		// will be reassigned before the thunk is run
-		// TODO remove when Go 1.22
-		collection := c
+	for _, collection := range collections {
 		fieldDescriptions := collection.GetFields()
 		isEmbeddedObject := !collection.Description.Name.HasValue()
 		isQuerySource := len(collection.Description.QuerySources()) > 0
@@ -536,18 +532,14 @@ func (g *Generator) buildTypes(
 // buildMutationInputTypes creates the input object types
 // for collection create and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
-	for _, c := range collections {
-		if !c.Description.Name.HasValue() {
+	for _, collection := range collections {
+		if !collection.Description.Name.HasValue() {
 			// If the definition's collection is empty, this must be a collectionless
 			// schema, in which case users cannot mutate documents through it and we
 			// have no need to build mutation input types for it.
 			continue
 		}
 
-		// Copy the loop variable before usage within the loop or it
-		// will be reassigned before the thunk is run
-		// TODO remove when Go 1.22
-		collection := c
 		mutationInputName := collection.Description.Name.Value() + mutationInputNameSuffix
 
 		// check if mutation input type exists
