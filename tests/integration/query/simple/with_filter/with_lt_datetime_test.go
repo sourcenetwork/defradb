@@ -86,3 +86,52 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithNilDateTimeLTAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic filter with nil value and non-nil filter",
+		Actions: []any{
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name":      "John",
+					"Age":       int64(21),
+					"CreatedAt": "2017-07-23T03:46:56-05:00",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name":      "Bob",
+					"Age":       int64(32),
+					"CreatedAt": "2016-07-23T03:46:56-05:00",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Fred",
+					"Age":  44,
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_lt: "2017-07-23T03:46:56-05:00"}}) {
+						Name
+						Age
+						CreatedAt
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+
+						{
+							"Name":      "Bob",
+							"Age":       int64(32),
+							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

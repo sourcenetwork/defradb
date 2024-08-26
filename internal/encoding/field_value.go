@@ -11,6 +11,8 @@
 package encoding
 
 import (
+	"time"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -80,6 +82,18 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 		return EncodeStringAscending(b, v.Value())
 	}
+	if v, ok := val.Time(); ok {
+		if descending {
+			return EncodeTimeDescending(b, v)
+		}
+		return EncodeTimeAscending(b, v)
+	}
+	if v, ok := val.NillableTime(); ok {
+		if descending {
+			return EncodeTimeDescending(b, v.Value())
+		}
+		return EncodeTimeAscending(b, v.Value())
+	}
 
 	return b
 }
@@ -129,6 +143,18 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalString(v), nil
+	case Time:
+		var v time.Time
+		var err error
+		if descending {
+			b, v, err = DecodeTimeDescending(b)
+		} else {
+			b, v, err = DecodeTimeAscending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalTime(v), nil
 	}
 
 	return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)

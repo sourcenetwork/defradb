@@ -27,6 +27,21 @@ import (
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
+// CborEncodingOptions returns the set of cbor encoding options to be used whenever
+// encoding defra documents.
+//
+// It is the canonical encoding options that ensure consistent serialization of
+// indeterministic datastructures, like Go Maps, plus nano-second precision for
+// time values (not canon).
+func CborEncodingOptions() cbor.EncOptions {
+	// Important: CanonicalEncOptions ensures consistent serialization of
+	// indeterministic datastructures, like Go Maps
+
+	opts := cbor.CanonicalEncOptions()
+	opts.Time = cbor.TimeRFC3339Nano
+	return opts
+}
+
 // This is the main implementation starting point for accessing the internal Document API
 // which provides API access to the various operations available for Documents, i.e. CRUD.
 //
@@ -659,9 +674,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	// Important: CanonicalEncOptions ensures consistent serialization of
-	// indeterministic datastructures, like Go Maps
-	em, err := cbor.CanonicalEncOptions().EncMode()
+	em, err := CborEncodingOptions().EncMode()
 	if err != nil {
 		return nil, err
 	}
