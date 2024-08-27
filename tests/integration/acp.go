@@ -27,7 +27,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -352,7 +351,7 @@ cmdReaderLoop:
 	}
 
 	return []node.ACPOpt{
-		node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)),
+		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
 		node.WithSourceHubChainID(chainID),
 		node.WithSourceHubGRPCAddress(gRpcAddress),
 		node.WithSourceHubCometRPCAddress(rpcAddress),
