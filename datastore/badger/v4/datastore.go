@@ -143,9 +143,9 @@ func NewDatastore(path string, options *Options) (*Datastore, error) {
 	}
 
 	if !opt.InMemory {
-	    opt.Dir = path
-	    opt.ValueDir = path
-    }
+		opt.Dir = path
+		opt.ValueDir = path
+	}
 
 	opt.Logger = &compatLogger{
 		SugaredLogger: *log.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar(),
