@@ -34,7 +34,7 @@ func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 						age: Int @default(int: 40)
 					}

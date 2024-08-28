@@ -79,6 +79,15 @@ type CollectionDescription struct {
 	// parsing is done, to avoid storing an invalid policyID or policy resource
 	// that may not even exist on acp.
 	Policy immutable.Option[PolicyDescription]
+
+	// IsMaterialized defines whether the items in this collection are cached or not.
+	//
+	// If it is true, they will be, if false, the data returned on query will be calculated
+	// at query-time from source.
+	//
+	// At the moment this can only be set to `false` if this collection sources it's data from
+	// another collection/query (is a View).
+	IsMaterialized bool
 }
 
 // QuerySource represents a collection data source from a query.
@@ -179,6 +188,7 @@ type collectionDescription struct {
 	ID              uint32
 	RootID          uint32
 	SchemaVersionID string
+	IsMaterialized  bool
 	Policy          immutable.Option[PolicyDescription]
 	Indexes         []IndexDescription
 	Fields          []CollectionFieldDescription
@@ -198,6 +208,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.ID = descMap.ID
 	c.RootID = descMap.RootID
 	c.SchemaVersionID = descMap.SchemaVersionID
+	c.IsMaterialized = descMap.IsMaterialized
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))

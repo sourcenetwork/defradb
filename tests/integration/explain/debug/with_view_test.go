@@ -13,6 +13,8 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -38,8 +40,8 @@ var viewPattern = dataMap{
 
 func TestDebugExplainRequestWithView(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with view",
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
+		Description:        "Explain (debug) request with view",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -55,7 +57,7 @@ func TestDebugExplainRequestWithView(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,

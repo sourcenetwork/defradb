@@ -34,7 +34,7 @@ func TestView_Simple(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -82,7 +82,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -139,7 +139,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -185,7 +185,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 				`,
 				// `age` is present in SDL but not the query
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 						age: Int
 					}
@@ -237,7 +237,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -287,7 +287,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -299,7 +299,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserViewView {
+					type UserViewView @materialized(if: false) {
 						name: String
 					}
 				`,

@@ -42,7 +42,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -63,7 +63,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorAliasView {
+					type AuthorAliasView @materialized(if: false) {
 						authorName: String
 						books: [BookView]
 					}

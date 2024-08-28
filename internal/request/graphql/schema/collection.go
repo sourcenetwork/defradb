@@ -186,6 +186,7 @@ func collectionFromAstDefinition(
 		return collectionFieldDescriptions[i].Name < collectionFieldDescriptions[j].Name
 	})
 
+	isMaterialized := immutable.None[bool]()
 	for _, directive := range def.Directives {
 		switch directive.Name.Value {
 		case types.IndexDirectiveLabel:
@@ -201,15 +202,35 @@ func collectionFromAstDefinition(
 				return client.CollectionDefinition{}, err
 			}
 			policyDescription = immutable.Some(policy)
+
+		case types.MaterializedDirectiveLabel:
+			if isMaterialized.Value() {
+				continue
+			}
+
+			explicitIsMaterialized := immutable.None[bool]()
+			for _, arg := range directive.Arguments {
+				if arg.Name.Value == types.MaterializedDirectivePropIf {
+					explicitIsMaterialized = immutable.Some(arg.Value.GetValue().(bool))
+					break
+				}
+			}
+
+			if explicitIsMaterialized.HasValue() {
+				isMaterialized = immutable.Some(isMaterialized.Value() || explicitIsMaterialized.Value())
+			} else {
+				isMaterialized = immutable.Some(true)
+			}
 		}
 	}
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
-			Name:    immutable.Some(def.Name.Value),
-			Indexes: indexDescriptions,
-			Policy:  policyDescription,
-			Fields:  collectionFieldDescriptions,
+			Name:           immutable.Some(def.Name.Value),
+			Indexes:        indexDescriptions,
+			Policy:         policyDescription,
+			Fields:         collectionFieldDescriptions,
+			IsMaterialized: !isMaterialized.HasValue() || isMaterialized.Value(),
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,

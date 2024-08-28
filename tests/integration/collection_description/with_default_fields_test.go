@@ -38,7 +38,8 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name: immutable.Some("Users"),
+						Name:           immutable.Some("Users"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								ID:   0,

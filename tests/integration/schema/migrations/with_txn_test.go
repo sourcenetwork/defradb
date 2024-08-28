@@ -52,10 +52,12 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 					{
 						ID:              1,
 						SchemaVersionID: "does not exist",
+						IsMaterialized:  true,
 					},
 					{
 						ID:              2,
 						SchemaVersionID: "also does not exist",
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,

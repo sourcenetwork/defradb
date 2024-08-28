@@ -196,6 +196,14 @@ type Store interface {
 		transform immutable.Option[model.Lens],
 	) ([]CollectionDefinition, error)
 
+	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set all views
+	// will be refreshed.
+	//
+	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
+	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
+	// when making this call.
+	RefreshViews(context.Context, CollectionFetchOptions) error
+
 	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
 	//
 	// There may only be one migration per collection version.  If another migration was registered it will be

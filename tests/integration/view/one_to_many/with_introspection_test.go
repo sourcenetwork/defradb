@@ -43,7 +43,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}

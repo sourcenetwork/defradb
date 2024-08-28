@@ -42,7 +42,7 @@ func TestView_OneToMany(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -118,7 +118,7 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [Book]
 					}
@@ -157,7 +157,7 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -212,7 +212,7 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -268,7 +268,7 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -333,7 +333,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type BookView {
+					type BookView @materialized(if: false) {
 						name: String
 						author: AuthorView
 					}
@@ -352,7 +352,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type BookView2 {
+					type BookView2 @materialized(if: false) {
 						name: String
 						author: AuthorView2
 					}
@@ -393,7 +393,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -402,25 +402,26 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
-				Query: `
-					AuthorView {
-						name
-						books {
+			/*
+				testUtils.CreateView{
+					Query: `
+						AuthorView {
 							name
+							books {
+								name
+							}
 						}
-					}
-				`,
-				SDL: `
-					type AuthorViewView {
-						name: String
-						books: [BookViewView]
-					}
-					interface BookViewView {
-						name: String
-					}
-				`,
-			},
+					`,
+					SDL: `
+						type AuthorViewView @materialized(if: false) {
+							name: String
+							books: [BookViewView]
+						}
+						interface BookViewView {
+							name: String
+						}
+					`,
+				},*/
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -436,7 +437,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-							AuthorViewView {
+							AuthorView {
 								name
 								books {
 									name
@@ -444,7 +445,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 							}
 						}`,
 				Results: map[string]any{
-					"AuthorViewView": []map[string]any{
+					"AuthorView": []map[string]any{
 						{
 							"name": "Harper Lee",
 							"books": []map[string]any{

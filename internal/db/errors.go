@@ -102,6 +102,8 @@ const (
 	errReplicatorNotFound                       string = "replicator not found"
 	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
 	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
+	errColNotMaterialized                       string = "non-materialized collections (only views) are not supported"
+	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
 )
 
 var (
@@ -143,6 +145,8 @@ var (
 	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)
 	ErrCanNotEncryptBuiltinField                = errors.New(errCanNotEncryptBuiltinField)
 	ErrSelfReferenceWithoutSelf                 = errors.New(errSelfReferenceWithoutSelf)
+	ErrColNotMaterialized                       = errors.New(errColNotMaterialized)
+	ErrMaterializedViewAndACPNotSupported       = errors.New(errMaterializedViewAndACPNotSupported)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -657,5 +661,19 @@ func NewErrSelfReferenceWithoutSelf(fieldName string) error {
 	return errors.New(
 		errSelfReferenceWithoutSelf,
 		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrColNotMaterialized(collection string) error {
+	return errors.New(
+		errColNotMaterialized,
+		errors.NewKV("Collection", collection),
+	)
+}
+
+func NewErrMaterializedViewAndACPNotSupported(collection string) error {
+	return errors.New(
+		errMaterializedViewAndACPNotSupported,
+		errors.NewKV("Collection", collection),
 	)
 }

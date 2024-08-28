@@ -35,7 +35,7 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,

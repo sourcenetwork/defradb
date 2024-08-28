@@ -42,7 +42,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}

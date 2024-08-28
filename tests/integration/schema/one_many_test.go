@@ -36,7 +36,8 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 				`,
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name: immutable.Some("User"),
+						Name:           immutable.Some("User"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -54,7 +55,8 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 						},
 					},
 					{
-						Name: immutable.Some("Dog"),
+						Name:           immutable.Some("Dog"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -97,7 +99,8 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 				`,
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name: immutable.Some("User"),
+						Name:           immutable.Some("User"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -142,7 +145,8 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 				`,
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name: immutable.Some("User"),
+						Name:           immutable.Some("User"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -192,7 +196,8 @@ func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name: immutable.Some("User"),
+						Name:           immutable.Some("User"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,

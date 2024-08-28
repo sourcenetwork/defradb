@@ -164,6 +164,8 @@ var globalValidators = []definitionValidator{
 	validateTypeAndKindCompatible,
 	validateFieldNotDuplicated,
 	validateSelfReferences,
+	validateCollectionMaterialized,
+	validateMaterializedHasNoACP,
 }
 
 var createValidators = append(
@@ -973,6 +975,42 @@ func validateSchemaNameNotEmpty(
 	for _, schema := range newState.schemaByName {
 		if schema.Name == "" {
 			return ErrSchemaNameEmpty
+		}
+	}
+
+	return nil
+}
+
+// validateCollectionMaterialized verifies that a non-view collection is materialized.
+//
+// Long term we wish to support this, however for now we block it off.
+func validateCollectionMaterialized(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, col := range newState.collections {
+		if len(col.QuerySources()) == 0 && !col.IsMaterialized {
+			return NewErrColNotMaterialized(col.Name.Value())
+		}
+	}
+
+	return nil
+}
+
+// validateCollectionMaterialized verifies that a materialized view has no ACP policy.
+//
+// Long term we wish to support this, however for now we block it off.
+func validateMaterializedHasNoACP(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, col := range newState.collections {
+		if col.IsMaterialized && len(col.QuerySources()) != 0 && col.Policy.HasValue() {
+			return NewErrMaterializedViewAndACPNotSupported(col.Name.Value())
 		}
 	}
 

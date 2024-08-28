@@ -38,7 +38,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						fullName: String
 					}
 				`,
@@ -111,7 +111,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						fullName: String
 						age: Int
 					}
@@ -196,7 +196,7 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -271,7 +271,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
