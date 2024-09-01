@@ -778,3 +778,50 @@ func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t 
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithUniqueIndex_WithDateTimeField_ShouldIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthday: {_eq: "2000-07-23T03:00:00-00:00"}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						birthday: DateTime @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Fred",
+						"birthday": "2000-07-23T03:00:00-00:00"
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Andy",
+						"birthday": "2001-08-23T03:00:00-00:00"
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

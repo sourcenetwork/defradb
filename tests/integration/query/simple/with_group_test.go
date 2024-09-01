@@ -155,10 +155,10 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 							"CreatedAt": testUtils.MustParseTime("2011-07-23T03:46:56-05:00"),
 						},
 						{
-							"CreatedAt": testUtils.MustParseTime("2013-07-23T03:46:56-05:00"),
+							"CreatedAt": testUtils.MustParseTime("2012-07-23T03:46:56-05:00"),
 						},
 						{
-							"CreatedAt": testUtils.MustParseTime("2012-07-23T03:46:56-05:00"),
+							"CreatedAt": testUtils.MustParseTime("2013-07-23T03:46:56-05:00"),
 						},
 					},
 				},

@@ -11,14 +11,11 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -26,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
-	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -49,15 +45,6 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			var peers []peer.AddrInfo
-			if val := cfg.GetStringSlice("net.peers"); len(val) > 0 {
-				addrs, err := netutils.ParsePeers(val)
-				if err != nil {
-					return errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %s", val), err)
-				}
-				peers = addrs
-			}
-
 			opts := []node.Option{
 				node.WithStorePath(cfg.GetString("datastore.badger.path")),
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
@@ -65,13 +52,13 @@ func MakeStartCommand() *cobra.Command {
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
-				node.WithPeers(peers...),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// net node options
 				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
 				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				net.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
@@ -113,7 +100,7 @@ func MakeStartCommand() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					opts = append(opts, node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)))
+					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
 

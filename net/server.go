@@ -20,7 +20,6 @@ import (
 	"time"
 
 	cid "github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
@@ -48,7 +47,7 @@ type server struct {
 
 	topics map[string]pubsubTopic
 	// replicators is a map from collectionName => peerId
-	replicators map[string]map[peer.ID]struct{}
+	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
@@ -85,7 +84,7 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 		peer:        p,
 		conns:       make(map[libpeer.ID]*grpc.ClientConn),
 		topics:      make(map[string]pubsubTopic),
-		replicators: make(map[string]map[peer.ID]struct{}),
+		replicators: make(map[string]map[libpeer.ID]struct{}),
 	}
 
 	cred := insecure.NewCredentials()
@@ -261,7 +260,7 @@ func (s *server) removePubSubTopic(topic string) error {
 		return nil
 	}
 
-	log.InfoContext(s.peer.ctx, "Removing pubsub topic",
+	log.Info("Removing pubsub topic",
 		corelog.String("PeerID", s.peer.PeerID().String()),
 		corelog.String("Topic", topic))
 
@@ -279,7 +278,7 @@ func (s *server) removeAllPubsubTopics() error {
 		return nil
 	}
 
-	log.InfoContext(s.peer.ctx, "Removing all pubsub topics",
+	log.Info("Removing all pubsub topics",
 		corelog.String("PeerID", s.peer.PeerID().String()))
 
 	s.mu.Lock()
@@ -319,7 +318,8 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
+	_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
+	if err != nil {
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
 	}
 	return nil
@@ -327,14 +327,14 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	log.InfoContext(s.peer.ctx, "Received new pubsub event",
+	log.Info("Received new pubsub event",
 		corelog.String("PeerID", s.peer.PeerID().String()),
 		corelog.Any("SenderId", from),
 		corelog.String("Topic", topic))
 
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
-		log.ErrorContextE(s.peer.ctx, "Failed to unmarshal pubsub message %s", err)
+		log.ErrorE("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
 	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
@@ -348,7 +348,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 
 // pubSubEventHandler logs events from the subscribed DocID topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
-	log.InfoContext(s.peer.ctx, "Received new pubsub event",
+	log.Info("Received new pubsub event",
 		corelog.String("PeerID", s.peer.PeerID().String()),
 		corelog.Any("SenderId", from),
 		corelog.String("Topic", topic),
@@ -386,14 +386,14 @@ func (s *server) updatePubSubTopics(evt event.P2PTopic) {
 	for _, topic := range evt.ToAdd {
 		err := s.addPubSubTopic(topic, true)
 		if err != nil {
-			log.ErrorContextE(s.peer.ctx, "Failed to add pubsub topic.", err)
+			log.ErrorE("Failed to add pubsub topic.", err)
 		}
 	}
 
 	for _, topic := range evt.ToRemove {
 		err := s.removePubSubTopic(topic)
 		if err != nil {
-			log.ErrorContextE(s.peer.ctx, "Failed to remove pubsub topic.", err)
+			log.ErrorE("Failed to remove pubsub topic.", err)
 		}
 	}
 	s.peer.bus.Publish(event.NewMessage(event.P2PTopicCompletedName, nil))
@@ -408,7 +408,7 @@ func (s *server) updateReplicators(evt event.Replicator) {
 		s.peer.host.Peerstore().AddAddrs(evt.Info.ID, evt.Info.Addrs, peerstore.PermanentAddrTTL)
 		// connect to the peer
 		if err := s.peer.Connect(s.peer.ctx, evt.Info); err != nil {
-			log.ErrorContextE(s.peer.ctx, "Failed to connect to replicator peer", err)
+			log.ErrorE("Failed to connect to replicator peer", err)
 		}
 	}
 
@@ -426,7 +426,7 @@ func (s *server) updateReplicators(evt event.Replicator) {
 	}
 	for schema := range evt.Schemas {
 		if _, exists := s.replicators[schema]; !exists {
-			s.replicators[schema] = make(map[peer.ID]struct{})
+			s.replicators[schema] = make(map[libpeer.ID]struct{})
 		}
 		s.replicators[schema][evt.Info.ID] = struct{}{}
 	}
@@ -434,9 +434,8 @@ func (s *server) updateReplicators(evt event.Replicator) {
 
 	if evt.Docs != nil {
 		for update := range evt.Docs {
-			if err := s.pushLog(s.peer.ctx, update, evt.Info.ID); err != nil {
-				log.ErrorContextE(
-					s.peer.ctx,
+			if err := s.pushLog(update, evt.Info.ID); err != nil {
+				log.ErrorE(
 					"Failed to replicate log",
 					err,
 					corelog.Any("CID", update.Cid),

@@ -16,8 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
@@ -28,29 +26,26 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Encstore(),
 		db1.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Rootstore(),
 		db2.Blockstore(),
 		db1.Encstore(),
 		db2.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
-	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n2.Bootstrap(addrs)
+
+	err = n2.Connect(ctx, n1.PeerInfo())
+	require.NoError(t, err)
+
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 }
@@ -63,29 +58,26 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Encstore(),
 		db1.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Rootstore(),
 		db2.Blockstore(),
 		db1.Encstore(),
 		db2.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
-	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n2.Bootstrap(addrs)
+
+	err = n2.Connect(ctx, n1.PeerInfo())
+	require.NoError(t, err)
+
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 
@@ -101,29 +93,26 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Rootstore(),
 		db1.Blockstore(),
 		db1.Encstore(),
 		db1.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Rootstore(),
 		db2.Blockstore(),
 		db1.Encstore(),
 		db2.Events(),
-		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
-	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	n2.Bootstrap(addrs)
+
+	err = n2.Connect(ctx, n1.PeerInfo())
+	require.NoError(t, err)
+
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 

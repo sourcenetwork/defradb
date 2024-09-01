@@ -12,7 +12,6 @@ package event
 
 import (
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -30,8 +29,6 @@ const (
 	UpdateName = Name("update")
 	// PubSubName is the name of the network pubsub event.
 	PubSubName = Name("pubsub")
-	// PeerName is the name of the network connect event.
-	PeerName = Name("peer")
 	// P2PTopicName is the name of the network p2p topic update event.
 	P2PTopicName = Name("p2p-topic")
 	// PeerInfoName is the name of the network peer info event.
@@ -43,10 +40,6 @@ const (
 	// ReplicatorCompletedName is the name of the replicator completed event.
 	ReplicatorCompletedName = Name("replicator-completed")
 )
-
-// Peer is an event that is published when
-// a peer connection has changed status.
-type Peer = event.EvtPeerConnectednessChanged
 
 // PubSub is an event that is published when
 // a pubsub message has been received from a remote peer.

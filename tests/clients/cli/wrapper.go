@@ -544,8 +544,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
-	w.node.Peer.Bootstrap(addrs)
+func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
+	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

@@ -1,3 +1,64 @@
+<a name="v0.13.0"></a>
+## [v0.13.0](https://github.com/sourcenetwork/defradb/compare/v0.12.0...v0.13.0)
+
+> 2024-08-23
+
+DefraDB v0.13 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.12.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Enable indexing for DateTime fields ([#2933](https://github.com/sourcenetwork/defradb/issues/2933))
+* Remove IsObjectArray ([#2859](https://github.com/sourcenetwork/defradb/issues/2859))
+* Handle P2P with SourceHub ACP ([#2848](https://github.com/sourcenetwork/defradb/issues/2848))
+* Implement SourceHub ACP ([#2657](https://github.com/sourcenetwork/defradb/issues/2657))
+* Doc field encryption ([#2817](https://github.com/sourcenetwork/defradb/issues/2817))
+* Doc encryption with symmetric key ([#2731](https://github.com/sourcenetwork/defradb/issues/2731))
+
+### Fixes
+
+* Filter with date and document with nil date value ([#2946](https://github.com/sourcenetwork/defradb/issues/2946))
+* Handle index queries where child found without parent ([#2942](https://github.com/sourcenetwork/defradb/issues/2942))
+* Add ns precision support to time values ([#2940](https://github.com/sourcenetwork/defradb/issues/2940))
+* Panic with different composite-indexed child objects ([#2947](https://github.com/sourcenetwork/defradb/issues/2947))
+* No panic if filter condition on indexed field is empty ([#2929](https://github.com/sourcenetwork/defradb/issues/2929))
+* Create mutation introspection ([#2881](https://github.com/sourcenetwork/defradb/issues/2881))
+* Handle multiple child index joins ([#2867](https://github.com/sourcenetwork/defradb/issues/2867))
+* Enable filtering doc by fields of JSON and Blob types ([#2841](https://github.com/sourcenetwork/defradb/issues/2841))
+* Allow querying of 9th, 19th, 29th, etc collections ([#2819](https://github.com/sourcenetwork/defradb/issues/2819))
+* Support one-many self joins without primary directive ([#2799](https://github.com/sourcenetwork/defradb/issues/2799))
+* Allow primary field declarations on one-many ([#2796](https://github.com/sourcenetwork/defradb/issues/2796))
+
+### Refactoring
+
+* GQL responses ([#2872](https://github.com/sourcenetwork/defradb/issues/2872))
+* Network test sync logic ([#2748](https://github.com/sourcenetwork/defradb/issues/2748))
+* Decouple client.DB from net ([#2768](https://github.com/sourcenetwork/defradb/issues/2768))
+
+### Testing
+
+* Add assert on DocIndex for child documents ([#2871](https://github.com/sourcenetwork/defradb/issues/2871))
+* Fix refreshing of docs in change detector ([#2832](https://github.com/sourcenetwork/defradb/issues/2832))
+* Remove hardcoded test identities ([#2822](https://github.com/sourcenetwork/defradb/issues/2822))
+* Allow assertion of AddSchema results ([#2788](https://github.com/sourcenetwork/defradb/issues/2788))
+
+### Chore
+
+* Bump grpc version ([#2824](https://github.com/sourcenetwork/defradb/issues/2824))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 21-08-2024 ([#2939](https://github.com/sourcenetwork/defradb/issues/2939))
+* Update dependencies (bulk dependabot PRs) 20-08-2024 ([#2932](https://github.com/sourcenetwork/defradb/issues/2932))
+* Update dependencies (bulk dependabot PRs) 12-08-2024 ([#2904](https://github.com/sourcenetwork/defradb/issues/2904))
+* Bump eslint from 8.57.0 to 9.9.0 in /playground ([#2903](https://github.com/sourcenetwork/defradb/issues/2903))
+* Bump golang.org/x/term from 0.22.0 to 0.23.0 ([#2890](https://github.com/sourcenetwork/defradb/issues/2890))
+* Update dependencies (bulk dependabot PRs) 06-08-2024 ([#2889](https://github.com/sourcenetwork/defradb/issues/2889))
+* Update dependencies (bulk dependabot PRs) 18-07-2024 ([#2846](https://github.com/sourcenetwork/defradb/issues/2846))
+* Update dependencies (bulk dependabot PRs) 05-07-2024 ([#2811](https://github.com/sourcenetwork/defradb/issues/2811))
+* Bump github.com/cometbft/cometbft from 0.38.7 to 0.38.8 ([#2794](https://github.com/sourcenetwork/defradb/issues/2794))
+
 <a name="v0.12.0"></a>
 ## [v0.12.0](https://github.com/sourcenetwork/defradb/compare/v0.11.0...v0.12.0)
 

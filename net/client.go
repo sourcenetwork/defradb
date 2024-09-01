@@ -31,7 +31,7 @@ var (
 
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
-func (s *server) pushLog(ctx context.Context, evt event.Update, pid peer.ID) error {
+func (s *server) pushLog(evt event.Update, pid peer.ID) error {
 	body := &pb.PushLogRequest_Body{
 		DocID:      []byte(evt.DocID),
 		Cid:        evt.Cid.Bytes(),
@@ -50,10 +50,10 @@ func (s *server) pushLog(ctx context.Context, evt event.Update, pid peer.ID) err
 		return NewErrPushLog(err)
 	}
 
-	cctx, cancel := context.WithTimeout(ctx, PushTimeout)
+	ctx, cancel := context.WithTimeout(s.peer.ctx, PushTimeout)
 	defer cancel()
 
-	if _, err := client.PushLog(cctx, req); err != nil {
+	if _, err := client.PushLog(ctx, req); err != nil {
 		return NewErrPushLog(
 			err,
 			errors.NewKV("CID", evt.Cid),

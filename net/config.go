@@ -24,6 +24,7 @@ type Options struct {
 	EnableRelay       bool
 	GRPCServerOptions []grpc.ServerOption
 	GRPCDialOptions   []grpc.DialOption
+	BootstrapPeers    []string
 }
 
 // DefaultOptions returns the default net options.
@@ -62,5 +63,12 @@ func WithEnableRelay(enable bool) NodeOpt {
 func WithListenAddresses(addresses ...string) NodeOpt {
 	return func(opt *Options) {
 		opt.ListenAddresses = addresses
+	}
+}
+
+// WithBootstrapPeers sets the bootstrap peer addresses to attempt to connect to.
+func WithBootstrapPeers(peers ...string) NodeOpt {
+	return func(opt *Options) {
+		opt.BootstrapPeers = peers
 	}
 }

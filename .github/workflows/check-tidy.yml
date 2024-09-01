@@ -9,8 +9,8 @@
 # licenses/APL.txt.
 
 # This workflow checks that go mod tidy command we have set for the specific
-# go version is not broken, for example `go mod tidy -go=1.21.3`. This
-# can cause some head scratching at times, so better catch this in the PR.
+# go version is not broken. This can cause some head scratching at times,
+# so better catch this in the PR.
 #
 # Inaddition to that also checks that we are currently in a `tidy` state.
 name: Check Tidy Workflow

@@ -331,7 +331,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreigyxgn2tss7objjzen5s77w6hijpe6wmmz4z3ercpxdcrq7uwnhl4",
+						cid: "bafyreihylh2iftquu5vukm2myjrfbkjnpr5vonlp5s5oo22bfrhddkju6e",
 						docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
 					) {
 						name
