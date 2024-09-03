@@ -1388,8 +1388,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:Udh
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/acp_core v0.2.0 h1:SzNHjLbfY5vJntHBubMN3r22jTL6EDxTdUMbaZeHgx4=
-github.com/sourcenetwork/acp_core v0.2.0/go.mod h1:od7xWFz+y3583xiRuskjVAKbdkQQc7tHEFqourNDAWw=
+github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2 h1:2aengjyUwOeF/R6bY0Bvl8DHxd8aA5rqC72s777zCGw=
+github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2/go.mod h1:vCb2fA1jj1eIyneHT+noM5g10oEuE3UzxDgBzeZZH1Q=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276 h1:TpQDDPfucDgCNH0NVqVUk6SSq6T6G8p9HIocmwZh9Tg=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276/go.mod h1:lxiZTDBw0vheFMqSwX2OvB6RTDI1+/UtVCSU4rpThFM=
 github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
@@ -1400,12 +1400,12 @@ github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd h1:lmp
 github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
-github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 h1:d0jNogSYqMt+dC05tnd+x7lmzEcBHpKoIU5woZSSHFM=
-github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234 h1:8dA9bVC1A0ChJygtsUfNsek3oR0GnwpLoYpmEo4t2mk=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234/go.mod h1:JvZ+G3QTmv7zto3tUBxnV0+fPoev0DkObSwczTm9VJE=
 github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274 h1:llH2tge8H5aw2gT6bCFnXK2ZAYuUS6PjIsZg4nikWc8=
 github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274/go.mod h1:spQwqm6P+KB8MsR9rPkWkncIHGFtqUqPWwjkv1nhfdA=
-github.com/sourcenetwork/zanzi v0.3.1-0.20240814180502-4f29069b6164 h1:WOEabJxSoPkAPnlPGBi9cmWCrC7TPf58KSwY4gdewUQ=
-github.com/sourcenetwork/zanzi v0.3.1-0.20240814180502-4f29069b6164/go.mod h1:c4C+Vd6knqAHX6fl57gb3BROUNC1g3WGGlWROREpC8U=
+github.com/sourcenetwork/zanzi v0.3.1-0.20240606201400-df5f801d0bd4 h1:lO0ZSZ75qdQPp+ZcHEDy+kyHQhnf6ZDB1V5TjQW422w=
+github.com/sourcenetwork/zanzi v0.3.1-0.20240606201400-df5f801d0bd4/go.mod h1:QdM0NfYxQd10WAPUTVAA1X10y5IgZ/CXs3gpD5YxdCE=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=
 github.com/spaolacci/murmur3 v1.1.0/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
