@@ -187,14 +187,15 @@ func collectionFromAstDefinition(
 	})
 
 	for _, directive := range def.Directives {
-		if directive.Name.Value == types.IndexDirectiveLabel {
+		switch directive.Name.Value {
+		case types.IndexDirectiveLabel:
 			index, err := indexFromAST(directive, nil)
 			if err != nil {
 				return client.CollectionDefinition{}, err
 			}
 			indexDescriptions = append(indexDescriptions, index)
-		}
-		if directive.Name.Value == types.PolicySchemaDirectiveLabel {
+
+		case types.PolicySchemaDirectiveLabel:
 			policy, err := policyFromAST(directive)
 			if err != nil {
 				return client.CollectionDefinition{}, err
