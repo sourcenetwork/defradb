@@ -1,0 +1,151 @@
+"""
+Returns the total number of items within the specified child sets. If multiple child
+sets are specified, the combined total of all of them will be returned as a single value.
+"""
+enum commitCountFieldArg {
+    """
+    Child commits in the DAG that contribute to the composition of this commit.
+    Composite commits will link to the field commits for the fields modified during
+    the single mutation.
+    """
+    links
+}
+
+"These are the set of fields supported for grouping by in a commits query."
+enum commitFields {
+    """
+    The name of the field that this commit was committed against. If this is a composite field
+    the value will be null.
+    """
+    fieldName
+    """
+    The id of the field that this commit was committed against. If this is a composite field
+    the value will be "C".
+    """
+    fieldId
+    """
+    Height represents the location of the commit in the DAG. All commits (composite,
+    and field level) on create will have a height of '1', each subsequent local update
+    will increment this by one for the new commits.
+    """
+    height
+    """
+    The unique CID of this commit, and the primary means through which to safely identify
+    a specific commit.
+    """
+    cid
+    "The docID of the document that this commit is for."
+    docID
+    "The ID of the collection that this commit was committed against."
+    collectionID
+}
+
+"""
+An optional set of field-orders which may be used to sort the results. An
+empty set will be ignored.
+"""
+input commitsOrderArg {
+    """
+    The unique CID of this commit, and the primary means through which to safely identify
+    a specific commit.
+    """
+    cid: Ordering
+    "The ID of the collection that this commit was committed against."
+    collectionID: Ordering
+    "The docID of the document that this commit is for."
+    docID: Ordering
+    """
+    Height represents the location of the commit in the DAG. All commits (composite,
+    and field level) on create will have a height of '1', each subsequent local update
+    will increment this by one for the new commits.
+    """
+    height: Ordering
+}
+
+"""
+Commit represents an individual commit to a MerkleCRDT, every mutation to a
+document will result in a new commit per modified field, and one composite
+commit composed of the field level commits and, in the case of an update,
+the prior composite commit.
+"""
+type Commit {
+    """
+    Height represents the location of the commit in the DAG. All commits (composite,
+    and field level) on create will have a height of '1', each subsequent local update
+    will increment this by one for the new commits.
+    """
+    height: Int
+    "The unique CID of this commit, and the primary means through which to safely identify a specific commit."
+    cid: String
+    "The docID of the document that this commit is for."
+    docID: String
+    "The ID of the collection that this commit was committed against."
+    collectionID: Int
+    """
+    The ID of the schema version that this commit was committed against. This ID allows one
+    to determine the state of the data model at the time of commit.
+    """
+    schemaVersionId: String
+    """
+    The name of the field that this commit was committed against. If this is a composite field
+    the value will be null.
+    """
+    fieldName: String
+    """
+    The id of the field that this commit was committed against. If this is a composite field
+    the value will be "C".
+    """
+    fieldId: String
+    "The CBOR encoded representation of the value that is saved as part of this commit."
+    delta: String
+    """
+    Child commits in the DAG that contribute to the composition of this commit.
+    Composite commits will link to the field commits for the fields modified during
+    the single mutation.
+    """
+    links: [CommitLink]
+    """
+    Returns the total number of items within the specified child sets. If multiple child
+    sets are specified, the combined total of all of them will be returned as a single value.
+    """
+    _count(field: commitCountFieldArg): Int
+}
+
+"""
+Child commits in the DAG that contribute to the composition of this commit.
+Composite commits will link to the field commits for the fields modified during
+the single mutation.
+"""
+type CommitLink {
+    "The Name of the field that this linked commit mutated."
+    name: String
+    "The CID of this linked commit."
+    cid: String
+}
+
+type Query {
+    """
+    Returns a set of commits matching any provided criteria. If no arguments are
+    provided all commits in the system will be returned.
+    """
+    commits(
+        cid: ID,
+        depth: Int,
+        docID: ID,
+        fieldId: String,
+        groupBy: [commitFields!],
+        limit: Int,
+        offset: Int,
+        order: commitsOrderArg,
+    ): [Commit]
+    """
+    Returns a set of head commits matching any provided criteria. If no arguments are
+    provided all head commits in the system will be returned. If no 'field' argument
+    is provided only composite commits will be returned. This is equivalent to
+    a 'commits' query with Depth: 1, and a differing 'field' default value.
+    """
+    latestCommits(
+        docID: ID!,
+        fieldId: String,
+    ): [Commit]
+}

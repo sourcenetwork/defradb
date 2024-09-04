@@ -1,0 +1,440 @@
+"The `DateTime` scalar type represents a DateTime. The DateTime is serialized as an RFC 3339 quoted string."
+scalar DateTime
+
+"The `Blob` scalar type represents a binary large object."
+scalar Blob
+
+"The `JSON` scalar type represents a JSON string."
+scalar JSON
+
+"@explain is a directive that can be used to explain the query."
+directive @explain(type: ExplainType!) on QUERY | MUTATION
+
+"@policy is a directive that can be used to link a policy on a collection type."
+directive @policy(id: String!, resource: String!) on OBJECT
+
+"@index is a directive that can be used to create an index on a type."
+directive @index(
+    name: String, 
+    unique: Boolean,
+    fields: [String], 
+    direction: Ordering,
+    directions: [Ordering],
+) on OBJECT | FIELD
+
+"Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister."
+directive @crdt(type: CRDTType!) on FIELD
+
+"Indicate the primary side of a one-to-one relationship."
+directive @primary on FIELD_DEFINITION
+
+"Allows the explicit definition of relationship attributes instead of using the system generated defaults."
+directive @relation(
+    "Explicitly define the name of the relationship instead of using the system generated defaults."
+    name: String!
+) on FIELD_DEFINITION
+
+enum Ordering {
+    "Sort the results in ascending order, e.g. null,1,2,3,a,b,c."
+    ASC
+    "Sort the results in descending order, e.g. c,b,a,3,2,1,null."
+    DESC
+}
+
+"ExplainType is an enum selecting the type of explanation done by the @explain directive."
+enum ExplainType {
+    "Simple explanation - dump of the plan graph."
+    simple
+    "Deeper explanation - insights gathered by executing the plan graph."
+    execute
+    "Like simple explain, but more verbose nodes (no attributes)."
+    debug
+}
+
+"One of the possible CRDT Types."
+enum CRDTType {
+    "Last Write Wins register"
+    lww
+    """
+    Positive-Negative Counter.
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incremeting a float and
+	causing it to overflow the float64 max value will act like a no-op.
+    """
+    pncounter
+    """
+    Positive Counter.
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incremeting a float and
+	causing it to overflow the float64 max value will act like a no-op.
+    """
+    pcounter
+}
+
+input AggregateSelector {
+    """
+    An optional value that caps the number of results to the number provided.
+    A limit of zero will be ignored.
+    """
+    limit: Int
+    """
+    An optional value that skips the given number of results that would have
+    otherwise been returned. Commonly used alongside the 'limit' argument,
+    this argument will still work on its own.
+    """
+    offset: Int
+}
+
+"These are the set of filter operators available for use when filtering on Boolean values."
+input BooleanOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Boolean
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Boolean
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Boolean]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Boolean]
+}
+
+"These are the set of filter operators available for use when filtering on Boolean! values."
+input NotNullBooleanOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Boolean!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Boolean!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Boolean!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Boolean!]
+}
+
+"These are the set of filter operators available for use when filtering on DateTime values."
+input DateTimeOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: DateTime
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: DateTime
+    "The greater than operator - if the target value is greater than the given value the check will pass."
+    _gt: DateTime
+    "The greater than or equal to operator - if the target value is greater than or equal to the given value the check will pass."
+    _ge: DateTime
+    "The less than operator - if the target value is less than the given value the check will pass."
+    _lt: DateTime
+    "The less than or equal to operator - if the target value is less than or equal to the given value the check will pass."
+    _le: DateTime
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [DateTime]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [DateTime]
+}
+
+"These are the set of filter operators available for use when filtering on Float values."
+input FloatOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Float
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Float
+    "The greater than operator - if the target value is greater than the given value the check will pass."
+    _gt: Float
+    "The greater than or equal to operator - if the target value is greater than or equal to the given value the check will pass."
+    _ge: Float
+    "The less than operator - if the target value is less than the given value the check will pass."
+    _lt: Float
+    "The less than or equal to operator - if the target value is less than or equal to the given value the check will pass."
+    _le: Float
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Float]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Float]
+}
+
+"These are the set of filter operators available for use when filtering on Float! values."
+input NotNullFloatOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Float!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Float!
+    "The greater than operator - if the target value is greater than the given value the check will pass."
+    _gt: Float!
+    "The greater than or equal to operator - if the target value is greater than or equal to the given value the check will pass."
+    _ge: Float!
+    "The less than operator - if the target value is less than the given value the check will pass."
+    _lt: Float!
+    "The less than or equal to operator - if the target value is less than or equal to the given value the check will pass."
+    _le: Float!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Float!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Float!]
+}
+
+"These are the set of filter operators available for use when filtering on Int values."
+input IntOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Int
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Int
+    "The greater than operator - if the target value is greater than the given value the check will pass."
+    _gt: Int
+    "The greater than or equal to operator - if the target value is greater than or equal to the given value the check will pass."
+    _ge: Int
+    "The less than operator - if the target value is less than the given value the check will pass."
+    _lt: Int
+    "The less than or equal to operator - if the target value is less than or equal to the given value the check will pass."
+    _le: Int
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Int]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Int]
+}
+
+"These are the set of filter operators available for use when filtering on Int! values."
+input NotNullIntOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Int!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Int!
+    "The greater than operator - if the target value is greater than the given value the check will pass."
+    _gt: Int!
+    "The greater than or equal to operator - if the target value is greater than or equal to the given value the check will pass."
+    _ge: Int!
+    "The less than operator - if the target value is less than the given value the check will pass."
+    _lt: Int!
+    "The less than or equal to operator - if the target value is less than or equal to the given value the check will pass."
+    _le: Int!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Int!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Int!]
+}
+
+"These are the set of filter operators available for use when filtering on String values."
+input StringOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: String
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: String
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [String]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [String]
+    """
+    The like operator - if the target value contains the given sub-string the check will pass. '%'
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _like: String
+    """
+    The not-like operator - if the target value does not contain the given sub-string the check will
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nlike: String
+    """
+    The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _ilike: String
+    """
+    The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nilike: String
+}
+
+"These are the set of filter operators available for use when filtering on String! values."
+input NotNullStringOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: String!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: String!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [String!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [String!]
+    """
+    The like operator - if the target value contains the given sub-string the check will pass. '%'
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _like: String!
+    """
+    The not-like operator - if the target value does not contain the given sub-string the check will
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nlike: String!
+    """
+    The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _ilike: String!
+    """
+    The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nilike: String!
+}
+
+"These are the set of filter operators available for use when filtering on JSON values."
+input JSONOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: JSON
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: JSON
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [JSON]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [JSON]
+    """
+    The like operator - if the target value contains the given sub-string the check will pass. '%'
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _like: JSON
+    """
+    The not-like operator - if the target value does not contain the given sub-string the check will
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nlike: JSON
+    """
+    The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _ilike: JSON
+    """
+    The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nilike: JSON
+}
+
+"These are the set of filter operators available for use when filtering on JSON! values."
+input NotNullJSONOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: JSON!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: JSON!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [JSON!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [JSON!]
+    """
+    The like operator - if the target value contains the given sub-string the check will pass. '%'
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _like: JSON!
+    """
+    The not-like operator - if the target value does not contain the given sub-string the check will
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nlike: JSON!
+    """
+    The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _ilike: JSON!
+    """
+    The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nilike: JSON!
+}
+
+"These are the set of filter operators available for use when filtering on Blob values."
+input BlobOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Blob
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Blob
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Blob]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Blob]
+    """
+    The like operator - if the target value contains the given sub-string the check will pass. '%'
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _like: Blob
+    """
+    The not-like operator - if the target value does not contain the given sub-string the check will
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nlike: Blob
+    """
+    The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _ilike: Blob
+    """
+    The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nilike: Blob
+}
+
+"These are the set of filter operators available for use when filtering on Blob! values."
+input NotNullBlobOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: Blob!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: Blob!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [Blob!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [Blob!]
+    """
+    The like operator - if the target value contains the given sub-string the check will pass. '%'
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _like: Blob!
+    """
+    The not-like operator - if the target value does not contain the given sub-string the check will
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nlike: Blob!
+    """
+    The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
+    """
+    _ilike: Blob!
+    """
+    The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
+    """
+    _nilike: Blob!
+}
+
+"These are the set of filter operators available for use when filtering on ID values."
+input IDOperatorBlock {
+    "The equality operator - if the target matches the value the check will pass."
+    _eq: ID!
+    "The inequality operator - if the target does not matches the value the check will pass."
+    _ne: ID!
+    "The contains operator - if the target value is within the given set the check will pass."
+    _in: [ID!]
+    "The does not contains operator - if the target value is not within the given set the check will pass."
+    _nin: [ID!]
+}

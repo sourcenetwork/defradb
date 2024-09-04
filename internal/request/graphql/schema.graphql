@@ -1,0 +1,354 @@
+{{- range $name, $col := . -}}
+"""
+{{$name}} is a user defined type.
+"""
+type {{$name}} {
+{{- range $field := .GetFields -}}
+    {{- if and (IsViewObject $col) (IsDocIDField $field)}}
+    {{- continue -}}{{/* views do not have docID fields */}}
+    {{- end}}
+    {{- if and $field.Kind.IsArray $field.Kind.IsObject}}
+    {{$field.Name}}(
+        docID: String
+        docIDs: [String!],
+        filter: {{$field.Kind.Underlying}}FilterArg,
+        groupBy: [{{$field.Kind.Underlying}}Field!],
+        limit: Int,
+        offset: Int,
+        order: {{$field.Kind.Underlying}}OrderArg,
+    ): {{$field.Kind.String}}
+    {{- else if $field.Kind.IsObject}}
+    {{$field.Name}}(
+        filter: {{$field.Kind.String}}FilterArg,
+    ): {{$field.Kind.String}}
+    {{- else}}
+    {{$field.Name}}: {{$field.Kind.String}}
+    {{- end}}
+{{- end}}
+{{- if not (IsViewObject $col)}}
+    "Returns the head commit for this document."
+    _version: [Commit]
+    "Indicates as to whether or not this document has been deleted."
+    _deleted: Boolean
+{{- end}}
+    """
+    The group field may be used to return a set of records belonging to the group.
+    It must be used alongside a 'groupBy' argument on the parent selector. It may
+    contain any field on the type being grouped, including those used by the
+    groupBy.
+    """
+    _group(
+        docID: String,
+        docIDs: [String],
+        filter: {{$name}}FilterArg,
+        groupBy: [{{$name}}Field!],
+        limit: Int,
+        offset: Int,
+        order: {{$name}}OrderArg,
+    ): [{{$name}}]
+    """
+    Returns the average of the specified field values within the specified child sets. If
+    multiple fields/sets are specified, the combined average of all items within each set
+    (true average, not an average of averages) will be returned as a single value.
+    """
+    _avg(
+        _group: {{$name}}__NumericSelector,
+{{- range $field := .GetFields -}}
+    {{- if not $field.Kind.IsArray}}
+        {{- continue -}}
+    {{- end}}
+    {{- if $field.Kind.IsObject}}
+        {{$field.Name}}: {{$field.Kind.Underlying}}__NumericSelector,
+    {{- else if (IsNumericField $field)}}
+        {{$field.Name}}: AggregateSelector,
+    {{- end}}
+{{- end}}
+    ): Float
+    """
+    Returns the total number of items within the specified child sets. If multiple child
+    sets are specified, the combined total of all of them will be returned as a single value.
+    """
+    _count(
+        _group: {{$name}}__CountSelector,
+        _version: AggregateSelector,
+{{- range $field := .GetFields -}}
+    {{- if not $field.Kind.IsArray}}
+        {{- continue -}}
+    {{- end}}
+    {{- if $field.Kind.IsObject}}
+        {{$field.Name}}: {{$field.Kind.Underlying}}__CountSelector,
+    {{- else}}
+        {{$field.Name}}: AggregateSelector,
+    {{- end}}
+{{- end}}
+    ): Int
+    """
+    Returns the total sum of the specified field values within the specified child sets. If
+    multiple fields/sets are specified, the combined sum of all of them will be returned as
+    a single value.
+    """
+    _sum(
+        _group: {{$name}}__NumericSelector,
+{{- range $field := .GetFields -}}
+    {{- if not $field.Kind.IsArray}}
+        {{- continue -}}
+    {{- end}}
+    {{- if $field.Kind.IsObject}}
+        {{$field.Name}}: {{$field.Kind.Underlying}}__NumericSelector,
+    {{- else if (IsNumericField $field)}}
+        {{$field.Name}}: AggregateSelector,
+    {{- end}}
+{{- end}} 
+    ): Float
+}
+
+enum {{$name}}Field {
+{{- range $field := .GetFields -}}
+    {{if and (IsViewObject $col) (IsDocIDField $field)}}
+    {{- continue -}}{{/* views do not have docID fields */}}
+    {{end}}
+    {{$field.Name}}
+{{- end}}
+{{- if not (IsViewObject $col)}}
+    _version
+    _deleted
+{{- end}}
+}
+
+enum {{$name}}NumericFieldsArg {
+    _count
+    _sum
+    _avg
+{{- range $field := .GetFields -}}
+    {{- if IsNumericField $field}}
+    {{$field.Name}}
+    {{- end}}
+{{- end}}
+}
+
+input {{$name}}__CountSelector {
+    """
+    An optional filter for this aggregate, only documents matching the given criteria
+    will be aggregated.
+    """
+    filter: {{$name}}FilterArg
+    """
+    An optional value that caps the number of results to the number provided.
+    A limit of zero will be ignored.
+    """
+    limit: Int
+    """
+    An optional value that skips the given number of results that would have
+    otherwise been returned. Commonly used alongside the 'limit' argument,
+    this argument will still work on its own.
+    """
+    offset: Int
+}
+
+input {{$name}}__NumericSelector {
+    field: {{$name}}NumericFieldsArg!
+    """
+    An optional filter for this aggregate, only documents matching the given criteria
+    will be aggregated.
+    """
+    filter: {{$name}}FilterArg
+    """
+    An optional value that caps the number of results to the number provided.
+    A limit of zero will be ignored.
+    """
+    limit: Int
+    """
+    An optional value that skips the given number of results that would have
+    otherwise been returned. Commonly used alongside the 'limit' argument,
+    this argument will still work on its own.
+    """
+    offset: Int
+    """
+    An optional set of field-orders which may be used to sort the results. An
+    empty set will be ignored.
+    """
+    order: {{$name}}OrderArg
+}
+
+"Input for ordering {{$name}} documents."
+input {{$name}}OrderArg {
+{{- range $field := .GetFields -}}
+    {{- if and $field.Kind.IsObject (not $field.Kind.IsArray)}}
+    {{$field.Name}}: {{$field.Kind.String}}OrderArg
+    {{- else}}
+    {{$field.Name}}: Ordering
+    {{- end}}
+{{- end}}
+}
+
+"Input for filtering {{$name}} documents."
+input {{$name}}FilterArg {
+    "The and operator - all checks within this clause must pass in order for this check to pass."
+    _and: [{{$name}}FilterArg]
+    "The negative operator - this check will only pass if all checks within it fail."
+    _not: {{$name}}FilterArg
+    "The or operator - only one check within this clause must pass in order for this check to pass."
+    _or: [{{$name}}FilterArg]
+{{- range $field := .GetFields -}}
+    {{- if and $field.Kind.IsObject $field.Kind.IsArray }}
+    {{$field.Name}}: {{$field.Kind.Underlying}}FilterArg
+    {{- else if $field.Kind.IsObject}}
+    {{$field.Name}}: {{$field.Kind.String}}FilterArg
+    {{- else}}
+    {{$field.Name}}: {{FieldOperatorBlock $field}}
+    {{- end}}
+{{- end}}
+}
+
+{{if not (IsViewObject $col)}}
+"Input for mutating {{$name}} documents."
+input {{$name}}MutationInputArg { 
+{{- range $field := .GetFields -}}
+    {{if IsSystemField $field}}
+    {{- continue -}}
+    {{end}}
+    {{- if and $field.Kind.IsObject $field.Kind.IsArray}}
+    {{$field.Name}}: [ID]
+    {{- else if $field.Kind.IsObject}}
+    {{$field.Name}}: ID
+    {{- else}}
+    {{$field.Name}}: {{$field.Kind.String}}
+    {{- end}}
+{{- end}}
+}
+
+enum {{$name}}ExplicitField {
+{{- range $field := .GetFields -}}
+    {{if IsSystemField $field}}
+    {{- continue -}}
+    {{end}}
+    {{$field.Name}}
+{{- end}}
+}
+{{end}}
+{{- end}}
+
+extend type Query {
+{{- range $name, $col := .}}
+    {{$name}}(
+        cid: String
+        docID: String
+        docIDs: [String!]
+        filter: {{$name}}FilterArg
+        groupBy: [{{$name}}Field!]
+        limit: Int
+        offset: Int
+        order: {{$name}}OrderArg
+        showDeleted: Boolean
+    ): [{{$name}}]
+{{- end}}
+    """
+    Returns the average of the specified field values within the specified child sets. If
+    multiple fields/sets are specified, the combined average of all items within each set
+    (true average, not an average of averages) will be returned as a single value.
+    """
+    _avg(
+{{- range $name, $col := .}}
+        {{$name}}: {{$name}}__NumericSelector,
+{{- end}}
+    ): Float
+    """
+    Returns the total number of items within the specified child sets. If multiple child
+    sets are specified, the combined total of all of them will be returned as a single value.
+    """
+    _count(
+{{- range $name, $col := .}}
+        {{$name}}: {{$name}}__CountSelector,
+{{- end}}
+    ): Int
+    """
+    Returns the total sum of the specified field values within the specified child sets. If
+    multiple fields/sets are specified, the combined sum of all of them will be returned as
+    a single value.
+    """
+    _sum(
+{{- range $name, $col := .}}
+        {{$name}}: {{$name}}__NumericSelector,
+{{- end}}
+    ): Float
+}
+
+extend type Mutation {
+{{- range $name, $col := . -}}
+    {{if IsViewObject $col}}
+    {{- continue -}}
+    {{end}}
+    "Creates one or more documents of this type using the data provided."
+    create_{{$name}}(
+        "Create a {{$name}} document"
+        input: {{$name}}MutationInputArg,
+        "Create many {{$name}} documents"
+        inputs: [{{$name}}MutationInputArg],
+        """
+        Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
+        DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
+        use it to encrypt all fields' values.
+        """
+        encrypt: Boolean,
+        """
+        An optional list of individual fields that should be encrypted. For every field
+        in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
+        If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
+        be encrypted with the same key.
+        """
+        encryptFields: [{{$name}}ExplicitField!],
+    ): [{{$name}}]
+    """
+    Updates documents in this collection using the data provided. Only documents
+    matching any provided criteria will be updated, if no criteria are provided
+    the update will be applied to all documents in the collection.
+    """
+    update_{{$name}}(
+        "Update field values"
+        input: {{$name}}MutationInputArg,
+        """
+        An optional docID value that will limit the update to the document with
+        a matching docID. If no matching document is found, the operation will
+        succeed, but no documents will be updated.
+        """
+        docID: ID,
+        """
+        An optional set of docID values that will limit the update to documents
+        with a matching docID. If no matching documents are found, the operation will
+        succeed, but no documents will be updated.
+        """
+        docIDs: [ID],
+        """
+        An optional filter for this update that will limit the update to the documents
+        matching the given criteria. If no matching documents are found, the operation
+        will succeed, but no documents will be updated.
+        """
+        filter: {{$name}}FilterArg,
+    ): [{{$name}}]
+    """
+    Deletes documents in this collection matching any provided criteria. If no
+    criteria are provided all documents in the collection will be deleted.
+    """
+    delete_{{$name}}(
+        """
+        An optional docID value that will limit the delete to the document with
+        a matching docID. If no matching document is found, the operation will
+        succeed, but no documents will be deleted.
+        """
+        docID: ID,
+        """
+        An optional set of docID values that will limit the delete to documents with
+        a matching docID. If no matching documents are found, the operation will
+        succeed, but no documents will be deleted. If an empty set is provided, no
+        documents will be deleted.
+        """
+        docIDs: [ID],
+        """
+        An optional filter for this delete that will limit the delete to documents
+        matching the given criteria. If no matching documents are found, the operation
+        will succeed, but no documents will be deleted.
+        """
+        filter: {{$name}}FilterArg,
+    ): [{{$name}}]
+{{- end}}
+}
