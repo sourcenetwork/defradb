@@ -257,15 +257,15 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"published": map[string]any{
-								"name": "Theif Lord",
-							},
-						},
-						{
 							"name": "John Grisham",
 							"published": map[string]any{
 								"name": "Painted House",
+							},
+						},
+						{
+							"name": "Cornelia Funke",
+							"published": map[string]any{
+								"name": "Theif Lord",
 							},
 						},
 					},
@@ -437,7 +437,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
 						},
 					},
 				},

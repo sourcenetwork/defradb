@@ -94,20 +94,20 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"name": "New Publisher",
-							"printed": map[string]any{
-								"name": "Theif Lord",
-								"author": map[string]any{
-									"name": "Cornelia Funke",
-								},
-							},
-						},
-						{
 							"name": "Old Publisher",
 							"printed": map[string]any{
 								"name": "Painted House",
 								"author": map[string]any{
 									"name": "John Grisham",
+								},
+							},
+						},
+						{
+							"name": "New Publisher",
+							"printed": map[string]any{
+								"name": "Theif Lord",
+								"author": map[string]any{
+									"name": "Cornelia Funke",
 								},
 							},
 						},
@@ -302,20 +302,20 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"name": "New Publisher",
-							"printed": map[string]any{
-								"name": "Theif Lord",
-								"author": map[string]any{
-									"name": "Cornelia Funke",
-								},
-							},
-						},
-						{
 							"name": "Old Publisher",
 							"printed": map[string]any{
 								"name": "Painted House",
 								"author": map[string]any{
 									"name": "John Grisham",
+								},
+							},
+						},
+						{
+							"name": "New Publisher",
+							"printed": map[string]any{
+								"name": "Theif Lord",
+								"author": map[string]any{
+									"name": "Cornelia Funke",
 								},
 							},
 						},

@@ -25,7 +25,8 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Authors
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
 			testUtils.ExplainRequest{
@@ -163,6 +164,8 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
@@ -223,6 +226,8 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
@@ -287,6 +292,8 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 

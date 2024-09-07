@@ -18,7 +18,7 @@ import (
 )
 
 func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
-	user1ID := "bae-ec56fb02-88fb-5113-b4d8-1b9be5f2217b"
+	user1ID := "bae-93b58e20-b3e1-55b9-b5b8-0617fabe710e"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation, self referencing from primary",
@@ -64,14 +64,14 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
+							"name": "John",
+							"boss": nil,
+						},
+						{
 							"name": "Fred",
 							"boss": map[string]any{
 								"name": "John",
 							},
-						},
-						{
-							"name": "John",
-							"boss": nil,
 						},
 					},
 				},
@@ -89,14 +89,14 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name":      "Fred",
-							"underling": nil,
-						},
-						{
 							"name": "John",
 							"underling": map[string]any{
 								"name": "Fred",
 							},
+						},
+						{
+							"name":      "Fred",
+							"underling": nil,
 						},
 					},
 				},
@@ -108,7 +108,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
-	user1ID := "bae-12a7f594-f02e-53b7-81c4-aba27b2e7ea7"
+	user1ID := "bae-a86ab69e-a2be-54b9-b66e-4e30d6778ffe"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation, self referencing from secondary",
@@ -155,14 +155,14 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "John",
-							"boss": nil,
-						},
-						{
 							"name": "Fred",
 							"boss": map[string]any{
 								"name": "John",
 							},
+						},
+						{
+							"name": "John",
+							"boss": nil,
 						},
 					},
 				},
@@ -180,14 +180,14 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
+							"name":      "Fred",
+							"underling": nil,
+						},
+						{
 							"name": "John",
 							"underling": map[string]any{
 								"name": "Fred",
 							},
-						},
-						{
-							"name":      "Fred",
-							"underling": nil,
 						},
 					},
 				},

@@ -242,12 +242,6 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 						{
 							"book": []map[string]any{
 								{
-									"name": "A Time for Mercy",
-									"publisher": map[string]any{
-										"yearOpened": int64(2013),
-									},
-								},
-								{
 									"name":      "The Associate",
 									"publisher": nil,
 								},
@@ -261,6 +255,12 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 									"name": "Painted House",
 									"publisher": map[string]any{
 										"yearOpened": int64(1995),
+									},
+								},
+								{
+									"name": "A Time for Mercy",
+									"publisher": map[string]any{
+										"yearOpened": int64(2013),
 									},
 								},
 								{

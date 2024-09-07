@@ -20,8 +20,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
@@ -36,69 +34,24 @@ func (db *db) createCollections(
 		return nil, err
 	}
 
-	txn := mustGetContextTxn(ctx)
-
+	newSchemas := make([]client.SchemaDescription, len(newDefinitions))
 	for i, def := range newDefinitions {
-		schemaByName := map[string]client.SchemaDescription{}
-		for _, existingDefinition := range existingDefinitions {
-			schemaByName[existingDefinition.Schema.Name] = existingDefinition.Schema
-		}
-		for _, newDefinition := range newDefinitions {
-			schemaByName[newDefinition.Schema.Name] = newDefinition.Schema
-		}
-
-		schema, err := description.CreateSchemaVersion(ctx, txn, def.Schema)
-		if err != nil {
-			return nil, err
-		}
-		newDefinitions[i].Description.SchemaVersionID = schema.VersionID
-		newDefinitions[i].Schema = schema
+		newSchemas[i] = def.Schema
 	}
 
-	for i, def := range newDefinitions {
-		if len(def.Description.Fields) == 0 {
-			// This is a schema-only definition, we should not create a collection for it
-			continue
-		}
+	err = setSchemaIDs(newSchemas)
+	if err != nil {
+		return nil, err
+	}
 
-		colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
-		if err != nil {
-			return nil, err
-		}
-		colID, err := colSeq.next(ctx)
-		if err != nil {
-			return nil, err
-		}
+	for i := range newDefinitions {
+		newDefinitions[i].Description.SchemaVersionID = newSchemas[i].VersionID
+		newDefinitions[i].Schema = newSchemas[i]
+	}
 
-		fieldSeq, err := db.getSequence(ctx, core.NewFieldIDSequenceKey(uint32(colID)))
-		if err != nil {
-			return nil, err
-		}
-
-		newDefinitions[i].Description.ID = uint32(colID)
-		newDefinitions[i].Description.RootID = newDefinitions[i].Description.ID
-
-		for _, localField := range def.Description.Fields {
-			var fieldID uint64
-			if localField.Name == request.DocIDFieldName {
-				// There is no hard technical requirement for this, we just think it looks nicer
-				// if the doc id is at the zero index.  It makes it look a little nicer in commit
-				// queries too.
-				fieldID = 0
-			} else {
-				fieldID, err = fieldSeq.next(ctx)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			for j := range def.Description.Fields {
-				if def.Description.Fields[j].Name == localField.Name {
-					newDefinitions[i].Description.Fields[j].ID = client.FieldID(fieldID)
-					break
-				}
-			}
-		}
+	err = db.setCollectionIDs(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
 	}
 
 	err = db.validateNewCollection(
@@ -116,7 +69,14 @@ func (db *db) createCollections(
 		return nil, err
 	}
 
+	txn := mustGetContextTxn(ctx)
+
 	for _, def := range newDefinitions {
+		_, err := description.CreateSchemaVersion(ctx, txn, def.Schema)
+		if err != nil {
+			return nil, err
+		}
+
 		if len(def.Description.Fields) == 0 {
 			// This is a schema-only definition, we should not create a collection for it
 			returnDescriptions = append(returnDescriptions, def)

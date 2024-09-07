@@ -24,6 +24,9 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
+
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3BookDocuments(),
 
@@ -75,6 +78,8 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 

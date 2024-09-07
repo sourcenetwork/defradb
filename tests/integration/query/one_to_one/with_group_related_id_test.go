@@ -71,7 +71,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-077b5e8d-5a86-5ae7-a321-ac7e423bb260",
+							"author_id": "bae-fc7bf08d-9117-5acd-8b49-bc7431b1b238",
 							"_group": []map[string]any{
 								{
 									"name": "Painted House",
@@ -79,7 +79,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 							},
 						},
 						{
-							"author_id": "bae-cfee1ed9-ede8-5b80-a6fa-78c727a076ac",
+							"author_id": "bae-f2dcf043-d24d-5885-9a0a-60196094c782",
 							"_group": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
@@ -147,10 +147,10 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+							"author_id": "bae-23a33112-7345-52f1-8816-0481747645f2",
 						},
 						{
-							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
 						},
 					},
 				},
@@ -216,13 +216,13 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+							"author_id": "bae-23a33112-7345-52f1-8816-0481747645f2",
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
 						},
 						{
-							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
@@ -291,7 +291,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-bb4d6e89-e8b4-5eec-bfeb-6f7aa4840950",
+							"author_id": "bae-b6aedb41-3a00-54dd-9a84-78d0654dbc42",
 							"_group": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
@@ -299,7 +299,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 							},
 						},
 						{
-							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
 							"_group": []map[string]any{
 								{
 									"name": "Painted House",
@@ -373,7 +373,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-3c308f94-dc9e-5262-b0ce-ef4e8e545820",
+							"author_id": "bae-23a33112-7345-52f1-8816-0481747645f2",
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
@@ -384,7 +384,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 							},
 						},
 						{
-							"author_id": "bae-420e72a6-e0c6-5a06-a958-2cc7adb7b3d0",
+							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},

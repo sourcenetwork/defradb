@@ -20,8 +20,8 @@ import (
 )
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	bookID := "bae-dfce6a1a-27fa-5dde-bea7-44df2dffac1a"
+	author1ID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	bookID := "bae-89d64ba1-44e3-5d75-a610-7226077ece48"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using alias relation id from single side",
@@ -66,8 +66,8 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 }
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	author2ID := "bae-a34d8759-e549-5083-8ba6-e04038c41caa"
+	author1ID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using alias relation id from secondary side",
@@ -112,7 +112,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide(t *test
 }
 
 func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
+	author1ID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 	invalidLenSubID := "35953ca-518d-9e6b-9ce6cd00eff5"
 	invalidAuthorID := "bae-" + invalidLenSubID
 
@@ -153,7 +153,7 @@ func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *
 }
 
 func TestMutationUpdateOneToOne_InvalidAliasRelationNameToLinkFromSecondarySide_Error(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
+	author1ID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 	invalidAuthorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
 
 	test := testUtils.TestCase{
@@ -193,8 +193,8 @@ func TestMutationUpdateOneToOne_InvalidAliasRelationNameToLinkFromSecondarySide_
 }
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	author2ID := "bae-a34d8759-e549-5083-8ba6-e04038c41caa"
+	author1ID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation alias name from secondary side, with a wrong field.",

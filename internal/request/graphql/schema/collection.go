@@ -371,8 +371,8 @@ func fieldsFromAST(
 	schemaFieldDescriptions := []client.SchemaFieldDescription{}
 	collectionFieldDescriptions := []client.CollectionFieldDescription{}
 
-	if kind.IsObject() {
-		relationName, err := getRelationshipName(field, hostObjectName, kind.Underlying())
+	if namedKind, ok := kind.(*client.NamedKind); ok {
+		relationName, err := getRelationshipName(field, hostObjectName, namedKind.Name)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -544,7 +544,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
 			default:
-				return client.ObjectArrayKind(astTypeVal.Type.(*ast.Named).Name.Value), nil
+				return client.NewNamedKind(astTypeVal.Type.(*ast.Named).Name.Value, true), nil
 			}
 		}
 
@@ -567,7 +567,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		case typeJSON:
 			return client.FieldKind_NILLABLE_JSON, nil
 		default:
-			return client.ObjectKind(astTypeVal.Name.Value), nil
+			return client.NewNamedKind(astTypeVal.Name.Value, false), nil
 		}
 
 	case *ast.NonNull:
@@ -644,7 +644,12 @@ func finalizeRelations(
 		}
 
 		for _, field := range definition.Description.Fields {
-			if !field.Kind.HasValue() || !field.Kind.Value().IsObject() || field.Kind.Value().IsArray() {
+			if !field.Kind.HasValue() {
+				continue
+			}
+
+			namedKind, ok := field.Kind.Value().(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
 				// We only need to process the primary side of a relation here, if the field is not a relation
 				// or if it is an array, we can skip it.
 				continue
@@ -654,7 +659,7 @@ func finalizeRelations(
 			for _, otherDef := range definitions {
 				// Check the 'other' schema name, there can only be a one-one mapping in an SDL
 				// appart from embedded, which will be schema only.
-				if otherDef.Schema.Name == field.Kind.Value().Underlying() {
+				if otherDef.Schema.Name == namedKind.Name {
 					otherColDefinition = immutable.Some(otherDef)
 					break
 				}

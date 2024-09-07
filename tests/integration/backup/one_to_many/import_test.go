@@ -88,14 +88,14 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				ImportContent: `{
 					"Book":[
 						{
-							"_docID":"bae-8fc3d148-869b-5629-ae22-5423c73f709b",
-							"_docIDNew":"bae-33c136bd-4375-54a0-81ff-54ca560c7bb8",
+							"_docID":"bae-4a28c746-ccbf-5511-91a9-391036f42f80",
+							"_docIDNew":"bae-d821f684-47de-5b63-b9c7-6eccec368e52",
 							"author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
 							"name":"Game of chains"
 						},
 						{
-							"_docID":"bae-45c92e9c-4d31-5e96-8bd7-3d532734e117",
-							"_docIDNew":"bae-3ca9a4c3-6240-5e86-a00f-9590d2f2ecf3",
+							"_docID":"bae-8c8be5c6-d26b-50d4-9378-2acd5fe6959d",
+							"_docIDNew":"bae-c94e52f8-6e91-522c-b6a6-38346a06b3d2",
 							"author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
 							"name":"John and the sourcerers' stone"
 						}
@@ -150,13 +150,13 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name": "Game of chains",
+							"name": "John and the sourcerers' stone",
 							"author": map[string]any{
 								"_docID": "bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
 							},
 						},
 						{
-							"name": "John and the sourcerers' stone",
+							"name": "Game of chains",
 							"author": map[string]any{
 								"_docID": "bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
 							},

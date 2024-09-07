@@ -32,6 +32,7 @@ const (
 	errCanNotNormalizeValue                string = "can not normalize value"
 	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
+	errFailedToParseKind                   string = "failed to parse kind"
 )
 
 // Errors returnable from this package.
@@ -57,6 +58,7 @@ var (
 	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
 	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
 	ErrCollectionNotFound                  = errors.New(errCollectionNotFound)
+	ErrFailedToParseKind                   = errors.New(errFailedToParseKind)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -164,4 +166,11 @@ func NewErrCRDTKindMismatch(cType, kind string) error {
 
 func NewErrInvalidJSONPaylaod(payload string) error {
 	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
+}
+
+func NewErrFailedToParseKind(kind []byte) error {
+	return errors.New(
+		errCRDTKindMismatch,
+		errors.NewKV("Kind", kind),
+	)
 }

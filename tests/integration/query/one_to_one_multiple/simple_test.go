@@ -302,21 +302,21 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name": "Painted House",
-							"publisher": map[string]any{
-								"name": "Old Publisher",
-							},
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-						},
-						{
 							"name": "Theif Lord",
 							"publisher": map[string]any{
 								"name": "New Publisher",
 							},
 							"author": map[string]any{
 								"name": "Cornelia Funke",
+							},
+						},
+						{
+							"name": "Painted House",
+							"publisher": map[string]any{
+								"name": "Old Publisher",
+							},
+							"author": map[string]any{
+								"name": "John Grisham",
 							},
 						},
 					},

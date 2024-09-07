@@ -67,10 +67,10 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name": "Game of chains",
+							"name": "John and the sourcerers' stone",
 						},
 						{
-							"name": "John and the sourcerers' stone",
+							"name": "Game of chains",
 						},
 					},
 				},
@@ -88,8 +88,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				ImportContent: `{
 					"Book":[
 						{
-							"_docID":"bae-f33a7110-fb6f-57aa-9501-df0111427315",
-							"_docIDNew":"bae-c9c1a385-afce-5ef7-8b98-9369b157fd97",
+							"_docID":"bae-af59fdc4-e495-5fd3-a9a6-386249aafdbb",
+							"_docIDNew":"bae-d374c406-c6ea-51cd-9e9b-dd44a97b499c",
 							"author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
 							"name":"John and the sourcerers' stone"
 						}
@@ -171,8 +171,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 							"name":"Game of chains"
 						},
 						{
-							"_docID":"bae-f33a7110-fb6f-57aa-9501-df0111427315",
-							"_docIDNew":"bae-c9c1a385-afce-5ef7-8b98-9369b157fd97",
+							"_docID":"bae-af59fdc4-e495-5fd3-a9a6-386249aafdbb",
+							"_docIDNew":"bae-d374c406-c6ea-51cd-9e9b-dd44a97b499c",
 							"author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f",
 							"name":"John and the sourcerers' stone"
 						}
@@ -219,7 +219,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				`,
 			},
 			testUtils.BackupImport{
-				ImportContent: `{"Book":[{"_docID":"bae-236c14bd-4621-5d43-bc03-4442f3b8719e","_docIDNew":"bae-6dbb3738-d3db-5121-acee-6fbdd97ff7a8","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","name":"John and the sourcerers' stone"},{"_docID":"bae-ffba7007-d4d4-5630-be53-d66f56da57fd","_docIDNew":"bae-ffba7007-d4d4-5630-be53-d66f56da57fd","name":"Game of chains"}],"User":[{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"},{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"}]}`,
+				ImportContent: `{"Book":[{"_docID":"bae-236c14bd-4621-5d43-bc03-4442f3b8719e","_docIDNew":"bae-6dbb3738-d3db-5121-acee-6fbdd97ff7a8","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","name":"John and the sourcerers' stone"},{"_docID":"bae-0aa10275-4f6e-5b38-9915-5664dd4c7802","_docIDNew":"bae-0aa10275-4f6e-5b38-9915-5664dd4c7802","name":"Game of chains"}],"User":[{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"},{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"}]}`,
 			},
 			testUtils.Request{
 				Request: `
@@ -237,6 +237,10 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
+							"name":   "Game of chains",
+							"author": nil,
+						},
+						{
 							"name": "John and the sourcerers' stone",
 							"author": map[string]any{
 								"name": "John",
@@ -244,10 +248,6 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 									"name": "John and the sourcerers' stone",
 								},
 							},
-						},
-						{
-							"name":   "Game of chains",
-							"author": nil,
 						},
 					},
 				},

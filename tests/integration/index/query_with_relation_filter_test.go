@@ -56,8 +56,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "Shahzad"},
+						{"name": "Islam"},
 						{"name": "Keenan"},
 					},
 				},
@@ -124,8 +124,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "Shahzad"},
+						{"name": "Islam"},
 						{"name": "Keenan"},
 					},
 				},
@@ -204,8 +204,8 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Shahzad"},
 						{"name": "John"},
+						{"name": "Shahzad"},
 						{"name": "Fred"},
 					},
 				},
@@ -490,11 +490,11 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 							"devices": []map[string]any{
 								{
 									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
+									"manufacturer": "Sony",
 								},
 								{
 									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"manufacturer": "The Proclaimers",
 								},
 								// The filter is on User, so all devices belonging to it will be returned
 								{
@@ -580,11 +580,11 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 							"devices": []map[string]any{
 								{
 									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
+									"manufacturer": "Sony",
 								},
 								{
 									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"manufacturer": "The Proclaimers",
 								},
 								{
 									"model":        "Running Man",

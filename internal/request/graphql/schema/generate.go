@@ -416,6 +416,8 @@ func (g *Generator) createExpandedFieldList(
 func (g *Generator) buildTypes(
 	collections []client.CollectionDefinition,
 ) ([]*gql.Object, error) {
+	definitionCache := client.NewDefinitionCache(collections)
+
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
@@ -467,11 +469,10 @@ func (g *Generator) buildTypes(
 				}
 
 				var ttype gql.Type
-				if field.Kind.IsObject() {
-					var ok bool
-					ttype, ok = g.manager.schema.TypeMap()[field.Kind.Underlying()]
+				if otherDef, ok := client.GetDefinition(definitionCache, collection, field.Kind); ok {
+					ttype, ok = g.manager.schema.TypeMap()[otherDef.GetName()]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Kind.Underlying())
+						return nil, NewErrTypeNotFound(field.Kind.String())
 					}
 					if field.Kind.IsArray() {
 						ttype = gql.NewList(ttype)
@@ -480,7 +481,7 @@ func (g *Generator) buildTypes(
 					var ok bool
 					ttype, ok = fieldKindToGQLType[field.Kind]
 					if !ok {
-						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
+						return nil, NewErrTypeNotFound(field.Kind.String())
 					}
 				}
 

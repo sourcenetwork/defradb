@@ -35,7 +35,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 						}}
 					]
 				`,
-				ExpectedError: "no type found for given name. Field: foo, Kind: Unknown",
+				ExpectedError: "no type found for given name. Field: foo, Kind: [Unknown]",
 			},
 		},
 	}
