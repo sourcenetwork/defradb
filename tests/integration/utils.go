@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"reflect"
 	"strconv"
@@ -37,6 +38,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -167,6 +169,13 @@ func ExecuteTestCase(
 		databases = append(databases, defraIMType)
 	}
 
+	var kmsList []KMSType
+	if len(testCase.TargetKMSTypes) > 0 {
+		kmsList = testCase.TargetKMSTypes
+	} else {
+		kmsList = []KMSType{NoneKMSType}
+	}
+
 	// Assert that these are not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
 	require.NotEmpty(t, databases)
@@ -177,7 +186,9 @@ func ExecuteTestCase(
 	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
-			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
+			for _, kms := range kmsList {
+				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
+			}
 		}
 	}
 }
@@ -187,12 +198,11 @@ func executeTestCase(
 	t testing.TB,
 	collectionNames []string,
 	testCase TestCase,
+	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
-	log.InfoContext(
-		ctx,
-		testCase.Description,
+	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", mutationType),
@@ -204,11 +214,17 @@ func executeTestCase(
 		corelog.String("changeDetector.SourceBranch", changeDetector.SourceBranch),
 		corelog.String("changeDetector.TargetBranch", changeDetector.TargetBranch),
 		corelog.String("changeDetector.Repository", changeDetector.Repository),
-	)
+	}
+
+	if kms != NoneKMSType {
+		logAttrs = append(logAttrs, corelog.Any("kms", kms))
+	}
+
+	log.InfoContext(ctx, testCase.Description, logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
+	s := newState(ctx, t, testCase, kms, dbt, clientType, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -769,20 +785,21 @@ func configureNode(
 		return
 	}
 
-	node, path, err := setupNode(s) //disable change dector, or allow it?
-	require.NoError(s.t, err)
-
 	privateKey, err := crypto.GenerateEd25519()
 	require.NoError(s.t, err)
 
-	nodeOpts := action()
-	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
+	netNodeOpts := action()
+	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
 
-	node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Encstore(), node.DB.Events(), nodeOpts...)
+	nodeOpts := []node.Option{node.WithDisableP2P(false)}
+	for _, opt := range netNodeOpts {
+		nodeOpts = append(nodeOpts, opt)
+	}
+	node, path, err := setupNode(s, nodeOpts...) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	s.nodeAddresses = append(s.nodeAddresses, node.Peer.PeerInfo())
-	s.nodeConfigs = append(s.nodeConfigs, nodeOpts)
+	s.nodeConfigs = append(s.nodeConfigs, netNodeOpts)
 
 	c, err := setupClient(s, node)
 	require.NoError(s.t, err)

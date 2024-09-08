@@ -27,18 +27,19 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
 
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
 	"google.golang.org/grpc"
+	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -139,8 +140,7 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName,
-			encryption.RequestKeysEventName)
+		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +153,7 @@ func NewPeer(
 		return nil, err
 	}
 
-	p2plistener, err := gostream.Listen(h, corenet.Protocol)
+	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
 		return nil, err
 	}
@@ -166,16 +166,11 @@ func NewPeer(
 	// register the P2P gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
-		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
+		if err := p.p2pRPC.Serve(p2pListener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
 			log.ErrorE("Fatal P2P RPC server error", err)
 		}
 	}()
-
-	err = p.server.addPubSubEncryptionTopic()
-	if err != nil {
-		return nil, err
-	}
 
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
@@ -234,6 +229,12 @@ func (p *Peer) Close() {
 	}
 }
 
+func NewGRPCPeer(peerID libpeer.ID) *grpcpeer.Peer {
+	return &grpcpeer.Peer{
+		Addr: addr{peerID},
+	}
+}
+
 // handleMessage loop manages the transition of messages
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleMessageLoop() {
@@ -261,11 +262,6 @@ func (p *Peer) handleMessageLoop() {
 
 		case event.Replicator:
 			p.server.updateReplicators(evt)
-		case encryption.RequestKeysEvent:
-			err := p.handleEncryptionKeyRequest(evt)
-			if err != nil {
-				log.ErrorContextE(p.ctx, "Error while handling broadcast log", err)
-			}
 		default:
 			// ignore other events
 			continue
@@ -359,14 +355,6 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 	return nil
 }
 
-func (p *Peer) handleEncryptionKeyRequest(evt encryption.RequestKeysEvent) error {
-	if err := p.server.requestEncryptionKey(p.ctx, evt); err != nil {
-		return NewErrRequestingEncryptionKeys(err, evt.Keys)
-	}
-
-	return nil
-}
-
 func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// let the exchange know we have this block
 	// this should speed up the dag sync process
@@ -409,28 +397,6 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	}
 }
 
-func (p *Peer) setupBlockService() {
-	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
-	bswap := bitswap.New(p.ctx, bswapnet, p.blockstore)
-	p.bserv = blockservice.New(p.blockstore, bswap)
-}
-
-func stopGRPCServer(ctx context.Context, server *grpc.Server) {
-	stopped := make(chan struct{})
-	go func() {
-		server.GracefulStop()
-		close(stopped)
-	}()
-	timer := time.NewTimer(10 * time.Second)
-	select {
-	case <-timer.C:
-		server.Stop()
-		log.InfoContext(ctx, "Peer gRPC server was shutdown ungracefully")
-	case <-stopped:
-		timer.Stop()
-	}
-}
-
 // Connect initiates a connection to the peer with the given address.
 func (p *Peer) Connect(ctx context.Context, addr peer.AddrInfo) error {
 	return p.host.Connect(ctx, addr)
@@ -449,4 +415,8 @@ func (p *Peer) PeerInfo() peer.AddrInfo {
 		ID:    p.host.ID(),
 		Addrs: p.host.Network().ListenAddresses(),
 	}
+}
+
+func (p *Peer) Server() *server {
+	return p.server
 }

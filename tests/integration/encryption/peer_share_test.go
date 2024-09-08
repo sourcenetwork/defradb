@@ -21,6 +21,7 @@ import (
 
 func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) {
 	test := testUtils.TestCase{
+		TargetKMSTypes: []testUtils.KMSType{testUtils.P2PKMSType},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -45,10 +46,7 @@ func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) 
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {

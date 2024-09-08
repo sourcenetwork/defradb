@@ -8,17 +8,26 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package kms
 
 import (
-	"testing"
+	"context"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
-func TestWithMaxRetries(t *testing.T) {
-	d := dbOptions{}
-	WithMaxRetries(10)(&d)
-	assert.True(t, d.maxTxnRetries.HasValue())
-	assert.Equal(t, 10, d.maxTxnRetries.Value())
+var (
+	log = corelog.NewLogger("kms")
+)
+
+type ServiceType string
+
+const (
+	P2PServiceType = "p2p"
+)
+
+type Service interface {
+	GetKeys(ctx context.Context, keys ...core.EncStoreDocKey) (*encryption.Results, error)
 }

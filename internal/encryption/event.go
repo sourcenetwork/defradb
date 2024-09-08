@@ -28,6 +28,8 @@ type RequestKeysEvent struct {
 
 	// Keys is a list of the keys that are being requested.
 	Keys []core.EncStoreDocKey
+
+	Resp chan<- Result
 }
 
 // RequestedKeyEventData represents the data that was retrieved for a specific key.
@@ -45,16 +47,43 @@ type KeyRetrievedEvent struct {
 	Keys map[core.EncStoreDocKey][]byte
 }
 
+type Item struct {
+	StoreKey      core.EncStoreDocKey
+	EncryptionKey []byte
+}
+
+type Result struct {
+	Items []Item
+	Error error
+}
+
+type Results struct {
+	output chan Result
+}
+
+func (r *Results) Get() <-chan Result {
+	return r.output
+}
+
+func NewResults() (*Results, chan<- Result) {
+	ch := make(chan Result, 1)
+	return &Results{
+		output: ch,
+	}, ch
+}
+
 // NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
 func NewRequestKeysMessage(
 	schemaRoot string,
 	keys []core.EncStoreDocKey,
-) event.Message {
+) (event.Message, *Results) {
+	res, ch := NewResults()
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
 		SchemaRoot: schemaRoot,
 		Keys:       keys,
-	})
+		Resp:       ch,
+	}), res
 }
 
 // NewKeysRetrievedMessage creates a new event message for a key that was retrieved

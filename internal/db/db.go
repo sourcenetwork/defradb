@@ -118,8 +118,13 @@ func newDB(
 	}
 
 	// apply options
+	var opts dbOptions
 	for _, opt := range options {
-		opt(db)
+		opt(&opts)
+	}
+
+	if opts.maxTxnRetries.HasValue() {
+		db.maxTxnRetries = opts.maxTxnRetries
 	}
 
 	if lens != nil {

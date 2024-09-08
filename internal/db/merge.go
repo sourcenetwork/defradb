@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"container/list"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -75,7 +76,29 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	mp.sendPendingEncryptionRequest()
+	if len(mp.pendingEncryptionKeyRequests) != 0 {
+		entResults := mp.sendPendingEncryptionRequest()
+		newCtx, newTxn, err := EnforceNewContextTxn(context.TODO(), db, false)
+		go func(ccc context.Context, ttt datastore.Txn) {
+			res := <-entResults.Get()
+			if res.Error != nil {
+				fmt.Printf("Error fetching keys: %s\n", res.Error)
+				return
+			}
+			fmt.Printf("Received %d keys\n", len(res.Items))
+			for i, key := range res.Items {
+				fmt.Printf("Key %d: %s\n", i, key.StoreKey.ToString())
+			}
+			if err != nil {
+				fmt.Printf("Error creating new context txn: %s\n", err)
+				return
+			}
+			//err = db.executeMerge(ccc, dagMerge)
+			//if err != nil {
+			//fmt.Printf("Error executing merge: %s\n", err)
+			//}
+		}(newCtx, newTxn)
+	}
 
 	if !mp.hasPendingCompositeBlock {
 		err = syncIndexedDoc(ctx, docID, col)
@@ -406,17 +429,14 @@ func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName im
 	}
 }
 
-func (mp *mergeProcessor) sendPendingEncryptionRequest() {
-	n := len(mp.pendingEncryptionKeyRequests)
-	if n == 0 {
-		return
-	}
-	schemaRoot := mp.col.SchemaRoot()
-	storeKeys := make([]core.EncStoreDocKey, 0, n)
+func (mp *mergeProcessor) sendPendingEncryptionRequest() *encryption.Results {
+	storeKeys := make([]core.EncStoreDocKey, 0, len(mp.pendingEncryptionKeyRequests))
 	for k := range mp.pendingEncryptionKeyRequests {
 		storeKeys = append(storeKeys, k)
 	}
-	mp.col.db.events.Publish(encryption.NewRequestKeysMessage(schemaRoot, storeKeys))
+	msg, results := encryption.NewRequestKeysMessage(mp.col.SchemaRoot(), storeKeys)
+	mp.col.db.events.Publish(msg)
+	return results
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.

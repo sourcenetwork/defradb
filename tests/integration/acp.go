@@ -57,6 +57,13 @@ var (
 	acpType ACPType
 )
 
+type KMSType string
+
+const (
+	NoneKMSType = "none"
+	P2PKMSType  = "p2p"
+)
+
 func init() {
 	acpType = ACPType(os.Getenv(acpTypeEnvName))
 	if acpType == "" {

@@ -17,10 +17,12 @@ import (
 	gohttp "net/http"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/net"
 )
 
@@ -41,6 +43,7 @@ type Option any
 type Options struct {
 	disableP2P bool
 	disableAPI bool
+	kmsType    immutable.Option[kms.ServiceType]
 }
 
 // DefaultOptions returns options with default settings.
@@ -65,11 +68,18 @@ func WithDisableAPI(disable bool) NodeOpt {
 	}
 }
 
+func WithKMS(kms kms.ServiceType) NodeOpt {
+	return func(o *Options) {
+		o.kmsType = immutable.Some(kms)
+	}
+}
+
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
-	DB     client.DB
-	Peer   *net.Peer
-	Server *http.Server
+	DB         client.DB
+	Peer       *net.Peer
+	Server     *http.Server
+	kmsService kms.Service
 }
 
 // NewNode returns a new node instance configured with the given options.
@@ -130,11 +140,28 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 	}
 
 	var peer *net.Peer
+	var kmsService kms.Service
 	if !options.disableP2P {
 		// setup net node
 		peer, err = net.NewPeer(ctx, db.Blockstore(), db.Encstore(), db.Events(), netOpts...)
 		if err != nil {
 			return nil, err
+		}
+
+		if options.kmsType.HasValue() {
+			switch options.kmsType.Value() {
+			case kms.P2PServiceType:
+				kmsService, err = kms.NewP2PService(
+					ctx,
+					peer.PeerID(),
+					peer.Server(),
+					db.Events(),
+					db.Encstore(),
+				)
+			}
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -152,9 +179,10 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 	}
 
 	return &Node{
-		DB:     db,
-		Peer:   peer,
-		Server: server,
+		DB:         db,
+		Peer:       peer,
+		Server:     server,
+		kmsService: kmsService,
 	}, nil
 }
 

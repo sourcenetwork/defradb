@@ -14,10 +14,8 @@ package net
 
 import (
 	"context"
-	"crypto/ecdh"
 	"fmt"
 	"sync"
-	"time"
 
 	cid "github.com/ipfs/go-cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
@@ -36,7 +34,7 @@ import (
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
-// Server is the request/response instance for all P2P RPC communication.
+// server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
 //
 // Specifically, server handles the push/get request/response aspects of the RPC service
@@ -53,21 +51,6 @@ type server struct {
 	conns map[libpeer.ID]*grpc.ClientConn
 
 	pb.UnimplementedServiceServer
-
-	sessions []session
-}
-
-const sessionTimeout = 5 * time.Second
-
-type session struct {
-	id         string
-	privateKey *ecdh.PrivateKey
-	schemaRoot string
-	t          time.Time
-}
-
-func newSession(id string, schemaRoot string, privateKey *ecdh.PrivateKey) session {
-	return session{id: id, schemaRoot: schemaRoot, privateKey: privateKey, t: time.Now()}
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -96,26 +79,6 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s.opts = append(defaultOpts, opts...)
 
 	return s, nil
-}
-
-// extractSessionAndRemoveOld extracts a session with the given id from the server's session list
-// and removes any old sessions by comparing their timestamps.
-func (s *server) extractSessionAndRemoveOld(id string) *session {
-	var result *session
-	swapLast := func(i int) {
-		s.sessions[i] = s.sessions[len(s.sessions)-1]
-		s.sessions = s.sessions[:len(s.sessions)-1]
-	}
-	for i, session := range s.sessions {
-		if session.id == id {
-			tmpSession := session
-			result = &tmpSession
-			swapLast(i)
-		} else if time.Since(session.t) > sessionTimeout {
-			swapLast(i)
-		}
-	}
-	return result
 }
 
 // GetDocGraph receives a get graph request
@@ -445,4 +408,48 @@ func (s *server) updateReplicators(evt event.Replicator) {
 		}
 	}
 	s.peer.bus.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
+}
+
+func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) error {
+	if s.peer.ps == nil {
+		return nil
+	}
+
+	s.mu.Lock()
+	_, ok := s.topics[topicName]
+	s.mu.Unlock()
+	if ok {
+		return NewErrTopicAlreadyExist(topicName)
+	}
+
+	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topicName, true)
+	if err != nil {
+		return err
+	}
+
+	t.SetEventHandler(s.pubSubEventHandler)
+	t.SetMessageHandler(handler)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.topics[topicName] = pubsubTopic{
+		Topic:      t,
+		subscribed: true,
+	}
+	return nil
+}
+
+func (s *server) SendPubSubMessage(
+	ctx context.Context,
+	topic string,
+	data []byte,
+) (<-chan rpc.Response, error) {
+	s.mu.Lock()
+	t, ok := s.topics[topic]
+	s.mu.Unlock()
+	if !ok {
+		return nil, NewErrTopicDoesNotExist(topic)
+	}
+	return t.Publish(ctx, data)
 }

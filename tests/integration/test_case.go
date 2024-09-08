@@ -52,6 +52,8 @@ type TestCase struct {
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between acp types, or we need to temporarily document a bug.
 	SupportedACPTypes immutable.Option[[]ACPType]
+
+	TargetKMSTypes []KMSType
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point

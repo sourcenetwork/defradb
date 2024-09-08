@@ -8,17 +8,20 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package kms
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
-func TestWithMaxRetries(t *testing.T) {
-	d := dbOptions{}
-	WithMaxRetries(10)(&d)
-	assert.True(t, d.maxTxnRetries.HasValue())
-	assert.Equal(t, 10, d.maxTxnRetries.Value())
+const (
+	errUnknownKMSType string = "unknown KMS type"
+)
+
+var (
+	ErrUnknownKMSType = errors.New(errUnknownKMSType)
+)
+
+func NewErrUnknownKMSType(t ServiceType) error {
+	return errors.New(errUnknownKMSType, errors.NewKV("Type", t))
 }

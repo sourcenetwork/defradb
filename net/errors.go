@@ -24,6 +24,8 @@ const (
 	errPublishingToSchemaTopic  = "can't publish log %s for schema %s"
 	errCheckingForExistingBlock = "failed to check for existing block"
 	errRequestingEncryptionKeys = "failed to request encryption keys with %v"
+	errTopicAlreadyExist        = "topic with name \"%s\" already exists"
+	errTopicDoesNotExist        = "topic with name \"%s\" does not exists"
 )
 
 var (
@@ -53,4 +55,12 @@ func NewErrPublishingToSchemaTopic(inner error, cid, docID string, kv ...errors.
 
 func NewErrRequestingEncryptionKeys(inner error, keys []core.EncStoreDocKey) error {
 	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKeys, keys), inner)
+}
+
+func NewErrTopicAlreadyExist(topic string) error {
+	return errors.New(fmt.Sprintf(errTopicAlreadyExist, topic))
+}
+
+func NewErrTopicDoesNotExist(topic string) error {
+	return errors.New(fmt.Sprintf(errTopicDoesNotExist, topic))
 }
