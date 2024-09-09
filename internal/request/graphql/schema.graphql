@@ -30,7 +30,6 @@ type {{$name}} {
     _version: [Commit]
     "Indicates as to whether or not this document has been deleted."
     _deleted: Boolean
-{{- end}}
     """
     The group field may be used to return a set of records belonging to the group.
     It must be used alongside a 'groupBy' argument on the parent selector. It may
@@ -100,6 +99,7 @@ type {{$name}} {
     {{- end}}
 {{- end}} 
     ): Float
+{{- end}}
 }
 
 enum {{$name}}Field {
@@ -271,6 +271,22 @@ extend type Query {
         {{$name}}: {{$name}}__NumericSelector,
 {{- end}}
     ): Float
+}
+
+extend type Subscription {
+{{- range $name, $col := .}}
+    {{$name}}(
+        cid: String
+        docID: String
+        docIDs: [String!]
+        filter: {{$name}}FilterArg
+        groupBy: [{{$name}}Field!]
+        limit: Int
+        offset: Int
+        order: {{$name}}OrderArg
+        showDeleted: Boolean
+    ): [{{$name}}]
+{{- end}}
 }
 
 extend type Mutation {

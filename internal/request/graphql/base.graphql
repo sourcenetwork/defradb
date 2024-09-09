@@ -8,10 +8,10 @@ scalar Blob
 scalar JSON
 
 "@explain is a directive that can be used to explain the query."
-directive @explain(type: ExplainType!) on QUERY | MUTATION
+directive @explain(type: ExplainType) on QUERY | MUTATION
 
 "@policy is a directive that can be used to link a policy on a collection type."
-directive @policy(id: String!, resource: String!) on OBJECT
+directive @policy(id: String, resource: String) on OBJECT
 
 "@index is a directive that can be used to create an index on a type."
 directive @index(
@@ -20,10 +20,10 @@ directive @index(
     fields: [String], 
     direction: Ordering,
     directions: [Ordering],
-) on OBJECT | FIELD
+) on OBJECT | FIELD_DEFINITION
 
 "Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister."
-directive @crdt(type: CRDTType!) on FIELD
+directive @crdt(type: CRDTType) on FIELD_DEFINITION
 
 "Indicate the primary side of a one-to-one relationship."
 directive @primary on FIELD_DEFINITION
@@ -31,7 +31,7 @@ directive @primary on FIELD_DEFINITION
 "Allows the explicit definition of relationship attributes instead of using the system generated defaults."
 directive @relation(
     "Explicitly define the name of the relationship instead of using the system generated defaults."
-    name: String!
+    name: String
 ) on FIELD_DEFINITION
 
 enum Ordering {
@@ -430,11 +430,11 @@ input NotNullBlobOperatorBlock {
 "These are the set of filter operators available for use when filtering on ID values."
 input IDOperatorBlock {
     "The equality operator - if the target matches the value the check will pass."
-    _eq: ID!
+    _eq: ID
     "The inequality operator - if the target does not matches the value the check will pass."
-    _ne: ID!
+    _ne: ID
     "The contains operator - if the target value is within the given set the check will pass."
-    _in: [ID!]
+    _in: [ID]
     "The does not contains operator - if the target value is not within the given set the check will pass."
-    _nin: [ID!]
+    _nin: [ID]
 }
