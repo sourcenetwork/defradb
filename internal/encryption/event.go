@@ -30,6 +30,8 @@ type RequestKeysEvent struct {
 	Keys []core.EncStoreDocKey
 
 	Resp chan<- Result
+
+	MergeEvent event.Merge
 }
 
 // RequestedKeyEventData represents the data that was retrieved for a specific key.
@@ -45,6 +47,8 @@ type KeyRetrievedEvent struct {
 
 	// Keys is a map of the requested keys to the corresponding raw encryption keys.
 	Keys map[core.EncStoreDocKey][]byte
+
+	MergeEvent event.Merge
 }
 
 type Item struct {
@@ -77,12 +81,14 @@ func NewResults() (*Results, chan<- Result) {
 func NewRequestKeysMessage(
 	schemaRoot string,
 	keys []core.EncStoreDocKey,
+	mergeEvent event.Merge,
 ) (event.Message, *Results) {
 	res, ch := NewResults()
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
 		SchemaRoot: schemaRoot,
 		Keys:       keys,
 		Resp:       ch,
+		MergeEvent: mergeEvent,
 	}), res
 }
 
@@ -90,9 +96,11 @@ func NewRequestKeysMessage(
 func NewKeysRetrievedMessage(
 	schemaRoot string,
 	keys map[core.EncStoreDocKey][]byte,
+	mergeEvent event.Merge,
 ) event.Message {
 	return event.NewMessage(KeysRetrievedEventName, KeyRetrievedEvent{
 		SchemaRoot: schemaRoot,
 		Keys:       keys,
+		MergeEvent: mergeEvent,
 	})
 }

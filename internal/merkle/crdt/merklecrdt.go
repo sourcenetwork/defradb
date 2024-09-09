@@ -48,11 +48,7 @@ type MerkleClock interface {
 		links ...coreblock.DAGLink,
 	) (cidlink.Link, []byte, error)
 	// ProcessBlock processes a block and updates the CRDT state.
-	// skipMerge argument indicates whether merging of block's delta should be skipped. It is needed in case
-	// the block is encrypted and there is not encryption key to decrypt it.
-	// skipHeads argument indicates whether updating of heads should be skipped. It is needed in case
-	// the block's head was already updated when the encrypted block was processed.
-	ProcessBlock(ctx context.Context, block *coreblock.Block, cid cidlink.Link, skipMerge, skipHeads bool) error
+	ProcessBlock(ctx context.Context, block *coreblock.Block, cid cidlink.Link) error
 }
 
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state

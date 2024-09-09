@@ -71,13 +71,13 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	err = mp.mergeBlocks(ctx, false)
+	err = mp.mergeBlocks(ctx)
 	if err != nil {
 		return err
 	}
 
 	if len(mp.pendingEncryptionKeyRequests) != 0 {
-		entResults := mp.sendPendingEncryptionRequest()
+		entResults := mp.sendPendingEncryptionRequest(dagMerge)
 		newCtx, newTxn, err := EnforceNewContextTxn(context.TODO(), db, false)
 		go func(ccc context.Context, ttt datastore.Txn) {
 			res := <-entResults.Get()
@@ -93,11 +93,12 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 				fmt.Printf("Error creating new context txn: %s\n", err)
 				return
 			}
-			//err = db.executeMerge(ccc, dagMerge)
-			//if err != nil {
-			//fmt.Printf("Error executing merge: %s\n", err)
-			//}
+			err = db.executeMerge(ccc, dagMerge)
+			if err != nil {
+				fmt.Printf("Error executing merge: %s\n", err)
+			}
 		}(newCtx, newTxn)
+		return nil
 	}
 
 	if !mp.hasPendingCompositeBlock {
@@ -114,116 +115,6 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 
 	// send a complete event so we can track merges in the integration tests
 	db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
-	return nil
-}
-
-type encryptionMergeGroup struct {
-	compositeKey core.EncStoreDocKey
-	fieldsKeys   []core.EncStoreDocKey
-}
-
-func createMergeGroups(keyEvent encryption.KeyRetrievedEvent) map[string]encryptionMergeGroup {
-	mergeGroups := make(map[string]encryptionMergeGroup)
-
-	for encStoreKey := range keyEvent.Keys {
-		g := mergeGroups[encStoreKey.DocID]
-
-		if encStoreKey.FieldName.HasValue() {
-			g.fieldsKeys = append(g.fieldsKeys, encStoreKey)
-		} else {
-			g.compositeKey = encStoreKey
-		}
-
-		mergeGroups[encStoreKey.DocID] = g
-	}
-
-	return mergeGroups
-}
-
-func (db *db) mergeEncryptedBlocks(ctx context.Context, keyEvent encryption.KeyRetrievedEvent) error {
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	col, err := getCollectionFromRootSchema(ctx, db, keyEvent.SchemaRoot)
-	if err != nil {
-		return err
-	}
-
-	ls := cidlink.DefaultLinkSystem()
-	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
-
-	for docID, mergeGroup := range createMergeGroups(keyEvent) {
-		docID, err := client.NewDocIDFromString(docID)
-		if err != nil {
-			return err
-		}
-		dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
-
-		mp, err := db.newMergeProcessor(txn, ls, col, dsKey)
-		if err != nil {
-			return err
-		}
-
-		var blocks []*coreblock.Block
-		// if merge ground includes composite, we process only the composite block and skip the field
-		// blocks, as they will be processed as part of the composite block anyway.
-		// Otherwise, we load the blocks for each field
-		if mergeGroup.compositeKey.DocID != "" {
-			cids, err := getHeads(ctx, txn, dsKey.WithFieldID(core.COMPOSITE_NAMESPACE))
-			if err != nil {
-				return err
-			}
-
-			blocks, err = loadBlocksWithKeyIDFromBlockstore(ctx, txn, cids, mergeGroup.compositeKey.KeyID)
-			if err != nil {
-				return err
-			}
-		} else {
-			for _, fieldStoreKey := range mergeGroup.fieldsKeys {
-				fd, ok := mp.col.Definition().GetFieldByName(fieldStoreKey.FieldName.Value())
-				if !ok {
-					return client.NewErrFieldNotExist(fieldStoreKey.FieldName.Value())
-				}
-
-				fieldDsKey := dsKey.WithFieldID(fd.ID.String())
-
-				cids, err := getHeads(ctx, txn, fieldDsKey)
-				if err != nil {
-					return err
-				}
-
-				fieldBlocks, err := loadBlocksWithKeyIDFromBlockstore(ctx, txn, cids, fieldStoreKey.KeyID)
-				if err != nil {
-					return err
-				}
-
-				blocks = append(blocks, fieldBlocks...)
-			}
-		}
-
-		for _, block := range blocks {
-			mp.blocks.PushFront(block)
-		}
-		err = mp.mergeBlocks(ctx, true)
-		if err != nil {
-			return err
-		}
-
-		// TODO: test is doc field was indexed after decryption
-		err = syncIndexedDoc(ctx, docID, col)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = txn.Commit(ctx)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -373,14 +264,14 @@ func (mp *mergeProcessor) loadBlocks(
 	return nil
 }
 
-func (mp *mergeProcessor) mergeBlocks(ctx context.Context, withDecryption bool) error {
+func (mp *mergeProcessor) mergeBlocks(ctx context.Context) error {
 	for e := mp.blocks.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
 			return err
 		}
-		err = mp.processBlock(ctx, block, link, withDecryption)
+		err = mp.processBlock(ctx, block, link)
 		if err != nil {
 			return err
 		}
@@ -395,19 +286,18 @@ func (mp *mergeProcessor) mergeBlocks(ctx context.Context, withDecryption bool) 
 func (mp *mergeProcessor) processEncryptedBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
-	withDecryption bool,
-) (*coreblock.Block, bool, error) {
+) (*coreblock.Block, error) {
 	if dagBlock.IsEncrypted() {
 		plainTextBlock, err := decryptBlock(ctx, dagBlock)
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
 		if plainTextBlock != nil {
-			return plainTextBlock, false, nil
+			return plainTextBlock, nil
 		} else {
 			blockEnc := dagBlock.Encryption
 			// we weren't able to decrypt the block, so we request the encryption key unless it's a decryption pass
-			if !withDecryption && (dagBlock.Delta.IsComposite() && blockEnc.Type == coreblock.DocumentEncrypted) ||
+			if (dagBlock.Delta.IsComposite() && blockEnc.Type == coreblock.DocumentEncrypted) ||
 				blockEnc.Type == coreblock.FieldEncrypted {
 				docID := string(dagBlock.Delta.GetDocID())
 				fieldName := immutable.None[string]()
@@ -416,10 +306,10 @@ func (mp *mergeProcessor) processEncryptedBlock(
 				}
 				mp.addPendingEncryptionRequest(docID, fieldName, string(blockEnc.KeyID))
 			}
-			return dagBlock, true, nil
+			return dagBlock, nil
 		}
 	}
-	return dagBlock, false, nil
+	return dagBlock, nil
 }
 
 func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName immutable.Option[string], keyID string) {
@@ -429,12 +319,12 @@ func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName im
 	}
 }
 
-func (mp *mergeProcessor) sendPendingEncryptionRequest() *encryption.Results {
+func (mp *mergeProcessor) sendPendingEncryptionRequest(mergeEvent event.Merge) *encryption.Results {
 	storeKeys := make([]core.EncStoreDocKey, 0, len(mp.pendingEncryptionKeyRequests))
 	for k := range mp.pendingEncryptionKeyRequests {
 		storeKeys = append(storeKeys, k)
 	}
-	msg, results := encryption.NewRequestKeysMessage(mp.col.SchemaRoot(), storeKeys)
+	msg, results := encryption.NewRequestKeysMessage(mp.col.SchemaRoot(), storeKeys, mergeEvent)
 	mp.col.db.events.Publish(msg)
 	return results
 }
@@ -445,9 +335,8 @@ func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
-	withDecryption bool,
 ) error {
-	block, skipMerge, err := mp.processEncryptedBlock(ctx, dagBlock, withDecryption)
+	block, err := mp.processEncryptedBlock(ctx, dagBlock)
 	if err != nil {
 		return err
 	}
@@ -463,7 +352,7 @@ func (mp *mergeProcessor) processBlock(
 		return nil
 	}
 
-	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, skipMerge, withDecryption)
+	err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
 	if err != nil {
 		return err
 	}
@@ -483,7 +372,7 @@ func (mp *mergeProcessor) processBlock(
 			return err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link, withDecryption); err != nil {
+		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
 			return err
 		}
 	}

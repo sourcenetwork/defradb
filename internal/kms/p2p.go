@@ -101,22 +101,23 @@ func (s *p2pService) handleKeyRequestedEvent() {
 					log.ErrorContextE(s.ctx, "Failed to get encryption keys", err)
 				}
 
-				//_, encryptor := encryption.ContextWithStore(s.ctx, s.encstore)
-
 				encResult := <-results.Get()
-				/*for _, encItem := range encResult.Items {
+
+				_, encryptor := encryption.ContextWithStore(s.ctx, s.encstore)
+
+				for _, encItem := range encResult.Items {
 					err := encryptor.SaveKey(encItem.StoreKey, encItem.EncryptionKey)
 					if err != nil {
 						log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
 						return
 					}
-				}*/
+				}
 
 				m := make(map[core.EncStoreDocKey][]byte)
 				for _, item := range encResult.Items {
 					m[item.StoreKey] = item.EncryptionKey
 				}
-				s.eventBus.Publish(encryption.NewKeysRetrievedMessage(keyReqEvent.SchemaRoot, m))
+				s.eventBus.Publish(encryption.NewKeysRetrievedMessage(keyReqEvent.SchemaRoot, m, keyReqEvent.MergeEvent))
 				keyReqEvent.Resp <- encResult
 				close(keyReqEvent.Resp)
 			}()

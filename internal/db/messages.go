@@ -81,11 +81,11 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 				})
 
 			case encryption.KeyRetrievedEvent:
-				go func() {
+				/*go func() {
 					if err := db.handleEncryptionKeysRetrievedEvent(ctx, evt); err != nil {
 						log.ErrorContextE(ctx, errFailedToHandleEncKeysReceivedEvent, err, corelog.Any("Event", evt))
 					}
-				}()
+				}()*/
 			}
 		}
 	}
@@ -93,17 +93,5 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 
 // handleEncryptionKeysRetrievedEvent handles the event when requested encryption keys are retrieved from other peers.
 func (db *db) handleEncryptionKeysRetrievedEvent(ctx context.Context, evt encryption.KeyRetrievedEvent) error {
-	var encryptor *encryption.DocEncryptor
-	ctx, encryptor = encryption.ContextWithStore(ctx, db.Encstore())
-	if encryptor == nil {
-		return encryption.ErrContextHasNoEncryptor
-	}
-	for encStoreKey, encKey := range evt.Keys {
-		err := encryptor.SaveKey(encStoreKey, encKey)
-		if err != nil {
-			return err
-		}
-	}
-
-	return db.mergeEncryptedBlocks(ctx, evt)
+	return db.executeMerge(ctx, evt.MergeEvent)
 }
