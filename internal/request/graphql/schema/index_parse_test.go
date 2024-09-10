@@ -210,7 +210,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index",
 			sdl: `type user {
-				name: String @index
+				name: String @indexField
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -225,7 +225,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index with name",
 			sdl: `type user {
-				name: String @index(name: "nameIndex")
+				name: String @indexField(name: "nameIndex")
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -240,7 +240,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "unique field index",
 			sdl: `type user {
-				name: String @index(unique: true)
+				name: String @indexField(unique: true)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -254,7 +254,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index explicitly not unique",
 			sdl: `type user {
-				name: String @index(unique: false)
+				name: String @indexField(unique: false)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -268,7 +268,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index in ASC order",
 			sdl: `type user {
-				name: String @index(direction: ASC)
+				name: String @indexField(direction: ASC)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -282,7 +282,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index in DESC order",
 			sdl: `type user {
-				name: String @index(direction: DESC)
+				name: String @indexField(direction: DESC)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -305,49 +305,49 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 		{
 			description: "forbidden 'field' argument",
 			sdl: `type user {
-				name: String @index(field: "name") 
+				name: String @indexField(field: "name") 
 			}`,
 			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "invalid field index name type",
 			sdl: `type user {
-				name: String @index(name: 1) 
+				name: String @indexField(name: 1) 
 			}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "field index name starts with a number",
 			sdl: `type user {
-				name: String @index(name: "1_user_name") 
+				name: String @indexField(name: "1_user_name") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index with empty name",
 			sdl: `type user {
-				name: String @index(name: "") 
+				name: String @indexField(name: "") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index name with spaces",
 			sdl: `type user {
-				name: String @index(name: "user name") 
+				name: String @indexField(name: "user name") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index name with special symbols",
 			sdl: `type user {
-				name: String @index(name: "user!name") 
+				name: String @indexField(name: "user!name") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "invalid 'unique' value type",
 			sdl: `type user {
-				name: String @index(unique: "true") 
+				name: String @indexField(unique: "true") 
 			}`,
 			expectedErr: errIndexInvalidArgument,
 		},

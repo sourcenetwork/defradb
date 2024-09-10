@@ -24,7 +24,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrder_ShouldFetchInRevertedOrder(t *test
 				Schema: `
 					type User {
 						name: String
-						age: Int @index(direction: DESC)
+						age: Int @indexField(direction: DESC)
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -87,7 +87,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrder_ShouldFetchInRevertedOrder(t *te
 				Schema: `
 					type User {
 						name: String
-						iq: Float @index(direction: DESC)
+						iq: Float @indexField(direction: DESC)
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -149,7 +149,7 @@ func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *t
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index(direction: DESC)
+						name: String @indexField(direction: DESC)
 					}`,
 			},
 			testUtils.CreateDoc{

@@ -132,7 +132,7 @@ func collectionFromAstDefinition(
 		collectionFieldDescriptions = append(collectionFieldDescriptions, tmpCollectionFieldDescriptions...)
 
 		for _, directive := range field.Directives {
-			if directive.Name.Value == types.IndexDirectiveLabel {
+			if directive.Name.Value == types.IndexFieldDirectiveLabel {
 				index, err := fieldIndexFromAST(field, directive)
 				if err != nil {
 					return client.CollectionDefinition{}, err
@@ -258,13 +258,13 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !IsValidIndexName(desc.Name) {
 				return client.IndexDescription{}, NewErrIndexWithInvalidName(desc.Name)
 			}
-		case types.IndexDirectivePropUnique:
+		case types.IndexFieldDirectivePropUnique:
 			boolVal, ok := arg.Value.(*ast.BooleanValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 			desc.Unique = boolVal.Value
-		case types.IndexDirectivePropDirection:
+		case types.IndexFieldDirectivePropDirection:
 			dirVal, ok := arg.Value.(*ast.EnumValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg

@@ -33,7 +33,7 @@ var (
 )
 
 func makeUserAgeIndexOption() fixtures.Option {
-	return fixtures.OptionFieldDirective("User", "Age", "@index")
+	return fixtures.OptionFieldDirective("User", "Age", "@indexField")
 }
 
 func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1(b *testing.B) {

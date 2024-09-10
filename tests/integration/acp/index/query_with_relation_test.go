@@ -32,7 +32,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					resource: "author"
 				) {
 					name: String
-					age: Int @index
+					age: Int @indexField
 					verified: Boolean
 					published: [Book]
 				}
@@ -42,7 +42,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					resource: "author"
 				) {
 					name: String
-					rating: Float @index
+					rating: Float @indexField
 					author: Author
 				}`,
 		},

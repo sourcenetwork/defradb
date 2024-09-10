@@ -31,7 +31,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}`,
 			},
@@ -72,8 +72,8 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
-						age: Int @index
+						name: String @indexField
+						age: Int @indexField
 						email: String 
 					}`,
 			},
@@ -113,8 +113,8 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegularCaseInsensitive_ShouldF
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
-						age: Int @index
+						name: String @indexField
+						age: Int @indexField
 						email: String 
 					}`,
 			},
@@ -154,7 +154,7 @@ func TestQueryWithIndex_FilterOnNonIndexedField_ShouldIgnoreIndex(t *testing.T) 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}`,
 			},

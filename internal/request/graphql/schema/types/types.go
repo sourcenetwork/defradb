@@ -37,8 +37,12 @@ const (
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"
 	IndexDirectivePropFields     = "fields"
-	IndexDirectivePropDirection  = "direction"
 	IndexDirectivePropDirections = "directions"
+
+	IndexFieldDirectiveLabel         = "indexField"
+	IndexFieldDirectivePropName      = "name"
+	IndexFieldDirectivePropUnique    = "unique"
+	IndexFieldDirectivePropDirection = "direction"
 
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
@@ -129,6 +133,9 @@ func IndexDirective(orderingEnum *gql.Enum) *gql.Directive {
 			IndexDirectivePropName: &gql.ArgumentConfig{
 				Type: gql.String,
 			},
+			IndexDirectivePropUnique: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
 			IndexDirectivePropFields: &gql.ArgumentConfig{
 				Type: gql.NewList(gql.String),
 			},
@@ -144,21 +151,21 @@ func IndexDirective(orderingEnum *gql.Enum) *gql.Directive {
 
 func IndexFieldDirective(orderingEnum *gql.Enum) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        IndexDirectiveLabel,
-		Description: "@index is a directive that can be used to create an index on a field.",
+		Name:        IndexFieldDirectiveLabel,
+		Description: "@indexField is a directive that can be used to create an index on a field.",
 		Args: gql.FieldConfigArgument{
-			IndexDirectivePropName: &gql.ArgumentConfig{
+			IndexFieldDirectivePropName: &gql.ArgumentConfig{
 				Type: gql.String,
 			},
-			IndexDirectivePropUnique: &gql.ArgumentConfig{
+			IndexFieldDirectivePropUnique: &gql.ArgumentConfig{
 				Type: gql.Boolean,
 			},
-			IndexDirectivePropDirection: &gql.ArgumentConfig{
+			IndexFieldDirectivePropDirection: &gql.ArgumentConfig{
 				Type: orderingEnum,
 			},
 		},
 		Locations: []string{
-			gql.DirectiveLocationField,
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }

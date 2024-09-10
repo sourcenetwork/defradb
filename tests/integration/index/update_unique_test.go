@@ -23,7 +23,7 @@ func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testi
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index(unique: true)
+						name: String @indexField(unique: true)
 						age: Int
 					}
 				`,

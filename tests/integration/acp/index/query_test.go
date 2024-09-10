@@ -33,7 +33,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}
 				`,
@@ -87,7 +87,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}
 				`,
@@ -147,7 +147,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 						resource: "users"
 					) {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}
 				`,

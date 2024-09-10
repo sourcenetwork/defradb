@@ -29,7 +29,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}`,
 			},
@@ -69,7 +69,7 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -105,7 +105,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}`,
 			},
@@ -151,7 +151,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @index
+						age: Int @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -188,7 +188,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @index
+						age: Int @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -226,7 +226,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @index
+						age: Int @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -263,7 +263,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @index
+						age: Int @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -300,7 +300,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int 
 					}`,
 			},
@@ -346,7 +346,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @index
+						age: Int @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -379,7 +379,7 @@ func TestQueryWithIndex_WithInFilterOnFloat_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						rate: Float @index
+						rate: Float @indexField
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -438,7 +438,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int
 					}`,
 			},
@@ -484,7 +484,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @index
+						age: Int @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -549,7 +549,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						email: String @index
+						email: String @indexField
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -647,7 +647,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int 
 					}`,
 			},
@@ -684,7 +684,7 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index
+						name: String @indexField
 						age: Int 
 					}`,
 			},
