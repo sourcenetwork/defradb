@@ -11,7 +11,6 @@
 package db
 
 import (
-	"bytes"
 	"container/list"
 	"context"
 	"fmt"
@@ -517,32 +516,6 @@ func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid
 	}
 
 	return block, nil
-}
-
-// loadBlocksWithKeyIDFromBlockstore loads the blocks from the blockstore that have given encryption
-// keyID until it reaches a block with a different keyID or without any.
-// The returned blocks are ordered from the newest to the oldest.
-func loadBlocksWithKeyIDFromBlockstore(
-	ctx context.Context,
-	txn datastore.Txn,
-	cids []cid.Cid,
-	keyID string,
-) ([]*coreblock.Block, error) {
-	var blocks []*coreblock.Block
-	for len(cids) > 0 {
-		cid := cids[0]
-		block, err := loadBlockFromBlockStore(ctx, txn, cid)
-		if err != nil {
-			return nil, err
-		}
-
-		if block.Encryption != nil && bytes.Equal(block.Encryption.KeyID, []byte(keyID)) {
-			blocks = append(blocks, block)
-			cids = append(cids, block.GetPrevBlockCids()...)
-		}
-		cids = cids[1:]
-	}
-	return blocks, nil
 }
 
 func syncIndexedDoc(
