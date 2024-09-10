@@ -15,7 +15,6 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
 
 	"golang.org/x/crypto/hkdf"
 )
@@ -59,28 +58,28 @@ func X25519PublicKeyFromBytes(publicKeyBytes []byte) (*ecdh.PublicKey, error) {
 func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []byte) ([]byte, error) {
 	ephemeralPrivate, err := GenerateX25519()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate ephemeral key: %w", err)
+		return nil, NewErrFailedToGenerateEphemeralKey(err)
 	}
 	ephemeralPublic := ephemeralPrivate.PublicKey()
 
 	sharedSecret, err := ephemeralPrivate.ECDH(publicKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed ECDH operation: %w", err)
+		return nil, NewErrFailedECDHOperation(err)
 	}
 
 	kdf := hkdf.New(sha256.New, sharedSecret, nil, nil)
 	aesKey := make([]byte, AESKeySize)
 	hmacKey := make([]byte, HMACSize)
 	if _, err := kdf.Read(aesKey); err != nil {
-		return nil, fmt.Errorf("failed KDF operation for AES key: %w", err)
+		return nil, NewErrFailedKDFOperationForAESKey(err)
 	}
 	if _, err := kdf.Read(hmacKey); err != nil {
-		return nil, fmt.Errorf("failed KDF operation for HMAC key: %w", err)
+		return nil, NewErrFailedKDFOperationForHMACKey(err)
 	}
 
 	cipherText, _, err := EncryptAES(plainText, aesKey, makeAAD(ephemeralPublic.Bytes(), associatedData), true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt: %w", err)
+		return nil, NewErrFailedToEncrypt(err)
 	}
 
 	mac := hmac.New(sha256.New, hmacKey)
@@ -114,28 +113,28 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 //   - Error if any step of the decryption process fails, including authentication failure
 func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData []byte) ([]byte, error) {
 	if len(cipherText) < X25519PublicKeySize+AESNonceSize+HMACSize+minCipherTextSize {
-		return nil, fmt.Errorf("ciphertext too short")
+		return nil, ErrCipherTextTooShort
 	}
 
 	ephemeralPublicBytes := cipherText[:X25519PublicKeySize]
 	ephemeralPublic, err := ecdh.X25519().NewPublicKey(ephemeralPublicBytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse ephemeral public key: %w", err)
+		return nil, NewErrFailedToParseEphemeralPublicKey(err)
 	}
 
 	sharedSecret, err := privateKey.ECDH(ephemeralPublic)
 	if err != nil {
-		return nil, fmt.Errorf("failed ECDH operation: %w", err)
+		return nil, NewErrFailedECDHOperation(err)
 	}
 
 	kdf := hkdf.New(sha256.New, sharedSecret, nil, nil)
 	aesKey := make([]byte, AESKeySize)
 	hmacKey := make([]byte, HMACSize)
 	if _, err := kdf.Read(aesKey); err != nil {
-		return nil, fmt.Errorf("failed KDF operation for AES key: %w", err)
+		return nil, NewErrFailedKDFOperationForAESKey(err)
 	}
 	if _, err := kdf.Read(hmacKey); err != nil {
-		return nil, fmt.Errorf("failed KDF operation for HMAC key: %w", err)
+		return nil, NewErrFailedKDFOperationForHMACKey(err)
 	}
 
 	macSum := cipherText[len(cipherText)-HMACSize:]
@@ -145,12 +144,12 @@ func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData
 	mac.Write(cipherTextWithNonce)
 	expectedMAC := mac.Sum(nil)
 	if !hmac.Equal(macSum, expectedMAC) {
-		return nil, fmt.Errorf("verification with HMAC failed")
+		return nil, ErrVerificationWithHMACFailed
 	}
 
 	plainText, err := DecryptAES(nil, cipherTextWithNonce, aesKey, makeAAD(ephemeralPublicBytes, associatedData))
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt: %w", err)
+		return nil, NewErrFailedToDecrypt(err)
 	}
 
 	return plainText, nil

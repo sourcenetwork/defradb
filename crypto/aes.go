@@ -13,7 +13,6 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"fmt"
 )
 
 // EncryptAES encrypts data using AES-GCM with a provided key and additional data.
@@ -70,7 +69,7 @@ func EncryptAES(plainText, key, additionalData []byte, prependNonce bool) ([]byt
 func DecryptAES(nonce, cipherText, key, additionalData []byte) ([]byte, error) {
 	if len(nonce) == 0 {
 		if len(cipherText) < AESNonceSize {
-			return nil, fmt.Errorf("cipherText too short")
+			return nil, ErrCipherTextTooShort
 		}
 		nonce = cipherText[:AESNonceSize]
 		cipherText = cipherText[AESNonceSize:]
