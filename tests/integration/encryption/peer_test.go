@@ -20,6 +20,7 @@ import (
 
 func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 	test := testUtils.TestCase{
+		TargetKMSTypes: []testUtils.KMSType{testUtils.P2PKMSType},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -109,6 +110,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 
 func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		TargetKMSTypes: []testUtils.KMSType{testUtils.P2PKMSType},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

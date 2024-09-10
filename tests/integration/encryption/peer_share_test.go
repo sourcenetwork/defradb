@@ -322,8 +322,8 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				Doc:    `{"age": 2}`,
 			},
 			testUtils.WaitForSync{
-				//jEvent:   immutable.Some(encryption.KeysRetrievedEventName),
-				//NodeIDs: []int{1},
+				Event:   immutable.Some(encryption.KeysRetrievedEventName),
+				NodeIDs: []int{1},
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),

@@ -81,11 +81,9 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return nil
 	}
 
-	if !mp.hasPendingCompositeBlock {
-		err = syncIndexedDoc(ctx, docID, col)
-		if err != nil {
-			return err
-		}
+	err = syncIndexedDoc(ctx, docID, col)
+	if err != nil {
+		return err
 	}
 
 	err = txn.Commit(ctx)
@@ -149,8 +147,6 @@ type mergeProcessor struct {
 	// pendingEncryptionKeyRequests is a set of encryption keys that the node encountered during the merge
 	// and doesn't have locally, so they need to be requested from the network.
 	pendingEncryptionKeyRequests map[core.EncStoreDocKey]struct{}
-	// hasPendingCompositeBlock is a flag that indicates if there are any composite blocks that need encryption keys.
-	hasPendingCompositeBlock bool
 }
 
 func (db *db) newMergeProcessor(
@@ -266,14 +262,14 @@ func (mp *mergeProcessor) mergeBlocks(ctx context.Context) error {
 func (mp *mergeProcessor) processEncryptedBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
-) (*coreblock.Block, error) {
+) (*coreblock.Block, bool, error) {
 	if dagBlock.IsEncrypted() {
 		plainTextBlock, err := decryptBlock(ctx, dagBlock)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		if plainTextBlock != nil {
-			return plainTextBlock, nil
+			return plainTextBlock, true, nil
 		} else {
 			blockEnc := dagBlock.Encryption
 			// we weren't able to decrypt the block, so we request the encryption key unless it's a decryption pass
@@ -286,17 +282,14 @@ func (mp *mergeProcessor) processEncryptedBlock(
 				}
 				mp.addPendingEncryptionRequest(docID, fieldName, string(blockEnc.KeyID))
 			}
-			return dagBlock, nil
+			return dagBlock, false, nil
 		}
 	}
-	return dagBlock, nil
+	return dagBlock, true, nil
 }
 
 func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName immutable.Option[string], keyID string) {
 	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName, keyID)] = struct{}{}
-	if !fieldName.HasValue() {
-		mp.hasPendingCompositeBlock = true
-	}
 }
 
 func (mp *mergeProcessor) sendPendingEncryptionRequest(mergeEvent event.Merge) *encryption.Results {
@@ -316,25 +309,27 @@ func (mp *mergeProcessor) processBlock(
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
-	block, err := mp.processEncryptedBlock(ctx, dagBlock)
+	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
 	if err != nil {
 		return err
 	}
 
-	crdt, err := mp.initCRDTForType(dagBlock.Delta.GetFieldName())
-	if err != nil {
-		return err
-	}
+	if canRead {
+		crdt, err := mp.initCRDTForType(dagBlock.Delta.GetFieldName())
+		if err != nil {
+			return err
+		}
 
-	// If the CRDT is nil, it means the field is not part
-	// of the schema and we can safely ignore it.
-	if crdt == nil {
-		return nil
-	}
+		// If the CRDT is nil, it means the field is not part
+		// of the schema and we can safely ignore it.
+		if crdt == nil {
+			return nil
+		}
 
-	err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
-	if err != nil {
-		return err
+		err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, link := range dagBlock.Links {

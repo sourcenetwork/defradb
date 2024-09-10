@@ -79,6 +79,24 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 					}`,
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {age: {_eq: 21}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Andy",
+						},
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
 		},
 	}
 
