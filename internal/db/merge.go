@@ -66,12 +66,12 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	err = mp.loadBlocks(ctx, dagMerge.Cid, mt, false)
+	err = mp.loadComposites(ctx, dagMerge.Cid, mt, false)
 	if err != nil {
 		return err
 	}
 
-	err = mp.mergeBlocks(ctx)
+	err = mp.mergeComposites(ctx)
 	if err != nil {
 		return err
 	}
@@ -190,9 +190,9 @@ func newMergeTarget() mergeTarget {
 	}
 }
 
-// loadBlocks retrieves and stores into the merge processor the blocks for the given
+// loadComposites retrieves and stores into the merge processor the blocks for the given
 // CID until it reaches a block that has already been merged or until we reach the genesis block.
-func (mp *mergeProcessor) loadBlocks(
+func (mp *mergeProcessor) loadComposites(
 	ctx context.Context,
 	blockCid cid.Cid,
 	mt mergeTarget,
@@ -223,7 +223,7 @@ func (mp *mergeProcessor) loadBlocks(
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.blocks.PushFront(block)
 		for _, prevCid := range block.GetPrevBlockCids() {
-			err := mp.loadBlocks(ctx, prevCid, mt, willDecrypt)
+			err := mp.loadComposites(ctx, prevCid, mt, willDecrypt)
 			if err != nil {
 				return err
 			}
@@ -248,12 +248,12 @@ func (mp *mergeProcessor) loadBlocks(
 				}
 			}
 		}
-		return mp.loadBlocks(ctx, blockCid, newMT, willDecrypt)
+		return mp.loadComposites(ctx, blockCid, newMT, willDecrypt)
 	}
 	return nil
 }
 
-func (mp *mergeProcessor) mergeBlocks(ctx context.Context) error {
+func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	for e := mp.blocks.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()

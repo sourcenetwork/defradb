@@ -808,7 +808,6 @@ var _ Key = (*EncStoreDocKey)(nil)
 
 // NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
 // Unset fieldName indicates that the key is for the whole document.
-// blockHeight is the height of the block that the key is for.
 func NewEncStoreDocKey(docID string, fieldName immutable.Option[string], keyID string) EncStoreDocKey {
 	return EncStoreDocKey{DocID: docID, FieldName: fieldName, KeyID: keyID}
 }

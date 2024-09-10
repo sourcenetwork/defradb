@@ -58,10 +58,6 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	if ok {
 		return SetContextTxn(ctx, &explicitTxn{txn}), &explicitTxn{txn}, nil
 	}
-	return EnforceNewContextTxn(ctx, db, readOnly)
-}
-
-func EnforceNewContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	txn, err := db.NewTxn(ctx, readOnly)
 	if err != nil {
 		return nil, txn, err

@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
