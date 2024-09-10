@@ -81,11 +81,11 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 				})
 
 			case encryption.KeyRetrievedEvent:
-				/*go func() {
+				go func() {
 					if err := db.handleEncryptionKeysRetrievedEvent(ctx, evt); err != nil {
 						log.ErrorContextE(ctx, errFailedToHandleEncKeysReceivedEvent, err, corelog.Any("Event", evt))
 					}
-				}()*/
+				}()
 			}
 		}
 	}

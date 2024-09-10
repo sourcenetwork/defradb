@@ -77,27 +77,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	}
 
 	if len(mp.pendingEncryptionKeyRequests) != 0 {
-		entResults := mp.sendPendingEncryptionRequest(dagMerge)
-		newCtx, newTxn, err := EnforceNewContextTxn(context.TODO(), db, false)
-		go func(ccc context.Context, ttt datastore.Txn) {
-			res := <-entResults.Get()
-			if res.Error != nil {
-				fmt.Printf("Error fetching keys: %s\n", res.Error)
-				return
-			}
-			fmt.Printf("Received %d keys\n", len(res.Items))
-			for i, key := range res.Items {
-				fmt.Printf("Key %d: %s\n", i, key.StoreKey.ToString())
-			}
-			if err != nil {
-				fmt.Printf("Error creating new context txn: %s\n", err)
-				return
-			}
-			err = db.executeMerge(ccc, dagMerge)
-			if err != nil {
-				fmt.Printf("Error executing merge: %s\n", err)
-			}
-		}(newCtx, newTxn)
+		mp.sendPendingEncryptionRequest(dagMerge)
 		return nil
 	}
 
