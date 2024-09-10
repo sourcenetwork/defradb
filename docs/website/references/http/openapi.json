@@ -316,8 +316,15 @@
             },
             "graphql_request": {
                 "properties": {
+                    "operationName": {
+                        "type": "string"
+                    },
                     "query": {
                         "type": "string"
+                    },
+                    "variables": {
+                        "additionalProperties": {},
+                        "type": "object"
                     }
                 },
                 "type": "object"
