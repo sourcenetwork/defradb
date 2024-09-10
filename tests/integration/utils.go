@@ -221,7 +221,7 @@ func executeTestCase(
 	}
 
 	if kms != NoneKMSType {
-		logAttrs = append(logAttrs, corelog.Any("kms", kms))
+		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
 	log.InfoContext(ctx, testCase.Description, logAttrs...)
@@ -365,7 +365,7 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForSync(s, action)
+		waitForSync(s)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)

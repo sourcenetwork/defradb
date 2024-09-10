@@ -79,19 +79,7 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 						log.ErrorContextE(ctx, "Failed to load replicators", err)
 					}
 				})
-
-			case encryption.KeyRetrievedEvent:
-				go func() {
-					if err := db.handleEncryptionKeysRetrievedEvent(ctx, evt); err != nil {
-						log.ErrorContextE(ctx, errFailedToHandleEncKeysReceivedEvent, err, corelog.Any("Event", evt))
-					}
-				}()
 			}
 		}
 	}
-}
-
-// handleEncryptionKeysRetrievedEvent handles the event when requested encryption keys are retrieved from other peers.
-func (db *db) handleEncryptionKeysRetrievedEvent(ctx context.Context, evt encryption.KeyRetrievedEvent) error {
-	return db.executeMerge(ctx, evt.MergeEvent)
 }

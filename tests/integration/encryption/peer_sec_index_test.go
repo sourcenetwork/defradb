@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -65,11 +64,7 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-				Count:   2,
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				Request: `
 					query @explain(type: execute) {
@@ -149,11 +144,7 @@ func TestDocEncryptionPeer_IfDocDocHasEncryptedIndexedField_ShouldIndexAfterDecr
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-				Count:   2,
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				Request: `
 					query @explain(type: execute) {

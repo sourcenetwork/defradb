@@ -77,7 +77,20 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	}
 
 	if len(mp.pendingEncryptionKeyRequests) != 0 {
-		mp.sendPendingEncryptionRequest(dagMerge)
+		entResults := mp.sendPendingEncryptionRequest()
+		go func() {
+			res := <-entResults.Get()
+			if res.Error != nil {
+				fmt.Printf("Error fetching keys: %s\n", res.Error)
+				return
+			}
+			err = db.executeMerge(context.Background(), dagMerge)
+			if err != nil {
+				fmt.Printf("Error executing merge: %s\n", err)
+			}
+		}()
+		// if there are pending encryption keys, we discard the transaction
+		// and wait for the keys to be fetched
 		return nil
 	}
 
@@ -292,12 +305,12 @@ func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName im
 	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName, keyID)] = struct{}{}
 }
 
-func (mp *mergeProcessor) sendPendingEncryptionRequest(mergeEvent event.Merge) *encryption.Results {
+func (mp *mergeProcessor) sendPendingEncryptionRequest() *encryption.Results {
 	storeKeys := make([]core.EncStoreDocKey, 0, len(mp.pendingEncryptionKeyRequests))
 	for k := range mp.pendingEncryptionKeyRequests {
 		storeKeys = append(storeKeys, k)
 	}
-	msg, results := encryption.NewRequestKeysMessage(mp.col.SchemaRoot(), storeKeys, mergeEvent)
+	msg, results := encryption.NewRequestKeysMessage(storeKeys)
 	mp.col.db.events.Publish(msg)
 	return results
 }

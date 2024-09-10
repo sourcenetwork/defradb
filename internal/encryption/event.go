@@ -16,22 +16,16 @@ import (
 )
 
 const RequestKeysEventName = event.Name("enc-keys-request")
-const KeysRetrievedEventName = event.Name("enc-keys-retrieved")
 
 // RequestKeysEvent represents a request of a node to fetch an encryption key for a specific
 // docID/field
 //
 // It must only contain public elements not protected by ACP.
 type RequestKeysEvent struct {
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
-
 	// Keys is a list of the keys that are being requested.
 	Keys []core.EncStoreDocKey
 
 	Resp chan<- Result
-
-	MergeEvent event.Merge
 }
 
 // RequestedKeyEventData represents the data that was retrieved for a specific key.
@@ -41,16 +35,6 @@ type RequestedKeyEventData struct {
 }
 
 // KeyRetrievedEvent represents a key that was retrieved.
-type KeyRetrievedEvent struct {
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
-
-	// Keys is a map of the requested keys to the corresponding raw encryption keys.
-	Keys map[core.EncStoreDocKey][]byte
-
-	MergeEvent event.Merge
-}
-
 type Item struct {
 	StoreKey      core.EncStoreDocKey
 	EncryptionKey []byte
@@ -78,29 +62,10 @@ func NewResults() (*Results, chan<- Result) {
 
 // NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
-func NewRequestKeysMessage(
-	schemaRoot string,
-	keys []core.EncStoreDocKey,
-	mergeEvent event.Merge,
-) (event.Message, *Results) {
+func NewRequestKeysMessage(keys []core.EncStoreDocKey) (event.Message, *Results) {
 	res, ch := NewResults()
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
-		SchemaRoot: schemaRoot,
-		Keys:       keys,
-		Resp:       ch,
-		MergeEvent: mergeEvent,
+		Keys: keys,
+		Resp: ch,
 	}), res
-}
-
-// NewKeysRetrievedMessage creates a new event message for a key that was retrieved
-func NewKeysRetrievedMessage(
-	schemaRoot string,
-	keys map[core.EncStoreDocKey][]byte,
-	mergeEvent event.Merge,
-) event.Message {
-	return event.NewMessage(KeysRetrievedEventName, KeyRetrievedEvent{
-		SchemaRoot: schemaRoot,
-		Keys:       keys,
-		MergeEvent: mergeEvent,
-	})
 }

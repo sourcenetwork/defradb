@@ -31,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
@@ -136,7 +135,7 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, encryption.KeysRetrievedEventName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
 	if err != nil {
 		return nil, err
 	}

@@ -12,8 +12,6 @@ package tests
 
 import (
 	"encoding/json"
-	"slices"
-	"sync"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -21,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 // eventTimeout is the amount of time to wait
@@ -352,57 +349,8 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	return expect
 }
 
-// waitForKeyRetrievedEvent waits for nodes to receive a key retrieved event.
-// If targetNodeIDs is empty, all nodes will be waiting on the event sync.
-// Otherwise, only the nodes with the specified IDs will be checked.
-func waitForKeyRetrievedEvent(s *state, targetNodeIDs []int) {
-	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
-		// if we have target nodes and the current node is not in the list, skip it
-		if len(targetNodeIDs) > 0 && !slices.Contains(targetNodeIDs, nodeID) {
-			continue
-		}
-
-		select {
-		case _, ok := <-s.nodeEvents[nodeID].encKeysRetrieved.Message():
-			if !ok {
-				require.Fail(s.t, "subscription closed waiting for key retrieved event")
-			}
-
-		case <-time.After(eventTimeout):
-			require.Fail(s.t, "timeout waiting for key retrieved event")
-		}
-	}
-}
-
-func waitForSync(s *state, action WaitForSync) {
-	count := int(action.Count)
-	if count == 0 {
-		count = 1
-	}
-
-	syncFunc := func(s *state, action WaitForSync) {
-		if !action.Event.HasValue() || action.Event.Value() == event.MergeCompleteName {
-			waitForMergeEvents(s)
-		} else if action.Event.Value() == encryption.KeysRetrievedEventName {
-			waitForKeyRetrievedEvent(s, action.NodeIDs)
-		} else {
-			require.Fail(s.t, "unsupported event type: %s", action.Event.Value())
-		}
-	}
-
-	if count == 1 {
-		syncFunc(s, action)
-	} else {
-		var wg sync.WaitGroup
-		wg.Add(count)
-		for i := 0; i < count; i++ {
-			go func(s *state, action WaitForSync) {
-				defer wg.Done()
-				syncFunc(s, action)
-			}(s, action)
-		}
-		wg.Wait()
-	}
+func waitForSync(s *state) {
+	waitForMergeEvents(s)
 }
 
 // getEventsForUpdateWithFilter returns a map of docIDs that should be

@@ -13,10 +13,7 @@ package tests
 import (
 	"time"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 
 	"github.com/sourcenetwork/corelog"
@@ -136,17 +133,7 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct {
-	// Event is the name of the event to wait for.
-	// If is not provided then the action will wait for MergeComplete event.
-	Event immutable.Option[event.Name]
-	// NodeIDs are the node IDs (indexes) of the nodes to wait for sync on.
-	// If not provided then the action will wait for sync on all nodes.
-	NodeIDs []int
-	// Count is the number of times the event should be received by each node.
-	// Default value (zero) is treated as 1, e.g. the event should be received once.
-	Count uint
-}
+type WaitForSync struct{}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.

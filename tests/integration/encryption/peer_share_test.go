@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -95,10 +94,7 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -150,10 +146,7 @@ func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeys
 				IsDocEncrypted:  true,
 				EncryptedFields: []string{"age"},
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -205,10 +198,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 				IsDocEncrypted:  true,
 				EncryptedFields: []string{"name", "age"},
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -259,10 +249,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 				Doc:             john21Doc,
 				EncryptedFields: []string{"name", "age"},
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -321,10 +308,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				NodeID: immutable.Some(0),
 				Doc:    `{"age": 2}`,
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -383,10 +367,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				NodeID: immutable.Some(0),
 				Doc:    `{"age": 2}`,
 			},
-			testUtils.WaitForSync{
-				Event:   immutable.Some(encryption.KeysRetrievedEventName),
-				NodeIDs: []int{1},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {

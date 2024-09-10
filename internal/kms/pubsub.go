@@ -129,7 +129,6 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 				for _, item := range encResult.Items {
 					m[item.StoreKey] = item.EncryptionKey
 				}
-				s.eventBus.Publish(encryption.NewKeysRetrievedMessage(keyReqEvent.SchemaRoot, m, keyReqEvent.MergeEvent))
 				keyReqEvent.Resp <- encResult
 				close(keyReqEvent.Resp)
 			}()
