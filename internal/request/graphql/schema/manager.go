@@ -45,9 +45,10 @@ func NewSchemaManager() (*SchemaManager, error) {
 			crdtEnum,
 			explainEnum,
 		),
-		Query:      defaultQueryType(commitObject, commitsOrderArg),
-		Mutation:   defaultMutationType(),
-		Directives: defaultDirectivesType(crdtEnum, explainEnum, orderEnum),
+		Query:        defaultQueryType(commitObject, commitsOrderArg),
+		Mutation:     defaultMutationType(),
+		Subscription: defaultSubscriptionType(),
+		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum),
 	})
 	if err != nil {
 		return sm, err
@@ -118,6 +119,18 @@ func defaultQueryType(commitObject *gql.Object, commitsOrderArg *gql.InputObject
 func defaultMutationType() *gql.Object {
 	return gql.NewObject(gql.ObjectConfig{
 		Name: "Mutation",
+		Fields: gql.Fields{
+			"_": &gql.Field{
+				Name: "_",
+				Type: gql.Boolean,
+			},
+		},
+	})
+}
+
+func defaultSubscriptionType() *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
+		Name: "Subscription",
 		Fields: gql.Fields{
 			"_": &gql.Field{
 				Name: "_",
