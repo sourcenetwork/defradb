@@ -182,8 +182,8 @@ func setupNode(s *state, opts ...node.Option) (*node.Node, string, error) {
 		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
-	if s.kms == P2PKMSType {
-		opts = append(opts, node.WithKMS(kms.P2PServiceType))
+	if s.kms == PubSubKMSType {
+		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
 	node, err := node.NewNode(s.ctx, opts...)

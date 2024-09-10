@@ -21,7 +21,7 @@ import (
 
 func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecryption(t *testing.T) {
 	test := testUtils.TestCase{
-		TargetKMSTypes: []testUtils.KMSType{testUtils.P2PKMSType},
+		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -105,7 +105,7 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 
 func TestDocEncryptionPeer_IfDocDocHasEncryptedIndexedField_ShouldIndexAfterDecryption(t *testing.T) {
 	test := testUtils.TestCase{
-		TargetKMSTypes: []testUtils.KMSType{testUtils.P2PKMSType},
+		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

@@ -60,9 +60,13 @@ var (
 type KMSType string
 
 const (
-	NoneKMSType = "none"
-	P2PKMSType  = "p2p"
+	NoneKMSType   KMSType = "none"
+	PubSubKMSType KMSType = "pubsub"
 )
+
+func getKMSTypes() []KMSType {
+	return []KMSType{PubSubKMSType}
+}
 
 func init() {
 	acpType = ACPType(os.Getenv(acpTypeEnvName))

@@ -17,12 +17,12 @@ import (
 	"log/slog"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -170,9 +170,13 @@ func ExecuteTestCase(
 	}
 
 	var kmsList []KMSType
-	if len(testCase.TargetKMSTypes) > 0 {
-		kmsList = testCase.TargetKMSTypes
-	} else {
+	if testCase.KMS.Activated {
+		kmsList = getKMSTypes()
+		for _, excluded := range testCase.KMS.ExcludedTypes {
+			kmsList = slices.DeleteFunc(kmsList, func(t KMSType) bool { return t == excluded })
+		}
+	}
+	if len(kmsList) == 0 {
 		kmsList = []KMSType{NoneKMSType}
 	}
 
@@ -398,7 +402,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	collections := getNodeCollections(action.NodeID, s.collections)
 	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
 	for _, col := range collections[0] {
-		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name().Value()) {
+		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, col.Name().Value()) {
 			defs = append(defs, col.Definition())
 		}
 	}

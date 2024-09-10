@@ -25,7 +25,7 @@ var (
 type ServiceType string
 
 const (
-	P2PServiceType = "p2p"
+	PubSubServiceType ServiceType = "pubsub"
 )
 
 type Service interface {

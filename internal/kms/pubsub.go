@@ -15,6 +15,7 @@ import (
 	"context"
 	"crypto/ecdh"
 	"encoding/base64"
+	"fmt"
 
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
@@ -32,14 +33,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const requestType = "encryption"
+const pubsubTopic = "encryption"
 
 type PubSubServer interface {
 	AddPubSubTopic(string, rpc.MessageHandler) error
 	SendPubSubMessage(context.Context, string, []byte) (<-chan rpc.Response, error)
 }
 
-type p2pService struct {
+type pubSubService struct {
 	ctx             context.Context
 	peerID          libpeer.ID
 	pubsub          PubSubServer
@@ -48,9 +49,9 @@ type p2pService struct {
 	eventBus        *event.Bus
 }
 
-var _ Service = (*p2pService)(nil)
+var _ Service = (*pubSubService)(nil)
 
-func (s *p2pService) GetKeys(ctx context.Context, keys ...core.EncStoreDocKey) (*encryption.Results, error) {
+func (s *pubSubService) GetKeys(ctx context.Context, keys ...core.EncStoreDocKey) (*encryption.Results, error) {
 	res, ch := encryption.NewResults()
 
 	err := s.requestEncryptionKey(ctx, keys, ch)
@@ -61,21 +62,21 @@ func (s *p2pService) GetKeys(ctx context.Context, keys ...core.EncStoreDocKey) (
 	return res, nil
 }
 
-func NewP2PService(
+func NewPubSubService(
 	ctx context.Context,
 	peerID libpeer.ID,
 	pubsub PubSubServer,
 	eventBus *event.Bus,
 	encstore datastore.DSReaderWriter,
-) (*p2pService, error) {
-	s := &p2pService{
+) (*pubSubService, error) {
+	s := &pubSubService{
 		ctx:      ctx,
 		peerID:   peerID,
 		pubsub:   pubsub,
 		encstore: encstore,
 		eventBus: eventBus,
 	}
-	err := pubsub.AddPubSubTopic(requestType, s.handleRequestFromPeer)
+	err := pubsub.AddPubSubTopic(pubsubTopic, s.handleRequestFromPeer)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func NewP2PService(
 	return s, nil
 }
 
-func (s *p2pService) handleKeyRequestedEvent() {
+func (s *pubSubService) handleKeyRequestedEvent() {
 	for {
 		msg, isOpen := <-s.keyRequestedSub.Message()
 		if !isOpen {
@@ -106,11 +107,22 @@ func (s *p2pService) handleKeyRequestedEvent() {
 				_, encryptor := encryption.ContextWithStore(s.ctx, s.encstore)
 
 				for _, encItem := range encResult.Items {
-					err := encryptor.SaveKey(encItem.StoreKey, encItem.EncryptionKey)
+					encKey, err := encryptor.GetKey(encItem.StoreKey)
+					if err != nil {
+						fmt.Printf(">>>>>>>>>> Failed to get stored key %s\n", encItem.StoreKey.ToString())
+						continue
+					}
+					if len(encKey) == 0 {
+						fmt.Printf(">>>>>>>>>> No key stored %s\n", encItem.StoreKey.ToString())
+					} else {
+						fmt.Printf(">>>>>>>>>> Has already key stored %s\n", encItem.StoreKey.ToString())
+					}
+					err = encryptor.SaveKey(encItem.StoreKey, encItem.EncryptionKey)
 					if err != nil {
 						log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
 						return
 					}
+					fmt.Printf(">>>>>>>>>> Saved key %s\n", encItem.StoreKey.ToString())
 				}
 
 				m := make(map[core.EncStoreDocKey][]byte)
@@ -128,7 +140,7 @@ func (s *p2pService) handleKeyRequestedEvent() {
 }
 
 // handleEncryptionMessage handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
-func (s *p2pService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg []byte) ([]byte, error) {
+func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg []byte) ([]byte, error) {
 	// TODO: check how it makes sense and how much effort to separate net package so that it has
 	// client-related and server-related code independently. Conceptually, they should no depend on each other.
 	// Any common functionality (like hosting peer) can be shared.
@@ -149,7 +161,7 @@ func (s *p2pService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg 
 	return res.MarshalVT()
 }
 
-func (s *p2pService) prepareFetchEncryptionKeyRequest(
+func (s *pubSubService) prepareFetchEncryptionKeyRequest(
 	encStoreKeys []core.EncStoreDocKey,
 	ephemeralPublicKey []byte,
 ) (*pb.FetchEncryptionKeyRequest, error) {
@@ -172,7 +184,7 @@ func (s *p2pService) prepareFetchEncryptionKeyRequest(
 }
 
 // requestEncryptionKey publishes the given FetchEncryptionKeyRequest object on the PubSub network
-func (s *p2pService) requestEncryptionKey(
+func (s *pubSubService) requestEncryptionKey(
 	ctx context.Context,
 	encStoreKeys []core.EncStoreDocKey,
 	result chan<- encryption.Result,
@@ -193,7 +205,7 @@ func (s *p2pService) requestEncryptionKey(
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	respChan, err := s.pubsub.SendPubSubMessage(ctx, requestType, data)
+	respChan, err := s.pubsub.SendPubSubMessage(ctx, pubsubTopic, data)
 	//respChan, err := s.topic.Publish(ctx, data)
 	if err != nil {
 		return errors.Wrap("failed publishing to encryption thread", err)
@@ -209,7 +221,7 @@ func (s *p2pService) requestEncryptionKey(
 }
 
 // handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
-func (s *p2pService) handleFetchEncryptionKeyResponse(
+func (s *pubSubService) handleFetchEncryptionKeyResponse(
 	resp rpc.Response,
 	req *pb.FetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
@@ -271,7 +283,7 @@ func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []
 	}, []byte{}))
 }
 
-func (s *p2pService) TryGenEncryptionKey(
+func (s *pubSubService) TryGenEncryptionKey(
 	ctx context.Context,
 	req *pb.FetchEncryptionKeyRequest,
 ) (*pb.FetchEncryptionKeyReply, error) {
@@ -301,7 +313,7 @@ func (s *p2pService) TryGenEncryptionKey(
 
 // getEncryptionKeys retrieves the encryption keys for the given targets.
 // It returns the encryption keys and the targets for which the keys were found.
-func (s *p2pService) getEncryptionKeys(
+func (s *pubSubService) getEncryptionKeys(
 	ctx context.Context,
 	req *pb.FetchEncryptionKeyRequest,
 ) ([]byte, []*pb.EncryptionKeyTarget, error) {

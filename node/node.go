@@ -150,8 +150,8 @@ func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
 
 		if options.kmsType.HasValue() {
 			switch options.kmsType.Value() {
-			case kms.P2PServiceType:
-				kmsService, err = kms.NewP2PService(
+			case kms.PubSubServiceType:
+				kmsService, err = kms.NewPubSubService(
 					ctx,
 					peer.PeerID(),
 					peer.Server(),
