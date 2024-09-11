@@ -83,6 +83,7 @@
                     "Fields": {
                         "items": {
                             "properties": {
+                                "DefaultValue": {},
                                 "ID": {
                                     "maximum": 4294967295,
                                     "minimum": 0,
@@ -160,6 +161,7 @@
                             "Fields": {
                                 "items": {
                                     "properties": {
+                                        "DefaultValue": {},
                                         "ID": {
                                             "maximum": 4294967295,
                                             "minimum": 0,
