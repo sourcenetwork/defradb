@@ -135,6 +135,7 @@ func defaultDirectivesType(
 ) []*gql.Directive {
 	return []*gql.Directive{
 		schemaTypes.CRDTFieldDirective(crdtEnum),
+		schemaTypes.DefaultDirective(),
 		schemaTypes.ExplainDirective(explainEnum),
 		schemaTypes.PolicyDirective(),
 		schemaTypes.IndexDirective(orderEnum),

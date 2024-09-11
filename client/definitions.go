@@ -145,6 +145,9 @@ type FieldDefinition struct {
 
 	// If true, this is the primary half of a relation, otherwise is false.
 	IsPrimaryRelation bool
+
+	// DefaultValue contains the default value for this field.
+	DefaultValue any
 }
 
 // NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
@@ -164,6 +167,7 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		RelationName:      local.RelationName.Value(),
 		Typ:               global.Typ,
 		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
+		DefaultValue:      global.DefaultValue,
 	}
 }
 
@@ -180,9 +184,10 @@ func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 // NewSchemaOnlyFieldDefinition returns a new [FieldDefinition] from the given global [SchemaFieldDescription].
 func NewSchemaOnlyFieldDefinition(global SchemaFieldDescription) FieldDefinition {
 	return FieldDefinition{
-		Name: global.Name,
-		Kind: global.Kind,
-		Typ:  global.Typ,
+		Name:         global.Name,
+		Kind:         global.Kind,
+		Typ:          global.Typ,
+		DefaultValue: global.DefaultValue,
 	}
 }
 

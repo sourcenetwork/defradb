@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -24,6 +25,17 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
+)
+
+const (
+	typeID       string = "ID"
+	typeBoolean  string = "Boolean"
+	typeInt      string = "Int"
+	typeFloat    string = "Float"
+	typeDateTime string = "DateTime"
+	typeString   string = "String"
+	typeBlob     string = "Blob"
+	typeJSON     string = "JSON"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
@@ -345,6 +357,46 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 	return desc, nil
 }
 
+func defaultFromAST(
+	field *ast.FieldDefinition,
+	directive *ast.Directive,
+) (any, error) {
+	astNamed, ok := field.Type.(*ast.Named)
+	if !ok {
+		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, field.Type.String())
+	}
+	var value any
+	for _, arg := range directive.Arguments {
+		valueTyp := arg.Name.Value
+		fieldTyp := astNamed.Name.Value
+		switch {
+		case valueTyp == types.DefaultDirectivePropString && fieldTyp == typeString:
+			value = arg.Value.(*ast.StringValue).Value
+
+		case valueTyp == types.DefaultDirectivePropBool && fieldTyp == typeBoolean:
+			value = arg.Value.(*ast.BooleanValue).Value
+
+		case valueTyp == types.DefaultDirectivePropInt && fieldTyp == typeInt:
+			val, err := strconv.ParseInt(arg.Value.(*ast.IntValue).Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			value = val
+
+		case valueTyp == types.DefaultDirectivePropFloat && fieldTyp == typeFloat:
+			val, err := strconv.ParseFloat(arg.Value.(*ast.IntValue).Value, 64)
+			if err != nil {
+				return nil, err
+			}
+			value = val
+
+		default:
+			return nil, NewErrDefaultValueInvalid(fieldTyp, valueTyp)
+		}
+	}
+	return value, nil
+}
+
 func fieldsFromAST(
 	field *ast.FieldDefinition,
 	hostObjectName string,
@@ -367,6 +419,16 @@ func fieldsFromAST(
 		cTypeByFieldNameByObjName[hostObjectName] = hostMap
 	}
 	hostMap[field.Name.Value] = cType
+
+	var defaultValue any
+	for _, directive := range field.Directives {
+		if directive.Name.Value == types.DefaultDirectiveLabel {
+			defaultValue, err = defaultFromAST(field, directive)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	}
 
 	schemaFieldDescriptions := []client.SchemaFieldDescription{}
 	collectionFieldDescriptions := []client.CollectionFieldDescription{}
@@ -434,9 +496,10 @@ func fieldsFromAST(
 		schemaFieldDescriptions = append(
 			schemaFieldDescriptions,
 			client.SchemaFieldDescription{
-				Name: field.Name.Value,
-				Kind: kind,
-				Typ:  cType,
+				Name:         field.Name.Value,
+				Kind:         kind,
+				Typ:          cType,
+				DefaultValue: defaultValue,
 			},
 		)
 
@@ -505,17 +568,6 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 }
 
 func astTypeToKind(t ast.Type) (client.FieldKind, error) {
-	const (
-		typeID       string = "ID"
-		typeBoolean  string = "Boolean"
-		typeInt      string = "Int"
-		typeFloat    string = "Float"
-		typeDateTime string = "DateTime"
-		typeString   string = "String"
-		typeBlob     string = "Blob"
-		typeJSON     string = "JSON"
-	)
-
 	switch astTypeVal := t.(type) {
 	case *ast.List:
 		switch innerAstTypeVal := astTypeVal.Type.(type) {

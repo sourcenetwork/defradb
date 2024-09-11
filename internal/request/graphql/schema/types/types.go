@@ -40,6 +40,12 @@ const (
 	IndexDirectivePropDirection  = "direction"
 	IndexDirectivePropDirections = "directions"
 
+	DefaultDirectiveLabel      = "default"
+	DefaultDirectivePropString = "string"
+	DefaultDirectivePropBool   = "bool"
+	DefaultDirectivePropInt    = "int"
+	DefaultDirectivePropFloat  = "float"
+
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
 )
@@ -80,6 +86,30 @@ func ExplainEnum() *gql.Enum {
 				Value:       ExplainArgDebug,
 				Description: "Like simple explain, but more verbose nodes (no attributes).",
 			},
+		},
+	})
+}
+
+func DefaultDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        DefaultDirectiveLabel,
+		Description: "@default is a directive that can be used to set a default field value.",
+		Args: gql.FieldConfigArgument{
+			DefaultDirectivePropString: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+			DefaultDirectivePropBool: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+			DefaultDirectivePropInt: &gql.ArgumentConfig{
+				Type: gql.Int,
+			},
+			DefaultDirectivePropFloat: &gql.ArgumentConfig{
+				Type: gql.Float,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }
