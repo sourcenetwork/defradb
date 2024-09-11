@@ -38,6 +38,9 @@ type CollectionFieldDescription struct {
 	//
 	// Otherwise will be [None].
 	RelationName immutable.Option[string]
+
+	// DefaultValue contains the default value for this field.
+	DefaultValue any
 }
 
 func (f FieldID) String() string {
@@ -50,6 +53,7 @@ type collectionFieldDescription struct {
 	Name         string
 	ID           FieldID
 	RelationName immutable.Option[string]
+	DefaultValue any
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
@@ -64,6 +68,7 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 
 	f.Name = descMap.Name
 	f.ID = descMap.ID
+	f.DefaultValue = descMap.DefaultValue
 	f.RelationName = descMap.RelationName
 	kind, err := parseFieldKind(descMap.Kind)
 	if err != nil {

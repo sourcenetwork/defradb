@@ -40,11 +40,14 @@ const (
 	IndexDirectivePropDirection  = "direction"
 	IndexDirectivePropDirections = "directions"
 
-	DefaultDirectiveLabel      = "default"
-	DefaultDirectivePropString = "string"
-	DefaultDirectivePropBool   = "bool"
-	DefaultDirectivePropInt    = "int"
-	DefaultDirectivePropFloat  = "float"
+	DefaultDirectiveLabel        = "default"
+	DefaultDirectivePropString   = "string"
+	DefaultDirectivePropBool     = "bool"
+	DefaultDirectivePropInt      = "int"
+	DefaultDirectivePropFloat    = "float"
+	DefaultDirectivePropDateTime = "dateTime"
+	DefaultDirectivePropJSON     = "json"
+	DefaultDirectivePropBlob     = "blob"
 
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
@@ -106,6 +109,15 @@ func DefaultDirective() *gql.Directive {
 			},
 			DefaultDirectivePropFloat: &gql.ArgumentConfig{
 				Type: gql.Float,
+			},
+			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
+				Type: gql.DateTime,
+			},
+			DefaultDirectivePropJSON: &gql.ArgumentConfig{
+				Type: JSONScalarType(),
+			},
+			DefaultDirectivePropBlob: &gql.ArgumentConfig{
+				Type: BlobScalarType(),
 			},
 		},
 		Locations: []string{

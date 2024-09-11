@@ -50,9 +50,6 @@ type SchemaFieldDescription struct {
 	//
 	// It is currently immutable.
 	Typ CType
-
-	// DefaultValue contains the default value for this field.
-	DefaultValue any
 }
 
 // ScalarKind represents singular scalar field kinds, such as `Int`.
@@ -362,9 +359,8 @@ func (f SchemaFieldDescription) IsRelation() bool {
 // schemaFieldDescription is a private type used to facilitate the unmarshalling
 // of json to a [SchemaFieldDescription].
 type schemaFieldDescription struct {
-	Name         string
-	Typ          CType
-	DefaultValue any
+	Name string
+	Typ  CType
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
@@ -379,7 +375,6 @@ func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
 
 	f.Name = descMap.Name
 	f.Typ = descMap.Typ
-	f.DefaultValue = descMap.DefaultValue
 	f.Kind, err = parseFieldKind(descMap.Kind)
 	if err != nil {
 		return err

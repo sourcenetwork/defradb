@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package schema
+package collection_description
 
 import (
 	"testing"
@@ -19,55 +19,64 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestSchemaCreate_WithDefaultFieldValues(t *testing.T) {
-	schemaVersionID := "bafkreidgt7jiy2abozwydf3frpvvvu6whuvw2saqm6erflnf3vqlnapxly"
-
+func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
+						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
 						name: String @default(string: "Bob")
 						age: Int @default(int: 10)
 						points: Float @default(float: 30)
+						metadata: JSON @default(json: "{\"value\":1}")
+						image: Blob @default(blob: "ff0099")
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name: immutable.Some("Users"),
+						Fields: []client.CollectionFieldDescription{
 							{
+								ID:   0,
 								Name: "_docID",
-								Kind: client.FieldKind_DocID,
 							},
 							{
+								ID:           1,
 								Name:         "active",
-								Kind:         client.FieldKind_NILLABLE_BOOL,
-								Typ:          client.LWW_REGISTER,
 								DefaultValue: true,
 							},
 							{
+								ID:           2,
 								Name:         "age",
-								Kind:         client.FieldKind_NILLABLE_INT,
-								Typ:          client.LWW_REGISTER,
 								DefaultValue: float64(10),
 							},
 							{
+								ID:           3,
+								Name:         "created",
+								DefaultValue: "2000-07-23T03:00:00-00:00",
+							},
+							{
+								ID:           4,
+								Name:         "image",
+								DefaultValue: "ff0099",
+							},
+							{
+								ID:           5,
+								Name:         "metadata",
+								DefaultValue: "{\"value\":1}",
+							},
+							{
+								ID:           6,
 								Name:         "name",
-								Kind:         client.FieldKind_NILLABLE_STRING,
-								Typ:          client.LWW_REGISTER,
 								DefaultValue: "Bob",
 							},
 							{
+								ID:           7,
 								Name:         "points",
-								Kind:         client.FieldKind_NILLABLE_FLOAT,
-								Typ:          client.LWW_REGISTER,
 								DefaultValue: float64(30),
 							},
 						},

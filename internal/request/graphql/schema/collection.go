@@ -14,9 +14,9 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
+	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -37,6 +37,18 @@ const (
 	typeBlob     string = "Blob"
 	typeJSON     string = "JSON"
 )
+
+// this mapping is used to check that the default prop value
+// matches the field type
+var defaultPropNameToType = map[string]string{
+	types.DefaultDirectivePropString:   typeString,
+	types.DefaultDirectivePropBool:     typeBoolean,
+	types.DefaultDirectivePropInt:      typeInt,
+	types.DefaultDirectivePropFloat:    typeFloat,
+	types.DefaultDirectivePropDateTime: typeDateTime,
+	types.DefaultDirectivePropJSON:     typeJSON,
+	types.DefaultDirectivePropBlob:     typeBlob,
+}
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
 func FromString(ctx context.Context, schemaString string) (
@@ -367,31 +379,20 @@ func defaultFromAST(
 	}
 	var value any
 	for _, arg := range directive.Arguments {
-		valueTyp := arg.Name.Value
-		fieldTyp := astNamed.Name.Value
-		switch {
-		case valueTyp == types.DefaultDirectivePropString && fieldTyp == typeString:
-			value = arg.Value.(*ast.StringValue).Value
-
-		case valueTyp == types.DefaultDirectivePropBool && fieldTyp == typeBoolean:
-			value = arg.Value.(*ast.BooleanValue).Value
-
-		case valueTyp == types.DefaultDirectivePropInt && fieldTyp == typeInt:
-			val, err := strconv.ParseInt(arg.Value.(*ast.IntValue).Value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			value = val
-
-		case valueTyp == types.DefaultDirectivePropFloat && fieldTyp == typeFloat:
-			val, err := strconv.ParseFloat(arg.Value.(*ast.IntValue).Value, 64)
-			if err != nil {
-				return nil, err
-			}
-			value = val
-
+		if defaultPropNameToType[arg.Name.Value] != astNamed.Name.Value {
+			return nil, NewErrDefaultValueInvalid(astNamed.Name.Value, arg.Name.Value)
+		}
+		switch t := arg.Value.(type) {
+		case *ast.IntValue:
+			value = gql.Int.ParseLiteral(arg.Value)
+		case *ast.FloatValue:
+			value = gql.Float.ParseLiteral(arg.Value)
+		case *ast.BooleanValue:
+			value = t.Value
+		case *ast.StringValue:
+			value = t.Value
 		default:
-			return nil, NewErrDefaultValueInvalid(fieldTyp, valueTyp)
+			value = arg.Value.GetValue()
 		}
 	}
 	return value, nil
@@ -496,17 +497,17 @@ func fieldsFromAST(
 		schemaFieldDescriptions = append(
 			schemaFieldDescriptions,
 			client.SchemaFieldDescription{
-				Name:         field.Name.Value,
-				Kind:         kind,
-				Typ:          cType,
-				DefaultValue: defaultValue,
+				Name: field.Name.Value,
+				Kind: kind,
+				Typ:  cType,
 			},
 		)
 
 		collectionFieldDescriptions = append(
 			collectionFieldDescriptions,
 			client.CollectionFieldDescription{
-				Name: field.Name.Value,
+				Name:         field.Name.Value,
+				DefaultValue: defaultValue,
 			},
 		)
 	}

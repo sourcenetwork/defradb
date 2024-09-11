@@ -12,6 +12,7 @@ package create
 
 import (
 	"testing"
+	"time"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -23,10 +24,13 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						age: Int @default(int: 40)
 						active: Boolean @default(bool: true)
+						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
 						name: String @default(string: "Bob")
+						age: Int @default(int: 40)
 						points: Float @default(float: 10)
+						metadata: JSON @default(json: "{\"one\":1}")
+						image: Blob @default(blob: "ff0099")
 					}
 				`,
 			},
@@ -37,15 +41,21 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 								active
 								name
 								points
+								created
+								metadata
+								image
 							}
 						}`,
 				Results: map[string]any{
 					"create_Users": []map[string]any{
 						{
-							"age":    int64(40),
-							"active": true,
-							"name":   "Bob",
-							"points": float64(10),
+							"age":      int64(40),
+							"active":   true,
+							"name":     "Bob",
+							"points":   float64(10),
+							"created":  time.Time(time.Date(2000, time.July, 23, 3, 0, 0, 0, time.UTC)),
+							"metadata": "{\"one\":1}",
+							"image":    "ff0099",
 						},
 					},
 				},
@@ -63,29 +73,38 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						age: Int @default(int: 40)
 						active: Boolean @default(bool: true)
+						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
 						name: String @default(string: "Bob")
+						age: Int @default(int: 40)
 						points: Float @default(float: 10)
+						metadata: JSON @default(json: "{\"one\":1}")
+						image: Blob @default(blob: "ff0099")
 					}
 				`,
 			},
 			testUtils.Request{
 				Request: `mutation {
-							create_Users(input: {age: null, active: null, name: null, points: null}) {
+							create_Users(input: {age: null, active: null, name: null, points: null, created: null, metadata: null, image: null}) {
 								age
 								active
 								name
 								points
+								created
+								metadata
+								image
 							}
 						}`,
 				Results: map[string]any{
 					"create_Users": []map[string]any{
 						{
-							"age":    nil,
-							"active": nil,
-							"name":   nil,
-							"points": nil,
+							"age":      nil,
+							"active":   nil,
+							"name":     nil,
+							"points":   nil,
+							"created":  nil,
+							"metadata": nil,
+							"image":    nil,
 						},
 					},
 				},
@@ -103,29 +122,38 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						age: Int @default(int: 40)
 						active: Boolean @default(bool: true)
+						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
 						name: String @default(string: "Bob")
+						age: Int @default(int: 40)
 						points: Float @default(float: 10)
+						metadata: JSON @default(json: "{\"one\":1}")
+						image: Blob @default(blob: "ff0099")
 					}
 				`,
 			},
 			testUtils.Request{
 				Request: `mutation {
-							create_Users(input: {age: 50, active: false, name: "Alice", points: 5}) {
+							create_Users(input: {age: 50, active: false, name: "Alice", points: 5, created: "2024-06-18T01:00:00-00:00", metadata: "{\"two\":2}", image: "aabb33"}) {
 								age
 								active
 								name
 								points
+								created
+								metadata
+								image
 							}
 						}`,
 				Results: map[string]any{
 					"create_Users": []map[string]any{
 						{
-							"age":    int64(50),
-							"active": false,
-							"name":   "Alice",
-							"points": float64(5),
+							"age":      int64(50),
+							"active":   false,
+							"name":     "Alice",
+							"points":   float64(5),
+							"created":  time.Time(time.Date(2024, time.June, 18, 1, 0, 0, 0, time.UTC)),
+							"metadata": "{\"two\":2}",
+							"image":    "aabb33",
 						},
 					},
 				},

@@ -167,7 +167,7 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		RelationName:      local.RelationName.Value(),
 		Typ:               global.Typ,
 		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
-		DefaultValue:      global.DefaultValue,
+		DefaultValue:      local.DefaultValue,
 	}
 }
 
@@ -178,16 +178,16 @@ func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 		ID:           local.ID,
 		Kind:         local.Kind.Value(),
 		RelationName: local.RelationName.Value(),
+		DefaultValue: local.DefaultValue,
 	}
 }
 
 // NewSchemaOnlyFieldDefinition returns a new [FieldDefinition] from the given global [SchemaFieldDescription].
 func NewSchemaOnlyFieldDefinition(global SchemaFieldDescription) FieldDefinition {
 	return FieldDefinition{
-		Name:         global.Name,
-		Kind:         global.Kind,
-		Typ:          global.Typ,
-		DefaultValue: global.DefaultValue,
+		Name: global.Name,
+		Kind: global.Kind,
+		Typ:  global.Typ,
 	}
 }
 
