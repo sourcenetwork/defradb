@@ -64,6 +64,7 @@ var configFlags = map[string]string{
 	"keyring-path":       "keyring.path",
 	"no-keyring":         "keyring.disabled",
 	"source-hub-address": "acp.sourceHub.address",
+	"development":        "development",
 }
 
 // configDefaults contains default values for config entries.
@@ -74,6 +75,7 @@ var configDefaults = map[string]any{
 	"datastore.maxtxnretries":           5,
 	"datastore.store":                   "badger",
 	"datastore.badger.valuelogfilesize": 1 << 30,
+	"development":                       false,
 	"net.p2pdisabled":                   false,
 	"net.p2paddresses":                  []string{"/ip4/127.0.0.1/tcp/9171"},
 	"net.peers":                         []string{},

@@ -135,8 +135,12 @@ func MakeStartCommand() *cobra.Command {
 				return err
 			}
 
+		SELECT:
 			select {
 			case <-purgeSub.Message():
+				if !cfg.GetBool("development") {
+					goto SELECT
+				}
 				log.InfoContext(cmd.Context(), "Received purge event; restarting...")
 				if err := n.Close(cmd.Context()); err != nil {
 					return err
@@ -212,6 +216,11 @@ func MakeStartCommand() *cobra.Command {
 		"privkeypath",
 		cfg.GetString(configFlags["privkeypath"]),
 		"Path to the private key for tls",
+	)
+	cmd.PersistentFlags().Bool(
+		"development",
+		cfg.GetBool(configFlags["development"]),
+		"Enables a set of features that make development easier but should not be enabled in production",
 	)
 	return cmd
 }
