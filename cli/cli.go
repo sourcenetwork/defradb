@@ -142,6 +142,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeStartCommand(),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(),
+		MakePurgeCommand(),
 	)
 
 	return root
