@@ -137,7 +137,7 @@ func TestDecryptAES(t *testing.T) {
 			key:            validKey,
 			additionalData: validAAD,
 			expectError:    true,
-			errorContains:  "cipherText too short",
+			errorContains:  errCipherTextTooShort,
 		},
 		{
 			name:           "Invalid additional data",

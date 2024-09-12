@@ -15,7 +15,6 @@ import (
 	"context"
 	"crypto/ecdh"
 	"encoding/base64"
-	"fmt"
 
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
@@ -107,22 +106,11 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 				_, encryptor := encryption.ContextWithStore(s.ctx, s.encstore)
 
 				for _, encItem := range encResult.Items {
-					encKey, err := encryptor.GetKey(encItem.StoreKey)
-					if err != nil {
-						fmt.Printf(">>>>>>>>>> Failed to get stored key %s\n", encItem.StoreKey.ToString())
-						continue
-					}
-					if len(encKey) == 0 {
-						fmt.Printf(">>>>>>>>>> No key stored %s\n", encItem.StoreKey.ToString())
-					} else {
-						fmt.Printf(">>>>>>>>>> Has already key stored %s\n", encItem.StoreKey.ToString())
-					}
 					err = encryptor.SaveKey(encItem.StoreKey, encItem.EncryptionKey)
 					if err != nil {
 						log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
 						return
 					}
-					fmt.Printf(">>>>>>>>>> Saved key %s\n", encItem.StoreKey.ToString())
 				}
 
 				m := make(map[core.EncStoreDocKey][]byte)
@@ -205,12 +193,9 @@ func (s *pubSubService) requestEncryptionKey(
 	}
 
 	respChan, err := s.pubsub.SendPubSubMessage(ctx, pubsubTopic, data)
-	//respChan, err := s.topic.Publish(ctx, data)
 	if err != nil {
 		return errors.Wrap("failed publishing to encryption thread", err)
 	}
-
-	//s.server.RequestEncryptionKey(ctx, req, ephPrivKey)
 
 	go func() {
 		s.handleFetchEncryptionKeyResponse(<-respChan, req, ephPrivKey, result)

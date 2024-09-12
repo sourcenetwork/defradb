@@ -13,7 +13,6 @@ package db
 import (
 	"container/list"
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -65,7 +64,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	err = mp.loadComposites(ctx, dagMerge.Cid, mt, false)
+	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
 	if err != nil {
 		return err
 	}
@@ -80,12 +79,12 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		go func() {
 			res := <-entResults.Get()
 			if res.Error != nil {
-				fmt.Printf("Error fetching keys: %s\n", res.Error)
+				log.ErrorContextE(ctx, "Error fetching keys", res.Error)
 				return
 			}
 			err = db.executeMerge(context.Background(), dagMerge)
 			if err != nil {
-				fmt.Printf("Error executing merge: %s\n", err)
+				log.ErrorContextE(ctx, "Error executing merge", err)
 			}
 		}()
 		// if there are pending encryption keys, we discard the transaction
@@ -154,8 +153,8 @@ type mergeProcessor struct {
 	mCRDTs map[string]merklecrdt.MerkleCRDT
 	col    *collection
 	dsKey  core.DataStoreKey
-	// blocks is a list of blocks that need to be merged.
-	blocks *list.List
+	// composites is a list of composites that need to be merged.
+	composites *list.List
 	// pendingEncryptionKeyRequests is a set of encryption keys that the node encountered during the merge
 	// and doesn't have locally, so they need to be requested from the network.
 	pendingEncryptionKeyRequests map[core.EncStoreDocKey]struct{}
@@ -173,7 +172,7 @@ func (db *db) newMergeProcessor(
 		mCRDTs:                       make(map[string]merklecrdt.MerkleCRDT),
 		col:                          col,
 		dsKey:                        dsKey,
-		blocks:                       list.New(),
+		composites:                   list.New(),
 		pendingEncryptionKeyRequests: make(map[core.EncStoreDocKey]struct{}),
 	}, nil
 }
@@ -195,15 +194,10 @@ func (mp *mergeProcessor) loadComposites(
 	ctx context.Context,
 	blockCid cid.Cid,
 	mt mergeTarget,
-	willDecrypt bool,
 ) error {
-	if b, ok := mt.heads[blockCid]; ok {
-		// the head is already known, but the block might be encrypted
-		// if this time we try to decrypt it, we load the block
-		if !b.IsEncrypted() || !willDecrypt {
-			// We've already processed this block.
-			return nil
-		}
+	if _, ok := mt.heads[blockCid]; ok {
+		// We've already processed this block.
+		return nil
 	}
 
 	nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
@@ -220,9 +214,9 @@ func (mp *mergeProcessor) loadComposites(
 	// of the composite DAG. However, the new block and its children might have branched off from an older block.
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
-		mp.blocks.PushFront(block)
+		mp.composites.PushFront(block)
 		for _, prevCid := range block.GetPrevBlockCids() {
-			err := mp.loadComposites(ctx, prevCid, mt, willDecrypt)
+			err := mp.loadComposites(ctx, prevCid, mt)
 			if err != nil {
 				return err
 			}
@@ -247,13 +241,13 @@ func (mp *mergeProcessor) loadComposites(
 				}
 			}
 		}
-		return mp.loadComposites(ctx, blockCid, newMT, willDecrypt)
+		return mp.loadComposites(ctx, blockCid, newMT)
 	}
 	return nil
 }
 
 func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
-	for e := mp.blocks.Front(); e != nil; e = e.Next() {
+	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
@@ -315,7 +309,6 @@ func (mp *mergeProcessor) sendPendingEncryptionRequest() *encryption.Results {
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
-// withDecryption is a flag that indicates this is the decryption pass instead of a normal merge.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
@@ -536,11 +529,6 @@ func syncIndexedDoc(
 	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isDeletedDoc && err != nil {
 		return err
-	}
-
-	// this can happen if we received an encrypted document that we haven't decrypted yet
-	if isNewDoc && isDeletedDoc {
-		return nil
 	}
 
 	if isNewDoc {
