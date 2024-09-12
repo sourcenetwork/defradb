@@ -163,3 +163,89 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple create mutation, with default value, no value provided, and created twice",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String @default(string: "Bob")
+						age: Int @default(int: 40)
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+							create_Users(input: {}) {
+								name
+								age
+							}
+						}`,
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  int64(40),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+							create_Users(input: {}) {
+								name
+								age
+							}
+						}`,
+				ExpectedError: "a document with the given ID already exists",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueIndex_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple create mutation, with default value, no value provided, created twice, and unique index",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String @default(string: "Bob") @index(unique: true)
+						age: Int @default(int: 40)
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+							create_Users(input: {}) {
+								name
+								age
+							}
+						}`,
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  int64(40),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+							create_Users(input: {age: 30}) {
+								name
+								age
+							}
+						}`,
+				ExpectedError: "can not index a doc's field(s) that violates unique index",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
