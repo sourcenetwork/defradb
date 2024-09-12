@@ -1,14 +1,14 @@
-## defradb purge
+## defradb client purge
 
-Delete all persisted DefraDB data
+Delete all persisted data and restart
 
 ### Synopsis
 
-Delete all persisted DefraDB data.
-WARNING this operation will delete all data and cannot be reversed.
+Delete all persisted data and restart.
+WARNING this operation cannot be reversed.
 
 ```
-defradb purge [flags]
+defradb client purge [flags]
 ```
 
 ### Options
@@ -21,6 +21,7 @@ defradb purge [flags]
 ### Options inherited from parent commands
 
 ```
+  -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
@@ -34,10 +35,11 @@ defradb purge [flags]
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
+      --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 

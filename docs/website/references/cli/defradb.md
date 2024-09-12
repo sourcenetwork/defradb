@@ -34,7 +34,6 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb identity](defradb_identity.md)	 - Interact with identity features of DefraDB instance
 * [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
-* [defradb purge](defradb_purge.md)	 - Delete all persisted DefraDB data
 * [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
 * [defradb start](defradb_start.md)	 - Start a DefraDB node
 * [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components
