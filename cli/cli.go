@@ -110,6 +110,7 @@ func NewDefraCommand() *cobra.Command {
 
 	client := MakeClientCommand()
 	client.AddCommand(
+		MakePurgeCommand(),
 		MakeDumpCommand(),
 		MakeRequestCommand(),
 		schema,
@@ -142,7 +143,6 @@ func NewDefraCommand() *cobra.Command {
 		MakeStartCommand(),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(),
-		MakePurgeCommand(),
 	)
 
 	return root

@@ -435,6 +435,17 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	return err
 }
 
+func (c *Client) Purge(ctx context.Context) error {
+	methodURL := c.http.baseURL.JoinPath("purge")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) Close() {
 	// do nothing
 }

@@ -18,7 +18,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
@@ -45,9 +47,11 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			opts := []node.Option{
+			storeOpts := []node.StoreOpt{
 				node.WithStorePath(cfg.GetString("datastore.badger.path")),
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+			}
+			nodeOpts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
@@ -72,7 +76,7 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				opts = append(opts, node.WithACPPath(rootDir))
+				nodeOpts = append(nodeOpts, node.WithACPPath(rootDir))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -80,19 +84,20 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return NewErrKeyringHelp(err)
 				}
+
 				// load the required peer key
 				peerKey, err := kr.Get(peerKeyName)
 				if err != nil {
 					return NewErrKeyringHelp(err)
 				}
-				opts = append(opts, net.WithPrivateKey(peerKey))
+				nodeOpts = append(nodeOpts, net.WithPrivateKey(peerKey))
+
 				// load the optional encryption key
 				encryptionKey, err := kr.Get(encryptionKeyName)
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
-
-				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+				storeOpts = append(storeOpts, node.WithBadgerEncryptionKey(encryptionKey))
 
 				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
@@ -100,42 +105,65 @@ func MakeStartCommand() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
+					nodeOpts = append(nodeOpts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
 
 			acpType := cfg.GetString("acp.type")
 			if acpType != "" {
-				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
-			}
-
-			n, err := node.NewNode(cmd.Context(), opts...)
-			if err != nil {
-				return err
-			}
-
-			defer func() {
-				if err := n.Close(cmd.Context()); err != nil {
-					log.ErrorContextE(cmd.Context(), "Stopping DefraDB", err)
-				}
-			}()
-
-			log.InfoContext(cmd.Context(), "Starting DefraDB")
-			if err := n.Start(cmd.Context()); err != nil {
-				return err
+				nodeOpts = append(nodeOpts, node.WithACPType(node.ACPType(acpType)))
 			}
 
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
+			for _, o := range storeOpts {
+				nodeOpts = append(nodeOpts, any(o))
+			}
+
+		START:
+			n, err := node.NewNode(cmd.Context(), nodeOpts...)
+			if err != nil {
+				return err
+			}
+			log.InfoContext(cmd.Context(), "Starting DefraDB")
+			if err := n.Start(cmd.Context()); err != nil {
+				return err
+			}
+			purgeSub, err := n.DB.Events().Subscribe(event.PurgeName)
+			if err != nil {
+				return err
+			}
+
 			select {
+			case <-purgeSub.Message():
+				log.InfoContext(cmd.Context(), "Received purge event; restarting...")
+				if err := n.Close(cmd.Context()); err != nil {
+					return err
+				}
+				rootstore, err := node.NewStore(cmd.Context(), storeOpts...)
+				if err != nil {
+					return err
+				}
+				if b, ok := rootstore.(*badger.Datastore); ok {
+					// only badger persists data so drop all values manually
+					if err := b.DB.DropAll(); err != nil {
+						return err
+					}
+				}
+				if err := rootstore.Close(); err != nil {
+					return err
+				}
+				goto START
+
 			case <-cmd.Context().Done():
 				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
+
 			case <-signalCh:
 				log.InfoContext(cmd.Context(), "Received interrupt; shutting down...")
 			}
 
-			return nil
+			return n.Close(cmd.Context())
 		},
 	}
 	// set default flag values from config

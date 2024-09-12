@@ -11,30 +11,24 @@
 package cli
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakePurgeCommand() *cobra.Command {
 	var force bool
 	var cmd = &cobra.Command{
 		Use:   "purge",
-		Short: "Delete all persisted DefraDB data",
-		Long: `Delete all persisted DefraDB data.
-WARNING this operation will delete all data and cannot be reversed.`,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := setContextRootDir(cmd); err != nil {
-				return err
-			}
-			return setContextConfig(cmd)
-		},
+		Short: "Delete all persisted data and restart",
+		Long: `Delete all persisted data and restart.
+WARNING this operation cannot be reversed.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db := mustGetContextDB(cmd).(*http.Client)
 			if !force {
 				return ErrPurgeForceFlagRequired
 			}
-			cfg := mustGetContextConfig(cmd)
-			return os.RemoveAll(cfg.GetString("datastore.badger.path"))
+			return db.Purge(cmd.Context())
 		},
 	}
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "Must be set for the operation to run")

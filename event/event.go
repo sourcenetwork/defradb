@@ -39,6 +39,8 @@ const (
 	P2PTopicCompletedName = Name("p2p-topic-completed")
 	// ReplicatorCompletedName is the name of the replicator completed event.
 	ReplicatorCompletedName = Name("replicator-completed")
+	// PurgeName is the name of the purge event.
+	PurgeName = Name("purge")
 )
 
 // PubSub is an event that is published when
