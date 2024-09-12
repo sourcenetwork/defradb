@@ -12,9 +12,10 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,17 +30,38 @@ func TestPurgeCommandWithoutForceFlag_ReturnsError(t *testing.T) {
 	require.ErrorIs(t, err, ErrPurgeForceFlagRequired)
 }
 
-func TestPurgeCommandWithForceFlag_Succeeds(t *testing.T) {
+func TestPurgeCommandWithEmptyDirectory_DoesNothing(t *testing.T) {
 	rootDir := t.TempDir()
-
-	dataDir := filepath.Join(rootDir, "data")
-	err := os.MkdirAll(dataDir, 0755)
-	require.NoError(t, err)
 
 	cmd := NewDefraCommand()
 	cmd.SetArgs([]string{"purge", "--force", "--rootdir", rootDir})
 
-	err = cmd.Execute()
+	err := cmd.Execute()
+	assert.NoError(t, err)
+}
+
+func TestPurgeCommandWithForceFlag_Succeeds(t *testing.T) {
+	rootDir := t.TempDir()
+
+	var dataDir string
+	// load the config and create the data directory
+	configLoader = func(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
+		cfg, err := loadConfig(rootdir, flags)
+		if err != nil {
+			return nil, err
+		}
+		dataDir = cfg.GetString("datastore.badger.path")
+		if err := os.MkdirAll(dataDir, 0755); err != nil {
+			return nil, err
+		}
+		return cfg, nil
+	}
+
+	cmd := NewDefraCommand()
+	cmd.SetArgs([]string{"purge", "--force", "--rootdir", rootDir})
+
+	err := cmd.Execute()
 	require.NoError(t, err)
+
 	assert.NoDirExists(t, dataDir)
 }

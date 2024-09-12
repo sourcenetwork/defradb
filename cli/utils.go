@@ -22,6 +22,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 
@@ -64,6 +65,12 @@ var readPassword = func(cmd *cobra.Command, msg string) ([]byte, error) {
 	pass, err := term.ReadPassword(int(syscall.Stdin))
 	cmd.Println("")
 	return pass, err
+}
+
+// configLoader loads a config for the current command. This can be swapped
+// during tests to force a common config for a command.
+var configLoader = func(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
+	return loadConfig(rootdir, flags)
 }
 
 // mustGetContextDB returns the db for the current command context.
@@ -123,7 +130,7 @@ func setContextDB(cmd *cobra.Command) error {
 // setContextConfig sets teh config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
-	cfg, err := loadConfig(rootdir, cmd.Flags())
+	cfg, err := configLoader(rootdir, cmd.Flags())
 	if err != nil {
 		return err
 	}
