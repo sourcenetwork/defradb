@@ -88,3 +88,71 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestCollectionDescription_WithIncorrectDefaultFieldValueType_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						active: Boolean @default(int: 10)
+					}
+				`,
+				ExpectedError: "default value type must match field type. Name: active, Expected: bool, Actual: int",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionDescription_WithMultipleDefaultFieldValueTypes_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
+					}
+				`,
+				ExpectedError: "default value type must match field type. Name: name, Expected: string, Actual: int",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionDescription_WithDefaultFieldValueOnRelation_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						friend: User @default(string: "Bob")
+					}
+				`,
+				ExpectedError: "default value is not allowed for this field type. Name: friend, Type: User",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionDescription_WithDefaultFieldValueOnList_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						names: [String] @default(string: "Bob")
+					}
+				`,
+				ExpectedError: "default value is not allowed for this field type. Name: names, Type: List",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

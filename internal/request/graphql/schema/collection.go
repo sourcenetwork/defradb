@@ -40,14 +40,14 @@ const (
 
 // this mapping is used to check that the default prop value
 // matches the field type
-var defaultPropNameToType = map[string]string{
-	types.DefaultDirectivePropString:   typeString,
-	types.DefaultDirectivePropBool:     typeBoolean,
-	types.DefaultDirectivePropInt:      typeInt,
-	types.DefaultDirectivePropFloat:    typeFloat,
-	types.DefaultDirectivePropDateTime: typeDateTime,
-	types.DefaultDirectivePropJSON:     typeJSON,
-	types.DefaultDirectivePropBlob:     typeBlob,
+var TypeToDefaultPropName = map[string]string{
+	typeString:   types.DefaultDirectivePropString,
+	typeBoolean:  types.DefaultDirectivePropBool,
+	typeInt:      types.DefaultDirectivePropInt,
+	typeFloat:    types.DefaultDirectivePropFloat,
+	typeDateTime: types.DefaultDirectivePropDateTime,
+	typeJSON:     types.DefaultDirectivePropJSON,
+	typeBlob:     types.DefaultDirectivePropBlob,
 }
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
@@ -377,10 +377,14 @@ func defaultFromAST(
 	if !ok {
 		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, field.Type.String())
 	}
+	propName, ok := TypeToDefaultPropName[astNamed.Name.Value]
+	if !ok {
+		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, astNamed.Name.Value)
+	}
 	var value any
 	for _, arg := range directive.Arguments {
-		if defaultPropNameToType[arg.Name.Value] != astNamed.Name.Value {
-			return nil, NewErrDefaultValueInvalid(astNamed.Name.Value, arg.Name.Value)
+		if propName != arg.Name.Value {
+			return nil, NewErrDefaultValueInvalid(field.Name.Value, propName, arg.Name.Value)
 		}
 		switch t := arg.Value.(type) {
 		case *ast.IntValue:

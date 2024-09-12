@@ -139,11 +139,12 @@ func NewErrRelationNotFound(relationName string) error {
 	)
 }
 
-func NewErrDefaultValueInvalid(expectedType string, actualType string) error {
+func NewErrDefaultValueInvalid(name string, expected string, actual string) error {
 	return errors.New(
 		errDefaultValueInvalid,
-		errors.NewKV("ExpectedType", expectedType),
-		errors.NewKV("ActualType", actualType),
+		errors.NewKV("Name", name),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
 	)
 }
 

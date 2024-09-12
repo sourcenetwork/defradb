@@ -37,3 +37,27 @@ func TestColDescrUpdateReplaceFields_Errors(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestColDescrUpdateReplaceDefaultValue_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String @default(string: "Bob")
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "replace", "path": "/1/Fields/1/DefaultValue", "value": "Alice" }
+					]
+				`,
+				ExpectedError: "collection fields cannot be mutated. CollectionID: 1",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
