@@ -39,8 +39,9 @@ type Option any
 
 // Options contains start configuration values.
 type Options struct {
-	disableP2P bool
-	disableAPI bool
+	disableP2P        bool
+	disableAPI        bool
+	enableDevelopment bool
 }
 
 // DefaultOptions returns options with default settings.
@@ -65,103 +66,98 @@ func WithDisableAPI(disable bool) NodeOpt {
 	}
 }
 
+// WithEnableDevelopment sets the enable development mode flag.
+func WithEnableDevelopment(enable bool) NodeOpt {
+	return func(o *Options) {
+		o.enableDevelopment = enable
+	}
+}
+
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
 	DB     client.DB
 	Peer   *net.Peer
 	Server *http.Server
+
+	options    *Options
+	dbOpts     []db.Option
+	acpOpts    []ACPOpt
+	netOpts    []net.NodeOpt
+	storeOpts  []StoreOpt
+	serverOpts []http.ServerOpt
+	lensOpts   []LenOpt
 }
 
-// NewNode returns a new node instance configured with the given options.
-func NewNode(ctx context.Context, opts ...Option) (*Node, error) {
-	var (
-		dbOpts     []db.Option
-		acpOpts    []ACPOpt
-		netOpts    []net.NodeOpt
-		storeOpts  []StoreOpt
-		serverOpts []http.ServerOpt
-		lensOpts   []LenOpt
-	)
-
-	options := DefaultOptions()
+// New returns a new node instance configured with the given options.
+func New(ctx context.Context, opts ...Option) (*Node, error) {
+	n := Node{
+		options: DefaultOptions(),
+	}
 	for _, opt := range opts {
 		switch t := opt.(type) {
-		case ACPOpt:
-			acpOpts = append(acpOpts, t)
-
 		case NodeOpt:
-			t(options)
+			t(n.options)
+
+		case ACPOpt:
+			n.acpOpts = append(n.acpOpts, t)
 
 		case StoreOpt:
-			storeOpts = append(storeOpts, t)
+			n.storeOpts = append(n.storeOpts, t)
 
 		case db.Option:
-			dbOpts = append(dbOpts, t)
+			n.dbOpts = append(n.dbOpts, t)
 
 		case http.ServerOpt:
-			serverOpts = append(serverOpts, t)
+			n.serverOpts = append(n.serverOpts, t)
 
 		case net.NodeOpt:
-			netOpts = append(netOpts, t)
+			n.netOpts = append(n.netOpts, t)
 
 		case LenOpt:
-			lensOpts = append(lensOpts, t)
+			n.lensOpts = append(n.lensOpts, t)
 		}
 	}
-
-	rootstore, err := NewStore(ctx, storeOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	acp, err := NewACP(ctx, acpOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	lens, err := NewLens(ctx, lensOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := db.NewDB(ctx, rootstore, acp, lens, dbOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	var peer *net.Peer
-	if !options.disableP2P {
-		// setup net node
-		peer, err = net.NewPeer(ctx, db.Blockstore(), db.Events(), netOpts...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var server *http.Server
-	if !options.disableAPI {
-		// setup http server
-		handler, err := http.NewHandler(db)
-		if err != nil {
-			return nil, err
-		}
-		server, err = http.NewServer(handler, serverOpts...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &Node{
-		DB:     db,
-		Peer:   peer,
-		Server: server,
-	}, nil
+	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	if n.Server != nil {
-		err := n.Server.SetListener()
+	rootstore, err := NewStore(ctx, n.storeOpts...)
+	if err != nil {
+		return err
+	}
+	acp, err := NewACP(ctx, n.acpOpts...)
+	if err != nil {
+		return err
+	}
+	lens, err := NewLens(ctx, n.lensOpts...)
+	if err != nil {
+		return err
+	}
+	n.DB, err = db.NewDB(ctx, rootstore, acp, lens, n.dbOpts...)
+	if err != nil {
+		return err
+	}
+
+	if !n.options.disableP2P {
+		// setup net node
+		n.Peer, err = net.NewPeer(ctx, n.DB.Blockstore(), n.DB.Events(), n.netOpts...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !n.options.disableAPI {
+		// setup http server
+		handler, err := http.NewHandler(n.DB)
+		if err != nil {
+			return err
+		}
+		n.Server, err = http.NewServer(handler, n.serverOpts...)
+		if err != nil {
+			return err
+		}
+		err = n.Server.SetListener()
 		if err != nil {
 			return err
 		}
@@ -172,6 +168,7 @@ func (n *Node) Start(ctx context.Context) error {
 			}
 		}()
 	}
+
 	return nil
 }
 
@@ -188,4 +185,21 @@ func (n *Node) Close(ctx context.Context) error {
 		n.DB.Close()
 	}
 	return err
+}
+
+// PurgeAndRestart causes the node to shutdown, purge all data from
+// its datastore, and restart.
+func (n *Node) PurgeAndRestart(ctx context.Context) error {
+	if !n.options.enableDevelopment {
+		return ErrPurgeWithDevModeDisabled
+	}
+	err := n.Close(ctx)
+	if err != nil {
+		return err
+	}
+	err = purgeStore(ctx, n.storeOpts...)
+	if err != nil {
+		return err
+	}
+	return n.Start(ctx)
 }

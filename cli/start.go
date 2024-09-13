@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -27,6 +26,17 @@ import (
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
 )
+
+const devModeBanner = `
+******************************************
+**     DEVELOPMENT MODE IS ENABLED      **
+** ------------------------------------ **
+**   if this is a production database   **
+** disable development mode and restart **
+**   or you may risk losing all data    **
+******************************************
+
+`
 
 func MakeStartCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -47,15 +57,16 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			storeOpts := []node.StoreOpt{
-				node.WithStorePath(cfg.GetString("datastore.badger.path")),
-				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
-			}
-			nodeOpts := []node.Option{
+			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
+				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
+				node.WithEnableDevelopment(cfg.GetBool("development")),
+				// store options
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
+				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// net node options
@@ -68,7 +79,6 @@ func MakeStartCommand() *cobra.Command {
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
 				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
 				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
-				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 			}
 
 			if cfg.GetString("datastore.store") != configStoreMemory {
@@ -76,7 +86,12 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				nodeOpts = append(nodeOpts, node.WithACPPath(rootDir))
+				opts = append(opts, node.WithACPPath(rootDir))
+			}
+
+			acpType := cfg.GetString("acp.type")
+			if acpType != "" {
+				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -84,45 +99,38 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return NewErrKeyringHelp(err)
 				}
-
 				// load the required peer key
 				peerKey, err := kr.Get(peerKeyName)
 				if err != nil {
 					return NewErrKeyringHelp(err)
 				}
-				nodeOpts = append(nodeOpts, net.WithPrivateKey(peerKey))
-
+				opts = append(opts, net.WithPrivateKey(peerKey))
 				// load the optional encryption key
 				encryptionKey, err := kr.Get(encryptionKeyName)
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
-				storeOpts = append(storeOpts, node.WithBadgerEncryptionKey(encryptionKey))
-
+				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
 					if err != nil {
 						return err
 					}
-					nodeOpts = append(nodeOpts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
+					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
 
-			acpType := cfg.GetString("acp.type")
-			if acpType != "" {
-				nodeOpts = append(nodeOpts, node.WithACPType(node.ACPType(acpType)))
+			isDevMode := cfg.GetBool("development")
+			if isDevMode {
+				cmd.Printf(devModeBanner)
 			}
 
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-			for _, o := range storeOpts {
-				nodeOpts = append(nodeOpts, any(o))
-			}
-
-		START:
-			n, err := node.NewNode(cmd.Context(), nodeOpts...)
+			n, err := node.New(cmd.Context(), opts...)
 			if err != nil {
 				return err
 			}
@@ -130,6 +138,9 @@ func MakeStartCommand() *cobra.Command {
 			if err := n.Start(cmd.Context()); err != nil {
 				return err
 			}
+
+		RESTART:
+			// after a restart we need to resubscribe
 			purgeSub, err := n.DB.Events().Subscribe(event.PurgeName)
 			if err != nil {
 				return err
@@ -138,27 +149,18 @@ func MakeStartCommand() *cobra.Command {
 		SELECT:
 			select {
 			case <-purgeSub.Message():
-				if !cfg.GetBool("development") {
+				log.InfoContext(cmd.Context(), "Received purge event; restarting...")
+
+				err := n.PurgeAndRestart(cmd.Context())
+				if err != nil {
+					log.ErrorContextE(cmd.Context(), "failed to purge", err)
+				}
+				if err == nil {
+					goto RESTART
+				}
+				if errors.Is(err, node.ErrPurgeWithDevModeDisabled) {
 					goto SELECT
 				}
-				log.InfoContext(cmd.Context(), "Received purge event; restarting...")
-				if err := n.Close(cmd.Context()); err != nil {
-					return err
-				}
-				rootstore, err := node.NewStore(cmd.Context(), storeOpts...)
-				if err != nil {
-					return err
-				}
-				if b, ok := rootstore.(*badger.Datastore); ok {
-					// only badger persists data so drop all values manually
-					if err := b.DB.DropAll(); err != nil {
-						return err
-					}
-				}
-				if err := rootstore.Close(); err != nil {
-					return err
-				}
-				goto START
 
 			case <-cmd.Context().Done():
 				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
