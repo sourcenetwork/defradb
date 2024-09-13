@@ -40,6 +40,8 @@ type CollectionFieldDescription struct {
 	RelationName immutable.Option[string]
 
 	// DefaultValue contains the default value for this field.
+	//
+	// This value has no effect on views.
 	DefaultValue any
 }
 

@@ -95,8 +95,10 @@ func ExplainEnum() *gql.Enum {
 
 func DefaultDirective() *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        DefaultDirectiveLabel,
-		Description: "@default is a directive that can be used to set a default field value.",
+		Name: DefaultDirectiveLabel,
+		Description: `@default is a directive that can be used to set a default field value.
+		
+		Setting a default value on a field within a view has no effect.`,
 		Args: gql.FieldConfigArgument{
 			DefaultDirectivePropString: &gql.ArgumentConfig{
 				Type: gql.String,
