@@ -25,13 +25,13 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				ImportContent: `{
 					"User":[
 						{
-							"_docID":"bae-f4def2b3-2fe8-5e3b-838e-b9d9f8aca102",
+							"_docID":"bae-0dfbaf9f-3c58-5133-aa07-a9f25d792f4e",
 							"age":31,
-							"boss_id":"bae-a2162ff0-3257-50f1-ba2f-39c299921220",
+							"boss_id":"bae-8096e3d7-41ab-5afe-ad88-481150483db1",
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-a2162ff0-3257-50f1-ba2f-39c299921220",
+							"_docID":"bae-8096e3d7-41ab-5afe-ad88-481150483db1",
 							"age":30,
 							"name":"John"
 						}
@@ -51,14 +51,14 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "John",
-							"boss": nil,
-						},
-						{
 							"name": "Bob",
 							"boss": map[string]any{
 								"name": "John",
 							},
+						},
+						{
+							"name": "John",
+							"boss": nil,
 						},
 					},
 				},
@@ -73,10 +73,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_docID":"bae-20631b3d-1498-51f1-be29-5c0effbfa646",` +
-		`"_docIDNew":"bae-20631b3d-1498-51f1-be29-5c0effbfa646",` +
+		`"_docID":"bae-b9449db8-3894-5701-84ce-ee96a3eafc9c",` +
+		`"_docIDNew":"bae-b9449db8-3894-5701-84ce-ee96a3eafc9c",` +
 		`"age":31,` +
-		`"boss_id":"bae-20631b3d-1498-51f1-be29-5c0effbfa646",` +
+		`"boss_id":"bae-b9449db8-3894-5701-84ce-ee96a3eafc9c",` +
 		`"name":"Bob"` +
 		`}` +
 		`]` +
@@ -100,7 +100,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"boss_id": "bae-20631b3d-1498-51f1-be29-5c0effbfa646"
+					"boss_id": "bae-b9449db8-3894-5701-84ce-ee96a3eafc9c"
 				}`,
 			},
 			testUtils.BackupExport{
@@ -277,18 +277,18 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 	expectedExportData := `{` +
 		`"Author":[` +
 		`{` +
-		`"_docID":"bae-069af8c0-9728-5dde-84ff-ab2dd836f165",` +
-		`"_docIDNew":"bae-f2e84aeb-decc-5e40-94ff-e365f0ed0f4b",` +
-		`"book_id":"bae-006376a9-5ceb-5bd0-bfed-6ff5afd3eb93",` +
+		`"_docID":"bae-bf1f16db-3c02-5759-8127-7d73346442cc",` +
+		`"_docIDNew":"bae-bf1f16db-3c02-5759-8127-7d73346442cc",` +
+		`"book_id":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
 		`"name":"John"` +
 		`}` +
 		`],` +
 		`"Book":[` +
 		`{` +
-		`"_docID":"bae-2b931633-22bf-576f-b788-d8098b213e5a",` +
-		`"_docIDNew":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
+		`"_docID":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
+		`"_docIDNew":"bae-66b0f769-c743-5a50-ae6d-1dcd978e2404",` +
 		`"name":"John and the sourcerers' stone",` +
-		`"reviewedBy_id":"bae-069af8c0-9728-5dde-84ff-ab2dd836f165"` +
+		`"reviewedBy_id":"bae-bf1f16db-3c02-5759-8127-7d73346442cc"` +
 		`}` +
 		`]` +
 		`}`
@@ -316,7 +316,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			testUtils.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
-				// bae-2b931633-22bf-576f-b788-d8098b213e5a
+				// bae-89136f56-3779-5656-b8a6-f76a1c262f37
 				Doc: `{
 					"name": "John and the sourcerers' stone"
 				}`,
@@ -326,7 +326,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"book": "bae-2b931633-22bf-576f-b788-d8098b213e5a"
+					"book": "bae-89136f56-3779-5656-b8a6-f76a1c262f37"
 				}`,
 			},
 			testUtils.UpdateDoc{
@@ -334,7 +334,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{
-					"reviewedBy_id": "bae-069af8c0-9728-5dde-84ff-ab2dd836f165"
+					"reviewedBy_id": "bae-bf1f16db-3c02-5759-8127-7d73346442cc"
 				}`,
 			},
 			/*
@@ -366,11 +366,8 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name": "John and the sourcerers' stone",
-							"author": map[string]any{
-								"name":     "John",
-								"reviewed": nil,
-							},
+							"name":   "John and the sourcerers' stone",
+							"author": nil,
 						},
 					},
 				},

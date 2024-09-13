@@ -104,8 +104,8 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicjhmyweoyzopsqf7qc4uqqpq7mwnqlpsfb2rzk3j2jg3a4d6fqy4"
-							docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
+							cid: "bafyreieytzivxtdjslivrsim22xkszg7sxy4onmp737u5uxf7v2cxvzikm"
+							docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
 						) {
 						name
 						author {
@@ -181,8 +181,8 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicjhmyweoyzopsqf7qc4uqqpq7mwnqlpsfb2rzk3j2jg3a4d6fqy4",
-							docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
+							cid: "bafyreieytzivxtdjslivrsim22xkszg7sxy4onmp737u5uxf7v2cxvzikm",
+							docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
 						) {
 						name
 						author {
@@ -256,8 +256,8 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreicjhmyweoyzopsqf7qc4uqqpq7mwnqlpsfb2rzk3j2jg3a4d6fqy4",
-						docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
+						cid: "bafyreieytzivxtdjslivrsim22xkszg7sxy4onmp737u5uxf7v2cxvzikm",
+						docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
 					) {
 						name
 						rating
@@ -331,8 +331,8 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreihylh2iftquu5vukm2myjrfbkjnpr5vonlp5s5oo22bfrhddkju6e",
-						docID: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"
+						cid: "bafyreia2sayewutxhcewm2ek2p6nwwg6zzeugrxsnwjyvam4pplydkjmz4",
+						docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
 					) {
 						name
 						rating

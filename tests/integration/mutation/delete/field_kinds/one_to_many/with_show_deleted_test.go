@@ -61,14 +61,14 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_Book(docID: "bae-b5c56d8f-b2f5-57f9-b371-4e9e04903e91") {
+					delete_Book(docID: "bae-39db1d4b-72c0-5b7b-b6f2-c20870982128") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-b5c56d8f-b2f5-57f9-b371-4e9e04903e91",
+							"_docID": "bae-39db1d4b-72c0-5b7b-b6f2-c20870982128",
 						},
 					},
 				},
@@ -94,13 +94,13 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 							"age":      int64(30),
 							"published": []map[string]any{
 								{
-									"_deleted": false,
-									"name":     "John has a chamber of secrets",
+									"_deleted": true,
+									"name":     "John and the philosopher are stoned",
 									"rating":   9.9,
 								},
 								{
-									"_deleted": true,
-									"name":     "John and the philosopher are stoned",
+									"_deleted": false,
+									"name":     "John has a chamber of secrets",
 									"rating":   9.9,
 								},
 							},

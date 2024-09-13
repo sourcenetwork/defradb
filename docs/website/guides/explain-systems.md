@@ -13,7 +13,7 @@ The DefraDB Explain System is a powerful tool designed to introspect requests, e
 ```graphql
 query {
     Author {
-      _key
+      _docID
       name
       age
     }
@@ -25,7 +25,7 @@ query {
 ```graphql
 query @explain {
     Author {
-      _key
+      _docID
       name
       age
     }

@@ -101,6 +101,7 @@ const (
 	errReplicatorCollections                    string = "failed to get collections for replicator"
 	errReplicatorNotFound                       string = "replicator not found"
 	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
+	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
 )
 
 var (
@@ -141,6 +142,7 @@ var (
 	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
 	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)
 	ErrCanNotEncryptBuiltinField                = errors.New(errCanNotEncryptBuiltinField)
+	ErrSelfReferenceWithoutSelf                 = errors.New(errSelfReferenceWithoutSelf)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -649,4 +651,11 @@ func NewErrReplicatorDocID(inner error, kv ...errors.KV) error {
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errReplicatorCollections, inner, kv...)
+}
+
+func NewErrSelfReferenceWithoutSelf(fieldName string) error {
+	return errors.New(
+		errSelfReferenceWithoutSelf,
+		errors.NewKV("Field", fieldName),
+	)
 }

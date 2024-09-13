@@ -25,4 +25,5 @@ func init() {
 		panic(err)
 	}
 	playgroundHandler = http.FileServer(http.FS(sub))
+	PlaygroundEnabled = true
 }

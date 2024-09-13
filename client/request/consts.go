@@ -72,6 +72,12 @@ const (
 	DeltaArgPriority        = "Priority"
 	DeltaArgDocID           = "DocID"
 
+	// SelfTypeName is the name given to relation field types that reference the host type.
+	//
+	// For example, when a `User` collection contains a relation to the `User` collection the field
+	// will be of type [SelfTypeName].
+	SelfTypeName = "Self"
+
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
 
@@ -85,15 +91,24 @@ var (
 		string(DESC): DESC,
 	}
 
-	ReservedFields = map[string]bool{
-		TypeNameFieldName: true,
-		VersionFieldName:  true,
-		GroupFieldName:    true,
-		CountFieldName:    true,
-		SumFieldName:      true,
-		AverageFieldName:  true,
-		DocIDFieldName:    true,
-		DeletedFieldName:  true,
+	// ReservedTypeNames is the set of type names reserved by the system.
+	//
+	// Users cannot define types using these names.
+	//
+	// For example, collections and schemas may not be defined using these names.
+	ReservedTypeNames = map[string]struct{}{
+		SelfTypeName: {},
+	}
+
+	ReservedFields = map[string]struct{}{
+		TypeNameFieldName: {},
+		VersionFieldName:  {},
+		GroupFieldName:    {},
+		CountFieldName:    {},
+		SumFieldName:      {},
+		AverageFieldName:  {},
+		DocIDFieldName:    {},
+		DeletedFieldName:  {},
 	}
 
 	Aggregates = map[string]struct{}{

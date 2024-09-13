@@ -71,7 +71,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": "bae-1a0405fa-e17d-5b0f-8fe2-eb966938df1c",
+							"author_id": "bae-5da9ad38-0a01-51ad-b54f-43eb9288d4f5",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},

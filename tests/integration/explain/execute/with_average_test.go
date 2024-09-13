@@ -24,6 +24,9 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
+
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3BookDocuments(),
 
@@ -81,6 +84,9 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
+
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 			create3BookDocuments(),
 

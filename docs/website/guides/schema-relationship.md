@@ -74,7 +74,7 @@ type Address {
 ```graphql
 mutation {
   create_Address(input: {streetNumber: "123", streetName: "Test road", country: "Canada"}) {
-  	_key
+  	_docID
   }
 }
 ```
@@ -82,7 +82,7 @@ mutation {
 ```graphql
 mutation {
   create_User(input: {name: "Alice", username: "awesomealice", age: 35, address_id: "bae-be6d8024-4953-5a92-84b4-f042d25230c6"}) {
-  	_key
+  	_docID
   }
 }
 ```
@@ -178,7 +178,7 @@ defradb client schema add -f schema.graphql
 ```graphql
 mutation {
     create_Author(input: {name: "Saadi", dateOfBirth: "1210-07-23T03:46:56.647Z"}) {
-    	_key
+    	_docID
     }
 }
 ```
@@ -187,7 +187,7 @@ mutation {
 ```graphql
 mutation {
   	create_Book(input: {name: "Gulistan", genre: "Poetry", author_id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
-      	_key
+      	_docID
     }
 }
 ```
@@ -196,7 +196,7 @@ mutation {
 ```graphql
 mutation {
   	update_Author(id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4", input: {name: "Saadi Shirazi"}) {
-      	_key
+      	_docID
     }
 }
 ```
@@ -205,7 +205,7 @@ mutation {
 ```graphql
 mutation {
   	update_Book(filter: {name: {_eq: "Gulistan"}}, input: {description: "Persian poetry of ideas"}) {
-      	_key
+      	_docID
     }
 }
 ```
