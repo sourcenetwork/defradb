@@ -129,3 +129,42 @@ func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with variable default value override",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Variables: immutable.Some(map[string]any{
+					"age": int64(30),
+				}),
+				Request: `query($age: Int = 50) {
+					Users(filter: {Age: {_lt: $age}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
