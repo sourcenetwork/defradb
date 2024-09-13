@@ -84,7 +84,7 @@ func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 	return res
 }
 
-func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
+func (p *parser) Parse(ast *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
 	schema := p.schemaManager.Schema()
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
@@ -95,7 +95,7 @@ func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseRequest(*schema, ast)
+	query, parsingErrors := defrap.ParseRequest(*schema, ast, options)
 	if len(parsingErrors) > 0 {
 		return nil, parsingErrors
 	}

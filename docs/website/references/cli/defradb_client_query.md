@@ -30,8 +30,10 @@ defradb client query [-i --identity] [request] [flags]
 ### Options
 
 ```
-  -f, --file string   File containing the query request
-  -h, --help          help for query
+  -f, --file string        File containing the query request
+  -h, --help               help for query
+  -o, --operation string   Name of the operation to execute in the query
+  -v, --variables string   JSON encoded variables to use in the query
 ```
 
 ### Options inherited from parent commands
