@@ -24,7 +24,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						name: String @indexField
+						name: String @index
 						age: Int
 					}
 				`,

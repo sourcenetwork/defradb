@@ -27,7 +27,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 				  }
 
 				  type Organization {
-					name: String @indexField
+					name: String @index
 					programs: [Program]
 				  }`,
 			},
@@ -64,7 +64,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 				  }
 
 				  type Organization {
-					name: String @indexField
+					name: String @index
 					programs: [Program]
 				  }`,
 			},
@@ -101,7 +101,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 				  }
 
 				  type Organization {
-					name: String @indexField
+					name: String @index
 					programs: [Program]
 				  }`,
 			},
@@ -138,7 +138,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 				  }
 
 				  type Organization {
-					name: String @indexField
+					name: String @index
 					programs: [Program]
 				  }`,
 			},
@@ -221,7 +221,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 				  }
 
 				  type Organization {
-					name: String @indexField
+					name: String @index
 					programs: [Program]
 				  }`,
 			},
@@ -308,7 +308,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 				  }
 
 				  type Organization {
-					name: String @indexField
+					name: String @index
 					programs: [Program]
 				  }`,
 			},

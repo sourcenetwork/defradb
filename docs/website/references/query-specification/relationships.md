@@ -66,7 +66,7 @@ It is possible to define a collection of different relationship models. Addition
 type Author {
     name: String
     address: Address
-    books: [Book] @relation("authored_books") @indexField
+    books: [Book] @relation("authored_books") @index
 }
 ```
 

@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -23,7 +24,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 	cases := []indexTestCase{
 		{
 			description: "Index with a single field",
-			sdl:         `type user @index(fields: ["name"]) {}`,
+			sdl:         `type user @index(includes: [{name: "name"}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Name: "",
@@ -36,7 +37,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with a name",
-			sdl:         `type user @index(name: "userIndex", fields: ["name"]) {}`,
+			sdl:         `type user @index(name: "userIndex", includes: [{name: "name"}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Name: "userIndex",
@@ -48,7 +49,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Unique index",
-			sdl:         `type user @index(fields: ["name"], unique: true) {}`,
+			sdl:         `type user @index(includes: [{name: "name"}], unique: true) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -60,7 +61,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index explicitly not unique",
-			sdl:         `type user @index(fields: ["name"], unique: false) {}`,
+			sdl:         `type user @index(includes: [{name: "name"}], unique: false) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -72,7 +73,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with explicit ascending field",
-			sdl:         `type user @index(fields: ["name"], directions: [ASC]) {}`,
+			sdl:         `type user @index(includes: [{name: "name", direction: ASC}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -82,7 +83,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with descending field",
-			sdl:         `type user @index(fields: ["name"], directions: [DESC]) {}`,
+			sdl:         `type user @index(includes: [{name: "name", direction: DESC}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -92,7 +93,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with 2 fields",
-			sdl:         `type user @index(fields: ["name", "age"]) {}`,
+			sdl:         `type user @index(includes: [{name: "name"}, {name: "age"}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -104,7 +105,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with 2 fields and 2 directions",
-			sdl:         `type user @index(fields: ["name", "age"], directions: [ASC, DESC]) {}`,
+			sdl:         `type user @index(includes: [{name: "name", direction: ASC}, {name: "age", direction: DESC}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -124,78 +125,53 @@ func TestParseIndexOnStruct(t *testing.T) {
 func TestParseInvalidIndexOnStruct(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
-			description: "missing 'fields' argument",
+			description: "missing 'includes' argument",
 			sdl:         `type user @index(name: "userIndex", unique: true) {}`,
 			expectedErr: errIndexMissingFields,
 		},
 		{
 			description: "unknown argument",
-			sdl:         `type user @index(unknown: "something", fields: ["name"]) {}`,
+			sdl:         `type user @index(unknown: "something", includes: [{name: "name"}]) {}`,
 			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "invalid index name type",
-			sdl:         `type user @index(name: 1, fields: ["name"]) {}`,
+			sdl:         `type user @index(name: 1, includes: [{name: "name"}]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "index name starts with a number",
-			sdl:         `type user @index(name: "1_user_name", fields: ["name"]) {}`,
-			expectedErr: errIndexInvalidArgument,
+			sdl:         `type user @index(name: "1_user_name", includes: [{name: "name"}]) {}`,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "index with empty name",
-			sdl:         `type user @index(name: "", fields: ["name"]) {}`,
-			expectedErr: errIndexInvalidArgument,
+			sdl:         `type user @index(name: "", includes: [{name: "name"}]) {}`,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "index name with spaces",
-			sdl:         `type user @index(name: "user name", fields: ["name"]) {}`,
-			expectedErr: errIndexInvalidArgument,
+			sdl:         `type user @index(name: "user name", includes: [{name: "name"}]) {}`,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "index name with special symbols",
-			sdl:         `type user @index(name: "user!name", fields: ["name"]) {}`,
-			expectedErr: errIndexInvalidArgument,
+			sdl:         `type user @index(name: "user!name", includes: [{name: "name"}]) {}`,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "invalid 'unique' value type",
-			sdl:         `type user @index(fields: ["name"], unique: "true") {}`,
+			sdl:         `type user @index(includes: [{name: "name"}], unique: "true") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
-			description: "invalid 'fields' value type (not a list)",
-			sdl:         `type user @index(fields: "name") {}`,
+			description: "invalid 'includes' value type (not a list)",
+			sdl:         `type user @index(includes: "name") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
-			description: "invalid 'fields' value type (not a string list)",
-			sdl:         `type user @index(fields: [1]) {}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "invalid 'directions' value type (not a list)",
-			sdl:         `type user @index(fields: ["name"], directions: "ASC") {}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "invalid 'directions' value type (not a string list)",
-			sdl:         `type user @index(fields: ["name"], directions: [1]) {}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "invalid 'directions' value type (invalid element value)",
-			sdl:         `type user @index(fields: ["name"], directions: ["direction"]) {}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "fewer directions than fields",
-			sdl:         `type user @index(fields: ["name", "age"], directions: [ASC]) {}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "more directions than fields",
-			sdl:         `type user @index(fields: ["name"], directions: [ASC, DESC]) {}`,
+			description: "invalid 'includes' value type (not an object list)",
+			sdl:         `type user @index(includes: [1]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 	}
@@ -210,7 +186,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index",
 			sdl: `type user {
-				name: String @indexField
+				name: String @index
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -225,7 +201,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index with name",
 			sdl: `type user {
-				name: String @indexField(name: "nameIndex")
+				name: String @index(name: "nameIndex")
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -240,7 +216,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "unique field index",
 			sdl: `type user {
-				name: String @indexField(unique: true)
+				name: String @index(unique: true)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -254,7 +230,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index explicitly not unique",
 			sdl: `type user {
-				name: String @indexField(unique: false)
+				name: String @index(unique: false)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -268,7 +244,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index in ASC order",
 			sdl: `type user {
-				name: String @indexField(direction: ASC)
+				name: String @index(direction: ASC)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -282,7 +258,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "field index in DESC order",
 			sdl: `type user {
-				name: String @indexField(direction: DESC)
+				name: String @index(direction: DESC)
 			}`,
 			targetDescriptions: []client.IndexDescription{
 				{
@@ -305,49 +281,49 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 		{
 			description: "forbidden 'field' argument",
 			sdl: `type user {
-				name: String @indexField(field: "name") 
+				name: String @index(field: "name") 
 			}`,
 			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "invalid field index name type",
 			sdl: `type user {
-				name: String @indexField(name: 1) 
+				name: String @index(name: 1) 
 			}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "field index name starts with a number",
 			sdl: `type user {
-				name: String @indexField(name: "1_user_name") 
+				name: String @index(name: "1_user_name") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index with empty name",
 			sdl: `type user {
-				name: String @indexField(name: "") 
+				name: String @index(name: "") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index name with spaces",
 			sdl: `type user {
-				name: String @indexField(name: "user name") 
+				name: String @index(name: "user name") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index name with special symbols",
 			sdl: `type user {
-				name: String @indexField(name: "user!name") 
+				name: String @index(name: "user!name") 
 			}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "invalid 'unique' value type",
 			sdl: `type user {
-				name: String @indexField(unique: "true") 
+				name: String @index(unique: "true") 
 			}`,
 			expectedErr: errIndexInvalidArgument,
 		},
@@ -362,9 +338,10 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	ctx := context.Background()
 
 	cols, err := FromString(ctx, testCase.sdl)
-	assert.NoError(t, err, testCase.description)
-	assert.Equal(t, len(cols), 1, testCase.description)
-	assert.Equal(t, len(cols[0].Description.Indexes), len(testCase.targetDescriptions), testCase.description)
+	require.NoError(t, err, testCase.description)
+
+	require.Equal(t, len(cols), 1, testCase.description)
+	require.Equal(t, len(cols[0].Description.Indexes), len(testCase.targetDescriptions), testCase.description)
 
 	for i, d := range cols[0].Description.Indexes {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)

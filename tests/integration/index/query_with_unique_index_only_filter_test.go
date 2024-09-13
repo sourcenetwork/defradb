@@ -28,7 +28,7 @@ func TestQueryWithUniqueIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @indexField(unique: true)
+						name: String @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -65,7 +65,7 @@ func TestQueryWithUniqueIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -102,7 +102,7 @@ func TestQueryWithUniqueIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T)
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -140,7 +140,7 @@ func TestQueryWithUniqueIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -177,7 +177,7 @@ func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -214,7 +214,7 @@ func TestQueryWithUniqueIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @indexField(unique: true)
+						name: String @index(unique: true)
 						age: Int 
 					}`,
 			},
@@ -260,7 +260,7 @@ func TestQueryWithUniqueIndex_WithInFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -298,7 +298,7 @@ func TestQueryWithUniqueIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -363,7 +363,7 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						email: String @indexField(unique: true)
+						email: String @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -461,7 +461,7 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @indexField(unique: true)
+						name: String @index(unique: true)
 						age: Int 
 					}`,
 			},
@@ -504,7 +504,7 @@ func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *te
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @indexField(unique: true)
+						name: String @index(unique: true)
 						age: Int 
 					}`,
 			},
@@ -544,7 +544,7 @@ func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}
 				`,
 			},
@@ -579,7 +579,7 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -627,7 +627,7 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -680,7 +680,7 @@ func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testin
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -734,7 +734,7 @@ func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t 
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -791,7 +791,7 @@ func TestQueryWithUniqueIndex_WithDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField(unique: true)
+						birthday: DateTime @index(unique: true)
 					}`,
 			},
 			testUtils.CreateDoc{

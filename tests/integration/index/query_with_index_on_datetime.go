@@ -28,7 +28,7 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField
+						birthday: DateTime @index
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -68,7 +68,7 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField
+						birthday: DateTime @index
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -108,7 +108,7 @@ func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField
+						birthday: DateTime @index
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -155,7 +155,7 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField
+						birthday: DateTime @index
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -195,7 +195,7 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField
+						birthday: DateTime @index
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -242,7 +242,7 @@ func TestQueryWithIndex_WithNeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField
+						birthday: DateTime @index
 					}`,
 			},
 			testUtils.CreateDoc{

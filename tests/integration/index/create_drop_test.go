@@ -23,7 +23,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @indexField
+						name: String @index
 						age: Int
 					}
 				`,

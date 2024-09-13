@@ -75,7 +75,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(unique: true, fields: ["name", "age"]) {
+					type User @index(unique: true, includes: [{name: "name"}, {name: "age"}]) {
 						name: String 
 						age: Int 
 						email: String

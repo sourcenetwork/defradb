@@ -45,7 +45,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 					} 
 
 					type Device {
-						model: String @indexField
+						model: String @index
 						owner: User
 					}`,
 			},
@@ -113,7 +113,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 					} 
 
 					type Device {
-						model: String @indexField
+						model: String @index
 						owner: User
 					}`,
 			},
@@ -182,7 +182,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 
 					type Address {
 						user: User @primary
-						city: String @indexField
+						city: String @index
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -245,12 +245,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 					type User {
 						name: String 
 						age: Int
-						address: Address @primary @indexField
+						address: Address @primary @index
 					} 
 
 					type Address {
 						user: User
-						city: String @indexField
+						city: String @index
 						street: String 
 					}`,
 			},
@@ -325,7 +325,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 
 					type Address {
 						user: User
-						city: String @indexField
+						city: String @index
 						street: String 
 					}`,
 			},
@@ -387,12 +387,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 					type User {
 						name: String 
 						age: Int
-						address: Address @primary @indexField
+						address: Address @primary @index
 					} 
 
 					type Address {
 						user: User
-						city: String @indexField
+						city: String @index
 						street: String 
 					}`,
 			},
@@ -429,7 +429,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 					}
 
 					type Device {
-						model: String @indexField
+						model: String @index
 						manufacturer: String
 						owner: User
 					}
@@ -535,7 +535,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 					} 
 
 					type Device {
-						model: String @indexField
+						model: String @index
 						manufacturer: String
 						owner: User
 					}
@@ -629,7 +629,7 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 
 					type Address {
 						user: User @primary
-						city: String @indexField
+						city: String @index
 					}
 				`,
 			},
@@ -684,7 +684,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 
 					type Device {
 						model: String 
-						year: Int @indexField
+						year: Int @index
 						owner: User
 					}
 				`,
@@ -746,13 +746,13 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @indexField
+						name: String @index
 						devices: [Device]
 					}
 
 					type Device {
 						model: String
-						owner: User @indexField
+						owner: User @index
 					}
 				`,
 			},
@@ -803,7 +803,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 					type Device {
 						model: String 
 						manufacturer: String
-						owner: User @indexField
+						owner: User @index
 					}
 				`,
 			},
@@ -886,7 +886,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 					type Device {
 						model: String 
 						manufacturer: String
-						owner: User @indexField
+						owner: User @index
 					}
 				`,
 			},
@@ -961,8 +961,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 
 					type Device {
 						model: String
-						owner: User @indexField
-						manufacturer: Manufacturer @indexField
+						owner: User @index
+						manufacturer: Manufacturer @index
 					}
 
 					type Manufacturer {
@@ -1024,7 +1024,7 @@ func TestQueryWithIndex_UniqueIndexOnChildWithEmptyParentCollection(t *testing.T
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Action {
-						key: String @indexField(unique: true)
+						key: String @index(unique: true)
 						playerActions: [PlayerAction]
 					}
 

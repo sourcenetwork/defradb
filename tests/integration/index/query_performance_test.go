@@ -41,7 +41,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 				Schema: `
 					type IndexedUser {
 						name:   String
-						age:    Int @indexField
+						age:    Int @index
 						email:  String
 					}`,
 			},

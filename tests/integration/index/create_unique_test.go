@@ -82,7 +82,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true, name: "age_unique_index")
+						age: Int @index(unique: true, name: "age_unique_index")
 					}
 				`,
 			},
@@ -259,7 +259,7 @@ func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}
 				`,
 			},
@@ -284,7 +284,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 				Schema: `
 					type User {
 						name: String 
-						age: Int @indexField(unique: true)
+						age: Int @index(unique: true)
 					}
 				`,
 			},
@@ -323,7 +323,7 @@ func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) 
 				Schema: `
 					type User {
 						name: String 
-						birthday: DateTime @indexField(unique: true)
+						birthday: DateTime @index(unique: true)
 					}`,
 			},
 			testUtils.CreateDoc{

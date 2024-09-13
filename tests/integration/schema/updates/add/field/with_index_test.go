@@ -23,8 +23,8 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndex(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						name: String @indexField
-						age:  Int    @indexField
+						name: String @index
+						age:  Int    @index
 					}
 				`,
 			},
