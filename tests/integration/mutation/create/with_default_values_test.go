@@ -15,6 +15,8 @@ import (
 	"time"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *testing.T) {
@@ -34,20 +36,24 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 					}
 				`,
 			},
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap: map[string]any{},
+			},
 			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {}) {
-								age
-								active
-								name
-								points
-								created
-								metadata
-								image
-							}
-						}`,
+				Request: `query {
+					Users {
+						age
+						active
+						name
+						points
+						created
+						metadata
+						image
+					}
+				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"Users": []map[string]any{
 						{
 							"age":      int64(40),
 							"active":   true,
@@ -83,20 +89,31 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 					}
 				`,
 			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"age":      nil,
+					"active":   nil,
+					"name":     nil,
+					"points":   nil,
+					"created":  nil,
+					"metadata": nil,
+					"image":    nil,
+				},
+			},
 			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {age: null, active: null, name: null, points: null, created: null, metadata: null, image: null}) {
-								age
-								active
-								name
-								points
-								created
-								metadata
-								image
-							}
-						}`,
+				Request: `query {
+					Users {
+						age
+						active
+						name
+						points
+						created
+						metadata
+						image
+					}
+				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"Users": []map[string]any{
 						{
 							"age":      nil,
 							"active":   nil,
@@ -132,20 +149,31 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 					}
 				`,
 			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"age":      int64(50),
+					"active":   false,
+					"name":     "Alice",
+					"points":   float64(5),
+					"created":  time.Time(time.Date(2024, time.June, 18, 1, 0, 0, 0, time.UTC)),
+					"metadata": "{\"two\":2}",
+					"image":    "aabb33",
+				},
+			},
 			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {age: 50, active: false, name: "Alice", points: 5, created: "2024-06-18T01:00:00-00:00", metadata: "{\"two\":2}", image: "aabb33"}) {
-								age
-								active
-								name
-								points
-								created
-								metadata
-								image
-							}
-						}`,
+				Request: `query {
+					Users {
+						age
+						active
+						name
+						points
+						created
+						metadata
+						image
+					}
+				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"Users": []map[string]any{
 						{
 							"age":      int64(50),
 							"active":   false,
@@ -167,6 +195,12 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation, with default value, no value provided, and created twice",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// This test will fail if using the collection save
+			// method because it does not create two unique docs
+			testUtils.CollectionNamedMutationType,
+			testUtils.GQLRequestMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -176,29 +210,13 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 					}
 				`,
 			},
-			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {}) {
-								name
-								age
-							}
-						}`,
-				Results: map[string]any{
-					"create_Users": []map[string]any{
-						{
-							"name": "Bob",
-							"age":  int64(40),
-						},
-					},
-				},
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap: map[string]any{},
 			},
-			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {}) {
-								name
-								age
-							}
-						}`,
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap:        map[string]any{},
 				ExpectedError: "a document with the given ID already exists",
 			},
 		},
@@ -210,6 +228,12 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation, with default value, no value provided, created twice, and unique index",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// This test will fail if using the collection save
+			// method because it does not create two unique docs
+			testUtils.CollectionNamedMutationType,
+			testUtils.GQLRequestMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -219,29 +243,13 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 					}
 				`,
 			},
-			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {}) {
-								name
-								age
-							}
-						}`,
-				Results: map[string]any{
-					"create_Users": []map[string]any{
-						{
-							"name": "Bob",
-							"age":  int64(40),
-						},
-					},
-				},
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap: map[string]any{},
 			},
-			testUtils.Request{
-				Request: `mutation {
-							create_Users(input: {age: 30}) {
-								name
-								age
-							}
-						}`,
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap:        map[string]any{},
 				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
