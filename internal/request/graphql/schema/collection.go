@@ -300,7 +300,9 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		}
 	}
 
-	// implicitly add the field if it is not already in the list
+	// if the directive is applied to a field and
+	// the field is not in the includes list
+	// implicitly add it as the first entry
 	if !containsField && fieldDef != nil {
 		field := client.IndexedFieldDescription{
 			Name: fieldDef.Name.Value,
@@ -308,7 +310,7 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		if direction != nil {
 			field.Descending = direction.Value == types.FieldOrderDESC
 		}
-		fields = append(fields, field)
+		fields = append([]client.IndexedFieldDescription{field}, fields...)
 	}
 
 	if len(fields) == 0 {
@@ -353,11 +355,12 @@ func indexFieldFromAST(value ast.Value, defaultDirection *ast.EnumValue) (client
 	}
 
 	var descending bool
-	if direction == nil && defaultDirection != nil {
-		direction = defaultDirection
-	}
+	// if the direction is explicitly set use that value, otherwise
+	// if the default direction was set on the index use that value
 	if direction != nil {
 		descending = direction.Value == types.FieldOrderDESC
+	} else if defaultDirection != nil {
+		descending = defaultDirection.Value == types.FieldOrderDESC
 	}
 
 	return client.IndexedFieldDescription{

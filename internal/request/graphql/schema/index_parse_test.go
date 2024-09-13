@@ -269,6 +269,57 @@ func TestParseIndexOnField(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "composite field index with implicit include and implicit ordering",
+			sdl: `type user {
+				name: String @index(direction: DESC, includes: [{name: "age"}])
+				age: Int
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Name: "",
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Descending: true},
+						{Name: "age", Descending: true},
+					},
+					Unique: false,
+				},
+			},
+		},
+		{
+			description: "composite field index with implicit include and explicit ordering",
+			sdl: `type user {
+				name: String @index(direction: DESC, includes: [{name: "age", direction: ASC}])
+				age: Int
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Name: "",
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Descending: true},
+						{Name: "age", Descending: false},
+					},
+					Unique: false,
+				},
+			},
+		},
+		{
+			description: "composite field index with explicit includes",
+			sdl: `type user {
+				name: String @index(includes: [{name: "age"}, {name: "name"}])
+				age: Int
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Name: "",
+					Fields: []client.IndexedFieldDescription{
+						{Name: "age", Descending: false},
+						{Name: "name", Descending: false},
+					},
+					Unique: false,
+				},
+			},
+		},
 	}
 
 	for _, test := range cases {

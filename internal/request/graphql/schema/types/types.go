@@ -125,7 +125,8 @@ func PolicyDirective() *gql.Directive {
 
 func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name: "IndexField",
+		Name:        "IndexField",
+		Description: "Used to create an index from a field.",
 		Fields: gql.InputObjectConfigFieldMap{
 			IndexFieldInputName: &gql.InputObjectFieldConfig{
 				Type: gql.String,
@@ -143,21 +144,31 @@ func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObje
 		Description: "@index is a directive that can be used to create an index on a type or a field.",
 		Args: gql.FieldConfigArgument{
 			IndexDirectivePropName: &gql.ArgumentConfig{
-				Type: gql.String,
+				Description: "Sets the index name.",
+				Type:        gql.String,
 			},
 			IndexDirectivePropUnique: &gql.ArgumentConfig{
-				Type: gql.Boolean,
+				Description: "Makes the index unique.",
+				Type:        gql.Boolean,
 			},
 			IndexDirectivePropDirection: &gql.ArgumentConfig{
-				Type: gql.String,
+				Description: `Sets the default index ordering for all fields.
+				
+	If a field in the includes list does not specify a direction
+	the default ordering from this value will be used instead.`,
+				Type: orderingEnum,
 			},
 			IndexDirectivePropIncludes: &gql.ArgumentConfig{
+				Description: `Sets the fields the index is created on.
+
+	When used on a field definition and the field is not in the includes list
+	it will be implicitly added as the first entry.`,
 				Type: gql.NewList(indexFieldInputObject),
 			},
 		},
 		Locations: []string{
 			gql.DirectiveLocationObject,
-			gql.DirectiveLocationField,
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }
