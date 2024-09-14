@@ -212,8 +212,9 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 		decryptedData, err := crypto.DecryptECIES(
 			block,
 			privateKey,
-			makeAssociatedData(req, resp.From),
-			keyResp.EphemeralPublicKey,
+			crypto.WithAAD(makeAssociatedData(req, resp.From)),
+			crypto.WithPubKeyBytes(keyResp.EphemeralPublicKey),
+			crypto.WithPubKeyPrepended(false),
 		)
 
 		if err != nil {
@@ -269,7 +270,13 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 	res.Blocks = make([][]byte, 0, len(blocks))
 
 	for _, block := range blocks {
-		encryptedBlock, err := crypto.EncryptECIES(block, reqEphPubKey, makeAssociatedData(req, s.peerID), privKey)
+		encryptedBlock, err := crypto.EncryptECIES(
+			block,
+			reqEphPubKey,
+			crypto.WithAAD(makeAssociatedData(req, s.peerID)),
+			crypto.WithPrivKey(privKey),
+			crypto.WithPubKeyPrepended(false),
+		)
 		if err != nil {
 			return nil, errors.Wrap("failed to encrypt key for requester", err)
 		}

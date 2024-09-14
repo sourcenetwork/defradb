@@ -20,15 +20,17 @@ const (
 	errFailedKDFOperationForAESKey     string = "failed KDF operation for AES key"
 	errFailedKDFOperationForHMACKey    string = "failed KDF operation for HMAC key"
 	errFailedToEncrypt                 string = "failed to encrypt"
-	errCipherTextTooShort              string = "ciphertext too short"
+	errCipherTextTooShort              string = "cipherText too short"
 	errFailedToParseEphemeralPublicKey string = "failed to parse ephemeral public key"
 	errVerificationWithHMACFailed      string = "verification with HMAC failed"
 	errFailedToDecrypt                 string = "failed to decrypt"
+	errNoPublicKeyForDecryption        string = "no public key provided for decryption"
 )
 
 var (
 	ErrCipherTextTooShort         = errors.New(errCipherTextTooShort)
 	ErrVerificationWithHMACFailed = errors.New(errVerificationWithHMACFailed)
+	ErrNoPublicKeyForDecryption   = errors.New(errNoPublicKeyForDecryption)
 )
 
 func NewErrFailedToGenerateEphemeralKey(inner error) error {
