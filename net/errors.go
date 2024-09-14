@@ -14,7 +14,6 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 const (
@@ -51,10 +50,6 @@ func NewErrPublishingToDocIDTopic(inner error, cid, docID string, kv ...errors.K
 
 func NewErrPublishingToSchemaTopic(inner error, cid, docID string, kv ...errors.KV) error {
 	return errors.Wrap(fmt.Sprintf(errPublishingToSchemaTopic, cid, docID), inner, kv...)
-}
-
-func NewErrRequestingEncryptionKeys(inner error, keys []core.EncStoreDocKey) error {
-	return errors.Wrap(fmt.Sprintf(errRequestingEncryptionKeys, keys), inner)
 }
 
 func NewErrTopicAlreadyExist(topic string) error {

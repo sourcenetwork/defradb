@@ -792,37 +792,3 @@ func bytesPrefixEnd(b []byte) []byte {
 	// maximal byte string (i.e. already \xff...).
 	return b
 }
-
-// EncStoreDocKey is a key for the encryption store.
-type EncStoreDocKey struct {
-	// DocID is the ID of the document that the key is for.
-	DocID string
-	// FieldName is the name of the field that the key is for.
-	// If unset, it indicates that the key is for the whole document.
-	FieldName immutable.Option[string]
-	// KeyID is a hash (Cid) of the of the encryption key.
-	KeyID string
-}
-
-var _ Key = (*EncStoreDocKey)(nil)
-
-// NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-// Unset fieldName indicates that the key is for the whole document.
-func NewEncStoreDocKey(docID string, fieldName immutable.Option[string], keyID string) EncStoreDocKey {
-	return EncStoreDocKey{DocID: docID, FieldName: fieldName, KeyID: keyID}
-}
-
-func (k EncStoreDocKey) ToString() string {
-	if k.FieldName.HasValue() {
-		return fmt.Sprintf("%s/%s/%s", k.DocID, k.FieldName.Value(), k.KeyID)
-	}
-	return fmt.Sprintf("%s/%s", k.DocID, k.KeyID)
-}
-
-func (k EncStoreDocKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k EncStoreDocKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
-}
