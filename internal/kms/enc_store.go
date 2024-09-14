@@ -16,6 +16,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/defradb/datastore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )

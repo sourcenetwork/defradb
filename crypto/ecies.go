@@ -55,8 +55,13 @@ func X25519PublicKeyFromBytes(publicKeyBytes []byte) (*ecdh.PublicKey, error) {
 // Returns:
 //   - Byte slice containing the encrypted message and necessary metadata for decryption
 //   - Error if any step of the encryption process fails
-func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []byte, ourPrivateKey *ecdh.PrivateKey) ([]byte, error) {
-	// TODO: apply option patter 
+func EncryptECIES(
+	plainText []byte,
+	publicKey *ecdh.PublicKey,
+	associatedData []byte,
+	ourPrivateKey *ecdh.PrivateKey,
+) ([]byte, error) {
+	// TODO: apply option patter
 	if ourPrivateKey == nil {
 		var err error
 		ourPrivateKey, err = GenerateX25519()
@@ -115,7 +120,12 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 // Returns:
 //   - Byte slice containing the decrypted plaintext
 //   - Error if any step of the decryption process fails, including authentication failure
-func DecryptECIES(cipherText []byte, ourPrivateKey *ecdh.PrivateKey, associatedData, publicKeyBytes []byte) ([]byte, error) {
+func DecryptECIES(
+	cipherText []byte,
+	ourPrivateKey *ecdh.PrivateKey,
+	associatedData,
+	publicKeyBytes []byte,
+) ([]byte, error) {
 	if len(cipherText) < X25519PublicKeySize+AESNonceSize+HMACSize+minCipherTextSize {
 		return nil, ErrCipherTextTooShort
 	}

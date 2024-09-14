@@ -12,6 +12,7 @@ package encryption
 
 import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/defradb/event"
 )
 

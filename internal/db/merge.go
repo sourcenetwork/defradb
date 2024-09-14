@@ -379,7 +379,11 @@ func (mp *mergeProcessor) processBlock(
 	return nil
 }
 
-func decryptBlock(ctx context.Context, block *coreblock.Block, encBlock *coreblock.Encryption) (*coreblock.Block, error) {
+func decryptBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+	encBlock *coreblock.Encryption,
+) (*coreblock.Block, error) {
 	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
 
 	if block.Delta.IsComposite() {

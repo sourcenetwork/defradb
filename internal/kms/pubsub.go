@@ -18,6 +18,10 @@ import (
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
+	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	grpcpeer "google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
@@ -25,9 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/net"
 	pb "github.com/sourcenetwork/defradb/net/pb"
-	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
-	grpcpeer "google.golang.org/grpc/peer"
-	"google.golang.org/protobuf/proto"
 )
 
 const pubsubTopic = "encryption"
