@@ -53,7 +53,7 @@ type DB interface {
 	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
 	//
 	// It sits within the rootstore returned by [Root].
-	Encstore() datastore.DSReaderWriter
+	Encstore() datastore.Blockstore
 
 	// Peerstore returns the peerstore where known host information is stored.
 	//

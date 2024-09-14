@@ -55,14 +55,18 @@ func X25519PublicKeyFromBytes(publicKeyBytes []byte) (*ecdh.PublicKey, error) {
 // Returns:
 //   - Byte slice containing the encrypted message and necessary metadata for decryption
 //   - Error if any step of the encryption process fails
-func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []byte) ([]byte, error) {
-	ephemeralPrivate, err := GenerateX25519()
-	if err != nil {
-		return nil, NewErrFailedToGenerateEphemeralKey(err)
+func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []byte, ourPrivateKey *ecdh.PrivateKey) ([]byte, error) {
+	// TODO: apply option patter 
+	if ourPrivateKey == nil {
+		var err error
+		ourPrivateKey, err = GenerateX25519()
+		if err != nil {
+			return nil, NewErrFailedToGenerateEphemeralKey(err)
+		}
 	}
-	ephemeralPublic := ephemeralPrivate.PublicKey()
+	ourPublicKey := ourPrivateKey.PublicKey()
 
-	sharedSecret, err := ephemeralPrivate.ECDH(publicKey)
+	sharedSecret, err := ourPrivateKey.ECDH(publicKey)
 	if err != nil {
 		return nil, NewErrFailedECDHOperation(err)
 	}
@@ -77,7 +81,7 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 		return nil, NewErrFailedKDFOperationForHMACKey(err)
 	}
 
-	cipherText, _, err := EncryptAES(plainText, aesKey, makeAAD(ephemeralPublic.Bytes(), associatedData), true)
+	cipherText, _, err := EncryptAES(plainText, aesKey, makeAAD(ourPublicKey.Bytes(), associatedData), true)
 	if err != nil {
 		return nil, NewErrFailedToEncrypt(err)
 	}
@@ -86,7 +90,7 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 	mac.Write(cipherText)
 	macSum := mac.Sum(nil)
 
-	result := append(ephemeralPublic.Bytes(), cipherText...)
+	result := append(ourPublicKey.Bytes(), cipherText...)
 	result = append(result, macSum...)
 
 	return result, nil
@@ -111,18 +115,20 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, associatedData []
 // Returns:
 //   - Byte slice containing the decrypted plaintext
 //   - Error if any step of the decryption process fails, including authentication failure
-func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData []byte) ([]byte, error) {
+func DecryptECIES(cipherText []byte, ourPrivateKey *ecdh.PrivateKey, associatedData, publicKeyBytes []byte) ([]byte, error) {
 	if len(cipherText) < X25519PublicKeySize+AESNonceSize+HMACSize+minCipherTextSize {
 		return nil, ErrCipherTextTooShort
 	}
 
-	ephemeralPublicBytes := cipherText[:X25519PublicKeySize]
-	ephemeralPublic, err := ecdh.X25519().NewPublicKey(ephemeralPublicBytes)
+	if publicKeyBytes == nil {
+		publicKeyBytes = cipherText[:X25519PublicKeySize]
+	}
+	publicKey, err := ecdh.X25519().NewPublicKey(publicKeyBytes)
 	if err != nil {
 		return nil, NewErrFailedToParseEphemeralPublicKey(err)
 	}
 
-	sharedSecret, err := privateKey.ECDH(ephemeralPublic)
+	sharedSecret, err := ourPrivateKey.ECDH(publicKey)
 	if err != nil {
 		return nil, NewErrFailedECDHOperation(err)
 	}
@@ -147,7 +153,7 @@ func DecryptECIES(cipherText []byte, privateKey *ecdh.PrivateKey, associatedData
 		return nil, ErrVerificationWithHMACFailed
 	}
 
-	plainText, err := DecryptAES(nil, cipherTextWithNonce, aesKey, makeAAD(ephemeralPublicBytes, associatedData))
+	plainText, err := DecryptAES(nil, cipherTextWithNonce, aesKey, makeAAD(publicKeyBytes, associatedData))
 	if err != nil {
 		return nil, NewErrFailedToDecrypt(err)
 	}

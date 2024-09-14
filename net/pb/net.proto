@@ -38,41 +38,25 @@ message PushLogRequest {
     }
 }
 
-// EncryptionKeyTarget is a struct containing information about required doc encryption key.
-message EncryptionKeyTarget {
-    // docID is the ID of the document that the key is being requested for.
-    bytes docID = 1;
-    // fieldName if the name of the document field that the key is being requested for.
-    // If the fieldName is empty, the key is being requested for the whole document.
-    string fieldName = 2;
-    // keyID is the hash (Cid) of the key that is being requested.
-    bytes keyID = 3;
-}
-
 // FetchEncryptionKeyRequest is a request to receive a doc encryption key
 // from a peer that holds it.
 message FetchEncryptionKeyRequest {
-    // targets is the list of docs/fields for which encryption keys are being requested.
-    repeated EncryptionKeyTarget targets = 1;
+    // links is the list of cid links of the blocks containing encryption keys.
+    repeated bytes links = 1;
     // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
     bytes ephemeralPublicKey = 2;
-    // signature is the requesting peer's signature of the request
-    bytes signature = 3;
 }
 
 // FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
 // by a peer that holds the requested doc encryption key.
 message FetchEncryptionKeyReply {
-    // targets is the list of docs/fields for which encryption keys are being requested.
-    repeated EncryptionKeyTarget targets = 1;
-    // encryptedKeys is an encrypted list of doc encryption keys.
-    // It is prepended with the responder's ephemeral public key and a nonce for AES-GCM
-    // Each encryption key in the decrypted list corresponds to the key requested in the same index in the targets list.
-    bytes encryptedKeys = 2;
-    // reqEphemeralPublicKey is an ephemeral public of the requesting peer to be used as session id
-    bytes reqEphemeralPublicKey = 3;
-    // signature is the responding peer's signature of the reply
-    bytes signature = 4;
+    // links is the list of cid links of the blocks containing encryption keys.
+    repeated bytes links = 1;
+    // blocks is the list of blocks containing encryption keys. The order of blocks should match the order of links.
+    // Every block is encrypted and contains a nonce.
+    repeated bytes blocks = 2;
+    // ephemeralPublicKey is an ephemeral public of the responding peer for deriving shared secret
+    bytes ephemeralPublicKey = 3;
 }
 
 message GetHeadLogRequest {}
@@ -91,8 +75,6 @@ service Service {
     rpc GetLog(GetLogRequest) returns (GetLogReply) {}
     // PushLog to this peer.
     rpc PushLog(PushLogRequest) returns (PushLogReply) {}
-    // TryGenEncryptionKey from this peer.
-    rpc TryGenEncryptionKey(FetchEncryptionKeyRequest) returns (FetchEncryptionKeyReply) {}
     // GetHeadLog from this peer
     rpc GetHeadLog(GetHeadLogRequest) returns (GetHeadLogReply) {}
 }

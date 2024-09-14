@@ -11,8 +11,8 @@
 package encryption
 
 import (
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 const RequestKeysEventName = event.Name("enc-keys-request")
@@ -23,7 +23,7 @@ const RequestKeysEventName = event.Name("enc-keys-request")
 // It must only contain public elements not protected by ACP.
 type RequestKeysEvent struct {
 	// Keys is a list of the keys that are being requested.
-	Keys []core.EncStoreDocKey
+	Keys []cidlink.Link
 
 	Resp chan<- Result
 }
@@ -36,8 +36,8 @@ type RequestedKeyEventData struct {
 
 // KeyRetrievedEvent represents a key that was retrieved.
 type Item struct {
-	StoreKey      core.EncStoreDocKey
-	EncryptionKey []byte
+	Link  []byte
+	Block []byte
 }
 
 type Result struct {
@@ -62,7 +62,7 @@ func NewResults() (*Results, chan<- Result) {
 
 // NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
-func NewRequestKeysMessage(keys []core.EncStoreDocKey) (event.Message, *Results) {
+func NewRequestKeysMessage(keys []cidlink.Link) (event.Message, *Results) {
 	res, ch := NewResults()
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
 		Keys: keys,

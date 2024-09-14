@@ -180,13 +180,23 @@ func TestBlockDeltaPriority(t *testing.T) {
 	require.Equal(t, uint64(2), block.Delta.GetPriority())
 }
 
-func TestBlockMarshal_IsEncryptedNotSet_ShouldNotContainIsEcryptedField(t *testing.T) {
+func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *testing.T) {
 	lsys := cidlink.DefaultLinkSystem()
 	store := memstore.Store{}
 	lsys.SetReadStorage(&store)
 	lsys.SetWriteStorage(&store)
 
-	fieldBlock := Block{
+	encBlock := Encryption{
+		DocID: []byte("docID"),
+		Key:   []byte("keyID"),
+	}
+
+	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
+	require.NoError(t, err)
+
+	link := encBlockLink.(cidlink.Link)
+
+	block := Block{
 		Delta: crdt.CRDT{
 			LWWRegDelta: &crdt.LWWRegDelta{
 				DocID:           []byte("docID"),
@@ -196,11 +206,27 @@ func TestBlockMarshal_IsEncryptedNotSet_ShouldNotContainIsEcryptedField(t *testi
 				Data:            []byte("John"),
 			},
 		},
+		Encryption: &link,
 	}
 
-	b, err := fieldBlock.Marshal()
+	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
 	require.NoError(t, err)
-	require.NotContains(t, string(b), "isEncrypted")
+
+	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, SchemaPrototype)
+	require.NoError(t, err)
+
+	loadedBlock, err := GetFromNode(nd)
+	require.NoError(t, err)
+
+	require.NotNil(t, loadedBlock.Encryption)
+
+	nd, err = lsys.Load(ipld.LinkContext{}, loadedBlock.Encryption, EncryptionSchemaPrototype)
+	require.NoError(t, err)
+
+	loadedEncBlock, err := GetEncryptionBlockFromNode(nd)
+	require.NoError(t, err)
+
+	require.Equal(t, encBlock, *loadedEncBlock)
 }
 
 func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *testing.T) {
@@ -259,106 +285,27 @@ func TestBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestBlockUnmarshal_WithValidEncryption_Succeed(t *testing.T) {
-	encryptedBlock := Block{
-		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
-				DocID:           []byte("docID"),
-				FieldName:       "name",
-				Priority:        1,
-				SchemaVersionID: "schemaVersionID",
-				Data:            []byte("John"),
-			},
-		},
-		Encryption: &Encryption{
-			Type:  FieldEncrypted,
-			KeyID: []byte("keyID"),
-		},
-	}
-
-	marshaledData, err := encryptedBlock.Marshal()
-	require.NoError(t, err)
-
-	var unmarshaledBlock Block
-	err = unmarshaledBlock.Unmarshal(marshaledData)
-	require.NoError(t, err)
-
-	require.Equal(t, encryptedBlock, unmarshaledBlock)
-	require.NotNil(t, unmarshaledBlock.Encryption)
-	require.Equal(t, FieldEncrypted, unmarshaledBlock.Encryption.Type)
-	require.Equal(t, []byte("keyID"), unmarshaledBlock.Encryption.KeyID)
-}
-
-func TestBlockUnmarshal_WithInvalidEncryption_Error(t *testing.T) {
-	encryptedBlock := Block{
-		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
-				DocID:           []byte("docID"),
-				FieldName:       "name",
-				Priority:        1,
-				SchemaVersionID: "schemaVersionID",
-				Data:            []byte("John"),
-			},
-		},
-		Encryption: &Encryption{
-			Type:  FieldEncrypted,
-			KeyID: []byte{},
-		},
-	}
-
-	marshaledData, err := encryptedBlock.Marshal()
-	require.NoError(t, err)
-
-	var unmarshaledBlock Block
-	err = unmarshaledBlock.Unmarshal(marshaledData)
+func TestEncryptionBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
+	invalidData := []byte("invalid CBOR data")
+	var encBlock Encryption
+	err := encBlock.Unmarshal(invalidData)
 	require.Error(t, err)
 }
 
-func TestBlock_Validate(t *testing.T) {
-	tests := []struct {
-		name          string
-		encryption    *Encryption
-		expectedError error
-	}{
-		{
-			name:          "NotEncrypted type is valid",
-			encryption:    &Encryption{Type: NotEncrypted, KeyID: []byte{1}},
-			expectedError: nil,
-		},
-		{
-			name:          "DocumentEncrypted type is valid",
-			encryption:    &Encryption{Type: DocumentEncrypted, KeyID: []byte{1}},
-			expectedError: nil,
-		},
-		{
-			name:          "FieldEncrypted type is valid",
-			encryption:    &Encryption{Type: FieldEncrypted, KeyID: []byte{1}},
-			expectedError: nil,
-		},
-		{
-			name:          "Nil Encryption is valid",
-			encryption:    nil,
-			expectedError: nil,
-		},
-		{
-			name:          "Invalid encryption type",
-			encryption:    &Encryption{Type: EncryptionType(99), KeyID: []byte{1}},
-			expectedError: ErrInvalidBlockEncryptionType,
-		},
-		{
-			name:          "Invalid encryption key id parameter",
-			encryption:    &Encryption{Type: DocumentEncrypted, KeyID: []byte{}},
-			expectedError: ErrInvalidBlockEncryptionKeyID,
-		},
+func TestEncryptionBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
+	fieldName := "fieldName"
+	encBlock := Encryption{
+		DocID:     []byte("docID"),
+		Key:       []byte("keyID"),
+		FieldName: &fieldName,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			b := &Block{
-				Encryption: tt.encryption,
-			}
-			err := b.Validate()
-			require.Equal(t, tt.expectedError, err)
-		})
-	}
+	marshaledData, err := encBlock.Marshal()
+	require.NoError(t, err)
+
+	var unmarshaledBlock Encryption
+	err = unmarshaledBlock.Unmarshal(marshaledData)
+	require.NoError(t, err)
+
+	require.Equal(t, encBlock, unmarshaledBlock)
 }

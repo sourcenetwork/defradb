@@ -14,8 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // docEncContextKey is the key type for document encryption context values.
@@ -39,21 +37,17 @@ func setConfig(ctx context.Context, enc *DocEncryptor) {
 	enc.ctx = ctx
 }
 
-func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
+// EnsureContextWithEncryptor returns a context with a document encryptor and the
+// document encryptor itself. If the context already has an encryptor, it
+// returns the context and encryptor as is. Otherwise, it creates a new
+// document encryptor and stores it in the context.
+func EnsureContextWithEncryptor(ctx context.Context) (context.Context, *DocEncryptor) {
 	enc := GetEncryptorFromContext(ctx)
 	if enc == nil {
 		enc = newDocEncryptor(ctx)
 		ctx = context.WithValue(ctx, docEncContextKey{}, enc)
 	}
 	return ctx, enc
-}
-
-// ContextWithStore sets the store on the doc encryptor in the context and returns the updated
-// context and doc encryptor. If the doc encryptor is not present, it will be created.
-func ContextWithStore(ctx context.Context, encstore datastore.DSReaderWriter) (context.Context, *DocEncryptor) {
-	ctx, encryptor := ensureContextWithDocEnc(ctx)
-	encryptor.SetStore(encstore)
-	return ctx, encryptor
 }
 
 // GetContextConfig returns the doc encryption config from the given context.
@@ -67,6 +61,7 @@ func GetContextConfig(ctx context.Context) immutable.Option[DocEncConfig] {
 
 // SetContextConfig returns a new context with the doc encryption config set.
 func SetContextConfig(ctx context.Context, encConfig DocEncConfig) context.Context {
+	ctx, _ = EnsureContextWithEncryptor(ctx)
 	return context.WithValue(ctx, configContextKey{}, encConfig)
 }
 

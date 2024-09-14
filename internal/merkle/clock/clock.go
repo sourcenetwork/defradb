@@ -37,6 +37,7 @@ var (
 type MerkleClock struct {
 	headstore  datastore.DSReaderWriter
 	blockstore datastore.Blockstore
+	encstore   datastore.Blockstore
 	headset    *heads
 	crdt       core.ReplicatedData
 }
@@ -45,12 +46,14 @@ type MerkleClock struct {
 func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
+	encstore datastore.Blockstore,
 	namespace core.HeadStoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{
 		headstore:  headstore,
 		blockstore: blockstore,
+		encstore:   encstore,
 		headset:    NewHeadSet(headstore, namespace),
 		crdt:       crdt,
 	}
@@ -60,10 +63,23 @@ func (mc *MerkleClock) putBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 ) (cidlink.Link, error) {
-	nd := block.GenerateNode()
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(mc.blockstore.AsIPLDStorage())
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), nd)
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	if err != nil {
+		return cidlink.Link{}, NewErrWritingBlock(err)
+	}
+
+	return link.(cidlink.Link), nil
+}
+
+func (mc *MerkleClock) putEncBlock(
+	ctx context.Context,
+	encBlock *coreblock.Encryption,
+) (cidlink.Link, error) {
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(mc.encstore.AsIPLDStorage())
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), encBlock.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
@@ -91,17 +107,18 @@ func (mc *MerkleClock) AddDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	blockEnc, err := mc.determineBlockEncryptionData(ctx, string(block.Delta.GetDocID()), fieldName, heads)
+	encBlock, encLink, err := mc.determineBlockEncryptionData(ctx, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	dagBlock := block
-	if blockEnc != nil && blockEnc.Type != coreblock.NotEncrypted {
-		dagBlock, err = encryptBlock(ctx, block, blockEnc)
+	if encBlock != nil {
+		dagBlock, err = encryptBlock(ctx, block, encBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
+		dagBlock.Encryption = &encLink
 	}
 
 	link, err := mc.putBlock(ctx, dagBlock)
@@ -123,83 +140,85 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
+// TODO: rename this to reflect storage
 func (mc *MerkleClock) determineBlockEncryptionData(
 	ctx context.Context,
 	docID string,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
-) (*coreblock.Encryption, error) {
+) (*coreblock.Encryption, cidlink.Link, error) {
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		blockEnc := &coreblock.Encryption{}
+		encBlock := &coreblock.Encryption{DocID: []byte(docID)}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
-			blockEnc.Type = coreblock.FieldEncrypted
-		} else {
-			blockEnc.Type = coreblock.DocumentEncrypted
+			f := fieldName.Value()
+			encBlock.FieldName = &f
 		}
 		encryptor := encryption.GetEncryptorFromContext(ctx)
-		if encryptor == nil {
-			return nil, encryption.ErrContextHasNoEncryptor
+		if encryptor != nil {
+			encKey, err := encryptor.GetOrGenerateEncryptionKey(docID, fieldName)
+			if err != nil {
+				return nil, cidlink.Link{}, err
+			}
+			if len(encKey) > 0 {
+				encBlock.Key = encKey
+			}
+
+			link, err := mc.putEncBlock(ctx, encBlock)
+			if err != nil {
+				return nil, cidlink.Link{}, err
+			}
+			return encBlock, link, nil
 		}
-		encStoreKey, _, err := encryptor.GetOrGenerateEncryptionKey(docID, fieldName)
-		if err != nil {
-			return nil, err
-		}
-		if encStoreKey.HasValue() {
-			blockEnc.KeyID = []byte(encStoreKey.Value().KeyID)
-		}
-		return blockEnc, nil
 	}
 
 	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
-		bytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
+		prevBlockBytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
-			return nil, NewErrCouldNotFindBlock(headCid, err)
+			return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 		}
-		prevBlock, err := coreblock.GetFromBytes(bytes)
+		prevBlock, err := coreblock.GetFromBytes(prevBlockBytes)
 		if err != nil {
-			return nil, err
+			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
+			prevBlockEncBytes, err := mc.encstore.AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
+			if err != nil {
+				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
+			}
+			prevEncBlock, err := coreblock.GetEncryptionBlockFromBytes(prevBlockEncBytes)
+			if err != nil {
+				return nil, cidlink.Link{}, err
+			}
 			return &coreblock.Encryption{
-				Type:  prevBlock.Encryption.Type,
-				KeyID: prevBlock.Encryption.KeyID,
-			}, nil
+				DocID:     prevEncBlock.DocID,
+				FieldName: prevEncBlock.FieldName,
+				Key:       prevEncBlock.Key,
+			}, *prevBlock.Encryption, nil
 		}
 	}
 
-	return nil, nil
+	return nil, cidlink.Link{}, nil
 }
 
 func encryptBlock(
 	ctx context.Context,
 	block *coreblock.Block,
-	blockEnc *coreblock.Encryption,
+	encBlock *coreblock.Encryption,
 ) (*coreblock.Block, error) {
-	fieldName := immutable.None[string]()
-	if blockEnc.Type == coreblock.FieldEncrypted {
-		fieldName = immutable.Some(block.Delta.GetFieldName())
-	}
-
-	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), fieldName, string(blockEnc.KeyID))
-	blockEnc.KeyID = []byte(encStoreKey.KeyID)
 	if block.Delta.IsComposite() {
-		block.Encryption = blockEnc
 		return block, nil
 	}
 
 	clonedCRDT := block.Delta.Clone()
-	encryptor := encryption.GetEncryptorFromContext(ctx)
-	if encryptor == nil {
-		return nil, encryption.ErrContextHasNoEncryptor
-	}
-	bytes, err := encryptor.Encrypt(encStoreKey, clonedCRDT.GetData())
+	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
+	bytes, err := encryptor.Encrypt(clonedCRDT.GetData(), encBlock.Key)
 	if err != nil {
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links, Encryption: blockEnc}, nil
+	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.

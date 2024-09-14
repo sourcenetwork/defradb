@@ -16,18 +16,16 @@ import (
 	"crypto/ecdh"
 	"encoding/base64"
 
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/net"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
-	"github.com/sourcenetwork/immutable"
 	grpcpeer "google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/proto"
 )
@@ -44,16 +42,16 @@ type pubSubService struct {
 	peerID          libpeer.ID
 	pubsub          PubSubServer
 	keyRequestedSub *event.Subscription
-	encstore        datastore.DSReaderWriter
 	eventBus        *event.Bus
+	encStore        *ipldEncStorage
 }
 
 var _ Service = (*pubSubService)(nil)
 
-func (s *pubSubService) GetKeys(ctx context.Context, keys ...core.EncStoreDocKey) (*encryption.Results, error) {
+func (s *pubSubService) GetKeys(ctx context.Context, cids ...cidlink.Link) (*encryption.Results, error) {
 	res, ch := encryption.NewResults()
 
-	err := s.requestEncryptionKey(ctx, keys, ch)
+	err := s.requestEncryptionKeyFromPeers(ctx, cids, ch)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +64,14 @@ func NewPubSubService(
 	peerID libpeer.ID,
 	pubsub PubSubServer,
 	eventBus *event.Bus,
-	encstore datastore.DSReaderWriter,
+	encstore datastore.Blockstore,
 ) (*pubSubService, error) {
 	s := &pubSubService{
 		ctx:      ctx,
 		peerID:   peerID,
 		pubsub:   pubsub,
-		encstore: encstore,
 		eventBus: eventBus,
+		encStore: newIPLDEncryptionStorage(encstore),
 	}
 	err := pubsub.AddPubSubTopic(pubsubTopic, s.handleRequestFromPeer)
 	if err != nil {
@@ -103,20 +101,14 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 
 				encResult := <-results.Get()
 
-				_, encryptor := encryption.ContextWithStore(s.ctx, s.encstore)
-
 				for _, encItem := range encResult.Items {
-					err = encryptor.SaveKey(encItem.StoreKey, encItem.EncryptionKey)
+					_, err = s.encStore.put(s.ctx, encItem.Block)
 					if err != nil {
 						log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
 						return
 					}
 				}
 
-				m := make(map[core.EncStoreDocKey][]byte)
-				for _, item := range encResult.Items {
-					m[item.StoreKey] = item.EncryptionKey
-				}
 				keyReqEvent.Resp <- encResult
 				close(keyReqEvent.Resp)
 			}()
@@ -140,7 +132,7 @@ func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, m
 
 	// TODO: check if this NewGRPCPeer can be abstracted away or copied in this package.
 	ctx := grpcpeer.NewContext(s.ctx, net.NewGRPCPeer(peerID))
-	res, err := s.TryGenEncryptionKey(ctx, req)
+	res, err := s.tryGenEncryptionKeyLocally(ctx, req)
 	if err != nil {
 		log.ErrorContextE(s.ctx, "failed attempt to get encryption key", err)
 		return nil, errors.Wrap("failed attempt to get encryption key", err)
@@ -149,31 +141,25 @@ func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, m
 }
 
 func (s *pubSubService) prepareFetchEncryptionKeyRequest(
-	encStoreKeys []core.EncStoreDocKey,
+	cids []cidlink.Link,
 	ephemeralPublicKey []byte,
 ) (*pb.FetchEncryptionKeyRequest, error) {
 	req := &pb.FetchEncryptionKeyRequest{
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
-	for _, encStoreKey := range encStoreKeys {
-		encKey := &pb.EncryptionKeyTarget{
-			DocID: []byte(encStoreKey.DocID),
-			KeyID: []byte(encStoreKey.KeyID),
-		}
-		if encStoreKey.FieldName.HasValue() {
-			encKey.FieldName = encStoreKey.FieldName.Value()
-		}
-		req.Targets = append(req.Targets, encKey)
+	req.Links = make([][]byte, len(cids))
+	for i, cid := range cids {
+		req.Links[i] = cid.Bytes()
 	}
 
 	return req, nil
 }
 
-// requestEncryptionKey publishes the given FetchEncryptionKeyRequest object on the PubSub network
-func (s *pubSubService) requestEncryptionKey(
+// requestEncryptionKeyFromPeers publishes the given FetchEncryptionKeyRequest object on the PubSub network
+func (s *pubSubService) requestEncryptionKeyFromPeers(
 	ctx context.Context,
-	encStoreKeys []core.EncStoreDocKey,
+	cids []cidlink.Link,
 	result chan<- encryption.Result,
 ) error {
 	ephPrivKey, err := crypto.GenerateX25519()
@@ -182,7 +168,7 @@ func (s *pubSubService) requestEncryptionKey(
 	}
 
 	ephPubKeyBytes := ephPrivKey.PublicKey().Bytes()
-	req, err := s.prepareFetchEncryptionKeyRequest(encStoreKeys, ephPubKeyBytes)
+	req, err := s.prepareFetchEncryptionKeyRequest(cids, ephPubKeyBytes)
 	if err != nil {
 		return err
 	}
@@ -220,37 +206,25 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 		return
 	}
 
-	decryptedData, err := crypto.DecryptECIES(
-		keyResp.EncryptedKeys,
-		privateKey,
-		makeAssociatedData(req, resp.From),
-	)
+	resultEncItems := make([]encryption.Item, 0, len(keyResp.Blocks))
+	for i, block := range keyResp.Blocks {
+		decryptedData, err := crypto.DecryptECIES(
+			block,
+			privateKey,
+			makeAssociatedData(req, resp.From),
+			keyResp.EphemeralPublicKey,
+		)
 
-	if err != nil {
-		log.ErrorContextE(s.ctx, "Failed to decrypt encryption key", err)
-		result <- encryption.Result{Error: err}
-		return
-	}
-
-	if len(decryptedData) != crypto.AESKeySize*len(keyResp.Targets) {
-		log.ErrorContext(s.ctx, "Invalid decrypted data length")
-		result <- encryption.Result{Error: errors.New("invalid decrypted data length")}
-		return
-	}
-
-	resultEncItems := make([]encryption.Item, 0, len(keyResp.Targets))
-	for _, target := range keyResp.Targets {
-		optFieldName := immutable.None[string]()
-		if target.FieldName != "" {
-			optFieldName = immutable.Some(target.FieldName)
+		if err != nil {
+			log.ErrorContextE(s.ctx, "Failed to decrypt encryption key", err)
+			result <- encryption.Result{Error: err}
+			return
 		}
 
-		encKey := decryptedData[:crypto.AESKeySize]
-		decryptedData = decryptedData[crypto.AESKeySize:]
-
 		resultEncItems = append(resultEncItems, encryption.Item{
-			StoreKey:      core.NewEncStoreDocKey(string(target.DocID), optFieldName, string(target.KeyID)),
-			EncryptionKey: encKey,
+			Link: keyResp.Links[i],
+			//Block: decryptedData[:crypto.AESKeySize],
+			Block: decryptedData,
 		})
 	}
 
@@ -267,12 +241,12 @@ func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []
 	}, []byte{}))
 }
 
-func (s *pubSubService) TryGenEncryptionKey(
+func (s *pubSubService) tryGenEncryptionKeyLocally(
 	ctx context.Context,
 	req *pb.FetchEncryptionKeyRequest,
 ) (*pb.FetchEncryptionKeyReply, error) {
-	encryptionKeys, targets, err := s.getEncryptionKeys(ctx, req)
-	if err != nil || len(encryptionKeys) == 0 {
+	blocks, err := s.getEncryptionKeysLocally(ctx, req)
+	if err != nil || len(blocks) == 0 {
 		return nil, err
 	}
 
@@ -281,15 +255,26 @@ func (s *pubSubService) TryGenEncryptionKey(
 		return nil, errors.Wrap("failed to unmarshal ephemeral public key", err)
 	}
 
-	encryptedKey, err := crypto.EncryptECIES(encryptionKeys, reqEphPubKey, makeAssociatedData(req, s.peerID))
+	privKey, err := crypto.GenerateX25519()
 	if err != nil {
-		return nil, errors.Wrap("failed to encrypt key for requester", err)
+		return nil, err
 	}
 
 	res := &pb.FetchEncryptionKeyReply{
-		ReqEphemeralPublicKey: req.EphemeralPublicKey,
-		Targets:               targets,
-		EncryptedKeys:         encryptedKey,
+		Links:              req.Links,
+		EphemeralPublicKey: privKey.PublicKey().Bytes(),
+	}
+
+	res.Blocks = make([][]byte, 0, len(blocks))
+
+	for _, block := range blocks {
+		encryptedBlock, err := crypto.EncryptECIES(block, reqEphPubKey, makeAssociatedData(req, s.peerID), privKey)
+		if err != nil {
+			return nil, errors.Wrap("failed to encrypt key for requester", err)
+		}
+
+		res.Blocks = append(res.Blocks, encryptedBlock)
+		//res.Blocks = append(res.Blocks, encryptedBlock[crypto.X25519PublicKeySize:])
 	}
 
 	return res, nil
@@ -297,41 +282,30 @@ func (s *pubSubService) TryGenEncryptionKey(
 
 // getEncryptionKeys retrieves the encryption keys for the given targets.
 // It returns the encryption keys and the targets for which the keys were found.
-func (s *pubSubService) getEncryptionKeys(
+func (s *pubSubService) getEncryptionKeysLocally(
 	ctx context.Context,
 	req *pb.FetchEncryptionKeyRequest,
-) ([]byte, []*pb.EncryptionKeyTarget, error) {
-	encryptionKeys := make([]byte, 0, len(req.Targets))
-	targets := make([]*pb.EncryptionKeyTarget, 0, len(req.Targets))
-	for _, target := range req.Targets {
-		docID, err := client.NewDocIDFromString(string(target.DocID))
+) ([][]byte, error) {
+	blocks := make([][]byte, 0, len(req.Links))
+	for _, link := range req.Links {
+		encBlock, err := s.encStore.get(ctx, link)
 		if err != nil {
-			return nil, nil, err
-		}
-
-		optFieldName := immutable.None[string]()
-		if target.FieldName != "" {
-			optFieldName = immutable.Some(target.FieldName)
-		}
-		_, encryptor := encryption.ContextWithStore(ctx, s.encstore)
-		if encryptor == nil {
-			return nil, nil, encryption.ErrContextHasNoEncryptor
-		}
-		encKey, err := encryptor.GetKey(
-			core.NewEncStoreDocKey(docID.String(), optFieldName, string(target.KeyID)),
-		)
-		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		// TODO: we should test it somehow. For this this one peer should have some keys and
 		// another one should have the others. https://github.com/sourcenetwork/defradb/issues/2895
-		if len(encKey) == 0 {
+		if encBlock == nil {
 			continue
 		}
-		targets = append(targets, target)
-		encryptionKeys = append(encryptionKeys, encKey...)
+
+		encBlockBytes, err := encBlock.Marshal()
+		if err != nil {
+			return nil, err
+		}
+
+		blocks = append(blocks, encBlockBytes)
 	}
-	return encryptionKeys, targets, nil
+	return blocks, nil
 }
 
 func encodeToBase64(data []byte) []byte {

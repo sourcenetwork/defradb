@@ -121,9 +121,6 @@ func setContextDocEncryption(cmd *cobra.Command, shouldEncryptDoc bool, encryptF
 		return
 	}
 	ctx := cmd.Context()
-	if txn != nil {
-		ctx, _ = encryption.ContextWithStore(ctx, txn.Encstore())
-	}
 	ctx = encryption.SetContextConfigFromParams(ctx, shouldEncryptDoc, encryptFields)
 	cmd.SetContext(ctx)
 }

@@ -167,7 +167,7 @@ func (db *db) Blockstore() datastore.Blockstore {
 }
 
 // Encstore returns the internal enc store which contains encryption key for documents and their fields.
-func (db *db) Encstore() datastore.DSReaderWriter {
+func (db *db) Encstore() datastore.Blockstore {
 	return db.multistore.Encstore()
 }
 

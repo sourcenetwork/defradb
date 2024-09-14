@@ -13,8 +13,8 @@ package kms
 import (
 	"context"
 
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -29,5 +29,5 @@ const (
 )
 
 type Service interface {
-	GetKeys(ctx context.Context, keys ...core.EncStoreDocKey) (*encryption.Results, error)
+	GetKeys(ctx context.Context, cids ...cidlink.Link) (*encryption.Results, error)
 }

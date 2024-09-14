@@ -19,12 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	Service_GetDocGraph_FullMethodName         = "/net.pb.Service/GetDocGraph"
-	Service_PushDocGraph_FullMethodName        = "/net.pb.Service/PushDocGraph"
-	Service_GetLog_FullMethodName              = "/net.pb.Service/GetLog"
-	Service_PushLog_FullMethodName             = "/net.pb.Service/PushLog"
-	Service_TryGenEncryptionKey_FullMethodName = "/net.pb.Service/TryGenEncryptionKey"
-	Service_GetHeadLog_FullMethodName          = "/net.pb.Service/GetHeadLog"
+	Service_GetDocGraph_FullMethodName  = "/net.pb.Service/GetDocGraph"
+	Service_PushDocGraph_FullMethodName = "/net.pb.Service/PushDocGraph"
+	Service_GetLog_FullMethodName       = "/net.pb.Service/GetLog"
+	Service_PushLog_FullMethodName      = "/net.pb.Service/PushLog"
+	Service_GetHeadLog_FullMethodName   = "/net.pb.Service/GetHeadLog"
 )
 
 // ServiceClient is the client API for Service service.
@@ -41,8 +40,6 @@ type ServiceClient interface {
 	GetLog(ctx context.Context, in *GetLogRequest, opts ...grpc.CallOption) (*GetLogReply, error)
 	// PushLog to this peer.
 	PushLog(ctx context.Context, in *PushLogRequest, opts ...grpc.CallOption) (*PushLogReply, error)
-	// TryGenEncryptionKey from this peer.
-	TryGenEncryptionKey(ctx context.Context, in *FetchEncryptionKeyRequest, opts ...grpc.CallOption) (*FetchEncryptionKeyReply, error)
 	// GetHeadLog from this peer
 	GetHeadLog(ctx context.Context, in *GetHeadLogRequest, opts ...grpc.CallOption) (*GetHeadLogReply, error)
 }
@@ -95,16 +92,6 @@ func (c *serviceClient) PushLog(ctx context.Context, in *PushLogRequest, opts ..
 	return out, nil
 }
 
-func (c *serviceClient) TryGenEncryptionKey(ctx context.Context, in *FetchEncryptionKeyRequest, opts ...grpc.CallOption) (*FetchEncryptionKeyReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FetchEncryptionKeyReply)
-	err := c.cc.Invoke(ctx, Service_TryGenEncryptionKey_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *serviceClient) GetHeadLog(ctx context.Context, in *GetHeadLogRequest, opts ...grpc.CallOption) (*GetHeadLogReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetHeadLogReply)
@@ -129,8 +116,6 @@ type ServiceServer interface {
 	GetLog(context.Context, *GetLogRequest) (*GetLogReply, error)
 	// PushLog to this peer.
 	PushLog(context.Context, *PushLogRequest) (*PushLogReply, error)
-	// TryGenEncryptionKey from this peer.
-	TryGenEncryptionKey(context.Context, *FetchEncryptionKeyRequest) (*FetchEncryptionKeyReply, error)
 	// GetHeadLog from this peer
 	GetHeadLog(context.Context, *GetHeadLogRequest) (*GetHeadLogReply, error)
 	mustEmbedUnimplementedServiceServer()
@@ -151,9 +136,6 @@ func (UnimplementedServiceServer) GetLog(context.Context, *GetLogRequest) (*GetL
 }
 func (UnimplementedServiceServer) PushLog(context.Context, *PushLogRequest) (*PushLogReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushLog not implemented")
-}
-func (UnimplementedServiceServer) TryGenEncryptionKey(context.Context, *FetchEncryptionKeyRequest) (*FetchEncryptionKeyReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TryGenEncryptionKey not implemented")
 }
 func (UnimplementedServiceServer) GetHeadLog(context.Context, *GetHeadLogRequest) (*GetHeadLogReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHeadLog not implemented")
@@ -243,24 +225,6 @@ func _Service_PushLog_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_TryGenEncryptionKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FetchEncryptionKeyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ServiceServer).TryGenEncryptionKey(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Service_TryGenEncryptionKey_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).TryGenEncryptionKey(ctx, req.(*FetchEncryptionKeyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Service_GetHeadLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetHeadLogRequest)
 	if err := dec(in); err != nil {
@@ -301,10 +265,6 @@ var Service_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PushLog",
 			Handler:    _Service_PushLog_Handler,
-		},
-		{
-			MethodName: "TryGenEncryptionKey",
-			Handler:    _Service_TryGenEncryptionKey_Handler,
 		},
 		{
 			MethodName: "GetHeadLog",

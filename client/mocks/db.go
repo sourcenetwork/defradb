@@ -480,19 +480,19 @@ func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(context.Context, clien
 }
 
 // Encstore provides a mock function with given fields:
-func (_m *DB) Encstore() datastore.DSReaderWriter {
+func (_m *DB) Encstore() datastore.Blockstore {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Encstore")
 	}
 
-	var r0 datastore.DSReaderWriter
-	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
+	var r0 datastore.Blockstore
+	if rf, ok := ret.Get(0).(func() datastore.Blockstore); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
+			r0 = ret.Get(0).(datastore.Blockstore)
 		}
 	}
 
@@ -516,12 +516,12 @@ func (_c *DB_Encstore_Call) Run(run func()) *DB_Encstore_Call {
 	return _c
 }
 
-func (_c *DB_Encstore_Call) Return(_a0 datastore.DSReaderWriter) *DB_Encstore_Call {
+func (_c *DB_Encstore_Call) Return(_a0 datastore.Blockstore) *DB_Encstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Encstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *DB_Encstore_Call {
+func (_c *DB_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_Encstore_Call {
 	_c.Call.Return(run)
 	return _c
 }

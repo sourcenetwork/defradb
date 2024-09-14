@@ -74,21 +74,7 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	if len(mp.pendingEncryptionKeyRequests) != 0 {
-		entResults := mp.sendPendingEncryptionRequest()
-		go func() {
-			res := <-entResults.Get()
-			if res.Error != nil {
-				log.ErrorContextE(ctx, "Error fetching keys", res.Error)
-				return
-			}
-			err = db.executeMerge(context.Background(), dagMerge)
-			if err != nil {
-				log.ErrorContextE(ctx, "Error executing merge", err)
-			}
-		}()
-		// if there are pending encryption keys, we discard the transaction
-		// and wait for the keys to be fetched
+	if len(mp.failedEncryptionBlocks) > 0 {
 		return nil
 	}
 
@@ -157,7 +143,10 @@ type mergeProcessor struct {
 	composites *list.List
 	// pendingEncryptionKeyRequests is a set of encryption keys that the node encountered during the merge
 	// and doesn't have locally, so they need to be requested from the network.
-	pendingEncryptionKeyRequests map[core.EncStoreDocKey]struct{}
+	pendingEncryptionKeyRequests map[cidlink.Link]struct{}
+
+	failedEncryptionBlocks  map[cidlink.Link]struct{}
+	fetchedEncryptionBlocks map[cidlink.Link]*coreblock.Encryption
 }
 
 func (db *db) newMergeProcessor(
@@ -173,7 +162,9 @@ func (db *db) newMergeProcessor(
 		col:                          col,
 		dsKey:                        dsKey,
 		composites:                   list.New(),
-		pendingEncryptionKeyRequests: make(map[core.EncStoreDocKey]struct{}),
+		pendingEncryptionKeyRequests: make(map[cidlink.Link]struct{}),
+		failedEncryptionBlocks:       make(map[cidlink.Link]struct{}),
+		fetchedEncryptionBlocks:      make(map[cidlink.Link]*coreblock.Encryption),
 	}, nil
 }
 
@@ -261,6 +252,38 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	return nil
 }
 
+// TODO: check if we should send 1-by-1
+func (mp *mergeProcessor) getEncryptionBlock(
+	encLink cidlink.Link,
+) (*coreblock.Encryption, error) {
+	if _, ok := mp.failedEncryptionBlocks[encLink]; ok {
+		return nil, nil
+	}
+	if encBlock, ok := mp.fetchedEncryptionBlocks[encLink]; ok {
+		return encBlock, nil
+	}
+	msg, results := encryption.NewRequestKeysMessage([]cidlink.Link{encLink})
+	mp.col.db.events.Publish(msg)
+
+	res := <-results.Get()
+	if res.Error != nil {
+		mp.failedEncryptionBlocks[encLink] = struct{}{}
+		return nil, nil
+	}
+
+	delete(mp.failedEncryptionBlocks, encLink)
+
+	var encBlock coreblock.Encryption
+	err := encBlock.Unmarshal(res.Items[0].Block)
+	if err != nil {
+		return nil, err
+	}
+
+	mp.fetchedEncryptionBlocks[encLink] = &encBlock
+
+	return &encBlock, nil
+}
+
 // processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
 // If the block is encrypted and we were not able to decrypt it, it returns true as the second return value
 // which indicates that the we should skip merging of the block.
@@ -270,43 +293,39 @@ func (mp *mergeProcessor) processEncryptedBlock(
 	dagBlock *coreblock.Block,
 ) (*coreblock.Block, bool, error) {
 	if dagBlock.IsEncrypted() {
-		plainTextBlock, err := decryptBlock(ctx, dagBlock)
+		encBlock, err := mp.getEncryptionBlock(*dagBlock.Encryption)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if encBlock == nil {
+			return dagBlock, false, nil
+		}
+
+		plainTextBlock, err := decryptBlock(ctx, dagBlock, encBlock)
 		if err != nil {
 			return nil, false, err
 		}
 		if plainTextBlock != nil {
 			return plainTextBlock, true, nil
-		} else {
-			blockEnc := dagBlock.Encryption
-			// we weren't able to decrypt the block, so we request the encryption key unless it's a decryption pass
-			if (dagBlock.Delta.IsComposite() && blockEnc.Type == coreblock.DocumentEncrypted) ||
-				blockEnc.Type == coreblock.FieldEncrypted {
-				docID := string(dagBlock.Delta.GetDocID())
-				fieldName := immutable.None[string]()
-				if blockEnc.Type == coreblock.FieldEncrypted {
-					fieldName = immutable.Some(dagBlock.Delta.GetFieldName())
-				}
-				mp.addPendingEncryptionRequest(docID, fieldName, string(blockEnc.KeyID))
-			}
-			return dagBlock, false, nil
 		}
 	}
 	return dagBlock, true, nil
 }
 
-func (mp *mergeProcessor) addPendingEncryptionRequest(docID string, fieldName immutable.Option[string], keyID string) {
-	mp.pendingEncryptionKeyRequests[core.NewEncStoreDocKey(docID, fieldName, keyID)] = struct{}{}
+/*func (mp *mergeProcessor) addPendingEncryptionRequest(link cidlink.Link) {
+	mp.pendingEncryptionKeyRequests[link] = struct{}{}
 }
 
 func (mp *mergeProcessor) sendPendingEncryptionRequest() *encryption.Results {
-	storeKeys := make([]core.EncStoreDocKey, 0, len(mp.pendingEncryptionKeyRequests))
+	storeKeys := make([]cidlink.Link, 0, len(mp.pendingEncryptionKeyRequests))
 	for k := range mp.pendingEncryptionKeyRequests {
 		storeKeys = append(storeKeys, k)
 	}
 	msg, results := encryption.NewRequestKeysMessage(storeKeys)
 	mp.col.db.events.Publish(msg)
 	return results
-}
+}*/
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
 func (mp *mergeProcessor) processBlock(
@@ -360,43 +379,24 @@ func (mp *mergeProcessor) processBlock(
 	return nil
 }
 
-func decryptBlock(ctx context.Context, block *coreblock.Block) (*coreblock.Block, error) {
-	optFieldName := immutable.None[string]()
-	blockEnc := block.Encryption
-	if blockEnc.Type == coreblock.FieldEncrypted {
-		optFieldName = immutable.Some(block.Delta.GetFieldName())
-	}
-
-	encStoreKey := core.NewEncStoreDocKey(string(block.Delta.GetDocID()), optFieldName, string(blockEnc.KeyID))
-
-	encryptor := encryption.GetEncryptorFromContext(ctx)
-	if encryptor == nil {
-		return nil, encryption.ErrContextHasNoEncryptor
-	}
+func decryptBlock(ctx context.Context, block *coreblock.Block, encBlock *coreblock.Encryption) (*coreblock.Block, error) {
+	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
 
 	if block.Delta.IsComposite() {
 		// for composite blocks there is nothing to decrypt
-		// so we just check if we have the encryption key for child blocks
-		bytes, err := encryptor.GetKey(encStoreKey)
-		if err != nil {
-			return nil, err
-		}
-		if len(bytes) == 0 {
-			return nil, nil
-		}
 		return block, nil
 	}
 
-	clonedCRDT := block.Delta.Clone()
-	bytes, err := encryptor.Decrypt(encStoreKey, clonedCRDT.GetData())
+	bytes, err := encryptor.Decrypt(block.Delta.GetData(), encBlock.Key)
 	if err != nil {
 		return nil, err
 	}
 	if len(bytes) == 0 {
 		return nil, nil
 	}
-	clonedCRDT.SetData(bytes)
-	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
+	newBlock := block.Clone()
+	newBlock.Delta.SetData(bytes)
+	return newBlock, nil
 }
 
 func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, error) {

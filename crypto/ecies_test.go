@@ -37,7 +37,7 @@ func TestEncryptECIES_Errors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := EncryptECIES(tt.plainText, tt.publicKey, tt.associatedData)
+			_, err := EncryptECIES(tt.plainText, tt.publicKey, tt.associatedData, nil)
 			if err == nil {
 				t.Errorf("Expected an error, but got nil")
 			} else if !strings.Contains(err.Error(), tt.expectError) {
@@ -50,7 +50,7 @@ func TestEncryptECIES_Errors(t *testing.T) {
 func TestDecryptECIES_Errors(t *testing.T) {
 	// Setup
 	validPrivateKey, _ := GenerateX25519()
-	validCipherText, _ := EncryptECIES([]byte("test data"), validPrivateKey.PublicKey(), []byte("associated data"))
+	validCipherText, _ := EncryptECIES([]byte("test data"), validPrivateKey.PublicKey(), []byte("associated data"), nil)
 
 	tests := []struct {
 		name           string
@@ -91,7 +91,7 @@ func TestDecryptECIES_Errors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := DecryptECIES(tt.cipherText, tt.privateKey, tt.associatedData)
+			_, err := DecryptECIES(tt.cipherText, tt.privateKey, tt.associatedData, nil)
 			if err == nil || !strings.Contains(err.Error(), tt.expectError) {
 				t.Errorf("Expected error containing '%s', got %v", tt.expectError, err)
 			}

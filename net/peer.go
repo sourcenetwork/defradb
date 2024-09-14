@@ -47,7 +47,7 @@ import (
 // to the underlying DefraDB instance.
 type Peer struct {
 	blockstore datastore.Blockstore
-	encstore   datastore.DSReaderWriter
+	encstore   datastore.Blockstore
 
 	bus       *event.Bus
 	updateSub *event.Subscription
@@ -72,7 +72,7 @@ type Peer struct {
 func NewPeer(
 	ctx context.Context,
 	blockstore datastore.Blockstore,
-	encstore datastore.DSReaderWriter,
+	encstore datastore.Blockstore,
 	bus *event.Bus,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
