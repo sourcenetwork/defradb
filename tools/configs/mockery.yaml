@@ -32,6 +32,7 @@ packages: # Packages and their interfaces to generate mocks for.
             DSReaderWriter:
             RootStore:
             Txn:
+            Blockstore:
 
     github.com/sourcenetwork/defradb/client:
         config:

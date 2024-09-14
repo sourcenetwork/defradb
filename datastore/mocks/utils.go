@@ -24,6 +24,7 @@ type MultiStoreTxn struct {
 	MockRootstore   *DSReaderWriter
 	MockDatastore   *DSReaderWriter
 	MockHeadstore   *DSReaderWriter
+	MockEncstore    *Blockstore
 	MockDAGstore    *DAGStore
 	MockSystemstore *DSReaderWriter
 }
@@ -34,6 +35,14 @@ func prepareDataStore(t *testing.T) *DSReaderWriter {
 	dataStore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	dataStore.EXPECT().Has(mock.Anything, mock.Anything).Return(true, nil).Maybe()
 	return dataStore
+}
+
+func prepareEncStore(t *testing.T) *Blockstore {
+	encStore := NewBlockstore(t)
+	encStore.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound).Maybe()
+	encStore.EXPECT().Put(mock.Anything, mock.Anything).Return(nil).Maybe()
+	encStore.EXPECT().Has(mock.Anything, mock.Anything).Return(true, nil).Maybe()
+	return encStore
 }
 
 func prepareRootstore(t *testing.T) *DSReaderWriter {
@@ -75,6 +84,7 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 		t:               t,
 		MockRootstore:   prepareRootstore(t),
 		MockDatastore:   prepareDataStore(t),
+		MockEncstore:    prepareEncStore(t),
 		MockHeadstore:   prepareHeadStore(t),
 		MockDAGstore:    prepareDAGStore(t),
 		MockSystemstore: prepareSystemStore(t),
@@ -82,6 +92,7 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 
 	txn.EXPECT().Rootstore().Return(result.MockRootstore).Maybe()
 	txn.EXPECT().Datastore().Return(result.MockDatastore).Maybe()
+	txn.EXPECT().Encstore().Return(result.MockEncstore).Maybe()
 	txn.EXPECT().Headstore().Return(result.MockHeadstore).Maybe()
 	txn.EXPECT().Blockstore().Return(result.MockDAGstore).Maybe()
 	txn.EXPECT().Systemstore().Return(result.MockSystemstore).Maybe()
