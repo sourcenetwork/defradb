@@ -111,7 +111,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
-	// the local reperesentation of the document.
+	// the local representation of the document.
 	versionKey := c.key.WithValueFlag().WithFieldID(core.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	hasObjectMarker := !errors.Is(err, ds.ErrNotFound)
