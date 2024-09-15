@@ -54,6 +54,8 @@ func (r *Results) Get() <-chan Result {
 	return r.output
 }
 
+// NewResults creates a new Results object and a channel that can be used to send results to it.
+// The Results object can be used to wait on the results, and the channel can be used to send results.
 func NewResults() (*Results, chan<- Result) {
 	ch := make(chan Result, 1)
 	return &Results{
@@ -63,6 +65,7 @@ func NewResults() (*Results, chan<- Result) {
 
 // NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
+// It returns the message and the results that that can be waited on.
 func NewRequestKeysMessage(keys []cidlink.Link) (event.Message, *Results) {
 	res, ch := NewResults()
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{

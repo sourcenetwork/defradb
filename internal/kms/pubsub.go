@@ -100,18 +100,22 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 					log.ErrorContextE(s.ctx, "Failed to get encryption keys", err)
 				}
 
-				encResult := <-results.Get()
+				defer close(keyReqEvent.Resp)
 
-				for _, encItem := range encResult.Items {
-					_, err = s.encStore.put(s.ctx, encItem.Block)
-					if err != nil {
-						log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
-						return
+				select {
+				case <-s.ctx.Done():
+					return
+				case encResult := <-results.Get():
+					for _, encItem := range encResult.Items {
+						_, err = s.encStore.put(s.ctx, encItem.Block)
+						if err != nil {
+							log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
+							return
+						}
 					}
-				}
 
-				keyReqEvent.Resp <- encResult
-				close(keyReqEvent.Resp)
+					keyReqEvent.Resp <- encResult
+				}
 			}()
 		} else {
 			log.ErrorContext(s.ctx, "Failed to cast event data to RequestKeysEvent")
@@ -121,17 +125,12 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 
 // handleEncryptionMessage handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
 func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	// TODO: check how it makes sense and how much effort to separate net package so that it has
-	// client-related and server-related code independently. Conceptually, they should no depend on each other.
-	// Any common functionality (like hosting peer) can be shared.
-	// This way we could make kms package depend only on client. The server would depend on kms.
 	req := new(pb.FetchEncryptionKeyRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
 		log.ErrorContextE(s.ctx, "Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
 
-	// TODO: check if this NewGRPCPeer can be abstracted away or copied in this package.
 	ctx := grpcpeer.NewContext(s.ctx, net.NewGRPCPeer(peerID))
 	res, err := s.tryGenEncryptionKeyLocally(ctx, req)
 	if err != nil {
@@ -224,8 +223,7 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 		}
 
 		resultEncItems = append(resultEncItems, encryption.Item{
-			Link: keyResp.Links[i],
-			//Block: decryptedData[:crypto.AESKeySize],
+			Link:  keyResp.Links[i],
 			Block: decryptedData,
 		})
 	}
@@ -282,7 +280,6 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 		}
 
 		res.Blocks = append(res.Blocks, encryptedBlock)
-		//res.Blocks = append(res.Blocks, encryptedBlock[crypto.X25519PublicKeySize:])
 	}
 
 	return res, nil
