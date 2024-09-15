@@ -138,9 +138,6 @@ type mergeProcessor struct {
 	dsKey  core.DataStoreKey
 	// composites is a list of composites that need to be merged.
 	composites *list.List
-	// pendingEncryptionKeyRequests is a set of encryption keys that the node encountered during the merge
-	// and doesn't have locally, so they need to be requested from the network.
-	pendingEncryptionKeyRequests map[cidlink.Link]struct{}
 	// missingEncryptionBlocks is a list of blocks that we failed to fetch
 	missingEncryptionBlocks map[cidlink.Link]struct{}
 	// availableEncryptionBlocks is a list of blocks that we have successfully fetched
@@ -154,15 +151,14 @@ func (db *db) newMergeProcessor(
 	dsKey core.DataStoreKey,
 ) (*mergeProcessor, error) {
 	return &mergeProcessor{
-		txn:                          txn,
-		lsys:                         lsys,
-		mCRDTs:                       make(map[string]merklecrdt.MerkleCRDT),
-		col:                          col,
-		dsKey:                        dsKey,
-		composites:                   list.New(),
-		pendingEncryptionKeyRequests: make(map[cidlink.Link]struct{}),
-		missingEncryptionBlocks:      make(map[cidlink.Link]struct{}),
-		availableEncryptionBlocks:    make(map[cidlink.Link]*coreblock.Encryption),
+		txn:                       txn,
+		lsys:                      lsys,
+		mCRDTs:                    make(map[string]merklecrdt.MerkleCRDT),
+		col:                       col,
+		dsKey:                     dsKey,
+		composites:                list.New(),
+		missingEncryptionBlocks:   make(map[cidlink.Link]struct{}),
+		availableEncryptionBlocks: make(map[cidlink.Link]*coreblock.Encryption),
 	}, nil
 }
 
@@ -281,7 +277,7 @@ func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) err
 			mp.availableEncryptionBlocks[cidlink.Link{Cid: link}] = &encBlock
 		}
 
-		err := mp.mergeComposites(ctx)
+		err := mp.mergeComposites(context.Background())
 		if err != nil {
 			return err
 		}
@@ -289,17 +285,10 @@ func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) err
 	return nil
 }
 
-func (mp *mergeProcessor) getEncryptionBlock(
+func (mp *mergeProcessor) loadEncryptionBlock(
 	ctx context.Context,
 	encLink cidlink.Link,
 ) (*coreblock.Encryption, error) {
-	if encBlock, ok := mp.availableEncryptionBlocks[encLink]; ok {
-		return encBlock, nil
-	}
-	if _, ok := mp.pendingEncryptionKeyRequests[encLink]; ok {
-		return nil, nil
-	}
-
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetReadStorage(mp.txn.Encstore().AsIPLDStorage())
 
@@ -318,7 +307,21 @@ func (mp *mergeProcessor) getEncryptionBlock(
 		return nil, err
 	}
 
-	encBlock, err := coreblock.GetEncryptionBlockFromNode(nd)
+	return coreblock.GetEncryptionBlockFromNode(nd)
+}
+
+func (mp *mergeProcessor) tryGetEncryptionBlock(
+	ctx context.Context,
+	encLink cidlink.Link,
+) (*coreblock.Encryption, error) {
+	if encBlock, ok := mp.availableEncryptionBlocks[encLink]; ok {
+		return encBlock, nil
+	}
+	if _, ok := mp.missingEncryptionBlocks[encLink]; ok {
+		return nil, nil
+	}
+
+	encBlock, err := mp.loadEncryptionBlock(ctx, encLink)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +340,7 @@ func (mp *mergeProcessor) processEncryptedBlock(
 	dagBlock *coreblock.Block,
 ) (*coreblock.Block, bool, error) {
 	if dagBlock.IsEncrypted() {
-		encBlock, err := mp.getEncryptionBlock(ctx, *dagBlock.Encryption)
+		encBlock, err := mp.tryGetEncryptionBlock(ctx, *dagBlock.Encryption)
 		if err != nil {
 			return nil, false, err
 		}
