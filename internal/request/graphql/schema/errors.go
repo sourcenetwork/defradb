@@ -30,6 +30,8 @@ const (
 	errPolicyUnknownArgument         string = "policy with unknown argument"
 	errPolicyInvalidIDProp           string = "policy directive with invalid id property"
 	errPolicyInvalidResourceProp     string = "policy directive with invalid resource property"
+	errDefaultValueInvalid           string = "default value type must match field type"
+	errDefaultValueNotAllowed        string = "default value is not allowed for this field type"
 )
 
 var (
@@ -134,5 +136,22 @@ func NewErrRelationNotFound(relationName string) error {
 	return errors.New(
 		errRelationNotFound,
 		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrDefaultValueInvalid(name string, expected string, actual string) error {
+	return errors.New(
+		errDefaultValueInvalid,
+		errors.NewKV("Name", name),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
+}
+
+func NewErrDefaultValueNotAllowed(fieldName, fieldType string) error {
+	return errors.New(
+		errDefaultValueNotAllowed,
+		errors.NewKV("Name", fieldName),
+		errors.NewKV("Type", fieldType),
 	)
 }

@@ -42,6 +42,15 @@ const (
 	IndexFieldInputName      = "name"
 	IndexFieldInputDirection = "direction"
 
+	DefaultDirectiveLabel        = "default"
+	DefaultDirectivePropString   = "string"
+	DefaultDirectivePropBool     = "bool"
+	DefaultDirectivePropInt      = "int"
+	DefaultDirectivePropFloat    = "float"
+	DefaultDirectivePropDateTime = "dateTime"
+	DefaultDirectivePropJSON     = "json"
+	DefaultDirectivePropBlob     = "blob"
+
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
 )
@@ -82,6 +91,41 @@ func ExplainEnum() *gql.Enum {
 				Value:       ExplainArgDebug,
 				Description: "Like simple explain, but more verbose nodes (no attributes).",
 			},
+		},
+	})
+}
+
+func DefaultDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name: DefaultDirectiveLabel,
+		Description: `@default is a directive that can be used to set a default field value.
+		
+		Setting a default value on a field within a view has no effect.`,
+		Args: gql.FieldConfigArgument{
+			DefaultDirectivePropString: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+			DefaultDirectivePropBool: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+			DefaultDirectivePropInt: &gql.ArgumentConfig{
+				Type: gql.Int,
+			},
+			DefaultDirectivePropFloat: &gql.ArgumentConfig{
+				Type: gql.Float,
+			},
+			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
+				Type: gql.DateTime,
+			},
+			DefaultDirectivePropJSON: &gql.ArgumentConfig{
+				Type: JSONScalarType(),
+			},
+			DefaultDirectivePropBlob: &gql.ArgumentConfig{
+				Type: BlobScalarType(),
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }

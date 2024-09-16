@@ -307,7 +307,10 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc := client.NewDocWithID(docID, c.def)
+	doc, err := client.NewDocWithID(docID, c.def)
+	if err != nil {
+		return nil, err
+	}
 	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
