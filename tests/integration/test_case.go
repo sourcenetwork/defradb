@@ -532,6 +532,12 @@ type Request struct {
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
 
+	// OperationName sets the operation name option for the request.
+	OperationName immutable.Option[string]
+
+	// Variables sets the variables option for the request.
+	Variables immutable.Option[map[string]any]
+
 	// The request to execute.
 	Request string
 

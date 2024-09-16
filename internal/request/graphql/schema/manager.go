@@ -36,6 +36,8 @@ func NewSchemaManager() (*SchemaManager, error) {
 	commitObject := schemaTypes.CommitObject(commitLinkObject)
 	commitsOrderArg := schemaTypes.CommitsOrderArg(orderEnum)
 
+	indexFieldInput := schemaTypes.IndexFieldInputObject(orderEnum)
+
 	schema, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
 			commitObject,
@@ -44,10 +46,12 @@ func NewSchemaManager() (*SchemaManager, error) {
 			orderEnum,
 			crdtEnum,
 			explainEnum,
+			indexFieldInput,
 		),
-		Query:      defaultQueryType(commitObject, commitsOrderArg),
-		Mutation:   defaultMutationType(),
-		Directives: defaultDirectivesType(crdtEnum, explainEnum, orderEnum),
+		Query:        defaultQueryType(commitObject, commitsOrderArg),
+		Mutation:     defaultMutationType(),
+		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
+		Subscription: defaultSubscriptionType(),
 	})
 	if err != nil {
 		return sm, err
@@ -127,19 +131,31 @@ func defaultMutationType() *gql.Object {
 	})
 }
 
+func defaultSubscriptionType() *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
+		Name: "Subscription",
+		Fields: gql.Fields{
+			"_": &gql.Field{
+				Name: "_",
+				Type: gql.Boolean,
+			},
+		},
+	})
+}
+
 // default directives type.
 func defaultDirectivesType(
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	orderEnum *gql.Enum,
+	indexFieldInput *gql.InputObject,
 ) []*gql.Directive {
 	return []*gql.Directive{
 		schemaTypes.CRDTFieldDirective(crdtEnum),
 		schemaTypes.DefaultDirective(),
 		schemaTypes.ExplainDirective(explainEnum),
 		schemaTypes.PolicyDirective(),
-		schemaTypes.IndexDirective(orderEnum),
-		schemaTypes.IndexFieldDirective(orderEnum),
+		schemaTypes.IndexDirective(orderEnum, indexFieldInput),
 		schemaTypes.PrimaryDirective(),
 		schemaTypes.RelationDirective(),
 	}
@@ -166,6 +182,7 @@ func defaultTypes(
 	orderEnum *gql.Enum,
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
+	indexFieldInput *gql.InputObject,
 ) []gql.Type {
 	blobScalarType := schemaTypes.BlobScalarType()
 	jsonScalarType := schemaTypes.JSONScalarType()
@@ -210,5 +227,7 @@ func defaultTypes(
 
 		crdtEnum,
 		explainEnum,
+
+		indexFieldInput,
 	}
 }

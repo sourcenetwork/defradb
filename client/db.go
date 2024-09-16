@@ -246,7 +246,32 @@ type Store interface {
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(ctx context.Context, request string) *RequestResult
+	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
+}
+
+// GQLOptions contains optional arguments for GQL requests.
+type GQLOptions struct {
+	// OperationName is the name of the operation to exec.
+	OperationName string
+	// Variables is a map of names to varible values.
+	Variables map[string]any
+}
+
+// RequestOption sets an optional request setting.
+type RequestOption func(*GQLOptions)
+
+// WithOperationName sets the operation name for a GQL request.
+func WithOperationName(operationName string) RequestOption {
+	return func(o *GQLOptions) {
+		o.OperationName = operationName
+	}
+}
+
+// WithVariables sets the variables for a GQL request.
+func WithVariables(variables map[string]any) RequestOption {
+	return func(o *GQLOptions) {
+		o.Variables = variables
+	}
 }
 
 // GQLResult represents the immediate results of a GQL request.

@@ -165,7 +165,9 @@ func (n *Node) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		log.InfoContext(ctx, fmt.Sprintf("Providing HTTP API at %s.", n.Server.Address()))
+		log.InfoContext(ctx,
+			fmt.Sprintf("Providing HTTP API at %s PlaygroundEnabled=%t", n.Server.Address(), http.PlaygroundEnabled))
+		log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/v0/graphql", n.Server.Address()))
 		go func() {
 			if err := n.Server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
 				log.ErrorContextE(ctx, "HTTP server stopped", err)

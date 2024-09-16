@@ -109,6 +109,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 	// for each built type generate query inputs
 	queryType := g.manager.schema.QueryType()
+	subscriptionType := g.manager.schema.SubscriptionType()
 	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {
 		f, err := g.GenerateQueryInputForGQLType(ctx, t)
@@ -133,6 +134,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 
 		queryType.AddFieldConfig(f.Name, f)
+		subscriptionType.AddFieldConfig(f.Name, f)
 	}
 
 	// resolve types

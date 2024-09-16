@@ -23,7 +23,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(name: "age_index", fields: ["age"]) {
+					type User @index(name: "age_index", includes: [{name: "age"}]) {
 						name: String @index(name: "name_index")
 						age: Int
 					}

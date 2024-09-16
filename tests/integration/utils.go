@@ -1704,7 +1704,14 @@ func executeRequest(
 		identity := getIdentity(s, nodeID, action.Identity)
 		ctx = db.SetContextIdentity(ctx, identity)
 
-		result := node.ExecRequest(ctx, action.Request)
+		var options []client.RequestOption
+		if action.OperationName.HasValue() {
+			options = append(options, client.WithOperationName(action.OperationName.Value()))
+		}
+		if action.Variables.HasValue() {
+			options = append(options, client.WithVariables(action.Variables.Value()))
+		}
+		result := node.ExecRequest(ctx, action.Request, options...)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
