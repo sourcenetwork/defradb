@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 var (
@@ -49,6 +50,7 @@ const (
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
 	COLLECTION_ROOT                = "/collection/root"
 	COLLECTION_INDEX               = "/collection/index"
+	COLLECTION_VIEW_ITEMS          = "/collection/vi"
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	COLLECTION_SEQ                 = "/seq/collection"
@@ -76,6 +78,24 @@ type DataStoreKey struct {
 }
 
 var _ Key = (*DataStoreKey)(nil)
+
+// ViewCacheKey is a trimmed down [DataStoreKey] used for caching the results
+// of View items.
+//
+// It is stored in the format `/collection/vi/[CollectionRootID]/[ItemID]`. It points to the
+// full serialized View item.
+type ViewCacheKey struct {
+	// CollectionRootID is the Root of the Collection that this item belongs to.
+	CollectionRootID uint32
+
+	// ItemID is the unique (to this CollectionRootID) ID of the View item.
+	//
+	// For now this is essentially just the index of the item in the result-set, however
+	// that is likely to change in the near future.
+	ItemID uint
+}
+
+var _ Key = (*ViewCacheKey)(nil)
 
 // IndexedField contains information necessary for storing a single
 // value of a field in an index.
@@ -525,6 +545,56 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 		CollectionRootID: k.CollectionRootID,
 		DocID:            k.DocID,
 	}
+}
+
+func NewViewCacheColPrefix(rootID uint32) ViewCacheKey {
+	return ViewCacheKey{
+		CollectionRootID: rootID,
+	}
+}
+
+func NewViewCacheKey(rootID uint32, itemID uint) ViewCacheKey {
+	return ViewCacheKey{
+		CollectionRootID: rootID,
+		ItemID:           itemID,
+	}
+}
+
+func (k ViewCacheKey) ToString() string {
+	return string(k.Bytes())
+}
+
+func (k ViewCacheKey) Bytes() []byte {
+	result := []byte(COLLECTION_VIEW_ITEMS)
+
+	if k.CollectionRootID != 0 {
+		result = append(result, '/')
+		result = encoding.EncodeUvarintAscending(result, uint64(k.CollectionRootID))
+	}
+
+	if k.ItemID != 0 {
+		result = append(result, '/')
+		result = encoding.EncodeUvarintAscending(result, uint64(k.ItemID))
+	}
+
+	return result
+}
+
+func (k ViewCacheKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k ViewCacheKey) PrettyPrint() string {
+	result := COLLECTION_VIEW_ITEMS
+
+	if k.CollectionRootID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
+	}
+	if k.ItemID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.ItemID))
+	}
+
+	return result
 }
 
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.

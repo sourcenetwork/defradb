@@ -219,6 +219,32 @@ func (c *Client) AddView(
 	return descriptions, nil
 }
 
+func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	methodURL := c.http.baseURL.JoinPath("view", "refresh")
+	params := url.Values{}
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		params.Add("version_id", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		params.Add("schema_root", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+	methodURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
 	methodURL := c.http.baseURL.JoinPath("lens")
 

@@ -44,8 +44,9 @@ func TestColDescrUpdateReplaceName_GivenExistingName(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:   1,
-						Name: immutable.Some("Actors"),
+						ID:             1,
+						Name:           immutable.Some("Actors"),
+						IsMaterialized: true,
 					},
 				},
 			},
@@ -180,11 +181,13 @@ func TestColDescrUpdateReplaceName_RemoveExistingName(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID: 1,
+						ID:             1,
+						IsMaterialized: true,
 					},
 					{
-						ID:   2,
-						Name: immutable.Some("Actors"),
+						ID:             2,
+						Name:           immutable.Some("Actors"),
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,

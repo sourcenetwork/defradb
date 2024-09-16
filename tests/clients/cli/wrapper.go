@@ -281,6 +281,25 @@ func (w *Wrapper) AddView(
 	return defs, nil
 }
 
+func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	args := []string{"client", "view", "refresh"}
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		args = append(args, "--version", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		args = append(args, "--schema", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
 	args := []string{"client", "schema", "migration", "set"}
 

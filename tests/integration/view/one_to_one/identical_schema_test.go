@@ -46,7 +46,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 				// todo - such a setup appears to work, yet prevents the querying of `RightHand`s as the primary return object
 				// thought - although, perhaps if the view is defined as such, Left and right hands *could* be merged by us into a single table
 				SDL: `
-					type HandView {
+					type HandView @materialized(if: false) {
 						name: String
 						holding: HandView @primary
 						heldBy: HandView
@@ -120,7 +120,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}

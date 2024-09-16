@@ -34,7 +34,7 @@ func TestView_SimpleWithFilter(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -91,7 +91,7 @@ func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						name: String
 						age: Int
 					}

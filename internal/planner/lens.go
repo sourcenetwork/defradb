@@ -77,12 +77,7 @@ func (n *lensNode) Next() (bool, error) {
 			return false, err
 		}
 
-		nextValue, err := n.toDoc(lensDoc)
-		if err != nil {
-			return false, err
-		}
-
-		n.currentValue = nextValue
+		n.currentValue = n.toDoc(n.documentMapping, lensDoc)
 		return true, nil
 	}
 
@@ -106,7 +101,7 @@ func (n *lensNode) Next() (bool, error) {
 	return n.Next()
 }
 
-func (n *lensNode) toDoc(mapDoc map[string]any) (core.Doc, error) {
+func (n *lensNode) toDoc(mapping *core.DocumentMapping, mapDoc map[string]any) core.Doc {
 	status := client.Active
 	properties := make([]any, len(mapDoc))
 
@@ -125,7 +120,7 @@ func (n *lensNode) toDoc(mapDoc map[string]any) (core.Doc, error) {
 			continue
 		}
 
-		indexes := n.documentMapping.IndexesByName[fieldName]
+		indexes := mapping.IndexesByName[fieldName]
 		if len(indexes) == 0 {
 			// Note: This can happen if a migration returns a field that
 			// we do not know about. In which case we have to skip it.
@@ -135,6 +130,21 @@ func (n *lensNode) toDoc(mapDoc map[string]any) (core.Doc, error) {
 		// similar logic, for example when converting a core.Doc to a map before passing it
 		// into a lens transform.
 		fieldIndex := indexes[len(indexes)-1]
+
+		if fieldIndex < len(mapping.ChildMappings) && mapping.ChildMappings[fieldIndex] != nil {
+			switch typedValue := fieldValue.(type) {
+			case map[string]any:
+				fieldValue = n.toDoc(mapping.ChildMappings[fieldIndex], typedValue)
+
+			case []any:
+				values := make([]core.Doc, 0, len(typedValue))
+				for _, val := range typedValue {
+					innerDoc := n.toDoc(mapping.ChildMappings[fieldIndex], val.(map[string]any))
+					values = append(values, innerDoc)
+				}
+				fieldValue = values
+			}
+		}
 
 		if len(properties) <= fieldIndex {
 			// Because the document is sourced from another mapping, we may still need to grow
@@ -151,7 +161,7 @@ func (n *lensNode) toDoc(mapDoc map[string]any) (core.Doc, error) {
 		Fields:          properties,
 		SchemaVersionID: n.collection.SchemaVersionID,
 		Status:          status,
-	}, nil
+	}
 }
 
 func (n *lensNode) Source() planNode {

@@ -157,6 +157,18 @@ func (db *db) patchCollection(
 
 		existingCol, ok := existingColsByID[col.ID]
 		if ok {
+			if existingCol.IsMaterialized && !col.IsMaterialized {
+				// If the collection is being de-materialized - delete any cached values.
+				// Leaving them around will not break anything, but it would be a waste of
+				// storage space.
+				err := db.clearViewCache(ctx, client.CollectionDefinition{
+					Description: col,
+				})
+				if err != nil {
+					return err
+				}
+			}
+
 			// Clear any existing migrations in the registry, using this semi-hacky way
 			// to avoid adding more functions to a public interface that we wish to remove.
 

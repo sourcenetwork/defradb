@@ -242,6 +242,26 @@ func (db *db) AddView(
 	return defs, nil
 }
 
+func (db *db) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.refreshViews(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
 func (db *db) BasicImport(ctx context.Context, filepath string) error {
