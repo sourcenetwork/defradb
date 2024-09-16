@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package index
+package simple
 
 import (
 	"testing"
@@ -16,35 +16,52 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_ShouldSucceed(t *testing.T) {
+func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "updating non-indexed fields on a doc with existing field combination for composite index should succeed",
+		Description: "Simple view with default value",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(unique: true, includes: [{name: "name"}, {name: "age"}]) {
-						name: String 
-						age: Int 
-						email: String
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+						age: Int @default(int: 40)
 					}
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `
-					{
-						"name":	"John",
-						"age":	21,
-						"email": "email@gmail.com"
-					}`,
+				Doc: `{
+					"name":	"Alice"
+				}`,
 			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `
-					{
-						"email": "another@gmail.com"
-					}`,
+			testUtils.Request{
+				Request: `
+					query {
+						UserView {
+							name
+							age
+						}
+					}
+				`,
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  nil,
+						},
+					},
+				},
 			},
 		},
 	}

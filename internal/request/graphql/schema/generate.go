@@ -583,7 +583,8 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 				}
 
 				fields[field.Name] = &gql.InputObjectFieldConfig{
-					Type: ttype,
+					Type:         ttype,
+					DefaultValue: field.DefaultValue,
 				}
 			}
 

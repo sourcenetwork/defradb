@@ -84,25 +84,34 @@ type Document struct {
 	collectionDefinition CollectionDefinition
 }
 
-func newEmptyDoc(collectionDefinition CollectionDefinition) *Document {
-	return &Document{
+func newEmptyDoc(collectionDefinition CollectionDefinition) (*Document, error) {
+	doc := &Document{
 		fields:               make(map[string]Field),
 		values:               make(map[Field]*FieldValue),
 		collectionDefinition: collectionDefinition,
 	}
+	if err := doc.setDefaultValues(); err != nil {
+		return nil, err
+	}
+	return doc, nil
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) *Document {
-	doc := newEmptyDoc(collectionDefinition)
+func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) (*Document, error) {
+	doc, err := newEmptyDoc(collectionDefinition)
+	if err != nil {
+		return nil, err
+	}
 	doc.id = docID
-	return doc
+	return doc, nil
 }
 
 // NewDocFromMap creates a new Document from a data map.
 func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinition) (*Document, error) {
-	var err error
-	doc := newEmptyDoc(collectionDefinition)
+	doc, err := newEmptyDoc(collectionDefinition)
+	if err != nil {
+		return nil, err
+	}
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -142,8 +151,11 @@ func IsJSONArray(obj []byte) bool {
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
 func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc := newEmptyDoc(collectionDefinition)
-	err := doc.SetWithJSON(obj)
+	doc, err := newEmptyDoc(collectionDefinition)
+	if err != nil {
+		return nil, err
+	}
+	err = doc.SetWithJSON(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +184,10 @@ func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*
 		if err != nil {
 			return nil, err
 		}
-		doc := newEmptyDoc(collectionDefinition)
+		doc, err := newEmptyDoc(collectionDefinition)
+		if err != nil {
+			return nil, err
+		}
 		err = doc.setWithFastJSONObject(o)
 		if err != nil {
 			return nil, err
@@ -646,6 +661,19 @@ func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	for k, v := range value {
 		err := doc.Set(k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (doc *Document) setDefaultValues() error {
+	for _, field := range doc.collectionDefinition.GetFields() {
+		if field.DefaultValue == nil {
+			continue // no default value to set
+		}
+		err := doc.Set(field.Name, field.DefaultValue)
 		if err != nil {
 			return err
 		}

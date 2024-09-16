@@ -31,7 +31,7 @@ func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_Should
 						devices: [Device]
 					}
 
-					type Device @index(fields: ["owner_id", "manufacturer_id"]) {
+					type Device @index(includes: [{name: "owner_id"}, {name: "manufacturer_id"}]) {
 						model: String
 						owner: User 
 						manufacturer: Manufacturer 
