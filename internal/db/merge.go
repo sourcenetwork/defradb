@@ -277,7 +277,7 @@ func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) err
 			mp.availableEncryptionBlocks[cidlink.Link{Cid: link}] = &encBlock
 		}
 
-		err := mp.mergeComposites(context.Background())
+		err := mp.mergeComposites(ctx)
 		if err != nil {
 			return err
 		}

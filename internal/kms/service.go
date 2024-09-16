@@ -26,9 +26,15 @@ var (
 type ServiceType string
 
 const (
+	// PubSubServiceType is the type of KMS that uses PubSub mechanism to exchange keys
+	// between peers.
 	PubSubServiceType ServiceType = "pubsub"
 )
 
+// Service is interface for key management service (KMS)
 type Service interface {
+	// GetKeys retrieves the encryption blocks containing encryption keys for the given links.
+	// Blocks are fetched asynchronously, so the method returns an [encryption.Results] object
+	// that can be used to wait for the results.
 	GetKeys(ctx context.Context, cids ...cidlink.Link) (*encryption.Results, error)
 }

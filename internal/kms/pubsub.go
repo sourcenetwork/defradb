@@ -60,6 +60,11 @@ func (s *pubSubService) GetKeys(ctx context.Context, cids ...cidlink.Link) (*enc
 	return res, nil
 }
 
+// NewPubSubService creates a new instance of the KMS service that is connected to the given PubSubServer,
+// event bus and encryption storage.
+//
+// The service will subscribe to the "encryption" topic on the PubSubServer and to the
+// "enc-keys-request" event on the event bus. 
 func NewPubSubService(
 	ctx context.Context,
 	peerID libpeer.ID,

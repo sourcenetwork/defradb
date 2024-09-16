@@ -222,8 +222,6 @@ func encryptBlock(
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
-// If skipMerge is true, it will skip merging and update only the heads.
-// If skipHeads is true, it will skip updating the heads.
 func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
 	block *coreblock.Block,
