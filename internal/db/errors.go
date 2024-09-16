@@ -102,7 +102,7 @@ const (
 	errReplicatorNotFound                       string = "replicator not found"
 	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
 	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
-	errColNotMaterialized                       string = "non-materialized collections (only views) are not supported"
+	errColNotMaterialized                       string = "non-materialized collections are not supported"
 	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
 )
 

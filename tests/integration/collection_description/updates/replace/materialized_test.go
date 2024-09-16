@@ -35,7 +35,7 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t *t
 						{ "op": "replace", "path": "/1/IsMaterialized", "value": false }
 					]
 				`,
-				ExpectedError: "non-materialized collections (only views) are not supported. Collection: User",
+				ExpectedError: "non-materialized collections are not supported. Collection: User",
 			},
 		},
 	}
