@@ -7,8 +7,9 @@ Refresh views.
 Refresh views, executing the underlying query and LensVm transforms and
 persisting the results.
 
-View is refreshed as the current user, meaning results returned for all subsequent query requests
-to the view will receive items generated using the user refreshing the view's permissions.
+View is refreshed as the current user, meaning the cached items will reflect that user's
+permissions. Subsequent query requests to the view, regardless of user, will receive
+items from that cache.
 
 Example: refresh all views
   defradb client view refresh
