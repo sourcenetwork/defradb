@@ -193,7 +193,7 @@ func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 		return err
 	}
 
-	hasNext, err := source.Next()
+	hasValue, err := source.Next()
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 	// The order in which results are returned must be consistent with the results of the
 	// underlying query/transform.
 	var itemID uint
-	for itemID = 1; hasNext; itemID++ {
+	for itemID = 1; hasValue; itemID++ {
 		doc := source.Value()
 
 		serializedItem, err := core.MarshalViewItem(doc)
@@ -216,7 +216,7 @@ func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		hasNext, err = source.Next()
+		hasValue, err = source.Next()
 		if err != nil {
 			return err
 		}
