@@ -1,15 +1,40 @@
-## defradb client view
+## defradb client view refresh
 
-Manage views within a running DefraDB instance
+Refresh views.
 
 ### Synopsis
 
-Manage (add) views withing a running DefraDB instance
+Refresh views, executing the underlying query and LensVm transforms and
+persisting the results.
+
+View is refreshed as the current user, meaning results returned for all subsequent query requests
+to the view will receive items generated using the user refreshing the view's permissions.
+
+Example: refresh all views
+  defradb client view refresh
+
+Example: refresh views by name
+  defradb client view refresh --name UserView
+
+Example: refresh views by schema root id
+  defradb client view refresh --schema bae123
+
+Example: refresh views by version id. This will also return inactive views
+  defradb client view refresh --version bae123
+		
+
+```
+defradb client view refresh [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for view
+      --get-inactive     Get inactive views as well as active
+  -h, --help             help for refresh
+      --name string      View name
+      --schema string    View schema Root
+      --version string   View version ID
 ```
 
 ### Options inherited from parent commands
@@ -35,7 +60,5 @@ Manage (add) views withing a running DefraDB instance
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client view add](defradb_client_view_add.md)	 - Add new view
-* [defradb client view refresh](defradb_client_view_refresh.md)	 - Refresh views.
+* [defradb client view](defradb_client_view.md)	 - Manage views within a running DefraDB instance
 
