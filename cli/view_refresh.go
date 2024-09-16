@@ -29,7 +29,7 @@ func MakeViewRefreshCommand() *cobra.Command {
 persisting the results.
 
 View is refreshed as the current user, meaning results returned for all subsequent query requests
-to the view will recieve items accessible to the user refreshing the view's permissions.
+to the view will receive items generated using the user refreshing the view's permissions.
 
 Example: refresh all views
   defradb client view refresh
