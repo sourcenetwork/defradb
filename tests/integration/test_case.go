@@ -227,6 +227,7 @@ type CreateView struct {
 	ExpectedError string
 }
 
+// RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
 type RefreshViews struct {
 	// NodeID may hold the ID (index) of a node to create this View on.
 	//
