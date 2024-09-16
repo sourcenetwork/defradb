@@ -85,7 +85,7 @@ type CollectionDescription struct {
 	// If it is true, they will be, if false, the data returned on query will be calculated
 	// at query-time from source.
 	//
-	// At the moment this can only be set to `false` if this collection sources it's data from
+	// At the moment this can only be set to `false` if this collection sources its data from
 	// another collection/query (is a View).
 	IsMaterialized bool
 }
