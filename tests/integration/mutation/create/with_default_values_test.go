@@ -252,8 +252,9 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 				DocMap: map[string]any{},
 			},
 			testUtils.CreateDoc{
-				// left empty to test default values
-				DocMap:        map[string]any{},
+				DocMap: map[string]any{
+					"age": int64(50),
+				},
 				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
