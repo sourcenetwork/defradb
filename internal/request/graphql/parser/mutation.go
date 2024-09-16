@@ -95,38 +95,60 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 		mut.Collection = strings.Join(mutNameParts[1:], "_")
 	}
 
-	// parse arguments
 	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
-		// parse each individual arg type seperately
-		if prop == request.Input { // parse input
-			mut.Input = arguments[prop].(map[string]any)
-		} else if prop == request.Inputs {
-			inputsValue := arguments[prop].([]any)
-			inputs := make([]map[string]any, len(inputsValue))
-			for i, v := range inputsValue {
+		name := argument.Name.Value
+		value := arguments[name]
+
+		switch name {
+		case request.Input:
+			if v, ok := value.(map[string]any); ok {
+				mut.Input = v
+			}
+
+		case request.Inputs:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			inputs := make([]map[string]any, len(v))
+			for i, v := range v {
 				inputs[i] = v.(map[string]any)
 			}
 			mut.Inputs = inputs
-		} else if prop == request.FilterClause { // parse filter
-			mut.Filter = immutable.Some(request.Filter{
-				Conditions: arguments[prop].(map[string]any),
-			})
-		} else if prop == request.DocIDArgName {
-			mut.DocIDs = immutable.Some([]string{arguments[prop].(string)})
-		} else if prop == request.DocIDsArgName {
-			docIDsValue := arguments[prop].([]any)
-			docIDs := make([]string, len(docIDsValue))
-			for i, v := range docIDsValue {
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				mut.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
+
+		case request.DocIDArgName:
+			if v, ok := value.(string); ok {
+				mut.DocIDs = immutable.Some([]string{v})
+			}
+
+		case request.DocIDsArgName:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, v := range v {
 				docIDs[i] = v.(string)
 			}
 			mut.DocIDs = immutable.Some(docIDs)
-		} else if prop == request.EncryptDocArgName {
-			mut.Encrypt = arguments[prop].(bool)
-		} else if prop == request.EncryptFieldsArgName {
-			fieldsValue := arguments[prop].([]any)
-			fields := make([]string, len(fieldsValue))
-			for i, v := range fieldsValue {
+
+		case request.EncryptDocArgName:
+			if v, ok := value.(bool); ok {
+				mut.Encrypt = v
+			}
+
+		case request.EncryptFieldsArgName:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			fields := make([]string, len(v))
+			for i, v := range v {
 				fields[i] = v.(string)
 			}
 			mut.EncryptFields = fields
@@ -144,5 +166,9 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	}
 
 	mut.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
+	if err != nil {
+		return nil, err
+	}
+
 	return mut, err
 }
