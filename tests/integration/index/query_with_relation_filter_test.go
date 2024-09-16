@@ -182,7 +182,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 
 					type Address {
 						user: User @primary
-						city: String @index 
+						city: String @index
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{

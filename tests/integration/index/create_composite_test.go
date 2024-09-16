@@ -72,3 +72,225 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestCompositeIndexCreate_UsingObjectDirective_SetsDefaultDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create composite index using object directive sets default direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(direction: DESC, includes: [{name: "name"}, {name: "age"}]) {
+						name: String
+						age: Int 
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						// this should be User_name_DESC
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "name",
+								Descending: true,
+							},
+							{
+								Name:       "age",
+								Descending: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCompositeIndexCreate_UsingObjectDirective_OverridesDefaultDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create composite object using field directive overrides default direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(direction: DESC, includes: [{name: "name"}, {name: "age", direction: ASC}]) {
+						name: String
+						age: Int 
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						// this should be User_name_DESC
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "name",
+								Descending: true,
+							},
+							{
+								Name:       "age",
+								Descending: false,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCompositeIndexCreate_UsingFieldDirective_ImplicitlyAddsField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create composite index using field directive implicitly adds field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index(includes: [{name: "age"}])
+						age: Int 
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
+							{
+								Name: "age",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCompositeIndexCreate_UsingFieldDirective_SetsDefaultDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create composite index using field directive sets default direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index(direction: DESC, includes: [{name: "age"}])
+						age: Int 
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						// this should be User_name_DESC
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "name",
+								Descending: true,
+							},
+							{
+								Name:       "age",
+								Descending: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCompositeIndexCreate_UsingFieldDirective_OverridesDefaultDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create composite index using field directive overrides default direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index(direction: DESC, includes: [{name: "age", direction: ASC}])
+						age: Int 
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						// this should be User_name_DESC
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "name",
+								Descending: true,
+							},
+							{
+								Name:       "age",
+								Descending: false,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCompositeIndexCreate_UsingFieldDirective_WithExplicitIncludes_RespectsOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create composite index using field directive with explicit includes respects order",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index(includes: [{name: "age"}, {name: "name"}])
+						age: Int 
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_age_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "age",
+							},
+							{
+								Name: "name",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
