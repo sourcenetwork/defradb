@@ -13,6 +13,7 @@ package parser
 import (
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -20,7 +21,7 @@ import (
 // parseSubscriptionOperationDefinition parses the individual GraphQL
 // 'subcription' operations, which there may be multiple of.
 func parseSubscriptionOperationDefinition(
-	schema gql.Schema,
+	exe *gql.ExecutionContext,
 	def *ast.OperationDefinition,
 ) (*request.OperationDefinition, error) {
 	sdef := &request.OperationDefinition{
@@ -30,7 +31,7 @@ func parseSubscriptionOperationDefinition(
 	for i, selection := range def.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			sub, err := parseSubscription(schema, node)
+			sub, err := parseSubscription(exe, node)
 			if err != nil {
 				return nil, err
 			}
@@ -44,7 +45,7 @@ func parseSubscriptionOperationDefinition(
 // parseSubscription parses a typed subscription field
 // which includes sub fields, and may include
 // filters, IDs, etc.
-func parseSubscription(schema gql.Schema, field *ast.Field) (*request.ObjectSubscription, error) {
+func parseSubscription(exe *gql.ExecutionContext, field *ast.Field) (*request.ObjectSubscription, error) {
 	sub := &request.ObjectSubscription{
 		Field: request.Field{
 			Name:  field.Name.Value,
@@ -54,23 +55,13 @@ func parseSubscription(schema gql.Schema, field *ast.Field) (*request.ObjectSubs
 
 	sub.Collection = sub.Name
 
-	fieldDef := gql.GetFieldDef(schema, schema.QueryType(), field.Name.Value)
+	fieldDef := gql.GetFieldDef(exe.Schema, exe.Schema.QueryType(), field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
-		if prop == request.FilterClause {
-			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
-			if !ok {
-				return nil, ErrFilterMissingArgumentType
-			}
-			obj := argument.Value.(*ast.ObjectValue)
-			filter, err := NewFilter(obj, filterType)
-			if err != nil {
-				return nil, err
-			}
-
-			sub.Filter = filter
-		}
+	if v, ok := arguments[request.FilterClause]; ok {
+		sub.Filter = immutable.Some(request.Filter{
+			Conditions: v.(map[string]any),
+		})
 	}
 
 	// parse field selections
@@ -79,6 +70,6 @@ func parseSubscription(schema gql.Schema, field *ast.Field) (*request.ObjectSubs
 		return nil, err
 	}
 
-	sub.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
+	sub.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
 	return sub, err
 }

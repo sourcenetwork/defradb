@@ -2,6 +2,8 @@ module github.com/sourcenetwork/defradb
 
 go 1.22
 
+toolchain go1.22.0
+
 require (
 	github.com/bits-and-blooms/bitset v1.14.3
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -45,7 +47,7 @@ require (
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
-	github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd
+	github.com/sourcenetwork/graphql-go v0.7.10-0.20240910200541-550a51c57c7d
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274
 	github.com/spf13/cobra v1.8.1

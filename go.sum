@@ -1394,8 +1394,8 @@ github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s
 github.com/sourcenetwork/corelog v0.0.8/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
-github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd h1:lmpW39/8wPJ0khWRhOcj7Bj0HYKbSmQ8rXMJw1cMB8U=
-github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
+github.com/sourcenetwork/graphql-go v0.7.10-0.20240910200541-550a51c57c7d h1:gpBJx/mKmpelxZfHT4AYhPYFgSy8DKp/Ca+bBzIIy2A=
+github.com/sourcenetwork/graphql-go v0.7.10-0.20240910200541-550a51c57c7d/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234 h1:8dA9bVC1A0ChJygtsUfNsek3oR0GnwpLoYpmEo4t2mk=

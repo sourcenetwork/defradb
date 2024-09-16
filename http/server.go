@@ -21,6 +21,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// PlaygroundEnabled is used to detect if the playground is enabled
+// on the current http server instance.
+var PlaygroundEnabled = false
+
 // We only allow cipher suites that are marked secure
 // by ssllabs
 var tlsCipherSuites = []uint16{

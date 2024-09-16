@@ -14,12 +14,20 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation secondary direction, id field with name clash on secondary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL will parse the input type as ID and
+			// will return an unexpected type error
+			testUtils.CollectionSaveMutationType,
+			testUtils.CollectionNamedMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

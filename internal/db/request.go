@@ -18,7 +18,7 @@ import (
 )
 
 // execRequest executes a request against the database.
-func (db *db) execRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *db) execRequest(ctx context.Context, request string, options *client.GQLOptions) *client.RequestResult {
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
 	if err != nil {
@@ -29,7 +29,7 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 		return db.parser.ExecuteIntrospection(request)
 	}
 
-	parsedRequest, errors := db.parser.Parse(ast)
+	parsedRequest, errors := db.parser.Parse(ast, options)
 	if len(errors) > 0 {
 		res.GQL.Errors = errors
 		return res

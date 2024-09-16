@@ -11,8 +11,6 @@
 package parser
 
 import (
-	"strconv"
-
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -21,7 +19,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 )
 
-func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.CommitSelect, error) {
+func parseCommitSelect(
+	exe *gql.ExecutionContext,
+	parent *gql.Object,
+	field *ast.Field,
+) (*request.CommitSelect, error) {
 	commit := &request.CommitSelect{
 		Field: request.Field{
 			Name:  field.Name.Value,
@@ -29,61 +31,39 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		},
 	}
 
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
+
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
 		if prop == request.DocIDArgName {
-			raw := argument.Value.(*ast.StringValue)
-			commit.DocID = immutable.Some(raw.Value)
+			commit.DocID = immutable.Some(arguments[prop].(string))
 		} else if prop == request.Cid {
-			raw := argument.Value.(*ast.StringValue)
-			commit.CID = immutable.Some(raw.Value)
+			commit.CID = immutable.Some(arguments[prop].(string))
 		} else if prop == request.FieldIDName {
-			raw := argument.Value.(*ast.StringValue)
-			commit.FieldID = immutable.Some(raw.Value)
+			commit.FieldID = immutable.Some(arguments[prop].(string))
 		} else if prop == request.OrderClause {
-			obj := argument.Value.(*ast.ObjectValue)
-			cond, err := ParseConditionsInOrder(obj)
+			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), arguments[prop].(map[string]any))
 			if err != nil {
 				return nil, err
 			}
-			commit.OrderBy = immutable.Some(
-				request.OrderBy{
-					Conditions: cond,
-				},
-			)
+			commit.OrderBy = immutable.Some(request.OrderBy{
+				Conditions: conditions,
+			})
 		} else if prop == request.LimitClause {
-			val := argument.Value.(*ast.IntValue)
-			limit, err := strconv.ParseUint(val.Value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			commit.Limit = immutable.Some(limit)
+			commit.Limit = immutable.Some(uint64(arguments[prop].(int32)))
 		} else if prop == request.OffsetClause {
-			val := argument.Value.(*ast.IntValue)
-			offset, err := strconv.ParseUint(val.Value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			commit.Offset = immutable.Some(offset)
+			commit.Offset = immutable.Some(uint64(arguments[prop].(int32)))
 		} else if prop == request.DepthClause {
-			raw := argument.Value.(*ast.IntValue)
-			depth, err := strconv.ParseUint(raw.Value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			commit.Depth = immutable.Some(depth)
+			commit.Depth = immutable.Some(uint64(arguments[prop].(int32)))
 		} else if prop == request.GroupByClause {
-			obj := argument.Value.(*ast.ListValue)
 			fields := []string{}
-			for _, v := range obj.Values {
-				fields = append(fields, v.GetValue().(string))
+			for _, v := range arguments[prop].([]any) {
+				fields = append(fields, v.(string))
 			}
-
-			commit.GroupBy = immutable.Some(
-				request.GroupBy{
-					Fields: fields,
-				},
-			)
+			commit.GroupBy = immutable.Some(request.GroupBy{
+				Fields: fields,
+			})
 		}
 	}
 
@@ -105,14 +85,12 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		return commit, nil
 	}
 
-	fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
-
 	fieldObject, err := typeFromFieldDef(fieldDef)
 	if err != nil {
 		return nil, err
 	}
 
-	commit.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
+	commit.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
 
 	return commit, err
 }
