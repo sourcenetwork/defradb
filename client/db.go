@@ -196,7 +196,7 @@ type Store interface {
 		transform immutable.Option[model.Lens],
 	) ([]CollectionDefinition, error)
 
-	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set all views
+	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
 	// will be refreshed.
 	//
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
