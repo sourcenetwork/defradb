@@ -402,26 +402,25 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 			},
-			/*
-				testUtils.CreateView{
-					Query: `
-						AuthorView {
+			testUtils.CreateView{
+				Query: `
+					AuthorView {
+						name
+						books {
 							name
-							books {
-								name
-							}
 						}
-					`,
-					SDL: `
-						type AuthorViewView @materialized(if: false) {
-							name: String
-							books: [BookViewView]
-						}
-						interface BookViewView {
-							name: String
-						}
-					`,
-				},*/
+					}
+				`,
+				SDL: `
+					type AuthorViewView @materialized(if: false) {
+						name: String
+						books: [BookViewView]
+					}
+					interface BookViewView {
+						name: String
+					}
+				`,
+			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -437,7 +436,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-							AuthorView {
+							AuthorViewView {
 								name
 								books {
 									name
@@ -445,7 +444,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 							}
 						}`,
 				Results: map[string]any{
-					"AuthorView": []map[string]any{
+					"AuthorViewView": []map[string]any{
 						{
 							"name": "Harper Lee",
 							"books": []map[string]any{
