@@ -88,7 +88,7 @@ type ViewCacheKey struct {
 	// CollectionRootID is the Root of the Collection that this item belongs to.
 	CollectionRootID uint32
 
-	// ItemID is the unique (to this CollectionRootID) of the View item.
+	// ItemID is the unique (to this CollectionRootID) ID of the View item.
 	//
 	// For now this is essentially just the index of the item in the result-set, however
 	// that is likely to change in the near future.
