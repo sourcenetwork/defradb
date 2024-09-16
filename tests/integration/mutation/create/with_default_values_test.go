@@ -198,6 +198,8 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// This test will fail if using the collection save
 			// method because it does not create two unique docs
+			// and instead calls update on the second doc with
+			// matching fields
 			testUtils.CollectionNamedMutationType,
 			testUtils.GQLRequestMutationType,
 		}),
@@ -231,6 +233,8 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// This test will fail if using the collection save
 			// method because it does not create two unique docs
+			// and instead calls update on the second doc with
+			// matching fields
 			testUtils.CollectionNamedMutationType,
 			testUtils.GQLRequestMutationType,
 		}),
