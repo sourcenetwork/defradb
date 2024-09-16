@@ -274,12 +274,12 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 										"name": "John Grisham",
 										"published": []map[string]any{
 											{
-												"name":   "The Client",
-												"rating": 4.5,
-											},
-											{
 												"name":   "Painted House",
 												"rating": 4.9,
+											},
+											{
+												"name":   "The Client",
+												"rating": 4.5,
 											},
 											{
 												"name":   "A Time for Mercy",

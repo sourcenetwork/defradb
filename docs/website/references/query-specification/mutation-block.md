@@ -89,28 +89,28 @@ A basic example is provided below:
 ```graphql
 mutation {
     update_Book(dockey: '123', input: {name: "John"}) {
-        _key
+        _docID
         name
     }
 }
 
 ```
 
-Here, we can see that after applying the mutation, we return the `_key` and `name` fields. We can return any field from the document (not just the updated ones). We can even return and filter on related types.
+Here, we can see that after applying the mutation, we return the `_docID` and `name` fields. We can return any field from the document (not just the updated ones). We can even return and filter on related types.
 
 Beyond updating by an ID or IDs, we can use a query filter to select which fields to apply our update to. This filter works the same as the queries.
 
 ```graphql
 mutation {
     update_Book(filter: {rating: {_le: 1.0}}, input: {rating: 1.5}) {
-        _key
+        _docID
         rating
         name
     }
 }
 ```
 
-Here, we select all documents with a rating less than or equal to 1.0, update the rating value to 1.5, and return all the affected documents `_key`, `rating`, and `name` fields.
+Here, we select all documents with a rating less than or equal to 1.0, update the rating value to 1.5, and return all the affected documents `_docID`, `rating`, and `name` fields.
 
 For additional filter details, see the above `Query Block` section.
 
@@ -132,13 +132,13 @@ Here, we can delete a document with ID '123':
 ```graphql
 mutation {
     delete_User(dockey: '123') {
-        _key
+        _docID
         name
     }
 }
 ```
 
-This will delete the specific document, and return the `_key` and `name` for the deleted document.
+This will delete the specific document, and return the `_docID` and `name` for the deleted document.
 
 DefraDB currently uses a Hard Delete system, which means that when a document is deleted, it is completely removed from the database.
 
@@ -147,7 +147,7 @@ Similar to the Update system, you can use a filter to select which documents to 
 ```graphql
 mutation {
     delete_User(filter: {rating: {_gt: 3}}) {
-        _key
+        _docID
         name
     }
 }

@@ -161,8 +161,13 @@ type state struct {
 	collections [][]client.Collection
 
 	// The names of the collections active in this test.
-	// Indexes matches that of collections.
+	// Indexes matches that of inital collections.
 	collectionNames []string
+
+	// A map of the collection indexes by their Root, this allows easier
+	// identification of collections in a natural, human readable, order
+	// even when they are renamed.
+	collectionIndexesByRoot map[uint32]int
 
 	// Document IDs by index, by collection index.
 	//
@@ -211,6 +216,7 @@ func newState(
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
+		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
 		indexes:                  [][][]client.IndexDescription{},
 		isBench:                  false,

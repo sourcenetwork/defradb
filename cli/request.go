@@ -11,11 +11,13 @@
 package cli
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -26,6 +28,8 @@ const (
 
 func MakeRequestCommand() *cobra.Command {
 	var filePath string
+	var operationName string
+	var variablesJSON string
 	var cmd = &cobra.Command{
 		Use:   "query [-i --identity] [request]",
 		Short: "Send a DefraDB GraphQL query request",
@@ -70,8 +74,21 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return errors.New("request cannot be empty")
 			}
 
+			var options []client.RequestOption
+			if variablesJSON != "" {
+				var variables map[string]any
+				err := json.Unmarshal([]byte(variablesJSON), &variables)
+				if err != nil {
+					return err
+				}
+				options = append(options, client.WithVariables(variables))
+			}
+			if operationName != "" {
+				options = append(options, client.WithOperationName(operationName))
+			}
+
 			store := mustGetContextStore(cmd)
-			result := store.ExecRequest(cmd.Context(), request)
+			result := store.ExecRequest(cmd.Context(), request, options...)
 
 			var errors []string
 			for _, err := range result.GQL.Errors {
@@ -88,7 +105,8 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			return nil
 		},
 	}
-
+	cmd.Flags().StringVarP(&operationName, "operation", "o", "", "Name of the operation to execute in the query")
+	cmd.Flags().StringVarP(&variablesJSON, "variables", "v", "", "JSON encoded variables to use in the query")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "File containing the query request")
 	return cmd
 }

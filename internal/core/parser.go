@@ -45,7 +45,7 @@ type Parser interface {
 	ExecuteIntrospection(request string) *client.RequestResult
 
 	// Parses the given request, returning a strongly typed model of that request.
-	Parse(*ast.Document) (*request.Request, []error)
+	Parse(*ast.Document, *client.GQLOptions) (*request.Request, []error)
 
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)

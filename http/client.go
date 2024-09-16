@@ -340,11 +340,22 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 func (c *Client) ExecRequest(
 	ctx context.Context,
 	query string,
+	opts ...client.RequestOption,
 ) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
-	body, err := json.Marshal(&GraphQLRequest{query})
+	gqlOptions := &client.GQLOptions{}
+	for _, o := range opts {
+		o(gqlOptions)
+	}
+	gqlRequest := &GraphQLRequest{
+		Query:         query,
+		OperationName: gqlOptions.OperationName,
+		Variables:     gqlOptions.Variables,
+	}
+
+	body, err := json.Marshal(gqlRequest)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result

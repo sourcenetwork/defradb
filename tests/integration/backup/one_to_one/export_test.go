@@ -60,7 +60,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-f33a7110-fb6f-57aa-9501-df0111427315","_docIDNew":"bae-c9c1a385-afce-5ef7-8b98-9369b157fd97","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","name":"John and the sourcerers' stone"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-af59fdc4-e495-5fd3-a9a6-386249aafdbb","_docIDNew":"bae-d374c406-c6ea-51cd-9e9b-dd44a97b499c","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","name":"John and the sourcerers' stone"}]}`,
 			},
 		},
 	}
@@ -108,7 +108,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-ccf9da82-8ed6-5133-b64f-558c21bc8dfd","_docIDNew":"bae-27ae099a-fa7d-5a66-a919-6c3b0322d17c","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","name":"John and the sourcerers' stone"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-bddb7139-7035-5fff-a118-3fc2033723b3","_docIDNew":"bae-6972e51f-a8cd-59eb-9a34-8a37058ddf4e","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","name":"John and the sourcerers' stone"}]}`,
 			},
 		},
 	}
@@ -160,7 +160,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-ccf9da82-8ed6-5133-b64f-558c21bc8dfd","_docIDNew":"bae-27ae099a-fa7d-5a66-a919-6c3b0322d17c","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","name":"John and the sourcerers' stone"},{"_docID":"bae-ffba7007-d4d4-5630-be53-d66f56da57fd","_docIDNew":"bae-ffba7007-d4d4-5630-be53-d66f56da57fd","name":"Game of chains"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-0aa10275-4f6e-5b38-9915-5664dd4c7802","_docIDNew":"bae-0aa10275-4f6e-5b38-9915-5664dd4c7802","name":"Game of chains"},{"_docID":"bae-bddb7139-7035-5fff-a118-3fc2033723b3","_docIDNew":"bae-6972e51f-a8cd-59eb-9a34-8a37058ddf4e","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","name":"John and the sourcerers' stone"}]}`,
 			},
 		},
 	}

@@ -242,7 +242,9 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 }
 
 type GraphQLRequest struct {
-	Query string `json:"query"`
+	Query         string         `json:"query"`
+	OperationName string         `json:"operationName"`
+	Variables     map[string]any `json:"variables"`
 }
 
 type GraphQLResponse struct {
@@ -299,7 +301,14 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := store.ExecRequest(req.Context(), request.Query)
+	var options []client.RequestOption
+	if request.OperationName != "" {
+		options = append(options, client.WithOperationName(request.OperationName))
+	}
+	if len(request.Variables) > 0 {
+		options = append(options, client.WithVariables(request.Variables))
+	}
+	result := store.ExecRequest(req.Context(), request.Query, options...)
 
 	if result.Subscription == nil {
 		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})

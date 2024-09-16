@@ -129,6 +129,13 @@ func (db *db) getCollections(
 
 	var cols []client.CollectionDescription
 	switch {
+	case options.Root.HasValue():
+		var err error
+		cols, err = description.GetCollectionsByRoot(ctx, txn, options.Root.Value())
+		if err != nil {
+			return nil, err
+		}
+
 	case options.Name.HasValue():
 		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
 		if err != nil {
@@ -173,6 +180,13 @@ func (db *db) getCollections(
 				continue
 			}
 		}
+
+		if options.Root.HasValue() {
+			if col.RootID != options.Root.Value() {
+				continue
+			}
+		}
+
 		// By default, we don't return inactive collections unless a specific version is requested.
 		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.SchemaVersionID.HasValue() {
 			continue
@@ -745,11 +759,12 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, err := c.db.getCollectionByName(ctx, objFieldDescription.Kind.Underlying())
+	otherCol, _, err := client.GetDefinitionFromStore(ctx, c.db, c.Definition(), objFieldDescription.Kind)
 	if err != nil {
 		return err
 	}
-	otherObjFieldDescription, _ := otherCol.Description().GetFieldByRelation(
+
+	otherObjFieldDescription, _ := otherCol.Description.GetFieldByRelation(
 		fieldDescription.RelationName,
 		c.Name().Value(),
 		objFieldDescription.Name,

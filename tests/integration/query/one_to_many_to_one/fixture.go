@@ -84,7 +84,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-7697f14d-7b32-5884-8677-344e183c14bf", Has 1 Publisher
+			// "bae-86f7a96a-be15-5b4d-91c7-bb6047aa4008", Has 1 Publisher
 			DocMap: map[string]any{
 				"name":      "Theif Lord",
 				"rating":    4.8,
@@ -93,7 +93,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-374998e0-e84d-5f6b-9e87-5edaaa2d9c7d", Has no Publisher.
+			// "bae-5ce5698b-5af6-5f50-a6fb-633252be8d12", Has no Publisher.
 			DocMap: map[string]any{
 				"name":      "The Associate",
 				"rating":    4.2,
@@ -102,7 +102,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-aef1d940-5ac1-5924-a87f-63ac40758b22", Has 1 Publisher
+			// "bae-d890c705-8a7a-57ce-88b1-ddd7827438ea", Has 1 Publisher
 			DocMap: map[string]any{
 				"name":      "Painted House",
 				"rating":    4.9,
@@ -111,7 +111,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-1d0dcbed-300a-567a-9b48-c23cd026d165", Has 1 Publisher
+			// "bae-fc61b19e-646a-5537-82d6-69259e4f959a", Has 1 Publisher
 			DocMap: map[string]any{
 				"name":      "A Time for Mercy",
 				"rating":    4.5,
@@ -120,7 +120,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-ee6b8339-8a9e-58a9-9a0d-dbd8d44fa149", Has 1 Publisher
+			// "bae-fc9f77fd-7b26-58c3-ad29-b2bd58a877be", Has 1 Publisher
 			DocMap: map[string]any{
 				"name":      "Sooley",
 				"rating":    3.2,

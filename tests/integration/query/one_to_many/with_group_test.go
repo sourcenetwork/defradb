@@ -103,6 +103,14 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 								"age":  int64(65),
 								"published": []map[string]any{
 									{
+										"rating": 4.9,
+										"_group": []map[string]any{
+											{
+												"name": "Painted House",
+											},
+										},
+									},
+									{
 										"rating": 4.5,
 										"_group": []map[string]any{
 											{
@@ -110,14 +118,6 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 											},
 											{
 												"name": "A Time for Mercy",
-											},
-										},
-									},
-									{
-										"rating": 4.9,
-										"_group": []map[string]any{
-											{
-												"name": "Painted House",
 											},
 										},
 									},
@@ -260,12 +260,12 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 									"name": "John Grisham",
 									"published": []map[string]any{
 										{
-											"name":   "The Client",
-											"rating": 4.5,
-										},
-										{
 											"name":   "Painted House",
 											"rating": 4.9,
+										},
+										{
+											"name":   "The Client",
+											"rating": 4.5,
 										},
 										{
 											"name":   "A Time for Mercy",

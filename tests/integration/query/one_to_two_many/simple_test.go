@@ -98,17 +98,6 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "Painted House",
-							"rating": 4.9,
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-							"reviewedBy": map[string]any{
-								"name": "Cornelia Funke",
-								"age":  int64(62),
-							},
-						},
-						{
 							"name":   "A Time for Mercy",
 							"rating": 4.5,
 							"author": map[string]any{
@@ -128,6 +117,17 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 							"reviewedBy": map[string]any{
 								"name": "John Grisham",
 								"age":  int64(65),
+							},
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"reviewedBy": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
 							},
 						},
 					},
@@ -225,12 +225,12 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 							"age":  int64(62),
 							"reviewed": []map[string]any{
 								{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
-								{
 									"name":   "A Time for Mercy",
 									"rating": 4.5,
+								},
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
 								},
 							},
 							"written": []map[string]any{
@@ -250,10 +250,10 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 							},
 							"written": []map[string]any{
 								{
-									"name": "Painted House",
+									"name": "A Time for Mercy",
 								},
 								{
-									"name": "A Time for Mercy",
+									"name": "Painted House",
 								},
 							},
 						},
@@ -376,21 +376,6 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "Painted House",
-							"rating": 4.9,
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-							"reviewedBy": map[string]any{
-								"name": "Cornelia Funke",
-								"age":  int64(62),
-							},
-							"price": map[string]any{
-								"currency": "GBP",
-								"value":    12.99,
-							},
-						},
-						{
 							"name":   "A Time for Mercy",
 							"rating": 4.5,
 							"author": map[string]any{
@@ -414,6 +399,21 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 							"reviewedBy": map[string]any{
 								"name": "John Grisham",
 								"age":  int64(65),
+							},
+							"price": map[string]any{
+								"currency": "GBP",
+								"value":    12.99,
+							},
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"reviewedBy": map[string]any{
+								"name": "Cornelia Funke",
+								"age":  int64(62),
 							},
 							"price": map[string]any{
 								"currency": "GBP",
@@ -542,12 +542,12 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 							"age":  int64(62),
 							"reviewed": []map[string]any{
 								{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
-								{
 									"name":   "A Time for Mercy",
 									"rating": 4.5,
+								},
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
 								},
 							},
 							"written": []map[string]any{
@@ -570,15 +570,15 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 							},
 							"written": []map[string]any{
 								{
-									"name": "Painted House",
-									"price": map[string]any{
-										"value": 12.99,
-									},
-								},
-								{
 									"name": "A Time for Mercy",
 									"price": map[string]any{
 										"value": float64(129),
+									},
+								},
+								{
+									"name": "Painted House",
+									"price": map[string]any{
+										"value": 12.99,
 									},
 								},
 							},

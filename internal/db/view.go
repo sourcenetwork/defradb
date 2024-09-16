@@ -43,7 +43,7 @@ func (db *db) addView(
 		return nil, err
 	}
 
-	req, errs := db.parser.Parse(ast)
+	req, errs := db.parser.Parse(ast, &client.GQLOptions{})
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)
 	}
