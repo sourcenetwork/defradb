@@ -165,7 +165,7 @@ var globalValidators = []definitionValidator{
 	validateFieldNotDuplicated,
 	validateSelfReferences,
 	validateCollectionMaterialized,
-	validateMaterializedHasNoACP,
+	validateMaterializedHasNoPolicy,
 }
 
 var createValidators = append(
@@ -999,10 +999,10 @@ func validateCollectionMaterialized(
 	return nil
 }
 
-// validateCollectionMaterialized verifies that a materialized view has no ACP policy.
+// validateMaterializedHasNoPolicy verifies that a materialized view has no ACP policy.
 //
 // Long term we wish to support this, however for now we block it off.
-func validateMaterializedHasNoACP(
+func validateMaterializedHasNoPolicy(
 	ctx context.Context,
 	db *db,
 	newState *definitionState,
