@@ -17,6 +17,7 @@ defradb start [flags]
       --development                   Enables a set of features that make development easier but should not be enabled in production
   -h, --help                          help for start
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
+      --no-encryption-key             Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
       --no-p2p                        Disable the peer-to-peer network synchronization system
       --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray             List of peers to connect to

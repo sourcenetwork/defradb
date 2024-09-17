@@ -68,7 +68,11 @@ The following keys are loaded from the keyring on start:
 - `peer-key` Ed25519 private key (required)
 - `encryption-key` AES-128, AES-192, or AES-256 key (optional)
 
-To randomly generate the required keys, run the following command:
+A secret to unlock the keyring is required on start and must be provided via the `DEFRADB_KEYRING_SECRET` environment variable. If a `.env` file is available at the root of the project, the secret can be stored there.
+
+The keys will be randomly generated on the inital start of the node if they are not found.
+
+Alternatively, to randomly generate the required keys, run the following command:
 
 ```
 defradb keyring generate

@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -63,6 +64,7 @@ var configFlags = map[string]string{
 	"keyring-backend":    "keyring.backend",
 	"keyring-path":       "keyring.path",
 	"no-keyring":         "keyring.disabled",
+	"no-encryption-key":  "keyring.noencryptionkey",
 	"source-hub-address": "acp.sourceHub.address",
 	"development":        "development",
 }
@@ -96,6 +98,9 @@ var configDefaults = map[string]any{
 
 // defaultConfig returns a new config with default values.
 func defaultConfig() *viper.Viper {
+	// load environment variables from .env file if one exists
+	_ = godotenv.Load()
+
 	cfg := viper.New()
 
 	cfg.AutomaticEnv()

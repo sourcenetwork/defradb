@@ -29,6 +29,7 @@ require (
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/jbenet/goprocess v0.1.4
+	github.com/joho/godotenv v1.5.1
 	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
 	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/libp2p/go-libp2p v0.36.3
@@ -62,7 +63,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.30.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
-	golang.org/x/term v0.24.0
 	google.golang.org/grpc v1.66.2
 	google.golang.org/protobuf v1.34.2
 )
@@ -365,6 +365,7 @@ require (
 	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/term v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
