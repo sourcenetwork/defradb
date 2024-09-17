@@ -59,7 +59,7 @@ type TestCase struct {
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between view types, or we need to temporarily document a bug.
 	SupportedViewTypes immutable.Option[[]ViewType]
-	
+
 	// Configuration for KMS to be used in the test
 	KMS KMS
 }
@@ -67,7 +67,7 @@ type TestCase struct {
 // KMS contains the configuration for KMS to be used in the test
 type KMS struct {
 	// Activated indicates if the KMS should be used in the test
-	Activated     bool
+	Activated bool
 	// ExcludedTypes specifies the KMS types that should be excluded from the test.
 	// If none are specified all types will be used.
 	ExcludedTypes []KMSType
