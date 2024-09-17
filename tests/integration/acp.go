@@ -57,10 +57,13 @@ var (
 	acpType ACPType
 )
 
+// KMSType is the type of KMS to use.
 type KMSType string
 
 const (
-	NoneKMSType   KMSType = "none"
+	// NoneKMSType is the none KMS type. It is used to indicate that no KMS should be used.
+	NoneKMSType KMSType = "none"
+	// PubSubKMSType is the PubSub KMS type.
 	PubSubKMSType KMSType = "pubsub"
 )
 
