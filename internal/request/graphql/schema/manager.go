@@ -188,6 +188,22 @@ func defaultTypes(
 	blobScalarType := schemaTypes.BlobScalarType()
 	jsonScalarType := schemaTypes.JSONScalarType()
 
+	idOpBlock := schemaTypes.IDOperatorBlock()
+	intOpBlock := schemaTypes.IntOperatorBlock()
+	floatOpBlock := schemaTypes.FloatOperatorBlock()
+	booleanOpBlock := schemaTypes.BooleanOperatorBlock()
+	stringOpBlock := schemaTypes.StringOperatorBlock()
+	jsonOpBlock := schemaTypes.JSONOperatorBlock(jsonScalarType)
+	blobOpBlock := schemaTypes.BlobOperatorBlock(blobScalarType)
+	dateTimeOpBlock := schemaTypes.DateTimeOperatorBlock()
+
+	notNullIntOpBlock := schemaTypes.NotNullIntOperatorBlock()
+	notNullFloatOpBlock := schemaTypes.NotNullFloatOperatorBlock()
+	notNullBooleanOpBlock := schemaTypes.NotNullBooleanOperatorBlock()
+	notNullStringOpBlock := schemaTypes.NotNullStringOperatorBlock()
+	notNullJSONOpBlock := schemaTypes.NotNullJSONOperatorBlock(jsonScalarType)
+	notNullBlobOpBlock := schemaTypes.NotNullBlobOperatorBlock(blobScalarType)
+
 	return []gql.Type{
 		// Base Scalar types
 		gql.Boolean,
@@ -207,20 +223,34 @@ func defaultTypes(
 		orderEnum,
 
 		// Filter scalar blocks
-		schemaTypes.BooleanOperatorBlock(),
-		schemaTypes.NotNullBooleanOperatorBlock(),
-		schemaTypes.DateTimeOperatorBlock(),
-		schemaTypes.FloatOperatorBlock(),
-		schemaTypes.NotNullFloatOperatorBlock(),
-		schemaTypes.IdOperatorBlock(),
-		schemaTypes.IntOperatorBlock(),
-		schemaTypes.NotNullIntOperatorBlock(),
-		schemaTypes.StringOperatorBlock(),
-		schemaTypes.NotNullstringOperatorBlock(),
-		schemaTypes.JSONOperatorBlock(jsonScalarType),
-		schemaTypes.NotNullJSONOperatorBlock(jsonScalarType),
-		schemaTypes.BlobOperatorBlock(blobScalarType),
-		schemaTypes.NotNullBlobOperatorBlock(blobScalarType),
+		idOpBlock,
+		intOpBlock,
+		floatOpBlock,
+		booleanOpBlock,
+		stringOpBlock,
+		jsonOpBlock,
+		blobOpBlock,
+		dateTimeOpBlock,
+
+		// Filter non null scalar blocks
+		notNullIntOpBlock,
+		notNullFloatOpBlock,
+		notNullBooleanOpBlock,
+		notNullStringOpBlock,
+		notNullJSONOpBlock,
+		notNullBlobOpBlock,
+
+		// Filter scalar list blocks
+		schemaTypes.IntListOperatorBlock(intOpBlock),
+		schemaTypes.FloatListOperatorBlock(floatOpBlock),
+		schemaTypes.BooleanListOperatorBlock(booleanOpBlock),
+		schemaTypes.StringListOperatorBlock(stringOpBlock),
+
+		// Filter non null scalar list blocks
+		schemaTypes.NotNullIntListOperatorBlock(notNullIntOpBlock),
+		schemaTypes.NotNullFloatListOperatorBlock(notNullFloatOpBlock),
+		schemaTypes.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
+		schemaTypes.NotNullStringListOperatorBlock(notNullStringOpBlock),
 
 		commitsOrderArg,
 		commitLinkObject,

@@ -29,28 +29,32 @@ func eq(condition, data any) (bool, error) {
 		return false, nil
 
 	case immutable.Option[bool]:
-		if !arr.HasValue() {
-			return condition == nil, nil
+		if arr.HasValue() {
+			data = arr.Value()
+		} else {
+			data = nil
 		}
-		data = arr.Value()
 
 	case immutable.Option[int64]:
-		if !arr.HasValue() {
-			return condition == nil, nil
+		if arr.HasValue() {
+			data = arr.Value()
+		} else {
+			data = nil
 		}
-		data = arr.Value()
 
 	case immutable.Option[float64]:
-		if !arr.HasValue() {
-			return condition == nil, nil
+		if arr.HasValue() {
+			data = arr.Value()
+		} else {
+			data = nil
 		}
-		data = arr.Value()
 
 	case immutable.Option[string]:
-		if !arr.HasValue() {
-			return condition == nil, nil
+		if arr.HasValue() {
+			data = arr.Value()
+		} else {
+			data = nil
 		}
-		data = arr.Value()
 	}
 
 	switch cn := condition.(type) {
