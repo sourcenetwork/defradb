@@ -1,0 +1,70 @@
+# Copyright 2024 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: 'Setup DefraDB Composite'
+
+description: 'Composite action to setup defradb'
+
+runs:
+  # This is a composite action, setting this is required.
+  using: "composite"
+
+  steps:
+    - name: Setup Go environment explicitly
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+        check-latest: true
+        cache: false
+
+    - name: Set cache paths
+      id: cache-paths
+      shell: bash # It's required for run step to specify shell in a composite action.
+      run: |
+        echo "GO_CACHE=$(go env GOCACHE)" >> "${GITHUB_OUTPUT}"
+        echo "GO_MODCACHE=$(go env GOMODCACHE)" >> "${GITHUB_OUTPUT}"
+        echo "CARGO_CACHE=~/.cargo" >> "${GITHUB_OUTPUT}"
+
+    - name: Go cache/restore
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+        path: |
+          ${{ steps.cache-paths.outputs.GO_CACHE }}
+          ${{ steps.cache-paths.outputs.GO_MODCACHE }}
+
+    - name: Cargo cache/restore
+      # A very cool post: https://blog.arriven.wtf/posts/rust-ci-cache
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          # Here are some directories we shouldn't forget about:
+          # ~/.cargo/.*
+          # ~/.cargo/bin/
+          # ~/.cargo/git/db/
+          # ~/.cargo/registry/cache/
+          # ~/.cargo/registry/index/
+          # **/target/*/*.d
+          # **/target/*/*.rlib
+          # **/target/*/.fingerprint
+          # **/target/*/build
+          # **/target/*/deps
+        path: |
+          ${{ steps.cache-paths.outputs.CARGO_CACHE }}
+          **/target/
+
+    - name: Restore modified time
+      uses: chetan/git-restore-mtime-action@v2
+
+    - name: Build dependencies
+      shell: bash # It's required for run step to specify shell in a composite action.
+      run: |
+        make deps:modules
+        make deps:test
