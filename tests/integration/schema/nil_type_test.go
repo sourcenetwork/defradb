@@ -13,8 +13,6 @@ package schema
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,14 +25,10 @@ func TestSchema_WithMissingType_Errors(t *testing.T) {
 						name:
 					}
 				`,
+				ExpectedError: "field type not specified. Object: User, Field: name",
 			},
 		},
 	}
 
-	require.Panics(
-		t,
-		func() {
-			testUtils.ExecuteTestCase(t, test)
-		},
-	)
+	testUtils.ExecuteTestCase(t, test)
 }

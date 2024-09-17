@@ -454,7 +454,7 @@ func fieldsFromAST(
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 	schemaOnly bool,
 ) ([]client.SchemaFieldDescription, []client.CollectionFieldDescription, error) {
-	kind, err := astTypeToKind(field.Type)
+	kind, err := astTypeToKind(hostObjectName, field)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -618,8 +618,11 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 	return defaultCRDTForFieldKind[kind], nil
 }
 
-func astTypeToKind(t ast.Type) (client.FieldKind, error) {
-	switch astTypeVal := t.(type) {
+func astTypeToKind(
+	hostObjectName string,
+	field *ast.FieldDefinition,
+) (client.FieldKind, error) {
+	switch astTypeVal := field.Type.(type) {
 	case *ast.List:
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
 		case *ast.NonNull:
@@ -677,7 +680,10 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		return client.FieldKind_None, ErrNonNullNotSupported
 
 	default:
-		return client.FieldKind_None, NewErrTypeNotFound(t.String())
+		if field.Type == nil {
+			return client.FieldKind_None, NewErrFieldTypeNotSpecified(hostObjectName, field.Name.Value)
+		}
+		return client.FieldKind_None, NewErrTypeNotFound(field.Type.String())
 	}
 }
 
