@@ -158,6 +158,7 @@ func defaultDirectivesType(
 		schemaTypes.IndexDirective(orderEnum, indexFieldInput),
 		schemaTypes.PrimaryDirective(),
 		schemaTypes.RelationDirective(),
+		schemaTypes.MaterializedDirective(),
 	}
 }
 

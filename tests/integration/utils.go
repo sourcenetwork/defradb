@@ -36,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
@@ -45,6 +46,7 @@ import (
 
 const (
 	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
+	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
 )
 
@@ -75,9 +77,17 @@ const (
 	GQLRequestMutationType MutationType = "gql"
 )
 
+type ViewType string
+
+const (
+	CachelessViewType    ViewType = "cacheless"
+	MaterializedViewType ViewType = "materialized"
+)
+
 var (
 	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
+	viewType     ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 )
@@ -103,6 +113,13 @@ func init() {
 		// mutation type.
 		mutationType = CollectionSaveMutationType
 	}
+
+	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
+		viewType = ViewType(value)
+	} else {
+		viewType = CachelessViewType
+	}
+
 	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
 		skipNetworkTests, _ = strconv.ParseBool(value)
 	}
@@ -144,6 +161,7 @@ func ExecuteTestCase(
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
+	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 
 	var clients []ClientType
 	if httpClient {
@@ -292,6 +310,9 @@ func performAction(
 
 	case CreateView:
 		createView(s, action)
+
+	case RefreshViews:
+		refreshViews(s, action)
 
 	case ConfigureMigration:
 		configureMigration(s, action)
@@ -1108,10 +1129,34 @@ func createView(
 	s *state,
 	action CreateView,
 ) {
+	if viewType == MaterializedViewType {
+		typeIndex := strings.Index(action.SDL, "\ttype ")
+		subStrSquigglyIndex := strings.Index(action.SDL[typeIndex:], "{")
+		squigglyIndex := typeIndex + subStrSquigglyIndex
+		action.SDL = strings.Join([]string{
+			action.SDL[:squigglyIndex],
+			"@",
+			types.MaterializedDirectiveLabel,
+			action.SDL[squigglyIndex:],
+			"",
+		}, "")
+	}
+
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
+}
+
+func refreshViews(
+	s *state,
+	action RefreshViews,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.RefreshViews(s.ctx, action.FilterOptions)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
 }
@@ -1711,6 +1756,15 @@ func executeRequest(
 		if action.Variables.HasValue() {
 			options = append(options, client.WithVariables(action.Variables.Value()))
 		}
+
+		if !expectedErrorRaised && viewType == MaterializedViewType {
+			err := node.RefreshViews(s.ctx, client.CollectionFetchOptions{})
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+		}
+
 		result := node.ExecRequest(ctx, action.Request, options...)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
@@ -2128,6 +2182,22 @@ func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutabl
 
 		if !isTypeSupported {
 			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+		}
+	}
+}
+
+func skipIfViewCacheTypeUnsupported(t testing.TB, supportedViewTypes immutable.Option[[]ViewType]) {
+	if supportedViewTypes.HasValue() {
+		var isTypeSupported bool
+		for _, supportedViewType := range supportedViewTypes.Value() {
+			if supportedViewType == viewType {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			t.Skipf("test does not support given view cache type. Type: %s", viewType)
 		}
 	}
 }

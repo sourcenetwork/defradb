@@ -46,7 +46,7 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						fullName: String
 						book: BookView
 					}

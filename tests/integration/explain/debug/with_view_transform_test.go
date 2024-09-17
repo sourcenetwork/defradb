@@ -44,8 +44,8 @@ var transformViewPattern = dataMap{
 
 func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with view with transform",
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
+		Description:        "Explain (debug) request with view with transform",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -61,7 +61,7 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						fullName: String
 					}
 				`,

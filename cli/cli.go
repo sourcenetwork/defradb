@@ -75,6 +75,7 @@ func NewDefraCommand() *cobra.Command {
 	view := MakeViewCommand()
 	view.AddCommand(
 		MakeViewAddCommand(),
+		MakeViewRefreshCommand(),
 	)
 
 	index := MakeIndexCommand()

@@ -34,7 +34,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type UserView {
+					type UserView @materialized(if: false) {
 						fullname: String
 					}
 				`,

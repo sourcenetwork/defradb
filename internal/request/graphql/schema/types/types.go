@@ -51,6 +51,9 @@ const (
 	DefaultDirectivePropJSON     = "json"
 	DefaultDirectivePropBlob     = "blob"
 
+	MaterializedDirectiveLabel  = "materialized"
+	MaterializedDirectivePropIf = "if"
+
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
 )
@@ -213,6 +216,23 @@ func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObje
 		Locations: []string{
 			gql.DirectiveLocationObject,
 			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
+func MaterializedDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name: MaterializedDirectiveLabel,
+		Description: `@materialized is a directive that specifies whether a collection is cached or not.
+ It will default to true if ommited.  If multiple @materialized directives are provided, they will aggregated
+ with OR logic (if any are true, the collection will be cached).`,
+		Args: gql.FieldConfigArgument{
+			MaterializedDirectivePropIf: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationSchema,
 		},
 	})
 }
