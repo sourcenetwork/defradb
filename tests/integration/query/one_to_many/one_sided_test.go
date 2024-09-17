@@ -52,7 +52,16 @@ func TestQueryOneToMany_OneSided(t *testing.T) {
 						}
 					}
 				}`,
-				ExpectedError: "The given field does not exist. Name: author",
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
