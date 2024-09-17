@@ -222,7 +222,7 @@ jobs:
             _${{ matrix.mutation-type }}\
             _${{ matrix.lens-type }}\
             _${{ matrix.acp-type }}\
-            _${{ matrix.matrix.view-type }}\
+            _${{ matrix.view-type }}\
             _${{ matrix.database-encryption }}\
           "
           path: coverage.txt
