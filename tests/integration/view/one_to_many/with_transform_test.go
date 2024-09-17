@@ -46,7 +46,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						fullName: String
 						books: [BookView]
 					}
@@ -96,8 +96,8 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 					"AuthorView": []map[string]any{
 						{
 							"fullName": "Ferdowsi",
-							"books": []any{
-								map[string]any{
+							"books": []map[string]any{
+								{
 									"name": "Shahnameh",
 								},
 							},
@@ -129,7 +129,7 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -177,11 +177,11 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 					"AuthorView": []map[string]any{
 						{
 							"name": "Ferdowsi",
-							"books": []any{
-								map[string]any{
+							"books": []map[string]any{
+								{
 									"name": "The Tragedy of Sohrab and Rostam",
 								},
-								map[string]any{
+								{
 									"name": "The Legend of Seyavash",
 								},
 							},

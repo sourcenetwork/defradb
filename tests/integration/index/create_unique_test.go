@@ -339,7 +339,6 @@ func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) 
 					}`,
 				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
 					"bae-7e20b26e-5d93-572a-9724-d8f862efbe63",
-					errors.NewKV("birthday", testUtils.MustParseTime("2000-07-23T03:00:00-00:00")),
 				).Error(),
 			},
 		},

@@ -37,6 +37,7 @@ jobs:
         lens-type: [wasm-time]
         acp-type: [local]
         database-encryption: [false]
+        view-type: [cacheless]
         include:
           - os: ubuntu-latest
             client-type: go
@@ -45,6 +46,7 @@ jobs:
             lens-type: wasm-time
             acp-type: local
             database-encryption: true
+            view-type: cacheless
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
@@ -52,6 +54,7 @@ jobs:
             lens-type: wazero
             acp-type: local
             database-encryption: false
+            view-type: cacheless
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
@@ -59,6 +62,7 @@ jobs:
             lens-type: wasmer
             acp-type: local
             database-encryption: false
+            view-type: cacheless
           - os: ubuntu-latest
             client-type: go
             database-type: badger-memory
@@ -66,6 +70,7 @@ jobs:
             lens-type: wasm-time
             acp-type: source-hub
             database-encryption: false
+            view-type: cacheless
           - os: ubuntu-latest
             client-type: http
             database-type: badger-memory
@@ -73,6 +78,7 @@ jobs:
             lens-type: wasm-time
             acp-type: source-hub
             database-encryption: false
+            view-type: cacheless
           - os: ubuntu-latest
             client-type: cli
             database-type: badger-memory
@@ -80,6 +86,15 @@ jobs:
             lens-type: wasm-time
             acp-type: source-hub
             database-encryption: false
+            view-type: cacheless
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            lens-type: wasm-time
+            acp-type: local
+            database-encryption: false
+            view-type: materialized
           - os: macos-latest
             client-type: go
             database-type: badger-memory
@@ -87,6 +102,7 @@ jobs:
             lens-type: wasm-time
             acp-type: local
             database-encryption: false
+            view-type: cacheless
 ## TODO: https://github.com/sourcenetwork/defradb/issues/2080
 ## Uncomment the lines below to Re-enable the windows build once this todo is resolved.
 ##        - os: windows-latest
@@ -96,6 +112,7 @@ jobs:
 ##          lens-type: wasm-time
 ##          acp-type: local
 ##          database-encryption: false
+##          view-type: cacheless
 
     runs-on: ${{ matrix.os }}
 
@@ -115,6 +132,7 @@ jobs:
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
       DEFRA_ACP_TYPE: ${{ matrix.acp-type }}
+      DEFRA_VIEW_TYPE: ${{ matrix.view-type }}
 
     steps:
       - name: Checkout code into the directory
@@ -204,6 +222,7 @@ jobs:
             _${{ matrix.mutation-type }}\
             _${{ matrix.lens-type }}\
             _${{ matrix.acp-type }}\
+            _${{ matrix.matrix.view-type }}\
             _${{ matrix.database-encryption }}\
           "
           path: coverage.txt

@@ -52,6 +52,7 @@ func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			ID:              uint32(colID),
 			RootID:          client.OrphanRootID,
 			SchemaVersionID: cfg.SourceSchemaVersionID,
+			IsMaterialized:  true,
 		}
 
 		col, err := description.SaveCollection(ctx, txn, desc)
@@ -96,6 +97,7 @@ func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
 				ID:              uint32(colID),
 				RootID:          sourceCol.RootID,
 				SchemaVersionID: cfg.DestinationSchemaVersionID,
+				IsMaterialized:  true,
 				Sources: []any{
 					&client.CollectionSource{
 						SourceCollectionID: sourceCol.ID,

@@ -134,6 +134,10 @@ func (w *Wrapper) AddView(
 	return w.client.AddView(ctx, query, sdl, transform)
 }
 
+func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+	return w.client.RefreshViews(ctx, opts)
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return w.client.SetMigration(ctx, config)
 }

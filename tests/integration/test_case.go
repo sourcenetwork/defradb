@@ -53,11 +53,23 @@ type TestCase struct {
 	// differences between acp types, or we need to temporarily document a bug.
 	SupportedACPTypes immutable.Option[[]ACPType]
 
+	// If provided a value, SupportedACPTypes will cause this test to be skipped
+	// if the active view type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between view types, or we need to temporarily document a bug.
+	SupportedViewTypes immutable.Option[[]ViewType]
+	
+	// Configuration for KMS to be used in the test
 	KMS KMS
 }
 
+// KMS contains the configuration for KMS to be used in the test
 type KMS struct {
+	// Activated indicates if the KMS should be used in the test
 	Activated     bool
+	// ExcludedTypes specifies the KMS types that should be excluded from the test.
+	// If none are specified all types will be used.
 	ExcludedTypes []KMSType
 }
 
@@ -219,6 +231,23 @@ type CreateView struct {
 
 	// An optional Lens transform to add to the view.
 	Transform immutable.Option[model.Lens]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
+type RefreshViews struct {
+	// NodeID may hold the ID (index) of a node to create this View on.
+	//
+	// If a value is not provided the view will be created on all nodes.
+	NodeID immutable.Option[int]
+
+	// The set of fetch options for the views.
+	FilterOptions client.CollectionFetchOptions
 
 	// Any error expected from the action. Optional.
 	//

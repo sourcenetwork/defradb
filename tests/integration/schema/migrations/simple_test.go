@@ -52,10 +52,12 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 					{
 						ID:              1,
 						SchemaVersionID: "does not exist",
+						IsMaterialized:  true,
 					},
 					{
 						ID:              2,
 						SchemaVersionID: "also does not exist",
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -129,10 +131,12 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					{
 						ID:              1,
 						SchemaVersionID: "does not exist",
+						IsMaterialized:  true,
 					},
 					{
 						ID:              2,
 						SchemaVersionID: "also does not exist",
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -154,10 +158,12 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					},
 					{
 						ID:              3,
+						IsMaterialized:  true,
 						SchemaVersionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 					},
 					{
 						ID:              4,
+						IsMaterialized:  true,
 						SchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
 						Sources: []any{
 							&client.CollectionSource{
@@ -233,10 +239,12 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					{
 						ID:              1,
 						SchemaVersionID: "a",
+						IsMaterialized:  true,
 					},
 					{
 						ID:              2,
 						SchemaVersionID: "b",
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -259,6 +267,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					{
 						ID:              3,
 						SchemaVersionID: "c",
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,

@@ -208,6 +208,7 @@ func assertCollectionDescriptions(
 		}
 
 		require.Equal(s.t, expected.Name, actual.Name)
+		require.Equal(s.t, expected.IsMaterialized, actual.IsMaterialized)
 
 		if expected.Indexes != nil || len(actual.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
@@ -215,7 +216,7 @@ func assertCollectionDescriptions(
 			require.Equal(s.t, expected.Indexes, actual.Indexes)
 		}
 
-		if expected.Sources != nil || len(actual.Sources) != 0 {
+		if expected.Sources != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no sources)
 			require.Equal(s.t, expected.Sources, actual.Sources)

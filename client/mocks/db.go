@@ -1536,6 +1536,53 @@ func (_c *DB_PrintDump_Call) RunAndReturn(run func(context.Context) error) *DB_P
 	return _c
 }
 
+// RefreshViews provides a mock function with given fields: _a0, _a1
+func (_m *DB) RefreshViews(_a0 context.Context, _a1 client.CollectionFetchOptions) error {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RefreshViews")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_RefreshViews_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RefreshViews'
+type DB_RefreshViews_Call struct {
+	*mock.Call
+}
+
+// RefreshViews is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 client.CollectionFetchOptions
+func (_e *DB_Expecter) RefreshViews(_a0 interface{}, _a1 interface{}) *DB_RefreshViews_Call {
+	return &DB_RefreshViews_Call{Call: _e.mock.On("RefreshViews", _a0, _a1)}
+}
+
+func (_c *DB_RefreshViews_Call) Run(run func(_a0 context.Context, _a1 client.CollectionFetchOptions)) *DB_RefreshViews_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(client.CollectionFetchOptions))
+	})
+	return _c
+}
+
+func (_c *DB_RefreshViews_Call) Return(_a0 error) *DB_RefreshViews_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_RefreshViews_Call) RunAndReturn(run func(context.Context, client.CollectionFetchOptions) error) *DB_RefreshViews_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveP2PCollections provides a mock function with given fields: ctx, collectionIDs
 func (_m *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	ret := _m.Called(ctx, collectionIDs)
