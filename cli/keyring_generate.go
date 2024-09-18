@@ -36,7 +36,7 @@ Example:
   defradb keyring generate
 
 Example: with no encryption key
-  defradb keyring generate --no-encryption-key
+  defradb keyring generate --no-encryption
 
 Example: with no peer key
   defradb keyring generate --no-peer-key
@@ -73,7 +73,7 @@ Example: with system keyring
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&noEncryptionKey, "no-encryption-key", false,
+	cmd.Flags().BoolVar(&noEncryptionKey, "no-encryption", false,
 		"Skip generating an encryption key. Encryption at rest will be disabled")
 	cmd.Flags().BoolVar(&noPeerKey, "no-peer-key", false,
 		"Skip generating a peer key.")

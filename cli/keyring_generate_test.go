@@ -40,7 +40,7 @@ func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
 	require.NoError(t, err)
 
 	cmd := NewDefraCommand()
-	cmd.SetArgs([]string{"keyring", "generate", "--no-encryption-key", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "generate", "--no-encryption", "--rootdir", rootdir})
 
 	err = cmd.Execute()
 	require.NoError(t, err)

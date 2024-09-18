@@ -43,31 +43,31 @@ var configPaths = []string{
 
 // configFlags is a mapping of cli flag names to config keys to bind.
 var configFlags = map[string]string{
-	"log-level":           "log.level",
-	"log-output":          "log.output",
-	"log-format":          "log.format",
-	"log-stacktrace":      "log.stacktrace",
-	"log-source":          "log.source",
-	"log-overrides":       "log.overrides",
-	"no-log-color":        "log.colordisabled",
-	"url":                 "api.address",
-	"max-txn-retries":     "datastore.maxtxnretries",
-	"store":               "datastore.store",
-	"valuelogfilesize":    "datastore.badger.valuelogfilesize",
-	"peers":               "net.peers",
-	"p2paddr":             "net.p2paddresses",
-	"no-p2p":              "net.p2pdisabled",
-	"allowed-origins":     "api.allowed-origins",
-	"pubkeypath":          "api.pubkeypath",
-	"privkeypath":         "api.privkeypath",
-	"keyring-namespace":   "keyring.namespace",
-	"keyring-backend":     "keyring.backend",
-	"keyring-path":        "keyring.path",
-	"no-keyring":          "keyring.disabled",
-	"no-encryption-key":   "keyring.noencryptionkey",
-	"keyring-secret-file": "keyring.secretfile",
-	"source-hub-address":  "acp.sourceHub.address",
-	"development":         "development",
+	"log-level":          "log.level",
+	"log-output":         "log.output",
+	"log-format":         "log.format",
+	"log-stacktrace":     "log.stacktrace",
+	"log-source":         "log.source",
+	"log-overrides":      "log.overrides",
+	"no-log-color":       "log.colordisabled",
+	"url":                "api.address",
+	"max-txn-retries":    "datastore.maxtxnretries",
+	"store":              "datastore.store",
+	"no-encryption":      "datastore.noencryption",
+	"valuelogfilesize":   "datastore.badger.valuelogfilesize",
+	"peers":              "net.peers",
+	"p2paddr":            "net.p2paddresses",
+	"no-p2p":             "net.p2pdisabled",
+	"allowed-origins":    "api.allowed-origins",
+	"pubkeypath":         "api.pubkeypath",
+	"privkeypath":        "api.privkeypath",
+	"keyring-namespace":  "keyring.namespace",
+	"keyring-backend":    "keyring.backend",
+	"keyring-path":       "keyring.path",
+	"no-keyring":         "keyring.disabled",
+	"source-hub-address": "acp.sourceHub.address",
+	"development":        "development",
+	"secret-file":        "secretfile",
 }
 
 // configDefaults contains default values for config entries.
@@ -88,7 +88,6 @@ var configDefaults = map[string]any{
 	"keyring.disabled":                  false,
 	"keyring.namespace":                 "defradb",
 	"keyring.path":                      "keys",
-	"keyring.secretfile":                ".env",
 	"log.caller":                        false,
 	"log.colordisabled":                 false,
 	"log.format":                        "text",
@@ -96,6 +95,7 @@ var configDefaults = map[string]any{
 	"log.output":                        "stderr",
 	"log.source":                        false,
 	"log.stacktrace":                    false,
+	"secretfile":                        ".env",
 }
 
 // defaultConfig returns a new config with default values.
@@ -164,7 +164,7 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	}
 
 	// load environment variables from .env file if one exists
-	_ = godotenv.Load(cfg.GetString("keyring.secretfile"))
+	_ = godotenv.Load(cfg.GetString("secretfile"))
 
 	// set logging config
 	corelog.SetConfig(corelog.Config{

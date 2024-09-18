@@ -92,10 +92,6 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		cfg.GetString(configFlags["keyring-path"]),
 		"Path to store encrypted keys when using the file backend",
 	)
-	cmd.PersistentFlags().String(
-		"keyring-secret-file",
-		cfg.GetString(configFlags["keyring-secret-file"]),
-		"Path to the file containing the keyring secret")
 	cmd.PersistentFlags().Bool(
 		"no-keyring",
 		cfg.GetBool(configFlags["no-keyring"]),
@@ -106,5 +102,9 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		cfg.GetString(configFlags["source-hub-address"]),
 		"The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor",
 	)
+	cmd.PersistentFlags().String(
+		"secret-file",
+		cfg.GetString(configFlags["secret-file"]),
+		"Path to the file containing secrets")
 	return cmd
 }

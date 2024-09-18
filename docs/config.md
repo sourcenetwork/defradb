@@ -21,6 +21,10 @@ The number of retries to make in the event of a transaction conflict. Defaults t
 
 Currently this is only used within the P2P system and will not affect operations initiated by users.
 
+## `datastore.noencryption`
+
+Skip generating an encryption key. Encryption at rest will be disabled. **WARNING**: This cannot be undone.
+
 ## `datastore.badger.path`
 
 The path to the database data file(s). Defaults to `data`.
@@ -156,3 +160,7 @@ transactions created by the node is stored. Required when using `acp.type`:`sour
 The SourceHub address of the actor that client-side actions should permit to make SourceHub actions on
 their behalf.  This is a client-side only config param.  It is required if the client wishes to make
 SourceHub ACP requests in order to create protected data.
+
+## `secretfile`
+
+Path to the file containing secrets. Defaults to `.env`.

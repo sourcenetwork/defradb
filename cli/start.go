@@ -119,7 +119,7 @@ func MakeStartCommand() *cobra.Command {
 
 				// load the optional encryption key
 				encryptionKey, err := kr.Get(encryptionKeyName)
-				if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("keyring.noencryptionkey") {
+				if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
 					encryptionKey, err = crypto.GenerateAES256()
 					if err != nil {
 						return err
@@ -247,8 +247,8 @@ func MakeStartCommand() *cobra.Command {
 		"Enables a set of features that make development easier but should not be enabled in production",
 	)
 	cmd.Flags().Bool(
-		"no-encryption-key",
-		cfg.GetBool(configFlags["no-encryption-key"]),
+		"no-encryption",
+		cfg.GetBool(configFlags["no-encryption"]),
 		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
 	return cmd
 }
