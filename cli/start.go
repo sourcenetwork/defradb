@@ -100,8 +100,6 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return err
 				}
-<<<<<<< HEAD
-=======
 				// load the required peer key or generate one if it doesn't exist
 				peerKey, err := kr.Get(peerKeyName)
 				if err != nil && errors.Is(err, keyring.ErrNotFound) {
@@ -134,7 +132,6 @@ func MakeStartCommand() *cobra.Command {
 				} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
->>>>>>> 2cdf9388 (make keyring non-interactive)
 				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
