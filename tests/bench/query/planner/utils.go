@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -41,7 +42,7 @@ func runQueryParserBench(
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ast, _ := parser.BuildRequestAST(query)
-		_, errs := parser.Parse(ast)
+		_, errs := parser.Parse(ast, &client.GQLOptions{})
 		if errs != nil {
 			return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 		}
@@ -69,7 +70,7 @@ func runMakePlanBench(
 	}
 
 	ast, _ := parser.BuildRequestAST(query)
-	q, errs := parser.Parse(ast)
+	q, errs := parser.Parse(ast, &client.GQLOptions{})
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}

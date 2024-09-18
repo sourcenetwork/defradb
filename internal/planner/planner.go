@@ -286,6 +286,11 @@ func findFilteredByRelationFields(
 }
 
 func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
+	if !node.childSide.relFieldDef.HasValue() {
+		// If the relation is one sided we cannot invert the join, so return early
+		return nil
+	}
+
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
@@ -295,8 +300,8 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
-			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Name)
-			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Name, Index: subInd}
+			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
+			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
 			fieldFilter := filter.UnwrapRelation(filter.CopyField(
 				parentPlan.selectNode.filter,
 				relatedField,

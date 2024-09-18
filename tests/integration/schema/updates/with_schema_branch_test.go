@@ -139,12 +139,14 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						// The original collection version is present, it has no source and is inactive (has no name).
 						ID:              1,
 						SchemaVersionID: schemaVersion1ID,
+						IsMaterialized:  true,
 					},
 					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
 						ID:              2,
 						SchemaVersionID: schemaVersion2ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -157,6 +159,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						ID:              3,
 						Name:            immutable.Some("Users"),
 						SchemaVersionID: schemaVersion3ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -268,12 +271,14 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						// The original collection version is present, it has no source and is inactive (has no name).
 						ID:              1,
 						SchemaVersionID: schemaVersion1ID,
+						IsMaterialized:  true,
 					},
 					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
 						ID:              2,
 						SchemaVersionID: schemaVersion2ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -285,6 +290,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						// as source.
 						ID:              3,
 						SchemaVersionID: schemaVersion3ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -297,6 +303,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						ID:              4,
 						Name:            immutable.Some("Users"),
 						SchemaVersionID: schemaVersion4ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 3,
@@ -378,12 +385,14 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 						// The original collection version is present, it has no source and is inactive (has no name).
 						ID:              1,
 						SchemaVersionID: schemaVersion1ID,
+						IsMaterialized:  true,
 					},
 					{
 						// The collection version for schema version 2 is present and is active, it has the first collection as a source
 						ID:              2,
 						Name:            immutable.Some("Users"),
 						SchemaVersionID: schemaVersion2ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -395,6 +404,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 						// as source.
 						ID:              3,
 						SchemaVersionID: schemaVersion3ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -510,12 +520,14 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						// The original collection version is present, it has no source and is inactive (has no name).
 						ID:              1,
 						SchemaVersionID: schemaVersion1ID,
+						IsMaterialized:  true,
 					},
 					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
 						ID:              2,
 						SchemaVersionID: schemaVersion2ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -527,6 +539,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						// as source.
 						ID:              3,
 						SchemaVersionID: schemaVersion3ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 1,
@@ -539,6 +552,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						ID:              4,
 						Name:            immutable.Some("Users"),
 						SchemaVersionID: schemaVersion4ID,
+						IsMaterialized:  true,
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: 2,
@@ -584,6 +598,7 @@ collection at a specific version`,
 						// The original collection version is present, it has no source and is inactive (has no name).
 						ID:              1,
 						SchemaVersionID: schemaVersion1ID,
+						IsMaterialized:  true,
 					},
 				},
 			},

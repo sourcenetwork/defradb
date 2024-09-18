@@ -526,17 +526,24 @@ func (_c *DB_Events_Call) RunAndReturn(run func() *event.Bus) *DB_Events_Call {
 	return _c
 }
 
-// ExecRequest provides a mock function with given fields: ctx, request
-func (_m *DB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
-	ret := _m.Called(ctx, request)
+// ExecRequest provides a mock function with given fields: ctx, request, opts
+func (_m *DB) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, request)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExecRequest")
 	}
 
 	var r0 *client.RequestResult
-	if rf, ok := ret.Get(0).(func(context.Context, string) *client.RequestResult); ok {
-		r0 = rf(ctx, request)
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...client.RequestOption) *client.RequestResult); ok {
+		r0 = rf(ctx, request, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.RequestResult)
@@ -554,13 +561,21 @@ type DB_ExecRequest_Call struct {
 // ExecRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request string
-func (_e *DB_Expecter) ExecRequest(ctx interface{}, request interface{}) *DB_ExecRequest_Call {
-	return &DB_ExecRequest_Call{Call: _e.mock.On("ExecRequest", ctx, request)}
+//   - opts ...client.RequestOption
+func (_e *DB_Expecter) ExecRequest(ctx interface{}, request interface{}, opts ...interface{}) *DB_ExecRequest_Call {
+	return &DB_ExecRequest_Call{Call: _e.mock.On("ExecRequest",
+		append([]interface{}{ctx, request}, opts...)...)}
 }
 
-func (_c *DB_ExecRequest_Call) Run(run func(ctx context.Context, request string)) *DB_ExecRequest_Call {
+func (_c *DB_ExecRequest_Call) Run(run func(ctx context.Context, request string, opts ...client.RequestOption)) *DB_ExecRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		variadicArgs := make([]client.RequestOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(client.RequestOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -570,7 +585,7 @@ func (_c *DB_ExecRequest_Call) Return(_a0 *client.RequestResult) *DB_ExecRequest
 	return _c
 }
 
-func (_c *DB_ExecRequest_Call) RunAndReturn(run func(context.Context, string) *client.RequestResult) *DB_ExecRequest_Call {
+func (_c *DB_ExecRequest_Call) RunAndReturn(run func(context.Context, string, ...client.RequestOption) *client.RequestResult) *DB_ExecRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1470,6 +1485,53 @@ func (_c *DB_PrintDump_Call) Return(_a0 error) *DB_PrintDump_Call {
 }
 
 func (_c *DB_PrintDump_Call) RunAndReturn(run func(context.Context) error) *DB_PrintDump_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RefreshViews provides a mock function with given fields: _a0, _a1
+func (_m *DB) RefreshViews(_a0 context.Context, _a1 client.CollectionFetchOptions) error {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RefreshViews")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_RefreshViews_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RefreshViews'
+type DB_RefreshViews_Call struct {
+	*mock.Call
+}
+
+// RefreshViews is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 client.CollectionFetchOptions
+func (_e *DB_Expecter) RefreshViews(_a0 interface{}, _a1 interface{}) *DB_RefreshViews_Call {
+	return &DB_RefreshViews_Call{Call: _e.mock.On("RefreshViews", _a0, _a1)}
+}
+
+func (_c *DB_RefreshViews_Call) Run(run func(_a0 context.Context, _a1 client.CollectionFetchOptions)) *DB_RefreshViews_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(client.CollectionFetchOptions))
+	})
+	return _c
+}
+
+func (_c *DB_RefreshViews_Call) Return(_a0 error) *DB_RefreshViews_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_RefreshViews_Call) RunAndReturn(run func(context.Context, client.CollectionFetchOptions) error) *DB_RefreshViews_Call {
 	_c.Call.Return(run)
 	return _c
 }

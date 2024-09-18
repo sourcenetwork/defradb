@@ -42,7 +42,7 @@ func TestView_OneToMany(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -118,7 +118,7 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [Book]
 					}
@@ -157,7 +157,7 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -212,7 +212,7 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -268,7 +268,7 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -333,7 +333,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type BookView {
+					type BookView @materialized(if: false) {
 						name: String
 						author: AuthorView
 					}
@@ -352,7 +352,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type BookView2 {
+					type BookView2 @materialized(if: false) {
 						name: String
 						author: AuthorView2
 					}
@@ -393,7 +393,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						books: [BookView]
 					}
@@ -412,7 +412,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorViewView {
+					type AuthorViewView @materialized(if: false) {
 						name: String
 						books: [BookViewView]
 					}

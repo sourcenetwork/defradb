@@ -112,7 +112,10 @@ func Decode(encdoc EncodedDocument, collectionDefinition client.CollectionDefini
 		return nil, err
 	}
 
-	doc := client.NewDocWithID(docID, collectionDefinition)
+	doc, err := client.NewDocWithID(docID, collectionDefinition)
+	if err != nil {
+		return nil, err
+	}
 	properties, err := encdoc.Properties(false)
 	if err != nil {
 		return nil, err

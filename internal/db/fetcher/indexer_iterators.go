@@ -141,6 +141,9 @@ func (iter *indexPrefixIterator) Next() (indexIterResult, error) {
 }
 
 func (iter *indexPrefixIterator) Close() error {
+	if iter.resultIter == nil {
+		return nil
+	}
 	return iter.resultIter.Close()
 }
 

@@ -37,4 +37,5 @@ Manage (add) views withing a running DefraDB instance
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client view add](defradb_client_view_add.md)	 - Add new view
+* [defradb client view refresh](defradb_client_view_refresh.md)	 - Refresh views.
 

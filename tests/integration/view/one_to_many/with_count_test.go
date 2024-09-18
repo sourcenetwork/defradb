@@ -42,7 +42,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						_count: Int
 					}
@@ -108,7 +108,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 						numberOfBooks: Int
 					}
@@ -182,7 +182,7 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type AuthorView {
+					type AuthorView @materialized(if: false) {
 						name: String
 					}
 				`,

@@ -81,7 +81,7 @@ func (c *httpClient) request(req *http.Request) ([]byte, error) {
 	// attempt to parse json error
 	var errRes errorResponse
 	if err := json.Unmarshal(data, &errRes); err != nil {
-		return nil, fmt.Errorf("%s", data)
+		return nil, fmt.Errorf("%v: %s", res.StatusCode, data)
 	}
 	return nil, errRes.Error
 }

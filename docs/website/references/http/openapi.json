@@ -83,6 +83,7 @@
                     "Fields": {
                         "items": {
                             "properties": {
+                                "DefaultValue": {},
                                 "ID": {
                                     "maximum": 4294967295,
                                     "minimum": 0,
@@ -136,6 +137,9 @@
                         },
                         "type": "array"
                     },
+                    "IsMaterialized": {
+                        "type": "boolean"
+                    },
                     "Name": {},
                     "Policy": {},
                     "RootID": {
@@ -160,6 +164,7 @@
                             "Fields": {
                                 "items": {
                                     "properties": {
+                                        "DefaultValue": {},
                                         "ID": {
                                             "maximum": 4294967295,
                                             "minimum": 0,
@@ -212,6 +217,9 @@
                                     "type": "object"
                                 },
                                 "type": "array"
+                            },
+                            "IsMaterialized": {
+                                "type": "boolean"
                             },
                             "Name": {},
                             "Policy": {},
@@ -316,8 +324,15 @@
             },
             "graphql_request": {
                 "properties": {
+                    "operationName": {
+                        "type": "string"
+                    },
                     "query": {
                         "type": "string"
+                    },
+                    "variables": {
+                        "additionalProperties": {},
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -2039,6 +2054,60 @@
                             }
                         },
                         "description": "The created collection and embedded schemas for the added view."
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "view"
+                ]
+            }
+        },
+        "/view/refresh": {
+            "post": {
+                "description": "Refresh view(s) by name, schema id, or version id.",
+                "operationId": "view_refresh",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Collection schema root",
+                        "in": "query",
+                        "name": "schema_root",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Collection schema version id",
+                        "in": "query",
+                        "name": "version_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "If true, inactive collections will be returned in addition to active ones",
+                        "in": "query",
+                        "name": "get_inactive",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"

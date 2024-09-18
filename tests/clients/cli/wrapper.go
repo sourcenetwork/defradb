@@ -281,6 +281,25 @@ func (w *Wrapper) AddView(
 	return defs, nil
 }
 
+func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	args := []string{"client", "view", "refresh"}
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		args = append(args, "--version", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		args = append(args, "--schema", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
 	args := []string{"client", "schema", "migration", "set"}
 
@@ -396,11 +415,28 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
+	opts ...client.RequestOption,
 ) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
 
+	options := &client.GQLOptions{}
+	for _, o := range opts {
+		o(options)
+	}
+
 	result := &client.RequestResult{}
+	if options.OperationName != "" {
+		args = append(args, "--operation", options.OperationName)
+	}
+	if len(options.Variables) > 0 {
+		enc, err := json.Marshal(options.Variables)
+		if err != nil {
+			result.GQL.Errors = []error{err}
+			return result
+		}
+		args = append(args, "--variables", string(enc))
+	}
 
 	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
