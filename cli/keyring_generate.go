@@ -26,13 +26,17 @@ func MakeKeyringGenerateCommand() *cobra.Command {
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
+The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+This can also be done with a .env file in the working directory or at a path
+defined with the --keyring-secret-file flag.
+
 WARNING: This will overwrite existing keys in the keyring.
 
 Example:
   defradb keyring generate
 
 Example: with no encryption key
-  defradb keyring generate --no-encryption-key
+  defradb keyring generate --no-encryption
 
 Example: with no peer key
   defradb keyring generate --no-peer-key
@@ -69,7 +73,7 @@ Example: with system keyring
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&noEncryptionKey, "no-encryption-key", false,
+	cmd.Flags().BoolVar(&noEncryptionKey, "no-encryption", false,
 		"Skip generating an encryption key. Encryption at rest will be disabled")
 	cmd.Flags().BoolVar(&noPeerKey, "no-peer-key", false,
 		"Skip generating a peer key.")

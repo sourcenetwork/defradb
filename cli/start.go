@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -97,17 +98,38 @@ func MakeStartCommand() *cobra.Command {
 			if !cfg.GetBool("keyring.disabled") {
 				kr, err := openKeyring(cmd)
 				if err != nil {
-					return NewErrKeyringHelp(err)
+					return err
 				}
-				// load the required peer key
+				// load the required peer key or generate one if it doesn't exist
 				peerKey, err := kr.Get(peerKeyName)
-				if err != nil {
-					return NewErrKeyringHelp(err)
+				if err != nil && errors.Is(err, keyring.ErrNotFound) {
+					peerKey, err = crypto.GenerateEd25519()
+					if err != nil {
+						return err
+					}
+					err = kr.Set(peerKeyName, peerKey)
+					if err != nil {
+						return err
+					}
+					log.Info("generated peer key")
+				} else if err != nil {
+					return err
 				}
 				opts = append(opts, net.WithPrivateKey(peerKey))
+
 				// load the optional encryption key
 				encryptionKey, err := kr.Get(encryptionKeyName)
-				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+				if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
+					encryptionKey, err = crypto.GenerateAES256()
+					if err != nil {
+						return err
+					}
+					err = kr.Set(encryptionKeyName, encryptionKey)
+					if err != nil {
+						return err
+					}
+					log.Info("generated encryption key")
+				} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
 				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
@@ -224,5 +246,9 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetBool(configFlags["development"]),
 		"Enables a set of features that make development easier but should not be enabled in production",
 	)
+	cmd.Flags().Bool(
+		"no-encryption",
+		cfg.GetBool(configFlags["no-encryption"]),
+		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
 	return cmd
 }

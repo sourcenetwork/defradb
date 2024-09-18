@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -52,6 +53,7 @@ var configFlags = map[string]string{
 	"url":                "api.address",
 	"max-txn-retries":    "datastore.maxtxnretries",
 	"store":              "datastore.store",
+	"no-encryption":      "datastore.noencryption",
 	"valuelogfilesize":   "datastore.badger.valuelogfilesize",
 	"peers":              "net.peers",
 	"p2paddr":            "net.p2paddresses",
@@ -65,6 +67,7 @@ var configFlags = map[string]string{
 	"no-keyring":         "keyring.disabled",
 	"source-hub-address": "acp.sourceHub.address",
 	"development":        "development",
+	"secret-file":        "secretfile",
 }
 
 // configDefaults contains default values for config entries.
@@ -92,6 +95,7 @@ var configDefaults = map[string]any{
 	"log.output":                        "stderr",
 	"log.source":                        false,
 	"log.stacktrace":                    false,
+	"secretfile":                        ".env",
 }
 
 // defaultConfig returns a new config with default values.
@@ -157,6 +161,12 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 		if path != "" && !filepath.IsAbs(path) {
 			cfg.Set(key, filepath.Join(rootdir, path))
 		}
+	}
+
+	// load environment variables from .env file if one exists
+	err = godotenv.Load(cfg.GetString("secretfile"))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, err
 	}
 
 	// set logging config
