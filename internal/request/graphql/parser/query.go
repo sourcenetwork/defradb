@@ -101,53 +101,77 @@ func parseSelect(
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-	// parse arguments
 	for _, argument := range field.Arguments {
 		name := argument.Name.Value
 		value := arguments[name]
 
-		// parse filter
 		switch name {
 		case request.FilterClause:
-			slct.Filter = immutable.Some(request.Filter{
-				Conditions: value.(map[string]any),
-			})
+			if v, ok := value.(map[string]any); ok {
+				slct.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
+
 		case request.DocIDArgName: // parse single DocID field
-			slct.DocIDs = immutable.Some([]string{value.(string)})
+			if v, ok := value.(string); ok {
+				slct.DocIDs = immutable.Some([]string{v})
+			}
+
 		case request.DocIDsArgName:
-			docIDValues := value.([]any)
-			docIDs := make([]string, len(docIDValues))
-			for i, value := range docIDValues {
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, value := range v {
 				docIDs[i] = value.(string)
 			}
 			slct.DocIDs = immutable.Some(docIDs)
+
 		case request.Cid: // parse single CID query field
-			slct.CID = immutable.Some(value.(string))
+			if v, ok := value.(string); ok {
+				slct.CID = immutable.Some(v)
+			}
+
 		case request.LimitClause: // parse limit/offset
-			slct.Limit = immutable.Some(uint64(value.(int32)))
+			if v, ok := value.(int32); ok {
+				slct.Limit = immutable.Some(uint64(v))
+			}
+
 		case request.OffsetClause: // parse limit/offset
-			slct.Offset = immutable.Some(uint64(value.(int32)))
+			if v, ok := value.(int32); ok {
+				slct.Offset = immutable.Some(uint64(v))
+			}
+
 		case request.OrderClause: // parse order by
-			conditionsAST := argument.Value.(*ast.ObjectValue)
-			conditionsValue := value.(map[string]any)
-			conditions, err := ParseConditionsInOrder(conditionsAST, conditionsValue)
+			v, ok := value.(map[string]any)
+			if !ok {
+				continue // value is nil
+			}
+			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), v)
 			if err != nil {
 				return nil, err
 			}
 			slct.OrderBy = immutable.Some(request.OrderBy{
 				Conditions: conditions,
 			})
+
 		case request.GroupByClause:
-			fieldsValue := value.([]any)
-			fields := make([]string, len(fieldsValue))
-			for i, v := range fieldsValue {
-				fields[i] = v.(string)
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			fields := make([]string, len(v))
+			for i, c := range v {
+				fields[i] = c.(string)
 			}
 			slct.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,
 			})
+
 		case request.ShowDeleted:
-			slct.ShowDeleted = value.(bool)
+			if v, ok := value.(bool); ok {
+				slct.ShowDeleted = v
+			}
 		}
 	}
 
@@ -175,96 +199,29 @@ func parseAggregate(
 	parent *gql.Object,
 	field *ast.Field,
 ) (*request.Aggregate, error) {
-	targets := make([]*request.AggregateTarget, len(field.Arguments))
-
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-	for i, argument := range field.Arguments {
+	var targets []*request.AggregateTarget
+	for _, argument := range field.Arguments {
 		name := argument.Name.Value
-		value := arguments[name]
 
-		switch v := value.(type) {
+		switch v := arguments[name].(type) {
 		case string:
-			targets[i] = &request.AggregateTarget{
+			targets = append(targets, &request.AggregateTarget{
 				HostName: v,
-			}
+			})
+
 		case map[string]any:
-			var childName string
-			var filter immutable.Option[request.Filter]
-			var limit immutable.Option[uint64]
-			var offset immutable.Option[uint64]
-			var order immutable.Option[request.OrderBy]
-
-			for _, f := range argument.Value.(*ast.ObjectValue).Fields {
-				switch f.Name.Value {
-				case request.FieldName:
-					childName = v[request.FieldName].(string)
-
-				case request.FilterClause:
-					filter = immutable.Some(request.Filter{
-						Conditions: v[request.FilterClause].(map[string]any),
-					})
-
-				case request.LimitClause:
-					limit = immutable.Some(uint64(v[request.LimitClause].(int32)))
-
-				case request.OffsetClause:
-					offset = immutable.Some(uint64(v[request.OffsetClause].(int32)))
-
-				case request.OrderClause:
-					switch conditionsAST := f.Value.(type) {
-					case *ast.EnumValue:
-						// For inline arrays the order arg will be a simple enum declaring the order direction
-						var orderDirection request.OrderDirection
-						switch v[request.OrderClause].(int) {
-						case 0:
-							orderDirection = request.ASC
-
-						case 1:
-							orderDirection = request.DESC
-
-						default:
-							return nil, ErrInvalidOrderDirection
-						}
-
-						order = immutable.Some(request.OrderBy{
-							Conditions: []request.OrderCondition{{
-								Direction: orderDirection,
-							}},
-						})
-
-					case *ast.ObjectValue:
-						// For relations the order arg will be the complex order object as used by the host object
-						// for non-aggregate ordering
-						conditionsValue := v[request.OrderClause].(map[string]any)
-						conditions, err := ParseConditionsInOrder(conditionsAST, conditionsValue)
-						if err != nil {
-							return nil, err
-						}
-						order = immutable.Some(request.OrderBy{
-							Conditions: conditions,
-						})
-					}
-				}
+			value, ok := argument.Value.(*ast.ObjectValue)
+			if !ok {
+				continue // value is nil
 			}
-
-			targets[i] = &request.AggregateTarget{
-				HostName:  name,
-				ChildName: immutable.Some(childName),
-				Filterable: request.Filterable{
-					Filter: filter,
-				},
-				Limitable: request.Limitable{
-					Limit: limit,
-				},
-				Offsetable: request.Offsetable{
-					Offset: offset,
-				},
-				Orderable: request.Orderable{
-					OrderBy: order,
-				},
+			target, err := parseAggregateTarget(name, value, v)
+			if err != nil {
+				return nil, err
 			}
+			targets = append(targets, target)
 		}
 	}
 
@@ -274,5 +231,93 @@ func parseAggregate(
 			Alias: getFieldAlias(field),
 		},
 		Targets: targets,
+	}, nil
+}
+
+func parseAggregateTarget(
+	hostName string,
+	value *ast.ObjectValue,
+	arguments map[string]any,
+) (*request.AggregateTarget, error) {
+	var childName string
+	var filter immutable.Option[request.Filter]
+	var limit immutable.Option[uint64]
+	var offset immutable.Option[uint64]
+	var order immutable.Option[request.OrderBy]
+
+	for _, f := range value.Fields {
+		name := f.Name.Value
+		value := arguments[name]
+
+		switch name {
+		case request.FieldName:
+			if v, ok := value.(string); ok {
+				childName = v
+			}
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				filter = immutable.Some(request.Filter{Conditions: v})
+			}
+
+		case request.LimitClause:
+			if v, ok := value.(int32); ok {
+				limit = immutable.Some(uint64(v))
+			}
+
+		case request.OffsetClause:
+			if v, ok := value.(int32); ok {
+				offset = immutable.Some(uint64(v))
+			}
+
+		case request.OrderClause:
+			switch conditionsAST := f.Value.(type) {
+			case *ast.EnumValue:
+				// For inline arrays the order arg will be a simple enum declaring the order direction
+				v, ok := value.(int)
+				if !ok {
+					continue // value is nil
+				}
+				dir, err := parseOrderDirection(v)
+				if err != nil {
+					return nil, err
+				}
+				order = immutable.Some(request.OrderBy{
+					Conditions: []request.OrderCondition{{Direction: dir}},
+				})
+
+			case *ast.ObjectValue:
+				// For relations the order arg will be the complex order object as used by the host object
+				// for non-aggregate ordering
+				v, ok := value.(map[string]any)
+				if !ok {
+					continue // value is nil
+				}
+				conditions, err := ParseConditionsInOrder(conditionsAST, v)
+				if err != nil {
+					return nil, err
+				}
+				order = immutable.Some(request.OrderBy{
+					Conditions: conditions,
+				})
+			}
+		}
+	}
+
+	return &request.AggregateTarget{
+		HostName:  hostName,
+		ChildName: immutable.Some(childName),
+		Filterable: request.Filterable{
+			Filter: filter,
+		},
+		Limitable: request.Limitable{
+			Limit: limit,
+		},
+		Offsetable: request.Offsetable{
+			Offset: offset,
+		},
+		Orderable: request.Orderable{
+			OrderBy: order,
+		},
 	}, nil
 }
