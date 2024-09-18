@@ -12,94 +12,42 @@ import (
 func anyOp(condition, data any) (bool, error) {
 	switch t := data.(type) {
 	case []string:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []immutable.Option[string]:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []int64:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []immutable.Option[int64]:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []bool:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []immutable.Option[bool]:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []float64:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	case []immutable.Option[float64]:
-		for _, c := range t {
-			m, err := eq(condition, c)
-			if err != nil {
-				return false, err
-			} else if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, t)
 
 	default:
 		return false, client.NewErrUnhandledType("data", data)
 	}
+}
+
+func anySlice[T any](condition any, data []T) (bool, error) {
+	for _, c := range data {
+		m, err := eq(condition, c)
+		if err != nil {
+			return false, err
+		} else if m {
+			return true, nil
+		}
+	}
+	return false, nil
 }
