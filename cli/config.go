@@ -164,7 +164,10 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	}
 
 	// load environment variables from .env file if one exists
-	_ = godotenv.Load(cfg.GetString("secretfile"))
+	err = godotenv.Load(cfg.GetString("secretfile"))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, err
+	}
 
 	// set logging config
 	corelog.SetConfig(corelog.Config{
