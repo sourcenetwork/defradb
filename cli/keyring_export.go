@@ -23,7 +23,7 @@ Prints the hexadecimal representation of a private key.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --keyring-secret-file flag.
+defined with the --secret-file flag.
 
 Example:
   defradb keyring export encryption-key`,
