@@ -69,3 +69,42 @@ func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with logical compound filter (and) on inline int array",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"FavoriteNumbers": [0, 10, 20]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"FavoriteNumbers": [30, 40, 50]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_and: [
+						{FavoriteNumbers: {_all: {_ge: 0}}},
+						{FavoriteNumbers: {_all: {_lt: 30}}},
+					]}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

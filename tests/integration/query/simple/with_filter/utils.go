@@ -23,6 +23,7 @@ var userCollectionGQLSchema = (`
 		HeightM: Float
 		Verified: Boolean
 		CreatedAt: DateTime
+		FavoriteNumbers: [Int!]
 	}
 `)
 

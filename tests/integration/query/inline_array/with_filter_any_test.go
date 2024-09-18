@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineStringArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of string array",
 		Actions: []any{
@@ -52,7 +52,7 @@ func TestQueryInlineStringArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineNonNullStringArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineNotNullStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of non null string array",
 		Actions: []any{
@@ -88,7 +88,7 @@ func TestQueryInlineNonNullStringArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of int array",
 		Actions: []any{
@@ -124,7 +124,7 @@ func TestQueryInlineIntArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineNonNullIntArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineNotNullIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of non null int array",
 		Actions: []any{
@@ -160,7 +160,7 @@ func TestQueryInlineNonNullIntArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of float array",
 		Actions: []any{
@@ -196,7 +196,7 @@ func TestQueryInlineFloatArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineNonNullFloatArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineNotNullFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of non null float array",
 		Actions: []any{
@@ -232,7 +232,7 @@ func TestQueryInlineNonNullFloatArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineBooleanArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of boolean array",
 		Actions: []any{
@@ -268,7 +268,7 @@ func TestQueryInlineBooleanArrayWithAnyFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineNonNullBooleanArrayWithAnyFilter(t *testing.T) {
+func TestQueryInlineNotNullBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple inline array, filtered any of non null boolean array",
 		Actions: []any{
