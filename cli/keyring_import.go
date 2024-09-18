@@ -24,7 +24,8 @@ func MakeKeyringImportCommand() *cobra.Command {
 Store an externally generated key in the keyring.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
-This can also be done with a .env file in the root directory.
+This can also be done with a .env file in the working directory or at a path
+defined with the --keyring-secret-file flag.
 
 Example:
   defradb keyring import encryption-key 0000000000000000`,

@@ -27,7 +27,8 @@ Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
-This can also be done with a .env file in the root directory.
+This can also be done with a .env file in the working directory or at a path
+defined with the --keyring-secret-file flag.
 
 WARNING: This will overwrite existing keys in the keyring.
 
