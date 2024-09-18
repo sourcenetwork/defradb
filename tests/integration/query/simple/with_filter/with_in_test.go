@@ -54,12 +54,12 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 					},
 				},
@@ -164,16 +164,16 @@ func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Fred",
-							"Age":  nil,
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 						{
 							"Name": "Carlo",
 							"Age":  int64(55),
 						},
 						{
-							"Name": "Alice",
-							"Age":  int64(19),
+							"Name": "Fred",
+							"Age":  nil,
 						},
 					},
 				},

@@ -150,10 +150,10 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 					},
 				},
