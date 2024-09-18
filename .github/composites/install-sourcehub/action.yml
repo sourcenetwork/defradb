@@ -1,0 +1,36 @@
+# Copyright 2024 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: 'Install SourceHub'
+
+description: 'Composite action to install sourcehub'
+
+inputs:
+  ref:
+    description: 'The branch, tag or SHA to install'
+    required: true
+    default: 'coverage_default'
+
+runs:
+  # This is a composite action, setting this is required.
+  using: "composite"
+
+  steps:
+    - name: Checkout sourcehub code into the directory
+      uses: actions/checkout@v4
+      with:
+        repository: sourcenetwork/sourcehub
+        path: _sourceHub
+        ref: ${{ inputs.ref }}
+
+    - name: Install SourceHub CLI
+      working-directory: _sourceHub
+      shell: bash # It's required for run step to specify shell in a composite action.
+      run: make install

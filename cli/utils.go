@@ -16,14 +16,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/term"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -57,14 +55,6 @@ const (
 	// authTokenExpiration is the default expiration time for auth tokens.
 	authTokenExpiration = time.Minute * 15
 )
-
-// readPassword reads a user input password without echoing it to the terminal.
-var readPassword = func(cmd *cobra.Command, msg string) ([]byte, error) {
-	cmd.Print(msg)
-	pass, err := term.ReadPassword(int(syscall.Stdin))
-	cmd.Println("")
-	return pass, err
-}
 
 // mustGetContextDB returns the db for the current command context.
 //
@@ -214,10 +204,11 @@ func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
-	prompt := keyring.PromptFunc(func(s string) ([]byte, error) {
-		return readPassword(cmd, s)
-	})
-	return keyring.OpenFileKeyring(path, prompt)
+	secret := []byte(cfg.GetString("keyring.secret"))
+	if len(secret) == 0 {
+		return nil, ErrMissingKeyringSecret
+	}
+	return keyring.OpenFileKeyring(path, secret)
 }
 
 func writeJSON(cmd *cobra.Command, out any) error {
