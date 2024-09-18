@@ -37,6 +37,6 @@ func TestPurge(t *testing.T) {
 	res := rec.Result()
 	require.Equal(t, 200, res.StatusCode)
 
-	// test will timeout if purge never recieved
+	// test will timeout if purge never received
 	<-purgeSub.Message()
 }
