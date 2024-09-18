@@ -47,6 +47,37 @@ func TestMutationCreate_WithNullEncrypt_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple create mutation, with null input",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_Users(input: null, inputs: [{name: "Bob"}]) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationCreate_WithNullInputs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation, with null inputs",
