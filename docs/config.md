@@ -4,6 +4,10 @@ The default DefraDB directory is `$HOME/.defradb`. It can be changed via the --r
 
 Relative paths are interpreted as being rooted in the DefraDB directory.
 
+## `development`
+
+Enables a set of features that make development easier but should not be enabled in production.
+
 ## `datastore.store`
 
 Store can be badger or memory. Defaults to `badger`.

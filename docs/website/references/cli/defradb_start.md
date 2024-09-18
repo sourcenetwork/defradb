@@ -14,6 +14,7 @@ defradb start [flags]
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
+      --development                   Enables a set of features that make development easier but should not be enabled in production
   -h, --help                          help for start
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --no-p2p                        Disable the peer-to-peer network synchronization system

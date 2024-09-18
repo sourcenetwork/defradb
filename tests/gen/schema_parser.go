@@ -26,7 +26,7 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	// Spinning up a temporary in-memory node with all extras disabled is the
 	// most reliable and cheapest maintainance-cost-wise way to fully parse
 	// the SDL and correctly link all relations.
-	node, err := node.NewNode(
+	node, err := node.New(
 		ctx,
 		node.WithBadgerInMemory(true),
 		node.WithDisableAPI(true),

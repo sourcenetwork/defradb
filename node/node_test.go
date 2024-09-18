@@ -11,9 +11,13 @@
 package node
 
 import (
+	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWithDisableP2P(t *testing.T) {
@@ -26,4 +30,57 @@ func TestWithDisableAPI(t *testing.T) {
 	options := &Options{}
 	WithDisableAPI(true)(options)
 	assert.Equal(t, true, options.disableAPI)
+}
+
+func TestWithEnableDevelopment(t *testing.T) {
+	options := &Options{}
+	WithEnableDevelopment(true)(options)
+	assert.Equal(t, true, options.enableDevelopment)
+}
+
+func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
+	ctx := context.Background()
+
+	opts := []Option{
+		WithDisableAPI(true),
+		WithDisableP2P(true),
+		WithStorePath(t.TempDir()),
+	}
+
+	n, err := New(ctx, opts...)
+	require.NoError(t, err)
+
+	err = n.Start(ctx)
+	require.NoError(t, err)
+
+	err = n.PurgeAndRestart(ctx)
+	require.ErrorIs(t, err, ErrPurgeWithDevModeDisabled)
+}
+
+func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
+	ctx := context.Background()
+
+	opts := []Option{
+		WithDisableAPI(true),
+		WithDisableP2P(true),
+		WithStorePath(t.TempDir()),
+		WithEnableDevelopment(true),
+	}
+
+	n, err := New(ctx, opts...)
+	require.NoError(t, err)
+
+	err = n.Start(ctx)
+	require.NoError(t, err)
+
+	_, err = n.DB.AddSchema(ctx, "type User { name: String }")
+	require.NoError(t, err)
+
+	err = n.PurgeAndRestart(ctx)
+	require.NoError(t, err)
+
+	schemas, err := n.DB.GetSchemas(ctx, client.SchemaFetchOptions{})
+	require.NoError(t, err)
+
+	assert.Len(t, schemas, 0)
 }

@@ -38,8 +38,23 @@ func init() {
 
 		return badger.NewDatastore(options.path, &badgerOpts)
 	}
+	purge := func(ctx context.Context, options *StoreOptions) error {
+		store, err := constructor(ctx, options)
+		if err != nil {
+			return err
+		}
+		err = store.(*badger.Datastore).DB.DropAll()
+		if err != nil {
+			return err
+		}
+		return store.Close()
+	}
+
 	storeConstructors[BadgerStore] = constructor
+	storePurgeFuncs[BadgerStore] = purge
+
 	storeConstructors[DefaultStore] = constructor
+	storePurgeFuncs[DefaultStore] = purge
 }
 
 // WithBadgerInMemory sets the badger in memory option.

@@ -73,14 +73,19 @@ func init() {
 
 func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	opts := []node.Option{
+		node.WithDisableP2P(true),
+		node.WithDisableAPI(true),
 		node.WithBadgerInMemory(true),
 	}
 
-	node, err := node.NewNode(ctx, opts...)
+	node, err := node.New(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-
+	err = node.Start(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return node.DB, err
 }
 
@@ -88,14 +93,19 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{
+		node.WithDisableP2P(true),
+		node.WithDisableAPI(true),
 		node.WithStorePath(path),
 	}
 
-	node, err := node.NewNode(ctx, opts...)
+	node, err := node.New(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-
+	err = node.Start(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return node.DB, err
 }
 
@@ -175,10 +185,13 @@ func setupNode(s *state) (*node.Node, string, error) {
 		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
-	node, err := node.NewNode(s.ctx, opts...)
+	node, err := node.New(s.ctx, opts...)
 	if err != nil {
 		return nil, "", err
 	}
-
+	err = node.Start(s.ctx)
+	if err != nil {
+		return nil, "", err
+	}
 	return node, path, nil
 }
