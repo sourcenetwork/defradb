@@ -24,9 +24,14 @@ func init() {
 	constructor := func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error) {
 		return memory.NewDatastore(ctx), nil
 	}
+	purge := func(ctx context.Context, options *StoreOptions) error {
+		return nil
+	}
 	// don't override the default constructor if previously set
 	if _, ok := storeConstructors[DefaultStore]; !ok {
 		storeConstructors[DefaultStore] = constructor
+		storePurgeFuncs[DefaultStore] = purge
 	}
 	storeConstructors[MemoryStore] = constructor
+	storePurgeFuncs[MemoryStore] = purge
 }

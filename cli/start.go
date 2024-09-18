@@ -19,12 +19,24 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
 )
+
+const devModeBanner = `
+******************************************
+**     DEVELOPMENT MODE IS ENABLED      **
+** ------------------------------------ **
+**   if this is a production database   **
+** disable development mode and restart **
+**   or you may risk losing all data    **
+******************************************
+
+`
 
 func MakeStartCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -46,12 +58,15 @@ func MakeStartCommand() *cobra.Command {
 			cfg := mustGetContextConfig(cmd)
 
 			opts := []node.Option{
-				node.WithStorePath(cfg.GetString("datastore.badger.path")),
-				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
+				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
+				node.WithEnableDevelopment(cfg.GetBool("development")),
+				// store options
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
+				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// net node options
@@ -64,7 +79,6 @@ func MakeStartCommand() *cobra.Command {
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
 				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
 				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
-				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 			}
 
 			if cfg.GetString("datastore.store") != configStoreMemory {
@@ -73,6 +87,11 @@ func MakeStartCommand() *cobra.Command {
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
 				opts = append(opts, node.WithACPPath(rootDir))
+			}
+
+			acpType := cfg.GetString("acp.type")
+			if acpType != "" {
+				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -91,9 +110,8 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
-
 				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
-
+				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
@@ -104,38 +122,54 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
-			acpType := cfg.GetString("acp.type")
-			if acpType != "" {
-				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
-			}
-
-			n, err := node.NewNode(cmd.Context(), opts...)
-			if err != nil {
-				return err
-			}
-
-			defer func() {
-				if err := n.Close(cmd.Context()); err != nil {
-					log.ErrorContextE(cmd.Context(), "Stopping DefraDB", err)
-				}
-			}()
-
-			log.InfoContext(cmd.Context(), "Starting DefraDB")
-			if err := n.Start(cmd.Context()); err != nil {
-				return err
+			isDevMode := cfg.GetBool("development")
+			if isDevMode {
+				cmd.Printf(devModeBanner)
 			}
 
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
+			n, err := node.New(cmd.Context(), opts...)
+			if err != nil {
+				return err
+			}
+			log.InfoContext(cmd.Context(), "Starting DefraDB")
+			if err := n.Start(cmd.Context()); err != nil {
+				return err
+			}
+
+		RESTART:
+			// after a restart we need to resubscribe
+			purgeSub, err := n.DB.Events().Subscribe(event.PurgeName)
+			if err != nil {
+				return err
+			}
+
+		SELECT:
 			select {
+			case <-purgeSub.Message():
+				log.InfoContext(cmd.Context(), "Received purge event; restarting...")
+
+				err := n.PurgeAndRestart(cmd.Context())
+				if err != nil {
+					log.ErrorContextE(cmd.Context(), "failed to purge", err)
+				}
+				if err == nil {
+					goto RESTART
+				}
+				if errors.Is(err, node.ErrPurgeWithDevModeDisabled) {
+					goto SELECT
+				}
+
 			case <-cmd.Context().Done():
 				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
+
 			case <-signalCh:
 				log.InfoContext(cmd.Context(), "Received interrupt; shutting down...")
 			}
 
-			return nil
+			return n.Close(cmd.Context())
 		},
 	}
 	// set default flag values from config
@@ -184,6 +218,11 @@ func MakeStartCommand() *cobra.Command {
 		"privkeypath",
 		cfg.GetString(configFlags["privkeypath"]),
 		"Path to the private key for tls",
+	)
+	cmd.PersistentFlags().Bool(
+		"development",
+		cfg.GetBool(configFlags["development"]),
+		"Enables a set of features that make development easier but should not be enabled in production",
 	)
 	return cmd
 }

@@ -1711,6 +1711,23 @@
                 ]
             }
         },
+        "/purge": {
+            "post": {
+                "description": "Purge all persisted data and restart",
+                "operationId": "purge",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/schema": {
             "get": {
                 "description": "Introspect schema(s) by name, schema root, or version id.",
