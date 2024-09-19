@@ -136,10 +136,20 @@ func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 		return false, err
 	}
 
-	doc := plan.Value()
-	copy(p.currentValue.Fields, doc.Fields)
+	p.currentValue = p.mergeDoc(p.currentValue, plan.Value().Fields)
 
 	return true, nil
+}
+
+func (p *parallelNode) mergeDoc(doc core.Doc, newFields core.DocFields) core.Doc {
+	for i := range newFields {
+		if doc.Fields[i] == nil {
+			doc.Fields[i] = newFields[i]
+		} else if newSubDoc, ok := newFields[i].(core.Doc); ok {
+			doc.Fields[i] = p.mergeDoc(doc.Fields[i].(core.Doc), newSubDoc.Fields)
+		}
+	}
+	return doc
 }
 
 func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
