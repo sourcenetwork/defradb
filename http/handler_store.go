@@ -358,9 +358,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
-	graphQLResponseSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/graphql_response",
-	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
 	}
@@ -373,6 +370,16 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
 	}
+
+	graphQLResponseSchema := openapi3.NewObjectSchema().
+		WithProperties(map[string]*openapi3.Schema{
+			"errors": openapi3.NewArraySchema().WithItems(
+				openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+					"message": openapi3.NewStringSchema(),
+				}),
+			),
+			"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
+		})
 
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
@@ -588,7 +595,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	graphQLResponse := openapi3.NewResponse().
 		WithDescription("GraphQL response").
-		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema))
 
 	graphQLPost := openapi3.NewOperation()
 	graphQLPost.Description = "GraphQL POST endpoint"

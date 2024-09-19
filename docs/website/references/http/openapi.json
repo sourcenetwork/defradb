@@ -337,23 +337,6 @@
                 },
                 "type": "object"
             },
-            "graphql_response": {
-                "properties": {
-                    "data": {},
-                    "errors": {
-                        "items": {
-                            "properties": {
-                                "message": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
             "index": {
                 "properties": {
                     "Fields": {
@@ -1302,7 +1285,24 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/graphql_response"
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         },
@@ -1336,7 +1336,24 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/graphql_response"
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         },
