@@ -531,43 +531,35 @@ func newPrimaryObjectsRetriever(
 	return j
 }
 
-func (j *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {
-	relIDFieldDef, ok := j.primarySide.col.Definition().GetFieldByName(
-		j.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
+func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {
+	relIDFieldDef, ok := r.primarySide.col.Definition().GetFieldByName(
+		r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
 	if !ok {
-		return client.NewErrFieldNotExist(j.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
+		return client.NewErrFieldNotExist(r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
 	}
 
-	j.primaryScan = getScanNode(j.primarySide.plan)
+	r.primaryScan = getScanNode(r.primarySide.plan)
 
-	j.relIDFieldDef = relIDFieldDef
+	r.relIDFieldDef = relIDFieldDef
 
-	primaryDocs, err := j.retrievePrimaryDocs()
+	primaryDocs, err := r.retrievePrimaryDocs()
 
 	if err != nil {
 		return err
 	}
 
-	j.resultPrimaryDocs, j.resultSecondaryDoc = joinPrimaryDocs(primaryDocs, j.secondarySide, j.primarySide)
+	r.resultPrimaryDocs, r.resultSecondaryDoc = joinPrimaryDocs(primaryDocs, r.secondarySide, r.primarySide)
 
 	return nil
 }
 
-func (j *primaryObjectsRetriever) addIDFieldToScanner() {
-	found := false
-	for i := range j.primaryScan.fields {
-		if j.primaryScan.fields[i].Name == j.relIDFieldDef.Name {
-			found = true
-			break
-		}
+func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
+	p := r.primarySide.plan
+	// If the primary side is a multiScanNode, we need to get the source node, as we are the only
+	// consumer (one, not multiple) of it.
+	if multiScan, ok := p.(*multiScanNode); ok {
+		p = multiScan.Source()
 	}
-	if !found {
-		j.primaryScan.fields = append(j.primaryScan.fields, j.relIDFieldDef)
-	}
-}
-
-func (j *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
-	p := j.primarySide.plan
 	if err := p.Init(); err != nil {
 		return nil, NewErrSubTypeInit(err)
 	}
@@ -591,28 +583,28 @@ func (j *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
 	return docs, nil
 }
 
-func (j *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
-	j.addIDFieldToScanner()
+func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
+	r.primaryScan.addField(r.relIDFieldDef)
 
-	secondaryDoc := j.secondarySide.plan.Value()
-	addFilterOnIDField(j.primaryScan, j.primarySide.relIDFieldMapIndex.Value(), secondaryDoc.GetID())
+	secondaryDoc := r.secondarySide.plan.Value()
+	addFilterOnIDField(r.primaryScan, r.primarySide.relIDFieldMapIndex.Value(), secondaryDoc.GetID())
 
-	oldFetcher := j.primaryScan.fetcher
+	oldFetcher := r.primaryScan.fetcher
 
-	indexOnRelation := findIndexByFieldName(j.primaryScan.col, j.relIDFieldDef.Name)
-	j.primaryScan.initFetcher(immutable.None[string](), indexOnRelation)
+	indexOnRelation := findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
+	r.primaryScan.initFetcher(immutable.None[string](), indexOnRelation)
 
-	docs, err := j.collectDocs(0)
+	docs, err := r.collectDocs(0)
 	if err != nil {
 		return nil, err
 	}
 
-	err = j.primaryScan.fetcher.Close()
+	err = r.primaryScan.fetcher.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	j.primaryScan.fetcher = oldFetcher
+	r.primaryScan.fetcher = oldFetcher
 
 	return docs, nil
 }
@@ -780,7 +772,7 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 ) error {
 	p := join.childSide.plan
 	s := getScanNode(p)
-	s.tryAddField(join.childSide.relFieldDef.Value().Name + request.RelatedObjectID)
+	s.tryAddFieldWithName(join.childSide.relFieldDef.Value().Name + request.RelatedObjectID)
 	s.filter = fieldFilter
 	s.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 

@@ -136,8 +136,15 @@ func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 		return false, err
 	}
 
-	doc := plan.Value()
-	copy(p.currentValue.Fields, doc.Fields)
+	// Field-by-fields check is necessary because parallelNode can have multiple children, and
+	// each child can return the same doc, but with different related fields available
+	// depending on what is requested.
+	newFields := plan.Value().Fields
+	for i := range newFields {
+		if p.currentValue.Fields[i] == nil {
+			p.currentValue.Fields[i] = newFields[i]
+		}
+	}
 
 	return true, nil
 }
