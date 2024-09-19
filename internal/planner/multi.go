@@ -141,6 +141,10 @@ func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 	return true, nil
 }
 
+// mergeDoc merges the newFields into the doc, and returns the new doc.
+// It is necessary because parallelNode can have multiple children, and
+// each child can return the same doc, but with different related fields available
+// depending on what is requested.
 func (p *parallelNode) mergeDoc(doc core.Doc, newFields core.DocFields) core.Doc {
 	for i := range newFields {
 		if doc.Fields[i] == nil {

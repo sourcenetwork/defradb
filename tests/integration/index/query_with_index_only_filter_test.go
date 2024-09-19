@@ -718,3 +718,89 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test checks if a query with a filter on 2 relations (one of which is indexed) works.
+// Because of 2 relations in the query a parallelNode will be used with each child focusing
+// on fetching one of the relations. This test makes sure the result of the second child
+// (say Device with manufacturer) doesn't overwrite the result of the first child (say Device with owner).
+// Also as the fetching is inverted (because of the index) we fetch first the secondary doc which
+// is User and fetch all primary docs (Device) that reference that User. For fetching the primary
+// docs we use the same planNode which in this case happens to be multiscanNode (source of parallelNode).
+// For every second call multiscanNode will return the result of the first call, but in this case
+// we have only one consumer, so take the source of the multiscanNode and use it to fetch the primary docs
+// to avoid having all docs doubled.
+func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						devices: [Device]
+					}
+
+					type Manufacturer {
+						name: String
+						devices: [Device]
+					}
+					
+					type Device  {
+						owner: User 
+						manufacturer: Manufacturer 
+						model: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Apple",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"model":           "iPhone",
+					"owner_id":        testUtils.NewDocIndex(0, 0),
+					"manufacturer_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"model":           "MacBook",
+					"owner_id":        testUtils.NewDocIndex(0, 0),
+					"manufacturer_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Device (filter: {
+						manufacturer: {name: {_eq: "Apple"}},
+						owner: {name: {_eq: "John"}}
+					}) {
+						model
+					}
+				}`,
+				Results: map[string]any{
+					"Device": []map[string]any{
+						{
+							"model": "iPhone",
+						},
+						{
+							"model": "MacBook",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
