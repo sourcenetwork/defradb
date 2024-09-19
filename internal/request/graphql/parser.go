@@ -77,7 +77,7 @@ func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 	}
 
 	for _, err := range r.Errors {
-		res.GQL.AddErrors(err)
+		res.GQL.Errors = append(res.GQL.Errors, err)
 	}
 
 	return res

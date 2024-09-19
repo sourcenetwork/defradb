@@ -432,7 +432,7 @@ func (w *Wrapper) ExecRequest(
 	if len(options.Variables) > 0 {
 		enc, err := json.Marshal(options.Variables)
 		if err != nil {
-			result.GQL.AddErrors(err)
+			result.GQL.Errors = append(result.GQL.Errors, err)
 			return result
 		}
 		args = append(args, "--variables", string(enc))
@@ -440,13 +440,13 @@ func (w *Wrapper) ExecRequest(
 
 	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	buffer := bufio.NewReader(stdOut)
 	header, err := buffer.ReadString('\n')
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
@@ -455,21 +455,21 @@ func (w *Wrapper) ExecRequest(
 	}
 	data, err := io.ReadAll(buffer)
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	errData, err := io.ReadAll(stdErr)
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if len(errData) > 0 {
-		result.GQL.AddErrors(fmt.Errorf("%s", errData))
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errData))
 		return result
 	}
 
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 	}
 	return result
 }
@@ -483,7 +483,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 		for {
 			var res client.GQLResult
 			if err := dec.Decode(&res); err != nil {
-				res.AddErrors(err)
+				res.Errors = append(res.Errors, err)
 			}
 			resCh <- res
 		}

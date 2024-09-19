@@ -1323,9 +1323,8 @@ func createDocViaGQL(
 	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
 
 	result := node.ExecRequest(ctx, req)
-	resultErrors := result.GQL.GetErrors()
-	if len(resultErrors) > 0 {
-		return nil, resultErrors[0]
+	if len(result.GQL.Errors) > 0 {
+		return nil, result.GQL.Errors[0]
 	}
 
 	resultData := result.GQL.Data.(map[string]any)
@@ -1502,9 +1501,8 @@ func updateDocViaGQL(
 	ctx := db.SetContextIdentity(s.ctx, identity)
 
 	result := node.ExecRequest(ctx, request)
-	resultErrors := result.GQL.GetErrors()
-	if len(resultErrors) > 0 {
-		return resultErrors[0]
+	if len(result.GQL.Errors) > 0 {
+		return result.GQL.Errors[0]
 	}
 	return nil
 }
@@ -1800,7 +1798,7 @@ func executeSubscriptionRequest(
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.ExecRequest(s.ctx, action.Request)
-		if AssertErrors(s.t, s.testCase.Description, result.GQL.GetErrors(), action.ExpectedError) {
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
 
@@ -1902,7 +1900,7 @@ func assertRequestResults(
 	anyOfByField map[docFieldKey][]any,
 ) bool {
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
-	if AssertErrors(s.t, s.testCase.Description, result.GetErrors(), expectedError) || s.isBench {
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true
 	}
 
@@ -2056,7 +2054,7 @@ func assertIntrospectionResults(
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.ExecRequest(s.ctx, action.Request)
 
-		if AssertErrors(s.t, s.testCase.Description, result.GQL.GetErrors(), action.ExpectedError) {
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
 		}
 		resultantData := result.GQL.Data.(map[string]any)
@@ -2087,7 +2085,7 @@ func assertClientIntrospectionResults(
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.ExecRequest(s.ctx, action.Request)
 
-		if AssertErrors(s.t, s.testCase.Description, result.GQL.GetErrors(), action.ExpectedError) {
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
 		}
 		resultantData := result.GQL.Data.(map[string]any)

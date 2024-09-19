@@ -383,13 +383,13 @@ func (c *Client) ExecRequest(
 
 	body, err := json.Marshal(gqlRequest)
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	err = c.http.setDefaultHeaders(req)
@@ -397,13 +397,13 @@ func (c *Client) ExecRequest(
 	setDocEncryptionFlagIfNeeded(ctx, req)
 
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 
 	res, err := c.http.client.Do(req)
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
@@ -417,11 +417,11 @@ func (c *Client) ExecRequest(
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
-		result.GQL.AddErrors(err)
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	return result
@@ -446,7 +446,7 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult 
 			}
 			var res client.GQLResult
 			if err := json.Unmarshal(evt.Data, &res); err != nil {
-				res.AddErrors(err)
+				res.Errors = append(res.Errors, err)
 			}
 			resCh <- res
 		}

@@ -148,7 +148,7 @@ func assertExplainRequestResults(
 	if AssertErrors(
 		s.t,
 		s.testCase.Description,
-		actualResult.GetErrors(),
+		actualResult.Errors,
 		action.ExpectedError,
 	) {
 		return

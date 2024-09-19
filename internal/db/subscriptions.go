@@ -77,7 +77,7 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			res := client.GQLResult{}
 			if err != nil {
-				res.AddErrors(err)
+				res.Errors = append(res.Errors, err)
 			}
 			res.Data = result
 

@@ -22,7 +22,7 @@ func (db *db) execRequest(ctx context.Context, request string, options *client.G
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
 	if err != nil {
-		res.GQL.AddErrors(err)
+		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 	if db.parser.IsIntrospection(ast) {
@@ -31,13 +31,13 @@ func (db *db) execRequest(ctx context.Context, request string, options *client.G
 
 	parsedRequest, errors := db.parser.Parse(ast, options)
 	if len(errors) > 0 {
-		res.GQL.AddErrors(errors...)
+		res.GQL.Errors = append(res.GQL.Errors, errors...)
 		return res
 	}
 
 	pub, err := db.handleSubscription(ctx, parsedRequest)
 	if err != nil {
-		res.GQL.AddErrors(err)
+		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 
@@ -52,7 +52,7 @@ func (db *db) execRequest(ctx context.Context, request string, options *client.G
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
-		res.GQL.AddErrors(err)
+		res.GQL.Errors = append(res.GQL.Errors, err)
 	}
 	res.GQL.Data = results
 	return res
