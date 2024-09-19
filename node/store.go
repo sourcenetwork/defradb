@@ -31,6 +31,12 @@ const (
 // allows it's population to be managed by build flags.
 var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error){}
 
+// storePurgeFuncs is a map of [StoreType]s to store purge functions.
+//
+// Is is populated by the `init` functions in the runtime-specific files - this
+// allows it's population to be managed by build flags.
+var storePurgeFuncs = map[StoreType]func(ctx context.Context, options *StoreOptions) error{}
+
 // StoreOptions contains store configuration values.
 type StoreOptions struct {
 	store               StoreType
@@ -76,4 +82,16 @@ func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.Rootstore, error
 		return storeConstructor(ctx, options)
 	}
 	return nil, NewErrStoreTypeNotSupported(options.store)
+}
+
+func purgeStore(ctx context.Context, opts ...StoreOpt) error {
+	options := DefaultStoreOptions()
+	for _, opt := range opts {
+		opt(options)
+	}
+	purgeFunc, ok := storePurgeFuncs[options.store]
+	if ok {
+		return purgeFunc(ctx, options)
+	}
+	return NewErrStoreTypeNotSupported(options.store)
 }

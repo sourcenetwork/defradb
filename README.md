@@ -1,4 +1,4 @@
-![Tests Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-and-upload-coverage.yml/badge.svg)
+![Test Coverage Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-coverage.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sourcenetwork/defradb)](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
 [![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
 [![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.gg/w7jYQVJ)
@@ -68,7 +68,11 @@ The following keys are loaded from the keyring on start:
 - `peer-key` Ed25519 private key (required)
 - `encryption-key` AES-128, AES-192, or AES-256 key (optional)
 
-To randomly generate the required keys, run the following command:
+A secret to unlock the keyring is required on start and must be provided via the `DEFRA_KEYRING_SECRET` environment variable. If a `.env` file is available in the working directory, the secret can be stored there or via a file at a path defined by the `--secret-file` flag.
+
+The keys will be randomly generated on the inital start of the node if they are not found.
+
+Alternatively, to randomly generate the required keys, run the following command:
 
 ```
 defradb keyring generate

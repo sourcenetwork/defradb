@@ -19,11 +19,7 @@ import (
 )
 
 func TestFileKeyring(t *testing.T) {
-	prompt := PromptFunc(func(s string) ([]byte, error) {
-		return []byte("secret"), nil
-	})
-
-	kr, err := OpenFileKeyring(t.TempDir(), prompt)
+	kr, err := OpenFileKeyring(t.TempDir(), []byte("secret"))
 	require.NoError(t, err)
 
 	err = kr.Set("peer_key", []byte("abc"))
