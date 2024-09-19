@@ -136,24 +136,17 @@ func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 		return false, err
 	}
 
-	p.currentValue = p.mergeDoc(p.currentValue, plan.Value().Fields)
-
-	return true, nil
-}
-
-// mergeDoc merges the newFields into the doc, and returns the new doc.
-// It is necessary because parallelNode can have multiple children, and
-// each child can return the same doc, but with different related fields available
-// depending on what is requested.
-func (p *parallelNode) mergeDoc(doc core.Doc, newFields core.DocFields) core.Doc {
+	// Field-by-fields check is necessary because parallelNode can have multiple children, and
+	// each child can return the same doc, but with different related fields available
+	// depending on what is requested.
+	newFields := plan.Value().Fields
 	for i := range newFields {
-		if doc.Fields[i] == nil {
-			doc.Fields[i] = newFields[i]
-		} else if newSubDoc, ok := newFields[i].(core.Doc); ok {
-			doc.Fields[i] = p.mergeDoc(doc.Fields[i].(core.Doc), newSubDoc.Fields)
+		if p.currentValue.Fields[i] == nil {
+			p.currentValue.Fields[i] = newFields[i]
 		}
 	}
-	return doc
+
+	return true, nil
 }
 
 func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
