@@ -107,7 +107,7 @@ func (mc *MerkleClock) AddDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := mc.determineBlockEncryptionData(ctx, string(block.Delta.GetDocID()), fieldName, heads)
+	encBlock, encLink, err := mc.determineBlockEncryption(ctx, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -140,8 +140,7 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
-// TODO: rename this to reflect storage
-func (mc *MerkleClock) determineBlockEncryptionData(
+func (mc *MerkleClock) determineBlockEncryption(
 	ctx context.Context,
 	docID string,
 	fieldName immutable.Option[string],

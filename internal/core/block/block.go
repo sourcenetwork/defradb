@@ -142,8 +142,8 @@ func (block *Block) Clone() *Block {
 	}
 }
 
-// GetPrevBlockCids returns the CIDs of the previous blocks. It can be more than 1 with multiple heads.
-func (block *Block) GetPrevBlockCids() []cid.Cid {
+// GetHeadLinks returns the CIDs of the previous blocks. There can be more than 1 with multiple heads.
+func (block *Block) GetHeadLinks() []cid.Cid {
 	var heads []cid.Cid
 	for _, link := range block.Links {
 		if link.Name == core.HEAD {

@@ -17,8 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -89,8 +87,7 @@ Example: create from stdin:
 				return cmd.Usage()
 			}
 
-			txn, _ := db.TryGetContextTxn(cmd.Context())
-			setContextDocEncryption(cmd, shouldEncryptDoc, encryptedFields, txn)
+			setContextDocEncryption(cmd, shouldEncryptDoc, encryptedFields)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())
@@ -116,7 +113,7 @@ Example: create from stdin:
 }
 
 // setContextDocEncryption sets doc encryption for the current command context.
-func setContextDocEncryption(cmd *cobra.Command, shouldEncryptDoc bool, encryptFields []string, txn datastore.Txn) {
+func setContextDocEncryption(cmd *cobra.Command, shouldEncryptDoc bool, encryptFields []string) {
 	if !shouldEncryptDoc && len(encryptFields) == 0 {
 		return
 	}

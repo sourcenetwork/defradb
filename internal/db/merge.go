@@ -46,16 +46,13 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	ls := cidlink.DefaultLinkSystem()
-	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
-
 	docID, err := client.NewDocIDFromString(dagMerge.DocID)
 	if err != nil {
 		return err
 	}
 	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
 
-	mp, err := db.newMergeProcessor(txn, ls, col, dsKey)
+	mp, err := db.newMergeProcessor(txn, col, dsKey)
 	if err != nil {
 		return err
 	}
@@ -131,11 +128,12 @@ func (m *mergeQueue) done(docID string) {
 }
 
 type mergeProcessor struct {
-	txn    datastore.Txn
-	lsys   linking.LinkSystem
-	mCRDTs map[string]merklecrdt.MerkleCRDT
-	col    *collection
-	dsKey  core.DataStoreKey
+	txn        datastore.Txn
+	blockLS    linking.LinkSystem
+	encBlockLS linking.LinkSystem
+	mCRDTs     map[string]merklecrdt.MerkleCRDT
+	col        *collection
+	dsKey      core.DataStoreKey
 	// composites is a list of composites that need to be merged.
 	composites *list.List
 	// missingEncryptionBlocks is a list of blocks that we failed to fetch
@@ -146,13 +144,19 @@ type mergeProcessor struct {
 
 func (db *db) newMergeProcessor(
 	txn datastore.Txn,
-	lsys linking.LinkSystem,
 	col *collection,
 	dsKey core.DataStoreKey,
 ) (*mergeProcessor, error) {
+	blockLS := cidlink.DefaultLinkSystem()
+	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
+
+	encBlockLS := cidlink.DefaultLinkSystem()
+	encBlockLS.SetReadStorage(txn.Encstore().AsIPLDStorage())
+
 	return &mergeProcessor{
 		txn:                       txn,
-		lsys:                      lsys,
+		blockLS:                   blockLS,
+		encBlockLS:                encBlockLS,
 		mCRDTs:                    make(map[string]merklecrdt.MerkleCRDT),
 		col:                       col,
 		dsKey:                     dsKey,
@@ -185,7 +189,7 @@ func (mp *mergeProcessor) loadComposites(
 		return nil
 	}
 
-	nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
+	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
 	if err != nil {
 		return err
 	}
@@ -200,7 +204,7 @@ func (mp *mergeProcessor) loadComposites(
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.composites.PushFront(block)
-		for _, prevCid := range block.GetPrevBlockCids() {
+		for _, prevCid := range block.GetHeadLinks() {
 			err := mp.loadComposites(ctx, prevCid, mt)
 			if err != nil {
 				return err
@@ -211,7 +215,7 @@ func (mp *mergeProcessor) loadComposites(
 		for _, b := range mt.heads {
 			for _, link := range b.Links {
 				if link.Name == core.HEAD {
-					nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+					nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
 					if err != nil {
 						return err
 					}
@@ -289,16 +293,7 @@ func (mp *mergeProcessor) loadEncryptionBlock(
 	ctx context.Context,
 	encLink cidlink.Link,
 ) (*coreblock.Encryption, error) {
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetReadStorage(mp.txn.Encstore().AsIPLDStorage())
-
-	_, blockCid, err := cid.CidFromBytes(encLink.Cid.Bytes())
-	if err != nil {
-		return nil, err
-	}
-
-	nd, err := lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid},
-		coreblock.EncryptionSchemaPrototype)
+	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
 	if err != nil {
 		if errors.Is(err, ipld.ErrNotFound{}) {
 			mp.missingEncryptionBlocks[encLink] = struct{}{}
@@ -326,15 +321,17 @@ func (mp *mergeProcessor) tryGetEncryptionBlock(
 		return nil, err
 	}
 
-	mp.availableEncryptionBlocks[encLink] = encBlock
+	if encBlock != nil {
+		mp.availableEncryptionBlocks[encLink] = encBlock
+	}
 
 	return encBlock, nil
 }
 
 // processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
-// If the block is encrypted and we were not able to decrypt it, it returns true as the second return value
-// which indicates that the we should skip merging of the block.
-// If we were able to decrypt the block, we return the decrypted block and false as the second return value.
+// If the block is encrypted and we were not able to decrypt it, it returns false as the second return value
+// which indicates that the we can't read the block.
+// If we were able to decrypt the block, we return the decrypted block and true as the second return value.
 func (mp *mergeProcessor) processEncryptedBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
@@ -394,7 +391,7 @@ func (mp *mergeProcessor) processBlock(
 			continue
 		}
 
-		nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
 		if err != nil {
 			return err
 		}
