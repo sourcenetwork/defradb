@@ -341,7 +341,14 @@
                 "properties": {
                     "data": {},
                     "errors": {
-                        "items": {},
+                        "items": {
+                            "properties": {
+                                "message": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
                         "type": "array"
                     }
                 },
