@@ -13,6 +13,7 @@ package client
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -173,4 +174,18 @@ func NewErrFailedToParseKind(kind []byte) error {
 		errCRDTKindMismatch,
 		errors.NewKV("Kind", kind),
 	)
+}
+
+// ReviveError attempts to return a client specific error from
+// the given message. If no matching error is found the message
+// is wrapped in a new anonymous error type.
+func ReviveError(message string) error {
+	switch message {
+	case ErrDocumentNotFoundOrNotAuthorized.Error():
+		return ErrDocumentNotFoundOrNotAuthorized
+	case datastore.ErrTxnConflict.Error():
+		return datastore.ErrTxnConflict
+	default:
+		return fmt.Errorf("%s", message)
+	}
 }

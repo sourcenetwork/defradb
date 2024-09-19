@@ -11,7 +11,6 @@
 package http
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -279,51 +278,6 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
-type GraphQLResponse struct {
-	Data   any     `json:"data"`
-	Errors []error `json:"errors,omitempty"`
-}
-
-func (res GraphQLResponse) MarshalJSON() ([]byte, error) {
-	errors := make([]map[string]any, len(res.Errors))
-	for i, err := range res.Errors {
-		errors[i] = map[string]any{"message": err.Error()}
-	}
-	if len(errors) == 0 {
-		return json.Marshal(map[string]any{"data": res.Data})
-	}
-	return json.Marshal(map[string]any{"data": res.Data, "errors": errors})
-}
-
-func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
-	// decode numbers to json.Number
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	dec.UseNumber()
-
-	var out map[string]any
-	if err := dec.Decode(&out); err != nil {
-		return err
-	}
-	res.Data = out["data"]
-
-	// fix errors type to match tests
-	switch t := out["errors"].(type) {
-	case []any:
-		for _, v := range t {
-			err, ok := v.(map[string]any)
-			if !ok {
-				res.Errors = append(res.Errors, parseError(err["message"]))
-			} else {
-				res.Errors = append(res.Errors, fmt.Errorf("%v", v))
-			}
-		}
-	default:
-		res.Errors = nil
-	}
-
-	return nil
-}
-
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(dbContextKey).(client.Store)
 
@@ -351,7 +305,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	result := store.ExecRequest(req.Context(), request.Query, options...)
 
 	if result.Subscription == nil {
-		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})
+		responseJSON(rw, http.StatusOK, result.GQL)
 		return
 	}
 	flusher, ok := rw.(http.Flusher)

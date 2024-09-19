@@ -282,6 +282,12 @@ func WithVariables(variables map[string]any) RequestOption {
 	}
 }
 
+// GQLError represents an error that was encountered during a GQL request.
+type GQLError struct {
+	// Message contains a description of the error.
+	Message string `json:"message"`
+}
+
 // GQLResult represents the immediate results of a GQL request.
 //
 // It does not handle subscription channels. This object and its children are json serializable.
@@ -290,12 +296,31 @@ type GQLResult struct {
 	//
 	// If there are values in this slice the request will likely not have run to completion
 	// and [Data] will be nil.
-	Errors []error `json:"errors,omitempty"`
+	Errors []GQLError `json:"errors,omitempty"`
 
 	// Data contains the resultant data produced by the GQL request.
 	//
 	// It will be nil if any errors were raised during execution.
 	Data any `json:"data"`
+}
+
+// AddErrors appends a new GQLError to the result.
+func (res *GQLResult) AddErrors(errors ...error) {
+	for _, e := range errors {
+		res.Errors = append(res.Errors, GQLError{Message: e.Error()})
+	}
+}
+
+// GetErrors parses the list of GQLErrors into go errors.
+//
+// Any errors that match client specific errors will be revived
+// into their respective types.
+func (res *GQLResult) GetErrors() []error {
+	errors := make([]error, len(res.Errors))
+	for i, e := range res.Errors {
+		errors[i] = ReviveError(e.Message)
+	}
+	return errors
 }
 
 // RequestResult represents the results of a GQL request.

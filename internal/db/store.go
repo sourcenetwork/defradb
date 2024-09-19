@@ -25,7 +25,7 @@ func (db *db) ExecRequest(ctx context.Context, request string, opts ...client.Re
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}
-		res.GQL.Errors = []error{err}
+		res.GQL.AddErrors(err)
 		return res
 	}
 	defer txn.Discard(ctx)
@@ -41,7 +41,7 @@ func (db *db) ExecRequest(ctx context.Context, request string, opts ...client.Re
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		res.GQL.Errors = []error{err}
+		res.GQL.AddErrors(err)
 		return res
 	}
 
