@@ -1,0 +1,280 @@
+# Copyright 2024 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Test Coverage Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+
+# Default environment configuration settings.
+env:
+  CGO_ENABLED: 1
+
+  DEFRA_CLIENT_GO: true
+  DEFRA_CLIENT_HTTP: false
+  DEFRA_CLIENT_CLI: false
+
+  DEFRA_BADGER_MEMORY: true
+  DEFRA_BADGER_FILE: false
+
+  DEFRA_BADGER_ENCRYPTION: false
+
+  DEFRA_MUTATION_TYPE: collection-save
+  DEFRA_LENS_TYPE: wasm-time
+  DEFRA_ACP_TYPE: local
+  DEFRA_VIEW_TYPE: cacheless
+
+
+# We run all runners via the bash shell to provide us with a consistent set of env variables and commands
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  # The basic matrix job tests the combination of client, database and mutation types using
+  # the default config settings for other options, all running on linux.
+  test-basic:
+    name: Test job
+
+    strategy:
+      fail-fast: false
+      matrix:
+        client-type: [go, http, cli]
+        database-type: [file, memory]
+        mutation-type: [gql, collection-named, collection-save]
+
+    runs-on: ubuntu-latest
+
+    # Overwrite the defaults based on the basic matrix
+    env:
+      DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
+      DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
+      DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
+      DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'memory' }}
+      DEFRA_BADGER_FILE: ${{ matrix.database-type == 'file' }}
+      DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_basic\
+            _${{ matrix.client-type }}\
+            _${{ matrix.database-type }}\
+            _${{ matrix.mutation-type }}\
+          "
+          coverage-path: coverage.txt
+
+
+  # This job runs the tests on other operating systems using default configurations.
+  test-os:
+    name: Test os job
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          # TODO: https://github.com/sourcenetwork/defradb/issues/2080
+          # Uncomment the line below to re-enable the windows build once this todo is resolved.
+          # - windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_os_${{ matrix.os }}"
+          coverage-path: coverage.txt
+
+
+  # The acp matrix job tests the combinations of source-hub acp and client types on linux.
+  test-acp:
+    name: Test acp job
+
+    strategy:
+      fail-fast: false
+      matrix:
+        client-type: [go, http, cli]
+        acp-type: [source-hub]
+
+    runs-on: ubuntu-latest
+
+    env:
+      DEFRA_ACP_TYPE: ${{ matrix.acp-type }}
+      DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
+      DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
+      DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      # We have to install it ourselves because it contains replace commands in its go.mod file.
+      - name: Install sourcehub
+        uses: ./.github/composites/install-sourcehub
+        with:
+          # Lock the sourcehub version until the dev branch is stable
+          # remove this when closed https://github.com/sourcenetwork/defradb/issues/2865
+          ref: c232133c35c96924509a4d955a7b450eb3624a15
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_acp\
+            _${{ matrix.acp-type }}\
+            _${{ matrix.client-type }}\
+          "
+          coverage-path: coverage.txt
+
+
+  # The lens matrix job tests the wazero and wasmer lens on linux.
+  test-lens:
+    name: Test lens job
+
+    strategy:
+      fail-fast: false
+      matrix:
+        lens-type: [wazero, wasmer]
+
+    runs-on: ubuntu-latest
+
+    env:
+      DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_lens_${{ matrix.lens-type }}"
+          coverage-path: coverage.txt
+
+
+  # This job runs the materialized view tests using default configuration, on linux.
+  test-view:
+    name: Test view job
+
+    runs-on: ubuntu-latest
+
+    env:
+      DEFRA_VIEW_TYPE: materialized
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_view_materialized"
+          coverage-path: coverage.txt
+
+
+  # This job runs the database with encryption tests using default configuration, on linux.
+  test-encryption:
+    name: Test encryption job
+
+    runs-on: ubuntu-latest
+
+    env:
+      DEFRA_BADGER_ENCRYPTION: true
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_encryption"
+          coverage-path: coverage.txt
+
+
+  ## This job gathers all the coverage reports and uploads them to code-cov
+  upload-coverage:
+    name: Upload test code coverage job
+
+    needs:
+      - test-basic        # 18 test(s)
+      - test-os           #  1 test(s) [excluding windows]
+      - test-acp          #  3 test(s)
+      - test-lens         #  2 test(s)
+      - test-view         #  1 test(s)
+      - test-encryption   #  1 test(s)
+
+    # Important to know:
+    # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
+    # - `if: success()` is always implied unless `always()` or `failure()` is specified.
+    if: success() || failure()
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage_*
+          # Note: https://github.com/actions/download-artifact/blob/main/docs/MIGRATION.md
+          merge-multiple: false
+          path: coverage_reports
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: defradb-codecov
+          files: coverage_reports/**/*.txt
+          flags: all-tests
+          os: 'linux'
+          fail_ci_if_error: true
+          verbose: true

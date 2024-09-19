@@ -155,9 +155,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 
 	kr, err := keyring.OpenFileKeyring(
 		directory,
-		keyring.PromptFunc(func(s string) ([]byte, error) {
-			return []byte("secret"), nil
-		}),
+		[]byte("secret"),
 	)
 	if err != nil {
 		return nil, err

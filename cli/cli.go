@@ -111,6 +111,7 @@ func NewDefraCommand() *cobra.Command {
 
 	client := MakeClientCommand()
 	client.AddCommand(
+		MakePurgeCommand(),
 		MakeDumpCommand(),
 		MakeRequestCommand(),
 		schema,

@@ -58,3 +58,6 @@ crash.log
 
 # Ignore .zip files, such as Lambda Function code slugs.
 **.zip
+
+# Ignore .env files containing sensitive information.
+.env

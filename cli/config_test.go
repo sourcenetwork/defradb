@@ -68,4 +68,6 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, false, cfg.GetBool("keyring.disabled"))
 	assert.Equal(t, "defradb", cfg.GetString("keyring.namespace"))
 	assert.Equal(t, "file", cfg.GetString("keyring.backend"))
+
+	assert.Equal(t, false, cfg.GetBool("development"))
 }

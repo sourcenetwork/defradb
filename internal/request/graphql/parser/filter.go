@@ -78,16 +78,9 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue, args map[string]any) ([]reque
 	for _, field := range stmt.Fields {
 		switch v := args[field.Name.Value].(type) {
 		case int: // base direction parsed (hopefully, check NameToOrderDirection)
-			var dir request.OrderDirection
-			switch v {
-			case 0:
-				dir = request.ASC
-
-			case 1:
-				dir = request.DESC
-
-			default:
-				return nil, ErrInvalidOrderDirection
+			dir, err := parseOrderDirection(v)
+			if err != nil {
+				return nil, err
 			}
 			conditions = append(conditions, request.OrderCondition{
 				Fields:    []string{field.Name.Value},
@@ -108,6 +101,9 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue, args map[string]any) ([]reque
 				cond.Fields = append([]string{field.Name.Value}, cond.Fields...)
 				conditions = append(conditions, cond)
 			}
+
+		case nil:
+			continue // ignore nil filter input
 
 		default:
 			return nil, client.NewErrUnhandledType("parseConditionInOrder", v)
@@ -198,4 +194,17 @@ func parseFilterFieldsForDescriptionSlice(
 		}
 	}
 	return fields, nil
+}
+
+func parseOrderDirection(v int) (request.OrderDirection, error) {
+	switch v {
+	case 0:
+		return request.ASC, nil
+
+	case 1:
+		return request.DESC, nil
+
+	default:
+		return request.ASC, ErrInvalidOrderDirection
+	}
 }

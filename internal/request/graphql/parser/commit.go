@@ -35,31 +35,61 @@ func parseCommitSelect(
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
 	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
-		if prop == request.DocIDArgName {
-			commit.DocID = immutable.Some(arguments[prop].(string))
-		} else if prop == request.Cid {
-			commit.CID = immutable.Some(arguments[prop].(string))
-		} else if prop == request.FieldIDName {
-			commit.FieldID = immutable.Some(arguments[prop].(string))
-		} else if prop == request.OrderClause {
-			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), arguments[prop].(map[string]any))
+		name := argument.Name.Value
+		value := arguments[name]
+
+		switch name {
+		case request.DocIDArgName:
+			if v, ok := value.(string); ok {
+				commit.DocID = immutable.Some(v)
+			}
+
+		case request.Cid:
+			if v, ok := value.(string); ok {
+				commit.CID = immutable.Some(v)
+			}
+
+		case request.FieldIDName:
+			if v, ok := value.(string); ok {
+				commit.FieldID = immutable.Some(v)
+			}
+
+		case request.OrderClause:
+			v, ok := value.(map[string]any)
+			if !ok {
+				continue // value is nil
+			}
+			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), v)
 			if err != nil {
 				return nil, err
 			}
 			commit.OrderBy = immutable.Some(request.OrderBy{
 				Conditions: conditions,
 			})
-		} else if prop == request.LimitClause {
-			commit.Limit = immutable.Some(uint64(arguments[prop].(int32)))
-		} else if prop == request.OffsetClause {
-			commit.Offset = immutable.Some(uint64(arguments[prop].(int32)))
-		} else if prop == request.DepthClause {
-			commit.Depth = immutable.Some(uint64(arguments[prop].(int32)))
-		} else if prop == request.GroupByClause {
-			fields := []string{}
-			for _, v := range arguments[prop].([]any) {
-				fields = append(fields, v.(string))
+
+		case request.LimitClause:
+			if v, ok := value.(int32); ok {
+				commit.Limit = immutable.Some(uint64(v))
+			}
+
+		case request.OffsetClause:
+			if v, ok := value.(int32); ok {
+				commit.Offset = immutable.Some(uint64(v))
+			}
+
+		case request.DepthClause:
+			if v, ok := value.(int32); ok {
+				commit.Depth = immutable.Some(uint64(v))
+			}
+
+		case request.GroupByClause:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			fields := make([]string, len(v))
+			for i, c := range v {
+				fields[i] = c.(string)
 			}
 			commit.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,
@@ -91,6 +121,9 @@ func parseCommitSelect(
 	}
 
 	commit.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
+	if err != nil {
+		return nil, err
+	}
 
 	return commit, err
 }

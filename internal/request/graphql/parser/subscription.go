@@ -58,10 +58,8 @@ func parseSubscription(exe *gql.ExecutionContext, field *ast.Field) (*request.Ob
 	fieldDef := gql.GetFieldDef(exe.Schema, exe.Schema.QueryType(), field.Name.Value)
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-	if v, ok := arguments[request.FilterClause]; ok {
-		sub.Filter = immutable.Some(request.Filter{
-			Conditions: v.(map[string]any),
-		})
+	if v, ok := arguments[request.FilterClause].(map[string]any); ok {
+		sub.Filter = immutable.Some(request.Filter{Conditions: v})
 	}
 
 	// parse field selections
@@ -71,5 +69,8 @@ func parseSubscription(exe *gql.ExecutionContext, field *ast.Field) (*request.Ob
 	}
 
 	sub.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
+	if err != nil {
+		return nil, err
+	}
 	return sub, err
 }

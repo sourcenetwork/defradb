@@ -102,5 +102,9 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		cfg.GetString(configFlags["source-hub-address"]),
 		"The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor",
 	)
+	cmd.PersistentFlags().String(
+		"secret-file",
+		cfg.GetString(configFlags["secret-file"]),
+		"Path to the file containing secrets")
 	return cmd
 }
