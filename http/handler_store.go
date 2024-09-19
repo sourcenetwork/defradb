@@ -285,9 +285,12 @@ type GraphQLResponse struct {
 }
 
 func (res GraphQLResponse) MarshalJSON() ([]byte, error) {
-	var errors []string
-	for _, err := range res.Errors {
-		errors = append(errors, err.Error())
+	errors := make([]map[string]any, len(res.Errors))
+	for i, err := range res.Errors {
+		errors[i] = map[string]any{"message": err.Error()}
+	}
+	if len(errors) == 0 {
+		return json.Marshal(map[string]any{"data": res.Data})
 	}
 	return json.Marshal(map[string]any{"data": res.Data, "errors": errors})
 }
@@ -307,7 +310,12 @@ func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
 	switch t := out["errors"].(type) {
 	case []any:
 		for _, v := range t {
-			res.Errors = append(res.Errors, parseError(v))
+			err, ok := v.(map[string]any)
+			if !ok {
+				res.Errors = append(res.Errors, parseError(err["message"]))
+			} else {
+				res.Errors = append(res.Errors, fmt.Errorf("%v", v))
+			}
 		}
 	default:
 		res.Errors = nil
