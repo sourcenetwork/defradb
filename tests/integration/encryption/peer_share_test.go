@@ -390,3 +390,141 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
+	test := testUtils.TestCase{
+		KMS: testUtils.KMS{Activated: true},
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int 
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.CreateDoc{
+				NodeID:         immutable.Some(0),
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"name": ""}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": ""},
+					},
+				},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"name": "John"}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
+	test := testUtils.TestCase{
+		KMS: testUtils.KMS{Activated: true},
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int 
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.CreateDoc{
+				NodeID:         immutable.Some(0),
+				Doc:            john21Doc,
+				IsDocEncrypted: true,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"name": null}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": nil},
+					},
+				},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc:    `{"name": "John"}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
