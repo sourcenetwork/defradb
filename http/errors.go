@@ -12,7 +12,9 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -53,7 +55,11 @@ func (e *errorResponse) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &out); err != nil {
 		return err
 	}
-	e.Error = parseError(out["error"])
+	if msg, ok := out["error"].(string); ok {
+		e.Error = client.ReviveError(msg)
+	} else {
+		e.Error = fmt.Errorf("%s", out)
+	}
 	return nil
 }
 
