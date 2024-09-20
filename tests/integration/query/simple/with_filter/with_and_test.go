@@ -74,6 +74,12 @@ func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t 
 	test := testUtils.TestCase{
 		Description: "Simple query with logical compound filter (and) on inline int array",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					FavoriteNumbers: [Int!]
+				}`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
@@ -106,5 +112,5 @@ func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t 
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

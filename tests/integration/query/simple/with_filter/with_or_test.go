@@ -54,12 +54,12 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Alice",
-							"Age":  int64(19),
-						},
-						{
 							"Name": "Carlo",
 							"Age":  int64(55),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 					},
 				},
@@ -74,6 +74,12 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Simple query with logical compound filter (or) on inline int array",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					FavoriteNumbers: [Int!]
+				}`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
@@ -98,10 +104,10 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "Alice",
 						},
 						{
-							"Name": "Alice",
+							"Name": "Bob",
 						},
 					},
 				},
@@ -109,5 +115,5 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

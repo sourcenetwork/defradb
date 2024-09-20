@@ -87,10 +87,10 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},

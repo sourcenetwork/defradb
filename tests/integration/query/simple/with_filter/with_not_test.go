@@ -58,12 +58,12 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 							"Age":  int64(21),
 						},
 						{
-							"Name": "Alice",
-							"Age":  int64(19),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 					},
 				},
@@ -271,16 +271,16 @@ func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 							"Age":  int64(21),
 						},
 						{
-							"Name": "Alice",
-							"Age":  int64(19),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
 							"Name": "Carlo",
 							"Age":  int64(55),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 					},
 				},

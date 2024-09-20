@@ -90,10 +90,10 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Fred",
+							"Name": "John",
 						},
 						{
-							"Name": "John",
+							"Name": "Fred",
 						},
 					},
 				},
@@ -134,10 +134,10 @@ func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 					},
 				},
