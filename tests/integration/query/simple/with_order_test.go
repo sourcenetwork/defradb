@@ -358,7 +358,7 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(order: {Age: DESC, Verified: ASC}) {
+					Users(order: [{Age: DESC}, {Verified: ASC}]) {
 						Name
 						Age
 						Verified

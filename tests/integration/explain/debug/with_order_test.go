@@ -69,7 +69,7 @@ func TestDebugExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					Author(order: {name: ASC, age: DESC}) {
+					Author(order: [{name: ASC}, {age: DESC}]) {
 						name
 						age
 					}

@@ -143,11 +143,11 @@ func parseSelect(
 			}
 
 		case request.OrderClause: // parse order by
-			v, ok := value.(map[string]any)
+			v, ok := value.([]any)
 			if !ok {
 				continue // value is nil
 			}
-			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), v)
+			conditions, err := parseOrderConditionList(v)
 			if err != nil {
 				return nil, err
 			}
@@ -213,11 +213,7 @@ func parseAggregate(
 			})
 
 		case map[string]any:
-			value, ok := argument.Value.(*ast.ObjectValue)
-			if !ok {
-				continue // value is nil
-			}
-			target, err := parseAggregateTarget(name, value, v)
+			target, err := parseAggregateTarget(name, v)
 			if err != nil {
 				return nil, err
 			}
@@ -236,7 +232,6 @@ func parseAggregate(
 
 func parseAggregateTarget(
 	hostName string,
-	value *ast.ObjectValue,
 	arguments map[string]any,
 ) (*request.AggregateTarget, error) {
 	var childName string
@@ -245,10 +240,7 @@ func parseAggregateTarget(
 	var offset immutable.Option[uint64]
 	var order immutable.Option[request.OrderBy]
 
-	for _, f := range value.Fields {
-		name := f.Name.Value
-		value := arguments[name]
-
+	for name, value := range arguments {
 		switch name {
 		case request.FieldName:
 			if v, ok := value.(string); ok {
@@ -271,14 +263,10 @@ func parseAggregateTarget(
 			}
 
 		case request.OrderClause:
-			switch conditionsAST := f.Value.(type) {
-			case *ast.EnumValue:
+			switch t := value.(type) {
+			case int:
 				// For inline arrays the order arg will be a simple enum declaring the order direction
-				v, ok := value.(int)
-				if !ok {
-					continue // value is nil
-				}
-				dir, err := parseOrderDirection(v)
+				dir, err := parseOrderDirection(t)
 				if err != nil {
 					return nil, err
 				}
@@ -286,14 +274,10 @@ func parseAggregateTarget(
 					Conditions: []request.OrderCondition{{Direction: dir}},
 				})
 
-			case *ast.ObjectValue:
+			case []any:
 				// For relations the order arg will be the complex order object as used by the host object
 				// for non-aggregate ordering
-				v, ok := value.(map[string]any)
-				if !ok {
-					continue // value is nil
-				}
-				conditions, err := ParseConditionsInOrder(conditionsAST, v)
+				conditions, err := parseOrderConditionList(t)
 				if err != nil {
 					return nil, err
 				}

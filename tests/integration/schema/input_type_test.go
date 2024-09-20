@@ -94,17 +94,12 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 									map[string]any{
 										"name": "order",
 										"type": map[string]any{
-											"name":   "groupOrderArg",
-											"ofType": nil,
-											"inputFields": []any{
-												map[string]any{
-													"name": "_docID",
-													"type": map[string]any{
-														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
+											"name": nil,
+											"ofType": map[string]any{
+												"kind": "INPUT_OBJECT",
+												"name": "groupOrderArg",
 											},
+											"inputFields": nil,
 										},
 									},
 								).Tidy(),
@@ -183,52 +178,11 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 									map[string]any{
 										"name": "order",
 										"type": map[string]any{
-											"name":   "authorOrderArg",
-											"ofType": nil,
-											"inputFields": []any{
-												map[string]any{
-													"name": "_docID",
-													"type": map[string]any{
-														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
-												map[string]any{
-													"name": "age",
-													"type": map[string]any{
-														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
-												map[string]any{
-													"name": "name",
-													"type": map[string]any{
-														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
-												map[string]any{
-													"name": "verified",
-													"type": map[string]any{
-														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
-												// Without the relation type we won't have the following ordering type(s).
-												map[string]any{
-													"name": "wrote",
-													"type": map[string]any{
-														"name":   "bookOrderArg",
-														"ofType": nil,
-													},
-												},
-												map[string]any{
-													"name": "wrote_id",
-													"type": map[string]any{
-														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
+											"name":        nil,
+											"inputFields": nil,
+											"ofType": map[string]any{
+												"kind": "INPUT_OBJECT",
+												"name": "authorOrderArg",
 											},
 										},
 									},

@@ -24,7 +24,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
-			Book (order: {rating: ASC, publisher: {yearOpened: DESC}}) {
+			Book (order: [{rating: ASC}, {publisher: {yearOpened: DESC}}]) {
 				name
 				rating
 				publisher{
@@ -97,15 +97,15 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
-			Book (order: {publisher: {yearOpened: DESC}, rating: ASC}) {
-				name
-				rating
-				publisher{
-					name
-					yearOpened
-				}
-			}
-		}`,
+					Book (order: [{publisher: {yearOpened: DESC}}, {rating: ASC}]) {
+						name
+						rating
+						publisher{
+							name
+							yearOpened
+						}
+					}
+				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
