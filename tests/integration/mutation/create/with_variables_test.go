@@ -35,7 +35,7 @@ func TestMutationCreateWithNonNullVariable(t *testing.T) {
 						"name": "Bob",
 					},
 				}),
-				Request: `mutation($user: UsersMutationInputArg!) {
+				Request: `mutation($user: [UsersMutationInputArg!]!) {
 					create_Users(input: $user) {
 						name
 					}
@@ -66,7 +66,7 @@ func TestMutationCreateWithDefaultVariable(t *testing.T) {
 				`,
 			},
 			testUtils.Request{
-				Request: `mutation($user: UsersMutationInputArg = {name: "Bob"}) {
+				Request: `mutation($user: [UsersMutationInputArg!] = {name: "Bob"}) {
 					create_Users(input: $user) {
 						name
 					}

@@ -1299,7 +1299,6 @@ func createDocViaGQL(
 		var docMaps []map[string]any
 		err = json.Unmarshal([]byte(action.Doc), &docMaps)
 		require.NoError(s.t, err)
-		paramName = request.Inputs
 		input, err = arrayToGQL(docMaps)
 	} else {
 		input, err = jsonToGQL(action.Doc)

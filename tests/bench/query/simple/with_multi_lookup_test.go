@@ -21,7 +21,7 @@ var (
 	// 10x `docID`s will be replaced in the bench runner func
 	userSimpleWithMultiLookupQuery = `
 	query {
-		User(docIDs: ["{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}"]) {
+		User(docID: ["{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}"]) {
 			_docID
 			Name
 			Age

@@ -125,7 +125,7 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to update.
-	simpleExplainMap[request.DocIDsArgName] = n.docIDs
+	simpleExplainMap[request.DocIDArgName] = n.docIDs
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil {
@@ -164,8 +164,12 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 		filter:     parsed.Filter,
 		docIDs:     parsed.DocIDs.Value(),
 		isUpdating: true,
-		input:      parsed.Input,
 		docMapper:  docMapper{parsed.DocumentMapping},
+	}
+
+	// update mutation only supports a single input
+	if len(parsed.Input) > 0 {
+		update.input = parsed.Input[0]
 	}
 
 	// get collection

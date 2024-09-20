@@ -184,7 +184,7 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 											"fields":    []string{"age"},
 										},
 									},
-									"docIDs":  nil,
+									"docID":   nil,
 									"groupBy": nil,
 									"limit":   nil,
 									"filter":  nil,

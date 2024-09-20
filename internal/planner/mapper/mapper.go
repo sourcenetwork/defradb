@@ -1246,7 +1246,6 @@ func toMutation(
 		Select:        *underlyingSelect,
 		Type:          MutationType(mutationRequest.Type),
 		Input:         mutationRequest.Input,
-		Inputs:        mutationRequest.Inputs,
 		Encrypt:       mutationRequest.Encrypt,
 		EncryptFields: mutationRequest.EncryptFields,
 	}, nil

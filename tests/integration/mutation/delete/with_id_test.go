@@ -29,7 +29,7 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"]) {
+					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"]) {
 						_docID
 					}
 				}`,
@@ -61,7 +61,7 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"]) {
+					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"]) {
 						_docID
 					}
 				}`,
