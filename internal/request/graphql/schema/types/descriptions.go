@@ -222,6 +222,16 @@ The or operator - only one check within this clause must pass in order for this 
 	NotOperatorDescription string = `
 The negative operator - this check will only pass if all checks within it fail.
 `
+	anyOperatorDescription string = `
+The any operator - only one check within this clause must pass on each item in order for this check to pass.	
+`
+	allOperatorDescription string = `
+The all operator - all checks within this clause must pass on each item in order for this check to pass.	
+`
+	noneOperatorDescription string = `
+The none operator - only one check within this clause must fail on one item in order for this check to pass.	
+`
+
 	ascOrderDescription string = `
 Sort the results in ascending order, e.g. null,1,2,3,a,b,c.
 `
