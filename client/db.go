@@ -11,6 +11,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 
@@ -318,8 +319,10 @@ type gqlResult struct {
 }
 
 func (res *GQLResult) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.UseNumber()
 	var out gqlResult
-	if err := json.Unmarshal(data, &out); err != nil {
+	if err := dec.Decode(&out); err != nil {
 		return err
 	}
 	res.Data = out.Data
