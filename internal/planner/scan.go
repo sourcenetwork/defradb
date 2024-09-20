@@ -92,10 +92,10 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 		switch requestable := r.(type) {
 		// field is simple as its just a base level field
 		case *mapper.Field:
-			n.tryAddField(requestable.GetName())
+			n.tryAddFieldWithName(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddField(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
+			n.tryAddFieldWithName(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err
@@ -112,13 +112,13 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 						return err
 					}
 					for _, fd := range fieldDescs {
-						n.tryAddField(fd.Name)
+						n.tryAddFieldWithName(fd.Name)
 					}
 				}
 				if target.ChildTarget.HasValue {
-					n.tryAddField(target.ChildTarget.Name)
+					n.tryAddFieldWithName(target.ChildTarget.Name)
 				} else {
-					n.tryAddField(target.Field.Name)
+					n.tryAddFieldWithName(target.Field.Name)
 				}
 			}
 		}
@@ -126,7 +126,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 	return nil
 }
 
-func (n *scanNode) tryAddField(fieldName string) bool {
+func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
 	fd, ok := n.col.Definition().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
@@ -134,8 +134,23 @@ func (n *scanNode) tryAddField(fieldName string) bool {
 		// is only responsible for basic fields
 		return false
 	}
-	n.fields = append(n.fields, fd)
+	n.addField(fd)
 	return true
+}
+
+// addField adds a field to the list of fields to be fetched.
+// It will not add the field if it is already in the list.
+func (n *scanNode) addField(field client.FieldDefinition) {
+	found := false
+	for i := range n.fields {
+		if n.fields[i].Name == field.Name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		n.fields = append(n.fields, field)
+	}
 }
 
 func (scan *scanNode) initFetcher(

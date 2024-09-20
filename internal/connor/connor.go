@@ -18,6 +18,10 @@ func matchWith(op string, conditions, data any) (bool, error) {
 	switch op {
 	case "_and":
 		return and(conditions, data)
+	case "_any":
+		return anyOp(conditions, data)
+	case "_all":
+		return all(conditions, data)
 	case "_eq":
 		return eq(conditions, data)
 	case "_ge":
@@ -44,6 +48,8 @@ func matchWith(op string, conditions, data any) (bool, error) {
 		return ilike(conditions, data)
 	case "_nilike":
 		return nilike(conditions, data)
+	case "_none":
+		return none(conditions, data)
 	case "_not":
 		return not(conditions, data)
 	default:
