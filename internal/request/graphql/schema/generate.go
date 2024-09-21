@@ -583,8 +583,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 				}
 
 				fields[field.Name] = &gql.InputObjectFieldConfig{
-					Type:         ttype,
-					DefaultValue: field.DefaultValue,
+					Type: ttype,
 				}
 			}
 
@@ -1151,11 +1150,17 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 				}
 				// scalars (leafs)
 				if gql.IsLeafType(field.Type) {
-					if _, isList := field.Type.(*gql.List); isList {
-						// Filtering by inline array value is currently not supported
-						continue
+					var operatorName string
+					if list, isList := field.Type.(*gql.List); isList {
+						if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
+							operatorName = "NotNull" + notNull.OfType.Name() + "ListOperatorBlock"
+						} else {
+							operatorName = list.OfType.Name() + "ListOperatorBlock"
+						}
+					} else {
+						operatorName = field.Type.Name() + "OperatorBlock"
 					}
-					operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
+					operatorType, isFilterable := g.manager.schema.TypeMap()[operatorName]
 					if !isFilterable {
 						continue
 					}

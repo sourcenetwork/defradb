@@ -11,7 +11,9 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
@@ -301,6 +303,48 @@ type GQLResult struct {
 	//
 	// It will be nil if any errors were raised during execution.
 	Data any `json:"data"`
+}
+
+// gqlError represents an error that was encountered during a GQL request.
+//
+// This is only used for marshalling to keep our responses spec compliant.
+type gqlError struct {
+	// Message contains a description of the error.
+	Message string `json:"message"`
+}
+
+// gqlResult is used to marshal and unmarshal GQLResults.
+//
+// The serialized data should always match the graphQL spec.
+type gqlResult struct {
+	// Errors contains the formatted result errors
+	Errors []gqlError `json:"errors,omitempty"`
+	// Data contains the result data
+	Data any `json:"data"`
+}
+
+func (res *GQLResult) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.UseNumber()
+	var out gqlResult
+	if err := dec.Decode(&out); err != nil {
+		return err
+	}
+	res.Data = out.Data
+	res.Errors = make([]error, len(out.Errors))
+	for i, e := range out.Errors {
+		res.Errors[i] = ReviveError(e.Message)
+	}
+	return nil
+}
+
+func (res GQLResult) MarshalJSON() ([]byte, error) {
+	out := gqlResult{Data: res.Data}
+	out.Errors = make([]gqlError, len(res.Errors))
+	for i, e := range res.Errors {
+		out.Errors[i] = gqlError{Message: e.Error()}
+	}
+	return json.Marshal(out)
 }
 
 // RequestResult represents the results of a GQL request.
