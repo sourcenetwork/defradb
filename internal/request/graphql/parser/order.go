@@ -63,7 +63,7 @@ func parseOrderCondition(arg map[string]any) (*request.OrderCondition, error) {
 			return nil, nil
 		}
 		// prepend the current field name, to the parsed condition from the slice
-		// Eg. order: {author: {name: ASC, birthday: DESC}}
+		// Eg. order: [{author: {name: ASC}}, {author: {birthday: DESC}}]
 		// This results in an array of [name, birthday] converted to
 		// [author.name, author.birthday].
 		// etc.
