@@ -7,7 +7,7 @@ toolchain go1.22.0
 require (
 	github.com/bits-and-blooms/bitset v1.14.3
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/cosmos/cosmos-sdk v0.50.9
+	github.com/cosmos/cosmos-sdk v0.50.10
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cyware/ssi-sdk v0.0.0-20231229164914-f93f3006379f
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
@@ -80,13 +80,13 @@ require (
 	cosmossdk.io/core v0.11.1 // indirect
 	cosmossdk.io/depinject v1.0.0 // indirect
 	cosmossdk.io/errors v1.0.1 // indirect
-	cosmossdk.io/log v1.3.1 // indirect
+	cosmossdk.io/log v1.4.1 // indirect
 	cosmossdk.io/math v1.3.0 // indirect
-	cosmossdk.io/store v1.1.0 // indirect
+	cosmossdk.io/store v1.1.1 // indirect
 	cosmossdk.io/x/circuit v0.1.0 // indirect
 	cosmossdk.io/x/evidence v0.1.0 // indirect
 	cosmossdk.io/x/feegrant v0.1.0 // indirect
-	cosmossdk.io/x/tx v0.13.4 // indirect
+	cosmossdk.io/x/tx v0.13.5 // indirect
 	cosmossdk.io/x/upgrade v0.1.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -129,10 +129,10 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
-	github.com/cosmos/iavl v1.1.2 // indirect
+	github.com/cosmos/iavl v1.2.0 // indirect
 	github.com/cosmos/ibc-go/modules/capability v1.0.0 // indirect
 	github.com/cosmos/ibc-go/v8 v8.2.0 // indirect
-	github.com/cosmos/ics23/go v0.10.0 // indirect
+	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
@@ -323,7 +323,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
-	github.com/rs/zerolog v1.32.0 // indirect
+	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
