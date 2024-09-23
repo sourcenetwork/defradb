@@ -117,8 +117,13 @@ func newDB(
 	}
 
 	// apply options
+	var opts dbOptions
 	for _, opt := range options {
-		opt(db)
+		opt(&opts)
+	}
+
+	if opts.maxTxnRetries.HasValue() {
+		db.maxTxnRetries = opts.maxTxnRetries
 	}
 
 	if lens != nil {
@@ -159,6 +164,11 @@ func (db *db) Rootstore() datastore.Rootstore {
 // Blockstore returns the internal DAG store which contains IPLD blocks.
 func (db *db) Blockstore() datastore.Blockstore {
 	return db.multistore.Blockstore()
+}
+
+// Encstore returns the internal enc store which contains encryption key for documents and their fields.
+func (db *db) Encstore() datastore.Blockstore {
+	return db.multistore.Encstore()
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.

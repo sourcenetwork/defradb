@@ -17,8 +17,8 @@ import (
 )
 
 func TestWithMaxRetries(t *testing.T) {
-	d := &db{}
-	WithMaxRetries(10)(d)
+	d := dbOptions{}
+	WithMaxRetries(10)(&d)
 	assert.True(t, d.maxTxnRetries.HasValue())
 	assert.Equal(t, 10, d.maxTxnRetries.Value())
 }

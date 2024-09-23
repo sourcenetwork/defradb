@@ -69,7 +69,7 @@ func (w *TxWrapper) Datastore() datastore.DSReaderWriter {
 	return w.server.Datastore()
 }
 
-func (w *TxWrapper) Encstore() datastore.DSReaderWriter {
+func (w *TxWrapper) Encstore() datastore.Blockstore {
 	return w.server.Encstore()
 }
 

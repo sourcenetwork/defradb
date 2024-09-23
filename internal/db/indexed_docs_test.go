@@ -309,7 +309,7 @@ func TestNonUnique_IfDocWithDescendingOrderIsAdded_ShouldBeIndexed(t *testing.T)
 	assert.Len(t, data, 0)
 }
 
-func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
+func TestNonUnique_IfFailsToStoreIndexedDoc_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
@@ -698,7 +698,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	fieldKeyString := core.DataStoreKey{
 		CollectionRootID: f.users.Description().RootID,
 	}.WithDocID(doc.ID().String()).
-		WithFieldId("1").
+		WithFieldID("1").
 		WithValueFlag().
 		ToString()
 

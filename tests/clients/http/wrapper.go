@@ -208,6 +208,10 @@ func (w *Wrapper) Rootstore() datastore.Rootstore {
 	return w.node.DB.Rootstore()
 }
 
+func (w *Wrapper) Encstore() datastore.Blockstore {
+	return w.node.DB.Encstore()
+}
+
 func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }

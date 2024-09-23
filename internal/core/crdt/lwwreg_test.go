@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -31,11 +32,12 @@ func setupLWWRegister() LWWRegister {
 	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
 }
 
-func setupLoadedLWWRegister(ctx context.Context) LWWRegister {
+func setupLoadedLWWRegister(t *testing.T, ctx context.Context) LWWRegister {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
 	addDelta.SetPriority(1)
-	lww.Merge(ctx, addDelta)
+	err := lww.Merge(ctx, addDelta)
+	require.NoError(t, err)
 	return lww
 }
 
@@ -71,12 +73,13 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 	}
 }
 
-func TestLWWReisterFollowupMerge(t *testing.T) {
+func TestLWWRegisterFollowupMerge(t *testing.T) {
 	ctx := context.Background()
-	lww := setupLoadedLWWRegister(ctx)
+	lww := setupLoadedLWWRegister(t, ctx)
 	addDelta := lww.Set([]byte("test2"))
 	addDelta.SetPriority(2)
-	lww.Merge(ctx, addDelta)
+	err := lww.Merge(ctx, addDelta)
+	require.NoError(t, err)
 
 	val, err := lww.Value(ctx)
 	if err != nil {
@@ -90,10 +93,11 @@ func TestLWWReisterFollowupMerge(t *testing.T) {
 
 func TestLWWRegisterOldMerge(t *testing.T) {
 	ctx := context.Background()
-	lww := setupLoadedLWWRegister(ctx)
+	lww := setupLoadedLWWRegister(t, ctx)
 	addDelta := lww.Set([]byte("test-1"))
 	addDelta.SetPriority(0)
-	lww.Merge(ctx, addDelta)
+	err := lww.Merge(ctx, addDelta)
+	require.NoError(t, err)
 
 	val, err := lww.Value(ctx)
 	if err != nil {
@@ -106,9 +110,7 @@ func TestLWWRegisterOldMerge(t *testing.T) {
 }
 
 func TestLWWRegisterDeltaInit(t *testing.T) {
-	delta := &LWWRegDelta{
-		Data: []byte("test"),
-	}
+	delta := &LWWRegDelta{}
 
 	var _ core.Delta = delta // checks if LWWRegDelta implements core.Delta (also checked in the implementation code, but w.e)
 }

@@ -116,6 +116,8 @@ type state struct {
 	// The TestCase currently being executed.
 	testCase TestCase
 
+	kms KMSType
+
 	// The type of database currently being tested.
 	dbt DatabaseType
 
@@ -191,6 +193,7 @@ func newState(
 	ctx context.Context,
 	t testing.TB,
 	testCase TestCase,
+	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
 	collectionNames []string,
@@ -199,6 +202,7 @@ func newState(
 		ctx:                      ctx,
 		t:                        t,
 		testCase:                 testCase,
+		kms:                      kms,
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},

@@ -11,7 +11,6 @@
 package http
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -279,43 +278,6 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
-type GraphQLResponse struct {
-	Data   any     `json:"data"`
-	Errors []error `json:"errors,omitempty"`
-}
-
-func (res GraphQLResponse) MarshalJSON() ([]byte, error) {
-	var errors []string
-	for _, err := range res.Errors {
-		errors = append(errors, err.Error())
-	}
-	return json.Marshal(map[string]any{"data": res.Data, "errors": errors})
-}
-
-func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
-	// decode numbers to json.Number
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	dec.UseNumber()
-
-	var out map[string]any
-	if err := dec.Decode(&out); err != nil {
-		return err
-	}
-	res.Data = out["data"]
-
-	// fix errors type to match tests
-	switch t := out["errors"].(type) {
-	case []any:
-		for _, v := range t {
-			res.Errors = append(res.Errors, parseError(v))
-		}
-	default:
-		res.Errors = nil
-	}
-
-	return nil
-}
-
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(dbContextKey).(client.Store)
 
@@ -343,7 +305,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	result := store.ExecRequest(req.Context(), request.Query, options...)
 
 	if result.Subscription == nil {
-		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})
+		responseJSON(rw, http.StatusOK, result.GQL)
 		return
 	}
 	flusher, ok := rw.(http.Flusher)
@@ -396,9 +358,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
-	graphQLResponseSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/graphql_response",
-	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
 	}
@@ -411,6 +370,16 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
 	}
+
+	graphQLResponseSchema := openapi3.NewObjectSchema().
+		WithProperties(map[string]*openapi3.Schema{
+			"errors": openapi3.NewArraySchema().WithItems(
+				openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+					"message": openapi3.NewStringSchema(),
+				}),
+			),
+			"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
+		})
 
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
@@ -626,7 +595,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	graphQLResponse := openapi3.NewResponse().
 		WithDescription("GraphQL response").
-		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema))
 
 	graphQLPost := openapi3.NewOperation()
 	graphQLPost.Description = "GraphQL POST endpoint"

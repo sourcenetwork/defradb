@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
@@ -109,10 +110,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	return node.DB, err
 }
 
-// setupNode returns the database implementation for the current
-// testing state. The database type on the test state is used to
-// select the datastore implementation to use.
-func setupNode(s *state) (*node.Node, string, error) {
+func getDefaultNodeOpts() []node.Option {
 	opts := []node.Option{
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
@@ -127,7 +125,7 @@ func setupNode(s *state) (*node.Node, string, error) {
 	if badgerEncryption && encryptionKey == nil {
 		key, err := crypto.GenerateAES256()
 		if err != nil {
-			return nil, "", err
+			return nil
 		}
 		encryptionKey = key
 	}
@@ -135,6 +133,15 @@ func setupNode(s *state) (*node.Node, string, error) {
 	if encryptionKey != nil {
 		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	}
+
+	return opts
+}
+
+// setupNode returns the database implementation for the current
+// testing state. The database type on the test state is used to
+// select the datastore implementation to use.
+func setupNode(s *state, opts ...node.Option) (*node.Node, string, error) {
+	opts = append(getDefaultNodeOpts(), opts...)
 
 	switch acpType {
 	case LocalACPType:
@@ -183,6 +190,10 @@ func setupNode(s *state) (*node.Node, string, error) {
 
 	default:
 		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
+	}
+
+	if s.kms == PubSubKMSType {
+		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
 	node, err := node.New(s.ctx, opts...)

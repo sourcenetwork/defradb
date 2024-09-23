@@ -44,7 +44,8 @@ func NewMerkleCompositeDAG(
 		fieldName,
 	)
 
-	clock := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), key.ToHeadStoreKey(), compositeDag)
+	clock := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(),
+		key.ToHeadStoreKey(), compositeDag)
 	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag}
 
 	return &MerkleCompositeDAG{

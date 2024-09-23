@@ -48,7 +48,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          "bafyreibdjepzhhiez4o27srv33xcd52yr336tpzqtkv36rdf3h3oue2l5m",
+							"cid":          "bafyreidkuvcdxxkyoeapnmttu6l2vk43qnm3zuzpxegbifpj6w24jrvrxq",
 							"collectionID": int64(1),
 							"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":        john21DocID,
@@ -58,7 +58,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreihkiua7jpwkye3xlex6s5hh2azckcaljfi2h3iscgub5sikacyrbu",
+							"cid":          "bafyreihdlv4fvvptetghxzyerxt4jc4zgprecybhoijrfjuyxqe55qw3x4",
 							"collectionID": int64(1),
 							"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":        john21DocID,
@@ -68,7 +68,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreidxdhzhwjrv5s4x6cho5drz6xq2tc7oymzupf4p4gfk6eelsnc7ke",
+							"cid":          "bafyreie5jegw4c2hg56bbiv6cgxmfz336jruukjakbjuyapockfnn6b5le",
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        john21DocID,
@@ -77,11 +77,11 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreibdjepzhhiez4o27srv33xcd52yr336tpzqtkv36rdf3h3oue2l5m",
+									"cid":  "bafyreidkuvcdxxkyoeapnmttu6l2vk43qnm3zuzpxegbifpj6w24jrvrxq",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreihkiua7jpwkye3xlex6s5hh2azckcaljfi2h3iscgub5sikacyrbu",
+									"cid":  "bafyreihdlv4fvvptetghxzyerxt4jc4zgprecybhoijrfjuyxqe55qw3x4",
 									"name": "name",
 								},
 							},
