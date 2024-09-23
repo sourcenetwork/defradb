@@ -29,7 +29,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `query {
-						Users(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
+						Users(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
 							Name
 							Age
 						}
@@ -56,7 +56,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `query {
-						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
+						Users(docID: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
 							Name
 							Age
 						}
@@ -84,7 +84,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `query {
-						Users(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
+						Users(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
 							Name
 							Age
 						}
@@ -123,7 +123,7 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `query {
-						Users(docIDs: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-428c6d76-3491-520b-ad1f-a218f4dad787"]) {
+						Users(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-428c6d76-3491-520b-ad1f-a218f4dad787"]) {
 							Name
 							Age
 						}
@@ -162,7 +162,7 @@ func TestQuerySimpleReturnsNothinGivenEmptyDocIDsFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(docIDs: []) {
+					Users(docID: []) {
 						Name
 						Age
 					}

@@ -28,7 +28,7 @@ var basicPattern = dataMap{
 
 var emptyChildSelectsAttributeForAuthor = dataMap{
 	"collectionName": "Author",
-	"docIDs":         nil,
+	"docID":          nil,
 	"filter":         nil,
 	"groupBy":        nil,
 	"limit":          nil,

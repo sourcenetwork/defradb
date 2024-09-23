@@ -61,7 +61,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 									"_eq": "Shahzad",
 								},
 							},
-							"docIDs": []string(nil),
+							"docID": []string(nil),
 						},
 					},
 
@@ -116,7 +116,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"docIDs": []string(nil),
+							"docID":  []string(nil),
 						},
 					},
 
@@ -167,7 +167,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
@@ -207,7 +207,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					delete_Author(docIDs: [
+					delete_Author(docID: [
 						"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 						"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 					]) {
@@ -223,7 +223,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
@@ -268,7 +268,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					delete_Author(docIDs: []) {
+					delete_Author(docID: []) {
 						_docID
 					}
 				}`,
@@ -281,7 +281,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"docIDs": []string{},
+							"docID":  []string{},
 						},
 					},
 
@@ -315,7 +315,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 
 				Request: `mutation @explain {
 					delete_Author(
-						docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
+						docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
 						filter: {
 							_and: [
 								{age: {_lt: 26}},
@@ -348,7 +348,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 									},
 								},
 							},
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"test",
 							},

@@ -201,9 +201,9 @@ func (n *selectNode) simpleExplain() (map[string]any, error) {
 
 	// Add the docIDs attribute if it exists.
 	if !n.docIDs.HasValue() {
-		simpleExplainMap[request.DocIDsArgName] = nil
+		simpleExplainMap[request.DocIDArgName] = nil
 	} else {
-		simpleExplainMap[request.DocIDsArgName] = n.docIDs.Value()
+		simpleExplainMap[request.DocIDArgName] = n.docIDs.Value()
 	}
 
 	return simpleExplainMap, nil

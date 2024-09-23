@@ -106,7 +106,7 @@ func TestMutationDelete_WithNullDocIDs_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_Users(docIDs: null) {
+					delete_Users(docID: null) {
 						name
 					}
 				}`,

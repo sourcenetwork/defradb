@@ -151,12 +151,9 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
-		input:     parsed.Inputs,
+		input:     parsed.Input,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-	}
-	if parsed.Input != nil {
-		create.input = []map[string]any{parsed.Input}
 	}
 
 	p.ctx = encryption.SetContextConfigFromParams(p.ctx, parsed.Encrypt, parsed.EncryptFields)

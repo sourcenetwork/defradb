@@ -40,7 +40,7 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"filter": nil,
@@ -80,7 +80,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					Author(docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
+					Author(docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
 						name
 						age
 					}
@@ -92,7 +92,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"filter": nil,
@@ -133,7 +133,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 
 				Request: `query @explain {
 					Author(
-						docIDs: [
+						docID: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						]
@@ -149,7 +149,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
@@ -195,7 +195,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 
 				Request: `query @explain {
 					Author(
-						docIDs: [
+						docID: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 						]
@@ -211,7 +211,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
@@ -274,7 +274,7 @@ func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": nil,
+							"docID":  nil,
 							"filter": nil,
 						},
 					},

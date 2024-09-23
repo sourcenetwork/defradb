@@ -385,8 +385,7 @@ func (g *Generator) createExpandedFieldList(
 		Description: f.Description,
 		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
-			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
 			"filter": schemaTypes.NewArgConfig(
 				g.manager.schema.TypeMap()[typeName+filterInputNameSuffix],
 				listFieldFilterArgDescription,
@@ -1054,8 +1053,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: createDocumentDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.Input: schemaTypes.NewArgConfig(mutationInput, "Create a "+obj.Name()+" document"),
-			request.Inputs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
+			request.Input: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
 				"Create "+obj.Name()+" documents"),
 			request.EncryptDocArgName: schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
 			request.EncryptFieldsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(explicitUserFieldsEnum)),
@@ -1068,10 +1066,9 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: updateDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
-			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
-			"filter":              schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
-			request.Input:         schemaTypes.NewArgConfig(mutationInput, "Update field values"),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			"filter":             schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
+			request.Input:        schemaTypes.NewArgConfig(mutationInput, "Update field values"),
 		},
 	}
 
@@ -1080,9 +1077,8 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: deleteDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
-			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
-			"filter":              schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
 		},
 	}
 
@@ -1301,10 +1297,9 @@ func (g *Generator) genTypeQueryableFieldList(
 		Description: obj.Description(),
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
-			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
-			"cid":                 schemaTypes.NewArgConfig(gql.String, cidArgDescription),
-			"filter":              schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
+			"cid":                schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			"filter":             schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(config.groupBy)),
 				schemaTypes.GroupByArgDescription,
