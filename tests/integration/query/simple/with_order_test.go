@@ -395,6 +395,26 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 	executeTestCase(t, test)
 }
 
+func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with invalid order",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					Users(order: {Age: INVALID}) {
+						Name
+						Age
+						Verified
+					}
+				}`,
+				ExpectedError: `Argument "order" has invalid value {Age: INVALID}`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
