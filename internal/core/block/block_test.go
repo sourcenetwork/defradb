@@ -21,7 +21,6 @@ import (
 	"github.com/ipld/go-ipld-prime/storage/memstore"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
@@ -75,11 +74,8 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 				Data:            []byte("Johny"),
 			},
 		},
-		Links: []DAGLink{
-			{
-				Name: core.HEAD,
-				Link: fieldBlockLink.(cidlink.Link),
-			},
+		Heads: []cidlink.Link{
+			fieldBlockLink.(cidlink.Link),
 		},
 	}
 	fieldUpdateBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), fieldUpdateBlock.GenerateNode())
@@ -97,11 +93,10 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 				Status:          1,
 			},
 		},
+		Heads: []cidlink.Link{
+			compositeBlockLink.(cidlink.Link),
+		},
 		Links: []DAGLink{
-			{
-				Name: core.HEAD,
-				Link: compositeBlockLink.(cidlink.Link),
-			},
 			{
 				Name: "name",
 				Link: fieldUpdateBlockLink.(cidlink.Link),

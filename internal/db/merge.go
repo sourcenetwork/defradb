@@ -204,8 +204,8 @@ func (mp *mergeProcessor) loadComposites(
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.composites.PushFront(block)
-		for _, prevCid := range block.GetHeadLinks() {
-			err := mp.loadComposites(ctx, prevCid, mt)
+		for _, head := range block.Heads {
+			err := mp.loadComposites(ctx, head.Cid, mt)
 			if err != nil {
 				return err
 			}
@@ -213,21 +213,19 @@ func (mp *mergeProcessor) loadComposites(
 	} else {
 		newMT := newMergeTarget()
 		for _, b := range mt.heads {
-			for _, link := range b.Links {
-				if link.Name == core.HEAD {
-					nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
-					if err != nil {
-						return err
-					}
-
-					childBlock, err := coreblock.GetFromNode(nd)
-					if err != nil {
-						return err
-					}
-
-					newMT.heads[link.Cid] = childBlock
-					newMT.headHeight = childBlock.Delta.GetPriority()
+			for _, link := range b.Heads {
+				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.SchemaPrototype)
+				if err != nil {
+					return err
 				}
+
+				childBlock, err := coreblock.GetFromNode(nd)
+				if err != nil {
+					return err
+				}
+
+				newMT.heads[link.Cid] = childBlock
+				newMT.headHeight = childBlock.Delta.GetPriority()
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
@@ -387,10 +385,6 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	for _, link := range dagBlock.Links {
-		if link.Name == core.HEAD {
-			continue
-		}
-
 		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
 		if err != nil {
 			return err

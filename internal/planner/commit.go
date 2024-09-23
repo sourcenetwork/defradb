@@ -12,7 +12,6 @@ package planner
 
 import (
 	cid "github.com/ipfs/go-cid"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -221,7 +220,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	currentValue, heads, err := n.dagBlockToNodeDoc(dagBlock)
+	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
 	if err != nil {
 		return false, err
 	}
@@ -239,10 +238,10 @@ func (n *dagScanNode) Next() (bool, error) {
 	if !n.commitSelect.Depth.HasValue() || n.depthVisited < n.commitSelect.Depth.Value() {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
-		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
+		n.queuedCids = append(make([]*cid.Cid, len(dagBlock.Heads)), n.queuedCids...)
 
-		for i, head := range heads {
-			n.queuedCids[len(heads)-i-1] = &head.Cid
+		for i, head := range dagBlock.Heads {
+			n.queuedCids[len(dagBlock.Heads)-i-1] = &head.Cid
 		}
 	}
 
@@ -293,11 +292,11 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cidlink.Link, error) {
+func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error) {
 	commit := n.commitSelect.DocumentMapping.NewDoc()
 	link, err := block.GenerateLink()
 	if err != nil {
-		return core.Doc{}, nil, err
+		return core.Doc{}, err
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
@@ -323,17 +322,17 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cid
 			},
 		)
 		if err != nil {
-			return core.Doc{}, nil, err
+			return core.Doc{}, err
 		}
 		if len(cols) == 0 {
-			return core.Doc{}, nil, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+			return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
 		}
 
 		// Because we only care about the schema, we can safely take the first - the schema is the same
 		// for all in the set.
 		field, ok := cols[0].Definition().GetFieldByName(fName)
 		if !ok {
-			return core.Doc{}, nil, client.NewErrFieldNotExist(fName)
+			return core.Doc{}, client.NewErrFieldNotExist(fName)
 		}
 		fieldID = field.ID.String()
 	}
@@ -362,10 +361,10 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cid
 		},
 	)
 	if err != nil {
-		return core.Doc{}, nil, err
+		return core.Doc{}, err
 	}
 	if len(cols) == 0 {
-		return core.Doc{}, nil, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+		return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
 	}
 
 	// WARNING: This will become incorrect once we allow multiple collections to share the same schema,
@@ -374,31 +373,34 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, []cid
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.CollectionIDFieldName, int64(cols[0].ID()))
 
-	heads := make([]cidlink.Link, 0)
-
 	// links
 	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
 
 	for _, linksIndex := range linksIndexes {
-		links := make([]core.Doc, len(block.Links))
+		links := make([]core.Doc, len(block.Heads)+len(block.Links))
 		linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
 
-		for i, l := range block.Links {
+		i := 0
+		for _, l := range block.Heads {
+			link := linksMapping.NewDoc()
+			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, "_head")
+			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Cid.String())
+
+			links[i] = link
+			i++
+		}
+
+		for _, l := range block.Links {
 			link := linksMapping.NewDoc()
 			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
 			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Link.Cid.String())
 
 			links[i] = link
+			i++
 		}
 
 		commit.Fields[linksIndex] = links
 	}
 
-	for _, l := range block.Links {
-		if l.Name == "_head" {
-			heads = append(heads, l.Link)
-		}
-	}
-
-	return commit, heads, nil
+	return commit, nil
 }

@@ -121,8 +121,21 @@ type Encryption struct {
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
 	Delta crdt.CRDT
+
+	// The previous block-CIDs that this block is based on.
+	//
+	// For example:
+	// - This will be empty for all 'create' blocks.
+	// - Most 'update' blocks will have a single head, however they will have multiple if the history has
+	//   diverged and there were multiple blocks at the previous height.
+	Heads []cidlink.Link
+
 	// Links are the links to other blocks in the DAG.
+	//
+	// This does not include `Heads`.  This will be empty for field-level blocks. It will never be empty
+	// for composite blocks (and will contain links to field-level blocks).
 	Links []DAGLink
+
 	// Encryption contains the encryption information for the block's delta.
 	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
 	Encryption *cidlink.Link
@@ -137,20 +150,25 @@ func (block *Block) IsEncrypted() bool {
 func (block *Block) Clone() *Block {
 	return &Block{
 		Delta:      block.Delta.Clone(),
+		Heads:      block.Heads,
 		Links:      block.Links,
 		Encryption: block.Encryption,
 	}
 }
 
-// GetHeadLinks returns the CIDs of the previous blocks. There can be more than 1 with multiple heads.
-func (block *Block) GetHeadLinks() []cid.Cid {
-	var heads []cid.Cid
+// AllLinks returns the block `Heads` and `Links` combined into a single set.
+//
+// All heads will be first in the set, followed by other links.
+func (block *Block) AllLinks() []cidlink.Link {
+	result := make([]cidlink.Link, 0, len(block.Heads)+len(block.Links))
+
+	result = append(result, block.Heads...)
+
 	for _, link := range block.Links {
-		if link.Name == core.HEAD {
-			heads = append(heads, link.Cid)
-		}
+		result = append(result, link.Link)
 	}
-	return heads
+
+	return result
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.
@@ -160,7 +178,8 @@ func (block *Block) IPLDSchemaBytes() []byte {
 	return []byte(`
 		type Block struct {
 			delta       CRDT
-			links       [DAGLink]
+			heads       optional [Link]
+			links       optional [DAGLink]
 			encryption  optional Link
 		}
 	`)
@@ -181,20 +200,17 @@ func (enc *Encryption) IPLDSchemaBytes() []byte {
 
 // New creates a new block with the given delta and links.
 func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
-	blockLinks := make([]DAGLink, 0, len(links)+len(heads))
-
 	// Sort the heads lexicographically by CID.
 	// We need to do this to ensure that the block is deterministic.
 	sort.Slice(heads, func(i, j int) bool {
 		return strings.Compare(heads[i].String(), heads[j].String()) < 0
 	})
+
+	headLinks := make([]cidlink.Link, 0, len(heads))
 	for _, head := range heads {
-		blockLinks = append(
-			blockLinks,
-			DAGLink{
-				Name: core.HEAD,
-				Link: cidlink.Link{Cid: head},
-			},
+		headLinks = append(
+			headLinks,
+			cidlink.Link{Cid: head},
 		)
 	}
 
@@ -204,9 +220,27 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 
+	blockLinks := make([]DAGLink, 0, len(links))
 	blockLinks = append(blockLinks, links...)
 
+	if len(headLinks) == 0 {
+		// The encoding used for block serialization will consume space if an empty set is
+		// provided, but it will not consume space if nil is provided, so if empty we set it
+		// to nil.  The would-be space consumed includes the property name, so this is not an
+		// insignificant amount.
+		headLinks = nil
+	}
+
+	if len(blockLinks) == 0 {
+		// The encoding used for block serialization will consume space if an empty set is
+		// provided, but it will not consume space if nil is provided, so if empty we set it
+		// to nil.  The would-be space consumed includes the property name, so this is not an
+		// insignificant amount.
+		blockLinks = nil
+	}
+
 	return &Block{
+		Heads: headLinks,
 		Links: blockLinks,
 		Delta: crdt.NewCRDT(delta),
 	}

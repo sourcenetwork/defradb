@@ -312,20 +312,14 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	}
 
 	// only seekNext on parent if we have a HEAD link
-	l, ok := block.GetLinkByName(core.HEAD)
-	if ok {
-		err := vf.seekNext(l.Cid, true)
+	if len(block.Heads) != 0 {
+		err := vf.seekNext(block.Heads[0].Cid, true)
 		if err != nil {
 			return err
 		}
 	}
 
-	// loop over links and ignore head links
 	for _, l := range block.Links {
-		if l.Name == core.HEAD {
-			continue
-		}
-
 		err := vf.seekNext(l.Link.Cid, false)
 		if err != nil {
 			return err
@@ -362,12 +356,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	}
 
 	// handle subgraphs
-	// loop over links and ignore head links
 	for _, l := range block.Links {
-		if l.Name == core.HEAD {
-			continue
-		}
-
 		// get node
 		subBlock, err := vf.getDAGBlock(l.Link.Cid)
 		if err != nil {
