@@ -61,7 +61,7 @@ func TestDebugExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 					Author(
 						groupBy: [age],
 						filter: {age: {_eq: 20}},
-						docIDs: [
+						docID: [
 							"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
 							"bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
 						]

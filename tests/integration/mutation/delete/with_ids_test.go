@@ -39,7 +39,7 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c", "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"]) {
+					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c", "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"]) {
 						_docID
 					}
 				}`,
@@ -83,7 +83,7 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: []) {
+					delete_User(docID: []) {
 						_docID
 					}
 				}`,
@@ -128,7 +128,7 @@ func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
+					delete_User(docID: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
 						_docID
 					}
 				}`,
@@ -155,7 +155,7 @@ func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+					delete_User(docID: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 						_docID
 					}
 				}`,
@@ -187,7 +187,7 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c", "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"]) {
+					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c", "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"]) {
 						_docID
 					}
 				}`,

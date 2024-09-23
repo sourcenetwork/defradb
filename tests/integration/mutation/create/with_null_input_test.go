@@ -60,16 +60,12 @@ func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					create_Users(input: null, inputs: [{name: "Bob"}]) {
+					create_Users(input: null) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
-						{
-							"name": "Bob",
-						},
-					},
+					"create_Users": []map[string]any{},
 				},
 			},
 		},
@@ -78,9 +74,9 @@ func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithNullInputs_Succeeds(t *testing.T) {
+func TestMutationCreate_WithNullInputEntry_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with null inputs",
+		Description: "Simple create mutation, with null input entry returns error",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -91,17 +87,11 @@ func TestMutationCreate_WithNullInputs_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					create_Users(inputs: null, input: {name: "Bob"}) {
+					create_Users(input: [null]) {
 						name
 					}
 				}`,
-				Results: map[string]any{
-					"create_Users": []map[string]any{
-						{
-							"name": "Bob",
-						},
-					},
-				},
+				ExpectedError: "Expected \"UsersMutationInputArg!\", found null.",
 			},
 		},
 	}

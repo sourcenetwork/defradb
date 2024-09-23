@@ -230,7 +230,7 @@ func TestQuerySimple_WithNullDocIDs_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(docIDs: null) {
+					Users(docID: null) {
 						Name
 					}
 				}`,

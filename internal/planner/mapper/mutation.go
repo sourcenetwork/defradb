@@ -27,11 +27,8 @@ type Mutation struct {
 	// The type of mutation. For example a create request.
 	Type MutationType
 
-	// Input is the map of fields and values used for the mutation.
-	Input map[string]any
-
-	// Inputs is the array of maps of fields and values used for the mutation.
-	Inputs []map[string]any
+	// Input is the array of maps of fields and values used for the mutation.
+	Input []map[string]any
 
 	// Encrypt is a flag to indicate if the input data should be encrypted.
 	Encrypt bool

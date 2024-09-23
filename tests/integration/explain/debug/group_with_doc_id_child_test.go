@@ -32,7 +32,7 @@ func TestDebugExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 						groupBy: [age]
 					) {
 						age
-						_group(docIDs: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
+						_group(docID: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
 							name
 						}
 					}

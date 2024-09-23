@@ -112,11 +112,6 @@ func parseSelect(
 			}
 
 		case request.DocIDArgName: // parse single DocID field
-			if v, ok := value.(string); ok {
-				slct.DocIDs = immutable.Some([]string{v})
-			}
-
-		case request.DocIDsArgName:
 			v, ok := value.([]any)
 			if !ok {
 				continue // value is nil
