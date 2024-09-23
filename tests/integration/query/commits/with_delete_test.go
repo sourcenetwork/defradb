@@ -55,9 +55,6 @@ func TestQueryCommits_WithDelete(t *testing.T) {
 								{
 									"name": "_head",
 								},
-								{
-									"name": "_head",
-								},
 							},
 						},
 						{
