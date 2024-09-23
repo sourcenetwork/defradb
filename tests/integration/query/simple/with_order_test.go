@@ -394,3 +394,40 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
+	tests := []testUtils.TestCase{
+		{
+			Description: "Simple query with multiple order fields and a single entry",
+			Actions: []any{
+				testUtils.Request{
+					Request: `query {
+					Users(order: {Age: ASC, Name: DESC}) {
+						Name
+						Age
+					}
+				}`,
+					ExpectedError: "each order argument can only define one field",
+				},
+			},
+		},
+		{
+			Description: "Simple query with multiple order fields and multiple entries",
+			Actions: []any{
+				testUtils.Request{
+					Request: `query {
+					Users(order: [{Age: ASC}, {Age: ASC, Name: DESC}]) {
+						Name
+						Age
+					}
+				}`,
+					ExpectedError: "each order argument can only define one field",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		executeTestCase(t, test)
+	}
+}
