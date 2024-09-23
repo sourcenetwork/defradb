@@ -27,13 +27,11 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
 
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
 	"google.golang.org/grpc"
-	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -229,12 +227,6 @@ func (p *Peer) Close() {
 	}
 }
 
-func NewGRPCPeer(peerID libpeer.ID) *grpcpeer.Peer {
-	return &grpcpeer.Peer{
-		Addr: addr{peerID},
-	}
-}
-
 // handleMessage loop manages the transition of messages
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleMessageLoop() {
@@ -278,7 +270,7 @@ func (p *Peer) RegisterNewDocument(
 	schemaRoot string,
 ) error {
 	// register topic
-	err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot))
+	err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot), nil)
 	if err != nil {
 		log.ErrorE(
 			"Failed to create new pubsub topic",

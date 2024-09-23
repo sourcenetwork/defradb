@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/net"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -136,7 +135,7 @@ func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, m
 		return nil, err
 	}
 
-	ctx := grpcpeer.NewContext(s.ctx, net.NewGRPCPeer(peerID))
+	ctx := grpcpeer.NewContext(s.ctx, newGRPCPeer(peerID))
 	res, err := s.tryGenEncryptionKeyLocally(ctx, req)
 	if err != nil {
 		log.ErrorContextE(s.ctx, "failed attempt to get encryption key", err)
@@ -323,3 +322,18 @@ func encodeToBase64(data []byte) []byte {
 	base64.StdEncoding.Encode(encoded, data)
 	return encoded
 }
+
+func newGRPCPeer(peerID libpeer.ID) *grpcpeer.Peer {
+	return &grpcpeer.Peer{
+		Addr: addr{peerID},
+	}
+}
+
+// addr implements net.Addr and holds a libp2p peer ID.
+type addr struct{ id libpeer.ID }
+
+// Network returns the name of the network that this address belongs to (libp2p).
+func (a addr) Network() string { return "libp2p" }
+
+// String returns the peer ID of this address in string form (B58-encoded).
+func (a addr) String() string { return a.id.String() }

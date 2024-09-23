@@ -146,7 +146,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// subscribed to the collection.
 	if !s.hasPubSubTopic(string(req.Body.SchemaRoot)) {
-		err = s.addPubSubTopic(docID.String(), true)
+		err = s.addPubSubTopic(docID.String(), true, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +172,9 @@ func (s *server) GetHeadLog(
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network
-func (s *server) addPubSubTopic(topic string, subscribe bool) error {
+// A custom message handler can be provided to handle incoming messages. If not provided,
+// the default message handler will be used.
+func (s *server) addPubSubTopic(topic string, subscribe bool, handler rpc.MessageHandler) error {
 	if s.peer.ps == nil {
 		return nil
 	}
@@ -200,13 +202,21 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 		return err
 	}
 
+	if handler == nil {
+		handler = s.pubSubMessageHandler
+	}
+
 	t.SetEventHandler(s.pubSubEventHandler)
-	t.SetMessageHandler(s.pubSubMessageHandler)
+	t.SetMessageHandler(handler)
 	s.topics[topic] = pubsubTopic{
 		Topic:      t,
 		subscribed: subscribe,
 	}
 	return nil
+}
+
+func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) error {
+	return s.addPubSubTopic(topicName, true, handler)
 }
 
 // hasPubSubTopic checks if we are subscribed to a topic.
@@ -269,7 +279,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	t, ok := s.topics[topic]
 	s.mu.Unlock()
 	if !ok {
-		err := s.addPubSubTopic(topic, false)
+		err := s.addPubSubTopic(topic, false, nil)
 		if err != nil {
 			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
 		}
@@ -347,7 +357,7 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 
 func (s *server) updatePubSubTopics(evt event.P2PTopic) {
 	for _, topic := range evt.ToAdd {
-		err := s.addPubSubTopic(topic, true)
+		err := s.addPubSubTopic(topic, true, nil)
 		if err != nil {
 			log.ErrorE("Failed to add pubsub topic.", err)
 		}
@@ -408,36 +418,6 @@ func (s *server) updateReplicators(evt event.Replicator) {
 		}
 	}
 	s.peer.bus.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
-}
-
-func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) error {
-	if s.peer.ps == nil {
-		return nil
-	}
-
-	s.mu.Lock()
-	_, ok := s.topics[topicName]
-	s.mu.Unlock()
-	if ok {
-		return NewErrTopicAlreadyExist(topicName)
-	}
-
-	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topicName, true)
-	if err != nil {
-		return err
-	}
-
-	t.SetEventHandler(s.pubSubEventHandler)
-	t.SetMessageHandler(handler)
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.topics[topicName] = pubsubTopic{
-		Topic:      t,
-		subscribed: true,
-	}
-	return nil
 }
 
 func (s *server) SendPubSubMessage(
