@@ -57,6 +57,20 @@ var (
 	acpType ACPType
 )
 
+// KMSType is the type of KMS to use.
+type KMSType string
+
+const (
+	// NoneKMSType is the none KMS type. It is used to indicate that no KMS should be used.
+	NoneKMSType KMSType = "none"
+	// PubSubKMSType is the PubSub KMS type.
+	PubSubKMSType KMSType = "pubsub"
+)
+
+func getKMSTypes() []KMSType {
+	return []KMSType{PubSubKMSType}
+}
+
 func init() {
 	acpType = ACPType(os.Getenv(acpTypeEnvName))
 	if acpType == "" {

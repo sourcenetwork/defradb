@@ -349,6 +349,10 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	return expect
 }
 
+func waitForSync(s *state) {
+	waitForMergeEvents(s)
+}
+
 // getEventsForUpdateWithFilter returns a map of docIDs that should be
 // published to the local event bus after a UpdateWithFilter action.
 //

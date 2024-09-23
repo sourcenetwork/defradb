@@ -92,7 +92,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, err
 	}
 
-	if hf.fieldId.HasValue() && hf.fieldId.Value() != headStoreKey.FieldId {
+	if hf.fieldId.HasValue() && hf.fieldId.Value() != headStoreKey.FieldID {
 		// FieldIds do not match, continue to next row
 		return hf.FetchNext()
 	}

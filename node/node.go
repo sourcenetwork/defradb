@@ -17,10 +17,12 @@ import (
 	gohttp "net/http"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/net"
 )
 
@@ -42,6 +44,7 @@ type Options struct {
 	disableP2P        bool
 	disableAPI        bool
 	enableDevelopment bool
+	kmsType           immutable.Option[kms.ServiceType]
 }
 
 // DefaultOptions returns options with default settings.
@@ -66,6 +69,12 @@ func WithDisableAPI(disable bool) NodeOpt {
 	}
 }
 
+func WithKMS(kms kms.ServiceType) NodeOpt {
+	return func(o *Options) {
+		o.kmsType = immutable.Some(kms)
+	}
+}
+
 // WithEnableDevelopment sets the enable development mode flag.
 func WithEnableDevelopment(enable bool) NodeOpt {
 	return func(o *Options) {
@@ -75,9 +84,10 @@ func WithEnableDevelopment(enable bool) NodeOpt {
 
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
-	DB     client.DB
-	Peer   *net.Peer
-	Server *http.Server
+	DB         client.DB
+	Peer       *net.Peer
+	Server     *http.Server
+	kmsService kms.Service
 
 	options    *Options
 	dbOpts     []db.Option
@@ -141,9 +151,24 @@ func (n *Node) Start(ctx context.Context) error {
 
 	if !n.options.disableP2P {
 		// setup net node
-		n.Peer, err = net.NewPeer(ctx, n.DB.Blockstore(), n.DB.Events(), n.netOpts...)
+		n.Peer, err = net.NewPeer(ctx, n.DB.Blockstore(), n.DB.Encstore(), n.DB.Events(), n.netOpts...)
 		if err != nil {
 			return err
+		}
+		if n.options.kmsType.HasValue() {
+			switch n.options.kmsType.Value() {
+			case kms.PubSubServiceType:
+				n.kmsService, err = kms.NewPubSubService(
+					ctx,
+					n.Peer.PeerID(),
+					n.Peer.Server(),
+					n.DB.Events(),
+					n.DB.Encstore(),
+				)
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
 

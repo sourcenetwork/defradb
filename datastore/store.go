@@ -40,7 +40,7 @@ type MultiStore interface {
 	// Encstore is a wrapped root DSReaderWriter under the /enc namespace
 	// This store is used for storing symmetric encryption keys for doc encryption.
 	// The store keys are comprised of docID + field name.
-	Encstore() DSReaderWriter
+	Encstore() Blockstore
 
 	// Headstore is a wrapped root DSReaderWriter under the /head namespace
 	Headstore() DSReaderWriter

@@ -19,12 +19,16 @@ const (
 	updateEventBufferSize = 100
 )
 
+type dbOptions struct {
+	maxTxnRetries immutable.Option[int]
+}
+
 // Option is a funtion that sets a config value on the db.
-type Option func(*db)
+type Option func(*dbOptions)
 
 // WithMaxRetries sets the maximum number of retries per transaction.
 func WithMaxRetries(num int) Option {
-	return func(db *db) {
-		db.maxTxnRetries = immutable.Some(num)
+	return func(opts *dbOptions) {
+		opts.maxTxnRetries = immutable.Some(num)
 	}
 }

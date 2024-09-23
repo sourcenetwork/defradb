@@ -12,211 +12,192 @@ package encryption
 
 import (
 	"context"
-	"errors"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/datastore/mocks"
-	"github.com/sourcenetwork/defradb/internal/core"
 )
 
-var testErr = errors.New("test error")
-
-const docID = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"
-
-const fieldName = "name"
-
-func getPlainText() []byte {
-	return []byte("test")
+func TestContext_NoEncryptor_ReturnsNil(t *testing.T) {
+	ctx := context.Background()
+	enc := GetEncryptorFromContext(ctx)
+	assert.Nil(t, enc)
 }
 
-func getEncKey(fieldName string) []byte {
-	key, _ := generateTestEncryptionKey(docID, fieldName)
-	return key
+func TestContext_WithEncryptor_ReturnsEncryptor(t *testing.T) {
+	ctx := context.Background()
+	enc := newDocEncryptor(ctx)
+	ctx = context.WithValue(ctx, docEncContextKey{}, enc)
+
+	retrievedEnc := GetEncryptorFromContext(ctx)
+	assert.NotNil(t, retrievedEnc)
+	assert.Equal(t, enc, retrievedEnc)
 }
 
-func getCipherText(t *testing.T, fieldName string) []byte {
-	cipherText, err := EncryptAES(getPlainText(), getEncKey(fieldName))
+func TestContext_EnsureEncryptor_CreatesNew(t *testing.T) {
+	ctx := context.Background()
+	newCtx, enc := EnsureContextWithEncryptor(ctx)
+
+	assert.NotNil(t, enc)
+	assert.NotEqual(t, ctx, newCtx)
+
+	retrievedEnc := GetEncryptorFromContext(newCtx)
+	assert.Equal(t, enc, retrievedEnc)
+}
+
+func TestContext_EnsureEncryptor_ReturnsExisting(t *testing.T) {
+	ctx := context.Background()
+	enc := newDocEncryptor(ctx)
+	ctx = context.WithValue(ctx, docEncContextKey{}, enc)
+
+	newCtx, retrievedEnc := EnsureContextWithEncryptor(ctx)
+	assert.Equal(t, ctx, newCtx)
+	assert.Equal(t, enc, retrievedEnc)
+}
+
+func TestConfig_GetFromContext_NoConfig(t *testing.T) {
+	ctx := context.Background()
+	config := GetContextConfig(ctx)
+	assert.False(t, config.HasValue())
+}
+
+func TestConfig_GetFromContext_ReturnCurrentConfig(t *testing.T) {
+	ctx := context.Background()
+	expectedConfig := DocEncConfig{IsDocEncrypted: true, EncryptedFields: []string{"field1", "field2"}}
+	ctx = context.WithValue(ctx, configContextKey{}, expectedConfig)
+
+	config := GetContextConfig(ctx)
+	assert.True(t, config.HasValue())
+	assert.Equal(t, expectedConfig, config.Value())
+}
+
+func TestConfig_SetContextConfig_StoreConfig(t *testing.T) {
+	ctx := context.Background()
+	config := DocEncConfig{IsDocEncrypted: true, EncryptedFields: []string{"field1", "field2"}}
+
+	newCtx := SetContextConfig(ctx, config)
+	retrievedConfig := GetContextConfig(newCtx)
+
+	assert.True(t, retrievedConfig.HasValue())
+	assert.Equal(t, config, retrievedConfig.Value())
+}
+
+func TestConfig_SetFromParamsWithDocEncryption_StoreConfig(t *testing.T) {
+	ctx := context.Background()
+	newCtx := SetContextConfigFromParams(ctx, true, []string{"field1", "field2"})
+
+	config := GetContextConfig(newCtx)
+	assert.True(t, config.HasValue())
+	assert.True(t, config.Value().IsDocEncrypted)
+	assert.Equal(t, []string{"field1", "field2"}, config.Value().EncryptedFields)
+}
+
+func TestConfig_SetFromParamsWithFields_StoreConfig(t *testing.T) {
+	ctx := context.Background()
+	newCtx := SetContextConfigFromParams(ctx, false, []string{"field1", "field2"})
+
+	config := GetContextConfig(newCtx)
+	assert.True(t, config.HasValue())
+	assert.False(t, config.Value().IsDocEncrypted)
+	assert.Equal(t, []string{"field1", "field2"}, config.Value().EncryptedFields)
+}
+
+func TestConfig_SetFromParamsWithNoEncryptionSetting_NoConfig(t *testing.T) {
+	ctx := context.Background()
+	newCtx := SetContextConfigFromParams(ctx, false, nil)
+
+	config := GetContextConfig(newCtx)
+	assert.False(t, config.HasValue())
+}
+
+func TestEncryptor_EncryptDecrypt_SuccessfulRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	enc := newDocEncryptor(ctx)
+	enc.SetConfig(immutable.Some(DocEncConfig{EncryptedFields: []string{"field1"}}))
+
+	plainText := []byte("Hello, World!")
+	docID := "doc1"
+	fieldName := immutable.Some("field1")
+
+	key, err := enc.GetOrGenerateEncryptionKey(docID, fieldName)
 	assert.NoError(t, err)
-	return cipherText
-}
+	assert.NotNil(t, key)
 
-func newDefaultEncryptor(t *testing.T) (*DocEncryptor, *mocks.DSReaderWriter) {
-	return newEncryptorWithConfig(t, DocEncConfig{IsDocEncrypted: true})
-}
-
-func newEncryptorWithConfig(t *testing.T, conf DocEncConfig) (*DocEncryptor, *mocks.DSReaderWriter) {
-	enc := newDocEncryptor(context.Background())
-	st := mocks.NewDSReaderWriter(t)
-	enc.SetConfig(immutable.Some(conf))
-	enc.SetStore(st)
-	return enc, st
-}
-
-func TestEncryptorEncrypt_IfStorageReturnsError_Error(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, testErr)
-
-	_, err := enc.Encrypt(docID, fieldName, []byte("test"))
-
-	assert.ErrorIs(t, err, testErr)
-}
-
-func TestEncryptorEncrypt_IfStorageReturnsErrorOnSecondCall_Error(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound).Once()
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, testErr)
-
-	_, err := enc.Encrypt(docID, fieldName, []byte("test"))
-
-	assert.ErrorIs(t, err, testErr)
-}
-
-func TestEncryptorEncrypt_WithEmptyFieldNameIfNoKeyFoundInStorage_ShouldGenerateKeyStoreItAndReturnCipherText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	storeKey := core.NewEncStoreDocKey(docID, "")
-
-	st.EXPECT().Get(mock.Anything, storeKey.ToDS()).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Put(mock.Anything, storeKey.ToDS(), getEncKey("")).Return(nil)
-
-	cipherText, err := enc.Encrypt(docID, "", getPlainText())
-
+	cipherText, err := enc.Encrypt(plainText, key)
 	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, ""), cipherText)
-}
+	assert.NotEqual(t, plainText, cipherText)
 
-func TestEncryptorEncrypt_IfNoFieldEncRequestedAndNoKeyInStorage_GenerateKeyStoreItAndReturnCipherText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	docStoreKey := core.NewEncStoreDocKey(docID, "").ToDS()
-	fieldStoreKey := core.NewEncStoreDocKey(docID, fieldName).ToDS()
-
-	st.EXPECT().Get(mock.Anything, fieldStoreKey).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Get(mock.Anything, docStoreKey).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Put(mock.Anything, docStoreKey, getEncKey("")).Return(nil)
-
-	cipherText, err := enc.Encrypt(docID, fieldName, getPlainText())
-
+	decryptedText, err := enc.Decrypt(cipherText, key)
 	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, ""), cipherText)
+	assert.Equal(t, plainText, decryptedText)
 }
 
-func TestEncryptorEncrypt_IfNoKeyWithFieldFoundInStorage_ShouldGenerateKeyStoreItAndReturnCipherText(t *testing.T) {
-	enc, st := newEncryptorWithConfig(t, DocEncConfig{EncryptedFields: []string{fieldName}})
+func TestEncryptor_GetOrGenerateKey_ReturnsExistingKey(t *testing.T) {
+	ctx := context.Background()
+	enc := newDocEncryptor(ctx)
+	enc.SetConfig(immutable.Some(DocEncConfig{EncryptedFields: []string{"field1"}}))
 
-	storeKey := core.NewEncStoreDocKey(docID, fieldName)
+	docID := "doc1"
+	fieldName := immutable.Some("field1")
 
-	st.EXPECT().Get(mock.Anything, storeKey.ToDS()).Return(nil, ds.ErrNotFound)
-	st.EXPECT().Put(mock.Anything, storeKey.ToDS(), getEncKey(fieldName)).Return(nil)
-
-	cipherText, err := enc.Encrypt(docID, fieldName, getPlainText())
-
+	key1, err := enc.GetOrGenerateEncryptionKey(docID, fieldName)
 	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, fieldName), cipherText)
-}
+	assert.NotNil(t, key1)
 
-func TestEncryptorEncrypt_IfKeyWithFieldFoundInStorage_ShouldUseItToReturnCipherText(t *testing.T) {
-	enc, st := newEncryptorWithConfig(t, DocEncConfig{EncryptedFields: []string{fieldName}})
-
-	storeKey := core.NewEncStoreDocKey(docID, fieldName)
-	st.EXPECT().Get(mock.Anything, storeKey.ToDS()).Return(getEncKey(fieldName), nil)
-
-	cipherText, err := enc.Encrypt(docID, fieldName, getPlainText())
-
+	key2, err := enc.GetOrGenerateEncryptionKey(docID, fieldName)
 	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, fieldName), cipherText)
+	assert.Equal(t, key1, key2)
 }
 
-func TestEncryptorEncrypt_IfKeyFoundInStorage_ShouldUseItToReturnCipherText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
+func TestEncryptor_GenerateKey_DifferentKeysForDifferentFields(t *testing.T) {
+	ctx := context.Background()
+	enc := newDocEncryptor(ctx)
+	enc.SetConfig(immutable.Some(DocEncConfig{EncryptedFields: []string{"field1", "field2"}}))
 
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(getEncKey(""), nil)
+	docID := "doc1"
+	fieldName1 := immutable.Some("field1")
+	fieldName2 := immutable.Some("field2")
 
-	cipherText, err := enc.Encrypt(docID, "", getPlainText())
-
+	key1, err := enc.GetOrGenerateEncryptionKey(docID, fieldName1)
 	assert.NoError(t, err)
-	assert.Equal(t, getCipherText(t, ""), cipherText)
-}
+	assert.NotNil(t, key1)
 
-func TestEncryptorEncrypt_IfStorageFailsToStoreEncryptionKey_ReturnError(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound)
-
-	st.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(testErr)
-
-	_, err := enc.Encrypt(docID, fieldName, getPlainText())
-
-	assert.ErrorIs(t, err, testErr)
-}
-
-func TestEncryptorEncrypt_IfKeyGenerationIsNotEnabled_ShouldReturnPlainText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
-	enc.SetConfig(immutable.None[DocEncConfig]())
-
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound)
-
-	cipherText, err := enc.Encrypt(docID, fieldName, getPlainText())
-
+	key2, err := enc.GetOrGenerateEncryptionKey(docID, fieldName2)
 	assert.NoError(t, err)
-	assert.Equal(t, getPlainText(), cipherText)
+	assert.NotNil(t, key2)
+
+	assert.NotEqual(t, key1, key2)
 }
 
-func TestEncryptorEncrypt_IfNoStorageProvided_Error(t *testing.T) {
-	enc, _ := newDefaultEncryptor(t)
-	enc.SetStore(nil)
+func TestShouldEncryptField_WithDocEncryption_True(t *testing.T) {
+	config := DocEncConfig{IsDocEncrypted: true}
+	ctx := SetContextConfig(context.Background(), config)
 
-	_, err := enc.Encrypt(docID, fieldName, getPlainText())
-
-	assert.ErrorIs(t, err, ErrNoStorageProvided)
+	assert.True(t, ShouldEncryptDocField(ctx, immutable.Some("field1")))
+	assert.True(t, ShouldEncryptDocField(ctx, immutable.Some("field2")))
 }
 
-func TestEncryptorDecrypt_IfNoStorageProvided_Error(t *testing.T) {
-	enc, _ := newDefaultEncryptor(t)
-	enc.SetStore(nil)
+func TestShouldEncryptField_WithFieldEncryption_TrueForMatchingField(t *testing.T) {
+	config := DocEncConfig{EncryptedFields: []string{"field1"}}
+	ctx := SetContextConfig(context.Background(), config)
 
-	_, err := enc.Decrypt(docID, fieldName, getPlainText())
-
-	assert.ErrorIs(t, err, ErrNoStorageProvided)
+	assert.True(t, ShouldEncryptDocField(ctx, immutable.Some("field1")))
+	assert.False(t, ShouldEncryptDocField(ctx, immutable.Some("field2")))
 }
 
-func TestEncryptorDecrypt_IfStorageReturnsError_Error(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
+func TestShouldEncryptIndividualField_WithDocEncryption_False(t *testing.T) {
+	config := DocEncConfig{IsDocEncrypted: true}
+	ctx := SetContextConfig(context.Background(), config)
 
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, testErr)
-
-	_, err := enc.Decrypt(docID, fieldName, []byte("test"))
-
-	assert.ErrorIs(t, err, testErr)
+	assert.False(t, ShouldEncryptIndividualField(ctx, immutable.Some("field1")))
+	assert.False(t, ShouldEncryptIndividualField(ctx, immutable.Some("field2")))
 }
 
-func TestEncryptorDecrypt_IfKeyFoundInStorage_ShouldUseItToReturnPlainText(t *testing.T) {
-	enc, st := newDefaultEncryptor(t)
+func TestShouldEncryptIndividualField_WithFieldEncryption_TrueForMatchingField(t *testing.T) {
+	config := DocEncConfig{EncryptedFields: []string{"field1"}}
+	ctx := SetContextConfig(context.Background(), config)
 
-	st.EXPECT().Get(mock.Anything, mock.Anything).Return(getEncKey(""), nil)
-
-	plainText, err := enc.Decrypt(docID, fieldName, getCipherText(t, ""))
-
-	assert.NoError(t, err)
-	assert.Equal(t, getPlainText(), plainText)
-}
-
-func TestEncryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
-	data, err := EncryptDoc(context.Background(), docID, fieldName, getPlainText())
-	assert.Nil(t, data, "data should be nil")
-	assert.NoError(t, err, "error should be nil")
-}
-
-func TestDecryptDoc_IfContextHasNoEncryptor_ReturnNil(t *testing.T) {
-	data, err := DecryptDoc(context.Background(), docID, fieldName, getCipherText(t, fieldName))
-	assert.Nil(t, data, "data should be nil")
-	assert.NoError(t, err, "error should be nil")
+	assert.True(t, ShouldEncryptIndividualField(ctx, immutable.Some("field1")))
+	assert.False(t, ShouldEncryptIndividualField(ctx, immutable.Some("field2")))
 }

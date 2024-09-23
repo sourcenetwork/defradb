@@ -415,8 +415,7 @@ func (vf *VersionedFetcher) processBlock(
 		vf.mCRDTs[crdtIndex] = mcrdt
 	}
 
-	err = mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink, false)
-	return err
+	return mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink)
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {

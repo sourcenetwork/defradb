@@ -52,6 +52,11 @@ type DB interface {
 	// It sits within the rootstore returned by [Root].
 	Blockstore() datastore.Blockstore
 
+	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
+	//
+	// It sits within the rootstore returned by [Root].
+	Encstore() datastore.Blockstore
+
 	// Peerstore returns the peerstore where known host information is stored.
 	//
 	// It sits within the rootstore returned by [Root].

@@ -14,14 +14,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -38,6 +39,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -185,6 +187,17 @@ func ExecuteTestCase(
 		databases = append(databases, defraIMType)
 	}
 
+	var kmsList []KMSType
+	if testCase.KMS.Activated {
+		kmsList = getKMSTypes()
+		for _, excluded := range testCase.KMS.ExcludedTypes {
+			kmsList = slices.DeleteFunc(kmsList, func(t KMSType) bool { return t == excluded })
+		}
+	}
+	if len(kmsList) == 0 {
+		kmsList = []KMSType{NoneKMSType}
+	}
+
 	// Assert that these are not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
 	require.NotEmpty(t, databases)
@@ -195,7 +208,9 @@ func ExecuteTestCase(
 	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
-			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
+			for _, kms := range kmsList {
+				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
+			}
 		}
 	}
 }
@@ -205,12 +220,11 @@ func executeTestCase(
 	t testing.TB,
 	collectionNames []string,
 	testCase TestCase,
+	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
-	log.InfoContext(
-		ctx,
-		testCase.Description,
+	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", mutationType),
@@ -222,11 +236,17 @@ func executeTestCase(
 		corelog.String("changeDetector.SourceBranch", changeDetector.SourceBranch),
 		corelog.String("changeDetector.TargetBranch", changeDetector.TargetBranch),
 		corelog.String("changeDetector.Repository", changeDetector.Repository),
-	)
+	}
+
+	if kms != NoneKMSType {
+		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
+	}
+
+	log.InfoContext(ctx, testCase.Description, logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
+	s := newState(ctx, t, testCase, kms, dbt, clientType, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -366,7 +386,7 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForMergeEvents(s)
+		waitForSync(s)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
@@ -403,7 +423,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	collections := getNodeCollections(action.NodeID, s.collections)
 	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
 	for _, col := range collections[0] {
-		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name().Value()) {
+		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, col.Name().Value()) {
 			defs = append(defs, col.Definition())
 		}
 	}
@@ -730,7 +750,7 @@ func restartNodes(
 		nodeOpts := s.nodeConfigs[i]
 		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
-		node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
+		node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Encstore(), node.DB.Events(), nodeOpts...)
 		require.NoError(s.t, err)
 
 		c, err := setupClient(s, node)
@@ -802,20 +822,21 @@ func configureNode(
 		return
 	}
 
-	node, path, err := setupNode(s) //disable change dector, or allow it?
-	require.NoError(s.t, err)
-
 	privateKey, err := crypto.GenerateEd25519()
 	require.NoError(s.t, err)
 
-	nodeOpts := action()
-	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
+	netNodeOpts := action()
+	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
 
-	node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Events(), nodeOpts...)
+	nodeOpts := []node.Option{node.WithDisableP2P(false)}
+	for _, opt := range netNodeOpts {
+		nodeOpts = append(nodeOpts, opt)
+	}
+	node, path, err := setupNode(s, nodeOpts...) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	s.nodeAddresses = append(s.nodeAddresses, node.Peer.PeerInfo())
-	s.nodeConfigs = append(s.nodeConfigs, nodeOpts)
+	s.nodeConfigs = append(s.nodeConfigs, netNodeOpts)
 
 	c, err := setupClient(s, node)
 	require.NoError(s.t, err)
@@ -1767,7 +1788,6 @@ func executeRequest(
 
 		result := node.ExecRequest(ctx, action.Request, options...)
 
-		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
 			s,
 			&result.GQL,
@@ -1775,7 +1795,6 @@ func executeRequest(
 			action.ExpectedError,
 			action.Asserter,
 			nodeID,
-			anyOfByFieldKey,
 		)
 	}
 
@@ -1825,9 +1844,7 @@ func executeSubscriptionRequest(
 						r,
 						action.ExpectedError,
 						nil,
-						// anyof is not yet supported by subscription requests
 						0,
-						map[docFieldKey][]any{},
 					)
 
 					assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1884,12 +1901,6 @@ func AssertErrors(
 	return false
 }
 
-// docFieldKey is an internal key type that wraps docIndex and fieldName
-type docFieldKey struct {
-	docIndex  int
-	fieldName string
-}
-
 func assertRequestResults(
 	s *state,
 	result *client.GQLResult,
@@ -1897,7 +1908,6 @@ func assertRequestResults(
 	expectedError string,
 	asserter ResultAsserter,
 	nodeID int,
-	anyOfByField map[docFieldKey][]any,
 ) bool {
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
@@ -1926,31 +1936,37 @@ func assertRequestResults(
 		keys[key] = struct{}{}
 	}
 
+	stack := &assertStack{}
 	for key := range keys {
+		stack.pushMap(key)
 		expect, ok := expectedResults[key]
 		require.True(s.t, ok, "expected key not found: %s", key)
 
 		actual, ok := resultantData[key]
 		require.True(s.t, ok, "result key not found: %s", key)
 
-		expectDocs, ok := expect.([]map[string]any)
-		if ok {
+		switch exp := expect.(type) {
+		case []map[string]any:
 			actualDocs := ConvertToArrayOfMaps(s.t, actual)
 			assertRequestResultDocs(
 				s,
 				nodeID,
-				expectDocs,
+				exp,
 				actualDocs,
-				anyOfByField)
-		} else {
+				stack,
+			)
+		case AnyOf:
+			assertResultsAnyOf(s.t, s.clientType, exp, actual)
+		default:
 			assertResultsEqual(
 				s.t,
 				s.clientType,
 				expect,
 				actual,
-				fmt.Sprintf("node: %v, key: %v", nodeID, key),
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 			)
 		}
+		stack.pop()
 	}
 
 	return false
@@ -1961,13 +1977,14 @@ func assertRequestResultDocs(
 	nodeID int,
 	expectedResults []map[string]any,
 	actualResults []map[string]any,
-	anyOfByField map[docFieldKey][]any,
+	stack *assertStack,
 ) bool {
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(actualResults),
 		s.testCase.Description+" \n(number of results don't match)")
 
 	for actualDocIndex, actualDoc := range actualResults {
+		stack.pushArray(actualDocIndex)
 		expectedDoc := expectedResults[actualDocIndex]
 
 		require.Equal(
@@ -1982,14 +1999,10 @@ func assertRequestResultDocs(
 		)
 
 		for field, actualValue := range actualDoc {
+			stack.pushMap(field)
 			switch expectedValue := expectedDoc[field].(type) {
 			case AnyOf:
 				assertResultsAnyOf(s.t, s.clientType, expectedValue, actualValue)
-
-				dfk := docFieldKey{actualDocIndex, field}
-				valueSet := anyOfByField[dfk]
-				valueSet = append(valueSet, actualValue)
-				anyOfByField[dfk] = valueSet
 			case DocIndex:
 				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
 				assertResultsEqual(
@@ -1997,7 +2010,7 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedDocID,
 					actualValue,
-					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			case []map[string]any:
 				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
@@ -2007,7 +2020,7 @@ func assertRequestResultDocs(
 					nodeID,
 					expectedValue,
 					actualValueMap,
-					anyOfByField,
+					stack,
 				)
 
 			default:
@@ -2016,10 +2029,12 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedValue,
 					actualValue,
-					fmt.Sprintf("node: %v, doc: %v", nodeID, actualDocIndex),
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			}
+			stack.pop()
 		}
+		stack.pop()
 	}
 
 	return false

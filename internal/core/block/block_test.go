@@ -180,13 +180,23 @@ func TestBlockDeltaPriority(t *testing.T) {
 	require.Equal(t, uint64(2), block.Delta.GetPriority())
 }
 
-func TestBlockMarshal_IsEncryptedNotSet_ShouldNotContainIsEcryptedField(t *testing.T) {
+func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *testing.T) {
 	lsys := cidlink.DefaultLinkSystem()
 	store := memstore.Store{}
 	lsys.SetReadStorage(&store)
 	lsys.SetWriteStorage(&store)
 
-	fieldBlock := Block{
+	encBlock := Encryption{
+		DocID: []byte("docID"),
+		Key:   []byte("keyID"),
+	}
+
+	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
+	require.NoError(t, err)
+
+	link := encBlockLink.(cidlink.Link)
+
+	block := Block{
 		Delta: crdt.CRDT{
 			LWWRegDelta: &crdt.LWWRegDelta{
 				DocID:           []byte("docID"),
@@ -196,11 +206,27 @@ func TestBlockMarshal_IsEncryptedNotSet_ShouldNotContainIsEcryptedField(t *testi
 				Data:            []byte("John"),
 			},
 		},
+		Encryption: &link,
 	}
 
-	b, err := fieldBlock.Marshal()
+	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
 	require.NoError(t, err)
-	require.NotContains(t, string(b), "isEncrypted")
+
+	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, SchemaPrototype)
+	require.NoError(t, err)
+
+	loadedBlock, err := GetFromNode(nd)
+	require.NoError(t, err)
+
+	require.NotNil(t, loadedBlock.Encryption)
+
+	nd, err = lsys.Load(ipld.LinkContext{}, loadedBlock.Encryption, EncryptionSchemaPrototype)
+	require.NoError(t, err)
+
+	loadedEncBlock, err := GetEncryptionBlockFromNode(nd)
+	require.NoError(t, err)
+
+	require.Equal(t, encBlock, *loadedEncBlock)
 }
 
 func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *testing.T) {
@@ -227,4 +253,59 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	require.NoError(t, err)
 	_, err = GetFromNode(nd)
 	require.NoError(t, err)
+}
+
+func TestBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
+	validBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+	}
+
+	marshaledData, err := validBlock.Marshal()
+	require.NoError(t, err)
+
+	var unmarshaledBlock Block
+	err = unmarshaledBlock.Unmarshal(marshaledData)
+	require.NoError(t, err)
+
+	require.Equal(t, validBlock, unmarshaledBlock)
+}
+
+func TestBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
+	invalidData := []byte("invalid CBOR data")
+	var block Block
+	err := block.Unmarshal(invalidData)
+	require.Error(t, err)
+}
+
+func TestEncryptionBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
+	invalidData := []byte("invalid CBOR data")
+	var encBlock Encryption
+	err := encBlock.Unmarshal(invalidData)
+	require.Error(t, err)
+}
+
+func TestEncryptionBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
+	fieldName := "fieldName"
+	encBlock := Encryption{
+		DocID:     []byte("docID"),
+		Key:       []byte("keyID"),
+		FieldName: &fieldName,
+	}
+
+	marshaledData, err := encBlock.Marshal()
+	require.NoError(t, err)
+
+	var unmarshaledBlock Encryption
+	err = unmarshaledBlock.Unmarshal(marshaledData)
+	require.NoError(t, err)
+
+	require.Equal(t, encBlock, unmarshaledBlock)
 }

@@ -15,9 +15,11 @@ import (
 )
 
 const (
-	errNoStorageProvided string = "no storage provided"
+	errNoStorageProvided     string = "no storage provided"
+	errContextHasNoEncryptor string = "context has no encryptor"
 )
 
 var (
-	ErrNoStorageProvided = errors.New(errNoStorageProvided)
+	ErrNoStorageProvided     = errors.New(errNoStorageProvided)
+	ErrContextHasNoEncryptor = errors.New(errContextHasNoEncryptor)
 )
