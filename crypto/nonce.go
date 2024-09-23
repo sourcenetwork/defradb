@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package encryption
+package crypto
 
 import (
 	"crypto/rand"
@@ -18,12 +18,12 @@ import (
 	"strings"
 )
 
-const nonceLength = 12
+const AESNonceSize = 12
 
 var generateNonceFunc = generateNonce
 
 func generateNonce() ([]byte, error) {
-	nonce := make([]byte, nonceLength)
+	nonce := make([]byte, AESNonceSize)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
@@ -35,11 +35,11 @@ func generateNonce() ([]byte, error) {
 func generateTestNonce() ([]byte, error) {
 	nonce := []byte("deterministic nonce for testing")
 
-	if len(nonce) < nonceLength {
+	if len(nonce) < AESNonceSize {
 		return nil, errors.New("nonce length is longer than available deterministic nonce")
 	}
 
-	return nonce[:nonceLength], nil
+	return nonce[:AESNonceSize], nil
 }
 
 func init() {
@@ -48,6 +48,5 @@ func init() {
 	// TODO: We should try to find a better way to detect this https://github.com/sourcenetwork/defradb/issues/2801
 	if strings.HasSuffix(arg, ".test") || strings.Contains(arg, "/defradb/tests/") {
 		generateNonceFunc = generateTestNonce
-		generateEncryptionKeyFunc = generateTestEncryptionKey
 	}
 }

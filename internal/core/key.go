@@ -127,7 +127,7 @@ var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocID   string
-	FieldId string //can be 'C'
+	FieldID string //can be 'C'
 	Cid     cid.Cid
 }
 
@@ -285,7 +285,7 @@ func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	return HeadStoreKey{
 		// elements[0] is empty (key has leading '/')
 		DocID:   elements[1],
-		FieldId: elements[2],
+		FieldID: elements[2],
 		Cid:     cid,
 	}, nil
 }
@@ -471,16 +471,16 @@ func (k DataStoreKey) WithInstanceInfo(key DataStoreKey) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
+func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 	newKey := k
-	newKey.FieldID = fieldId
+	newKey.FieldID = fieldID
 	return newKey
 }
 
 func (k DataStoreKey) ToHeadStoreKey() HeadStoreKey {
 	return HeadStoreKey{
 		DocID:   k.DocID,
-		FieldId: k.FieldID,
+		FieldID: k.FieldID,
 	}
 }
 
@@ -496,9 +496,9 @@ func (k HeadStoreKey) WithCid(c cid.Cid) HeadStoreKey {
 	return newKey
 }
 
-func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
+func (k HeadStoreKey) WithFieldID(fieldID string) HeadStoreKey {
 	newKey := k
-	newKey.FieldId = fieldId
+	newKey.FieldID = fieldID
 	return newKey
 }
 
@@ -858,8 +858,8 @@ func (k HeadStoreKey) ToString() string {
 	if k.DocID != "" {
 		result = result + "/" + k.DocID
 	}
-	if k.FieldId != "" {
-		result = result + "/" + k.FieldId
+	if k.FieldID != "" {
+		result = result + "/" + k.FieldID
 	}
 	if k.Cid.Defined() {
 		result = result + "/" + k.Cid.String()
@@ -926,35 +926,4 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
-}
-
-// EncStoreDocKey is a key for the encryption store.
-type EncStoreDocKey struct {
-	DocID     string
-	FieldName string
-}
-
-var _ Key = (*EncStoreDocKey)(nil)
-
-// NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-func NewEncStoreDocKey(docID string, fieldName string) EncStoreDocKey {
-	return EncStoreDocKey{
-		DocID:     docID,
-		FieldName: fieldName,
-	}
-}
-
-func (k EncStoreDocKey) ToString() string {
-	if k.FieldName == "" {
-		return k.DocID
-	}
-	return fmt.Sprintf("%s/%s", k.DocID, k.FieldName)
-}
-
-func (k EncStoreDocKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k EncStoreDocKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
 }

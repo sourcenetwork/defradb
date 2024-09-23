@@ -21,7 +21,6 @@ import (
 	"github.com/ipfs/boxo/bitswap/network"
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/bootstrap"
-	exchange "github.com/ipfs/boxo/exchange"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	gostream "github.com/libp2p/go-libp2p-gostream"
@@ -46,6 +45,7 @@ import (
 // to the underlying DefraDB instance.
 type Peer struct {
 	blockstore datastore.Blockstore
+	encstore   datastore.Blockstore
 
 	bus       *event.Bus
 	updateSub *event.Subscription
@@ -61,7 +61,6 @@ type Peer struct {
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
-	exch  exchange.Interface
 	bserv blockservice.BlockService
 
 	bootCloser io.Closer
@@ -71,6 +70,7 @@ type Peer struct {
 func NewPeer(
 	ctx context.Context,
 	blockstore datastore.Blockstore,
+	encstore datastore.Blockstore,
 	bus *event.Bus,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
@@ -83,7 +83,7 @@ func NewPeer(
 		}
 	}()
 
-	if blockstore == nil {
+	if blockstore == nil || encstore == nil {
 		return nil, ErrNilDB
 	}
 
@@ -120,12 +120,12 @@ func NewPeer(
 		host:       h,
 		dht:        ddht,
 		blockstore: blockstore,
+		encstore:   encstore,
 		ctx:        ctx,
 		cancel:     cancel,
 		bus:        bus,
 		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
 		bserv:      blockservice.New(blockstore, bswap),
-		exch:       bswap,
 	}
 
 	if options.EnablePubSub {
@@ -151,7 +151,7 @@ func NewPeer(
 		return nil, err
 	}
 
-	p2plistener, err := gostream.Listen(h, corenet.Protocol)
+	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func NewPeer(
 	// register the P2P gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
-		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
+		if err := p.p2pRPC.Serve(p2pListener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
 			log.ErrorE("Fatal P2P RPC server error", err)
 		}
@@ -270,7 +270,7 @@ func (p *Peer) RegisterNewDocument(
 	schemaRoot string,
 ) error {
 	// register topic
-	err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot))
+	err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot), nil)
 	if err != nil {
 		log.ErrorE(
 			"Failed to create new pubsub topic",
@@ -287,7 +287,7 @@ func (p *Peer) RegisterNewDocument(
 			Cid:        c.Bytes(),
 			SchemaRoot: []byte(schemaRoot),
 			Creator:    p.host.ID().String(),
-			Log: &pb.Document_Log{
+			Log: &pb.Log{
 				Block: rawBlock,
 			},
 		},
@@ -325,7 +325,7 @@ func (p *Peer) handleDocUpdateLog(evt event.Update) error {
 		Cid:        evt.Cid.Bytes(),
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    p.host.ID().String(),
-		Log: &pb.Document_Log{
+		Log: &pb.Log{
 			Block: evt.Block,
 		},
 	}
@@ -407,4 +407,8 @@ func (p *Peer) PeerInfo() peer.AddrInfo {
 		ID:    p.host.ID(),
 		Addrs: p.host.Network().ListenAddresses(),
 	}
+}
+
+func (p *Peer) Server() *server {
+	return p.server
 }

@@ -133,7 +133,6 @@ var defaultUserArgsWithoutFilter = trimFields(
 	fields{
 		cidArg,
 		docIDArg,
-		docIDsArg,
 		showDeletedArg,
 		groupByArg,
 		limitArg,
@@ -280,7 +279,6 @@ var defaultBookArgsWithoutFilter = trimFields(
 	fields{
 		cidArg,
 		docIDArg,
-		docIDsArg,
 		showDeletedArg,
 		groupByArg,
 		limitArg,

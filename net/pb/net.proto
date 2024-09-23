@@ -4,17 +4,9 @@ package net.pb;
 option go_package = "/;net_pb";
 
 // Log represents a thread log.
-message Document {
-    // ID of the document.
-    bytes docID = 1;
-    // head of the log.
-    bytes head = 4;
-
-    // Record is a thread record containing link data.
-    message Log {
-        // block is the top-level node's raw data as an ipld.Block.
-        bytes block = 1;
-    }
+message Log {
+    // block is the top-level node's raw data as an ipld.Block.
+    bytes block = 1;
 }
 
 message GetDocGraphRequest {}
@@ -42,8 +34,29 @@ message PushLogRequest {
         // creator is the PeerID of the peer that created the log.
         string creator = 4;
         // log hold the block that represent version of the document.
-        Document.Log log = 6;
+        Log log = 6;
     }
+}
+
+// FetchEncryptionKeyRequest is a request to receive a doc encryption key
+// from a peer that holds it.
+message FetchEncryptionKeyRequest {
+    // links is the list of cid links of the blocks containing encryption keys.
+    repeated bytes links = 1;
+    // ephemeralPublicKey is an ephemeral public of the requesting peer for deriving shared secret
+    bytes ephemeralPublicKey = 2;
+}
+
+// FetchEncryptionKeyReply is a response to FetchEncryptionKeyRequest request
+// by a peer that holds the requested doc encryption key.
+message FetchEncryptionKeyReply {
+    // links is the list of cid links of the blocks containing encryption keys.
+    repeated bytes links = 1;
+    // blocks is the list of blocks containing encryption keys. The order of blocks should match the order of links.
+    // Every block is encrypted and contains a nonce.
+    repeated bytes blocks = 2;
+    // ephemeralPublicKey is an ephemeral public of the responding peer for deriving shared secret
+    bytes ephemeralPublicKey = 3;
 }
 
 message GetHeadLogRequest {}

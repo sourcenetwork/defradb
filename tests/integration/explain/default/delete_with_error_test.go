@@ -29,7 +29,7 @@ func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.
 
 				Request: `mutation @explain {
 					delete_Author(
-						docIDs: [
+						docID: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 						]

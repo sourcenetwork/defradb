@@ -37,7 +37,7 @@ func (s *server) pushLog(evt event.Update, pid peer.ID) error {
 		Cid:        evt.Cid.Bytes(),
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    s.peer.host.ID().String(),
-		Log: &pb.Document_Log{
+		Log: &pb.Log{
 			Block: evt.Block,
 		},
 	}

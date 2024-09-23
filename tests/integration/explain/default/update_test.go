@@ -73,7 +73,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 									"_eq": true,
 								},
 							},
-							"docIDs": []string(nil),
+							"docID": []string(nil),
 						},
 					},
 					{
@@ -115,7 +115,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 				Request: `mutation @explain {
 					update_Author(
-						docIDs: [
+						docID: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
@@ -138,7 +138,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 								"age": int32(59),
 							},
 							"filter": nil,
-							"docIDs": []string{
+							"docID": []string{
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
@@ -203,7 +203,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 								"age": int32(59),
 							},
 							"filter": nil,
-							"docIDs": []string{
+							"docID": []string{
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
 						},
@@ -248,7 +248,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 								_eq: true
 							}
 						},
-						docIDs: [
+						docID: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
@@ -275,7 +275,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 									"_eq": true,
 								},
 							},
-							"docIDs": []string{
+							"docID": []string{
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},

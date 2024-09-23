@@ -75,7 +75,7 @@ func TestGetHeadLog(t *testing.T) {
 }
 
 func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
-	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE).ToString()
+	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToString()
 	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return cid.Undef, err
@@ -132,7 +132,7 @@ func TestPushLog(t *testing.T) {
 			Cid:        headCID.Bytes(),
 			SchemaRoot: []byte(col.SchemaRoot()),
 			Creator:    p.PeerID().String(),
-			Log: &net_pb.Document_Log{
+			Log: &net_pb.Log{
 				Block: b,
 			},
 		},

@@ -78,7 +78,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(
-						docIDs: [
+						docID: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
@@ -144,7 +144,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
 								_eq: true
 							}
 						},
-						docIDs: [
+						docID: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],

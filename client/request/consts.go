@@ -21,7 +21,6 @@ const (
 
 	Cid         = "cid"
 	Input       = "input"
-	Inputs      = "inputs"
 	FieldName   = "field"
 	FieldIDName = "fieldId"
 	ShowDeleted = "showDeleted"
@@ -36,8 +35,7 @@ const (
 	OrderClause   = "order"
 	DepthClause   = "depth"
 
-	DocIDArgName  = "docID"
-	DocIDsArgName = "docIDs"
+	DocIDArgName = "docID"
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"

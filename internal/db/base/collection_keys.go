@@ -45,7 +45,7 @@ func MakePrimaryIndexKeyForCRDT(
 	case client.COMPOSITE:
 		return MakeDataStoreKeyWithCollectionDescription(c.Description).
 				WithInstanceInfo(key).
-				WithFieldId(core.COMPOSITE_NAMESPACE),
+				WithFieldID(core.COMPOSITE_NAMESPACE),
 			nil
 	case client.LWW_REGISTER, client.PN_COUNTER, client.P_COUNTER:
 		field, ok := c.GetFieldByName(fieldName)
@@ -55,7 +55,7 @@ func MakePrimaryIndexKeyForCRDT(
 
 		return MakeDataStoreKeyWithCollectionDescription(c.Description).
 				WithInstanceInfo(key).
-				WithFieldId(fmt.Sprint(field.ID)),
+				WithFieldID(fmt.Sprint(field.ID)),
 			nil
 	}
 	return core.DataStoreKey{}, ErrInvalidCrdtType

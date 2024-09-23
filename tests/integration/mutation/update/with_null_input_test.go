@@ -106,7 +106,7 @@ func TestMutationUpdate_WithNullDocIDs_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(docIDs: null, input: {name: "Alice"}) {
+					update_Users(docID: null, input: {name: "Alice"}) {
 						name
 					}
 				}`,

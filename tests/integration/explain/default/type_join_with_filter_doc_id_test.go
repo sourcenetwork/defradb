@@ -33,7 +33,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 							name: {_eq: "John Grisham"},
 							books: {name: {_eq: "Painted House"}}
 						},
-						docIDs: [
+						docID: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e"
 						]
@@ -61,7 +61,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
 							},
@@ -122,7 +122,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 							articles: {name: {_eq: "To my dear readers"}},
 							books: {name: {_eq: "Theif Lord"}}
 						},
-						docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]
+						docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]
 					) {
 						name
 						age
@@ -154,7 +154,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"docIDs": []string{
+							"docID": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"filter": dataMap{

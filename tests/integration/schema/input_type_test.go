@@ -78,7 +78,6 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 									trimFields(
 										fields{
 											docIDArg,
-											docIDsArg,
 											buildFilterArg("group", []argDef{
 												{
 													fieldName: "members",
@@ -213,7 +212,6 @@ var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any
 var defaultGroupArgsWithoutOrder = trimFields(
 	fields{
 		docIDArg,
-		docIDsArg,
 		buildFilterArg("author", []argDef{
 			{
 				fieldName: "age",

@@ -101,20 +101,19 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 
 		switch name {
 		case request.Input:
-			if v, ok := value.(map[string]any); ok {
-				mut.Input = v
-			}
+			switch v := value.(type) {
+			case []any:
+				// input for create is a list
+				inputs := make([]map[string]any, len(v))
+				for i, v := range v {
+					inputs[i] = v.(map[string]any)
+				}
+				mut.Input = inputs
 
-		case request.Inputs:
-			v, ok := value.([]any)
-			if !ok {
-				continue // value is nil
+			case map[string]any:
+				// input for update is an object
+				mut.Input = []map[string]any{v}
 			}
-			inputs := make([]map[string]any, len(v))
-			for i, v := range v {
-				inputs[i] = v.(map[string]any)
-			}
-			mut.Inputs = inputs
 
 		case request.FilterClause:
 			if v, ok := value.(map[string]any); ok {
@@ -122,11 +121,6 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 			}
 
 		case request.DocIDArgName:
-			if v, ok := value.(string); ok {
-				mut.DocIDs = immutable.Some([]string{v})
-			}
-
-		case request.DocIDsArgName:
 			v, ok := value.([]any)
 			if !ok {
 				continue // value is nil

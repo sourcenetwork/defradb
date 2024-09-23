@@ -36,17 +36,11 @@ type ObjectMutation struct {
 	// Collection is the target collection name.
 	Collection string
 
-	// Input is the json representation of the fieldName-value pairs of document properties
-	// to mutate.
-	//
-	// This is ignored for [DeleteObjects] mutations.
-	Input map[string]any
-
-	// Inputs is the array of json representations of the fieldName-value pairs of document
+	// Input is the array of json representations of the fieldName-value pairs of document
 	// properties to mutate.
 	//
 	// This is ignored for [DeleteObjects] mutations.
-	Inputs []map[string]any
+	Input []map[string]any
 
 	// Encrypt is a boolean flag that indicates whether the input data should be encrypted.
 	Encrypt bool

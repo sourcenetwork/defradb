@@ -29,12 +29,11 @@ var (
 type multistore struct {
 	root   DSReaderWriter
 	data   DSReaderWriter
-	enc    DSReaderWriter
+	enc    Blockstore
 	head   DSReaderWriter
 	peer   DSBatching
 	system DSReaderWriter
-	// block DSReaderWriter
-	dag Blockstore
+	dag    Blockstore
 }
 
 var _ MultiStore = (*multistore)(nil)
@@ -45,7 +44,7 @@ func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 	ms := &multistore{
 		root:   rootRW,
 		data:   prefix(rootRW, dataStoreKey),
-		enc:    prefix(rootRW, encStoreKey),
+		enc:    newBlockstore(prefix(rootRW, encStoreKey)),
 		head:   prefix(rootRW, headStoreKey),
 		peer:   namespace.Wrap(rootstore, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),
@@ -61,7 +60,7 @@ func (ms multistore) Datastore() DSReaderWriter {
 }
 
 // Encstore implements MultiStore.
-func (ms multistore) Encstore() DSReaderWriter {
+func (ms multistore) Encstore() Blockstore {
 	return ms.enc
 }
 

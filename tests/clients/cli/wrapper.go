@@ -432,7 +432,7 @@ func (w *Wrapper) ExecRequest(
 	if len(options.Variables) > 0 {
 		enc, err := json.Marshal(options.Variables)
 		if err != nil {
-			result.GQL.Errors = []error{err}
+			result.GQL.Errors = append(result.GQL.Errors, err)
 			return result
 		}
 		args = append(args, "--variables", string(enc))
@@ -440,13 +440,13 @@ func (w *Wrapper) ExecRequest(
 
 	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	buffer := bufio.NewReader(stdOut)
 	header, err := buffer.ReadString('\n')
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
@@ -455,26 +455,22 @@ func (w *Wrapper) ExecRequest(
 	}
 	data, err := io.ReadAll(buffer)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	errData, err := io.ReadAll(stdErr)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if len(errData) > 0 {
-		result.GQL.Errors = []error{fmt.Errorf("%s", errData)}
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errData))
 		return result
 	}
 
-	var response http.GraphQLResponse
-	if err = json.Unmarshal(data, &response); err != nil {
-		result.GQL.Errors = []error{err}
-		return result
+	if err = json.Unmarshal(data, &result.GQL); err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
 	}
-	result.GQL.Data = response.Data
-	result.GQL.Errors = response.Errors
 	return result
 }
 
@@ -485,14 +481,11 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 		defer close(resCh)
 
 		for {
-			var response http.GraphQLResponse
-			if err := dec.Decode(&response); err != nil {
-				return
+			var res client.GQLResult
+			if err := dec.Decode(&res); err != nil {
+				res.Errors = append(res.Errors, err)
 			}
-			resCh <- client.GQLResult{
-				Errors: response.Errors,
-				Data:   response.Data,
-			}
+			resCh <- res
 		}
 	}()
 	return resCh
@@ -544,6 +537,10 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 
 func (w *Wrapper) Rootstore() datastore.Rootstore {
 	return w.node.DB.Rootstore()
+}
+
+func (w *Wrapper) Encstore() datastore.Blockstore {
+	return w.node.DB.Encstore()
 }
 
 func (w *Wrapper) Blockstore() datastore.Blockstore {

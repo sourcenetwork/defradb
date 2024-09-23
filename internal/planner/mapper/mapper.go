@@ -1246,7 +1246,6 @@ func toMutation(
 		Select:        *underlyingSelect,
 		Type:          MutationType(mutationRequest.Type),
 		Input:         mutationRequest.Input,
-		Inputs:        mutationRequest.Inputs,
 		Encrypt:       mutationRequest.Encrypt,
 		EncryptFields: mutationRequest.EncryptFields,
 	}, nil
@@ -1348,13 +1347,15 @@ func toFilterMap(
 			returnClause := map[connor.FilterKey]any{}
 			for innerSourceKey, innerSourceValue := range typedClause {
 				var innerMapping *core.DocumentMapping
-				switch innerSourceValue.(type) {
-				case map[string]any:
+				// innerSourceValue may refer to a child mapping or
+				// an inline array if we don't have a child mapping
+				_, ok := innerSourceValue.(map[string]any)
+				if ok && index < len(mapping.ChildMappings) {
 					// If the innerSourceValue is also a map, then we should parse the nested clause
 					// using the child mapping, as this key must refer to a host property in a join
 					// and deeper keys must refer to properties on the child items.
 					innerMapping = mapping.ChildMappings[index]
-				default:
+				} else {
 					innerMapping = mapping
 				}
 				rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, innerMapping)
