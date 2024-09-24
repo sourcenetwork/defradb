@@ -572,6 +572,12 @@ func getNodes(nodeID immutable.Option[int], nodes []clients.Client) []clients.Cl
 //
 // If nodeID has a value it will return collections for that node only, otherwise all collections across all
 // nodes will be returned.
+//
+// WARNING:
+// The caller must not assume the returned collections are in order of the node index if the specified
+// index is greater than 0. For example if requesting collections with nodeID=2 then the resulting output
+// will contain only one element (at index 0) that will be the collections of the respective node, the
+// caller might accidentally assume that these collections belong to node 0.
 func getNodeCollections(nodeID immutable.Option[int], collections [][]client.Collection) [][]client.Collection {
 	if !nodeID.HasValue() {
 		return collections
@@ -931,11 +937,12 @@ func getIndexes(
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
-		err := withRetry(
-			actionNodes,
-			nodeID,
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
+		err := withRetryOnNode(
+			s.nodes[nodeID],
 			func() error {
 				actualIndexes, err := collections[action.CollectionID].GetIndexes(s.ctx)
 				if err != nil {
@@ -950,6 +957,26 @@ func getIndexes(
 		)
 		expectedErrorRaised = expectedErrorRaised ||
 			AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	} else {
+		for nodeID, collections := range s.collections {
+			err := withRetryOnNode(
+				s.nodes[nodeID],
+				func() error {
+					actualIndexes, err := collections[action.CollectionID].GetIndexes(s.ctx)
+					if err != nil {
+						return err
+					}
+
+					assertIndexesListsEqual(action.ExpectedIndexes,
+						actualIndexes, s.t, s.testCase.Description)
+
+					return nil
+				},
+			)
+			expectedErrorRaised = expectedErrorRaised ||
+				AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		}
+
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
