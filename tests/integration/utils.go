@@ -1667,11 +1667,15 @@ func createIndex(
 ) {
 	if action.CollectionID >= len(s.indexes) {
 		// Expand the slice if required, so that the index can be accessed by collection index
-		s.indexes = append(s.indexes,
-			make([][][]client.IndexDescription, action.CollectionID-len(s.indexes)+1)...)
+		s.indexes = append(
+			s.indexes,
+			make([][][]client.IndexDescription, action.CollectionID-len(s.indexes)+1)...,
+		)
 	}
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
 		indexDesc := client.IndexDescription{
 			Name: action.IndexName,
 		}
@@ -1689,22 +1693,63 @@ func createIndex(
 				})
 			}
 		}
+
 		indexDesc.Unique = action.Unique
-		err := withRetry(
-			actionNodes,
-			nodeID,
+		err := withRetryOnNode(
+			s.nodes[nodeID],
 			func() error {
 				desc, err := collections[action.CollectionID].CreateIndex(s.ctx, indexDesc)
 				if err != nil {
 					return err
 				}
-				s.indexes[nodeID][action.CollectionID] =
-					append(s.indexes[nodeID][action.CollectionID], desc)
+				s.indexes[nodeID][action.CollectionID] = append(
+					s.indexes[nodeID][action.CollectionID],
+					desc,
+				)
 				return nil
 			},
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
 			return
+		}
+	} else {
+		for nodeID, collections := range s.collections {
+			indexDesc := client.IndexDescription{
+				Name: action.IndexName,
+			}
+			if action.FieldName != "" {
+				indexDesc.Fields = []client.IndexedFieldDescription{
+					{
+						Name: action.FieldName,
+					},
+				}
+			} else if len(action.Fields) > 0 {
+				for i := range action.Fields {
+					indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+						Name:       action.Fields[i].Name,
+						Descending: action.Fields[i].Descending,
+					})
+				}
+			}
+
+			indexDesc.Unique = action.Unique
+			err := withRetryOnNode(
+				s.nodes[nodeID],
+				func() error {
+					desc, err := collections[action.CollectionID].CreateIndex(s.ctx, indexDesc)
+					if err != nil {
+						return err
+					}
+					s.indexes[nodeID][action.CollectionID] = append(
+						s.indexes[nodeID][action.CollectionID],
+						desc,
+					)
+					return nil
+				},
+			)
+			if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
+				return
+			}
 		}
 	}
 
