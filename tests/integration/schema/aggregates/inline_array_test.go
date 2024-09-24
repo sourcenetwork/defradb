@@ -246,7 +246,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name": "UsersOrderArg",
+														"name": nil,
 													},
 												},
 											},

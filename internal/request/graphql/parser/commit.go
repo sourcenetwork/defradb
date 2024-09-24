@@ -55,11 +55,11 @@ func parseCommitSelect(
 			}
 
 		case request.OrderClause:
-			v, ok := value.(map[string]any)
+			v, ok := value.([]any)
 			if !ok {
 				continue // value is nil
 			}
-			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), v)
+			conditions, err := parseOrderConditionList(v)
 			if err != nil {
 				return nil, err
 			}
