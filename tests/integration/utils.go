@@ -1499,16 +1499,42 @@ func updateDoc(
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
-		err := withRetry(
-			actionNodes,
-			nodeID,
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
+		actionNode := s.nodes[nodeID]
+		err := withRetryOnNode(
+			actionNode,
 			func() error {
-				return mutation(s, action, actionNodes[nodeID], nodeID, collections[action.CollectionID])
+				return mutation(
+					s,
+					action,
+					actionNode,
+					nodeID,
+					collections[action.CollectionID],
+				)
 			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	} else {
+		for nodeID, collections := range s.collections {
+			actionNode := s.nodes[nodeID]
+			err := withRetryOnNode(
+				actionNode,
+				func() error {
+					return mutation(
+						s,
+						action,
+						actionNode,
+						nodeID,
+						collections[action.CollectionID],
+					)
+				},
+			)
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		}
+
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
