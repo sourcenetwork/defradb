@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
@@ -25,13 +26,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 // server is the request/response instance for all P2P RPC communication.
@@ -49,8 +48,6 @@ type server struct {
 	mu          sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
-
-	pb.UnimplementedServiceServer
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -74,6 +71,7 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	defaultOpts := []grpc.DialOption{
 		s.getLibp2pDialer(),
 		grpc.WithTransportCredentials(cred),
+		grpc.WithDefaultCallOptions(grpc.CallContentSubtype(cborCodecName)),
 	}
 
 	s.opts = append(defaultOpts, opts...)
@@ -84,43 +82,43 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 // GetDocGraph receives a get graph request
 func (s *server) GetDocGraph(
 	ctx context.Context,
-	req *pb.GetDocGraphRequest,
-) (*pb.GetDocGraphReply, error) {
+	req *getDocGraphRequest,
+) (*getDocGraphReply, error) {
 	return nil, nil
 }
 
 // PushDocGraph receives a push graph request
 func (s *server) PushDocGraph(
 	ctx context.Context,
-	req *pb.PushDocGraphRequest,
-) (*pb.PushDocGraphReply, error) {
+	req *pushDocGraphRequest,
+) (*pushDocGraphReply, error) {
 	return nil, nil
 }
 
 // GetLog receives a get log request
-func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogReply, error) {
+func (s *server) GetLog(ctx context.Context, req *getLogRequest) (*getLogReply, error) {
 	return nil, nil
 }
 
 // PushLog receives a push log request
-func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
+func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	headCID, err := cid.Cast(req.Body.Cid)
+	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return nil, err
 	}
-	docID, err := client.NewDocIDFromString(string(req.Body.DocID))
+	docID, err := client.NewDocIDFromString(req.DocID)
 	if err != nil {
 		return nil, err
 	}
-	byPeer, err := libpeer.Decode(req.Body.Creator)
+	byPeer, err := libpeer.Decode(req.Creator)
 	if err != nil {
 		return nil, err
 	}
-	block, err := coreblock.GetFromBytes(req.Body.Log.Block)
+	block, err := coreblock.GetFromBytes(req.Block)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +143,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// subscribed to the collection.
-	if !s.hasPubSubTopic(string(req.Body.SchemaRoot)) {
+	if !s.hasPubSubTopic(req.SchemaRoot) {
 		err = s.addPubSubTopic(docID.String(), true, nil)
 		if err != nil {
 			return nil, err
@@ -157,17 +155,17 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		ByPeer:     byPeer,
 		FromPeer:   pid,
 		Cid:        headCID,
-		SchemaRoot: string(req.Body.SchemaRoot),
+		SchemaRoot: req.SchemaRoot,
 	}))
 
-	return &pb.PushLogReply{}, nil
+	return &pushLogReply{}, nil
 }
 
 // GetHeadLog receives a get head log request
 func (s *server) GetHeadLog(
 	ctx context.Context,
-	req *pb.GetHeadLogRequest,
-) (*pb.GetHeadLogReply, error) {
+	req *getHeadLogRequest,
+) (*getHeadLogReply, error) {
 	return nil, nil
 }
 
@@ -267,7 +265,7 @@ func (s *server) removeAllPubsubTopics() error {
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // corresponding topic
-func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRequest) error {
+func (s *server) publishLog(ctx context.Context, topic string, req *pushLogRequest) error {
 	log.InfoContext(ctx, "Publish log",
 		corelog.String("PeerID", s.peer.PeerID().String()),
 		corelog.String("Topic", topic))
@@ -286,7 +284,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 		return s.publishLog(ctx, topic, req)
 	}
 
-	data, err := req.MarshalVT()
+	data, err := cbor.Marshal(req)
 	if err != nil {
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
@@ -305,8 +303,8 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		corelog.Any("SenderId", from),
 		corelog.String("Topic", topic))
 
-	req := new(pb.PushLogRequest)
-	if err := proto.Unmarshal(msg, req); err != nil {
+	req := &pushLogRequest{}
+	if err := cbor.Unmarshal(msg, req); err != nil {
 		log.ErrorE("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}

@@ -38,7 +38,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
@@ -163,7 +162,7 @@ func NewPeer(
 
 	// register the P2P gRPC server
 	go func() {
-		pb.RegisterServiceServer(p.p2pRPC, p.server)
+		registerServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2pListener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
 			log.ErrorE("Fatal P2P RPC server error", err)
@@ -280,17 +279,12 @@ func (p *Peer) RegisterNewDocument(
 		return err
 	}
 
-	// publish log
-	req := &pb.PushLogRequest{
-		Body: &pb.PushLogRequest_Body{
-			DocID:      []byte(docID.String()),
-			Cid:        c.Bytes(),
-			SchemaRoot: []byte(schemaRoot),
-			Creator:    p.host.ID().String(),
-			Log: &pb.Log{
-				Block: rawBlock,
-			},
-		},
+	req := &pushLogRequest{
+		DocID:      docID.String(),
+		CID:        c.Bytes(),
+		SchemaRoot: schemaRoot,
+		Creator:    p.host.ID().String(),
+		Block:      rawBlock,
 	}
 
 	return p.server.publishLog(ctx, schemaRoot, req)
@@ -315,26 +309,21 @@ func (p *Peer) handleDocCreateLog(evt event.Update) error {
 }
 
 func (p *Peer) handleDocUpdateLog(evt event.Update) error {
-	docID, err := client.NewDocIDFromString(evt.DocID)
+	// push to each peer (replicator)
+	p.pushLogToReplicators(evt)
+
+	_, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
 	}
 
-	body := &pb.PushLogRequest_Body{
-		DocID:      []byte(docID.String()),
-		Cid:        evt.Cid.Bytes(),
-		SchemaRoot: []byte(evt.SchemaRoot),
+	req := &pushLogRequest{
+		DocID:      evt.DocID,
+		CID:        evt.Cid.Bytes(),
+		SchemaRoot: evt.SchemaRoot,
 		Creator:    p.host.ID().String(),
-		Log: &pb.Log{
-			Block: evt.Block,
-		},
+		Block:      evt.Block,
 	}
-	req := &pb.PushLogRequest{
-		Body: body,
-	}
-
-	// push to each peer (replicator)
-	p.pushLogToReplicators(evt)
 
 	if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
 		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
