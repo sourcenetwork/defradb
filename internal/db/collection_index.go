@@ -181,6 +181,22 @@ func (c *collection) deleteIndexedDoc(
 	return nil
 }
 
+func (c *collection) deleteIndexedDocWithID(
+	ctx context.Context,
+	docID client.DocID,
+) error {
+	doc, err := c.get(
+		ctx,
+		c.getPrimaryKeyFromDocID(docID),
+		c.Definition().CollectIndexedFields(),
+		false,
+	)
+	if err != nil {
+		return err
+	}
+	return c.deleteIndexedDoc(ctx, doc)
+}
+
 // CreateIndex creates a new index on the collection.
 //
 // If the index name is empty, a name will be automatically generated.

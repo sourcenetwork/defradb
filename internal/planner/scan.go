@@ -164,14 +164,24 @@ func (scan *scanNode) initFetcher(
 		f = new(fetcher.DocumentFetcher)
 
 		if index.HasValue() {
-			fields := make([]mapper.Field, 0, len(index.Value().Fields))
+			fieldsToMove := make([]mapper.Field, 0, len(index.Value().Fields))
+			fieldsToCopy := make([]mapper.Field, 0, len(index.Value().Fields))
 			for _, field := range index.Value().Fields {
 				fieldName := field.Name
 				typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
-				fields = append(fields, mapper.Field{Index: typeIndex, Name: fieldName})
+				indexField := mapper.Field{Index: typeIndex, Name: fieldName}
+				fd, _ := scan.col.Definition().Schema.GetFieldByName(fieldName)
+				// if the field is an array, we need to copy it instead of moving so that the 
+				// top select node can do final filter check on the whole array of the document
+				if fd.Kind.IsArray() {
+					fieldsToCopy = append(fieldsToCopy, indexField)
+				} else {
+					fieldsToMove = append(fieldsToMove, indexField)
+				}
 			}
 			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fields...)
+			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fieldsToMove...)
+			indexFilter = filter.Merge(indexFilter, filter.CopyField(scan.filter, fieldsToCopy...))
 			if indexFilter != nil {
 				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
 			}

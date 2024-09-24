@@ -12,13 +12,11 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // CollectionIndex is an interface for collection indexes
@@ -30,53 +28,27 @@ type CollectionIndex interface {
 	RemoveAll(context.Context, datastore.Txn) error
 }
 
-func canConvertIndexFieldValue[T any](val any) bool {
-	_, ok := val.(T)
-	return ok
-}
-
-func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
+func isSupportedKind(kind client.FieldKind) bool {
 	if kind.IsObject() && !kind.IsArray() {
-		return canConvertIndexFieldValue[string]
+		return true
 	}
 
 	switch kind {
-	case client.FieldKind_NILLABLE_STRING, client.FieldKind_DocID:
-		return canConvertIndexFieldValue[string]
-	case client.FieldKind_NILLABLE_INT:
-		return canConvertIndexFieldValue[int64]
-	case client.FieldKind_NILLABLE_FLOAT:
-		return canConvertIndexFieldValue[float64]
-	case client.FieldKind_NILLABLE_BOOL:
-		return canConvertIndexFieldValue[bool]
-	case client.FieldKind_NILLABLE_BLOB:
-		return func(val any) bool {
-			blobStrVal, ok := val.(string)
-			if !ok {
-				return false
-			}
-			return types.BlobPattern.MatchString(blobStrVal)
-		}
-	case client.FieldKind_NILLABLE_DATETIME:
-		return func(val any) bool {
-			timeStrVal, ok := val.(string)
-			if !ok {
-				return false
-			}
-			_, err := time.Parse(time.RFC3339, timeStrVal)
-			return err == nil
-		}
+	case
+		client.FieldKind_DocID,
+		client.FieldKind_NILLABLE_STRING,
+		client.FieldKind_NILLABLE_INT,
+		client.FieldKind_NILLABLE_FLOAT,
+		client.FieldKind_NILLABLE_BOOL,
+		client.FieldKind_NILLABLE_BLOB,
+		client.FieldKind_NILLABLE_DATETIME,
+		client.FieldKind_INT_ARRAY:
+		// TODO: add other types
+		//client.FieldKind_NILLABLE_INT_ARRAY:
+		return true
 	default:
-		return nil
+		return false
 	}
-}
-
-func getFieldValidateFunc(kind client.FieldKind) (func(any) bool, error) {
-	validateFunc := getValidateIndexFieldFunc(kind)
-	if validateFunc == nil {
-		return nil, NewErrUnsupportedIndexFieldType(kind)
-	}
-	return validateFunc, nil
 }
 
 // NewCollectionIndex creates a new collection index
@@ -88,19 +60,22 @@ func NewCollectionIndex(
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{collection: collection, desc: desc}
-	base.validateFieldFuncs = make([]func(any) bool, len(desc.Fields))
 	base.fieldsDescs = make([]client.SchemaFieldDescription, len(desc.Fields))
+	isArray := false
 	for i := range desc.Fields {
 		field, foundField := collection.Schema().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
 			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
-		validateFunc, err := getFieldValidateFunc(field.Kind)
-		if err != nil {
-			return nil, err
+		if !isSupportedKind(field.Kind) {
+			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
-		base.validateFieldFuncs[i] = validateFunc
+		isArray = isArray || field.Kind.IsArray()
+	}
+	// TODO: handle array as part of a composite index
+	if isArray {
+		return &collectionArrayIndex{collectionBaseIndex: base}, nil
 	}
 	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
@@ -110,10 +85,9 @@ func NewCollectionIndex(
 }
 
 type collectionBaseIndex struct {
-	collection         client.Collection
-	desc               client.IndexDescription
-	validateFieldFuncs []func(any) bool
-	fieldsDescs        []client.SchemaFieldDescription
+	collection  client.Collection
+	desc        client.IndexDescription
+	fieldsDescs []client.SchemaFieldDescription
 }
 
 func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]client.NormalValue, error) {
@@ -138,6 +112,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 
 func (index *collectionBaseIndex) getDocumentsIndexKey(
 	doc *client.Document,
+	appendDocID bool,
 ) (core.IndexDataStoreKey, error) {
 	fieldValues, err := index.getDocFieldValues(doc)
 	if err != nil {
@@ -148,6 +123,10 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	for i := range index.fieldsDescs {
 		fields[i].Value = fieldValues[i]
 		fields[i].Descending = index.desc.Fields[i].Descending
+	}
+
+	if appendDocID {
+		fields = append(fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
 	return core.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields), nil
 }
@@ -210,13 +189,7 @@ var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 func (index *collectionSimpleIndex) getDocumentsIndexKey(
 	doc *client.Document,
 ) (core.IndexDataStoreKey, error) {
-	key, err := index.collectionBaseIndex.getDocumentsIndexKey(doc)
-	if err != nil {
-		return core.IndexDataStoreKey{}, err
-	}
-
-	key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(doc.ID().String())})
-	return key, nil
+	return index.collectionBaseIndex.getDocumentsIndexKey(doc, true)
 }
 
 // Save indexes a document by storing the indexed field value.
@@ -333,7 +306,7 @@ func (index *collectionUniqueIndex) newUniqueIndexError(
 func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 	doc *client.Document,
 ) (core.IndexDataStoreKey, []byte, error) {
-	key, err := index.getDocumentsIndexKey(doc)
+	key, err := index.getDocumentsIndexKey(doc, false)
 	if err != nil {
 		return core.IndexDataStoreKey{}, nil, err
 	}
@@ -429,4 +402,126 @@ func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Docum
 		}
 	}
 	return false
+}
+
+type collectionArrayIndex struct {
+	collectionBaseIndex
+}
+
+var _ CollectionIndex = (*collectionArrayIndex)(nil)
+
+// Save indexes a document by storing the indexed field value.
+func (index *collectionArrayIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := index.getDocumentsIndexKey(doc, true)
+	if err != nil {
+		return err
+	}
+	// TODO: handle array as part of a composite index
+	field := &key.Fields[0]
+	arrVal := field.Value
+	normVals, err := client.ToArrayOfNormalValues(arrVal)
+	if err != nil {
+		return err
+	}
+	for i := range normVals {
+		field.Value = normVals[i]
+		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+		if err != nil {
+			return NewErrFailedToStoreIndexedField(key.ToString(), err)
+		}
+	}
+	return nil
+}
+
+func (index *collectionArrayIndex) Update(
+	ctx context.Context,
+	txn datastore.Txn,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	oldKey, err := index.getDocumentsIndexKey(oldDoc, true)
+	if err != nil {
+		return err
+	}
+	// TODO: handle array as part of a composite index
+	oldField := &oldKey.Fields[0]
+	oldArrVal := oldField.Value
+	oldNormVals, err := client.ToArrayOfNormalValues(oldArrVal)
+	if err != nil {
+		return err
+	}
+
+	newKey, err := index.getDocumentsIndexKey(newDoc, true)
+	if err != nil {
+		return err
+	}
+	newField := &newKey.Fields[0]
+	newArrVal := newField.Value
+	newNormVals, err := client.ToArrayOfNormalValues(newArrVal)
+	if err != nil {
+		return err
+	}
+	newValsMap := make(map[any]client.NormalValue)
+	for i := range newNormVals {
+		newValsMap[newNormVals[i].Unwrap()] = newNormVals[i]
+	}
+
+	existingValsMap := make(map[any]struct{})
+	valsToDeleteMap := make(map[any]client.NormalValue)
+	for i := range oldNormVals {
+		if _, ok := newValsMap[oldNormVals[i].Unwrap()]; !ok {
+			valsToDeleteMap[oldNormVals[i].Unwrap()] = oldNormVals[i]
+		} else {
+			existingValsMap[oldNormVals[i].Unwrap()] = struct{}{}
+		}
+	}
+
+	for _, val := range valsToDeleteMap {
+		oldField.Value = val
+		err = index.deleteIndexKey(ctx, txn, oldKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	for i := range newNormVals {
+		if _, ok := existingValsMap[newNormVals[i].Unwrap()]; !ok {
+			newField.Value = newNormVals[i]
+			err = txn.Datastore().Put(ctx, newKey.ToDS(), []byte{})
+			if err != nil {
+				return NewErrFailedToStoreIndexedField(newKey.ToString(), err)
+			}
+		}
+	}
+	return nil
+}
+
+func (index *collectionArrayIndex) Delete(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := index.getDocumentsIndexKey(doc, true)
+	if err != nil {
+		return err
+	}
+	// TODO: handle array as part of a composite index
+	field := &key.Fields[0]
+	arrVal := field.Value
+	normVals, err := client.ToArrayOfNormalValues(arrVal)
+	if err != nil {
+		return err
+	}
+	for i := range normVals {
+		field.Value = normVals[i]
+		err = index.deleteIndexKey(ctx, txn, key)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

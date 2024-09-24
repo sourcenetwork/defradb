@@ -37,9 +37,10 @@ const (
 	usersColName    = "Users"
 	productsColName = "Products"
 
-	usersNameFieldName   = "name"
-	usersAgeFieldName    = "age"
-	usersWeightFieldName = "weight"
+	usersNameFieldName    = "name"
+	usersAgeFieldName     = "age"
+	usersWeightFieldName  = "weight"
+	usersNumbersFieldName = "numbers"
 
 	productsIDFieldName        = "id"
 	productsPriceFieldName     = "price"
@@ -71,11 +72,13 @@ func (f *indexTestFixture) addUsersCollection() client.Collection {
 				%s: String
 				%s: Int
 				%s: Float
+				%s: [Int!]
 			}`,
 			usersColName,
 			usersNameFieldName,
 			usersAgeFieldName,
 			usersWeightFieldName,
+			usersNumbersFieldName,
 		),
 	)
 	require.NoError(f.t, err)
@@ -183,6 +186,20 @@ func getProductsIndexDescOnCategory() client.IndexDescription {
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
+	return newDesc
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnNumbers() client.IndexDescription {
+	indexDesc := client.IndexDescription{
+		Name: "users_numbers_index",
+		Fields: []client.IndexedFieldDescription{
+			{Name: usersNumbersFieldName},
+		},
+	}
+
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
 	return newDesc
 }
 

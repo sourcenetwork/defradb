@@ -36,9 +36,10 @@ import (
 )
 
 type userDoc struct {
-	Name   string  `json:"name"`
-	Age    int     `json:"age"`
-	Weight float64 `json:"weight"`
+	Name    string  `json:"name"`
+	Age     int     `json:"age"`
+	Weight  float64 `json:"weight"`
+	Numbers []int   `json:"numbers"`
 }
 
 type productDoc struct {
@@ -56,8 +57,27 @@ func (f *indexTestFixture) saveDocToCollection(doc *client.Document, col client.
 	require.NoError(f.t, err)
 }
 
+func (f *indexTestFixture) deleteDocFromCollection(docID client.DocID, col client.Collection) {
+	res, err := col.Delete(f.ctx, docID)
+	require.NoError(f.t, err)
+	require.True(f.t, res)
+	f.commitTxn()
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+}
+
 func (f *indexTestFixture) newUserDoc(name string, age int, col client.Collection) *client.Document {
 	d := userDoc{Name: name, Age: age, Weight: 154.1}
+	data, err := json.Marshal(d)
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(data, col.Definition())
+	require.NoError(f.t, err)
+	return doc
+}
+
+func (f *indexTestFixture) newUserDocWithNumbers(name string, numbers []int, col client.Collection) *client.Document {
+	d := userDoc{Name: name, Numbers: numbers}
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
@@ -86,10 +106,11 @@ type indexKeyBuilder struct {
 	descendingFields []bool
 	doc              *client.Document
 	isUnique         bool
+	arrayFieldValues map[string]any
 }
 
 func newIndexKeyBuilder(f *indexTestFixture) *indexKeyBuilder {
-	return &indexKeyBuilder{f: f}
+	return &indexKeyBuilder{f: f, arrayFieldValues: make(map[string]any)}
 }
 
 func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
@@ -102,6 +123,14 @@ func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
 // When building a key it will it will find the field id to use in the key.
 func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {
 	b.fieldsNames = fieldsNames
+	return b
+}
+
+// ArrayFieldVal sets the value for the array field.
+// The value should be of a single element of the array, as index indexes array fields by each element.
+// If ArrayFieldVal is not set and index array field is present, it will take array first element as a value.
+func (b *indexKeyBuilder) ArrayFieldVal(fieldName string, val any) *indexKeyBuilder {
+	b.arrayFieldValues[fieldName] = val
 	return b
 }
 
@@ -120,6 +149,7 @@ func (b *indexKeyBuilder) Doc(doc *client.Document) *indexKeyBuilder {
 	return b
 }
 
+// Unique sets the index key to be unique.
 func (b *indexKeyBuilder) Unique() *indexKeyBuilder {
 	b.isUnique = true
 	return b
@@ -170,12 +200,12 @@ indexLoop:
 		hasNilValue := false
 		for i, fieldName := range b.fieldsNames {
 			fieldValue, err := b.doc.GetValue(fieldName)
-			var val client.NormalValue
 			if err != nil {
 				if !errors.Is(err, client.ErrFieldNotExist) {
 					require.NoError(b.f.t, err)
 				}
 			}
+			var val client.NormalValue
 			if fieldValue != nil {
 				val = fieldValue.NormalValue()
 			} else {
@@ -190,6 +220,21 @@ indexLoop:
 			}
 			if val.IsNil() {
 				hasNilValue = true
+			} else if val.IsArray() {
+				if arrVal, ok := b.arrayFieldValues[fieldName]; ok {
+					if normVal, ok := arrVal.(client.NormalValue); ok {
+						val = normVal
+					} else {
+						val, err = client.NewNormalValue(arrVal)
+						require.NoError(b.f.t, err, "given value is not a normal value")
+					}
+				} else {
+					arrVals, err := client.ToArrayOfNormalValues(val)
+					require.NoError(b.f.t, err)
+					require.Greater(b.f.t, len(arrVals), 0, "empty array can not be indexed")
+					val = arrVals[0]
+				}
+
 			}
 			descending := false
 			if i < len(b.descendingFields) {
@@ -288,6 +333,19 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionIndexOnName()
+
+	doc := f.newUserDoc("John", 21, f.users)
+	f.saveDocToCollection(doc, f.users)
+	f.deleteDocFromCollection(doc.ID(), f.users)
+
+	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Build()
+	assert.Len(t, f.getPrefixFromDataStore(userNameKey.ToString()), 0)
 }
 
 func TestNonUnique_IfDocWithDescendingOrderIsAdded_ShouldBeIndexed(t *testing.T) {
@@ -1457,4 +1515,64 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 		require.NoError(t, err)
 		f.commitTxn()
 	}
+}
+
+func TestArrayIndex_IfDocIsAdded_ShouldIndexAllArrayElements(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnNumbers()
+
+	numbersArray := []int{1, 2, 3}
+	doc := f.newUserDocWithNumbers("John", numbersArray, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	for _, num := range numbersArray {
+		key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName).
+			ArrayFieldVal(usersNumbersFieldName, num).Doc(doc).Build()
+
+		data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+		require.NoError(t, err)
+		assert.Len(t, data, 0)
+	}
+}
+
+func TestArrayIndex_IfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnNumbers()
+
+	numbersArray := []int{1, 2, 3}
+	doc := f.newUserDocWithNumbers("John", numbersArray, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName).Build()
+	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), len(numbersArray))
+
+	f.deleteDocFromCollection(doc.ID(), f.users)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), 0)
+}
+
+func TestArrayIndex_IfDocIsDeletedButOneElementHasNotIndex_Error(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnNumbers()
+
+	numbersArray := []int{1, 2, 3}
+	doc := f.newUserDocWithNumbers("John", numbersArray, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName).
+		ArrayFieldVal(usersNumbersFieldName, 2).Doc(doc).Build()
+
+	err := f.txn.Datastore().Delete(f.ctx, userNumbersKey.ToDS())
+	require.NoError(t, err)
+	f.commitTxn()
+
+	res, err := f.users.Delete(f.ctx, doc.ID())
+	require.Error(f.t, err)
+	require.False(f.t, res)
 }
