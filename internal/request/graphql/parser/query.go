@@ -22,24 +22,20 @@ import (
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(
 	exe *gql.ExecutionContext,
-	def *ast.OperationDefinition,
+	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, []error) {
-	qdef := &request.OperationDefinition{
-		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
-	}
-
-	for i, selection := range def.SelectionSet.Selections {
-		var parsedSelection request.Selection
-		switch node := selection.(type) {
-		case *ast.Field:
-			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
+	var selections []request.Selection
+	for name, fields := range collectedFields {
+		for _, node := range fields {
+			var parsedSelection request.Selection
+			if _, isCommitQuery := request.CommitQueries[name]; isCommitQuery {
 				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
-			} else if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
+			} else if _, isAggregate := request.Aggregates[name]; isAggregate {
 				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
@@ -72,11 +68,13 @@ func parseQueryOperationDefinition(
 
 				parsedSelection = parsed
 			}
-
-			qdef.Selections[i] = parsedSelection
+			selections = append(selections, parsedSelection)
 		}
 	}
-	return qdef, nil
+
+	return &request.OperationDefinition{
+		Selections: selections,
+	}, nil
 }
 
 // @todo: Create separate select parse functions
