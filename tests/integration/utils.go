@@ -1441,20 +1441,34 @@ func deleteDoc(
 	docID := s.docIDs[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		actionNode := s.nodes[nodeID]
+		collections := s.collections[nodeID]
 		identity := getIdentity(s, nodeID, action.Identity)
 		ctx := db.SetContextIdentity(s.ctx, identity)
-
-		err := withRetry(
-			actionNodes,
-			nodeID,
+		err := withRetryOnNode(
+			actionNode,
 			func() error {
 				_, err := collections[action.CollectionID].Delete(ctx, docID)
 				return err
 			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	} else {
+		for nodeID, collections := range s.collections {
+			identity := getIdentity(s, nodeID, action.Identity)
+			ctx := db.SetContextIdentity(s.ctx, identity)
+			err := withRetryOnNode(
+				s.nodes[nodeID],
+				func() error {
+					_, err := collections[action.CollectionID].Delete(ctx, docID)
+					return err
+				},
+			)
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
