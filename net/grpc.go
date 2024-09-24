@@ -17,11 +17,13 @@ import (
 )
 
 const (
-	serviceGetDocGraphName  = "/defradb.net.Service/GetDocGraph"
-	servicePushDocGraphName = "/defradb.net.Service/PushDocGraph"
-	serviceGetLogName       = "/defradb.net.Service/GetLog"
-	servicePushLogName      = "/defradb.net.Service/PushLog"
-	serviceGetHeadLogName   = "/defradb.net.Service/GetHeadLog"
+	grpcServiceName = "defradb.net.Service"
+
+	serviceGetDocGraphName  = "/" + grpcServiceName + "/GetDocGraph"
+	servicePushDocGraphName = "/" + grpcServiceName + "/PushDocGraph"
+	serviceGetLogName       = "/" + grpcServiceName + "/GetLog"
+	servicePushLogName      = "/" + grpcServiceName + "/PushLog"
+	serviceGetHeadLogName   = "/" + grpcServiceName + "/GetHeadLog"
 )
 
 type getDocGraphRequest struct{}
@@ -88,7 +90,7 @@ func pushLogHandler(
 
 func registerServiceServer(s grpc.ServiceRegistrar, srv serviceServer) {
 	desc := &grpc.ServiceDesc{
-		ServiceName: "defradb.net.Service",
+		ServiceName: grpcServiceName,
 		HandlerType: (*serviceServer)(nil),
 		Methods: []grpc.MethodDesc{
 			{
