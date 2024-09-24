@@ -148,7 +148,7 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
 			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
-			"order":              NewArgConfig(commitsOrderArg, OrderArgDescription),
+			"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
 			"cid":                NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(

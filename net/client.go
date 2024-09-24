@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 var (
@@ -32,19 +31,6 @@ var (
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
 func (s *server) pushLog(evt event.Update, pid peer.ID) error {
-	body := &pb.PushLogRequest_Body{
-		DocID:      []byte(evt.DocID),
-		Cid:        evt.Cid.Bytes(),
-		SchemaRoot: []byte(evt.SchemaRoot),
-		Creator:    s.peer.host.ID().String(),
-		Log: &pb.Log{
-			Block: evt.Block,
-		},
-	}
-	req := &pb.PushLogRequest{
-		Body: body,
-	}
-
 	client, err := s.dial(pid) // grpc dial over P2P stream
 	if err != nil {
 		return NewErrPushLog(err)
@@ -53,7 +39,14 @@ func (s *server) pushLog(evt event.Update, pid peer.ID) error {
 	ctx, cancel := context.WithTimeout(s.peer.ctx, PushTimeout)
 	defer cancel()
 
-	if _, err := client.PushLog(ctx, req); err != nil {
+	req := pushLogRequest{
+		DocID:      evt.DocID,
+		CID:        evt.Cid.Bytes(),
+		SchemaRoot: evt.SchemaRoot,
+		Creator:    s.peer.host.ID().String(),
+		Block:      evt.Block,
+	}
+	if err := client.Invoke(ctx, servicePushLogName, req, nil); err != nil {
 		return NewErrPushLog(
 			err,
 			errors.NewKV("CID", evt.Cid),

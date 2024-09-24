@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	net_pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 func TestNewServerSimple(t *testing.T) {
@@ -39,7 +38,7 @@ func TestGetDocGraph(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.GetDocGraph(ctx, &net_pb.GetDocGraphRequest{})
+	r, err := p.server.GetDocGraph(ctx, &getDocGraphRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -49,7 +48,7 @@ func TestPushDocGraph(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.PushDocGraph(ctx, &net_pb.PushDocGraphRequest{})
+	r, err := p.server.PushDocGraph(ctx, &pushDocGraphRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -59,7 +58,7 @@ func TestGetLog(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.GetLog(ctx, &net_pb.GetLogRequest{})
+	r, err := p.server.GetLog(ctx, &getLogRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -69,7 +68,7 @@ func TestGetHeadLog(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.GetHeadLog(ctx, &net_pb.GetHeadLogRequest{})
+	r, err := p.server.GetHeadLog(ctx, &getHeadLogRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -126,16 +125,12 @@ func TestPushLog(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	_, err = p.server.PushLog(ctx, &net_pb.PushLogRequest{
-		Body: &net_pb.PushLogRequest_Body{
-			DocID:      []byte(doc.ID().String()),
-			Cid:        headCID.Bytes(),
-			SchemaRoot: []byte(col.SchemaRoot()),
-			Creator:    p.PeerID().String(),
-			Log: &net_pb.Log{
-				Block: b,
-			},
-		},
+	_, err = p.server.PushLog(ctx, &pushLogRequest{
+		DocID:      doc.ID().String(),
+		CID:        headCID.Bytes(),
+		SchemaRoot: col.SchemaRoot(),
+		Creator:    p.PeerID().String(),
+		Block:      b,
 	})
 	require.NoError(t, err)
 }

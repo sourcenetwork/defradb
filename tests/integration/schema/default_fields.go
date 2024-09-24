@@ -196,21 +196,16 @@ type argDef struct {
 	typeName  string
 }
 
-func buildOrderArg(objectName string, fields []argDef) Field {
-	inputFields := []any{
-		makeInputObject("_docID", "Ordering", nil),
-	}
-
-	for _, field := range fields {
-		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
-	}
-
+func buildOrderArg(objectName string) Field {
 	return Field{
 		"name": "order",
-		"type": Field{
-			"name":        objectName + "OrderArg",
-			"ofType":      nil,
-			"inputFields": inputFields,
+		"type": map[string]any{
+			"name": nil,
+			"ofType": map[string]any{
+				"kind": "INPUT_OBJECT",
+				"name": objectName + "OrderArg",
+			},
+			"inputFields": nil,
 		},
 	}
 }

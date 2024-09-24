@@ -24,4 +24,5 @@ var (
 	ErrUnknownExplainType             = errors.New("invalid / unknown explain type")
 	ErrUnknownGQLOperation            = errors.New("unknown GraphQL operation type")
 	ErrInvalidFilterConditions        = errors.New("invalid filter condition type, expected map")
+	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 )

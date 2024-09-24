@@ -395,7 +395,7 @@ func (g *Generator) createExpandedFieldList(
 				schemaTypes.GroupByArgDescription,
 			),
 			"order": schemaTypes.NewArgConfig(
-				g.manager.schema.TypeMap()[typeName+"OrderArg"],
+				gql.NewList(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
 				schemaTypes.OrderArgDescription,
 			),
 			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),
@@ -979,7 +979,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 				Description: schemaTypes.OffsetArgDescription,
 			},
 			request.OrderClause: &gql.InputObjectFieldConfig{
-				Type:        g.manager.schema.TypeMap()[genTypeName(obj, "OrderArg")],
+				Type:        gql.NewList(g.manager.schema.TypeMap()[genTypeName(obj, "OrderArg")]),
 				Description: schemaTypes.OrderArgDescription,
 			},
 		}, nil
@@ -1304,7 +1304,7 @@ func (g *Generator) genTypeQueryableFieldList(
 				gql.NewList(gql.NewNonNull(config.groupBy)),
 				schemaTypes.GroupByArgDescription,
 			),
-			"order":              schemaTypes.NewArgConfig(config.order, schemaTypes.OrderArgDescription),
+			"order":              schemaTypes.NewArgConfig(gql.NewList(config.order), schemaTypes.OrderArgDescription),
 			request.ShowDeleted:  schemaTypes.NewArgConfig(gql.Boolean, showDeletedArgDescription),
 			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),
 			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.OffsetArgDescription),
