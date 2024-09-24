@@ -179,9 +179,11 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 													map[string]any{
 														"name": "order",
 														"type": map[string]any{
-															"name":   "UsersOrderArg",
-															"kind":   "INPUT_OBJECT",
-															"ofType": nil,
+															"name": nil,
+															"kind": "LIST",
+															"ofType": map[string]any{
+																"name": "UsersOrderArg",
+															},
 														},
 													},
 												},
@@ -285,9 +287,11 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 													map[string]any{
 														"name": "order",
 														"type": map[string]any{
-															"name":   "UsersOrderArg",
-															"kind":   "INPUT_OBJECT",
-															"ofType": nil,
+															"name": nil,
+															"kind": "LIST",
+															"ofType": map[string]any{
+																"name": "UsersOrderArg",
+															},
 														},
 													},
 												},

@@ -137,12 +137,7 @@ var defaultUserArgsWithoutFilter = trimFields(
 		groupByArg,
 		limitArg,
 		offsetArg,
-		buildOrderArg("Users", []argDef{
-			{
-				fieldName: "name",
-				typeName:  "Ordering",
-			},
-		}),
+		buildOrderArg("Users"),
 	},
 	testFilterForSimpleSchemaArgProps,
 )
@@ -288,20 +283,7 @@ var defaultBookArgsWithoutFilter = trimFields(
 		groupByArg,
 		limitArg,
 		offsetArg,
-		buildOrderArg("Book", []argDef{
-			{
-				fieldName: "author",
-				typeName:  "AuthorOrderArg",
-			},
-			{
-				fieldName: "author_id",
-				typeName:  "Ordering",
-			},
-			{
-				fieldName: "name",
-				typeName:  "Ordering",
-			},
-		}),
+		buildOrderArg("Book"),
 	},
 	testFilterForOneToOneSchemaArgProps,
 )
