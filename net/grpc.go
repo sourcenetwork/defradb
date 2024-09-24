@@ -64,11 +64,11 @@ type serviceServer interface {
 }
 
 func pushLogHandler(
-	srv interface{},
+	srv any,
 	ctx context.Context,
-	dec func(interface{}) error,
+	dec func(any) error,
 	interceptor grpc.UnaryServerInterceptor,
-) (interface{}, error) {
+) (any, error) {
 	in := new(pushLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func pushLogHandler(
 		Server:     srv,
 		FullMethod: servicePushLogName,
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(serviceServer).PushLog(ctx, req.(*pushLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
