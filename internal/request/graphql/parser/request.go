@@ -181,6 +181,13 @@ func parseSelectFields(
 	var selections []request.Selection
 	for _, selection := range fields.Selections {
 		switch node := selection.(type) {
+		case *ast.InlineFragment:
+			selection, err := parseSelectFields(exe, parent, node.GetSelectionSet())
+			if err != nil {
+				return nil, err
+			}
+			selections = append(selections, selection...)
+
 		case *ast.FragmentSpread:
 			fragment, ok := exe.Fragments[node.Name.Value]
 			if !ok {

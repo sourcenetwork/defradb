@@ -14,9 +14,11 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
-func TestQuerySimpleWithFragmentsSucceeds(t *testing.T) {
+func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with fragments succeeds",
 		Actions: []any{
@@ -66,7 +68,7 @@ func TestQuerySimpleWithFragmentsSucceeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithNestedFragmentsSucceeds(t *testing.T) {
+func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with nested fragment succeeds",
 		Actions: []any{
@@ -114,9 +116,9 @@ func TestQuerySimpleWithNestedFragmentsSucceeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithSpreadFragmentAndSelectSucceeds(t *testing.T) {
+func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with spread fragment and select",
+		Description: "Simple query with fragment spread and select",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -159,7 +161,7 @@ func TestQuerySimpleWithSpreadFragmentAndSelectSucceeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithMissingFragmentReturnsError(t *testing.T) {
+func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with missing fragment returns error",
 		Actions: []any{
@@ -189,7 +191,7 @@ func TestQuerySimpleWithMissingFragmentReturnsError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithFragmentWithInvalidFieldReturnsError(t *testing.T) {
+func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with fragment with invalid field returns error",
 		Actions: []any{
@@ -222,7 +224,7 @@ func TestQuerySimpleWithFragmentWithInvalidFieldReturnsError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithFragmentWithAggregateSucceeds(t *testing.T) {
+func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with fragment with aggregate",
 		Actions: []any{
@@ -247,6 +249,96 @@ func TestQuerySimpleWithFragmentWithAggregateSucceeds(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"_count": int64(2),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with fragment with aggregate",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Variables: immutable.Some(map[string]any{
+					"filter": map[string]any{
+						"Age": map[string]any{
+							"_gt": int64(30),
+						},
+					},
+				}),
+				Request: `query($filter: UsersFilterArg!) {
+					...UserFilter
+				}
+				fragment UserFilter on Query {
+					Users(filter: $filter) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Alice",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithInlineFragment_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with inline fragment",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						... on Users {
+							Name
+							Age
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+							"Age":  int64(21),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(40),
+						},
+					},
 				},
 			},
 		},
