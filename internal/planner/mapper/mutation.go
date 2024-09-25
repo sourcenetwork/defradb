@@ -31,7 +31,7 @@ type Mutation struct {
 	// CreateInput is the array of maps of fields and values used for a create mutation.
 	CreateInput []map[string]any
 
-	// CreateInput is a map of fields and values used for an update mutation.
+	// UpdateInput is a map of fields and values used for an update mutation.
 	UpdateInput map[string]any
 
 	// Encrypt is a flag to indicate if the input data should be encrypted.
