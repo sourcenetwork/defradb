@@ -125,6 +125,16 @@ Returns the average of the specified field values within the specified child set
  multiple fields/sets are specified, the combined average of all items within each set
  (true average, not an average of averages) will be returned as a single value.
 `
+	MaximumFieldDescription string = `
+Returns the maximum of the specified field values within the specified child sets. If
+ multiple fields/sets are specified, the combined maximum of all items within each set
+ will be returned as a single value.
+`
+	MinimumFieldDescription string = `
+Returns the minimum of the specified field values within the specified child sets. If
+ multiple fields/sets are specified, the combined minimum of all items within each set
+ will be returned as a single value.
+`
 	booleanOperatorBlockDescription string = `
 These are the set of filter operators available for use when filtering on Boolean
  values.

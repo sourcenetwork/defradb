@@ -44,6 +44,8 @@ const (
 	DeletedFieldName = "_deleted"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
+	MaximumFieldName = "_max"
+	MinimumFieldName = "_min"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.
@@ -107,12 +109,16 @@ var (
 		AverageFieldName:  {},
 		DocIDFieldName:    {},
 		DeletedFieldName:  {},
+		MaximumFieldName:  {},
+		MinimumFieldName:  {},
 	}
 
 	Aggregates = map[string]struct{}{
 		CountFieldName:   {},
 		SumFieldName:     {},
 		AverageFieldName: {},
+		MaximumFieldName: {},
+		MinimumFieldName: {},
 	}
 
 	CommitQueries = map[string]struct{}{

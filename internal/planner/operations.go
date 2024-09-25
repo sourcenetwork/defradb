@@ -18,6 +18,8 @@ var (
 	_ planNode = (*deleteNode)(nil)
 	_ planNode = (*groupNode)(nil)
 	_ planNode = (*limitNode)(nil)
+	_ planNode = (*maximumNode)(nil)
+	_ planNode = (*minimumNode)(nil)
 	_ planNode = (*multiScanNode)(nil)
 	_ planNode = (*orderNode)(nil)
 	_ planNode = (*parallelNode)(nil)

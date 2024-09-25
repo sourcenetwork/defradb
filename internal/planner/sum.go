@@ -12,7 +12,6 @@ package planner
 
 import (
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -231,65 +230,69 @@ func (n *sumNode) Next() (bool, error) {
 		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
-			collectionSum = sumDocs(childCollection, func(childItem core.Doc) float64 {
+			collectionSum = reduceDocs(childCollection, 0, func(childItem core.Doc, value float64) float64 {
 				childProperty := childItem.Fields[source.ChildTarget.Index]
 				switch v := childProperty.(type) {
 				case int:
-					return float64(v)
+					return value + float64(v)
 				case int64:
-					return float64(v)
+					return value + float64(v)
 				case uint64:
-					return float64(v)
+					return value + float64(v)
 				case float64:
-					return v
+					return value + v
 				default:
 					// return nothing, cannot be summed
-					return 0
+					return value + 0
 				}
 			})
 		case []int64:
-			collectionSum, err = sumItems(
+			collectionSum, err = reduceItems(
 				childCollection,
 				&source,
 				lessN[int64],
-				func(childItem int64) float64 {
-					return float64(childItem)
+				0,
+				func(childItem int64, value float64) float64 {
+					return value + float64(childItem)
 				},
 			)
 
 		case []immutable.Option[int64]:
-			collectionSum, err = sumItems(
+			collectionSum, err = reduceItems(
 				childCollection,
 				&source,
 				lessO[int64],
-				func(childItem immutable.Option[int64]) float64 {
+				0,
+				func(childItem immutable.Option[int64], value float64) float64 {
 					if !childItem.HasValue() {
-						return 0
+						return value + 0
 					}
-					return float64(childItem.Value())
+					return value + float64(childItem.Value())
 				},
 			)
 
 		case []float64:
-			collectionSum, err = sumItems(
+			collectionSum, err = reduceItems(
 				childCollection,
 				&source,
 				lessN[float64],
-				func(childItem float64) float64 {
-					return childItem
+				0,
+				func(childItem float64, value float64) float64 {
+					return value + childItem
 				},
 			)
 
 		case []immutable.Option[float64]:
-			collectionSum, err = sumItems(
+			collectionSum, err = reduceItems(
 				childCollection,
 				&source,
 				lessO[float64],
-				func(childItem immutable.Option[float64]) float64 {
+				0,
+				func(childItem immutable.Option[float64], value float64) float64 {
 					if !childItem.HasValue() {
-						return 0
+						return value + 0
 					}
-					return childItem.Value()
+					return value + childItem.Value()
 				},
 			)
 		}
@@ -310,78 +313,4 @@ func (n *sumNode) Next() (bool, error) {
 	return true, nil
 }
 
-// offsets sums the documents in a slice, skipping over hidden items (a grouping mechanic).
-// Docs should be counted with this function to avoid applying offsets twice (once in the
-// select, then once here).
-func sumDocs(docs []core.Doc, toFloat func(core.Doc) float64) float64 {
-	var sum float64 = 0
-	for _, doc := range docs {
-		if !doc.Hidden {
-			sum += toFloat(doc)
-		}
-	}
-
-	return sum
-}
-
-func sumItems[T any](
-	source []T,
-	aggregateTarget *mapper.AggregateTarget,
-	less func(T, T) bool,
-	toFloat func(T) float64,
-) (float64, error) {
-	items := enumerable.New(source)
-	if aggregateTarget.Filter != nil {
-		items = enumerable.Where(items, func(item T) (bool, error) {
-			return mapper.RunFilter(item, aggregateTarget.Filter)
-		})
-	}
-
-	if aggregateTarget.OrderBy != nil && len(aggregateTarget.OrderBy.Conditions) > 0 {
-		if aggregateTarget.OrderBy.Conditions[0].Direction == mapper.ASC {
-			items = enumerable.Sort(items, less, len(source))
-		} else {
-			items = enumerable.Sort(items, reverse(less), len(source))
-		}
-	}
-
-	if aggregateTarget.Limit != nil {
-		items = enumerable.Skip(items, aggregateTarget.Limit.Offset)
-		items = enumerable.Take(items, aggregateTarget.Limit.Limit)
-	}
-
-	var sum float64 = 0
-	err := enumerable.ForEach(items, func(item T) {
-		sum += toFloat(item)
-	})
-
-	return sum, err
-}
-
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
-
-type number interface {
-	int64 | float64
-}
-
-func lessN[T number](a T, b T) bool {
-	return a < b
-}
-
-func lessO[T number](a immutable.Option[T], b immutable.Option[T]) bool {
-	if !a.HasValue() {
-		return true
-	}
-
-	if !b.HasValue() {
-		return false
-	}
-
-	return a.Value() < b.Value()
-}
-
-func reverse[T any](original func(T, T) bool) func(T, T) bool {
-	return func(t1, t2 T) bool {
-		return !original(t1, t2)
-	}
-}

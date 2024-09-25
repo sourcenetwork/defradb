@@ -347,6 +347,10 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				plan, aggregateError = n.planner.Sum(f, selectReq)
 			case request.AverageFieldName:
 				plan, aggregateError = n.planner.Average(f)
+			case request.MaximumFieldName:
+				plan, aggregateError = n.planner.Maximum(f, selectReq)
+			case request.MinimumFieldName:
+				plan, aggregateError = n.planner.Minimum(f, selectReq)
 			}
 
 			if aggregateError != nil {
