@@ -976,7 +976,6 @@ func getIndexes(
 			expectedErrorRaised = expectedErrorRaised ||
 				AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		}
-
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1534,7 +1533,6 @@ func updateDoc(
 			)
 			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		}
-
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1862,7 +1860,6 @@ func backupImport(
 			func() error { return node.BasicImport(s.ctx, action.Filepath) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-
 	} else {
 		for _, node := range s.nodes {
 			err := withRetryOnNode(
@@ -1871,7 +1868,6 @@ func backupImport(
 			)
 			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		}
-
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
