@@ -16,6 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+// This test ensures that nearby relation fields are not failing validation during a schema patch.
 func TestSchemaUpdatesAddField_DoesNotAffectExistingRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -38,7 +39,6 @@ func TestSchemaUpdatesAddField_DoesNotAffectExistingRelation(t *testing.T) {
 						{ "op": "add", "path": "/Book/Fields/-", "value": {"Name": "rating", "Kind": 4} }
 					]
 				`,
-				ExpectedError: "mutating an existing field is not supported.",
 			},
 		},
 	}
