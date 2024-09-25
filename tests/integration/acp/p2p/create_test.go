@@ -123,8 +123,6 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
 				},
-
-				ExpectedError: "403: forbidden", // TODO: FIX THIS BUG
 			},
 		},
 	}
