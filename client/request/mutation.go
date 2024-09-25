@@ -17,6 +17,7 @@ const (
 	CreateObjects
 	UpdateObjects
 	DeleteObjects
+	UpsertObjects
 )
 
 // ObjectMutation is a field on the `mutation` operation of a graphql request. It includes

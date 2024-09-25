@@ -1082,7 +1082,18 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	return []*gql.Field{create, update, delete}, nil
+	upsert := &gql.Field{
+		Name:        "upsert_" + obj.Name(),
+		Description: upsertDocumentDescription,
+		Type:        obj,
+		Args: gql.FieldConfigArgument{
+			"filter": schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
+			"create": schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
+			"update": schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
+		},
+	}
+
+	return []*gql.Field{create, update, delete, upsert}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {

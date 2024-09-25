@@ -25,6 +25,7 @@ var (
 		"create": request.CreateObjects,
 		"update": request.UpdateObjects,
 		"delete": request.DeleteObjects,
+		"upsert": request.UpsertObjects,
 	}
 )
 
