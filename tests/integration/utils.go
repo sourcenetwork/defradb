@@ -1762,21 +1762,38 @@ func dropIndex(
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
+
 		indexName := action.IndexName
 		if indexName == "" {
 			indexName = s.indexes[nodeID][action.CollectionID][action.IndexID].Name
 		}
 
-		err := withRetry(
-			actionNodes,
-			nodeID,
+		err := withRetryOnNode(
+			s.nodes[nodeID],
 			func() error {
 				return collections[action.CollectionID].DropIndex(s.ctx, indexName)
 			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	} else {
+		for nodeID, collections := range s.collections {
+			indexName := action.IndexName
+			if indexName == "" {
+				indexName = s.indexes[nodeID][action.CollectionID][action.IndexID].Name
+			}
+
+			err := withRetryOnNode(
+				s.nodes[nodeID],
+				func() error {
+					return collections[action.CollectionID].DropIndex(s.ctx, indexName)
+				},
+			)
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
