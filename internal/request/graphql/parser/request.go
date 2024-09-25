@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"fmt"
+
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -36,6 +38,15 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	if err != nil {
 		return nil, []error{err}
 	}
+	operationType, err := gql.GetOperationRootType(exe.Schema, exe.Operation)
+	if err != nil {
+		return nil, []error{err}
+	}
+	collectedFields := gql.CollectFields(gql.CollectFieldsParams{
+		ExeContext:   exe,
+		RuntimeType:  operationType,
+		SelectionSet: exe.Operation.GetSelectionSet(),
+	})
 
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -46,7 +57,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	astOpDef := exe.Operation.(*ast.OperationDefinition)
 	switch exe.Operation.GetOperation() {
 	case ast.OperationTypeQuery:
-		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, exe.Operation.(*ast.OperationDefinition))
+		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
 		if errs != nil {
 			return nil, errs
 		}
@@ -59,7 +70,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Queries = append(r.Queries, parsedQueryOpDef)
 
 	case ast.OperationTypeMutation:
-		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, astOpDef)
+		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, collectedFields)
 		if err != nil {
 			return nil, []error{err}
 		}
@@ -73,7 +84,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
 	case ast.OperationTypeSubscription:
-		parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(exe, astOpDef)
+		parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(exe, collectedFields)
 		if err != nil {
 			return nil, []error{err}
 		}
@@ -167,26 +178,45 @@ func parseSelectFields(
 	parent *gql.Object,
 	fields *ast.SelectionSet,
 ) ([]request.Selection, error) {
-	selections := make([]request.Selection, len(fields.Selections))
-	// parse field selections
-	for i, selection := range fields.Selections {
+	var selections []request.Selection
+	for _, selection := range fields.Selections {
 		switch node := selection.(type) {
+		case *ast.InlineFragment:
+			selection, err := parseSelectFields(exe, parent, node.GetSelectionSet())
+			if err != nil {
+				return nil, err
+			}
+			selections = append(selections, selection...)
+
+		case *ast.FragmentSpread:
+			fragment, ok := exe.Fragments[node.Name.Value]
+			if !ok {
+				return nil, fmt.Errorf("fragment not found %s", node.Name.Value)
+			}
+			selection, err := parseSelectFields(exe, parent, fragment.GetSelectionSet())
+			if err != nil {
+				return nil, err
+			}
+			selections = append(selections, selection...)
+
 		case *ast.Field:
+			var selection request.Selection
 			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
 				s, err := parseAggregate(exe, parent, node)
 				if err != nil {
 					return nil, err
 				}
-				selections[i] = s
+				selection = s
 			} else if node.SelectionSet == nil { // regular field
-				selections[i] = parseField(node)
+				selection = parseField(node)
 			} else { // sub type with extra fields
 				s, err := parseSelect(exe, parent, node)
 				if err != nil {
 					return nil, err
 				}
-				selections[i] = s
+				selection = s
 			}
+			selections = append(selections, selection)
 		}
 	}
 
