@@ -54,6 +54,8 @@ const (
 	collectionIDLabel   = "collectionID"
 	collectionNameLabel = "collectionName"
 	inputLabel          = "input"
+	createInputLabel    = "create"
+	updateInputLabel    = "update"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
 	joinRootLabel       = "root"

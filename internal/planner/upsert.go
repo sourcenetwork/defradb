@@ -17,52 +17,39 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-type updateNode struct {
+type upsertNode struct {
 	documentIterator
 	docMapper
 
-	p *Planner
-
-	collection client.Collection
-
-	filter *mapper.Filter
-
-	docIDs []string
-
-	// input map of fields and values
-	input map[string]any
-
-	isUpdating bool
-
-	results planNode
-
-	execInfo updateExecInfo
-}
-
-type updateExecInfo struct {
-	// Total number of times updateNode was executed.
-	iterations uint64
-
-	// Total number of successful updates.
-	updates uint64
+	p           *Planner
+	collection  client.Collection
+	filter      *mapper.Filter
+	createInput map[string]any
+	updateInput map[string]any
+	doc         *client.Document
+	isUpserting bool
+	results     planNode
 }
 
 // Next only returns once.
-func (n *updateNode) Next() (bool, error) {
-	n.execInfo.iterations++
+func (n *upsertNode) Next() (bool, error) {
+	if n.isUpserting {
+		next, err := n.results.Next()
+		if err != nil {
+			return false, err
+		}
 
-	if n.isUpdating {
-		for {
+		switch next {
+		case true:
+			n.currentValue = n.results.Value()
+			// make sure multiple documents do not match
 			next, err := n.results.Next()
 			if err != nil {
 				return false, err
 			}
-			if !next {
-				break
+			if next {
+				return false, ErrUpsertMultipleDocuments
 			}
-
-			n.currentValue = n.results.Value()
-
 			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 			if err != nil {
 				return false, err
@@ -71,7 +58,7 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			for k, v := range n.input {
+			for k, v := range n.updateInput {
 				if err := doc.Set(k, v); err != nil {
 					return false, err
 				}
@@ -80,17 +67,18 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-
-			n.execInfo.updates++
+		case false:
+			err := n.collection.Create(n.p.ctx, n.doc)
+			if err != nil {
+				return false, err
+			}
+			n.results.Spans(docIDsToSpans(documentsToDocIDs(n.doc), n.collection.Description()))
 		}
-		n.isUpdating = false
-
-		// Re-init the results node, so that they can be properly yielded with the updated
-		// values, as well as any formatting (e.g. aggregates, groupings, etc)
-		err := n.results.Init()
+		err = n.results.Init()
 		if err != nil {
 			return false, err
 		}
+		n.isUpserting = false
 	}
 
 	next, err := n.results.Next()
@@ -100,32 +88,42 @@ func (n *updateNode) Next() (bool, error) {
 	if !next {
 		return false, nil
 	}
-
 	n.currentValue = n.results.Value()
 	return true, nil
 }
 
-func (n *updateNode) Kind() string { return "updateNode" }
+func (n *upsertNode) Kind() string {
+	return "upsertNode"
+}
 
-func (n *updateNode) Spans(spans core.Spans) { n.results.Spans(spans) }
+func (n *upsertNode) Spans(spans core.Spans) {
+	n.results.Spans(spans)
+}
 
-func (n *updateNode) Init() error { return n.results.Init() }
+func (n *upsertNode) Init() error {
+	return n.results.Init()
+}
 
-func (n *updateNode) Start() error {
+func (n *upsertNode) Start() error {
+	doc, err := client.NewDocFromMap(n.createInput, n.collection.Definition())
+	if err != nil {
+		return err
+	}
+	n.doc = doc
+
 	return n.results.Start()
 }
 
-func (n *updateNode) Close() error {
+func (n *upsertNode) Close() error {
 	return n.results.Close()
 }
 
-func (n *updateNode) Source() planNode { return n.results }
+func (n *upsertNode) Source() planNode {
+	return n.results
+}
 
-func (n *updateNode) simpleExplain() (map[string]any, error) {
+func (n *upsertNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
-
-	// Add the document id(s) that request wants to update.
-	simpleExplainMap[request.DocIDArgName] = n.docIDs
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil {
@@ -134,38 +132,36 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 		simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 	}
 
-	// Add the attribute that represents the patch to update with.
-	simpleExplainMap[inputLabel] = n.input
+	// Add the attribute that represents the values to create or update.
+	simpleExplainMap[updateInputLabel] = n.updateInput
+	simpleExplainMap[createInputLabel] = n.createInput
 
 	return simpleExplainMap, nil
 }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *updateNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+func (n *upsertNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
 		return n.simpleExplain()
-
-	case request.ExecuteExplain:
-		return map[string]any{
-			"iterations": n.execInfo.iterations,
-			"updates":    n.execInfo.updates,
-		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
 	}
 }
 
-func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
-	update := &updateNode{
-		p:          p,
-		filter:     parsed.Filter,
-		docIDs:     parsed.DocIDs.Value(),
-		input:      parsed.UpdateInput,
-		isUpdating: true,
-		docMapper:  docMapper{parsed.DocumentMapping},
+func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
+	upsert := &upsertNode{
+		p:           p,
+		filter:      parsed.Filter,
+		updateInput: parsed.UpdateInput,
+		isUpserting: true,
+		docMapper:   docMapper{parsed.DocumentMapping},
+	}
+
+	if len(parsed.CreateInput) > 0 {
+		upsert.createInput = parsed.CreateInput[0]
 	}
 
 	// get collection
@@ -173,14 +169,14 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	update.collection = col
+	upsert.collection = col
 
 	// create the results Select node
 	resultsNode, err := p.Select(&parsed.Select)
 	if err != nil {
 		return nil, err
 	}
-	update.results = resultsNode
+	upsert.results = resultsNode
 
-	return update, nil
+	return upsert, nil
 }

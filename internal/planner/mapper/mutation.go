@@ -17,6 +17,7 @@ const (
 	CreateObjects
 	UpdateObjects
 	DeleteObjects
+	UpsertObjects
 )
 
 // Mutation represents a request to mutate data stored in Defra.
@@ -27,8 +28,11 @@ type Mutation struct {
 	// The type of mutation. For example a create request.
 	Type MutationType
 
-	// Input is the array of maps of fields and values used for the mutation.
-	Input []map[string]any
+	// CreateInput is the array of maps of fields and values used for a create mutation.
+	CreateInput []map[string]any
+
+	// CreateInput is a map of fields and values used for an update mutation.
+	UpdateInput map[string]any
 
 	// Encrypt is a flag to indicate if the input data should be encrypted.
 	Encrypt bool

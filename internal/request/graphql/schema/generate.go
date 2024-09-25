@@ -1085,11 +1085,11 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 	upsert := &gql.Field{
 		Name:        "upsert_" + obj.Name(),
 		Description: upsertDocumentDescription,
-		Type:        obj,
+		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"filter": schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
-			"create": schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
-			"update": schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
+			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
+			request.CreateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
+			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
 		},
 	}
 
