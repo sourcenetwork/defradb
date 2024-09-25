@@ -1809,11 +1809,12 @@ func backupExport(
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, node := range actionNodes {
-		err := withRetry(
-			actionNodes,
-			nodeID,
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		node := s.nodes[nodeID]
+		err := withRetryOnNode(
+			node,
 			func() error { return node.BasicExport(s.ctx, &action.Config) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -1821,7 +1822,20 @@ func backupExport(
 		if !expectedErrorRaised {
 			assertBackupContent(s.t, action.ExpectedContent, action.Config.Filepath)
 		}
+	} else {
+		for _, node := range s.nodes {
+			err := withRetryOnNode(
+				node,
+				func() error { return node.BasicExport(s.ctx, &action.Config) },
+			)
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+			if !expectedErrorRaised {
+				assertBackupContent(s.t, action.ExpectedContent, action.Config.Filepath)
+			}
+		}
 	}
+
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
@@ -1839,15 +1853,27 @@ func backupImport(
 	_ = os.WriteFile(action.Filepath, []byte(action.ImportContent), 0664)
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, node := range actionNodes {
-		err := withRetry(
-			actionNodes,
-			nodeID,
+
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		node := s.nodes[nodeID]
+		err := withRetryOnNode(
+			node,
 			func() error { return node.BasicImport(s.ctx, action.Filepath) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+	} else {
+		for _, node := range s.nodes {
+			err := withRetryOnNode(
+				node,
+				func() error { return node.BasicImport(s.ctx, action.Filepath) },
+			)
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		}
+
 	}
+
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
