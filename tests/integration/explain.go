@@ -54,6 +54,7 @@ var (
 		"typeJoinMany":  {},
 		"typeJoinOne":   {},
 		"updateNode":    {},
+		"upsertNode":    {},
 		"valuesNode":    {},
 		"viewNode":      {},
 		"lensNode":      {},

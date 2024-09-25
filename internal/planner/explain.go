@@ -47,6 +47,7 @@ var (
 	_ explainablePlanNode = (*topLevelNode)(nil)
 	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
+	_ explainablePlanNode = (*upsertNode)(nil)
 )
 
 const (

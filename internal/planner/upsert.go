@@ -146,6 +146,9 @@ func (n *upsertNode) Explain(explainType request.ExplainType) (map[string]any, e
 	case request.SimpleExplain:
 		return n.simpleExplain()
 
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
 	default:
 		return nil, ErrUnknownExplainRequestType
 	}
