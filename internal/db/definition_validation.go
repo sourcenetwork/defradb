@@ -818,7 +818,9 @@ func validateFieldNotMutated(
 
 		for _, newField := range newSchema.Fields {
 			oldField, exists := oldFieldsByName[newField.Name]
-			if exists && oldField != newField {
+
+			// DeepEqual is temporary, as this validation is temporary
+			if exists && !reflect.DeepEqual(oldField, newField) {
 				return NewErrCannotMutateField(newField.Name)
 			}
 		}
