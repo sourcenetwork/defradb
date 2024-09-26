@@ -22,24 +22,20 @@ import (
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(
 	exe *gql.ExecutionContext,
-	def *ast.OperationDefinition,
+	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, []error) {
-	qdef := &request.OperationDefinition{
-		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
-	}
-
-	for i, selection := range def.SelectionSet.Selections {
-		var parsedSelection request.Selection
-		switch node := selection.(type) {
-		case *ast.Field:
-			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
+	var selections []request.Selection
+	for name, fields := range collectedFields {
+		for _, node := range fields {
+			var parsedSelection request.Selection
+			if _, isCommitQuery := request.CommitQueries[name]; isCommitQuery {
 				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
-			} else if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
+			} else if _, isAggregate := request.Aggregates[name]; isAggregate {
 				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
@@ -72,11 +68,13 @@ func parseQueryOperationDefinition(
 
 				parsedSelection = parsed
 			}
-
-			qdef.Selections[i] = parsedSelection
+			selections = append(selections, parsedSelection)
 		}
 	}
-	return qdef, nil
+
+	return &request.OperationDefinition{
+		Selections: selections,
+	}, nil
 }
 
 // @todo: Create separate select parse functions
@@ -138,11 +136,11 @@ func parseSelect(
 			}
 
 		case request.OrderClause: // parse order by
-			v, ok := value.(map[string]any)
+			v, ok := value.([]any)
 			if !ok {
 				continue // value is nil
 			}
-			conditions, err := ParseConditionsInOrder(argument.Value.(*ast.ObjectValue), v)
+			conditions, err := parseOrderConditionList(v)
 			if err != nil {
 				return nil, err
 			}
@@ -208,11 +206,7 @@ func parseAggregate(
 			})
 
 		case map[string]any:
-			value, ok := argument.Value.(*ast.ObjectValue)
-			if !ok {
-				continue // value is nil
-			}
-			target, err := parseAggregateTarget(name, value, v)
+			target, err := parseAggregateTarget(name, v)
 			if err != nil {
 				return nil, err
 			}
@@ -231,7 +225,6 @@ func parseAggregate(
 
 func parseAggregateTarget(
 	hostName string,
-	value *ast.ObjectValue,
 	arguments map[string]any,
 ) (*request.AggregateTarget, error) {
 	var childName string
@@ -240,10 +233,7 @@ func parseAggregateTarget(
 	var offset immutable.Option[uint64]
 	var order immutable.Option[request.OrderBy]
 
-	for _, f := range value.Fields {
-		name := f.Name.Value
-		value := arguments[name]
-
+	for name, value := range arguments {
 		switch name {
 		case request.FieldName:
 			if v, ok := value.(string); ok {
@@ -266,14 +256,10 @@ func parseAggregateTarget(
 			}
 
 		case request.OrderClause:
-			switch conditionsAST := f.Value.(type) {
-			case *ast.EnumValue:
+			switch t := value.(type) {
+			case int:
 				// For inline arrays the order arg will be a simple enum declaring the order direction
-				v, ok := value.(int)
-				if !ok {
-					continue // value is nil
-				}
-				dir, err := parseOrderDirection(v)
+				dir, err := parseOrderDirection(t)
 				if err != nil {
 					return nil, err
 				}
@@ -281,14 +267,10 @@ func parseAggregateTarget(
 					Conditions: []request.OrderCondition{{Direction: dir}},
 				})
 
-			case *ast.ObjectValue:
+			case []any:
 				// For relations the order arg will be the complex order object as used by the host object
 				// for non-aggregate ordering
-				v, ok := value.(map[string]any)
-				if !ok {
-					continue // value is nil
-				}
-				conditions, err := ParseConditionsInOrder(conditionsAST, v)
+				conditions, err := parseOrderConditionList(t)
 				if err != nil {
 					return nil, err
 				}

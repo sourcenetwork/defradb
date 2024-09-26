@@ -32,24 +32,21 @@ var (
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(
 	exe *gql.ExecutionContext,
-	def *ast.OperationDefinition,
+	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, error) {
-	qdef := &request.OperationDefinition{
-		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
-	}
-
-	for i, selection := range def.SelectionSet.Selections {
-		switch node := selection.(type) {
-		case *ast.Field:
+	var selections []request.Selection
+	for _, fields := range collectedFields {
+		for _, node := range fields {
 			mut, err := parseMutation(exe, exe.Schema.MutationType(), node)
 			if err != nil {
 				return nil, err
 			}
-
-			qdef.Selections[i] = mut
+			selections = append(selections, mut)
 		}
 	}
-	return qdef, nil
+	return &request.OperationDefinition{
+		Selections: selections,
+	}, nil
 }
 
 // @todo: Create separate mutation parse functions

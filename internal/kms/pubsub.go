@@ -16,18 +16,17 @@ import (
 	"crypto/ecdh"
 	"encoding/base64"
 
+	"github.com/fxamacker/cbor/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	grpcpeer "google.golang.org/grpc/peer"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 const pubsubTopic = "encryption"
@@ -127,10 +126,15 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 	}
 }
 
+type fetchEncryptionKeyRequest struct {
+	Links              [][]byte
+	EphemeralPublicKey []byte
+}
+
 // handleEncryptionMessage handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
 func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	req := new(pb.FetchEncryptionKeyRequest)
-	if err := proto.Unmarshal(msg, req); err != nil {
+	req := new(fetchEncryptionKeyRequest)
+	if err := cbor.Unmarshal(msg, req); err != nil {
 		log.ErrorContextE(s.ctx, "Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
@@ -141,14 +145,14 @@ func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, m
 		log.ErrorContextE(s.ctx, "failed attempt to get encryption key", err)
 		return nil, errors.Wrap("failed attempt to get encryption key", err)
 	}
-	return res.MarshalVT()
+	return cbor.Marshal(res)
 }
 
 func (s *pubSubService) prepareFetchEncryptionKeyRequest(
 	cids []cidlink.Link,
 	ephemeralPublicKey []byte,
-) (*pb.FetchEncryptionKeyRequest, error) {
-	req := &pb.FetchEncryptionKeyRequest{
+) (*fetchEncryptionKeyRequest, error) {
+	req := &fetchEncryptionKeyRequest{
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
@@ -177,7 +181,7 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 		return err
 	}
 
-	data, err := req.MarshalVT()
+	data, err := cbor.Marshal(req)
 	if err != nil {
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
@@ -194,17 +198,23 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 	return nil
 }
 
+type fetchEncryptionKeyReply struct {
+	Links              [][]byte
+	Blocks             [][]byte
+	EphemeralPublicKey []byte
+}
+
 // handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
 func (s *pubSubService) handleFetchEncryptionKeyResponse(
 	resp rpc.Response,
-	req *pb.FetchEncryptionKeyRequest,
+	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
 ) {
 	defer close(result)
 
-	var keyResp pb.FetchEncryptionKeyReply
-	if err := proto.Unmarshal(resp.Data, &keyResp); err != nil {
+	var keyResp fetchEncryptionKeyReply
+	if err := cbor.Unmarshal(resp.Data, &keyResp); err != nil {
 		log.ErrorContextE(s.ctx, "Failed to unmarshal encryption key response", err)
 		result <- encryption.Result{Error: err}
 		return
@@ -238,7 +248,7 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 }
 
 // makeAssociatedData creates the associated data for the encryption key request
-func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
+func makeAssociatedData(req *fetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
 	return encodeToBase64(bytes.Join([][]byte{
 		req.EphemeralPublicKey,
 		[]byte(peerID),
@@ -247,8 +257,8 @@ func makeAssociatedData(req *pb.FetchEncryptionKeyRequest, peerID libpeer.ID) []
 
 func (s *pubSubService) tryGenEncryptionKeyLocally(
 	ctx context.Context,
-	req *pb.FetchEncryptionKeyRequest,
-) (*pb.FetchEncryptionKeyReply, error) {
+	req *fetchEncryptionKeyRequest,
+) (*fetchEncryptionKeyReply, error) {
 	blocks, err := s.getEncryptionKeysLocally(ctx, req)
 	if err != nil || len(blocks) == 0 {
 		return nil, err
@@ -264,7 +274,7 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 		return nil, err
 	}
 
-	res := &pb.FetchEncryptionKeyReply{
+	res := &fetchEncryptionKeyReply{
 		Links:              req.Links,
 		EphemeralPublicKey: privKey.PublicKey().Bytes(),
 	}
@@ -293,7 +303,7 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 // It returns the encryption keys and the targets for which the keys were found.
 func (s *pubSubService) getEncryptionKeysLocally(
 	ctx context.Context,
-	req *pb.FetchEncryptionKeyRequest,
+	req *fetchEncryptionKeyRequest,
 ) ([][]byte, error) {
 	blocks := make([][]byte, 0, len(req.Links))
 	for _, link := range req.Links {

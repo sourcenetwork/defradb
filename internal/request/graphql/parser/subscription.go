@@ -22,24 +22,21 @@ import (
 // 'subcription' operations, which there may be multiple of.
 func parseSubscriptionOperationDefinition(
 	exe *gql.ExecutionContext,
-	def *ast.OperationDefinition,
+	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, error) {
-	sdef := &request.OperationDefinition{
-		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
-	}
-
-	for i, selection := range def.SelectionSet.Selections {
-		switch node := selection.(type) {
-		case *ast.Field:
+	var selections []request.Selection
+	for _, fields := range collectedFields {
+		for _, node := range fields {
 			sub, err := parseSubscription(exe, node)
 			if err != nil {
 				return nil, err
 			}
-
-			sdef.Selections[i] = sub
+			selections = append(selections, sub)
 		}
 	}
-	return sdef, nil
+	return &request.OperationDefinition{
+		Selections: selections,
+	}, nil
 }
 
 // parseSubscription parses a typed subscription field

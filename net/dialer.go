@@ -23,11 +23,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/errors"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 // dial attempts to open a gRPC connection over libp2p to a peer.
-func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
+func (s *server) dial(peerID libpeer.ID) (*grpc.ClientConn, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	conn, ok := s.conns[peerID]
@@ -37,7 +36,7 @@ func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
 				return nil, err
 			}
 		} else {
-			return pb.NewServiceClient(conn), nil
+			return conn, nil
 		}
 	}
 	// We need the "passthrough:" in the beginning of the target,
@@ -54,7 +53,7 @@ func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
 		return nil, err
 	}
 	s.conns[peerID] = conn
-	return pb.NewServiceClient(conn), nil
+	return conn, nil
 }
 
 // getLibp2pDialer returns a WithContextDialer option for libp2p dialing.

@@ -168,3 +168,87 @@ func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithOrderVariable(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with order variable",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Variables: immutable.Some(map[string]any{
+					"order": []map[string]any{
+						{"Name": "DESC"},
+						{"Age": "ASC"},
+					},
+				}),
+				Request: `query($order: [UsersOrderArg]) {
+					Users(order: $order) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "Alice",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithAggregateCountVariable(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with aggregate count variable",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Variables: immutable.Some(map[string]any{
+					"usersCount": map[string]any{
+						"filter": map[string]any{
+							"Name": map[string]any{
+								"_eq": "Bob",
+							},
+						},
+					},
+				}),
+				Request: `query($usersCount: Users__CountSelector) {
+					_count(Users: $usersCount)
+				}`,
+				Results: map[string]any{
+					"_count": 1,
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
