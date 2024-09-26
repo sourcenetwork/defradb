@@ -203,10 +203,10 @@ func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 				child, err = p.Sum(f, m)
 			case request.AverageFieldName:
 				child, err = p.Average(f)
-			case request.MaximumFieldName:
-				child, err = p.Maximum(f, m)
-			case request.MinimumFieldName:
-				child, err = p.Minimum(f, m)
+			case request.MaxFieldName:
+				child, err = p.Max(f, m)
+			case request.MinFieldName:
+				child, err = p.Min(f, m)
 			}
 			if err != nil {
 				return nil, err

@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-type minimumNode struct {
+type maxNode struct {
 	documentIterator
 	docMapper
 
@@ -31,18 +31,18 @@ type minimumNode struct {
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
 
-	execInfo minimumExecInfo
+	execInfo maxExecInfo
 }
 
-type minimumExecInfo struct {
-	// Total number of times minimumNode was executed.
+type maxExecInfo struct {
+	// Total number of times maxNode was executed.
 	iterations uint64
 }
 
-func (p *Planner) Minimum(
+func (p *Planner) Max(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
-) (*minimumNode, error) {
+) (*maxNode, error) {
 	isFloat := false
 	for _, target := range field.AggregateTargets {
 		isTargetFloat, err := p.isValueFloat(parent, &target)
@@ -56,7 +56,7 @@ func (p *Planner) Minimum(
 		}
 	}
 
-	return &minimumNode{
+	return &maxNode{
 		p:                 p,
 		isFloat:           isFloat,
 		aggregateMapping:  field.AggregateTargets,
@@ -65,15 +65,15 @@ func (p *Planner) Minimum(
 	}, nil
 }
 
-func (n *minimumNode) Kind() string           { return "minimumNode" }
-func (n *minimumNode) Init() error            { return n.plan.Init() }
-func (n *minimumNode) Start() error           { return n.plan.Start() }
-func (n *minimumNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *minimumNode) Close() error           { return n.plan.Close() }
-func (n *minimumNode) Source() planNode       { return n.plan }
-func (n *minimumNode) SetPlan(p planNode)     { n.plan = p }
+func (n *maxNode) Kind() string           { return "maxNode" }
+func (n *maxNode) Init() error            { return n.plan.Init() }
+func (n *maxNode) Start() error           { return n.plan.Start() }
+func (n *maxNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *maxNode) Close() error           { return n.plan.Close() }
+func (n *maxNode) Source() planNode       { return n.plan }
+func (n *maxNode) SetPlan(p planNode)     { n.plan = p }
 
-func (n *minimumNode) simpleExplain() (map[string]any, error) {
+func (n *maxNode) simpleExplain() (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
@@ -115,7 +115,7 @@ func (n *minimumNode) simpleExplain() (map[string]any, error) {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *minimumNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+func (n *maxNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
 		return n.simpleExplain()
@@ -130,7 +130,7 @@ func (n *minimumNode) Explain(explainType request.ExplainType) (map[string]any, 
 	}
 }
 
-func (n *minimumNode) Next() (bool, error) {
+func (n *maxNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	hasNext, err := n.plan.Next()
@@ -139,95 +139,95 @@ func (n *minimumNode) Next() (bool, error) {
 	}
 	n.currentValue = n.plan.Value()
 
-	min := math.MaxFloat64
+	max := -math.MaxFloat64
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
-		collectionMin := math.MaxFloat64
+		collectionMax := -math.MaxFloat64
 		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
-			collectionMin = reduceDocs(
+			collectionMax = reduceDocs(
 				childCollection,
-				math.MaxFloat64,
+				-math.MaxFloat64,
 				func(childItem core.Doc, value float64) float64 {
 					childProperty := childItem.Fields[source.ChildTarget.Index]
 					switch v := childProperty.(type) {
 					case int:
-						return math.Min(value, float64(v))
+						return math.Max(value, float64(v))
 					case int64:
-						return math.Min(value, float64(v))
+						return math.Max(value, float64(v))
 					case uint64:
-						return math.Min(value, float64(v))
+						return math.Max(value, float64(v))
 					case float64:
-						return math.Min(value, float64(v))
+						return math.Max(value, float64(v))
 					default:
 						return value
 					}
 				},
 			)
 		case []int64:
-			collectionMin, err = reduceItems(
+			collectionMax, err = reduceItems(
 				childCollection,
 				&source,
 				lessN[int64],
-				math.MaxFloat64,
+				-math.MaxFloat64,
 				func(childItem int64, value float64) float64 {
-					return math.Min(value, float64(childItem))
+					return math.Max(value, float64(childItem))
 				},
 			)
 
 		case []immutable.Option[int64]:
-			collectionMin, err = reduceItems(
+			collectionMax, err = reduceItems(
 				childCollection,
 				&source,
 				lessO[int64],
-				math.MaxFloat64,
+				-math.MaxFloat64,
 				func(childItem immutable.Option[int64], value float64) float64 {
 					if !childItem.HasValue() {
 						return value
 					}
-					return math.Min(value, float64(childItem.Value()))
+					return math.Max(value, float64(childItem.Value()))
 				},
 			)
 
 		case []float64:
-			collectionMin, err = reduceItems(
+			collectionMax, err = reduceItems(
 				childCollection,
 				&source,
 				lessN[float64],
-				math.MaxFloat64,
+				-math.MaxFloat64,
 				func(childItem float64, value float64) float64 {
-					return math.Min(value, childItem)
+					return math.Max(value, childItem)
 				},
 			)
 
 		case []immutable.Option[float64]:
-			collectionMin, err = reduceItems(
+			collectionMax, err = reduceItems(
 				childCollection,
 				&source,
 				lessO[float64],
-				math.MaxFloat64,
+				-math.MaxFloat64,
 				func(childItem immutable.Option[float64], value float64) float64 {
 					if !childItem.HasValue() {
 						return value
 					}
-					return math.Min(value, childItem.Value())
+					return math.Max(value, childItem.Value())
 				},
 			)
 		}
 		if err != nil {
 			return false, err
 		}
-		min = math.Min(min, collectionMin)
+		max = math.Max(max, collectionMax)
 	}
 
-	var typedMin any
+	var typedMax any
 	if n.isFloat {
-		typedMin = min
+		typedMax = max
 	} else {
-		typedMin = int64(min)
+		typedMax = int64(max)
 	}
-	n.currentValue.Fields[n.virtualFieldIndex] = typedMin
+	n.currentValue.Fields[n.virtualFieldIndex] = typedMax
 
 	return true, nil
 }

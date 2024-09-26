@@ -707,14 +707,14 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 	}
 
 	topLevelMaximumField := gql.Field{
-		Name:        request.MaximumFieldName,
+		Name:        request.MaxFieldName,
 		Description: schemaTypes.MaximumFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
 
 	topLevelMinimumField := gql.Field{
-		Name:        request.MinimumFieldName,
+		Name:        request.MinFieldName,
 		Description: schemaTypes.MinimumFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
@@ -789,7 +789,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 func (g *Generator) genMinimumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
-		Name:        request.MinimumFieldName,
+		Name:        request.MinFieldName,
 		Description: schemaTypes.MinimumFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
@@ -804,7 +804,7 @@ func (g *Generator) genMinimumFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 func (g *Generator) genMaximumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
-		Name:        request.MaximumFieldName,
+		Name:        request.MaxFieldName,
 		Description: schemaTypes.MaximumFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
@@ -989,8 +989,8 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			// A child aggregate will always be aggregatable, as it can be present via an inner grouping
 			fieldsEnumCfg.Values[request.SumFieldName] = &gql.EnumValueConfig{Value: request.SumFieldName}
 			fieldsEnumCfg.Values[request.AverageFieldName] = &gql.EnumValueConfig{Value: request.AverageFieldName}
-			fieldsEnumCfg.Values[request.MinimumFieldName] = &gql.EnumValueConfig{Value: request.MinimumFieldName}
-			fieldsEnumCfg.Values[request.MaximumFieldName] = &gql.EnumValueConfig{Value: request.MaximumFieldName}
+			fieldsEnumCfg.Values[request.MinFieldName] = &gql.EnumValueConfig{Value: request.MinFieldName}
+			fieldsEnumCfg.Values[request.MaxFieldName] = &gql.EnumValueConfig{Value: request.MaxFieldName}
 
 			if !hasSumableFields {
 				return nil, nil
