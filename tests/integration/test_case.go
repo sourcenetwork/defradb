@@ -718,7 +718,8 @@ type ClientIntrospectionRequest struct {
 type BackupExport struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
-	// If a value is not provided the indexes will be retrieved from the first nodes.
+	// If a value is not provided the backup export will be done for all the nodes.
+	// todo: https://github.com/sourcenetwork/defradb/issues/3067
 	NodeID immutable.Option[int]
 
 	// The backup configuration.
@@ -738,7 +739,8 @@ type BackupExport struct {
 type BackupImport struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
-	// If a value is not provided the indexes will be retrieved from the first nodes.
+	// If a value is not provided the backup import will be done for all the nodes.
+	// todo: https://github.com/sourcenetwork/defradb/issues/3067
 	NodeID immutable.Option[int]
 
 	// The backup file path.
