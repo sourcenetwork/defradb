@@ -73,9 +73,8 @@ func NewCollectionIndex(
 		}
 		isArray = isArray || field.Kind.IsArray()
 	}
-	// TODO: handle array as part of a composite index
 	if isArray {
-		return &collectionArrayIndex{collectionBaseIndex: base}, nil
+		return newCollectionArrayIndex(base), nil
 	}
 	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
@@ -406,9 +405,19 @@ func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Docum
 
 type collectionArrayIndex struct {
 	collectionBaseIndex
+	arrFieldIndex int
 }
 
 var _ CollectionIndex = (*collectionArrayIndex)(nil)
+
+func newCollectionArrayIndex(base collectionBaseIndex) *collectionArrayIndex {
+	for i := range base.fieldsDescs {
+		if base.fieldsDescs[i].Kind.IsArray() {
+			return &collectionArrayIndex{collectionBaseIndex: base, arrFieldIndex: i}
+		}
+	}
+	return nil
+}
 
 // Save indexes a document by storing the indexed field value.
 func (index *collectionArrayIndex) Save(
@@ -420,8 +429,8 @@ func (index *collectionArrayIndex) Save(
 	if err != nil {
 		return err
 	}
-	// TODO: handle array as part of a composite index
-	field := &key.Fields[0]
+	// TODO: handle a case with having multiple array fields
+	field := &key.Fields[index.arrFieldIndex]
 	arrVal := field.Value
 	normVals, err := client.ToArrayOfNormalValues(arrVal)
 	if err != nil {
@@ -447,8 +456,8 @@ func (index *collectionArrayIndex) Update(
 	if err != nil {
 		return err
 	}
-	// TODO: handle array as part of a composite index
-	oldField := &oldKey.Fields[0]
+	// TODO: handle case with multiple array fields
+	oldField := &oldKey.Fields[index.arrFieldIndex]
 	oldArrVal := oldField.Value
 	oldNormVals, err := client.ToArrayOfNormalValues(oldArrVal)
 	if err != nil {
@@ -509,8 +518,8 @@ func (index *collectionArrayIndex) Delete(
 	if err != nil {
 		return err
 	}
-	// TODO: handle array as part of a composite index
-	field := &key.Fields[0]
+	// TODO: handle case with multiple array fields
+	field := &key.Fields[index.arrFieldIndex]
 	arrVal := field.Value
 	normVals, err := client.ToArrayOfNormalValues(arrVal)
 	if err != nil {

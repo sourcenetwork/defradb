@@ -254,9 +254,7 @@ func (iter *inIndexIterator) Close() error {
 }
 
 type arrayIndexIterator struct {
-	indexKey core.IndexDataStoreKey
-	inner    indexIterator
-	op       string
+	inner indexIterator
 
 	fetchedDocs map[string]struct{}
 
@@ -528,7 +526,8 @@ func (f *IndexFetcher) newPrefixIteratorFromConditions(
 ) (*indexPrefixIterator, error) {
 	keyFieldValues := make([]client.NormalValue, 0, len(fieldConditions))
 	for i := range fieldConditions {
-		if fieldConditions[i].op != opEq {
+		c := &fieldConditions[i]
+		if c.op != opEq || c.arrOp == compOpNone {
 			// prefix can be created only for subsequent _eq conditions
 			// if we encounter any other condition, we built the longest prefix we could
 			break
@@ -637,9 +636,14 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, err
 	}
 
-	// TODO: make it work not only for the first field
-	if len(fieldConditions[0].arrOp) > 0 && fieldConditions[0].arrOp == compOpNone {
-		matchers[0] = &invertedMatcher{matcher: matchers[0]}
+	hasArray := false
+	for i := range fieldConditions {
+		if len(fieldConditions[i].arrOp) > 0 {
+			hasArray = true
+			if fieldConditions[i].arrOp == compOpNone {
+				matchers[i] = &invertedMatcher{matcher: matchers[i]}
+			}
+		}
 	}
 
 	var iter indexIterator
@@ -671,13 +675,8 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 	}
 
-	// TODO: figure out if it's possible to have an array field as part of composite index
-	if len(fieldConditions[0].arrOp) > 0 {
-		iter = &arrayIndexIterator{
-			indexKey: f.newIndexDataStoreKey(),
-			inner:    iter,
-			op:       fieldConditions[0].arrOp,
-		}
+	if hasArray {
+		iter = &arrayIndexIterator{inner: iter}
 	}
 
 	return iter, nil
