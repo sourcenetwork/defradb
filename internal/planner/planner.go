@@ -188,7 +188,7 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 		return p.expandPlan(n.source, parentPlan)
 
 	case *upsertNode:
-		return p.expandPlan(n.results, parentPlan)
+		return p.expandPlan(n.source, parentPlan)
 
 	case *viewNode:
 		return p.expandPlan(n.source, parentPlan)

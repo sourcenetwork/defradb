@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -21,29 +21,26 @@ type upsertNode struct {
 	documentIterator
 	docMapper
 
-	p           *Planner
-	collection  client.Collection
-	filter      *mapper.Filter
-	createInput map[string]any
-	updateInput map[string]any
-	doc         *client.Document
-	isUpserting bool
-	results     planNode
+	p             *Planner
+	collection    client.Collection
+	filter        *mapper.Filter
+	createInput   map[string]any
+	updateInput   map[string]any
+	isInitialized bool
+	source        planNode
 }
 
 // Next only returns once.
 func (n *upsertNode) Next() (bool, error) {
-	if n.isUpserting {
-		next, err := n.results.Next()
+	if !n.isInitialized {
+		next, err := n.source.Next()
 		if err != nil {
 			return false, err
 		}
-
-		switch next {
-		case true:
-			n.currentValue = n.results.Value()
+		if next {
+			n.currentValue = n.source.Value()
 			// make sure multiple documents do not match
-			next, err := n.results.Next()
+			next, err := n.source.Next()
 			if err != nil {
 				return false, err
 			}
@@ -67,28 +64,31 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-		case false:
-			err := n.collection.Create(n.p.ctx, n.doc)
+		} else {
+			doc, err := client.NewDocFromMap(n.createInput, n.collection.Definition())
 			if err != nil {
 				return false, err
 			}
-			n.results.Spans(docIDsToSpans(documentsToDocIDs(n.doc), n.collection.Description()))
+			err = n.collection.Create(n.p.ctx, doc)
+			if err != nil {
+				return false, err
+			}
+			n.source.Spans(docIDsToSpans(documentsToDocIDs(doc), n.collection.Description()))
 		}
-		err = n.results.Init()
+		err = n.source.Init()
 		if err != nil {
 			return false, err
 		}
-		n.isUpserting = false
+		n.isInitialized = true
 	}
-
-	next, err := n.results.Next()
+	next, err := n.source.Next()
 	if err != nil {
 		return false, err
 	}
 	if !next {
 		return false, nil
 	}
-	n.currentValue = n.results.Value()
+	n.currentValue = n.source.Value()
 	return true, nil
 }
 
@@ -97,40 +97,30 @@ func (n *upsertNode) Kind() string {
 }
 
 func (n *upsertNode) Spans(spans core.Spans) {
-	n.results.Spans(spans)
+	n.source.Spans(spans)
 }
 
 func (n *upsertNode) Init() error {
-	return n.results.Init()
+	return n.source.Init()
 }
 
 func (n *upsertNode) Start() error {
-	doc, err := client.NewDocFromMap(n.createInput, n.collection.Definition())
-	if err != nil {
-		return err
-	}
-	n.doc = doc
-
-	return n.results.Start()
+	return n.source.Start()
 }
 
 func (n *upsertNode) Close() error {
-	return n.results.Close()
+	return n.source.Close()
 }
 
 func (n *upsertNode) Source() planNode {
-	return n.results
+	return n.source
 }
 
 func (n *upsertNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
-	// Add the filter attribute if it exists, otherwise have it nil.
-	if n.filter == nil {
-		simpleExplainMap[filterLabel] = nil
-	} else {
-		simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
-	}
+	// Add the filter attribute
+	simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 
 	// Add the attribute that represents the values to create or update.
 	simpleExplainMap[updateInputLabel] = n.updateInput
@@ -159,7 +149,6 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 		p:           p,
 		filter:      parsed.Filter,
 		updateInput: parsed.UpdateInput,
-		isUpserting: true,
 		docMapper:   docMapper{parsed.DocumentMapping},
 	}
 
@@ -179,7 +168,7 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	upsert.results = resultsNode
+	upsert.source = resultsNode
 
 	return upsert, nil
 }

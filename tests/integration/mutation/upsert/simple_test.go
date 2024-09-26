@@ -54,6 +54,26 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 					},
 				},
 			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  int64(40),
+						},
+						{
+							"name": "Alice",
+							"age":  int64(40),
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -74,6 +94,12 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
+					"name": "Alice",
+					"age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
@@ -91,6 +117,26 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"upsert_Users": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  int64(40),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  int64(40),
+						},
 						{
 							"name": "Bob",
 							"age":  int64(40),
@@ -140,6 +186,99 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 					}
 				}`,
 				ExpectedError: `cannot upsert multiple matching documents`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple upsert mutation with null create input",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					upsert_Users(
+						filter: {},
+						create: null,
+						update: {age: 50}
+					) {
+						name
+						age
+					}
+				}`,
+				ExpectedError: `Argument "create" has invalid value <nil>`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple upsert mutation with null update input",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					upsert_Users(
+						filter: {},
+						create: {name: "Alice", age: 40},
+						update: null,
+					) {
+						name
+						age
+					}
+				}`,
+				ExpectedError: `Argument "update" has invalid value <nil>`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple upsert mutation with null filter input",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					upsert_Users(
+						filter: null,
+						create: {name: "Alice", age: 40},
+						update: {age: 50}
+					) {
+						name
+						age
+					}
+				}`,
+				ExpectedError: `Argument "filter" has invalid value <nil>`,
 			},
 		},
 	}
