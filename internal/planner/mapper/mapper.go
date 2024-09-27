@@ -966,7 +966,10 @@ func resolveInnerFilterDependencies(
 
 	for key := range source {
 		if key == request.FilterOpAnd || key == request.FilterOpOr {
-			compoundFilter := source[key].([]any)
+			compoundFilter, ok := source[key].([]any)
+			if !ok {
+				continue // filter is nil
+			}
 			for _, innerFilter := range compoundFilter {
 				innerFields, err := resolveInnerFilterDependencies(
 					ctx,
@@ -987,7 +990,10 @@ func resolveInnerFilterDependencies(
 			}
 			continue
 		} else if key == request.FilterOpNot {
-			notFilter := source[key].(map[string]any)
+			notFilter, ok := source[key].(map[string]any)
+			if !ok {
+				continue // filter is nil
+			}
 			innerFields, err := resolveInnerFilterDependencies(
 				ctx,
 				store,

@@ -1138,11 +1138,11 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 			fields["_and"] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.AndOperatorDescription,
-				Type:        gql.NewList(selfRefType),
+				Type:        gql.NewList(gql.NewNonNull(selfRefType)),
 			}
 			fields["_or"] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.OrOperatorDescription,
-				Type:        gql.NewList(selfRefType),
+				Type:        gql.NewList(gql.NewNonNull(selfRefType)),
 			}
 			fields["_not"] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.NotOperatorDescription,
@@ -1220,7 +1220,7 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 		fields := gql.InputObjectConfigFieldMap{}
 
 		compoundListType := &gql.InputObjectFieldConfig{
-			Type: gql.NewList(selfRefType),
+			Type: gql.NewList(gql.NewNonNull(selfRefType)),
 		}
 
 		fields["_and"] = compoundListType
