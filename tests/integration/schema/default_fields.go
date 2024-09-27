@@ -120,6 +120,20 @@ var aggregateFields = fields{
 		},
 	},
 	map[string]any{
+		"name": "_max",
+		"type": map[string]any{
+			"kind": "SCALAR",
+			"name": "Float",
+		},
+	},
+	map[string]any{
+		"name": "_min",
+		"type": map[string]any{
+			"kind": "SCALAR",
+			"name": "Float",
+		},
+	},
+	map[string]any{
 		"name": "_count",
 		"type": map[string]any{
 			"kind": "SCALAR",
