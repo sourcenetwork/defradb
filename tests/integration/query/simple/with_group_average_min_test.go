@@ -111,10 +111,6 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 	executeTestCase(t, test)
 }
 
-// Note: this test should follow a different code path to `_avg` on it's own
-// utilising the existing `_min` node instead of adding a new one.  This test cannot
-// verify that that code path is taken, but it does verify that the correct result
-// is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with group by string, average and min on non-rendered group integer value",
