@@ -21,6 +21,8 @@ const (
 
 	Cid         = "cid"
 	Input       = "input"
+	CreateInput = "create"
+	UpdateInput = "update"
 	FieldName   = "field"
 	FieldIDName = "fieldId"
 	ShowDeleted = "showDeleted"
