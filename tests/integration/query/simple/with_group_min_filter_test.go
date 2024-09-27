@@ -54,7 +54,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_
 						},
 						{
 							"Age":  int64(19),
-							"_min": math.MaxInt64,
+							"_min": int64(math.MaxInt64),
 						},
 					},
 				},
@@ -113,7 +113,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 						},
 						{
 							"Age":  int64(19),
-							"_min": math.MaxInt64,
+							"_min": int64(math.MaxInt64),
 							"_group": []map[string]any{
 								{
 									"Name": "Alice",
@@ -174,7 +174,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 						},
 						{
 							"Age":    int64(19),
-							"_min":   math.MaxInt64,
+							"_min":   int64(math.MaxInt64),
 							"_group": []map[string]any{},
 						},
 					},
@@ -231,7 +231,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 						},
 						{
 							"Age":    int64(19),
-							"_min":   math.MaxInt64,
+							"_min":   int64(math.MaxInt64),
 							"_group": []map[string]any{},
 						},
 					},
@@ -278,11 +278,11 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithDiffere
 						{
 							"Age": int64(32),
 							"S1":  int64(32),
-							"S2":  math.MaxInt64,
+							"S2":  int64(math.MaxInt64),
 						},
 						{
 							"Age": int64(19),
-							"S1":  math.MaxInt64,
+							"S1":  int64(math.MaxInt64),
 							"S2":  int64(19),
 						},
 					},

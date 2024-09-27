@@ -61,7 +61,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWith
 						},
 						{
 							"Name": "Alice",
-							"_min": math.MaxInt64,
+							"_min": int64(math.MaxInt64),
 						},
 					},
 				},

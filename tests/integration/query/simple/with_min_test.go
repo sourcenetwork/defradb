@@ -58,7 +58,7 @@ func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 					_min(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_min": math.MaxInt64,
+					"_min": int64(math.MaxInt64),
 				},
 			},
 		},
