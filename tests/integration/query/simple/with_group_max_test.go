@@ -291,7 +291,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMax_
 						},
 						{
 							"Name": "Alice",
-							"_max": -math.MaxFloat64,
+							"_max": float64(-math.MaxFloat64),
 						},
 					},
 				},

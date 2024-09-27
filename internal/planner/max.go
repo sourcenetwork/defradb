@@ -221,13 +221,13 @@ func (n *maxNode) Next() (bool, error) {
 		max = math.Max(max, collectionMax)
 	}
 
-	var typedMax any
 	if n.isFloat {
-		typedMax = max
+		n.currentValue.Fields[n.virtualFieldIndex] = float64(max)
+	} else if max <= math.MinInt64 {
+		n.currentValue.Fields[n.virtualFieldIndex] = int64(math.MinInt64)
 	} else {
-		typedMax = int64(max)
+		n.currentValue.Fields[n.virtualFieldIndex] = int64(max)
 	}
-	n.currentValue.Fields[n.virtualFieldIndex] = typedMax
 
 	return true, nil
 }

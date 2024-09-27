@@ -291,7 +291,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMin_
 						},
 						{
 							"Name": "Alice",
-							"_min": math.MaxFloat64,
+							"_min": float64(math.MaxFloat64),
 						},
 					},
 				},

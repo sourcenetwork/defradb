@@ -221,13 +221,13 @@ func (n *minNode) Next() (bool, error) {
 		min = math.Min(min, collectionMin)
 	}
 
-	var typedMin any
 	if n.isFloat {
-		typedMin = min
+		n.currentValue.Fields[n.virtualFieldIndex] = float64(min)
+	} else if min >= math.MaxInt64 {
+		n.currentValue.Fields[n.virtualFieldIndex] = int64(math.MaxInt64)
 	} else {
-		typedMin = int64(min)
+		n.currentValue.Fields[n.virtualFieldIndex] = int64(min)
 	}
-	n.currentValue.Fields[n.virtualFieldIndex] = typedMin
 
 	return true, nil
 }
