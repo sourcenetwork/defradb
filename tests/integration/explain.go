@@ -41,6 +41,8 @@ var (
 		"deleteNode":    {},
 		"groupNode":     {},
 		"limitNode":     {},
+		"maxNode":       {},
+		"minNode":       {},
 		"multiScanNode": {},
 		"orderNode":     {},
 		"parallelNode":  {},
