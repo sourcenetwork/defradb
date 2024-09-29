@@ -405,18 +405,22 @@ func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Docum
 
 type collectionArrayIndex struct {
 	collectionBaseIndex
-	arrFieldIndex int
+	arrFieldsIndexes []int
 }
 
 var _ CollectionIndex = (*collectionArrayIndex)(nil)
 
 func newCollectionArrayIndex(base collectionBaseIndex) *collectionArrayIndex {
+	ind := &collectionArrayIndex{collectionBaseIndex: base}
 	for i := range base.fieldsDescs {
 		if base.fieldsDescs[i].Kind.IsArray() {
-			return &collectionArrayIndex{collectionBaseIndex: base, arrFieldIndex: i}
+			ind.arrFieldsIndexes = append(ind.arrFieldsIndexes, i)
 		}
 	}
-	return nil
+	if len(ind.arrFieldsIndexes) == 0 {
+		return nil
+	}
+	return ind
 }
 
 // Save indexes a document by storing the indexed field value.
@@ -425,19 +429,16 @@ func (index *collectionArrayIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, err := index.getDocumentsIndexKey(doc, true)
+	getNextKey, err := index.newIndexKeyGenerator(doc)
 	if err != nil {
 		return err
 	}
-	// TODO: handle a case with having multiple array fields
-	field := &key.Fields[index.arrFieldIndex]
-	arrVal := field.Value
-	normVals, err := client.ToArrayOfNormalValues(arrVal)
-	if err != nil {
-		return err
-	}
-	for i := range normVals {
-		field.Value = normVals[i]
+
+	for {
+		key, ok := getNextKey()
+		if !ok {
+			break
+		}
 		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
 		if err != nil {
 			return NewErrFailedToStoreIndexedField(key.ToString(), err)
@@ -452,60 +453,40 @@ func (index *collectionArrayIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	oldKey, err := index.getDocumentsIndexKey(oldDoc, true)
+	oldKeys, err := index.getAllKeys(oldDoc)
 	if err != nil {
 		return err
 	}
-	// TODO: handle case with multiple array fields
-	oldField := &oldKey.Fields[index.arrFieldIndex]
-	oldArrVal := oldField.Value
-	oldNormVals, err := client.ToArrayOfNormalValues(oldArrVal)
+	newKeys, err := index.getAllKeys(newDoc)
 	if err != nil {
 		return err
 	}
 
-	newKey, err := index.getDocumentsIndexKey(newDoc, true)
-	if err != nil {
-		return err
-	}
-	newField := &newKey.Fields[0]
-	newArrVal := newField.Value
-	newNormVals, err := client.ToArrayOfNormalValues(newArrVal)
-	if err != nil {
-		return err
-	}
-	newValsMap := make(map[any]client.NormalValue)
-	for i := range newNormVals {
-		newValsMap[newNormVals[i].Unwrap()] = newNormVals[i]
-	}
-
-	existingValsMap := make(map[any]struct{})
-	valsToDeleteMap := make(map[any]client.NormalValue)
-	for i := range oldNormVals {
-		if _, ok := newValsMap[oldNormVals[i].Unwrap()]; !ok {
-			valsToDeleteMap[oldNormVals[i].Unwrap()] = oldNormVals[i]
-		} else {
-			existingValsMap[oldNormVals[i].Unwrap()] = struct{}{}
+	for _, oldKey := range oldKeys {
+		isFound := false
+		for i := len(newKeys) - 1; i >= 0; i-- {
+			if oldKey.IsEqual(newKeys[i]) {
+				newKeys[i] = newKeys[len(newKeys)-1]
+				newKeys = newKeys[:len(newKeys)-1]
+				isFound = true
+				break
+			}
 		}
-	}
-
-	for _, val := range valsToDeleteMap {
-		oldField.Value = val
-		err = index.deleteIndexKey(ctx, txn, oldKey)
-		if err != nil {
-			return err
-		}
-	}
-
-	for i := range newNormVals {
-		if _, ok := existingValsMap[newNormVals[i].Unwrap()]; !ok {
-			newField.Value = newNormVals[i]
-			err = txn.Datastore().Put(ctx, newKey.ToDS(), []byte{})
+		if !isFound {
+			err = index.deleteIndexKey(ctx, txn, oldKey)
 			if err != nil {
-				return NewErrFailedToStoreIndexedField(newKey.ToString(), err)
+				return err
 			}
 		}
 	}
+
+	for _, key := range newKeys {
+		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+		if err != nil {
+			return NewErrFailedToStoreIndexedField(key.ToString(), err)
+		}
+	}
+
 	return nil
 }
 
@@ -514,23 +495,106 @@ func (index *collectionArrayIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, err := index.getDocumentsIndexKey(doc, true)
+	getNextKey, err := index.newIndexKeyGenerator(doc)
 	if err != nil {
 		return err
 	}
-	// TODO: handle case with multiple array fields
-	field := &key.Fields[index.arrFieldIndex]
-	arrVal := field.Value
-	normVals, err := client.ToArrayOfNormalValues(arrVal)
-	if err != nil {
-		return err
-	}
-	for i := range normVals {
-		field.Value = normVals[i]
+
+	for {
+		key, ok := getNextKey()
+		if !ok {
+			break
+		}
 		err = index.deleteIndexKey(ctx, txn, key)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// newIndexKeyGenerator creates a function that generates index keys for a document
+// with multiple array fields.
+// All generated keys are unique.
+// For example for a doc with these values {{"a", "b", "a"}, {"c", "d", "e"}, {"f", "g"}} it generates:
+// "acf", "acg", "adf", "adg", "aef", "aeg", "bcf", "bcg", "bdf", "bdg", "bef", "beg"
+// Note: the example is simplified and doesn't include field separation
+func (index *collectionArrayIndex) newIndexKeyGenerator(
+	doc *client.Document,
+) (func() (core.IndexDataStoreKey, bool), error) {
+	key, err := index.getDocumentsIndexKey(doc, true)
+	if err != nil {
+		return nil, err
+	}
+
+	normValsArr := make([][]client.NormalValue, 0, len(index.arrFieldsIndexes))
+	for _, arrFieldIndex := range index.arrFieldsIndexes {
+		arrVal := key.Fields[arrFieldIndex].Value
+		normVals, err := client.ToArrayOfNormalValues(arrVal)
+		if err != nil {
+			return nil, err
+		}
+		sets := make(map[client.NormalValue]struct{})
+		for i := len(normVals) - 1; i >= 0; i-- {
+			if _, ok := sets[normVals[i]]; ok {
+				normVals[i] = normVals[len(normVals)-1]
+				normVals = normVals[:len(normVals)-1]
+			} else {
+				sets[normVals[i]] = struct{}{}
+			}
+		}
+		normValsArr = append(normValsArr, normVals)
+	}
+
+	arrFieldCounter := make([]int, len(index.arrFieldsIndexes))
+	done := false
+
+	return func() (core.IndexDataStoreKey, bool) {
+		if done {
+			return core.IndexDataStoreKey{}, false
+		}
+
+		resultKey := core.IndexDataStoreKey{
+			CollectionID: key.CollectionID,
+			IndexID:      key.IndexID,
+			Fields:       make([]core.IndexedField, len(key.Fields)),
+		}
+		copy(resultKey.Fields, key.Fields)
+
+		for i, counter := range arrFieldCounter {
+			field := &resultKey.Fields[index.arrFieldsIndexes[i]]
+			field.Value = normValsArr[i][counter]
+		}
+
+		for i := len(arrFieldCounter) - 1; i >= 0; i-- {
+			arrFieldCounter[i]++
+			if arrFieldCounter[i] < len(normValsArr[i]) {
+				break
+			}
+			arrFieldCounter[i] = 0
+			if i == 0 {
+				done = true
+			}
+		}
+
+		return resultKey, true
+	}, nil
+}
+
+func (index *collectionArrayIndex) getAllKeys(
+	doc *client.Document,
+) ([]core.IndexDataStoreKey, error) {
+	getNextOldKey, err := index.newIndexKeyGenerator(doc)
+	if err != nil {
+		return nil, err
+	}
+	oldKeys := make([]core.IndexDataStoreKey, 0)
+	for {
+		key, ok := getNextOldKey()
+		if !ok {
+			break
+		}
+		oldKeys = append(oldKeys, key)
+	}
+	return oldKeys, nil
 }

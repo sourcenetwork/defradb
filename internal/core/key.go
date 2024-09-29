@@ -626,6 +626,25 @@ func (k *IndexDataStoreKey) ToString() string {
 	return string(k.Bytes())
 }
 
+// IsEqual returns true if the two keys are equal
+func (k *IndexDataStoreKey) IsEqual(other IndexDataStoreKey) bool {
+	if k.CollectionID != other.CollectionID || k.IndexID != other.IndexID {
+		return false
+	}
+
+	if len(k.Fields) != len(other.Fields) {
+		return false
+	}
+
+	for i, field := range k.Fields {
+		if !field.Value.IsEqual(other.Fields[i].Value) || field.Descending != other.Fields[i].Descending {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionRootID: k.CollectionRootID,
