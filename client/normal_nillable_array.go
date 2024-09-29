@@ -52,12 +52,20 @@ func (v normalBoolNillableArray) BoolNillableArray() (immutable.Option[[]bool], 
 	return v.val, true
 }
 
+func (v normalBoolNillableArray) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.BoolNillableArray)
+}
+
 type normalIntNillableArray struct {
 	baseNillableArrayNormalValue[[]int64]
 }
 
 func (v normalIntNillableArray) IntNillableArray() (immutable.Option[[]int64], bool) {
 	return v.val, true
+}
+
+func (v normalIntNillableArray) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.IntNillableArray)
 }
 
 type normalFloatNillableArray struct {
@@ -68,12 +76,20 @@ func (v normalFloatNillableArray) FloatNillableArray() (immutable.Option[[]float
 	return v.val, true
 }
 
+func (v normalFloatNillableArray) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.FloatNillableArray)
+}
+
 type normalStringNillableArray struct {
 	baseNillableArrayNormalValue[[]string]
 }
 
 func (v normalStringNillableArray) StringNillableArray() (immutable.Option[[]string], bool) {
 	return v.val, true
+}
+
+func (v normalStringNillableArray) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.StringNillableArray)
 }
 
 type normalBytesNillableArray struct {
@@ -84,6 +100,16 @@ func (v normalBytesNillableArray) BytesNillableArray() (immutable.Option[[][]byt
 	return v.val, true
 }
 
+func (v normalBytesNillableArray) IsEqual(other NormalValue) bool {
+	if otherVal, ok := other.BytesNillableArray(); ok {
+		if v.val.HasValue() && otherVal.HasValue() {
+			return are2DArraysEqual(v.val.Value(), otherVal.Value())
+		}
+		return !v.val.HasValue() && !otherVal.HasValue()
+	}
+	return false
+}
+
 type normalTimeNillableArray struct {
 	baseNillableArrayNormalValue[[]time.Time]
 }
@@ -92,12 +118,20 @@ func (v normalTimeNillableArray) TimeNillableArray() (immutable.Option[[]time.Ti
 	return v.val, true
 }
 
+func (v normalTimeNillableArray) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.TimeNillableArray)
+}
+
 type normalDocumentNillableArray struct {
 	baseNillableArrayNormalValue[[]*Document]
 }
 
 func (v normalDocumentNillableArray) DocumentNillableArray() (immutable.Option[[]*Document], bool) {
 	return v.val, true
+}
+
+func (v normalDocumentNillableArray) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.DocumentNillableArray)
 }
 
 // NewNormalNillableBoolArray creates a new NormalValue that represents a `immutable.Option[[]bool]` value.
@@ -149,4 +183,14 @@ func normalizeCharsNillableArr[R string | []byte, T string | []byte](val immutab
 		return immutable.Some(normalizeCharsArr[R](val.Value()))
 	}
 	return immutable.None[[]R]()
+}
+
+func areOptionsArrEqual[T comparable](val immutable.Option[[]T], f func() (immutable.Option[[]T], bool)) bool {
+	if otherVal, ok := f(); ok {
+		if val.HasValue() && otherVal.HasValue() {
+			return areArraysEqual(val.Value(), otherVal.Value())
+		}
+		return !val.HasValue() && !otherVal.HasValue()
+	}
+	return false
 }

@@ -30,6 +30,9 @@ type NormalValue interface {
 	// For nillable values (of type [immutable.Option[T]]) it will return the value itself
 	// if the option has value, otherwise it will return nil.
 	Unwrap() any
+	
+	// IsEqual returns if the value is equal to the given value.
+	IsEqual(NormalValue) bool
 
 	// IsNil returns if the value is nil. For not nillable values it will always return false.
 	IsNil() bool

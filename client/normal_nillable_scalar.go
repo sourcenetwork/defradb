@@ -48,12 +48,20 @@ func (v normalNillableBool) NillableBool() (immutable.Option[bool], bool) {
 	return v.val, true
 }
 
+func (v normalNillableBool) IsEqual(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableBool)
+}
+
 type normalNillableInt struct {
 	baseNillableNormalValue[int64]
 }
 
 func (v normalNillableInt) NillableInt() (immutable.Option[int64], bool) {
 	return v.val, true
+}
+
+func (v normalNillableInt) IsEqual(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableInt)
 }
 
 type normalNillableFloat struct {
@@ -64,12 +72,20 @@ func (v normalNillableFloat) NillableFloat() (immutable.Option[float64], bool) {
 	return v.val, true
 }
 
+func (v normalNillableFloat) IsEqual(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableFloat)
+}
+
 type normalNillableString struct {
 	baseNillableNormalValue[string]
 }
 
 func (v normalNillableString) NillableString() (immutable.Option[string], bool) {
 	return v.val, true
+}
+
+func (v normalNillableString) IsEqual(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableString)
 }
 
 type normalNillableBytes struct {
@@ -80,6 +96,10 @@ func (v normalNillableBytes) NillableBytes() (immutable.Option[[]byte], bool) {
 	return v.val, true
 }
 
+func (v normalNillableBytes) IsEqual(other NormalValue) bool {
+	return areOptionsArrEqual(v.val, other.NillableBytes)
+}
+
 type normalNillableTime struct {
 	baseNillableNormalValue[time.Time]
 }
@@ -88,12 +108,20 @@ func (v normalNillableTime) NillableTime() (immutable.Option[time.Time], bool) {
 	return v.val, true
 }
 
+func (v normalNillableTime) IsEqual(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableTime)
+}
+
 type normalNillableDocument struct {
 	baseNillableNormalValue[*Document]
 }
 
 func (v normalNillableDocument) NillableDocument() (immutable.Option[*Document], bool) {
 	return v.val, true
+}
+
+func (v normalNillableDocument) IsEqual(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableDocument)
 }
 
 // NewNormalNillableBool creates a new NormalValue that represents a `immutable.Option[bool]` value.

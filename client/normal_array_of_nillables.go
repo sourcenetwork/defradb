@@ -11,6 +11,7 @@
 package client
 
 import (
+	"bytes"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -25,12 +26,20 @@ func (v normalNillableBoolArray) NillableBoolArray() ([]immutable.Option[bool], 
 	return v.val, true
 }
 
+func (v normalNillableBoolArray) IsEqual(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableBoolArray)
+}
+
 type normalNillableIntArray struct {
 	baseArrayNormalValue[[]immutable.Option[int64]]
 }
 
 func (v normalNillableIntArray) NillableIntArray() ([]immutable.Option[int64], bool) {
 	return v.val, true
+}
+
+func (v normalNillableIntArray) IsEqual(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableIntArray)
 }
 
 type normalNillableFloatArray struct {
@@ -41,12 +50,20 @@ func (v normalNillableFloatArray) NillableFloatArray() ([]immutable.Option[float
 	return v.val, true
 }
 
+func (v normalNillableFloatArray) IsEqual(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableFloatArray)
+}
+
 type normalNillableStringArray struct {
 	baseArrayNormalValue[[]immutable.Option[string]]
 }
 
 func (v normalNillableStringArray) NillableStringArray() ([]immutable.Option[string], bool) {
 	return v.val, true
+}
+
+func (v normalNillableStringArray) IsEqual(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableStringArray)
 }
 
 type normalNillableBytesArray struct {
@@ -57,6 +74,13 @@ func (v normalNillableBytesArray) NillableBytesArray() ([]immutable.Option[[]byt
 	return v.val, true
 }
 
+func (v normalNillableBytesArray) IsEqual(other NormalValue) bool {
+	if otherVal, ok := other.NillableBytesArray(); ok {
+		return areArrayOfNillableBytesEqual(v.val, otherVal)
+	}
+	return false
+}
+
 type normalNillableTimeArray struct {
 	baseArrayNormalValue[[]immutable.Option[time.Time]]
 }
@@ -65,12 +89,20 @@ func (v normalNillableTimeArray) NillableTimeArray() ([]immutable.Option[time.Ti
 	return v.val, true
 }
 
+func (v normalNillableTimeArray) IsEqual(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableTimeArray)
+}
+
 type normalNillableDocumentArray struct {
 	baseArrayNormalValue[[]immutable.Option[*Document]]
 }
 
 func (v normalNillableDocumentArray) NillableDocumentArray() ([]immutable.Option[*Document], bool) {
 	return v.val, true
+}
+
+func (v normalNillableDocumentArray) IsEqual(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableDocumentArray)
 }
 
 // NewNormalNillableBoolNillableArray creates a new NormalValue that represents a
@@ -139,4 +171,42 @@ func normalizeNillableCharsArr[R string | []byte, T string | []byte](val []immut
 		}
 	}
 	return arr
+}
+
+func areNormalArraysOfNillablesEqual[T comparable](
+	val []immutable.Option[T],
+	f func() ([]immutable.Option[T], bool),
+) bool {
+	if otherVal, ok := f(); ok {
+		return areArraysOfNillablesEqual(val, otherVal)
+	}
+	return false
+}
+
+func areArraysOfNillablesEqual[T comparable](a, b []immutable.Option[T]) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func areArrayOfNillableBytesEqual(a, b []immutable.Option[[]byte]) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v.HasValue() && b[i].HasValue() {
+			if !bytes.Equal(v.Value(), b[i].Value()) {
+				return false
+			}
+		} else if v.HasValue() || b[i].HasValue() {
+			return false
+		}
+	}
+	return true
 }
