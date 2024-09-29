@@ -36,10 +36,11 @@ import (
 )
 
 type userDoc struct {
-	Name    string  `json:"name"`
-	Age     int     `json:"age"`
-	Weight  float64 `json:"weight"`
-	Numbers []int   `json:"numbers"`
+	Name    string   `json:"name"`
+	Age     int      `json:"age"`
+	Weight  float64  `json:"weight"`
+	Numbers []int    `json:"numbers"`
+	Hobbies []string `json:"hobbies"`
 }
 
 type productDoc struct {
@@ -76,8 +77,7 @@ func (f *indexTestFixture) newUserDoc(name string, age int, col client.Collectio
 	return doc
 }
 
-func (f *indexTestFixture) newUserDocWithNumbers(name string, numbers []int, col client.Collection) *client.Document {
-	d := userDoc{Name: name, Numbers: numbers}
+func (f *indexTestFixture) newCustomUserDoc(d userDoc, col client.Collection) *client.Document {
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
@@ -1524,7 +1524,7 @@ func TestArrayIndex_IfDocIsAdded_ShouldIndexAllArrayElements(t *testing.T) {
 	f.createUserCollectionIndexOnNumbers()
 
 	numbersArray := []int{1, 2, 3}
-	doc := f.newUserDocWithNumbers("John", numbersArray, f.users)
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Numbers: numbersArray}, f.users)
 	f.saveDocToCollection(doc, f.users)
 
 	for _, num := range numbersArray {
@@ -1544,7 +1544,7 @@ func TestArrayIndex_IfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
 	f.createUserCollectionIndexOnNumbers()
 
 	numbersArray := []int{1, 2, 3}
-	doc := f.newUserDocWithNumbers("John", numbersArray, f.users)
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Numbers: numbersArray}, f.users)
 	f.saveDocToCollection(doc, f.users)
 
 	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName).Build()
@@ -1555,20 +1555,79 @@ func TestArrayIndex_IfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
 	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), 0)
 }
 
-func TestArrayIndex_IfDocIsDeletedButOneElementHasNotIndex_Error(t *testing.T) {
+func TestArrayIndex_IfDocIsDeletedButOneArrayElementHasNoIndexRecord_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	f.createUserCollectionIndexOnNumbers()
 
 	numbersArray := []int{1, 2, 3}
-	doc := f.newUserDocWithNumbers("John", numbersArray, f.users)
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Numbers: numbersArray}, f.users)
 	f.saveDocToCollection(doc, f.users)
 
 	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName).
 		ArrayFieldVal(usersNumbersFieldName, 2).Doc(doc).Build()
 
 	err := f.txn.Datastore().Delete(f.ctx, userNumbersKey.ToDS())
+	require.NoError(t, err)
+	f.commitTxn()
+
+	res, err := f.users.Delete(f.ctx, doc.ID())
+	require.Error(f.t, err)
+	require.False(f.t, res)
+}
+
+func TestArrayIndex_With2ArrayFieldsIfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	indexDesc := client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{
+			{Name: usersNumbersFieldName},
+			{Name: usersHobbiesFieldName},
+		},
+	}
+
+	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
+	numbersArray := []int{1, 2}
+	hobbiesArray := []string{"reading", "swimming"}
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Numbers: numbersArray, Hobbies: hobbiesArray}, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).
+		Fields(usersNumbersFieldName, usersHobbiesFieldName).Build()
+	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), len(numbersArray)*len(hobbiesArray))
+
+	f.deleteDocFromCollection(doc.ID(), f.users)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), 0)
+}
+
+func TestArrayIndex_With2ArrayFieldsIfDocIsDeletedButOneArrayElementHasNoIndexRecord_ShouldRemoveIndex(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	indexDesc := client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{
+			{Name: usersNumbersFieldName},
+			{Name: usersHobbiesFieldName},
+		},
+	}
+
+	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
+	numbersArray := []int{1, 2}
+	hobbiesArray := []string{"reading", "swimming"}
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Numbers: numbersArray, Hobbies: hobbiesArray}, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName, usersHobbiesFieldName).
+		ArrayFieldVal(usersNumbersFieldName, 2).ArrayFieldVal(usersHobbiesFieldName, "swimming").Doc(doc).Build()
+
+	err = f.txn.Datastore().Delete(f.ctx, userNumbersKey.ToDS())
 	require.NoError(t, err)
 	f.commitTxn()
 

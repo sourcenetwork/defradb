@@ -439,7 +439,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayCompositeIndexUpdate_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
+func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -536,6 +536,58 @@ func TestArrayCompositeIndexUpdate_With2ConsecutiveArrayFields_Succeed(t *testin
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "Shahzad"}},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "hobbies"}]) {
+						name: String 
+						numbers: [Int!] 
+						hobbies: [String!] 
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, 30, 20],
+					"hobbies": ["sports", "books"]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [30, 40, 30, 50],
+					"hobbies": ["sports", "books", "sports", "movies"]
+				}`,
+			},
+			testUtils.DeleteDoc{DocID: 1},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_any: {_eq: 30}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{{"name": "John"}},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "sports"}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{{"name": "John"}},
 				},
 			},
 		},

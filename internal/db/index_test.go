@@ -41,6 +41,7 @@ const (
 	usersAgeFieldName     = "age"
 	usersWeightFieldName  = "weight"
 	usersNumbersFieldName = "numbers"
+	usersHobbiesFieldName = "hobbies"
 
 	productsIDFieldName        = "id"
 	productsPriceFieldName     = "price"
@@ -73,12 +74,14 @@ func (f *indexTestFixture) addUsersCollection() client.Collection {
 				%s: Int
 				%s: Float
 				%s: [Int!]
+				%s: [String!]
 			}`,
 			usersColName,
 			usersNameFieldName,
 			usersAgeFieldName,
 			usersWeightFieldName,
 			usersNumbersFieldName,
+			usersHobbiesFieldName,
 		),
 	)
 	require.NoError(f.t, err)
