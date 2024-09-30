@@ -38,7 +38,8 @@ func lessO[T number](a immutable.Option[T], b immutable.Option[T]) bool {
 	return a.Value() < b.Value()
 }
 
-func reverse[T any](original func(T, T) bool) func(T, T) bool {
+// inverse returns the logical inverse of the given sort func.
+func inverse[T any](original func(T, T) bool) func(T, T) bool {
 	return func(t1, t2 T) bool {
 		return !original(t1, t2)
 	}
@@ -80,7 +81,7 @@ func reduceItems[T any, V any](
 		if aggregateTarget.OrderBy.Conditions[0].Direction == mapper.ASC {
 			items = enumerable.Sort(items, less, len(source))
 		} else {
-			items = enumerable.Sort(items, reverse(less), len(source))
+			items = enumerable.Sort(items, inverse(less), len(source))
 		}
 	}
 

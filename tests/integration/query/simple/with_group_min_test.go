@@ -11,7 +11,6 @@
 package simple
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -291,7 +290,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMin_
 						},
 						{
 							"Name": "Alice",
-							"_min": float64(math.MaxFloat64),
+							"_min": nil,
 						},
 					},
 				},

@@ -11,7 +11,6 @@
 package simple
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -54,7 +53,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_
 						},
 						{
 							"Age":  int64(19),
-							"_max": math.MinInt64,
+							"_max": nil,
 						},
 					},
 				},
@@ -113,7 +112,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 						},
 						{
 							"Age":  int64(19),
-							"_max": math.MinInt64,
+							"_max": nil,
 							"_group": []map[string]any{
 								{
 									"Name": "Alice",
@@ -174,7 +173,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 						},
 						{
 							"Age":    int64(19),
-							"_max":   math.MinInt64,
+							"_max":   nil,
 							"_group": []map[string]any{},
 						},
 					},
@@ -231,7 +230,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 						},
 						{
 							"Age":    int64(19),
-							"_max":   math.MinInt64,
+							"_max":   nil,
 							"_group": []map[string]any{},
 						},
 					},
@@ -278,11 +277,11 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithDiffere
 						{
 							"Age": int64(32),
 							"S1":  int64(32),
-							"S2":  math.MinInt64,
+							"S2":  nil,
 						},
 						{
 							"Age": int64(19),
-							"S1":  math.MinInt64,
+							"S1":  nil,
 							"S2":  int64(19),
 						},
 					},

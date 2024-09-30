@@ -11,7 +11,6 @@
 package simple
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -58,7 +57,7 @@ func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 					_min(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_min": int64(math.MaxInt64),
+					"_min": nil,
 				},
 			},
 		},

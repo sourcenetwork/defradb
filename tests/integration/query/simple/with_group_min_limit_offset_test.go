@@ -11,7 +11,6 @@
 package simple
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -61,7 +60,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWith
 						},
 						{
 							"Name": "Alice",
-							"_min": int64(math.MaxInt64),
+							"_min": nil,
 						},
 					},
 				},

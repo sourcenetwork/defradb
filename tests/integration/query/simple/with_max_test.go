@@ -11,7 +11,6 @@
 package simple
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -58,7 +57,7 @@ func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 					_max(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_max": math.MinInt64,
+					"_max": nil,
 				},
 			},
 		},

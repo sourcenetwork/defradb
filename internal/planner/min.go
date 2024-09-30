@@ -27,7 +27,9 @@ type minNode struct {
 	p    *Planner
 	plan planNode
 
-	isFloat           bool
+	isFloat bool
+	// virtualFieldIndex is the index of the field
+	// that contains the result of the aggregate.
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
 
@@ -139,40 +141,50 @@ func (n *minNode) Next() (bool, error) {
 	}
 	n.currentValue = n.plan.Value()
 
-	min := math.MaxFloat64
+	var min *float64
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
-		collectionMin := math.MaxFloat64
+		var collectionMin *float64
 		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
 			collectionMin = reduceDocs(
 				childCollection,
-				math.MaxFloat64,
-				func(childItem core.Doc, value float64) float64 {
+				nil,
+				func(childItem core.Doc, value *float64) *float64 {
 					childProperty := childItem.Fields[source.ChildTarget.Index]
+					var res float64
 					switch v := childProperty.(type) {
 					case int:
-						return math.Min(value, float64(v))
+						res = float64(v)
 					case int64:
-						return math.Min(value, float64(v))
+						res = float64(v)
 					case uint64:
-						return math.Min(value, float64(v))
+						res = float64(v)
 					case float64:
-						return math.Min(value, float64(v))
+						res = float64(v)
 					default:
-						return value
+						return nil
 					}
+					if value != nil {
+						res = math.Min(*value, res)
+					}
+					return &res
 				},
 			)
+
 		case []int64:
 			collectionMin, err = reduceItems(
 				childCollection,
 				&source,
 				lessN[int64],
-				math.MaxFloat64,
-				func(childItem int64, value float64) float64 {
-					return math.Min(value, float64(childItem))
+				nil,
+				func(childItem int64, value *float64) *float64 {
+					res := float64(childItem)
+					if value != nil {
+						res = math.Min(*value, res)
+					}
+					return &res
 				},
 			)
 
@@ -181,12 +193,16 @@ func (n *minNode) Next() (bool, error) {
 				childCollection,
 				&source,
 				lessO[int64],
-				math.MaxFloat64,
-				func(childItem immutable.Option[int64], value float64) float64 {
+				nil,
+				func(childItem immutable.Option[int64], value *float64) *float64 {
 					if !childItem.HasValue() {
 						return value
 					}
-					return math.Min(value, float64(childItem.Value()))
+					res := float64(childItem.Value())
+					if value != nil {
+						res = math.Min(*value, res)
+					}
+					return &res
 				},
 			)
 
@@ -195,9 +211,13 @@ func (n *minNode) Next() (bool, error) {
 				childCollection,
 				&source,
 				lessN[float64],
-				math.MaxFloat64,
-				func(childItem float64, value float64) float64 {
-					return math.Min(value, childItem)
+				nil,
+				func(childItem float64, value *float64) *float64 {
+					res := childItem
+					if value != nil {
+						res = math.Min(*value, res)
+					}
+					return &res
 				},
 			)
 
@@ -206,28 +226,36 @@ func (n *minNode) Next() (bool, error) {
 				childCollection,
 				&source,
 				lessO[float64],
-				math.MaxFloat64,
-				func(childItem immutable.Option[float64], value float64) float64 {
+				nil,
+				func(childItem immutable.Option[float64], value *float64) *float64 {
 					if !childItem.HasValue() {
 						return value
 					}
-					return math.Min(value, childItem.Value())
+					res := childItem.Value()
+					if value != nil {
+						res = math.Min(*value, res)
+					}
+					return &res
 				},
 			)
 		}
 		if err != nil {
 			return false, err
 		}
-		min = math.Min(min, collectionMin)
+		if min == nil {
+			min = collectionMin
+		} else {
+			res := math.Min(*min, *collectionMin)
+			min = &res
+		}
 	}
 
-	if n.isFloat {
-		n.currentValue.Fields[n.virtualFieldIndex] = float64(min)
-	} else if min >= math.MaxInt64 {
-		n.currentValue.Fields[n.virtualFieldIndex] = int64(math.MaxInt64)
+	if min == nil {
+		n.currentValue.Fields[n.virtualFieldIndex] = nil
+	} else if n.isFloat {
+		n.currentValue.Fields[n.virtualFieldIndex] = float64(*min)
 	} else {
-		n.currentValue.Fields[n.virtualFieldIndex] = int64(min)
+		n.currentValue.Fields[n.virtualFieldIndex] = int64(*min)
 	}
-
 	return true, nil
 }

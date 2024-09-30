@@ -11,7 +11,6 @@
 package inline_array
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -38,7 +37,7 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": int64(math.MinInt64),
+							"_max": nil,
 						},
 					},
 				},
@@ -70,7 +69,7 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": int64(math.MinInt64),
+							"_max": nil,
 						},
 					},
 				},
@@ -166,7 +165,7 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": float64(-math.MaxFloat64),
+							"_max": nil,
 						},
 					},
 				},
@@ -198,7 +197,7 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": float64(-math.MaxFloat64),
+							"_max": nil,
 						},
 					},
 				},
@@ -254,6 +253,38 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 			testUtils.Request{
 				Request: `query {
 					Users {
+						name
+						_max(pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+							"_max": float64(10),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple inline array with no filter, max of nillable float array",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageRatings": [3.1425, 0.00000000001, 10, null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(docID: "bae-3f7e0f22-e253-53dd-b31b-df8b081292d9") {
 						name
 						_max(pageRatings: {})
 					}

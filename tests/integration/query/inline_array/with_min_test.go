@@ -11,7 +11,6 @@
 package inline_array
 
 import (
-	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -38,7 +37,7 @@ func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": int64(math.MaxInt64),
+							"_min": nil,
 						},
 					},
 				},
@@ -70,7 +69,7 @@ func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": int64(math.MaxInt64),
+							"_min": nil,
 						},
 					},
 				},
@@ -166,7 +165,7 @@ func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": float64(math.MaxFloat64),
+							"_min": nil,
 						},
 					},
 				},
@@ -198,7 +197,7 @@ func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": float64(math.MaxFloat64),
+							"_min": nil,
 						},
 					},
 				},
