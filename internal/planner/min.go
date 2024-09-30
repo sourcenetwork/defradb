@@ -11,7 +11,7 @@
 package planner
 
 import (
-	"math"
+	"math/big"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -141,35 +141,35 @@ func (n *minNode) Next() (bool, error) {
 	}
 	n.currentValue = n.plan.Value()
 
-	var min *float64
+	var min *big.Float
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
-		var collectionMin *float64
+		var collectionMin *big.Float
 		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
 			collectionMin = reduceDocs(
 				childCollection,
 				nil,
-				func(childItem core.Doc, value *float64) *float64 {
+				func(childItem core.Doc, value *big.Float) *big.Float {
 					childProperty := childItem.Fields[source.ChildTarget.Index]
-					var res float64
+					res := &big.Float{}
 					switch v := childProperty.(type) {
 					case int:
-						res = float64(v)
+						res = res.SetInt64(int64(v))
 					case int64:
-						res = float64(v)
+						res = res.SetInt64(v)
 					case uint64:
-						res = float64(v)
+						res = res.SetUint64(v)
 					case float64:
-						res = float64(v)
+						res = res.SetFloat64(v)
 					default:
 						return nil
 					}
-					if value != nil {
-						res = math.Min(*value, res)
+					if value == nil || res.Cmp(value) < 0 {
+						return res
 					}
-					return &res
+					return value
 				},
 			)
 
@@ -179,12 +179,12 @@ func (n *minNode) Next() (bool, error) {
 				&source,
 				lessN[int64],
 				nil,
-				func(childItem int64, value *float64) *float64 {
-					res := float64(childItem)
-					if value != nil {
-						res = math.Min(*value, res)
+				func(childItem int64, value *big.Float) *big.Float {
+					res := (&big.Float{}).SetInt64(childItem)
+					if value == nil || res.Cmp(value) < 0 {
+						return res
 					}
-					return &res
+					return value
 				},
 			)
 
@@ -194,15 +194,15 @@ func (n *minNode) Next() (bool, error) {
 				&source,
 				lessO[int64],
 				nil,
-				func(childItem immutable.Option[int64], value *float64) *float64 {
+				func(childItem immutable.Option[int64], value *big.Float) *big.Float {
 					if !childItem.HasValue() {
 						return value
 					}
-					res := float64(childItem.Value())
-					if value != nil {
-						res = math.Min(*value, res)
+					res := (&big.Float{}).SetInt64(childItem.Value())
+					if value == nil || res.Cmp(value) < 0 {
+						return res
 					}
-					return &res
+					return value
 				},
 			)
 
@@ -212,12 +212,12 @@ func (n *minNode) Next() (bool, error) {
 				&source,
 				lessN[float64],
 				nil,
-				func(childItem float64, value *float64) *float64 {
-					res := childItem
-					if value != nil {
-						res = math.Min(*value, res)
+				func(childItem float64, value *big.Float) *big.Float {
+					res := big.NewFloat(childItem)
+					if value == nil || res.Cmp(value) < 0 {
+						return res
 					}
-					return &res
+					return value
 				},
 			)
 
@@ -227,35 +227,34 @@ func (n *minNode) Next() (bool, error) {
 				&source,
 				lessO[float64],
 				nil,
-				func(childItem immutable.Option[float64], value *float64) *float64 {
+				func(childItem immutable.Option[float64], value *big.Float) *big.Float {
 					if !childItem.HasValue() {
 						return value
 					}
-					res := childItem.Value()
-					if value != nil {
-						res = math.Min(*value, res)
+					res := big.NewFloat(childItem.Value())
+					if value == nil || res.Cmp(value) < 0 {
+						return res
 					}
-					return &res
+					return value
 				},
 			)
 		}
 		if err != nil {
 			return false, err
 		}
-		if min == nil {
+		if min == nil || collectionMin == nil || collectionMin.Cmp(min) < 0 {
 			min = collectionMin
-		} else {
-			res := math.Min(*min, *collectionMin)
-			min = &res
 		}
 	}
 
 	if min == nil {
 		n.currentValue.Fields[n.virtualFieldIndex] = nil
 	} else if n.isFloat {
-		n.currentValue.Fields[n.virtualFieldIndex] = float64(*min)
+		res, _ := min.Float64()
+		n.currentValue.Fields[n.virtualFieldIndex] = res
 	} else {
-		n.currentValue.Fields[n.virtualFieldIndex] = int64(*min)
+		res, _ := min.Int64()
+		n.currentValue.Fields[n.virtualFieldIndex] = res
 	}
 	return true, nil
 }
