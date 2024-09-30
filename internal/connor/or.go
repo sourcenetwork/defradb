@@ -14,8 +14,11 @@ func or(condition, data any) (bool, error) {
 				return true, nil
 			}
 		}
-
 		return false, nil
+
+	case nil:
+		return true, nil
+
 	default:
 		return false, client.NewErrUnhandledType("condition", cn)
 	}

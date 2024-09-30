@@ -126,7 +126,10 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 		case *Operator:
 			switch keyType.Operation {
 			case request.FilterOpAnd, request.FilterOpOr:
-				v := v.([]any)
+				v, ok := v.([]any)
+				if !ok {
+					continue // value is nil
+				}
 				logicMapEntries := make([]any, len(v))
 				for i, item := range v {
 					itemMap := item.(map[connor.FilterKey]any)
@@ -134,8 +137,10 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 				}
 				outmap[keyType.Operation] = logicMapEntries
 			case request.FilterOpNot:
-				itemMap := v.(map[connor.FilterKey]any)
-				outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
+				itemMap, ok := v.(map[connor.FilterKey]any)
+				if ok {
+					outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
+				}
 			default:
 				outmap[keyType.Operation] = v
 			}

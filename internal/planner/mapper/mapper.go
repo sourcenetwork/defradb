@@ -964,9 +964,12 @@ func resolveInnerFilterDependencies(
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
-	for key := range source {
+	for key, value := range source {
 		if key == request.FilterOpAnd || key == request.FilterOpOr {
-			compoundFilter := source[key].([]any)
+			if value == nil {
+				continue
+			}
+			compoundFilter := value.([]any)
 			for _, innerFilter := range compoundFilter {
 				innerFields, err := resolveInnerFilterDependencies(
 					ctx,
@@ -987,7 +990,10 @@ func resolveInnerFilterDependencies(
 			}
 			continue
 		} else if key == request.FilterOpNot {
-			notFilter := source[key].(map[string]any)
+			if value == nil {
+				continue
+			}
+			notFilter := value.(map[string]any)
 			innerFields, err := resolveInnerFilterDependencies(
 				ctx,
 				store,
@@ -1044,8 +1050,7 @@ func resolveInnerFilterDependencies(
 			newFields = append(newFields, childSelect)
 		}
 
-		childSource := source[key]
-		childFilter, isChildFilter := childSource.(map[string]any)
+		childFilter, isChildFilter := value.(map[string]any)
 		if !isChildFilter {
 			// If the filter is not a child filter then the will be no inner dependencies to add and
 			// we can continue.
