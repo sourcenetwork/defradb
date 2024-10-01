@@ -1,4 +1,5 @@
 {
+  "name": "An Example Policy",
   "description": "A Valid Defra Policy Interface (DPI)",
   "actor": {
     "name": "actor"
