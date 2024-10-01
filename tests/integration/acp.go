@@ -313,11 +313,12 @@ func addDocActorRelationshipACP(
 func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	var isACPTest bool
 	for _, a := range s.testCase.Actions {
-		if _, ok := a.(AddPolicy); ok {
+		switch a.(type) {
+		case AddPolicy, AddDocActorRelationship:
 			isACPTest = true
-			break
 		}
 	}
+
 	if !isACPTest {
 		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
 		// runtime of the test suite when SourceHub ACP is selected.
