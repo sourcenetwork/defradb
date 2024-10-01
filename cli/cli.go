@@ -62,14 +62,14 @@ func NewDefraCommand() *cobra.Command {
 		schema_migrate,
 	)
 
-	policy := MakeACPPolicyCommand()
-	policy.AddCommand(
+	acp_policy := MakeACPPolicyCommand()
+	acp_policy.AddCommand(
 		MakeACPPolicyAddCommand(),
 	)
 
 	acp := MakeACPCommand()
 	acp.AddCommand(
-		policy,
+		acp_policy,
 	)
 
 	view := MakeViewCommand()
