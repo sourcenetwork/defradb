@@ -11,9 +11,12 @@
 package simple
 
 import (
+	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
@@ -88,6 +91,35 @@ func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"_max": int64(30),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GraphQL does not support 64 bit int
+			testUtils.CollectionSaveMutationType,
+			testUtils.CollectionNamedMutationType,
+		}),
+		Description: "Simple query max and max value int",
+		Actions: []any{
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "John",
+					"Age":  int64(math.MaxInt64),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					_max(Users: {field: Age})
+				}`,
+				Results: map[string]any{
+					"_max": int64(math.MaxInt64),
 				},
 			},
 		},

@@ -24,10 +24,10 @@ type maxNode struct {
 	documentIterator
 	docMapper
 
-	p    *Planner
-	plan planNode
+	p      *Planner
+	plan   planNode
+	parent *mapper.Select
 
-	isFloat bool
 	// virtualFieldIndex is the index of the field
 	// that contains the result of the aggregate.
 	virtualFieldIndex int
@@ -45,22 +45,9 @@ func (p *Planner) Max(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
 ) (*maxNode, error) {
-	isFloat := false
-	for _, target := range field.AggregateTargets {
-		isTargetFloat, err := p.isValueFloat(parent, &target)
-		if err != nil {
-			return nil, err
-		}
-		// If one source property is a float, the result will be a float - no need to check the rest
-		if isTargetFloat {
-			isFloat = true
-			break
-		}
-	}
-
 	return &maxNode{
 		p:                 p,
-		isFloat:           isFloat,
+		parent:            parent,
 		aggregateMapping:  field.AggregateTargets,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
@@ -142,6 +129,8 @@ func (n *maxNode) Next() (bool, error) {
 	n.currentValue = n.plan.Value()
 
 	var max *big.Float
+	isFloat := false
+
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
 		var collectionMax *big.Float
@@ -242,14 +231,20 @@ func (n *maxNode) Next() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		if max == nil || collectionMax == nil || collectionMax.Cmp(max) > 0 {
-			max = collectionMax
+		if collectionMax == nil || (max != nil && collectionMax.Cmp(max) <= 0) {
+			continue
 		}
+		isTargetFloat, err := n.p.isValueFloat(n.parent, &source)
+		if err != nil {
+			return false, err
+		}
+		isFloat = isTargetFloat
+		max = collectionMax
 	}
 
 	if max == nil {
 		n.currentValue.Fields[n.virtualFieldIndex] = nil
-	} else if n.isFloat {
+	} else if isFloat {
 		res, _ := max.Float64()
 		n.currentValue.Fields[n.virtualFieldIndex] = res
 	} else {

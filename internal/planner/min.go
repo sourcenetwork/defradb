@@ -24,10 +24,10 @@ type minNode struct {
 	documentIterator
 	docMapper
 
-	p    *Planner
-	plan planNode
+	p      *Planner
+	plan   planNode
+	parent *mapper.Select
 
-	isFloat bool
 	// virtualFieldIndex is the index of the field
 	// that contains the result of the aggregate.
 	virtualFieldIndex int
@@ -45,22 +45,9 @@ func (p *Planner) Min(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
 ) (*minNode, error) {
-	isFloat := false
-	for _, target := range field.AggregateTargets {
-		isTargetFloat, err := p.isValueFloat(parent, &target)
-		if err != nil {
-			return nil, err
-		}
-		// If one source property is a float, the result will be a float - no need to check the rest
-		if isTargetFloat {
-			isFloat = true
-			break
-		}
-	}
-
 	return &minNode{
 		p:                 p,
-		isFloat:           isFloat,
+		parent:            parent,
 		aggregateMapping:  field.AggregateTargets,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
@@ -142,6 +129,8 @@ func (n *minNode) Next() (bool, error) {
 	n.currentValue = n.plan.Value()
 
 	var min *big.Float
+	isFloat := false
+
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
 		var collectionMin *big.Float
@@ -242,14 +231,20 @@ func (n *minNode) Next() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		if min == nil || collectionMin == nil || collectionMin.Cmp(min) < 0 {
-			min = collectionMin
+		if collectionMin == nil || (min != nil && collectionMin.Cmp(min) >= 0) {
+			continue
 		}
+		isTargetFloat, err := n.p.isValueFloat(n.parent, &source)
+		if err != nil {
+			return false, err
+		}
+		isFloat = isTargetFloat
+		min = collectionMin
 	}
 
 	if min == nil {
 		n.currentValue.Fields[n.virtualFieldIndex] = nil
-	} else if n.isFloat {
+	} else if isFloat {
 		res, _ := min.Float64()
 		n.currentValue.Fields[n.virtualFieldIndex] = res
 	} else {
