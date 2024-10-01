@@ -644,3 +644,279 @@ func TestArrayIndex_OptionalString_ShouldUseIndex(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestArrayIndex_WithAnyAndInOperator_Succeed(t *testing.T) {
+	req := `query {
+		User(filter: {numbers: {_any: {_in: [3, 4, 5]}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int!] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [1, 4, 7]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [2, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithAllAndInOperator_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int!] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [3, 4]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [2, 8]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [3, 5, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_all: {_in: [3, 4, 5]}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithNoneAndInOperator_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int!] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [3, 4]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [2, 8]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [3, 5, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_none: {_in: [4, 5]}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithNoneAndNinOperator_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int!] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [3, 4]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [2, 8]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [3, 5, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_none: {_nin: [3, 4, 5]}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithAllAndNinOperator_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int!] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [3, 4]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [2, 8]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [3, 5, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_all: {_nin: [4, 5]}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithAnyAndNinOperator_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int!] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [3, 4]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [2, 8]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [3, 5, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {numbers: {_any: {_nin: [3, 4, 5]}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Andy"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

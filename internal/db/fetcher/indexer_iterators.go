@@ -673,8 +673,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 
 	var iter indexIterator
 
-	switch fieldConditions[0].op {
-	case opEq:
+	if fieldConditions[0].op == opEq {
 		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
 			keyFieldValues := make([]client.NormalValue, len(fieldConditions))
 			for i := range fieldConditions {
@@ -686,9 +685,9 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		} else {
 			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
 		}
-	case opIn:
+	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
-	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike, opILike, opNILike:
+	} else {
 		iter, err = f.newPrefixIterator(f.newIndexDataStoreKey(), matchers, &f.execInfo), nil
 	}
 
