@@ -1635,3 +1635,29 @@ func TestArrayIndex_With2ArrayFieldsIfDocIsDeletedButOneArrayElementHasNoIndexRe
 	require.Error(f.t, err)
 	require.False(f.t, res)
 }
+
+func TestArrayIndex_WithUniqueIndexIfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	indexDesc := client.IndexDescription{
+		Unique: true,
+		Fields: []client.IndexedFieldDescription{
+			{Name: usersNumbersFieldName},
+		},
+	}
+
+	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
+	numbersArray := []int{1, 2, 3}
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Numbers: numbersArray}, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	userNumbersKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNumbersFieldName).Unique().Build()
+	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), len(numbersArray))
+
+	f.deleteDocFromCollection(doc.ID(), f.users)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), 0)
+}
