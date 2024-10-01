@@ -16,13 +16,12 @@ import (
 
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
+	"github.com/sourcenetwork/corekv/memory"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
 	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
@@ -173,9 +172,9 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 // Rootstore returns the rootstore of the VersionedFetcher.
-func (vf *VersionedFetcher) Rootstore() ds.Datastore {
-	return vf.root
-}
+// func (vf *VersionedFetcher) Rootstore() ds.Datastore {
+// 	return vf.root
+// }
 
 // Start a fetcher with the needed info (cid embedded in a span)
 
@@ -421,10 +420,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 
 // Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
-	if err := vf.root.Close(); err != nil {
-		return err
-	}
-
+	vf.root.Close()
 	return vf.DocumentFetcher.Close()
 }
 

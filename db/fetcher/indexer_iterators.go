@@ -18,6 +18,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
@@ -56,26 +57,30 @@ type indexIterResult struct {
 }
 
 type queryResultIterator struct {
-	resultIter query.Results
+	resultIter corekv.Iterator
 }
 
 func (i *queryResultIterator) Next() (indexIterResult, error) {
-	res, hasVal := i.resultIter.NextSync()
-	if res.Error != nil {
-		return indexIterResult{}, res.Error
-	}
+	i.resultIter.Next()
+	hasVal := i.resultIter.Valid()
 	if !hasVal {
 		return indexIterResult{}, nil
 	}
-	key, err := core.NewIndexDataStoreKey(res.Key)
+
+	key, err := core.NewIndexDataStoreKey(string(i.resultIter.Key()))
 	if err != nil {
 		return indexIterResult{}, err
 	}
-	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
+	return indexIterResult{
+		key:      key,
+		value:    i.resultIter.Value(),
+		foundKey: true,
+	}, nil
 }
 
 func (i *queryResultIterator) Close() error {
-	return i.resultIter.Close()
+	// ATTENTION WIRE UP CONTEXT
+	return i.resultIter.Close(context.TODO())
 }
 
 type eqPrefixIndexIterator struct {
@@ -88,12 +93,9 @@ type eqPrefixIndexIterator struct {
 
 func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	i.indexKey.FieldValues = [][]byte{i.value}
-	resultIter, err := store.Query(ctx, query.Query{
-		Prefix: i.indexKey.ToString(),
+	resultIter := store.Iterator(ctx, corekv.IterOptions{
+		Prefix: i.indexKey.Bytes(),
 	})
-	if err != nil {
-		return err
-	}
 	i.resultIter = resultIter
 	return nil
 }
@@ -139,7 +141,7 @@ func (i *eqSingleIndexIterator) Next() (indexIterResult, error) {
 		return indexIterResult{}, nil
 	}
 	i.indexKey.FieldValues = [][]byte{i.value}
-	val, err := i.store.Get(i.ctx, i.indexKey.ToDS())
+	val, err := i.store.Get(i.ctx, i.indexKey.Bytes())
 	if err != nil {
 		return indexIterResult{}, err
 	}
@@ -267,13 +269,12 @@ type scanningIndexIterator struct {
 func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	i.filter.matcher = &execInfoIndexMatcherDecorator{matcher: i.matcher, execInfo: i.execInfo}
 
-	iter, err := store.Query(ctx, query.Query{
-		Prefix:  i.indexKey.ToString(),
-		Filters: []query.Filter{&i.filter},
+	// ATTENTION: DURING MY PLAIN TEXT REFACTOR
+	// I AM NOT INCLUDING THIS FILTER/MATCHER
+	// SYSTEM. WILL LOOK INTO IT.
+	iter := store.Iterator(ctx, corekv.IterOptions{
+		Prefix: i.indexKey.Bytes(),
 	})
-	if err != nil {
-		return err
-	}
 	i.resultIter = iter
 
 	return nil
