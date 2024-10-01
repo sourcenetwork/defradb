@@ -35,6 +35,66 @@ func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
 }
 
+// AddDocActorRelationship provides a mock function with given fields: ctx, collectionName, docID, relation, targetActor
+func (_m *DB) AddDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddDocActorRelationshipResult, error) {
+	ret := _m.Called(ctx, collectionName, docID, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddDocActorRelationship")
+	}
+
+	var r0 client.AddDocActorRelationshipResult
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.AddDocActorRelationshipResult, error)); ok {
+		return rf(ctx, collectionName, docID, relation, targetActor)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.AddDocActorRelationshipResult); ok {
+		r0 = rf(ctx, collectionName, docID, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.AddDocActorRelationshipResult)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, collectionName, docID, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_AddDocActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDocActorRelationship'
+type DB_AddDocActorRelationship_Call struct {
+	*mock.Call
+}
+
+// AddDocActorRelationship is a helper method to define mock.On call
+//   - ctx context.Context
+//   - collectionName string
+//   - docID string
+//   - relation string
+//   - targetActor string
+func (_e *DB_Expecter) AddDocActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *DB_AddDocActorRelationship_Call {
+	return &DB_AddDocActorRelationship_Call{Call: _e.mock.On("AddDocActorRelationship", ctx, collectionName, docID, relation, targetActor)}
+}
+
+func (_c *DB_AddDocActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *DB_AddDocActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *DB_AddDocActorRelationship_Call) Return(_a0 client.AddDocActorRelationshipResult, _a1 error) *DB_AddDocActorRelationship_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_AddDocActorRelationship_Call) RunAndReturn(run func(context.Context, string, string, string, string) (client.AddDocActorRelationshipResult, error)) *DB_AddDocActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddP2PCollections provides a mock function with given fields: ctx, collectionIDs
 func (_m *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
 	ret := _m.Called(ctx, collectionIDs)
