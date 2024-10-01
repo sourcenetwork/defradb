@@ -36,15 +36,20 @@ func isSupportedKind(kind client.FieldKind) bool {
 	switch kind {
 	case
 		client.FieldKind_DocID,
+		client.FieldKind_STRING_ARRAY,
+		client.FieldKind_INT_ARRAY,
+		client.FieldKind_BOOL_ARRAY,
+		client.FieldKind_FLOAT_ARRAY,
 		client.FieldKind_NILLABLE_STRING,
 		client.FieldKind_NILLABLE_INT,
 		client.FieldKind_NILLABLE_FLOAT,
 		client.FieldKind_NILLABLE_BOOL,
 		client.FieldKind_NILLABLE_BLOB,
 		client.FieldKind_NILLABLE_DATETIME,
-		client.FieldKind_INT_ARRAY:
-		// TODO: add other types
-		//client.FieldKind_NILLABLE_INT_ARRAY:
+		client.FieldKind_NILLABLE_BOOL_ARRAY,
+		client.FieldKind_NILLABLE_INT_ARRAY,
+		client.FieldKind_NILLABLE_FLOAT_ARRAY,
+		client.FieldKind_NILLABLE_STRING_ARRAY:
 		return true
 	default:
 		return false

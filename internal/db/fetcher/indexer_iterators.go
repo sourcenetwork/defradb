@@ -406,6 +406,31 @@ func (m *timeMatcher) Match(value client.NormalValue) (bool, error) {
 	return false, NewErrInvalidFilterOperator(m.op)
 }
 
+type boolMatcher struct {
+	value bool
+	isEq  bool
+}
+
+func (m *boolMatcher) Match(value client.NormalValue) (bool, error) {
+	boolVal, ok := value.Bool()
+	if !ok {
+		if boolOptVal, ok := value.NillableBool(); ok {
+			boolVal = boolOptVal.Value()
+		} else {
+			intVal, ok := value.Int()
+			if !ok {
+				if intOptVal, ok := value.NillableInt(); ok {
+					intVal = intOptVal.Value()
+				} else {
+					return false, NewErrUnexpectedTypeValue[bool](value)
+				}
+			}
+			boolVal = intVal != 0
+		}
+	}
+	return boolVal == m.value == m.isEq, nil
+}
+
 type nilMatcher struct {
 	matchNil bool
 }
@@ -696,26 +721,17 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		if v, ok := condition.val.Int(); ok {
 			return &intMatcher{value: v, evalFunc: getCompareValsFunc[int64](condition.op)}, nil
 		}
-		if v, ok := condition.val.NillableInt(); ok {
-			return &intMatcher{value: v.Value(), evalFunc: getCompareValsFunc[int64](condition.op)}, nil
-		}
 		if v, ok := condition.val.Float(); ok {
 			return &floatMatcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
-		}
-		if v, ok := condition.val.NillableFloat(); ok {
-			return &floatMatcher{value: v.Value(), evalFunc: getCompareValsFunc[float64](condition.op)}, nil
 		}
 		if v, ok := condition.val.String(); ok {
 			return &stringMatcher{value: v, evalFunc: getCompareValsFunc[string](condition.op)}, nil
 		}
-		if v, ok := condition.val.NillableString(); ok {
-			return &stringMatcher{value: v.Value(), evalFunc: getCompareValsFunc[string](condition.op)}, nil
-		}
 		if v, ok := condition.val.Time(); ok {
 			return &timeMatcher{value: v, op: condition.op}, nil
 		}
-		if v, ok := condition.val.NillableTime(); ok {
-			return &timeMatcher{value: v.Value(), op: condition.op}, nil
+		if v, ok := condition.val.Bool(); ok {
+			return &boolMatcher{value: v, isEq: condition.op == opEq}, nil
 		}
 	case opIn, opNin:
 		inVals, err := client.ToArrayOfNormalValues(condition.val)
