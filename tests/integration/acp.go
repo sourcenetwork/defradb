@@ -583,6 +583,37 @@ func crossLock(port uint16) (func(), error) {
 		nil
 }
 
+// Generate the keys using the index as the seed so that multiple
+// runs yield the same private key.  This is important for stuff like
+// the change detector.
+func generateIdentity(s *state, seedIndex int, nodeIndex int) (acpIdentity.Identity, error) {
+	var audience immutable.Option[string]
+	switch client := s.nodes[nodeIndex].(type) {
+	case *http.Wrapper:
+		audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+	case *cli.Wrapper:
+		audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+	}
+
+	source := rand.NewSource(int64(seedIndex))
+	r := rand.New(source)
+
+	privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
+	require.NoError(s.t, err)
+
+	identity, err := acpIdentity.FromPrivateKey(
+		privateKey,
+		authTokenExpiration,
+		audience,
+		immutable.Some(s.sourcehubAddress),
+		// Creating and signing the bearer token is slow, so we skip it if it not
+		// required.
+		!(acpType == SourceHubACPType || audience.HasValue()),
+	)
+
+	return identity, err
+}
+
 func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable.Option[acpIdentity.Identity] {
 	if !index.HasValue() {
 		return immutable.None[acpIdentity.Identity]()
@@ -597,40 +628,18 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 
 	if len(nodeIdentities) <= index.Value() {
 		identities := make([]acpIdentity.Identity, index.Value()+1)
-		copy(identities, nodeIdentities)
-		nodeIdentities = identities
-		s.identities[nodeIndex] = nodeIdentities
-
-		var audience immutable.Option[string]
-		switch client := s.nodes[nodeIndex].(type) {
-		case *http.Wrapper:
-			audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
-		case *cli.Wrapper:
-			audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+		// Fill any empty identities up to the index.
+		for i := range identities {
+			if i < len(nodeIdentities) && nodeIdentities[i] != (acpIdentity.Identity{}) {
+				identities[i] = nodeIdentities[i]
+				continue
+			}
+			newIdentity, err := generateIdentity(s, i, nodeIndex)
+			require.NoError(s.t, err)
+			identities[i] = newIdentity
 		}
-
-		// Generate the keys using the index as the seed so that multiple
-		// runs yield the same private key.  This is important for stuff like
-		// the change detector.
-		source := rand.NewSource(int64(index.Value()))
-		r := rand.New(source)
-
-		privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-		require.NoError(s.t, err)
-
-		identity, err := acpIdentity.FromPrivateKey(
-			privateKey,
-			authTokenExpiration,
-			audience,
-			immutable.Some(s.sourcehubAddress),
-			// Creating and signing the bearer token is slow, so we skip it if it not
-			// required.
-			!(acpType == SourceHubACPType || audience.HasValue()),
-		)
-		require.NoError(s.t, err)
-
-		nodeIdentities[index.Value()] = identity
-		return immutable.Some(identity)
+		s.identities[nodeIndex] = identities
+		return immutable.Some(identities[index.Value()])
 	} else {
 		return immutable.Some(nodeIdentities[index.Value()])
 	}
