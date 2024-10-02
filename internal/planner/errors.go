@@ -34,6 +34,7 @@ var (
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
 	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
+	ErrUpsertMultipleDocuments             = errors.New("cannot upsert multiple matching documents")
 )
 
 func NewErrUnknownDependency(name string) error {

@@ -1120,7 +1120,18 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	return []*gql.Field{create, update, delete}, nil
+	upsert := &gql.Field{
+		Name:        "upsert_" + obj.Name(),
+		Description: upsertDocumentDescription,
+		Type:        gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
+			request.CreateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
+			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
+		},
+	}
+
+	return []*gql.Field{create, update, delete, upsert}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
@@ -1165,11 +1176,11 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 			fields["_and"] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.AndOperatorDescription,
-				Type:        gql.NewList(selfRefType),
+				Type:        gql.NewList(gql.NewNonNull(selfRefType)),
 			}
 			fields["_or"] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.OrOperatorDescription,
-				Type:        gql.NewList(selfRefType),
+				Type:        gql.NewList(gql.NewNonNull(selfRefType)),
 			}
 			fields["_not"] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.NotOperatorDescription,
@@ -1247,7 +1258,7 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 		fields := gql.InputObjectConfigFieldMap{}
 
 		compoundListType := &gql.InputObjectFieldConfig{
-			Type: gql.NewList(selfRefType),
+			Type: gql.NewList(gql.NewNonNull(selfRefType)),
 		}
 
 		fields["_and"] = compoundListType

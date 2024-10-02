@@ -121,6 +121,9 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 	case mapper.DeleteObjects:
 		return p.DeleteDocs(stmt)
 
+	case mapper.UpsertObjects:
+		return p.UpsertDocs(stmt)
+
 	default:
 		return nil, client.NewErrUnhandledType("mutation", stmt.Type)
 	}
@@ -182,6 +185,9 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 		return p.expandPlan(n.results, parentPlan)
 
 	case *deleteNode:
+		return p.expandPlan(n.source, parentPlan)
+
+	case *upsertNode:
 		return p.expandPlan(n.source, parentPlan)
 
 	case *viewNode:

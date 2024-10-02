@@ -7,6 +7,8 @@
 #
 # Learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
 
+name: An Example Policy
+
 description: A Valid DefraDB Policy Interface (DPI)
 
 actor:

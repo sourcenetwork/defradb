@@ -49,6 +49,7 @@ var (
 	_ explainablePlanNode = (*topLevelNode)(nil)
 	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
+	_ explainablePlanNode = (*upsertNode)(nil)
 )
 
 const (
@@ -56,6 +57,8 @@ const (
 	collectionIDLabel   = "collectionID"
 	collectionNameLabel = "collectionName"
 	inputLabel          = "input"
+	createInputLabel    = "create"
+	updateInputLabel    = "update"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
 	joinRootLabel       = "root"

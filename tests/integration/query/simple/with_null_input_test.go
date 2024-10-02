@@ -334,3 +334,213 @@ func TestQuerySimple_WithNullShowDeleted_Succeeds(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithFilterWithNullOr_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with null or",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_or: null}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullOrElement_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with null or element",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_or: [null]}) {
+						Name
+					}
+				}`,
+				ExpectedError: `Expected "UsersFilterArg!", found null`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullOrField_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with or with null field",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": null
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_or: [{Name: null}]}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": nil,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullAnd_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with null and",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_and: null}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullAndElement_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with null and element",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_and: [null]}) {
+						Name
+					}
+				}`,
+				ExpectedError: `Expected "UsersFilterArg!", found null`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullAndField_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with and with null field",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": null
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_and: [{Name: null}]}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": nil,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullNot_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with null not",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_not: null}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithFilterWithNullNotField_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, with filter with null not field",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {_not: {Name: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

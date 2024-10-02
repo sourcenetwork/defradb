@@ -371,6 +371,11 @@ func (db *db) updateSchema(
 		proposedDescriptionsByName[schema.Name] = schema
 	}
 
+	allExistingCols, err := db.getCollections(ctx, client.CollectionFetchOptions{})
+	if err != nil {
+		return err
+	}
+
 	for _, schema := range proposedDescriptionsByName {
 		previousSchema := existingSchemaByName[schema.Name]
 
@@ -488,17 +493,25 @@ func (db *db) updateSchema(
 			return err
 		}
 
-		allExistingCols, err := db.getCollections(ctx, client.CollectionFetchOptions{})
-		if err != nil {
-			return err
-		}
-
 		oldDefs := make([]client.CollectionDefinition, 0, len(allExistingCols))
 		for _, col := range allExistingCols {
 			oldDefs = append(oldDefs, col.Definition())
 		}
 
-		err = db.validateSchemaUpdate(ctx, oldDefs, definitions)
+		defNames := make(map[string]struct{}, len(definitions))
+		for _, def := range definitions {
+			defNames[def.GetName()] = struct{}{}
+		}
+
+		newDefs := make([]client.CollectionDefinition, 0, len(definitions))
+		newDefs = append(newDefs, definitions...)
+		for _, existing := range allExistingCols {
+			if _, ok := defNames[existing.Definition().GetName()]; !ok {
+				newDefs = append(newDefs, existing.Definition())
+			}
+		}
+
+		err = db.validateSchemaUpdate(ctx, oldDefs, newDefs)
 		if err != nil {
 			return err
 		}

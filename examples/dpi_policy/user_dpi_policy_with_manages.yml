@@ -1,0 +1,49 @@
+# The below policy contains an example with valid DPI compliant resource that can be linked to a collection
+# object during the schema add command to have access control enabled for documents of that collection.
+#
+# This policy specifically has the manages attribute defined under admin relation which gives admin
+# of a resource, the ability to add/remove relationships with `reader` relation name.
+#
+# Learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
+
+name: An Example Policy
+
+description: A Policy
+
+actor:
+  name: actor
+
+resources:
+  users:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor

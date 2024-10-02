@@ -33,6 +33,7 @@ var (
 	_ planNode = (*typeJoinMany)(nil)
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*updateNode)(nil)
+	_ planNode = (*upsertNode)(nil)
 	_ planNode = (*valuesNode)(nil)
 	_ planNode = (*viewNode)(nil)
 	_ planNode = (*lensNode)(nil)

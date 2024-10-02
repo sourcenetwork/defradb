@@ -43,7 +43,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 ) (bool, error) {
 	// Even if acp exists, but there is no policy on the collection (unpermissioned collection)
 	// then we still have unrestricted access.
-	policyID, resourceName, hasPolicy := isPermissioned(collection)
+	policyID, resourceName, hasPolicy := IsPermissioned(collection)
 	if !hasPolicy {
 		return true, nil
 	}

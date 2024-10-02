@@ -71,7 +71,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "UsersFilterArg",
+																"name": nil,
 															},
 														},
 													},
@@ -94,7 +94,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "UsersFilterArg",
+																"name": nil,
 															},
 														},
 													},
@@ -203,7 +203,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "BookFilterArg",
+																"name": nil,
 															},
 														},
 													},
@@ -226,7 +226,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "BookFilterArg",
+																"name": nil,
 															},
 														},
 													},

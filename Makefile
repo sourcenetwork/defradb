@@ -135,6 +135,10 @@ else
 	$(info YAML linter 'yamllint' already installed.)
 endif
 
+.PHONY: deps\:vulncheck
+deps\:vulncheck:
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+
 .PHONY: deps\:lint
 deps\:lint:
 	@$(MAKE) deps:lint-go && \
@@ -172,6 +176,7 @@ deps:
 	$(MAKE) deps:bench && \
 	$(MAKE) deps:chglog && \
 	$(MAKE) deps:lint && \
+	$(MAKE) deps:vulncheck && \
 	$(MAKE) deps:test && \
 	$(MAKE) deps:mocks
 

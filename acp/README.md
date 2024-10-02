@@ -427,6 +427,209 @@ Error:
 
 ### Execute Explain example (coming soon)
 
+### Sharing Private Documents With Others
+
+To share a document (or grant a more restricted access) with another actor, we must add a relationship between the
+actor and the document. Inorder to make the relationship we require all of the following:
+
+1) **Target DocID**: The `docID` of the document we want to make a relationship for.
+2) **Collection Name**: The name of the collection that has the `Target DocID`.
+3) **Relation Name**: The type of relation (name must be defined within the linked policy on collection).
+4) **Target Identity**: The identity of the actor the relationship is being made with.
+5) **Requesting Identity**: The identity of the actor that is making the request.
+
+Note:
+  - ACP must be available (i.e. ACP can not be disabled).
+  - The collection with the target document must have a valid policy and resource linked.
+  - The target document must be registered with ACP already (private document).
+  - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
+  - If the specified relation was not granted the miminum DPI permissions (read or write) within the policy,
+  and a relationship is formed, the subject/actor will still not be able to access (read or write) the resource.
+  - If the relationship already exists, then it will just be a no-op.
+
+Consider the following policy that we have under `examples/dpi_policy/user_dpi_policy_with_manages.yml`:
+
+```yaml
+name: An Example Policy
+
+description: A Policy
+
+actor:
+  name: actor
+
+resources:
+  users:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor
+```
+
+Add the policy:
+```sh
+defradb client acp policy add -f examples/dpi_policy/user_dpi_policy_with_manages.yml \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "PolicyID": "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9"
+}
+```
+
+Add schema, linking to the users resource and our policyID:
+```sh
+defradb client schema add '
+type Users @policy(
+    id: "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9",
+    resource: "users"
+) {
+    name: String
+    age: Int
+}
+'
+```
+
+Result:
+```json
+[
+  {
+    "Name": "Users",
+    "ID": 1,
+    "RootID": 1,
+    "SchemaVersionID": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+    "Sources": [],
+    "Fields": [
+      {
+        "Name": "_docID",
+        "ID": 0,
+        "Kind": null,
+        "RelationName": null,
+        "DefaultValue": null
+      },
+      {
+        "Name": "age",
+        "ID": 1,
+        "Kind": null,
+        "RelationName": null,
+        "DefaultValue": null
+      },
+      {
+        "Name": "name",
+        "ID": 2,
+        "Kind": null,
+        "RelationName": null,
+        "DefaultValue": null
+      }
+    ],
+    "Indexes": [],
+    "Policy": {
+      "ID": "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9",
+      "ResourceName": "users"
+    },
+    "IsMaterialized": true
+  }
+]
+```
+
+Create a private document:
+```sh
+defradb client collection create --name Users '[{ "name": "SecretShahzadLone" }]' \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Only the owner can see it:
+```sh
+defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c",
+  "error": ""
+}
+```
+
+Another actor can not:
+```sh
+defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+```
+
+**Result is empty from the above command**
+
+
+Now let's make the other actor a reader of the document by adding a relationship:
+```sh
+defradb client acp relationship add \
+--collection Users \
+--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+--relation reader \
+--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "ExistedAlready": false
+}
+```
+
+**Note: If the same relationship is created again the `ExistedAlready` would then be true, indicating no-op**
+
+Now the other actor can read:
+```sh
+defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+```
+
+Result:
+```json
+{
+  "docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c",
+  "error": ""
+}
+```
+
+But, they still can not perform an update as they were only granted a read permission (through `reader` relation):
+```sh
+defradb client collection update --name Users --docID "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c" \
+--identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5 '{ "name": "SecretUpdatedShahzad" }'
+```
+
+Result:
+```sh
+Error: document not found or not authorized to access
+```
 
 ## DAC Usage HTTP:
 

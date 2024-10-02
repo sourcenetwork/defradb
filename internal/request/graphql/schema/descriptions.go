@@ -104,6 +104,13 @@ An optional value that specifies as to whether deleted documents may be
 	createDocumentDescription string = `
 Creates one or more documents of this type using the data provided.
 `
+	upsertDocumentDescription string = `
+Update or create a document in this collection using the data provided. The provided filter
+ must match at most one document. The matching document will be updated with the provided 
+ update input, or if no matching document is found, a new document will be created with the
+ provided create input.
+
+NOTE: It is highly recommended to create an index on the fields used to filter.`
 	updateDocumentsDescription string = `
 Updates documents in this collection using the data provided. Only documents
  matching any provided criteria will be updated, if no criteria are provided
@@ -123,6 +130,11 @@ An optional set of docID values that will limit the update to documents
 An optional filter for this update that will limit the update to the documents
  matching the given criteria. If no matching documents are found, the operation
  will succeed, but no documents will be updated.
+`
+	upsertFilterArgDescription string = `
+A required filter for this upsert that must match one or zero documents.
+ If a matching document is found it will be updated, otherwise a new
+ document will be created.
 `
 	deleteDocumentsDescription string = `
 Deletes documents in this collection matching any provided criteria. If no
