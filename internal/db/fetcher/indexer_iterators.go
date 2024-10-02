@@ -253,6 +253,8 @@ func (iter *inIndexIterator) Close() error {
 	return nil
 }
 
+// arrayIndexIterator is an iterator indexed array elements.
+// It keeps track of the already fetched documents to avoid duplicates.
 type arrayIndexIterator struct {
 	inner indexIterator
 
@@ -531,6 +533,7 @@ type anyMatcher struct{}
 
 func (m *anyMatcher) Match(client.NormalValue) (bool, error) { return true, nil }
 
+// invertedMatcher inverts the result of the inner matcher.
 type invertedMatcher struct {
 	matcher valueMatcher
 }
@@ -810,7 +813,6 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					for subKey, subVal := range subCondMap {
 						arrKind, ok := cond.kind.(client.ScalarArrayKind)
 						if !ok {
-							// TODO: can this be tested?
 							return nil, NewErrNotSupportedKindByIndex(cond.kind)
 						}
 

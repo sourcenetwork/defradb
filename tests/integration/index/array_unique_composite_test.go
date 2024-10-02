@@ -117,7 +117,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayUniqueCompositeIndex_IfDocIsUpdateThatViolatesUniqueness_Error(t *testing.T) {
+func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -150,7 +150,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdateThatViolatesUniqueness_Error(t *
 					"nfts2": [2, 5, 3]
 				}`,
 				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-60c91295-7105-565d-817e-a082b04aa311",
+					"bae-f6b3ab5a-dfa4-53fd-a320-a3e203a9e6f5",
 					errors.NewKV("nfts1", []int64{1}), errors.NewKV("nfts2", []int64{2, 5, 3})).Error(),
 			},
 		},

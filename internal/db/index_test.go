@@ -529,35 +529,6 @@ func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 		f.users.Description().Indexes)
 }
 
-func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T) {
-	f := newIndexTestFixtureBare(t)
-
-	const unsupportedKind = client.FieldKind_BOOL_ARRAY
-
-	_, err := f.db.AddSchema(
-		f.ctx,
-		`type testTypeCol {
-			field: [Boolean!]
-		}`,
-	)
-	require.NoError(f.t, err)
-
-	collection, err := f.db.GetCollectionByName(f.ctx, "testTypeCol")
-	require.NoError(f.t, err)
-
-	indexDesc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{
-			{Name: "field"},
-		},
-	}
-
-	f.txn, err = f.db.NewTxn(f.ctx, false)
-	require.NoError(f.t, err)
-
-	_, err = f.createCollectionIndexFor(collection.Name().Value(), indexDesc)
-	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
-}
-
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
@@ -894,43 +865,6 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 	require.Equal(t, 1, len(indexes))
 	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
-}
-
-func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *testing.T) {
-	f := newIndexTestFixtureBare(t)
-
-	const unsupportedKind = client.FieldKind_BOOL_ARRAY
-	_, err := f.db.AddSchema(
-		f.ctx,
-		`type testTypeCol {
-			name: String
-			field: [Boolean!]
-		}`,
-	)
-	require.NoError(f.t, err)
-
-	collection, err := f.db.GetCollectionByName(f.ctx, "testTypeCol")
-	require.NoError(f.t, err)
-
-	f.txn, err = f.db.NewTxn(f.ctx, false)
-	require.NoError(f.t, err)
-
-	indexDesc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{
-			{Name: "field"},
-		},
-	}
-	indexDescData, err := json.Marshal(indexDesc)
-	require.NoError(t, err)
-
-	mockedTxn := f.mockTxn()
-	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
-	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(mocks.NewQueryResultsWithValues(t, indexDescData), nil)
-
-	ctx := SetContextTxn(f.ctx, mockedTxn)
-	_, err = collection.GetIndexes(ctx)
-	require.ErrorIs(t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 }
 
 func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {

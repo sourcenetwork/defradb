@@ -459,6 +459,7 @@ func (index *collectionArrayBaseIndex) newIndexKeyGenerator(
 		return nil, err
 	}
 
+	// Collect unique values to use as source for generating keys
 	normValsArr := make([][]client.NormalValue, 0, len(index.arrFieldsIndexes))
 	for _, arrFieldIndex := range index.arrFieldsIndexes {
 		arrVal := key.Fields[arrFieldIndex].Value
@@ -521,15 +522,15 @@ func (index *collectionArrayBaseIndex) getAllKeys(
 	if err != nil {
 		return nil, err
 	}
-	oldKeys := make([]core.IndexDataStoreKey, 0)
+	keys := make([]core.IndexDataStoreKey, 0)
 	for {
 		key, ok := getNextOldKey()
 		if !ok {
 			break
 		}
-		oldKeys = append(oldKeys, key)
+		keys = append(keys, key)
 	}
-	return oldKeys, nil
+	return keys, nil
 }
 
 func (index *collectionArrayBaseIndex) deleteRetiredKeysAndReturnNew(

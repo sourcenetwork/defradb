@@ -254,11 +254,12 @@ func DecodeIndexDataStoreKey(
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
 
-		if kind.IsArray() {
+		if kind != nil && kind.IsArray() {
 			if arrKind, ok := kind.(client.ScalarArrayKind); ok {
 				kind = arrKind.SubKind()
 			}
 		}
+
 		var val client.NormalValue
 		data, val, err = encoding.DecodeFieldValue(data, descending, kind)
 		if err != nil {
