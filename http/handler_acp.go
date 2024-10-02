@@ -46,6 +46,35 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, addPolicyResult)
 }
 
+func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
+	db, ok := req.Context().Value(dbContextKey).(client.DB)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
+		return
+	}
+
+	var message addDocActorRelationshipRequest
+	err := requestJSON(req, &message)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	addDocActorRelResult, err := db.AddDocActorRelationship(
+		req.Context(),
+		message.CollectionName,
+		message.DocID,
+		message.Relation,
+		message.TargetActor,
+	)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, addDocActorRelResult)
+}
+
 func (h *acpHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -69,5 +98,21 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Value: acpAddPolicyRequest,
 	}
 
+	acpAddDocActorRelationshipRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
+
+	acpAddDocActorRelationship := openapi3.NewOperation()
+	acpAddDocActorRelationship.OperationID = "add relationship"
+	acpAddDocActorRelationship.Description = "Add an actor relationship using acp system"
+	acpAddDocActorRelationship.Tags = []string{"acp_relationship"}
+	acpAddDocActorRelationship.Responses = openapi3.NewResponses()
+	acpAddDocActorRelationship.Responses.Set("200", successResponse)
+	acpAddDocActorRelationship.Responses.Set("400", errorResponse)
+	acpAddDocActorRelationship.RequestBody = &openapi3.RequestBodyRef{
+		Value: acpAddDocActorRelationshipRequest,
+	}
+
 	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
+	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)
 }

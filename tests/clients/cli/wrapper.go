@@ -175,26 +175,6 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
-func (w *Wrapper) AddPolicy(
-	ctx context.Context,
-	policy string,
-) (client.AddPolicyResult, error) {
-	args := []string{"client", "acp", "policy", "add"}
-	args = append(args, policy)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	var addPolicyResult client.AddPolicyResult
-	if err := json.Unmarshal(data, &addPolicyResult); err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	return addPolicyResult, err
-}
-
 func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)

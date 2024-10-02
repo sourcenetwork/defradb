@@ -261,3 +261,53 @@ func (a *acpSourceHub) VerifyAccessRequest(
 func (a *acpSourceHub) Close() error {
 	return nil
 }
+
+func (a *acpSourceHub) AddActorRelationship(
+	ctx context.Context,
+	policyID string,
+	resourceName string,
+	objectID string,
+	relation string,
+	requester identity.Identity,
+	targetActor string,
+	creationTime *protoTypes.Timestamp,
+) (bool, error) {
+	msgSet := sourcehub.MsgSet{}
+	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
+		Creator:     a.signer.GetAccAddress(),
+		BearerToken: requester.BearerToken,
+		PolicyId:    policyID,
+		Cmd: acptypes.NewSetRelationshipCmd(
+			acptypes.NewActorRelationship(
+				resourceName,
+				objectID,
+				relation,
+				targetActor,
+			),
+		),
+		CreationTime: creationTime,
+	})
+	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
+	if err != nil {
+		return false, err
+	}
+	resp, err := a.client.BroadcastTx(ctx, tx)
+	if err != nil {
+		return false, err
+	}
+
+	result, err := a.client.AwaitTx(ctx, resp.TxHash)
+	if err != nil {
+		return false, err
+	}
+	if result.Error() != nil {
+		return false, result.Error()
+	}
+
+	cmdResult, err := cmdMapper.Map(result.TxPayload())
+	if err != nil {
+		return false, err
+	}
+
+	return cmdResult.GetResult().GetSetRelationshipResult().RecordExisted, nil
+}

@@ -85,6 +85,27 @@ type sourceHubClient interface {
 		docID string,
 	) (bool, error)
 
+	// AddActorRelationship creates a relationship within a policy which ties the target actor
+	// with the specified object, which means that the set of high level rules defined in the
+	// policy will now apply to target actor as well.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship with actor already existed (no-op), and false if a new
+	// relationship was made.
+	//
+	// Note: The requester identity must either be the owner of the object (being shared) or
+	//       the manager (i.e. the relation has `manages` defined in the policy).
+	AddActorRelationship(
+		ctx context.Context,
+		policyID string,
+		resourceName string,
+		objectID string,
+		relation string,
+		requester identity.Identity,
+		targetActor string,
+		creationTime *protoTypes.Timestamp,
+	) (bool, error)
+
 	// Close closes any resources in use by acp.
 	Close() error
 }
@@ -333,6 +354,70 @@ func (a *sourceHubBridge) CheckDocAccess(
 		)
 		return false, nil
 	}
+}
+
+func (a *sourceHubBridge) AddDocActorRelationship(
+	ctx context.Context,
+	policyID string,
+	resourceName string,
+	docID string,
+	relation string,
+	requestActor identity.Identity,
+	targetActor string,
+) (bool, error) {
+	if policyID == "" ||
+		resourceName == "" ||
+		docID == "" ||
+		relation == "" ||
+		requestActor == (identity.Identity{}) ||
+		targetActor == "" {
+		return false, NewErrMissingRequiredArgToAddDocActorRelationship(
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	exists, err := a.client.AddActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		requestActor,
+		targetActor,
+		protoTypes.TimestampNow(),
+	)
+
+	if err != nil {
+		return false, NewErrFailedToAddDocActorRelationshipWithACP(
+			err,
+			"Local",
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	log.InfoContext(
+		ctx,
+		"Document and actor relationship set",
+		corelog.Any("PolicyID", policyID),
+		corelog.Any("ResourceName", resourceName),
+		corelog.Any("DocID", docID),
+		corelog.Any("Relation", relation),
+		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("TargetActor", targetActor),
+		corelog.Any("Existed", exists),
+	)
+
+	return exists, nil
 }
 
 func (a *sourceHubBridge) SupportsP2P() bool {
