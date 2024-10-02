@@ -61,10 +61,10 @@ func TestQueryCommits_WithDelete(t *testing.T) {
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
-									"name": "name",
+									"name": "age",
 								},
 								{
-									"name": "age",
+									"name": "name",
 								},
 							},
 						},
