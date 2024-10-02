@@ -234,7 +234,6 @@ indexLoop:
 					require.Greater(b.f.t, len(arrVals), 0, "empty array can not be indexed")
 					val = arrVals[0]
 				}
-
 			}
 			descending := false
 			if i < len(b.descendingFields) {
