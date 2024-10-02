@@ -82,6 +82,11 @@ type DAGLink struct {
 	// Name is the name of the link.
 	//
 	// This will be either the field name of the CRDT delta or "_head" for the head link.
+	//
+	// This field currently serves no purpose and is duplicating data already held on the target
+	// block.  However we want to have this long term to enable some fancy P2P magic to allow users
+	// to configure the collection to only sync particular fields using
+	// [GraphSync](https://github.com/ipfs/go-graphsync) which will need to make use of this property.
 	Name string
 	// Link is the CID link to the object.
 	cidlink.Link
