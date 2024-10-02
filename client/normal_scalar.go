@@ -40,10 +40,7 @@ func (v normalBool) Bool() (bool, bool) {
 }
 
 func (v normalBool) IsEqual(other NormalValue) bool {
-	if otherVal, ok := other.Bool(); ok {
-		return v.val == otherVal
-	}
-	return false
+	return areNormalScalarsEqual(v.val, other.Bool)
 }
 
 type normalInt struct {
