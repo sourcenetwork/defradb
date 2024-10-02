@@ -651,10 +651,21 @@ func (g *Generator) genAggregateFields() error {
 			return err
 		}
 		t.AddFieldConfig(averageField.Name, &averageField)
+
+		maxField, err := g.genMaximumFieldConfig(t)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(maxField.Name, &maxField)
+
+		minField, err := g.genMinimumFieldConfig(t)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(minField.Name, &minField)
 	}
 
 	queryType := g.manager.schema.QueryType()
-
 	topLevelCountField := genTopLevelCount(topLevelCountInputs)
 	queryType.AddFieldConfig(topLevelCountField.Name, topLevelCountField)
 
@@ -695,12 +706,33 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 		Args:        gql.FieldConfigArgument{},
 	}
 
+	topLevelMaximumField := gql.Field{
+		Name:        request.MaxFieldName,
+		Description: schemaTypes.MaximumFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
+
+	topLevelMinimumField := gql.Field{
+		Name:        request.MinFieldName,
+		Description: schemaTypes.MinimumFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
+
 	for name, inputObject := range topLevelNumericAggInputs {
 		topLevelSumField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 		topLevelAverageField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
+		topLevelMaximumField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
+		topLevelMinimumField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
 
-	return []*gql.Field{&topLevelSumField, &topLevelAverageField}
+	return []*gql.Field{
+		&topLevelSumField,
+		&topLevelAverageField,
+		&topLevelMaximumField,
+		&topLevelMinimumField,
+	}
 }
 
 func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
@@ -741,31 +773,6 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 }
 
 func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
-	childTypesByFieldName := map[string]gql.Type{}
-
-	for _, field := range obj.Fields() {
-		// we can only sum list items
-		listType, isList := field.Type.(*gql.List)
-		if !isList {
-			continue
-		}
-
-		var inputObjectName string
-		if isNumericArray(listType) {
-			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
-		} else {
-			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
-		}
-
-		subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[inputObjectName]
-		// If the item is not in the type map, it must contain no summable
-		//  fields (e.g. no Int/Floats)
-		if !isSubTypeSumable {
-			continue
-		}
-		childTypesByFieldName[field.Name] = subSumType
-	}
-
 	field := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
@@ -773,18 +780,61 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 		Args:        gql.FieldConfigArgument{},
 	}
 
+	childTypesByFieldName := g.getNumericFields(obj)
 	for name, inputObject := range childTypesByFieldName {
 		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
+	return field, nil
+}
 
+func (g *Generator) genMinimumFieldConfig(obj *gql.Object) (gql.Field, error) {
+	field := gql.Field{
+		Name:        request.MinFieldName,
+		Description: schemaTypes.MinimumFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
+
+	childTypesByFieldName := g.getNumericFields(obj)
+	for name, inputObject := range childTypesByFieldName {
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
+	}
+	return field, nil
+}
+
+func (g *Generator) genMaximumFieldConfig(obj *gql.Object) (gql.Field, error) {
+	field := gql.Field{
+		Name:        request.MaxFieldName,
+		Description: schemaTypes.MaximumFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
+
+	childTypesByFieldName := g.getNumericFields(obj)
+	for name, inputObject := range childTypesByFieldName {
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
+	}
 	return field, nil
 }
 
 func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
-	childTypesByFieldName := map[string]gql.Type{}
+	field := gql.Field{
+		Name:        request.AverageFieldName,
+		Description: schemaTypes.AverageFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
 
+	childTypesByFieldName := g.getNumericFields(obj)
+	for name, inputObject := range childTypesByFieldName {
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
+	}
+	return field, nil
+}
+
+func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
+	fieldTypes := map[string]gql.Type{}
 	for _, field := range obj.Fields() {
-		// we can only sum list items
 		listType, isList := field.Type.(*gql.List)
 		if !isList {
 			continue
@@ -798,26 +848,12 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 		}
 
 		subAverageType, isSubTypeAveragable := g.manager.schema.TypeMap()[inputObjectName]
-		// If the item is not in the type map, it must contain no averagable
-		//  fields (e.g. no Int/Floats)
 		if !isSubTypeAveragable {
 			continue
 		}
-		childTypesByFieldName[field.Name] = subAverageType
+		fieldTypes[field.Name] = subAverageType
 	}
-
-	field := gql.Field{
-		Name:        request.AverageFieldName,
-		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.Float,
-		Args:        gql.FieldConfigArgument{},
-	}
-
-	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
-	}
-
-	return field, nil
+	return fieldTypes
 }
 
 func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.InputObject {
@@ -953,6 +989,8 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			// A child aggregate will always be aggregatable, as it can be present via an inner grouping
 			fieldsEnumCfg.Values[request.SumFieldName] = &gql.EnumValueConfig{Value: request.SumFieldName}
 			fieldsEnumCfg.Values[request.AverageFieldName] = &gql.EnumValueConfig{Value: request.AverageFieldName}
+			fieldsEnumCfg.Values[request.MinFieldName] = &gql.EnumValueConfig{Value: request.MinFieldName}
+			fieldsEnumCfg.Values[request.MaxFieldName] = &gql.EnumValueConfig{Value: request.MaxFieldName}
 
 			if !hasSumableFields {
 				return nil, nil

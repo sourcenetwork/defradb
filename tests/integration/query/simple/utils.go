@@ -31,7 +31,8 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
-			Description: test.Description,
+			Description:            test.Description,
+			SupportedMutationTypes: test.SupportedMutationTypes,
 			Actions: append(
 				[]any{
 					testUtils.SchemaUpdate{

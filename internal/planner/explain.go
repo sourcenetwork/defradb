@@ -39,6 +39,8 @@ var (
 	_ explainablePlanNode = (*deleteNode)(nil)
 	_ explainablePlanNode = (*groupNode)(nil)
 	_ explainablePlanNode = (*limitNode)(nil)
+	_ explainablePlanNode = (*maxNode)(nil)
+	_ explainablePlanNode = (*minNode)(nil)
 	_ explainablePlanNode = (*orderNode)(nil)
 	_ explainablePlanNode = (*scanNode)(nil)
 	_ explainablePlanNode = (*selectNode)(nil)
