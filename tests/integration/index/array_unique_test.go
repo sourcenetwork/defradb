@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestArrayCompositeUniqueIndex_UponDocCreationWithArrayElementThatExists_Error(t *testing.T) {
+func TestArrayUniqueIndex_UponDocCreationWithArrayElementThatExists_Error(t *testing.T) {
 	req := `query {
 		User(filter: {nfts: {_any: {_eq: 30}}}) {
 			name
@@ -63,7 +63,7 @@ func TestArrayCompositeUniqueIndex_UponDocCreationWithArrayElementThatExists_Err
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayCompositeUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *testing.T) {
+func TestArrayUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -94,7 +94,7 @@ func TestArrayCompositeUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayCompositeUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) {
+func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) {
 	req := `query {
 		User(filter: {nfts: {_any: {_eq: 60}}}) {
 			name
@@ -145,7 +145,7 @@ func TestArrayCompositeUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayCompositeUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testing.T) {
+func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -182,7 +182,7 @@ func TestArrayCompositeUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayCompositeUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
+func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -206,6 +206,187 @@ func TestArrayCompositeUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 			},
 			testUtils.DeleteDoc{
 				DocID: 1,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int] @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, null, 2, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [10, 20, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [33, 44, 55]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_any: {_eq: 2}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_any: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int] @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, null, 2, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [10, 20, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [33, 44, 55]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"numbers": [null, null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_all: {_ge: 10}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_all: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int] @index(unique: true)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, null, 2, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [10, 20, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [33, 44, 55]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_none: {_ge: 10}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_none: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
 			},
 		},
 	}

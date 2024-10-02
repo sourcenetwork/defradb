@@ -920,3 +920,184 @@ func TestArrayIndex_WithAnyAndNinOperator_Succeed(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestArrayIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, null, 2, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [10, 20, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [33, 44, 55]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_any: {_eq: 2}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_any: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, null, 2, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [10, 20, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [33, 44, 55]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"numbers": [null, null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_all: {_ge: 10}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_all: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestArrayIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						numbers: [Int] @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"numbers": [0, null, 2, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"numbers": [10, 20, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"numbers": [33, 44, 55]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_none: {_ge: 10}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {numbers: {_none: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

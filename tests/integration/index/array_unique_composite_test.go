@@ -158,3 +158,47 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdateThatViolatesUniqueness_Error(t *
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(unique: true, includes: [{name: "nfts1"}, {name: "nfts2"}]) {
+						name: String 
+						nfts1: [Int] 
+						nfts2: [Int] 
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"nfts1": [1, null],
+					"nfts2": [null, 1, 3, null]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"nfts1": [1, null, 2],
+					"nfts2": [2, 4, null, 5, 6, null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(filter: {nfts1: {_any: {_eq: null}}, nfts2: {_any: {_eq: null}}}) {
+							name
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

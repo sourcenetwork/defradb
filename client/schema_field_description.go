@@ -56,7 +56,7 @@ type SchemaFieldDescription struct {
 type ScalarKind uint8
 
 // ScalarArrayKind represents arrays of simple scalar field kinds, such as `[Int]`.
-type ScalarArrayKind ScalarKind
+type ScalarArrayKind uint8
 
 // CollectionKind represents a relationship with a [CollectionDescription].
 type CollectionKind struct {
@@ -187,7 +187,26 @@ func (k ScalarArrayKind) IsArray() bool {
 }
 
 func (k ScalarArrayKind) SubKind() FieldKind {
-	return FieldKind(k)
+	switch k {
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return FieldKind_NILLABLE_BOOL
+	case FieldKind_BOOL_ARRAY:
+		return FieldKind_NILLABLE_BOOL
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return FieldKind_NILLABLE_INT
+	case FieldKind_INT_ARRAY:
+		return FieldKind_NILLABLE_INT
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_FLOAT_ARRAY:
+		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return FieldKind_NILLABLE_STRING
+	case FieldKind_STRING_ARRAY:
+		return FieldKind_NILLABLE_STRING
+	default:
+		return FieldKind_None
+	}
 }
 
 func NewCollectionKind(root uint32, isArray bool) *CollectionKind {
