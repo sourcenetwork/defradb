@@ -31,6 +31,12 @@ type CompositeDAGDelta struct {
 	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
+	//
+	// This property is deliberately duplicated from field-level blocks as it makes the P2P code
+	// quite a lot easier - we can remove this from here at some point if we want to.
+	//
+	// Conversely we could remove this from the field-level commits and leave it on the composite,
+	// however that would complicate commit-queries and would require us to maintain an index elsewhere.
 	SchemaVersionID string
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
