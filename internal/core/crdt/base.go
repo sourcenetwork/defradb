@@ -34,6 +34,8 @@ type baseCRDT struct {
 	// It can be used to identify the collection datastructure state at the time of commit.
 	schemaVersionKey core.CollectionSchemaVersionKey
 
+	// fieldName holds the name of the field hosting this CRDT, if this is a field level
+	// commit.
 	fieldName string
 }
 

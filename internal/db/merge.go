@@ -443,7 +443,6 @@ func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, 
 			mp.txn,
 			schemaVersionKey,
 			mp.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
-			"",
 		)
 		mp.mCRDTs[field] = mcrdt
 		return mcrdt, nil

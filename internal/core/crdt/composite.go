@@ -26,9 +26,8 @@ import (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
-	DocID     []byte
-	FieldName string
-	Priority  uint64
+	DocID    []byte
+	Priority uint64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
@@ -47,7 +46,6 @@ func (delta *CompositeDAGDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CompositeDAGDelta struct {
 		docID     		Bytes
-		fieldName 		String
 		priority  		Int
 		schemaVersionID String
 		status          Int
@@ -75,9 +73,8 @@ func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
-	fieldName string,
 ) CompositeDAG {
-	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
+	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, "")}
 }
 
 // Value is a no-op for a CompositeDAG.
@@ -89,7 +86,6 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 func (c CompositeDAG) Set(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{
 		DocID:           []byte(c.key.DocID),
-		FieldName:       c.fieldName,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
 		Status:          status,
 	}

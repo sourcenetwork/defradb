@@ -920,7 +920,6 @@ func (c *collection) saveCompositeToMerkleCRDT(
 		txn,
 		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 		dsKey,
-		"",
 	)
 
 	if status.IsDeleted() {

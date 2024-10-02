@@ -46,7 +46,6 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 		Delta: crdt.CRDT{
 			CompositeDAGDelta: &crdt.CompositeDAGDelta{
 				DocID:           []byte("docID"),
-				FieldName:       "C",
 				Priority:        1,
 				SchemaVersionID: "schemaVersionID",
 				Status:          1,
@@ -87,7 +86,6 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 		Delta: crdt.CRDT{
 			CompositeDAGDelta: &crdt.CompositeDAGDelta{
 				DocID:           []byte("docID"),
-				FieldName:       "C",
 				Priority:        2,
 				SchemaVersionID: "schemaVersionID",
 				Status:          1,

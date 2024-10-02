@@ -262,7 +262,6 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 	compositeBlock := coreblock.New(
 		&crdt.CompositeDAGDelta{
 			DocID:           d.docID,
-			FieldName:       "",
 			Priority:        newPriority,
 			SchemaVersionID: d.col.Schema().VersionID,
 			Status:          1,
