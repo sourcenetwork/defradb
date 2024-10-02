@@ -588,6 +588,36 @@
                 ]
             }
         },
+        "/acp/relationship": {
+            "post": {
+                "description": "Add an actor relationship using acp system",
+                "operationId": "add relationship",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_relationship"
+                ]
+            }
+        },
         "/backup/export": {
             "post": {
                 "description": "Export a database backup to file",

@@ -163,13 +163,9 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 		p:          p,
 		filter:     parsed.Filter,
 		docIDs:     parsed.DocIDs.Value(),
+		input:      parsed.UpdateInput,
 		isUpdating: true,
 		docMapper:  docMapper{parsed.DocumentMapping},
-	}
-
-	// update mutation only supports a single input
-	if len(parsed.Input) > 0 {
-		update.input = parsed.Input[0]
 	}
 
 	// get collection

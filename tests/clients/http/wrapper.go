@@ -105,6 +105,22 @@ func (w *Wrapper) AddPolicy(
 	return w.client.AddPolicy(ctx, policy)
 }
 
+func (w *Wrapper) AddDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddDocActorRelationshipResult, error) {
+	return w.client.AddDocActorRelationship(
+		ctx,
+		collectionName,
+		docID,
+		relation,
+		targetActor,
+	)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,

@@ -42,4 +42,5 @@ Learn more about [ACP](/acp/README.md)
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client acp policy](defradb_client_acp_policy.md)	 - Interact with the acp policy features of DefraDB instance
+* [defradb client acp relationship](defradb_client_acp_relationship.md)	 - Interact with the acp relationship features of DefraDB instance
 

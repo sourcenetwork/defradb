@@ -29,3 +29,10 @@ type AddPolicyResult struct {
 	// upon successful creation of a policy.
 	PolicyID string
 }
+
+// AddDocActorRelationshipResult wraps the result of making a document-actor relationship.
+type AddDocActorRelationshipResult struct {
+	// ExistedAlready is true if the relationship existed already (no-op), and
+	// it is false if a new relationship was created.
+	ExistedAlready bool
+}

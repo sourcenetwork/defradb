@@ -215,14 +215,14 @@ func buildFilterArg(objectName string, fields []argDef) Field {
 
 	inputFields := []any{
 		makeInputObject("_and", nil, map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
+			"kind": "NON_NULL",
+			"name": nil,
 		}),
 		makeInputObject("_docID", "IDOperatorBlock", nil),
 		makeInputObject("_not", filterArgName, nil),
 		makeInputObject("_or", nil, map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
+			"kind": "NON_NULL",
+			"name": nil,
 		}),
 	}
 

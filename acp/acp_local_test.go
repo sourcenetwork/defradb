@@ -663,11 +663,226 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	require.Nil(t, errClose)
 }
 
+func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoOp(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	errStart := localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	policyID, errAddPolicy := localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	// Register a document.
+	errRegisterDoc := localACP.RegisterDocObject(
+		ctx,
+		identity1,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errRegisterDoc)
+
+	// Other identity does not have access yet.
+	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.False(t, hasAccess)
+
+	// Grant other identity access.
+	exists, errAddDocActorRelationship := localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errAddDocActorRelationship)
+	require.False(t, exists)
+
+	// Granting again will be no-op
+	exists, errAddDocActorRelationship = localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errAddDocActorRelationship)
+	require.True(t, exists) // Exists already this time
+
+	// Now the other identity has access.
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.True(t, hasAccess)
+
+	errClose := localACP.Close()
+	require.Nil(t, errClose)
+}
+
+func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoOp(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	errStart := localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	policyID, errAddPolicy := localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	// Register a document.
+	errRegisterDoc := localACP.RegisterDocObject(
+		ctx,
+		identity1,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errRegisterDoc)
+
+	// Other identity does not have access yet.
+	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.False(t, hasAccess)
+
+	// Grant other identity access.
+	exists, errAddDocActorRelationship := localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errAddDocActorRelationship)
+	require.False(t, exists)
+
+	// Granting again will be no-op
+	exists, errAddDocActorRelationship = localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errAddDocActorRelationship)
+	require.True(t, exists) // Exists already this time
+
+	// Now the other identity has access.
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.True(t, hasAccess)
+
+	// Should continue having their correct behaviour and access even after a restart.
+	errClose := localACP.Close()
+	require.Nil(t, errClose)
+
+	localACP.Init(ctx, acpPath)
+	errStart = localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	// Now check again after the restart that the second identity still has access.
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.True(t, hasAccess)
+
+	errClose = localACP.Close()
+	require.Nil(t, errClose)
+}
+
 func Test_LocalACP_InMemory_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
 	ctx := context.Background()
 	localACP := NewLocalACP()
 
 	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	policyID, err := localACP.AddPolicy(
+		ctx,
+		invalidIdentity,
+		validPolicy,
+	)
+
+	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.Empty(t, policyID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
 	require.Nil(t, err)
 
@@ -706,30 +921,6 @@ func Test_LocalACP_InMemory_RegisterObject_InvalidCreatorIDReturnsError(t *testi
 	require.NoError(t, err)
 }
 
-func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
-	acpPath := t.TempDir()
-	require.NotEqual(t, "", acpPath)
-
-	ctx := context.Background()
-	localACP := NewLocalACP()
-
-	localACP.Init(ctx, acpPath)
-	err := localACP.Start(ctx)
-	require.Nil(t, err)
-
-	policyID, err := localACP.AddPolicy(
-		ctx,
-		invalidIdentity,
-		validPolicy,
-	)
-
-	require.ErrorIs(t, err, ErrInvalidActorID)
-	require.Empty(t, policyID)
-
-	err = localACP.Close()
-	require.NoError(t, err)
-}
-
 func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *testing.T) {
 	acpPath := t.TempDir()
 	require.NotEqual(t, "", acpPath)
@@ -750,6 +941,85 @@ func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *tes
 	)
 
 	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	// Invalid requesting identity.
+	exists, err := localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		invalidIdentity,
+		identity2.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	// Invalid target actor.
+	exists, err = localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		invalidIdentity.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrFailedToAddDocActorRelationshipWithACP)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	// Invalid requesting identity.
+	exists, err := localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		invalidIdentity,
+		identity2.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	// Invalid target actor.
+	exists, err = localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		invalidIdentity.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrFailedToAddDocActorRelationshipWithACP)
 
 	err = localACP.Close()
 	require.NoError(t, err)

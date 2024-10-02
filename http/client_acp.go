@@ -11,7 +11,9 @@
 package http
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -41,4 +43,52 @@ func (c *Client) AddPolicy(
 	}
 
 	return policyResult, nil
+}
+
+type addDocActorRelationshipRequest struct {
+	CollectionName string
+	DocID          string
+	Relation       string
+	TargetActor    string
+}
+
+func (c *Client) AddDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddDocActorRelationshipResult, error) {
+	methodURL := c.http.baseURL.JoinPath("acp", "relationship")
+
+	body, err := json.Marshal(
+		addDocActorRelationshipRequest{
+			CollectionName: collectionName,
+			DocID:          docID,
+			Relation:       relation,
+			TargetActor:    targetActor,
+		},
+	)
+
+	if err != nil {
+		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		methodURL.String(),
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	var addDocActorRelResult client.AddDocActorRelationshipResult
+	if err := c.http.requestJson(req, &addDocActorRelResult); err != nil {
+		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	return addDocActorRelResult, nil
 }

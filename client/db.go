@@ -106,6 +106,20 @@ type DB interface {
 	//
 	// Note: A policy can not be added without the creatorID (identity).
 	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
+
+	// AddDocActorRelationship creates a relationship between document and the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship already existed (no-op), and false if a new relationship was made.
+	//
+	// Note: The request actor must either be the owner or manager of the document.
+	AddDocActorRelationship(
+		ctx context.Context,
+		collectionName string,
+		docID string,
+		relation string,
+		targetActor string,
+	) (AddDocActorRelationshipResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.

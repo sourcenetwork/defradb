@@ -14,13 +14,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// isPermissioned returns true if the collection has a policy, otherwise returns false.
+// IsPermissioned returns true if the collection has a policy, otherwise returns false.
 //
 // This tells us if access control is enabled for this collection or not.
 //
 // When there is a policy, in addition to returning true in the last return value, the
 // first returned value is policyID, second is the resource name.
-func isPermissioned(collection client.Collection) (string, string, bool) {
+func IsPermissioned(collection client.Collection) (string, string, bool) {
 	policy := collection.Definition().Description.Policy
 	if policy.HasValue() &&
 		policy.Value().ID != "" &&
