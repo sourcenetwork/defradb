@@ -26,6 +26,12 @@ import (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
+	// This property is duplicated from field-level blocks.
+	//
+	// We could remove this without much hassle from the composite, however long-term
+	// the ideal solution would be to remove it from the field-level commits *excluding*
+	// the initial field level commit where it must exist in order to scope it to a particular
+	// document.  This would require a local index in order to handle field level commit-queries.
 	DocID    []byte
 	Priority uint64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
