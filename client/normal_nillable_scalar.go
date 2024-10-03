@@ -48,7 +48,7 @@ func (v normalNillableBool) NillableBool() (immutable.Option[bool], bool) {
 	return v.val, true
 }
 
-func (v normalNillableBool) IsEqual(other NormalValue) bool {
+func (v normalNillableBool) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableBool)
 }
 
@@ -60,7 +60,7 @@ func (v normalNillableInt) NillableInt() (immutable.Option[int64], bool) {
 	return v.val, true
 }
 
-func (v normalNillableInt) IsEqual(other NormalValue) bool {
+func (v normalNillableInt) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableInt)
 }
 
@@ -72,7 +72,7 @@ func (v normalNillableFloat) NillableFloat() (immutable.Option[float64], bool) {
 	return v.val, true
 }
 
-func (v normalNillableFloat) IsEqual(other NormalValue) bool {
+func (v normalNillableFloat) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableFloat)
 }
 
@@ -84,7 +84,7 @@ func (v normalNillableString) NillableString() (immutable.Option[string], bool) 
 	return v.val, true
 }
 
-func (v normalNillableString) IsEqual(other NormalValue) bool {
+func (v normalNillableString) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableString)
 }
 
@@ -96,7 +96,7 @@ func (v normalNillableBytes) NillableBytes() (immutable.Option[[]byte], bool) {
 	return v.val, true
 }
 
-func (v normalNillableBytes) IsEqual(other NormalValue) bool {
+func (v normalNillableBytes) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.NillableBytes)
 }
 
@@ -108,7 +108,7 @@ func (v normalNillableTime) NillableTime() (immutable.Option[time.Time], bool) {
 	return v.val, true
 }
 
-func (v normalNillableTime) IsEqual(other NormalValue) bool {
+func (v normalNillableTime) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableTime)
 }
 
@@ -120,7 +120,7 @@ func (v normalNillableDocument) NillableDocument() (immutable.Option[*Document],
 	return v.val, true
 }
 
-func (v normalNillableDocument) IsEqual(other NormalValue) bool {
+func (v normalNillableDocument) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableDocument)
 }
 

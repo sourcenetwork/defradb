@@ -41,7 +41,7 @@ func (v normalBoolArray) BoolArray() ([]bool, bool) {
 	return v.val, true
 }
 
-func (v normalBoolArray) IsEqual(other NormalValue) bool {
+func (v normalBoolArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.BoolArray)
 }
 
@@ -53,7 +53,7 @@ func (v normalIntArray) IntArray() ([]int64, bool) {
 	return v.val, true
 }
 
-func (v normalIntArray) IsEqual(other NormalValue) bool {
+func (v normalIntArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.IntArray)
 }
 
@@ -65,7 +65,7 @@ func (v normalFloatArray) FloatArray() ([]float64, bool) {
 	return v.val, true
 }
 
-func (v normalFloatArray) IsEqual(other NormalValue) bool {
+func (v normalFloatArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.FloatArray)
 }
 
@@ -77,7 +77,7 @@ func (v normalStringArray) StringArray() ([]string, bool) {
 	return v.val, true
 }
 
-func (v normalStringArray) IsEqual(other NormalValue) bool {
+func (v normalStringArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.StringArray)
 }
 
@@ -89,7 +89,7 @@ func (v normalBytesArray) BytesArray() ([][]byte, bool) {
 	return v.val, true
 }
 
-func (v normalBytesArray) IsEqual(other NormalValue) bool {
+func (v normalBytesArray) Equal(other NormalValue) bool {
 	if otherVal, ok := other.BytesArray(); ok {
 		return are2DArraysEqual(v.val, otherVal)
 	}
@@ -104,7 +104,7 @@ func (v normalTimeArray) TimeArray() ([]time.Time, bool) {
 	return v.val, true
 }
 
-func (v normalTimeArray) IsEqual(other NormalValue) bool {
+func (v normalTimeArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.TimeArray)
 }
 
@@ -116,7 +116,7 @@ func (v normalDocumentArray) DocumentArray() ([]*Document, bool) {
 	return v.val, true
 }
 
-func (v normalDocumentArray) IsEqual(other NormalValue) bool {
+func (v normalDocumentArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.DocumentArray)
 }
 

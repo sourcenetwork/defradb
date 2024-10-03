@@ -52,7 +52,7 @@ func (v normalBoolNillableArray) BoolNillableArray() (immutable.Option[[]bool], 
 	return v.val, true
 }
 
-func (v normalBoolNillableArray) IsEqual(other NormalValue) bool {
+func (v normalBoolNillableArray) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.BoolNillableArray)
 }
 
@@ -64,7 +64,7 @@ func (v normalIntNillableArray) IntNillableArray() (immutable.Option[[]int64], b
 	return v.val, true
 }
 
-func (v normalIntNillableArray) IsEqual(other NormalValue) bool {
+func (v normalIntNillableArray) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.IntNillableArray)
 }
 
@@ -76,7 +76,7 @@ func (v normalFloatNillableArray) FloatNillableArray() (immutable.Option[[]float
 	return v.val, true
 }
 
-func (v normalFloatNillableArray) IsEqual(other NormalValue) bool {
+func (v normalFloatNillableArray) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.FloatNillableArray)
 }
 
@@ -88,7 +88,7 @@ func (v normalStringNillableArray) StringNillableArray() (immutable.Option[[]str
 	return v.val, true
 }
 
-func (v normalStringNillableArray) IsEqual(other NormalValue) bool {
+func (v normalStringNillableArray) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.StringNillableArray)
 }
 
@@ -100,7 +100,7 @@ func (v normalBytesNillableArray) BytesNillableArray() (immutable.Option[[][]byt
 	return v.val, true
 }
 
-func (v normalBytesNillableArray) IsEqual(other NormalValue) bool {
+func (v normalBytesNillableArray) Equal(other NormalValue) bool {
 	if otherVal, ok := other.BytesNillableArray(); ok {
 		if v.val.HasValue() && otherVal.HasValue() {
 			return are2DArraysEqual(v.val.Value(), otherVal.Value())
@@ -118,7 +118,7 @@ func (v normalTimeNillableArray) TimeNillableArray() (immutable.Option[[]time.Ti
 	return v.val, true
 }
 
-func (v normalTimeNillableArray) IsEqual(other NormalValue) bool {
+func (v normalTimeNillableArray) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.TimeNillableArray)
 }
 
@@ -130,7 +130,7 @@ func (v normalDocumentNillableArray) DocumentNillableArray() (immutable.Option[[
 	return v.val, true
 }
 
-func (v normalDocumentNillableArray) IsEqual(other NormalValue) bool {
+func (v normalDocumentNillableArray) Equal(other NormalValue) bool {
 	return areOptionsArrEqual(v.val, other.DocumentNillableArray)
 }
 

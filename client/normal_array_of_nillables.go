@@ -26,7 +26,7 @@ func (v normalNillableBoolArray) NillableBoolArray() ([]immutable.Option[bool], 
 	return v.val, true
 }
 
-func (v normalNillableBoolArray) IsEqual(other NormalValue) bool {
+func (v normalNillableBoolArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableBoolArray)
 }
 
@@ -38,7 +38,7 @@ func (v normalNillableIntArray) NillableIntArray() ([]immutable.Option[int64], b
 	return v.val, true
 }
 
-func (v normalNillableIntArray) IsEqual(other NormalValue) bool {
+func (v normalNillableIntArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableIntArray)
 }
 
@@ -50,7 +50,7 @@ func (v normalNillableFloatArray) NillableFloatArray() ([]immutable.Option[float
 	return v.val, true
 }
 
-func (v normalNillableFloatArray) IsEqual(other NormalValue) bool {
+func (v normalNillableFloatArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableFloatArray)
 }
 
@@ -62,7 +62,7 @@ func (v normalNillableStringArray) NillableStringArray() ([]immutable.Option[str
 	return v.val, true
 }
 
-func (v normalNillableStringArray) IsEqual(other NormalValue) bool {
+func (v normalNillableStringArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableStringArray)
 }
 
@@ -74,7 +74,7 @@ func (v normalNillableBytesArray) NillableBytesArray() ([]immutable.Option[[]byt
 	return v.val, true
 }
 
-func (v normalNillableBytesArray) IsEqual(other NormalValue) bool {
+func (v normalNillableBytesArray) Equal(other NormalValue) bool {
 	if otherVal, ok := other.NillableBytesArray(); ok {
 		return areArraysOfNillableBytesEqual(v.val, otherVal)
 	}
@@ -89,7 +89,7 @@ func (v normalNillableTimeArray) NillableTimeArray() ([]immutable.Option[time.Ti
 	return v.val, true
 }
 
-func (v normalNillableTimeArray) IsEqual(other NormalValue) bool {
+func (v normalNillableTimeArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableTimeArray)
 }
 
@@ -101,7 +101,7 @@ func (v normalNillableDocumentArray) NillableDocumentArray() ([]immutable.Option
 	return v.val, true
 }
 
-func (v normalNillableDocumentArray) IsEqual(other NormalValue) bool {
+func (v normalNillableDocumentArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableDocumentArray)
 }
 

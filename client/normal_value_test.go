@@ -3027,7 +3027,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 	for _, tt := range tests {
 		tStr := string(tt.name)
 		t.Run(tStr, func(t *testing.T) {
-			actual := tt.v1.IsEqual(tt.v2)
+			actual := tt.v1.Equal(tt.v2)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}

@@ -39,7 +39,7 @@ func (v normalBool) Bool() (bool, bool) {
 	return v.val, true
 }
 
-func (v normalBool) IsEqual(other NormalValue) bool {
+func (v normalBool) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.Bool)
 }
 
@@ -51,7 +51,7 @@ func (v normalInt) Int() (int64, bool) {
 	return v.val, true
 }
 
-func (v normalInt) IsEqual(other NormalValue) bool {
+func (v normalInt) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.Int)
 }
 
@@ -63,7 +63,7 @@ func (v normalFloat) Float() (float64, bool) {
 	return v.val, true
 }
 
-func (v normalFloat) IsEqual(other NormalValue) bool {
+func (v normalFloat) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.Float)
 }
 
@@ -75,7 +75,7 @@ func (v normalString) String() (string, bool) {
 	return v.val, true
 }
 
-func (v normalString) IsEqual(other NormalValue) bool {
+func (v normalString) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.String)
 }
 
@@ -87,7 +87,7 @@ func (v normalBytes) Bytes() ([]byte, bool) {
 	return v.val, true
 }
 
-func (v normalBytes) IsEqual(other NormalValue) bool {
+func (v normalBytes) Equal(other NormalValue) bool {
 	if otherVal, ok := other.Bytes(); ok {
 		return bytes.Equal(v.val, otherVal)
 	}
@@ -102,7 +102,7 @@ func (v normalTime) Time() (time.Time, bool) {
 	return v.val, true
 }
 
-func (v normalTime) IsEqual(other NormalValue) bool {
+func (v normalTime) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.Time)
 }
 
@@ -110,7 +110,7 @@ type normalDocument struct {
 	baseNormalValue[*Document]
 }
 
-func (v normalDocument) IsEqual(other NormalValue) bool {
+func (v normalDocument) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.Document)
 }
 

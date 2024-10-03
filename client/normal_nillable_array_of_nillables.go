@@ -27,7 +27,7 @@ func (v normalNillableBoolNillableArray) NillableBoolNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableBoolNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableBoolNillableArray) Equal(other NormalValue) bool {
 	return areNormalNillableArraysOfNillablesEqual(v.val, other.NillableBoolNillableArray)
 }
 
@@ -41,7 +41,7 @@ func (v normalNillableIntNillableArray) NillableIntNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableIntNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableIntNillableArray) Equal(other NormalValue) bool {
 	return areNormalNillableArraysOfNillablesEqual(v.val, other.NillableIntNillableArray)
 }
 
@@ -55,7 +55,7 @@ func (v normalNillableFloatNillableArray) NillableFloatNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableFloatNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableFloatNillableArray) Equal(other NormalValue) bool {
 	return areNormalNillableArraysOfNillablesEqual(v.val, other.NillableFloatNillableArray)
 }
 
@@ -69,7 +69,7 @@ func (v normalNillableStringNillableArray) NillableStringNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableStringNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableStringNillableArray) Equal(other NormalValue) bool {
 	return areNormalNillableArraysOfNillablesEqual(v.val, other.NillableStringNillableArray)
 }
 
@@ -83,7 +83,7 @@ func (v normalNillableBytesNillableArray) NillableBytesNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableBytesNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableBytesNillableArray) Equal(other NormalValue) bool {
 	if otherVal, ok := other.NillableBytesNillableArray(); ok {
 		if v.val.HasValue() && otherVal.HasValue() {
 			return areArraysOfNillableBytesEqual(v.val.Value(), otherVal.Value())
@@ -103,7 +103,7 @@ func (v normalNillableTimeNillableArray) NillableTimeNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableTimeNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableTimeNillableArray) Equal(other NormalValue) bool {
 	return areNormalNillableArraysOfNillablesEqual(v.val, other.NillableTimeNillableArray)
 }
 
@@ -117,7 +117,7 @@ func (v normalNillableDocumentNillableArray) NillableDocumentNillableArray() (
 	return v.val, true
 }
 
-func (v normalNillableDocumentNillableArray) IsEqual(other NormalValue) bool {
+func (v normalNillableDocumentNillableArray) Equal(other NormalValue) bool {
 	return areNormalNillableArraysOfNillablesEqual(v.val, other.NillableDocumentNillableArray)
 }
 

@@ -386,7 +386,7 @@ func TestIndexDataStoreKey_IsEqual(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			res := c.key1.IsEqual(c.key2)
+			res := c.key1.Equal(c.key2)
 			assert.Equal(t, res, c.shouldMatch, c.name)
 		})
 	}

@@ -552,7 +552,7 @@ func (index *collectionArrayBaseIndex) deleteRetiredKeysAndReturnNew(
 	for _, oldKey := range oldKeys {
 		isFound := false
 		for i := len(newKeys) - 1; i >= 0; i-- {
-			if oldKey.IsEqual(newKeys[i]) {
+			if oldKey.Equal(newKeys[i]) {
 				newKeys[i] = newKeys[len(newKeys)-1]
 				newKeys = newKeys[:len(newKeys)-1]
 				isFound = true
