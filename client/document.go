@@ -442,6 +442,10 @@ func getJSON(v any) (any, error) {
 		return true, nil
 
 	case fastjson.TypeNumber:
+		out, err := val.Int64()
+		if err == nil {
+			return out, nil
+		}
 		return val.Float64()
 
 	case fastjson.TypeString:

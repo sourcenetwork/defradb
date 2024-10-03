@@ -161,7 +161,16 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
-		"Custom": {"tree": "maple", "age": 260}
+		"Custom": {
+			"string": "maple", 
+			"int": 260,
+			"float": 3.14,
+			"false": false,
+			"true": true,
+			"null": null,
+			"array": ["one", 1],
+			"object": {"one": 1}
+		}
 	}`)
 	doc, err := NewDocFromJSON(objWithJSONField, def)
 	if err != nil {
@@ -184,8 +193,14 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(26))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), map[string]any{
-		"tree": "maple",
-		"age":  float64(260),
+		"string": "maple",
+		"int":    int64(260),
+		"float":  float64(3.14),
+		"false":  false,
+		"true":   true,
+		"null":   nil,
+		"array":  []any{"one", int64(1)},
+		"object": map[string]any{"one": int64(1)},
 	})
 	assert.Equal(t, doc.values[doc.fields["Custom"]].IsDocument(), false)
 }

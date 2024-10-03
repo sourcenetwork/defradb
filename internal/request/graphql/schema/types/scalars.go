@@ -102,18 +102,16 @@ func parseJSON(valueAST ast.Value) any {
 func JSONScalarType() *graphql.Scalar {
 	return graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "JSON",
-		Description: "The `JSON` scalar type represents a JSON string.",
-		// Serialize converts the value to a json string
+		Description: "The `JSON` scalar type represents a JSON value.",
+		// Serialize converts the value to json value
 		Serialize: func(value any) any {
 			return value
 		},
-		// ParseValue converts the value to a json string
+		// ParseValue converts the value to json value
 		ParseValue: func(value any) any {
 			return value
 		},
-		// ParseLiteral converts the ast value to a json string
-		ParseLiteral: func(valueAST ast.Value) any {
-			return any(parseJSON(valueAST))
-		},
+		// ParseLiteral converts the ast value to a json value
+		ParseLiteral: parseJSON,
 	})
 }
