@@ -181,10 +181,13 @@ func (c *collection) deleteIndexedDoc(
 	return nil
 }
 
+// deleteIndexedDocWithID deletes an indexed document with the provided document ID.
 func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
 ) error {
+	// we need to fetch the document to delete it from the indexes, because in order to do so
+	// we need to know the values of the fields that are indexed.
 	doc, err := c.get(
 		ctx,
 		c.getPrimaryKeyFromDocID(docID),

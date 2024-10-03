@@ -197,6 +197,7 @@ var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 func (index *collectionSimpleIndex) getDocumentsIndexKey(
 	doc *client.Document,
 ) (core.IndexDataStoreKey, error) {
+	// docID is appended, as it's part of the key for non-unique indexes
 	return index.collectionBaseIndex.getDocumentsIndexKey(doc, true)
 }
 

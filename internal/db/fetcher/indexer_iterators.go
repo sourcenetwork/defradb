@@ -811,11 +811,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 				} else {
 					subCondMap := filterVal.(map[connor.FilterKey]any)
 					for subKey, subVal := range subCondMap {
-						arrKind, ok := cond.kind.(client.ScalarArrayKind)
-						if !ok {
-							return nil, NewErrNotSupportedKindByIndex(cond.kind)
-						}
-
+						arrKind := cond.kind.(client.ScalarArrayKind)
 						if subVal == nil {
 							cond.val, err = client.NewNormalNil(arrKind.SubKind())
 						} else {
