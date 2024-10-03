@@ -26,12 +26,23 @@ import (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
-	DocID     []byte
-	FieldName string
-	Priority  uint64
+	// This property is duplicated from field-level blocks.
+	//
+	// We could remove this without much hassle from the composite, however long-term
+	// the ideal solution would be to remove it from the field-level commits *excluding*
+	// the initial field level commit where it must exist in order to scope it to a particular
+	// document.  This would require a local index in order to handle field level commit-queries.
+	DocID    []byte
+	Priority uint64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
+	//
+	// This property is deliberately duplicated from field-level blocks as it makes the P2P code
+	// quite a lot easier - we can remove this from here at some point if we want to.
+	//
+	// Conversely we could remove this from the field-level commits and leave it on the composite,
+	// however that would complicate commit-queries and would require us to maintain an index elsewhere.
 	SchemaVersionID string
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
@@ -47,7 +58,6 @@ func (delta *CompositeDAGDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CompositeDAGDelta struct {
 		docID     		Bytes
-		fieldName 		String
 		priority  		Int
 		schemaVersionID String
 		status          Int
@@ -75,9 +85,8 @@ func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
-	fieldName string,
 ) CompositeDAG {
-	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
+	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, "")}
 }
 
 // Value is a no-op for a CompositeDAG.
@@ -89,7 +98,6 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 func (c CompositeDAG) Set(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{
 		DocID:           []byte(c.key.DocID),
-		FieldName:       c.fieldName,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
 		Status:          status,
 	}

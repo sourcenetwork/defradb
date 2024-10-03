@@ -61,7 +61,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          "bafyreidkuvcdxxkyoeapnmttu6l2vk43qnm3zuzpxegbifpj6w24jrvrxq",
+							"cid":          "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
 							"collectionID": int64(1),
 							"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":        john21DocID,
@@ -71,7 +71,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreihdlv4fvvptetghxzyerxt4jc4zgprecybhoijrfjuyxqe55qw3x4",
+							"cid":          "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
 							"collectionID": int64(1),
 							"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":        john21DocID,
@@ -81,7 +81,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreie5jegw4c2hg56bbiv6cgxmfz336jruukjakbjuyapockfnn6b5le",
+							"cid":          "bafyreidl77w6pex7uworttm5bsqyvli5qxqoqy3q2n2xqor5vrqfr3woee",
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        john21DocID,
@@ -90,11 +90,11 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreidkuvcdxxkyoeapnmttu6l2vk43qnm3zuzpxegbifpj6w24jrvrxq",
+									"cid":  "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreihdlv4fvvptetghxzyerxt4jc4zgprecybhoijrfjuyxqe55qw3x4",
+									"cid":  "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
 									"name": "name",
 								},
 							},
