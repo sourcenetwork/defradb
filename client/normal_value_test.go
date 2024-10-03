@@ -1661,6 +1661,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 		v2       NormalValue
 		expected bool
 	}{
+		// Values
 		{
 			name:     "void",
 			v1:       NormalVoid{},
@@ -1805,6 +1806,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2:       NewNormalString("document"),
 			expected: false,
 		},
+		// Nillable values
 		{
 			name:     "bool nillable",
 			v1:       NewNormalNillableBool(immutable.Some(true)),
@@ -1979,6 +1981,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2:       NewNormalDocument(doc1),
 			expected: false,
 		},
+		// Arrays
 		{
 			name:     "bool array",
 			v1:       NewNormalBoolArray([]bool{true, false}),
@@ -2147,174 +2150,21 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2:       NewNormalStringArray([]string{"doc1", "doc2"}),
 			expected: false,
 		},
+		// Arrays of nillables
 		{
-			name:     "bool nillable array",
+			name:     "array of nillable bools",
 			v1:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
 			v2:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
 			expected: true,
 		},
 		{
-			name: "int nillable array",
-			v1: NewNormalNillableIntArray(
-				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.Some(int64(2))}),
-			v2: NewNormalNillableIntArray(
-				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.Some(int64(2))}),
-			expected: true,
-		},
-		{
-			name: "float nillable array",
-			v1: NewNormalNillableFloatArray(
-				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
-			v2: NewNormalNillableFloatArray(
-				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
-			expected: true,
-		},
-		{
-			name: "string nillable array",
-			v1: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
-			v2: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
-			expected: true,
-		},
-		{
-			name: "string nillable array not equal",
-			v1: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
-			v2: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test3")}),
-			expected: false,
-		},
-		{
-			name: "string nillable array with nil",
-			v1: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.None[string]()}),
-			v2: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.None[string]()}),
-			expected: true,
-		},
-		{
-			name: "string nillable array different length",
-			v1: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
-			v2: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test")}),
-			expected: false,
-		},
-		{
-			name: "string nillable array different type",
-			v1: NewNormalNillableStringArray(
-				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
-			v2:       NewNormalStringArray([]string{"test", "test2"}),
-			expected: false,
-		},
-		{
-			name: "bytes nillable array",
-			v1: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
-			v2: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
-			expected: true,
-		},
-		{
-			name: "bytes nillable array not equal",
-			v1: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
-			v2: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 7})}),
-			expected: false,
-		},
-		{
-			name: "bytes nillable array with nil",
-			v1: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.None[[]byte]()}),
-			v2: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.None[[]byte]()}),
-			expected: true,
-		},
-		{
-			name: "bytes nillable array different length",
-			v1: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
-			v2: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3})}),
-			expected: false,
-		},
-		{
-			name: "bytes nillable array different type",
-			v1: NewNormalNillableBytesArray(
-				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
-			v2:       NewNormalBytesArray([][]byte{{1, 2, 3}, {4, 5, 6}}),
-			expected: false,
-		},
-		{
-			name: "time nillable array",
-			v1: NewNormalNillableTimeArray(
-				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
-			v2: NewNormalNillableTimeArray(
-				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
-			expected: true,
-		},
-		{
-			name: "time nillable array not equal",
-			v1: NewNormalNillableTimeArray(
-				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
-			v2: NewNormalNillableTimeArray(
-				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now.Add(time.Hour))}),
-			expected: false,
-		},
-		{
-			name: "time nillable array with nil",
-			v1: NewNormalNillableTimeArray(
-				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
-			v2: NewNormalNillableTimeArray(
-				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
-			expected: true,
-		},
-		{
-			name: "document nillable array",
-			v1: NewNormalNillableDocumentArray(
-				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
-			v2: NewNormalNillableDocumentArray(
-				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
-			expected: true,
-		},
-		{
-			name: "document nillable array not equal",
-			v1: NewNormalNillableDocumentArray(
-				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
-			v2: NewNormalNillableDocumentArray(
-				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc3)}),
-			expected: false,
-		},
-		{
-			name: "document nillable array with nil",
-			v1: NewNormalNillableDocumentArray(
-				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.None[*Document]()}),
-			v2: NewNormalNillableDocumentArray(
-				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.None[*Document]()}),
-			expected: true,
-		},
-		{
-			name:     "bool nillable array",
-			v1:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
-			v2:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
-			expected: true,
-		},
-		{
-			name:     "bool nillable array equal",
-			v1:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
-			v2:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
-			expected: true,
-		},
-		{
-			name:     "bool nillable array not equal",
+			name:     "array of nillable bools not equal",
 			v1:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
 			v2:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(false), immutable.Some(true)}),
 			expected: false,
 		},
 		{
-			name: "bool nillable array with nil values equal",
+			name: "array of nillable bools with nil values equal",
 			v1: NewNormalNillableBoolArray(
 				[]immutable.Option[bool]{immutable.Some(true), immutable.None[bool]()}),
 			v2: NewNormalNillableBoolArray(
@@ -2322,7 +2172,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "bool nillable array with nil values not equal",
+			name: "array of nillable bools with nil values not equal",
 			v1: NewNormalNillableBoolArray(
 				[]immutable.Option[bool]{immutable.Some(true), immutable.None[bool]()}),
 			v2: NewNormalNillableBoolArray(
@@ -2330,27 +2180,21 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "bool nillable array different lengths",
+			name: "array of nillable bools different lengths",
 			v1: NewNormalNillableBoolArray(
 				[]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
 			v2:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true)}),
 			expected: false,
 		},
 		{
-			name: "bool nillable array vs non-nillable array",
+			name: "array of nillable bools vs non-nillable array",
 			v1: NewNormalNillableBoolArray(
 				[]immutable.Option[bool]{immutable.Some(true), immutable.Some(false)}),
 			v2:       NewNormalBoolArray([]bool{true, false}),
 			expected: false,
 		},
 		{
-			name:     "int nillable array",
-			v1:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
-			v2:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
-			expected: true,
-		},
-		{
-			name: "int nillable array equal",
+			name: "array of nillable ints equal",
 			v1: NewNormalNillableIntArray(
 				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.Some(int64(2))}),
 			v2: NewNormalNillableIntArray(
@@ -2358,7 +2202,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "int nillable array not equal",
+			name: "array of nillable ints not equal",
 			v1: NewNormalNillableIntArray(
 				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.Some(int64(2))}),
 			v2: NewNormalNillableIntArray(
@@ -2366,7 +2210,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "int nillable array with nil values equal",
+			name: "array of nillable ints with nil values equal",
 			v1: NewNormalNillableIntArray(
 				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.None[int64]()}),
 			v2: NewNormalNillableIntArray(
@@ -2374,7 +2218,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "int nillable array with nil values not equal",
+			name: "array of nillable ints with nil values not equal",
 			v1: NewNormalNillableIntArray(
 				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.None[int64]()}),
 			v2: NewNormalNillableIntArray(
@@ -2382,24 +2226,18 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "int nillable array different lengths",
+			name: "array of nillable ints different lengths",
 			v1: NewNormalNillableIntArray(
 				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.Some(int64(2))}),
 			v2:       NewNormalNillableIntArray([]immutable.Option[int64]{immutable.Some(int64(1))}),
 			expected: false,
 		},
 		{
-			name: "int nillable array vs non-nillable array",
+			name: "array of nillable ints vs non-nillable array",
 			v1: NewNormalNillableIntArray(
 				[]immutable.Option[int64]{immutable.Some(int64(1)), immutable.Some(int64(2))}),
 			v2:       NewNormalIntArray([]int64{1, 2}),
 			expected: false,
-		},
-		{
-			name:     "float nillable array",
-			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
-			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
-			expected: true,
 		},
 		{
 			name: "float nillable array equal",
@@ -2448,10 +2286,286 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "string nillable array",
-			v1:       NewNormalStringNillableArray(immutable.Some([]string{"test"})),
-			v2:       NewNormalStringNillableArray(immutable.Some([]string{"test"})),
+			name: "array of nillable strings",
+			v1: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
+			v2: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
 			expected: true,
+		},
+		{
+			name: "array of nillable strings not equal",
+			v1: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
+			v2: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test3")}),
+			expected: false,
+		},
+		{
+			name: "array of nillable strings with nil",
+			v1: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.None[string]()}),
+			v2: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.None[string]()}),
+			expected: true,
+		},
+		{
+			name: "array of nillable strings different length",
+			v1: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
+			v2: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test")}),
+			expected: false,
+		},
+		{
+			name: "array of nillable strings different type",
+			v1: NewNormalNillableStringArray(
+				[]immutable.Option[string]{immutable.Some("test"), immutable.Some("test2")}),
+			v2:       NewNormalStringArray([]string{"test", "test2"}),
+			expected: false,
+		},
+		{
+			name: "array of nillable bytes",
+			v1: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
+			v2: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
+			expected: true,
+		},
+		{
+			name: "array of nillable bytes not equal",
+			v1: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
+			v2: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 7})}),
+			expected: false,
+		},
+		{
+			name: "array of nillable bytes with nil",
+			v1: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.None[[]byte]()}),
+			v2: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.None[[]byte]()}),
+			expected: true,
+		},
+		{
+			name: "array of nillable bytes different nil values",
+			v1: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
+			v2: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.None[[]byte]()}),
+			expected: false,
+		},
+		{
+			name: "array of nillable bytes different length",
+			v1: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
+			v2: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3})}),
+			expected: false,
+		},
+		{
+			name: "array of nillable bytes different type",
+			v1: NewNormalNillableBytesArray(
+				[]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.Some([]byte{4, 5, 6})}),
+			v2:       NewNormalBytesArray([][]byte{{1, 2, 3}, {4, 5, 6}}),
+			expected: false,
+		},
+		{
+			name: "array of nillable time values",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
+			v2: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
+			expected: true,
+		},
+		{
+			name: "array of nillable time values not equal",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
+			v2: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now.Add(time.Hour))}),
+			expected: false,
+		},
+		{
+			name: "array of nillable time values different lengths",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
+			v2: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now)}),
+			expected: false,
+		},
+		{
+			name: "array of nillable time values different type",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
+			v2:       NewNormalTimeArray([]time.Time{now, now}),
+			expected: false,
+		},
+		{
+			name: "array of nillable time values with nil",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
+			v2: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
+			expected: true,
+		},
+		{
+			name: "array of nillable time values different nil vals",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.Some(now)}),
+			v2: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
+			expected: false,
+		},
+		{
+			name: "array of nillable time values with nil",
+			v1: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
+			v2: NewNormalNillableTimeArray(
+				[]immutable.Option[time.Time]{immutable.Some(now), immutable.None[time.Time]()}),
+			expected: true,
+		},
+		{
+			name: "document nillable array",
+			v1: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
+			v2: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
+			expected: true,
+		},
+		{
+			name: "document nillable array not equal",
+			v1: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
+			v2: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc3)}),
+			expected: false,
+		},
+		{
+			name: "document nillable array different lengths",
+			v1: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.Some(doc2)}),
+			v2: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1)}),
+			expected: false,
+		},
+		{
+			name: "document nillable array with nil",
+			v1: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.None[*Document]()}),
+			v2: NewNormalNillableDocumentArray(
+				[]immutable.Option[*Document]{immutable.Some(doc1), immutable.None[*Document]()}),
+			expected: true,
+		},
+		// Nillable arrays
+		{
+			name:     "bool nillable array equal",
+			v1:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
+			v2:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
+			expected: true,
+		},
+		{
+			name:     "bool nillable array not equal",
+			v1:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
+			v2:       NewNormalBoolNillableArray(immutable.Some([]bool{false})),
+			expected: false,
+		},
+		{
+			name:     "bool nillable array nil vs non-nil",
+			v1:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
+			v2:       NewNormalBoolNillableArray(immutable.None[[]bool]()),
+			expected: false,
+		},
+		{
+			name:     "bool nillable array different lengths",
+			v1:       NewNormalBoolNillableArray(immutable.Some([]bool{true, false})),
+			v2:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
+			expected: false,
+		},
+		{
+			name:     "bool nillable array nil array equal",
+			v1:       NewNormalBoolNillableArray(immutable.None[[]bool]()),
+			v2:       NewNormalBoolNillableArray(immutable.None[[]bool]()),
+			expected: true,
+		},
+		{
+			name:     "bool nillable array nil array not equal",
+			v1:       NewNormalBoolNillableArray(immutable.None[[]bool]()),
+			v2:       NewNormalBoolNillableArray(immutable.Some([]bool{true})),
+			expected: false,
+		},
+		{
+			name:     "int nillable array",
+			v1:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
+			v2:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
+			expected: true,
+		},
+		{
+			name:     "int nillable array not equal",
+			v1:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
+			v2:       NewNormalIntNillableArray(immutable.Some([]int64{2})),
+			expected: false,
+		},
+		{
+			name:     "int nillable array nil vs non-nil",
+			v1:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
+			v2:       NewNormalIntNillableArray(immutable.None[[]int64]()),
+			expected: false,
+		},
+		{
+			name:     "int nillable array different lengths",
+			v1:       NewNormalIntNillableArray(immutable.Some([]int64{1, 2})),
+			v2:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
+			expected: false,
+		},
+		{
+			name:     "int nillable array nil array equal",
+			v1:       NewNormalIntNillableArray(immutable.None[[]int64]()),
+			v2:       NewNormalIntNillableArray(immutable.None[[]int64]()),
+			expected: true,
+		},
+		{
+			name:     "int nillable array nil array not equal",
+			v1:       NewNormalIntNillableArray(immutable.None[[]int64]()),
+			v2:       NewNormalIntNillableArray(immutable.Some([]int64{1})),
+			expected: false,
+		},
+		{
+			name:     "float nillable array equal",
+			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			expected: true,
+		},
+		{
+			name:     "float nillable array not equal",
+			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{2.0})),
+			expected: false,
+		},
+		{
+			name:     "float nillable array nil vs non-nil",
+			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			v2:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
+			expected: false,
+		},
+		{
+			name:     "float nillable array different lengths",
+			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0, 2.0})),
+			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			expected: false,
+		},
+		{
+			name:     "float nillable array nil array equal",
+			v1:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
+			v2:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
+			expected: true,
+		},
+		{
+			name:     "float nillable array nil array not equal",
+			v1:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
+			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			expected: false,
 		},
 		{
 			name:     "string nillable array equal",
@@ -2481,12 +2595,6 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			name:     "string nillable array empty strings",
 			v1:       NewNormalStringNillableArray(immutable.Some([]string{"", ""})),
 			v2:       NewNormalStringNillableArray(immutable.Some([]string{"", ""})),
-			expected: true,
-		},
-		{
-			name:     "bytes nillable array",
-			v1:       NewNormalBytesNillableArray(immutable.Some([][]byte{{1, 2, 3}})),
-			v2:       NewNormalBytesNillableArray(immutable.Some([][]byte{{1, 2, 3}})),
 			expected: true,
 		},
 		{
@@ -2591,6 +2699,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2:       NewNormalDocumentNillableArray(immutable.Some([]*Document{nil, nil})),
 			expected: true,
 		},
+		// Nillable arrays of nillables
 		{
 			name: "nillable bool nillable array",
 			v1: NewNormalNillableBoolNillableArray(
@@ -2629,6 +2738,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2: NewNormalNillableBoolNillableArray(
 				immutable.Some([]immutable.Option[bool]{immutable.Some(true), immutable.None[bool]()})),
 			expected: true,
+		},
+		{
+			name: "nillable bool nillable array different type",
+			v1: NewNormalNillableBoolNillableArray(
+				immutable.Some([]immutable.Option[bool]{immutable.Some(true)})),
+			v2:       NewNormalNillableBoolArray([]immutable.Option[bool]{immutable.Some(true)}),
+			expected: false,
 		},
 		{
 			name: "nillable int nillable array",
@@ -2670,6 +2786,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "nillable int nillable array different type",
+			v1: NewNormalNillableIntNillableArray(
+				immutable.Some([]immutable.Option[int64]{immutable.Some(int64(1))})),
+			v2:       NewNormalNillableIntArray([]immutable.Option[int64]{immutable.Some(int64(1))}),
+			expected: false,
+		},
+		{
 			name: "nillable float nillable array",
 			v1: NewNormalNillableFloatNillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
@@ -2707,6 +2830,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2: NewNormalNillableFloatNillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64]()})),
 			expected: true,
+		},
+		{
+			name: "nillable float nillable array different type",
+			v1: NewNormalNillableFloatNillableArray(
+				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
+			v2:       NewNormalNillableFloatArray([]immutable.Option[float64]{immutable.Some(1.0)}),
+			expected: false,
 		},
 		{
 			name: "nillable string nillable array",
@@ -2748,6 +2878,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "nillable string nillable array different type",
+			v1: NewNormalNillableStringNillableArray(
+				immutable.Some([]immutable.Option[string]{immutable.Some("test")})),
+			v2:       NewNormalNillableStringArray([]immutable.Option[string]{immutable.Some("test")}),
+			expected: false,
+		},
+		{
 			name: "nillable bytes nillable array",
 			v1: NewNormalNillableBytesNillableArray(
 				immutable.Some([]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3})})),
@@ -2785,6 +2922,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2: NewNormalNillableBytesNillableArray(
 				immutable.Some([]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3}), immutable.None[[]byte]()})),
 			expected: true,
+		},
+		{
+			name: "nillable bytes nillable array different type",
+			v1: NewNormalNillableBytesNillableArray(
+				immutable.Some([]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3})})),
+			v2:       NewNormalNillableBytesArray([]immutable.Option[[]byte]{immutable.Some([]byte{1, 2, 3})}),
+			expected: false,
 		},
 		{
 			name: "nillable time nillable array",
@@ -2826,6 +2970,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "nillable time nillable array different type",
+			v1: NewNormalNillableTimeNillableArray(
+				immutable.Some([]immutable.Option[time.Time]{immutable.Some(now)})),
+			v2:       NewNormalNillableTimeArray([]immutable.Option[time.Time]{immutable.Some(now)}),
+			expected: false,
+		},
+		{
 			name: "nillable document nillable array",
 			v1: NewNormalNillableDocumentNillableArray(
 				immutable.Some([]immutable.Option[*Document]{immutable.Some(doc1)})),
@@ -2863,6 +3014,13 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			v2: NewNormalNillableDocumentNillableArray(
 				immutable.Some([]immutable.Option[*Document]{immutable.Some(doc1), immutable.None[*Document]()})),
 			expected: true,
+		},
+		{
+			name: "nillable document nillable array different type",
+			v1: NewNormalNillableDocumentNillableArray(
+				immutable.Some([]immutable.Option[*Document]{immutable.Some(doc1)})),
+			v2:       NewNormalNillableDocumentArray([]immutable.Option[*Document]{immutable.Some(doc1)}),
+			expected: false,
 		},
 	}
 

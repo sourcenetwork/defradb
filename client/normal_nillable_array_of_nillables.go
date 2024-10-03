@@ -86,7 +86,7 @@ func (v normalNillableBytesNillableArray) NillableBytesNillableArray() (
 func (v normalNillableBytesNillableArray) IsEqual(other NormalValue) bool {
 	if otherVal, ok := other.NillableBytesNillableArray(); ok {
 		if v.val.HasValue() && otherVal.HasValue() {
-			return areArrayOfNillableBytesEqual(v.val.Value(), otherVal.Value())
+			return areArraysOfNillableBytesEqual(v.val.Value(), otherVal.Value())
 		}
 		return !v.val.HasValue() && !otherVal.HasValue()
 	}
@@ -200,7 +200,7 @@ func areNormalNillableArraysOfNillablesEqual[T comparable](
 	if otherVal, ok := f(); ok {
 		return areNillableArraysOfNillablesEqual(val, otherVal)
 	}
-	return true
+	return false
 }
 
 func areNillableArraysOfNillablesEqual[T comparable](a, b immutable.Option[[]immutable.Option[T]]) bool {
