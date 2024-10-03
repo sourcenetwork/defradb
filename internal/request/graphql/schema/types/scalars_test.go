@@ -82,7 +82,7 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 		{&ast.ObjectValue{}, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType().ParseLiteral(c.input)
+		result := BlobScalarType().ParseLiteral(c.input, nil)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -96,7 +96,9 @@ func TestJSONScalarTypeParseLiteral(t *testing.T) {
 		{&ast.IntValue{Value: "10"}, int32(10)},
 		{&ast.BooleanValue{Value: true}, true},
 		{&ast.NullValue{}, nil},
-		{&ast.EnumValue{}, nil},
+		{&ast.EnumValue{Value: "DESC"}, "DESC"},
+		{&ast.Variable{Name: &ast.Name{Value: "message"}}, "hello"},
+		{&ast.Variable{Name: &ast.Name{Value: "invalid"}}, nil},
 		{&ast.FloatValue{Value: "3.14"}, 3.14},
 		{&ast.ListValue{Values: []ast.Value{
 			&ast.StringValue{Value: "hello"},
@@ -118,8 +120,11 @@ func TestJSONScalarTypeParseLiteral(t *testing.T) {
 			"string": "hello",
 		}},
 	}
+	variables := map[string]any{
+		"message": "hello",
+	}
 	for _, c := range cases {
-		result := JSONScalarType().ParseLiteral(c.input)
+		result := JSONScalarType().ParseLiteral(c.input, variables)
 		assert.Equal(t, c.expect, result)
 	}
 }

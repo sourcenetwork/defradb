@@ -434,9 +434,9 @@ func defaultFromAST(
 		}
 		switch t := arg.Value.(type) {
 		case *ast.IntValue:
-			value = gql.Int.ParseLiteral(arg.Value)
+			value = gql.Int.ParseLiteral(arg.Value, nil)
 		case *ast.FloatValue:
-			value = gql.Float.ParseLiteral(arg.Value)
+			value = gql.Float.ParseLiteral(arg.Value, nil)
 		case *ast.BooleanValue:
 			value = t.Value
 		case *ast.StringValue:

@@ -54,7 +54,7 @@ func BlobScalarType() *graphql.Scalar {
 		// ParseValue converts the value to a hex string
 		ParseValue: coerceBlob,
 		// ParseLiteral converts the ast value to a hex string
-		ParseLiteral: func(valueAST ast.Value) any {
+		ParseLiteral: func(valueAST ast.Value, variables map[string]any) any {
 			switch valueAST := valueAST.(type) {
 			case *ast.StringValue:
 				return coerceBlob(valueAST.Value)
@@ -66,33 +66,39 @@ func BlobScalarType() *graphql.Scalar {
 	})
 }
 
-func parseJSON(valueAST ast.Value) any {
+func parseJSON(valueAST ast.Value, variables map[string]any) any {
 	switch valueAST := valueAST.(type) {
 	case *ast.ObjectValue:
 		out := make(map[string]any)
 		for _, f := range valueAST.Fields {
-			out[f.Name.Value] = parseJSON(f.Value)
+			out[f.Name.Value] = parseJSON(f.Value, variables)
 		}
 		return out
 
 	case *ast.ListValue:
 		out := make([]any, len(valueAST.Values))
 		for i, v := range valueAST.Values {
-			out[i] = parseJSON(v)
+			out[i] = parseJSON(v, variables)
 		}
 		return out
 
 	case *ast.BooleanValue:
-		return graphql.Boolean.ParseLiteral(valueAST)
+		return graphql.Boolean.ParseLiteral(valueAST, variables)
 
 	case *ast.FloatValue:
-		return graphql.Float.ParseLiteral(valueAST)
+		return graphql.Float.ParseLiteral(valueAST, variables)
 
 	case *ast.IntValue:
-		return graphql.Int.ParseLiteral(valueAST)
+		return graphql.Int.ParseLiteral(valueAST, variables)
 
 	case *ast.StringValue:
-		return graphql.String.ParseLiteral(valueAST)
+		return graphql.String.ParseLiteral(valueAST, variables)
+
+	case *ast.EnumValue:
+		return valueAST.Value
+
+	case *ast.Variable:
+		return variables[valueAST.Name.Value]
 
 	default:
 		return nil
