@@ -75,8 +75,6 @@ func (c CRDT) GetFieldName() string {
 	switch {
 	case c.LWWRegDelta != nil:
 		return c.LWWRegDelta.FieldName
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.FieldName
 	case c.CounterDelta != nil:
 		return c.CounterDelta.FieldName
 	}
@@ -124,7 +122,6 @@ func (c CRDT) Clone() CRDT {
 	case c.CompositeDAGDelta != nil:
 		cloned.CompositeDAGDelta = &CompositeDAGDelta{
 			DocID:           c.CompositeDAGDelta.DocID,
-			FieldName:       c.CompositeDAGDelta.FieldName,
 			Priority:        c.CompositeDAGDelta.Priority,
 			SchemaVersionID: c.CompositeDAGDelta.SchemaVersionID,
 			Status:          c.CompositeDAGDelta.Status,

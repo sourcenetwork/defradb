@@ -72,9 +72,9 @@ func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblo
 		cancel()
 	}
 
-	for _, lnk := range block.Links {
+	for _, lnk := range block.AllLinks() {
 		wg.Add(1)
-		go func(lnk coreblock.DAGLink) {
+		go func(lnk cidlink.Link) {
 			defer wg.Done()
 			if ctx.Err() != nil {
 				return
