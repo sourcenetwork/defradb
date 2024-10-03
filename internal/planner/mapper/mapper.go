@@ -1309,6 +1309,12 @@ func toFilterMap(
 		key := &Operator{
 			Operation: sourceKey,
 		}
+		// if the operator is a simple comparison it may be
+		// comparing values of an embedded or JSON object
+		// that are not explicitly mapped in the document
+		if key.Operation == "_eq" || key.Operation == "_in" {
+			return key, sourceClause
+		}
 		switch typedClause := sourceClause.(type) {
 		case []any:
 			// If the clause is an array then we need to convert any inner maps.

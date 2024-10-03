@@ -136,6 +136,8 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 			case []byte:
 				return string(v), nil
 			}
+		case client.FieldKind_NILLABLE_JSON:
+			return convertToJSON(fieldDesc.Name, val)
 		}
 	}
 
@@ -189,6 +191,26 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 	default:
 		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
 	}
+}
+
+func convertToJSON(propertyName string, untypedValue any) (any, error) {
+	untypedMap, ok := untypedValue.(map[any]any)
+	if !ok {
+		return untypedValue, nil
+	}
+	resultValue := make(map[string]any)
+	for k, v := range untypedMap {
+		key, ok := k.(string)
+		if !ok {
+			return nil, client.NewErrUnexpectedType[any](propertyName, k)
+		}
+		val, err := convertToJSON(propertyName, v)
+		if err != nil {
+			return nil, err
+		}
+		resultValue[key] = val
+	}
+	return resultValue, nil
 }
 
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.

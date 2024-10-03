@@ -33,8 +33,11 @@ func (k *PropertyIndex) GetProp(data any) any {
 	if data == nil {
 		return nil
 	}
-
-	return data.(core.Doc).Fields[k.Index]
+	doc, ok := data.(core.Doc)
+	if ok {
+		return doc.Fields[k.Index]
+	}
+	return data
 }
 
 func (k *PropertyIndex) GetOperatorOrDefault(defaultOp string) string {

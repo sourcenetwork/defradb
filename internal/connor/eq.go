@@ -43,13 +43,34 @@ func eq(condition, data any) (bool, error) {
 		}
 		return true, nil
 
+	case map[string]any:
+		d, ok := data.(map[string]any)
+		if !ok {
+			return false, nil
+		}
+		for k, v := range d {
+			m, err := eq(cn[k], v)
+			if err != nil {
+				return false, err
+			} else if !m {
+				return false, nil
+			}
+		}
+		return true, nil
+
 	case string:
 		if d, ok := data.(string); ok {
 			return d == cn, nil
 		}
 		return false, nil
 
+	case uint64:
+		return numbers.Equal(cn, data), nil
+
 	case int64:
+		return numbers.Equal(cn, data), nil
+
+	case uint32:
 		return numbers.Equal(cn, data), nil
 
 	case int32:

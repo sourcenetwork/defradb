@@ -161,7 +161,7 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
-		"Custom": "{\"tree\":\"maple\", \"age\": 260}"
+		"Custom": {"tree": "maple", "age": 260}
 	}`)
 	doc, err := NewDocFromJSON(objWithJSONField, def)
 	if err != nil {
@@ -183,7 +183,10 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(26))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
-	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), "{\"tree\":\"maple\",\"age\":260}")
+	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), map[string]any{
+		"tree": "maple",
+		"age":  float64(260),
+	})
 	assert.Equal(t, doc.values[doc.fields["Custom"]].IsDocument(), false)
 }
 
@@ -191,20 +194,20 @@ func TestNewFromJSON_WithInvalidJSONFieldValue_Error(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
-		"Custom": "{\"tree\":\"maple, \"age\": 260}"
+		"Custom": {"tree":"maple, "age": 260}
 	}`)
 	_, err := NewDocFromJSON(objWithJSONField, def)
-	require.ErrorContains(t, err, "invalid JSON payload. Payload: {\"tree\":\"maple, \"age\": 260}")
+	require.ErrorContains(t, err, "cannot parse JSON")
 }
 
-func TestNewFromJSON_WithInvalidJSONFieldValueSimpleString_Error(t *testing.T) {
+func TestNewFromJSON_WithJSONFieldValueSimpleString_Succeed(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
 		"Custom": "blah"
 	}`)
 	_, err := NewDocFromJSON(objWithJSONField, def)
-	require.ErrorContains(t, err, "invalid JSON payload. Payload: blah")
+	require.NoError(t, err)
 }
 
 func TestIsJSONArray(t *testing.T) {

@@ -87,82 +87,36 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 	}
 }
 
-func TestJSONScalarTypeParseAndSerialize(t *testing.T) {
-	validString := `"hello"`
-	validBytes := []byte(`"hello"`)
-
-	boolString := "true"
-	boolBytes := []byte("true")
-
-	intString := "0"
-	intBytes := []byte("0")
-
-	floatString := "3.14"
-	floatBytes := []byte("3.14")
-
-	objectString := `{"name": "Bob"}`
-	objectBytes := []byte(`{"name": "Bob"}`)
-
-	invalidString := "invalid"
-	invalidBytes := []byte("invalid")
-
-	cases := []struct {
-		input  any
-		expect any
-	}{
-		{validString, `"hello"`},
-		{&validString, `"hello"`},
-		{validBytes, `"hello"`},
-		{&validBytes, `"hello"`},
-		{boolString, "true"},
-		{&boolString, "true"},
-		{boolBytes, "true"},
-		{&boolBytes, "true"},
-		{[]byte("true"), "true"},
-		{[]byte("false"), "false"},
-		{intString, "0"},
-		{&intString, "0"},
-		{intBytes, "0"},
-		{&intBytes, "0"},
-		{floatString, "3.14"},
-		{&floatString, "3.14"},
-		{floatBytes, "3.14"},
-		{&floatBytes, "3.14"},
-		{invalidString, nil},
-		{&invalidString, nil},
-		{invalidBytes, nil},
-		{&invalidBytes, nil},
-		{objectString, `{"name": "Bob"}`},
-		{&objectString, `{"name": "Bob"}`},
-		{objectBytes, `{"name": "Bob"}`},
-		{&objectBytes, `{"name": "Bob"}`},
-		{nil, nil},
-		{0, nil},
-		{false, nil},
-	}
-	for _, c := range cases {
-		parsed := JSONScalarType().ParseValue(c.input)
-		assert.Equal(t, c.expect, parsed)
-
-		serialized := JSONScalarType().Serialize(c.input)
-		assert.Equal(t, c.expect, serialized)
-	}
-}
-
 func TestJSONScalarTypeParseLiteral(t *testing.T) {
 	cases := []struct {
 		input  ast.Value
 		expect any
 	}{
-		{&ast.StringValue{Value: "0"}, "0"},
-		{&ast.StringValue{Value: "invalid"}, nil},
-		{&ast.IntValue{}, nil},
-		{&ast.BooleanValue{}, nil},
+		{&ast.StringValue{Value: "hello"}, "hello"},
+		{&ast.IntValue{Value: "10"}, int32(10)},
+		{&ast.BooleanValue{Value: true}, true},
 		{&ast.NullValue{}, nil},
 		{&ast.EnumValue{}, nil},
-		{&ast.FloatValue{}, nil},
-		{&ast.ListValue{}, nil},
-		{&ast.ObjectValue{}, nil},
+		{&ast.FloatValue{Value: "3.14"}, 3.14},
+		{&ast.ListValue{Values: []ast.Value{
+			&ast.StringValue{Value: "hello"},
+			&ast.IntValue{Value: "10"},
+		}}, []any{"hello", int32(10)}},
+		{&ast.ObjectValue{
+			Fields: []*ast.ObjectField{
+				{
+					Name:  &ast.Name{Value: "int"},
+					Value: &ast.IntValue{Value: "10"},
+				},
+				{
+					Name:  &ast.Name{Value: "string"},
+					Value: &ast.StringValue{Value: "hello"},
+				},
+			},
+		}, map[string]any{
+			"int":    int32(10),
+			"string": "hello",
+		}},
 	}
 	for _, c := range cases {
 		result := JSONScalarType().ParseLiteral(c.input)

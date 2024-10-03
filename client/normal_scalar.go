@@ -86,6 +86,14 @@ func (v normalDocument) Document() (*Document, bool) {
 	return v.val, true
 }
 
+type normalJSON struct {
+	baseNormalValue[any]
+}
+
+func (v normalJSON) JSON() (any, bool) {
+	return v.val, true
+}
+
 func newNormalInt(val int64) NormalValue {
 	return normalInt{newBaseNormalValue(val)}
 }
@@ -127,4 +135,9 @@ func NewNormalTime(val time.Time) NormalValue {
 // NewNormalDocument creates a new NormalValue that represents a `*Document` value.
 func NewNormalDocument(val *Document) NormalValue {
 	return normalDocument{baseNormalValue[*Document]{val: val}}
+}
+
+// NewNormalJSON creates a new NormalValue that represents a `JSON` value.
+func NewNormalJSON(val any) NormalValue {
+	return normalJSON{baseNormalValue[any]{val: val}}
 }
