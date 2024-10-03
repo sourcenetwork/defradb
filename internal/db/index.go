@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
 
 // CollectionIndex is an interface for collection indexes
@@ -467,16 +468,7 @@ func (index *collectionArrayBaseIndex) newIndexKeyGenerator(
 		if err != nil {
 			return nil, err
 		}
-		sets := make(map[client.NormalValue]struct{})
-		for i := len(normVals) - 1; i >= 0; i-- {
-			if _, ok := sets[normVals[i]]; ok {
-				normVals[i] = normVals[len(normVals)-1]
-				normVals = normVals[:len(normVals)-1]
-			} else {
-				sets[normVals[i]] = struct{}{}
-			}
-		}
-		normValsArr = append(normValsArr, normVals)
+		normValsArr = append(normValsArr, slice.RemoveDuplicates(normVals))
 	}
 
 	arrFieldCounter := make([]int, len(index.arrFieldsIndexes))
