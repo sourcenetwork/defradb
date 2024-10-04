@@ -310,11 +310,192 @@ func addDocActorRelationshipACP(
 	}
 }
 
+// DeleteDocActorRelationship will attempt to delete a relationship between a document and an actor.
+type DeleteDocActorRelationship struct {
+	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
+	//
+	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
+	// sourcehub ACP, in which case the relationship will only be deleted once.
+	NodeID immutable.Option[int]
+
+	// The collection in which the target document we want to delete relationship for exists.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	CollectionID int
+
+	// The index-identifier of the document within the collection.  This is based on
+	// the order in which it was created, not the ordering of the document within the
+	// database.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	DocID int
+
+	// The name of the relation within the relationship we want to delete (should be defined in the policy).
+	//
+	// This is a required field.
+	Relation string
+
+	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	TargetIdentity int
+
+	// The requestor identity, i.e. identity of the actor deleting the relationship.
+	// Note: This identity must either own or have managing access defined in the policy.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	RequestorIdentity int
+
+	// Result returns true if the relationship record was expected to be found and deleted,
+	// and returns false if no matching relationship record was found (no-op).
+	ExpectedRecordFound bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+func deleteDocActorRelationshipACP(
+	s *state,
+	action DeleteDocActorRelationship,
+) {
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
+		node := s.nodes[nodeID]
+
+		var collectionName string
+		if action.CollectionID == -1 {
+			collectionName = ""
+		} else {
+			collection := collections[action.CollectionID]
+			if !collection.Description().Name.HasValue() {
+				require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+			}
+			collectionName = collection.Description().Name.Value()
+		}
+
+		var docID string
+		if action.DocID == -1 || action.CollectionID == -1 {
+			docID = ""
+		} else {
+			docID = s.docIDs[action.CollectionID][action.DocID].String()
+		}
+
+		var targetIdentity string
+		if action.TargetIdentity == -1 {
+			targetIdentity = ""
+		} else {
+			optionalTargetIdentity := getIdentity(s, nodeID, immutable.Some(action.TargetIdentity))
+			if !optionalTargetIdentity.HasValue() {
+				require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
+			}
+			targetIdentity = optionalTargetIdentity.Value().DID
+		}
+
+		var requestorIdentity immutable.Option[acpIdentity.Identity]
+		if action.RequestorIdentity == -1 {
+			requestorIdentity = acpIdentity.None
+		} else {
+			requestorIdentity = getIdentity(s, nodeID, immutable.Some(action.RequestorIdentity))
+			if !requestorIdentity.HasValue() {
+				require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
+			}
+		}
+		ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
+
+		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+			ctx,
+			collectionName,
+			docID,
+			action.Relation,
+			targetIdentity,
+		)
+
+		if err == nil {
+			require.Equal(s.t, action.ExpectedError, "")
+			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
+		}
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	} else {
+		for i, node := range getNodes(action.NodeID, s.nodes) {
+			var collectionName string
+			if action.CollectionID == -1 {
+				collectionName = ""
+			} else {
+				collection := s.collections[i][action.CollectionID]
+				if !collection.Description().Name.HasValue() {
+					require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+				}
+				collectionName = collection.Description().Name.Value()
+			}
+
+			var docID string
+			if action.DocID == -1 || action.CollectionID == -1 {
+				docID = ""
+			} else {
+				docID = s.docIDs[action.CollectionID][action.DocID].String()
+			}
+
+			var targetIdentity string
+			if action.TargetIdentity == -1 {
+				targetIdentity = ""
+			} else {
+				optionalTargetIdentity := getIdentity(s, i, immutable.Some(action.TargetIdentity))
+				if !optionalTargetIdentity.HasValue() {
+					require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
+				}
+				targetIdentity = optionalTargetIdentity.Value().DID
+			}
+
+			var requestorIdentity immutable.Option[acpIdentity.Identity]
+			if action.RequestorIdentity == -1 {
+				requestorIdentity = acpIdentity.None
+			} else {
+				requestorIdentity = getIdentity(s, i, immutable.Some(action.RequestorIdentity))
+				if !requestorIdentity.HasValue() {
+					require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
+				}
+			}
+			ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
+
+			deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+				ctx,
+				collectionName,
+				docID,
+				action.Relation,
+				targetIdentity,
+			)
+
+			if err == nil {
+				require.Equal(s.t, action.ExpectedError, "")
+				require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
+			}
+
+			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+			// the nodes.
+			if acpType == SourceHubACPType {
+				break
+			}
+		}
+	}
+}
+
 func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	var isACPTest bool
 	for _, a := range s.testCase.Actions {
 		switch a.(type) {
-		case AddPolicy, AddDocActorRelationship:
+		case
+			AddPolicy,
+			AddDocActorRelationship,
+			DeleteDocActorRelationship:
 			isACPTest = true
 		}
 	}
