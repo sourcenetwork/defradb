@@ -277,8 +277,7 @@ func prepareScanNodeFilterForTypeJoin(
 			parent.filter = mapper.NewFilter()
 			parent.filter.Conditions = filter.Copy(scan.filter.Conditions)
 		} else {
-			parent.filter.Conditions = filter.Merge(
-				parent.filter.Conditions, scan.filter.Conditions)
+			parent.filter = filter.Merge(parent.filter, scan.filter)
 		}
 		scan.filter = nil
 	} else {
@@ -288,8 +287,7 @@ func prepareScanNodeFilterForTypeJoin(
 			if parent.filter == nil {
 				parent.filter = parentFilter
 			} else {
-				parent.filter.Conditions = filter.Merge(
-					parent.filter.Conditions, parentFilter.Conditions)
+				parent.filter = filter.Merge(parent.filter, parentFilter)
 			}
 		}
 	}
@@ -799,7 +797,7 @@ func addFilterOnIDField(scan *scanNode, propIndex int, val any) {
 	}
 
 	filter.RemoveField(scan.filter, mapper.Field{Index: propIndex})
-	scan.filter.Conditions = filter.Merge(scan.filter.Conditions, filterConditions)
+	scan.filter.Conditions = filter.MergeConditions(scan.filter.Conditions, filterConditions)
 }
 
 func getScanNode(plan planNode) *scanNode {

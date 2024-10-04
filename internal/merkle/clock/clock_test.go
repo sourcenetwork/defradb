@@ -97,8 +97,8 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 		return
 	}
 
-	if len(block.Links) != 1 {
-		t.Errorf("putBlock has incorrect number of heads. Have %v, want %v", len(block.Links), 1)
+	if len(block.Heads) != 1 {
+		t.Errorf("putBlock has incorrect number of heads. Have %v, want %v", len(block.Heads), 1)
 	}
 }
 

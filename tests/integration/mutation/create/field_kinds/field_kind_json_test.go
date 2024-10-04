@@ -308,7 +308,7 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-09fc6d72-daf7-5a61-9523-73a9fac7ce13",
+							"_docID": "bae-f405f600-56d9-5de4-8d02-75fdced35e3b",
 							"custom": nil,
 							"name":   "John",
 						},

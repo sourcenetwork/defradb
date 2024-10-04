@@ -323,3 +323,71 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 		})
 	}
 }
+
+func TestIndexDataStoreKey_IsEqual(t *testing.T) {
+	const colID, indexID = 1, 2
+
+	cases := []struct {
+		name        string
+		key1        IndexDataStoreKey
+		key2        IndexDataStoreKey
+		shouldMatch bool
+	}{
+		{
+			name:        "empty",
+			key1:        IndexDataStoreKey{},
+			key2:        IndexDataStoreKey{},
+			shouldMatch: true,
+		},
+		{
+			name:        "same",
+			key1:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			shouldMatch: true,
+		},
+		{
+			name:        "different collection",
+			key1:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(colID+1, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			shouldMatch: false,
+		},
+		{
+			name:        "different index",
+			key1:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(colID, indexID+1, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			shouldMatch: false,
+		},
+		{
+			name:        "different field",
+			key1:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(6)}}),
+			shouldMatch: false,
+		},
+		{
+			name: "different field count",
+			key1: NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2: NewIndexDataStoreKey(colID, indexID,
+				[]IndexedField{{Value: client.NewNormalInt(5)}, {Value: client.NewNormalInt(6)}}),
+			shouldMatch: false,
+		},
+		{
+			name:        "different field type",
+			key1:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalString("5")}}),
+			shouldMatch: false,
+		},
+		{
+			name: "different field descending",
+			key1: NewIndexDataStoreKey(colID, indexID, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2: NewIndexDataStoreKey(colID, indexID,
+				[]IndexedField{{Value: client.NewNormalInt(5), Descending: true}}),
+			shouldMatch: false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			res := c.key1.Equal(c.key2)
+			assert.Equal(t, res, c.shouldMatch, c.name)
+		})
+	}
+}

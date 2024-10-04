@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -22,7 +23,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
@@ -185,7 +185,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
 	})
-	require.ErrorContains(t, err, "could not find bafyreifi4sa4auy4uk6psoljwuzqepgwqzsjk3h6p2xjdtsty7bdjz4uzm")
+	require.ErrorContains(t, err, "could not find bafyreibdsxukhmkwea4hdd2svvf6fijvuhdxeil2bf75v4wzooldb74uwq")
 
 	// Verify the document was created with the expected values
 	doc, err := col.Get(ctx, docID, false)
@@ -228,14 +228,13 @@ type compositeInfo struct {
 }
 
 func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields map[string]any, from compositeInfo) (compositeInfo, error) {
-	links := []coreblock.DAGLink{}
+	heads := []cid.Cid{}
 	newPriority := from.height + 1
 	if from.link.ByteLen() != 0 {
-		links = append(links, coreblock.DAGLink{
-			Name: core.HEAD,
-			Link: from.link,
-		})
+		heads = append(heads, from.link.Cid)
 	}
+
+	links := []coreblock.DAGLink{}
 	for field, val := range fields {
 		d.fieldsHeight[field]++
 		// Generate new Block and save to lsys
@@ -260,18 +259,16 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		})
 	}
 
-	compositeBlock := coreblock.Block{
-		Delta: crdt.CRDT{
-			CompositeDAGDelta: &crdt.CompositeDAGDelta{
-				DocID:           d.docID,
-				FieldName:       "",
-				Priority:        newPriority,
-				SchemaVersionID: d.col.Schema().VersionID,
-				Status:          1,
-			},
+	compositeBlock := coreblock.New(
+		&crdt.CompositeDAGDelta{
+			DocID:           d.docID,
+			Priority:        newPriority,
+			SchemaVersionID: d.col.Schema().VersionID,
+			Status:          1,
 		},
-		Links: links,
-	}
+		links,
+		heads...,
+	)
 
 	compositeBlockLink, err := lsys.Store(ipld.LinkContext{}, coreblock.GetLinkPrototype(), compositeBlock.GenerateNode())
 	if err != nil {

@@ -657,6 +657,11 @@ func (c *collection) save(
 
 			relationFieldDescription, isSecondaryRelationID := fieldDescription.GetSecondaryRelationField(c.Definition())
 			if isSecondaryRelationID {
+				if val.Value() == nil {
+					// If the value (relation) is nil, we don't need to check for any documents already linked to it
+					continue
+				}
+
 				primaryId := val.Value().(string)
 
 				err = c.patchPrimaryDoc(
@@ -847,6 +852,11 @@ func (c *collection) Delete(
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
+	err = c.deleteIndexedDocWithID(ctx, docID)
+	if err != nil {
+		return false, err
+	}
+
 	err = c.applyDelete(ctx, primaryKey)
 	if err != nil {
 		return false, err
@@ -920,7 +930,6 @@ func (c *collection) saveCompositeToMerkleCRDT(
 		txn,
 		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 		dsKey,
-		"",
 	)
 
 	if status.IsDeleted() {

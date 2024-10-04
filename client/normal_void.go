@@ -24,6 +24,11 @@ func (NormalVoid) Unwrap() any {
 	return nil
 }
 
+func (NormalVoid) Equal(other NormalValue) bool {
+	_, ok := other.(NormalVoid)
+	return ok
+}
+
 func (NormalVoid) IsNil() bool {
 	return false
 }

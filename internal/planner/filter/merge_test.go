@@ -59,7 +59,7 @@ func TestMergeFilterConditions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			leftFilter := mapper.ToFilter(request.Filter{Conditions: tt.left}, mapping)
 			rightFilter := mapper.ToFilter(request.Filter{Conditions: tt.right}, mapping)
-			actualFilter := Merge(leftFilter.Conditions, rightFilter.Conditions)
+			actualFilter := MergeConditions(leftFilter.Conditions, rightFilter.Conditions)
 			expectedFilter := mapper.ToFilter(request.Filter{Conditions: tt.expected}, mapping)
 			AssertEqualFilterMap(t, expectedFilter.Conditions, actualFilter)
 		})
@@ -70,6 +70,6 @@ func TestMergeNullFilter(t *testing.T) {
 	f := map[connor.FilterKey]any{
 		&mapper.PropertyIndex{Index: 0}: "value1",
 	}
-	AssertEqualFilterMap(t, f, Merge(f, nil))
-	AssertEqualFilterMap(t, f, Merge(nil, f))
+	AssertEqualFilterMap(t, f, MergeConditions(f, nil))
+	AssertEqualFilterMap(t, f, MergeConditions(nil, f))
 }

@@ -217,7 +217,7 @@ func encryptBlock(
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	return &coreblock.Block{Delta: clonedCRDT, Links: block.Links}, nil
+	return &coreblock.Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
@@ -241,22 +241,14 @@ func (mc *MerkleClock) updateHeads(
 ) error {
 	priority := block.Delta.GetPriority()
 
-	// check if we have any HEAD links
-	hasHeads := false
-	for _, l := range block.Links {
-		if l.Name == core.HEAD {
-			hasHeads = true
-			break
-		}
-	}
-	if !hasHeads { // reached the bottom, at a leaf
+	if len(block.Heads) == 0 { // reached the bottom, at a leaf
 		err := mc.headset.Write(ctx, blockLink.Cid, priority)
 		if err != nil {
 			return NewErrAddingHead(blockLink.Cid, err)
 		}
 	}
 
-	for _, l := range block.Links {
+	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
 		isHead, err := mc.headset.IsHead(ctx, linkCid)
 		if err != nil {

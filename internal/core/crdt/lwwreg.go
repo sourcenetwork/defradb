@@ -16,6 +16,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -144,9 +145,20 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		}
 	}
 
-	err = reg.store.Put(ctx, key.ToDS(), val)
-	if err != nil {
-		return NewErrFailedToStoreValue(err)
+	if bytes.Equal(val, client.CborNil) {
+		// If len(val) is 1 or less the property is nil and there is no reason for
+		// the field datastore key to exist.  Ommiting the key saves space and is
+		// consistent with what would be found if the user omitted the property on
+		// create.
+		err = reg.store.Delete(ctx, key.ToDS())
+		if err != nil {
+			return err
+		}
+	} else {
+		err = reg.store.Put(ctx, key.ToDS(), val)
+		if err != nil {
+			return NewErrFailedToStoreValue(err)
+		}
 	}
 
 	return reg.setPriority(ctx, reg.key, priority)

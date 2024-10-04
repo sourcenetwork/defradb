@@ -13,6 +13,7 @@ package fetcher
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -30,6 +31,7 @@ const (
 	errMissingMapper                string = "missing document mapper"
 	errInvalidInOperatorValue       string = "invalid _in/_nin value"
 	errInvalidFilterOperator        string = "invalid filter operator is provided"
+	errNotSupportedKindByIndex      string = "kind is not supported by index"
 	errUnexpectedTypeValue          string = "unexpected type value"
 )
 
@@ -105,6 +107,11 @@ func NewErrFailedToGetDagNode(inner error) error {
 // NewErrInvalidFilterOperator returns an error indicating that the given filter operator is invalid.
 func NewErrInvalidFilterOperator(operator string) error {
 	return errors.New(errInvalidFilterOperator, errors.NewKV("Operator", operator))
+}
+
+// NewErrNotSupportedKindByIndex returns an error indicating that the given kind is not supported by index.
+func NewErrNotSupportedKindByIndex(kind client.FieldKind) error {
+	return errors.New(errNotSupportedKindByIndex, errors.NewKV("Kind", kind.String()))
 }
 
 // NewErrUnexpectedTypeValue returns an error indicating that the given value is of an unexpected type.

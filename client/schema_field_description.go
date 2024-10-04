@@ -186,6 +186,29 @@ func (k ScalarArrayKind) IsArray() bool {
 	return true
 }
 
+func (k ScalarArrayKind) SubKind() FieldKind {
+	switch k {
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return FieldKind_NILLABLE_BOOL
+	case FieldKind_BOOL_ARRAY:
+		return FieldKind_NILLABLE_BOOL
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return FieldKind_NILLABLE_INT
+	case FieldKind_INT_ARRAY:
+		return FieldKind_NILLABLE_INT
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_FLOAT_ARRAY:
+		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return FieldKind_NILLABLE_STRING
+	case FieldKind_STRING_ARRAY:
+		return FieldKind_NILLABLE_STRING
+	default:
+		return FieldKind_None
+	}
+}
+
 func NewCollectionKind(root uint32, isArray bool) *CollectionKind {
 	return &CollectionKind{
 		Root:  root,

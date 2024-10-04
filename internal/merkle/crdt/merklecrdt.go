@@ -103,7 +103,6 @@ func InstanceWithStore(
 			store,
 			schemaVersionKey,
 			key,
-			fieldName,
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)

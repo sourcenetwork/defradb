@@ -29,11 +29,9 @@ func CopyField(filter *mapper.Filter, fields ...mapper.Field) *mapper.Filter {
 		})
 	}
 
-	resultFilter := &mapper.Filter{}
 	conditionMap := traverseFilterByProperty(conditionKeys, filter.Conditions, false)
 	if len(conditionMap) > 0 {
-		resultFilter.Conditions = conditionMap
-		return resultFilter
+		return &mapper.Filter{Conditions: conditionMap}
 	}
 	return nil
 }

@@ -35,13 +35,11 @@ func NewMerkleCompositeDAG(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
-	fieldName string,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
 		store.Datastore(),
 		schemaVersionKey,
 		key,
-		fieldName,
 	)
 
 	clock := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(),

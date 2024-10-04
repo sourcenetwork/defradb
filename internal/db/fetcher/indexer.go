@@ -85,7 +85,10 @@ func (f *IndexFetcher) Init(
 outer:
 	for i := range fields {
 		for j := range f.indexedFields {
-			if fields[i].Name == f.indexedFields[j].Name {
+			// If the field is array, we want to keep it also for the document fetcher
+			// because the index only contains one array elements, not the whole array.
+			// The doc fetcher will fetch the whole array for us.
+			if fields[i].Name == f.indexedFields[j].Name && !fields[i].Kind.IsArray() {
 				continue outer
 			}
 		}
@@ -154,6 +157,12 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			field := res.key.Fields[i]
 			if field.Value.IsNil() {
 				hasNilField = true
+			}
+
+			// Index will fetch only 1 array element. So we skip it here and let doc fetcher
+			// fetch the whole array.
+			if indexedField.Kind.IsArray() {
+				continue
 			}
 
 			// We need to convert it to cbor bytes as this is what it will be encoded from on value retrieval.

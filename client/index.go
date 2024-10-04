@@ -38,9 +38,11 @@ type IndexDescription struct {
 
 // CollectionIndex is an interface for indexing documents in a collection.
 type CollectionIndex interface {
-	// Save indexes a document by storing it
+	// Save indexes a document by storing indexed field values.
+	// It doesn't retire previous values. For this [Update] should be used.
 	Save(context.Context, datastore.Txn, *Document) error
-	// Update updates an existing document in the index
+	// Update updates an existing document in the index.
+	// It removes the previous indexed field values and stores the new ones.
 	Update(context.Context, datastore.Txn, *Document, *Document) error
 	// Delete deletes an existing document from the index
 	Delete(context.Context, datastore.Txn, *Document) error
