@@ -27,6 +27,64 @@
             }
         },
         "schemas": {
+            "acp_policy_add_result": {
+                "properties": {
+                    "PolicyID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_add_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_add_result": {
+                "properties": {
+                    "ExistedAlready": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_delete_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_delete_result": {
+                "properties": {
+                    "RecordFound": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -574,7 +632,14 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_policy_add_result"
+                                }
+                            }
+                        },
+                        "description": "Add acp policy result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -589,14 +654,14 @@
             }
         },
         "/acp/relationship": {
-            "post": {
-                "description": "Add an actor relationship using acp system",
-                "operationId": "add relationship",
+            "delete": {
+                "description": "Delete an actor relationship using acp system",
+                "operationId": "delete relationship",
                 "requestBody": {
                     "content": {
-                        "text/plain": {
+                        "application/json": {
                             "schema": {
-                                "type": "string"
+                                "$ref": "#/components/schemas/acp_relationship_delete_request"
                             }
                         }
                     },
@@ -604,7 +669,49 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_relationship"
+                ]
+            },
+            "post": {
+                "description": "Add an actor relationship using acp system",
+                "operationId": "add relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_relationship_add_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_add_result"
+                                }
+                            }
+                        },
+                        "description": "Add acp relationship result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"

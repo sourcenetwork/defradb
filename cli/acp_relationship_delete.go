@@ -40,8 +40,9 @@ func MakeACPRelationshipDeleteCommand() *cobra.Command {
 		Short: "Delete relationship",
 		Long: `Delete relationship
 
-To revoke access to a document (or delete a relationship), we must delete a relationship link between the
+To revoke access to a document for an actor, we must delete the relationship between the
 actor and the document. Inorder to delete the relationship we require all of the following:
+
 1) Target DocID: The docID of the document we want to delete a relationship for.
 2) Collection Name: The name of the collection that has the Target DocID.
 3) Relation Name: The type of relation (name must be defined within the linked policy on collection).

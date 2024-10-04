@@ -631,6 +631,70 @@ Result:
 Error: document not found or not authorized to access
 ```
 
+### Revoking Access To Private Documents
+
+To revoke access to a document for an actor, we must delete the relationship between the
+actor and the document. Inorder to delete the relationship we require all of the following:
+
+1) Target DocID: The docID of the document we want to delete a relationship for.
+2) Collection Name: The name of the collection that has the Target DocID.
+3) Relation Name: The type of relation (name must be defined within the linked policy on collection).
+4) Target Identity: The identity of the actor the relationship is being deleted for.
+5) Requesting Identity: The identity of the actor that is making the request.
+
+Notes:
+  - ACP must be available (i.e. ACP can not be disabled).
+  - The target document must be registered with ACP already (policy & resource specified).
+  - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
+  - If the relationship record was not found, then it will be a no-op.
+
+Consider the same policy and added relationship from the previous example in the section above where we learnt
+how to share the document with other actors. 
+
+We made the document accessible to an actor by adding a relationship:
+```sh
+defradb client acp relationship add \
+--collection Users \
+--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+--relation reader \
+--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "ExistedAlready": false
+}
+```
+
+Similarly, inorder to revoke access to a document we have the following command to delete the relationship:
+```sh
+defradb client acp relationship delete \
+--collection Users \
+--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+--relation reader \
+--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "RecordFound": true
+}
+```
+
+**Note: If the same relationship is deleted again (or a record for a relationship does not exist) then the `RecordFound`
+would be false, indicating no-op**
+
+Now the other actor can no longer read:
+```sh
+defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+```
+
+**Result is empty from the above command**
+
 ## DAC Usage HTTP:
 
 ### Authentication

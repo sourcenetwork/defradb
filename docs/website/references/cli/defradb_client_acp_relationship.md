@@ -38,4 +38,5 @@ Interact with the acp relationship features of DefraDB instance
 
 * [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system of a DefraDB node
 * [defradb client acp relationship add](defradb_client_acp_relationship_add.md)	 - Add new relationship
+* [defradb client acp relationship delete](defradb_client_acp_relationship_delete.md)	 - Delete relationship
 
