@@ -353,8 +353,6 @@ linters-settings:
             - must not end in punctuation
 
   staticcheck:
-    # Select the Go version to target.
-    go: "1.22"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
