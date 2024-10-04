@@ -94,6 +94,9 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 			if err != nil {
 				return nil, err
 			}
+
+		case client.FieldKind_NILLABLE_JSON:
+			return convertToJSON(fieldDesc.Name, val)
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch fieldDesc.Kind {

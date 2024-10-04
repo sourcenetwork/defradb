@@ -62,3 +62,56 @@ func TestQuerySimple_WithEqOpOnJSONField_ShouldFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQuerySimple_WithEqOpOnJSONFieldWithNestedObjects_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						custom: JSON
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"level_1": {
+							"level_2": {
+								"level_3": [true, false]
+							}
+						}
+					}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"level_1": {
+							"level_2": {
+								"level_3": [false, true]
+							}
+						}
+					}
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_eq: {level_1: {level_2: {level_3: [true, false]}}}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
