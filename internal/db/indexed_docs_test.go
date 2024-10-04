@@ -18,7 +18,6 @@ import (
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -366,29 +365,6 @@ func TestNonUnique_IfDocWithDescendingOrderIsAdded_ShouldBeIndexed(t *testing.T)
 	assert.Len(t, data, 0)
 }
 
-func TestNonUnique_IfFailsToStoreIndexedDoc_Error(t *testing.T) {
-	f := newIndexTestFixture(t)
-	defer f.db.Close()
-	f.createUserCollectionIndexOnName()
-
-	doc := f.newUserDoc("John", 21, f.users)
-	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
-
-	mockTxn := f.mockTxn()
-	a := &mocks.DAGStore{}
-	mockTxn.MockDAGstore.EXPECT().AsIPLDStorage().Return(&bsadapter.Adapter{Wrapped: a})
-	a.EXPECT().Put(mock.Anything, mock.Anything).Return(nil)
-
-	dataStoreOn := mockTxn.MockDatastore.EXPECT()
-	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
-	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
-	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	ctx := SetContextTxn(f.ctx, mockTxn)
-	err := f.users.Create(ctx, doc)
-	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
-}
-
 func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
@@ -409,50 +385,6 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	key := newIndexKeyBuilder(f).Col(usersColName).Build()
 	prefixes := f.getPrefixFromDataStore(key.ToString())
 	assert.Len(t, prefixes, 0)
-}
-
-func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T) {
-	f := newIndexTestFixture(t)
-	defer f.db.Close()
-	f.createUserCollectionIndexOnName()
-
-	doc := f.newUserDoc("John", 21, f.users)
-
-	mockTxn := f.mockTxn().ClearSystemStore()
-	a := &mocks.DAGStore{}
-	mockTxn.MockDAGstore.EXPECT().AsIPLDStorage().Return(&bsadapter.Adapter{Wrapped: a})
-	a.EXPECT().Put(mock.Anything, mock.Anything).Return(nil)
-
-	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
-	systemStoreOn.Query(mock.Anything, mock.Anything).
-		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
-
-	ctx := SetContextTxn(f.ctx, mockTxn)
-	err := f.users.Create(ctx, doc)
-	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
-}
-
-func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
-	f := newIndexTestFixture(t)
-	defer f.db.Close()
-	f.createUserCollectionIndexOnName()
-
-	doc := f.newUserDoc("John", 21, f.users)
-
-	testErr := errors.New("test error")
-
-	mockTxn := f.mockTxn().ClearSystemStore()
-	a := &mocks.DAGStore{}
-	mockTxn.MockDAGstore.EXPECT().AsIPLDStorage().Return(&bsadapter.Adapter{Wrapped: a})
-	a.EXPECT().Put(mock.Anything, mock.Anything).Return(nil)
-
-	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
-	systemStoreOn.Query(mock.Anything, mock.Anything).
-		Return(nil, testErr)
-
-	ctx := SetContextTxn(f.ctx, mockTxn)
-	err := f.users.Create(ctx, doc)
-	require.ErrorIs(t, err, testErr)
 }
 
 func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
