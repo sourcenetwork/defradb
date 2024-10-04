@@ -36,3 +36,10 @@ type AddDocActorRelationshipResult struct {
 	// it is false if a new relationship was created.
 	ExistedAlready bool
 }
+
+// DeleteDocActorRelationshipResult wraps the result of making a document-actor relationship.
+type DeleteDocActorRelationshipResult struct {
+	// RecordFound is true if the relationship record was found, and
+	// is false if the relationship record was not found (no-op).
+	RecordFound bool
+}

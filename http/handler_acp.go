@@ -75,6 +75,35 @@ func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, addDocActorRelResult)
 }
 
+func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
+	db, ok := req.Context().Value(dbContextKey).(client.DB)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
+		return
+	}
+
+	var message deleteDocActorRelationshipRequest
+	err := requestJSON(req, &message)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	deleteDocActorRelResult, err := db.DeleteDocActorRelationship(
+		req.Context(),
+		message.CollectionName,
+		message.DocID,
+		message.Relation,
+		message.TargetActor,
+	)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, deleteDocActorRelResult)
+}
+
 func (h *acpHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -113,6 +142,22 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Value: acpAddDocActorRelationshipRequest,
 	}
 
+	acpDeleteDocActorRelationshipRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
+
+	acpDeleteDocActorRelationship := openapi3.NewOperation()
+	acpDeleteDocActorRelationship.OperationID = "delete relationship"
+	acpDeleteDocActorRelationship.Description = "Delete an actor relationship using acp system"
+	acpDeleteDocActorRelationship.Tags = []string{"acp_relationship"}
+	acpDeleteDocActorRelationship.Responses = openapi3.NewResponses()
+	acpDeleteDocActorRelationship.Responses.Set("200", successResponse)
+	acpDeleteDocActorRelationship.Responses.Set("400", errorResponse)
+	acpDeleteDocActorRelationship.RequestBody = &openapi3.RequestBodyRef{
+		Value: acpDeleteDocActorRelationshipRequest,
+	}
+
 	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
 	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)
+	router.AddRoute("/acp/relationship", http.MethodDelete, acpDeleteDocActorRelationship, h.DeleteDocActorRelationship)
 }

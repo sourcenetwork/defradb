@@ -64,3 +64,31 @@ func (w *Wrapper) AddDocActorRelationship(
 
 	return exists, err
 }
+
+func (w *Wrapper) DeleteDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteDocActorRelationshipResult, error) {
+	args := []string{
+		"client", "acp", "relationship", "delete",
+		"--collection", collectionName,
+		"--docID", docID,
+		"--relation", relation,
+		"--actor", targetActor,
+	}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	var exists client.DeleteDocActorRelationshipResult
+	if err := json.Unmarshal(data, &exists); err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	return exists, err
+}

@@ -70,6 +70,7 @@ func NewDefraCommand() *cobra.Command {
 	acp_relationship := MakeACPRelationshipCommand()
 	acp_relationship.AddCommand(
 		MakeACPRelationshipAddCommand(),
+		MakeACPRelationshipDeleteCommand(),
 	)
 
 	acp := MakeACPCommand()

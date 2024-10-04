@@ -115,6 +115,23 @@ type ACP interface {
 		targetActor string,
 	) (bool, error)
 
+	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found, and deleted. Upon success the boolean
+	// value will be false if the relationship record was not found (no-op).
+	//
+	// Note: The request actor must either be the owner or manager of the document.
+	DeleteDocActorRelationship(
+		ctx context.Context,
+		policyID string,
+		resourceName string,
+		docID string,
+		relation string,
+		requestActor identity.Identity,
+		targetActor string,
+	) (bool, error)
+
 	// SupportsP2P returns true if the implementation supports ACP across a peer network.
 	SupportsP2P() bool
 }
