@@ -260,8 +260,6 @@ linters-settings:
     local-prefixes: github.com/sourcenetwork/defradb
 
   gosimple:
-    # Select the Go version to target.
-    go: "1.22"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
