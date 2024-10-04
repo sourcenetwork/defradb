@@ -10,18 +10,41 @@
 
 package slice
 
-// RemoveDuplicates removes duplicates from a slice of elements in-place.
-// The algorithm is not stable, and the order of the elements may change.
-// A new slice is returned just to update the length of the given slice.
-func RemoveDuplicates[T comparable](elements []T) []T {
-	sets := make(map[T]struct{})
-	for i := len(elements) - 1; i >= 0; i-- {
-		if _, ok := sets[elements[i]]; ok {
-			elements[i] = elements[len(elements)-1]
-			elements = elements[:len(elements)-1]
+import "github.com/sourcenetwork/immutable"
+
+// RemoveDuplicates removes duplicates from a slice of elements.
+// Relative order of the elements is not preserved.
+// Both runtime and space complexity are O(n).
+func RemoveDuplicates[S ~[]E, E comparable](s S) S {
+	sets := make(map[E]struct{})
+	for i := len(s) - 1; i >= 0; i-- {
+		if _, ok := sets[s[i]]; ok {
+			swapLast(s, i)
+			s = s[:len(s)-1]
 		} else {
-			sets[elements[i]] = struct{}{}
+			sets[s[i]] = struct{}{}
 		}
 	}
-	return elements
+	return s
+}
+
+// RemoveFirstIf removes the first element that satisfies the predicate.
+// Relative order of the elements is not preserved, as the last element is swapped with the removed one.
+func RemoveFirstIf[S ~[]E, E any](s S, predicate func(E) bool) (S, immutable.Option[E]) {
+	for i := 0; i < len(s); i++ {
+		if predicate(s[i]) {
+			swapLast(s, i)
+			lastInd := len(s) - 1
+			return s[:lastInd], immutable.Some(s[lastInd])
+		}
+	}
+	return s, immutable.None[E]()
+}
+
+func swap[T any](elements []T, i, j int) {
+	elements[i], elements[j] = elements[j], elements[i]
+}
+
+func swapLast[T any](elements []T, i int) {
+	swap(elements, i, len(elements)-1)
 }

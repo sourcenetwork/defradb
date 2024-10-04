@@ -472,9 +472,12 @@ func (index *collectionArrayBaseIndex) newIndexKeyGenerator(
 		normValsArr = append(normValsArr, slice.RemoveDuplicates(normVals))
 	}
 
+	// arrFieldCounter keeps track of indexes into arrays of normal values
 	arrFieldCounter := make([]int, len(index.arrFieldsIndexes))
 	done := false
 
+	// This function generates the next key by iterating through all possible combinations.
+	// It works pretty much like a digital clock that first iterates through seconds, then minutes, etc.
 	return func() (core.IndexDataStoreKey, bool) {
 		if done {
 			return core.IndexDataStoreKey{}, false
@@ -487,17 +490,24 @@ func (index *collectionArrayBaseIndex) newIndexKeyGenerator(
 		}
 		copy(resultKey.Fields, key.Fields)
 
+		// Use current indexes in arrFieldsIndexes to replace corresponding fields in the key
 		for i, counter := range arrFieldCounter {
 			field := &resultKey.Fields[index.arrFieldsIndexes[i]]
 			field.Value = normValsArr[i][counter]
 		}
 
+		// iterate in reverse order so that we exhaust all combination for the last field first,
+		// {"f", "g"} in the example above. This way we guarantee that the order of generated keys
+		// is from left to right, "acf" -> "acg" -> "adf" -> "adg" -> ...
 		for i := len(arrFieldCounter) - 1; i >= 0; i-- {
 			arrFieldCounter[i]++
 			if arrFieldCounter[i] < len(normValsArr[i]) {
 				break
 			}
+			// if we iterated through all combinations for the current field, reset the counter
+			// so that we do it again for the next field from the left side
 			arrFieldCounter[i] = 0
+			// if the current side happens to be the leftmost one (the first), we are done
 			if i == 0 {
 				done = true
 			}
@@ -533,34 +543,29 @@ func (index *collectionArrayBaseIndex) deleteRetiredKeysAndReturnNew(
 	newDoc *client.Document,
 	appendDocID bool,
 ) ([]core.IndexDataStoreKey, error) {
-	oldKeys, err := index.getAllKeys(oldDoc, appendDocID)
+	prevKeys, err := index.getAllKeys(oldDoc, appendDocID)
 	if err != nil {
 		return nil, err
 	}
-	newKeys, err := index.getAllKeys(newDoc, appendDocID)
+	currentKeys, err := index.getAllKeys(newDoc, appendDocID)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, oldKey := range oldKeys {
-		isFound := false
-		for i := len(newKeys) - 1; i >= 0; i-- {
-			if oldKey.Equal(newKeys[i]) {
-				newKeys[i] = newKeys[len(newKeys)-1]
-				newKeys = newKeys[:len(newKeys)-1]
-				isFound = true
-				break
-			}
-		}
-		if !isFound {
-			err = index.deleteIndexKey(ctx, txn, oldKey)
+	for _, prevKey := range prevKeys {
+		keyEqual := func(key core.IndexDataStoreKey) bool { return prevKey.Equal(key) }
+		rem, removedVal := slice.RemoveFirstIf(currentKeys, keyEqual)
+		// If a previous keys is not among the current keys, it should be retired
+		if !removedVal.HasValue() {
+			err = index.deleteIndexKey(ctx, txn, prevKey)
 			if err != nil {
 				return nil, err
 			}
 		}
+		currentKeys = rem
 	}
 
-	return newKeys, nil
+	return currentKeys, nil
 }
 
 type collectionArrayIndex struct {
@@ -585,8 +590,8 @@ func (index *collectionArrayIndex) Save(
 	}
 
 	for {
-		key, ok := getNextKey()
-		if !ok {
+		key, hasKey := getNextKey()
+		if !hasKey {
 			break
 		}
 		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
