@@ -15,16 +15,16 @@ import (
 )
 
 const (
-	errInitializationOfACPFailed                      = "initialization of acp failed"
-	errStartingACPInEmptyPath                         = "starting acp in an empty path"
-	errFailedToAddPolicyWithACP                       = "failed to add policy with acp"
-	errFailedToRegisterDocWithACP                     = "failed to register document with acp"
-	errFailedToCheckIfDocIsRegisteredWithACP          = "failed to check if doc is registered with acp"
-	errFailedToVerifyDocAccessWithACP                 = "failed to verify doc access with acp"
-	errFailedToAddDocActorRelationshipWithACP         = "failed to add document actor relationship with acp"
-	errFailedToDeleteDocActorRelationshipWithACP      = "failed to delete document actor relationship with acp"
-	errMissingRequiredArgToAddDocActorRelationship    = "missing a required argument needed to add doc actor relationship"
-	errMissingRequiredArgToDeleteDocActorRelationship = "missing a required argument needed to delete doc actor relationship"
+	errInitializationOfACPFailed                 = "initialization of acp failed"
+	errStartingACPInEmptyPath                    = "starting acp in an empty path"
+	errFailedToAddPolicyWithACP                  = "failed to add policy with acp"
+	errFailedToRegisterDocWithACP                = "failed to register document with acp"
+	errFailedToCheckIfDocIsRegisteredWithACP     = "failed to check if doc is registered with acp"
+	errFailedToVerifyDocAccessWithACP            = "failed to verify doc access with acp"
+	errFailedToAddDocActorRelationshipWithACP    = "failed to add document actor relationship with acp"
+	errFailedToDeleteDocActorRelationshipWithACP = "failed to delete document actor relationship with acp"
+	errMissingReqArgToAddDocActorRelationship    = "missing a required argument needed to add doc actor relationship"
+	errMissingReqArgToDeleteDocActorRelationship = "missing a required argument needed to delete doc actor relationship"
 
 	errObjectDidNotRegister = "no-op while registering object (already exists or error) with acp"
 	errNoPolicyArgs         = "missing policy arguments, must have both id and resource"
@@ -270,7 +270,7 @@ func NewErrMissingRequiredArgToAddDocActorRelationship(
 	targetActor string,
 ) error {
 	return errors.New(
-		errMissingRequiredArgToAddDocActorRelationship,
+		errMissingReqArgToAddDocActorRelationship,
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
@@ -289,7 +289,7 @@ func NewErrMissingRequiredArgToDeleteDocActorRelationship(
 	targetActor string,
 ) error {
 	return errors.New(
-		errMissingRequiredArgToDeleteDocActorRelationship,
+		errMissingReqArgToDeleteDocActorRelationship,
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
