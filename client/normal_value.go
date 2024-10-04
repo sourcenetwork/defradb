@@ -31,6 +31,9 @@ type NormalValue interface {
 	// if the option has value, otherwise it will return nil.
 	Unwrap() any
 
+	// Equal returns if the value is equal to the given value.
+	Equal(NormalValue) bool
+
 	// IsNil returns if the value is nil. For not nillable values it will always return false.
 	IsNil() bool
 	// IsNillable returns if the value can be nil.

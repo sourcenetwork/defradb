@@ -41,12 +41,20 @@ func (v normalBoolArray) BoolArray() ([]bool, bool) {
 	return v.val, true
 }
 
+func (v normalBoolArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.BoolArray)
+}
+
 type normalIntArray struct {
 	baseArrayNormalValue[[]int64]
 }
 
 func (v normalIntArray) IntArray() ([]int64, bool) {
 	return v.val, true
+}
+
+func (v normalIntArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.IntArray)
 }
 
 type normalFloatArray struct {
@@ -57,12 +65,20 @@ func (v normalFloatArray) FloatArray() ([]float64, bool) {
 	return v.val, true
 }
 
+func (v normalFloatArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.FloatArray)
+}
+
 type normalStringArray struct {
 	baseArrayNormalValue[[]string]
 }
 
 func (v normalStringArray) StringArray() ([]string, bool) {
 	return v.val, true
+}
+
+func (v normalStringArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.StringArray)
 }
 
 type normalBytesArray struct {
@@ -73,6 +89,13 @@ func (v normalBytesArray) BytesArray() ([][]byte, bool) {
 	return v.val, true
 }
 
+func (v normalBytesArray) Equal(other NormalValue) bool {
+	if otherVal, ok := other.BytesArray(); ok {
+		return are2DArraysEqual(v.val, otherVal)
+	}
+	return false
+}
+
 type normalTimeArray struct {
 	baseArrayNormalValue[[]time.Time]
 }
@@ -81,12 +104,20 @@ func (v normalTimeArray) TimeArray() ([]time.Time, bool) {
 	return v.val, true
 }
 
+func (v normalTimeArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.TimeArray)
+}
+
 type normalDocumentArray struct {
 	baseArrayNormalValue[[]*Document]
 }
 
 func (v normalDocumentArray) DocumentArray() ([]*Document, bool) {
 	return v.val, true
+}
+
+func (v normalDocumentArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.DocumentArray)
 }
 
 // NewNormalBoolArray creates a new NormalValue that represents a `[]bool` value.
@@ -146,4 +177,35 @@ func normalizeCharsArr[R string | []byte, T string | []byte](val []T) []R {
 		arr[i] = R(v)
 	}
 	return arr
+}
+
+func areArraysEqual[T comparable](arr1, arr2 []T) bool {
+	if len(arr1) != len(arr2) {
+		return false
+	}
+	for i, v := range arr1 {
+		if v != arr2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func areNormalArraysEqual[T comparable](val []T, f func() ([]T, bool)) bool {
+	if otherVal, ok := f(); ok {
+		return areArraysEqual(val, otherVal)
+	}
+	return false
+}
+
+func are2DArraysEqual[T comparable](arr1, arr2 [][]T) bool {
+	if len(arr1) != len(arr2) {
+		return false
+	}
+	for i, v := range arr1 {
+		if !areArraysEqual(v, arr2[i]) {
+			return false
+		}
+	}
+	return true
 }
