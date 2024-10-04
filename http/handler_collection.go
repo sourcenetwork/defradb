@@ -243,7 +243,10 @@ func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 		if err != nil {
 			return
 		}
-		fmt.Fprintf(rw, "data: %s\n\n", data)
+		_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
+		if err != nil {
+			return
+		}
 		flusher.Flush()
 	}
 }

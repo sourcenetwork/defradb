@@ -29,5 +29,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Fprint(os.Stdout, string(json))
+	_, err = fmt.Fprint(os.Stdout, string(json))
+	if err != nil {
+		panic(err)
+	}
 }
