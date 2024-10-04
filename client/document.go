@@ -401,6 +401,10 @@ func getDateTime(v any) (time.Time, error) {
 	return time.Parse(time.RFC3339, s)
 }
 
+// getJSON converts the given value to a valid JSON value.
+//
+// If the value is of type *fastjson.Value it needs to be
+// manually parsed. All other values are valid JSON.
 func getJSON(v any) (any, error) {
 	val, ok := v.(*fastjson.Value)
 	if !ok {

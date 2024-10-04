@@ -34,7 +34,7 @@ func eq(condition, data any) (bool, error) {
 	switch cn := condition.(type) {
 	case map[FilterKey]any:
 		for prop, cond := range cn {
-			m, err := matchWith(prop.GetOperatorOrDefault("_eq"), cond, prop.GetProp(data))
+			m, err := matchWith(prop.GetOperatorOrDefault(EqualOp), cond, prop.GetProp(data))
 			if err != nil {
 				return false, err
 			} else if !m {
@@ -44,19 +44,7 @@ func eq(condition, data any) (bool, error) {
 		return true, nil
 
 	case map[string]any:
-		d, ok := data.(map[string]any)
-		if !ok {
-			return false, nil
-		}
-		for k, v := range d {
-			m, err := eq(cn[k], v)
-			if err != nil {
-				return false, err
-			} else if !m {
-				return false, nil
-			}
-		}
-		return true, nil
+		return objectsEqual(cn, data)
 
 	case string:
 		if d, ok := data.(string); ok {
@@ -64,13 +52,7 @@ func eq(condition, data any) (bool, error) {
 		}
 		return false, nil
 
-	case uint64:
-		return numbers.Equal(cn, data), nil
-
 	case int64:
-		return numbers.Equal(cn, data), nil
-
-	case uint32:
 		return numbers.Equal(cn, data), nil
 
 	case int32:
@@ -85,6 +67,27 @@ func eq(condition, data any) (bool, error) {
 	default:
 		return reflect.DeepEqual(condition, data), nil
 	}
+}
+
+// objectsEqual returns true if the given condition and data
+// contain equal key value pairs.
+func objectsEqual(condition map[string]any, data any) (bool, error) {
+	if data == nil {
+		return false, nil
+	}
+	d := data.(map[string]any)
+	if len(d) != len(condition) {
+		return false, nil
+	}
+	for k, v := range d {
+		m, err := eq(condition[k], v)
+		if err != nil {
+			return false, err
+		} else if !m {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func immutableValueOrNil[T any](data immutable.Option[T]) any {

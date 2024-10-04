@@ -1309,10 +1309,9 @@ func toFilterMap(
 		key := &Operator{
 			Operation: sourceKey,
 		}
-		// if the operator is a simple comparison it may be
-		// comparing values of an embedded or JSON object
-		// that are not explicitly mapped in the document
-		if key.Operation == "_eq" || key.Operation == "_in" {
+		// if the operator is simple (not compound) then
+		// it does not require further expansion
+		if connor.IsOpSimple(sourceKey) {
 			return key, sourceClause
 		}
 		switch typedClause := sourceClause.(type) {

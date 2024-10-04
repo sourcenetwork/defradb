@@ -193,24 +193,41 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 	}
 }
 
+// convertToJSON converts the given value to a valid JSON value.
+//
+// When maps are decoded, they are of type map[any]any, and need to
+// be converted to map[string]any. All other values are valid JSON.
 func convertToJSON(propertyName string, untypedValue any) (any, error) {
-	untypedMap, ok := untypedValue.(map[any]any)
-	if !ok {
+	switch t := untypedValue.(type) {
+	case map[any]any:
+		resultValue := make(map[string]any)
+		for k, v := range t {
+			key, ok := k.(string)
+			if !ok {
+				return nil, client.NewErrUnexpectedType[string](propertyName, k)
+			}
+			val, err := convertToJSON(fmt.Sprintf("%s.%s", propertyName, key), v)
+			if err != nil {
+				return nil, err
+			}
+			resultValue[key] = val
+		}
+		return resultValue, nil
+
+	case []any:
+		resultValue := make([]any, len(t))
+		for i, v := range t {
+			val, err := convertToJSON(fmt.Sprintf("%s[%d]", propertyName, i), v)
+			if err != nil {
+				return nil, err
+			}
+			resultValue[i] = val
+		}
+		return resultValue, nil
+
+	default:
 		return untypedValue, nil
 	}
-	resultValue := make(map[string]any)
-	for k, v := range untypedMap {
-		key, ok := k.(string)
-		if !ok {
-			return nil, client.NewErrUnexpectedType[any](propertyName, k)
-		}
-		val, err := convertToJSON(propertyName, v)
-		if err != nil {
-			return nil, err
-		}
-		resultValue[key] = val
-	}
-	return resultValue, nil
 }
 
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
