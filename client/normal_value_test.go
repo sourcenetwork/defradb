@@ -30,6 +30,7 @@ const (
 	BytesType    nType = "Bytes"
 	TimeType     nType = "Time"
 	DocumentType nType = "Document"
+	JSONType     nType = "JSON"
 
 	NillableBoolType     nType = "NillableBool"
 	NillableIntType      nType = "NillableInt"
@@ -76,6 +77,11 @@ const (
 // If it is and contains a value, it returns the contained value.
 // Otherwise, it returns the input itself.
 func extractValue(input any) any {
+	// unwrap JSON inner values
+	if v, ok := input.(*JSON); ok {
+		return v.inner
+	}
+
 	inputVal := reflect.ValueOf(input)
 
 	// Check if the type is Option[T] by seeing if it has the HasValue and Value methods.
@@ -112,6 +118,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		BytesType:    func(v NormalValue) (any, bool) { return v.Bytes() },
 		TimeType:     func(v NormalValue) (any, bool) { return v.Time() },
 		DocumentType: func(v NormalValue) (any, bool) { return v.Document() },
+		JSONType:     func(v NormalValue) (any, bool) { return v.JSON() },
 
 		NillableBoolType:     func(v NormalValue) (any, bool) { return v.NillableBool() },
 		NillableIntType:      func(v NormalValue) (any, bool) { return v.NillableInt() },
@@ -164,6 +171,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		BytesType:    func(v any) NormalValue { return NewNormalBytes(v.([]byte)) },
 		TimeType:     func(v any) NormalValue { return NewNormalTime(v.(time.Time)) },
 		DocumentType: func(v any) NormalValue { return NewNormalDocument(v.(*Document)) },
+		JSONType:     func(v any) NormalValue { return NewNormalJSON(v.(*JSON)) },
 
 		NillableBoolType:     func(v any) NormalValue { return NewNormalNillableBool(v.(immutable.Option[bool])) },
 		NillableIntType:      func(v any) NormalValue { return NewNormalNillableInt(v.(immutable.Option[int64])) },
@@ -282,6 +290,10 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		{
 			nType: DocumentType,
 			input: &Document{},
+		},
+		{
+			nType: JSONType,
+			input: &JSON{nil},
 		},
 		{
 			nType:      NillableBoolType,
@@ -828,6 +840,53 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+}
+
+func TestNormalValue_NewNormalJSON(t *testing.T) {
+	var expect *JSON
+	var actual *JSON
+
+	expect = &JSON{nil}
+	normal := NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
+
+	expect = &JSON{"hello"}
+	normal = NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
+
+	expect = &JSON{true}
+	normal = NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
+
+	expect = &JSON{int64(10)}
+	normal = NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
+
+	expect = &JSON{float64(3.14)}
+	normal = NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
+
+	expect = &JSON{map[string]any{"one": 1}}
+	normal = NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
+
+	expect = &JSON{[]any{1, "two"}}
+	normal = NewNormalJSON(expect)
+
+	actual, _ = normal.JSON()
+	assert.Equal(t, expect, actual)
 }
 
 func TestNormalValue_NewNormalInt(t *testing.T) {

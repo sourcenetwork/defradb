@@ -325,7 +325,7 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		if err != nil {
 			return nil, err
 		}
-		return NewNormalJSON(v), nil
+		return NewNormalJSON(&JSON{v}), nil
 	}
 
 	return nil, NewErrUnhandledType("FieldKind", field.Kind)

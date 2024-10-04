@@ -60,6 +60,10 @@ func (NormalVoid) Document() (*Document, bool) {
 	return nil, false
 }
 
+func (NormalVoid) JSON() (*JSON, bool) {
+	return nil, false
+}
+
 func (NormalVoid) NillableBool() (immutable.Option[bool], bool) {
 	return immutable.None[bool](), false
 }
