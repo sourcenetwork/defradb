@@ -657,6 +657,11 @@ func (c *collection) save(
 
 			relationFieldDescription, isSecondaryRelationID := fieldDescription.GetSecondaryRelationField(c.Definition())
 			if isSecondaryRelationID {
+				if val.Value() == nil {
+					// If the value (relation) is nil, we don't need to check for any documents already linked to it
+					continue
+				}
+
 				primaryId := val.Value().(string)
 
 				err = c.patchPrimaryDoc(
