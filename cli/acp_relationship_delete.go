@@ -109,10 +109,9 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 	)
 	_ = cmd.MarkFlagRequired(targetActorFlagLong)
 
-	cmd.Flags().StringVarP(
+	cmd.Flags().StringVar(
 		&docIDArg,
 		docIDFlag,
-		"",
 		"",
 		"Document Identifier (ObjectID) to delete relationship for",
 	)

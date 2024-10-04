@@ -117,10 +117,9 @@ Example: Creating a dummy relationship does nothing (from database prespective):
 	)
 	_ = cmd.MarkFlagRequired(targetActorFlagLong)
 
-	cmd.Flags().StringVarP(
+	cmd.Flags().StringVar(
 		&docIDArg,
 		docIDFlag,
-		"",
 		"",
 		"Document Identifier (ObjectID) to make relationship for",
 	)
