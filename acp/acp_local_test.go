@@ -854,6 +854,223 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	require.Nil(t, errClose)
 }
 
+func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFalseOtherwise(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	errStart := localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	policyID, errAddPolicy := localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	// Register a document.
+	errRegisterDoc := localACP.RegisterDocObject(
+		ctx,
+		identity1,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errRegisterDoc)
+
+	// Grant other identity access.
+	exists, errAddDocActorRelationship := localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errAddDocActorRelationship)
+	require.False(t, exists)
+
+	// Now the other identity has access.
+	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.True(t, hasAccess)
+
+	// Delete other identity's access by removing their relationship.
+	foundRecord, errDeleteDocActorRelationship := localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errDeleteDocActorRelationship)
+	require.True(t, foundRecord)
+
+	// Deleting same relationship again should be no-op.
+	foundRecord, errDeleteDocActorRelationship = localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errDeleteDocActorRelationship)
+	require.False(t, foundRecord) // Is a no-op
+
+	// Other identity now has no access again.
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.False(t, hasAccess)
+
+	errClose := localACP.Close()
+	require.Nil(t, errClose)
+}
+
+func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFalseOtherwise(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	errStart := localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	policyID, errAddPolicy := localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	// Register a document.
+	errRegisterDoc := localACP.RegisterDocObject(
+		ctx,
+		identity1,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errRegisterDoc)
+
+	// Grant other identity access.
+	exists, errAddDocActorRelationship := localACP.AddDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errAddDocActorRelationship)
+	require.False(t, exists)
+
+	// Now the other identity has access.
+	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.True(t, hasAccess)
+
+	// Delete other identity's access by removing their relationship.
+	foundRecord, errDeleteDocActorRelationship := localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errDeleteDocActorRelationship)
+	require.True(t, foundRecord)
+
+	// Deleting same relationship again should be no-op.
+	foundRecord, errDeleteDocActorRelationship = localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		identity2.DID,
+	)
+	require.Nil(t, errDeleteDocActorRelationship)
+	require.False(t, foundRecord) // Is a no-op
+
+	// Other identity now has no access again.
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.False(t, hasAccess)
+
+	// Should continue having their correct behaviour and access even after a restart.
+	errClose := localACP.Close()
+	require.Nil(t, errClose)
+
+	localACP.Init(ctx, acpPath)
+	errStart = localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	// Now check again after the restart that the second identity still has no access.
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		ReadPermission,
+		identity2.DID,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+	)
+	require.Nil(t, errCheckDocAccess)
+	require.False(t, hasAccess)
+
+	errClose = localACP.Close()
+	require.Nil(t, errClose)
+}
+
 func Test_LocalACP_InMemory_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
 	ctx := context.Background()
 	localACP := NewLocalACP()
@@ -1020,6 +1237,85 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, ErrFailedToAddDocActorRelationshipWithACP)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnError(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	// Invalid requesting identity.
+	exists, err := localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		invalidIdentity,
+		identity2.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	// Invalid target actor.
+	exists, err = localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		invalidIdentity.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrFailedToDeleteDocActorRelationshipWithACP)
+
+	err = localACP.Close()
+	require.NoError(t, err)
+}
+
+func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturnError(t *testing.T) {
+	acpPath := t.TempDir()
+	require.NotEqual(t, "", acpPath)
+
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, acpPath)
+	err := localACP.Start(ctx)
+	require.Nil(t, err)
+
+	// Invalid requesting identity.
+	exists, err := localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		invalidIdentity,
+		identity2.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrInvalidActorID)
+
+	// Invalid target actor.
+	exists, err = localACP.DeleteDocActorRelationship(
+		ctx,
+		validPolicyID,
+		"users",
+		"documentID_XYZ",
+		"reader",
+		identity1,
+		invalidIdentity.DID,
+	)
+	require.False(t, exists)
+	require.ErrorIs(t, err, ErrFailedToDeleteDocActorRelationshipWithACP)
 
 	err = localACP.Close()
 	require.NoError(t, err)
