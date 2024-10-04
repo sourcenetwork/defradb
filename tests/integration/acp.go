@@ -117,13 +117,13 @@ func addPolicyACP(
 		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
-		if err == nil {
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
 			require.Equal(s.t, action.ExpectedPolicyID, policyResult.PolicyID)
 		}
-
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
@@ -236,13 +236,13 @@ func addDocActorRelationshipACP(
 			targetIdentity,
 		)
 
-		if err == nil {
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
 			require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
 		}
-
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	} else {
 		for i, node := range getNodes(action.NodeID, s.nodes) {
 			var collectionName string
@@ -293,13 +293,13 @@ func addDocActorRelationshipACP(
 				targetIdentity,
 			)
 
-			if err == nil {
+			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+			if !expectedErrorRaised {
 				require.Equal(s.t, action.ExpectedError, "")
 				require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
 			}
-
-			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 			// the nodes.
@@ -414,13 +414,13 @@ func deleteDocActorRelationshipACP(
 			targetIdentity,
 		)
 
-		if err == nil {
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
 			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
 		}
-
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	} else {
 		for i, node := range getNodes(action.NodeID, s.nodes) {
 			var collectionName string
@@ -471,13 +471,13 @@ func deleteDocActorRelationshipACP(
 				targetIdentity,
 			)
 
-			if err == nil {
+			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+			if !expectedErrorRaised {
 				require.Equal(s.t, action.ExpectedError, "")
 				require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
 			}
-
-			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 			// the nodes.
