@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_add
 
 import (
 	"fmt"
@@ -19,12 +19,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t *testing.T) {
+func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotUpdate(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add doc actor relationship on a public document, return error",
+		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
+
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return no error when wrong identity is used so test that separately.
+			testUtils.GQLRequestMutationType,
+		}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -92,7 +97,9 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 				),
 			},
 
-			testUtils.CreateDoc{ // Note: Is a public document (without an identity).
+			testUtils.CreateDoc{
+				Identity: immutable.Some(1),
+
 				CollectionID: 0,
 
 				Doc: `
@@ -104,7 +111,55 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Can read as it is a public document
+				Identity: immutable.Some(2), // This identity can not read yet.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{}, // Can't see the documents yet
+				},
+			},
+
+			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
+				CollectionID: 0,
+
+				Identity: immutable.Some(2),
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				SkipLocalUpdateEvent: true,
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "reader",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -127,18 +182,20 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 				},
 			},
 
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
-
-				TargetIdentity: 2,
-
+			testUtils.UpdateDoc{ // But this actor still can't update.
 				CollectionID: 0,
+
+				Identity: immutable.Some(2),
 
 				DocID: 0,
 
-				Relation: "reader",
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
 
-				ExpectedError: "failed to add document actor relationship with acp",
+				ExpectedError: "document not found or not authorized to access",
 			},
 		},
 	}

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_add
 
 import (
 	"fmt"
@@ -19,12 +19,352 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
+func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add doc actor relationship with docID missing, return error",
+		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
+
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
+
+		Actions: []any{
+			testUtils.AddPolicy{
+
+				Identity: immutable.Some(1),
+
+				Policy: `
+                    name: Test Policy
+
+                    description: A Policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          read:
+                            expr: owner + reader + writer
+
+                          write:
+                            expr: owner + writer
+
+                          nothing:
+                            expr: dummy
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+
+                          reader:
+                            types:
+                              - actor
+
+                          writer:
+                            types:
+                              - actor
+
+                          admin:
+                            manages:
+                              - reader
+                            types:
+                              - actor
+
+                          dummy:
+                            types:
+                              - actor
+                `,
+
+				ExpectedPolicyID: expectedPolicyID,
+			},
+
+			testUtils.SchemaUpdate{
+				Schema: fmt.Sprintf(`
+						type Users @policy(
+							id: "%s",
+							resource: "users"
+						) {
+							name: String
+							age: Int
+						}
+					`,
+					expectedPolicyID,
+				),
+			},
+
+			testUtils.CreateDoc{
+				Identity: immutable.Some(1),
+
+				CollectionID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad",
+						"age": 28
+					}
+				`,
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // This identity can not read yet.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{}, // Can't see the documents yet
+				},
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can not update yet.
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				ExpectedError: "document not found or not authorized to access",
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "writer",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "writer",
+
+				ExpectedExistence: true, // is a no-op
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *testing.T) {
+	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+
+	test := testUtils.TestCase{
+
+		Description: "Test acp, owner gives write(update) access to another actor",
+
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
+
+		Actions: []any{
+			testUtils.AddPolicy{
+
+				Identity: immutable.Some(1),
+
+				Policy: `
+                    name: Test Policy
+
+                    description: A Policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          read:
+                            expr: owner + reader + writer
+
+                          write:
+                            expr: owner + writer
+
+                          nothing:
+                            expr: dummy
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+
+                          reader:
+                            types:
+                              - actor
+
+                          writer:
+                            types:
+                              - actor
+
+                          admin:
+                            manages:
+                              - reader
+                            types:
+                              - actor
+
+                          dummy:
+                            types:
+                              - actor
+                `,
+
+				ExpectedPolicyID: expectedPolicyID,
+			},
+
+			testUtils.SchemaUpdate{
+				Schema: fmt.Sprintf(`
+						type Users @policy(
+							id: "%s",
+							resource: "users"
+						) {
+							name: String
+							age: Int
+						}
+					`,
+					expectedPolicyID,
+				),
+			},
+
+			testUtils.CreateDoc{
+				Identity: immutable.Some(1),
+
+				CollectionID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad",
+						"age": 28
+					}
+				`,
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // This identity can not read yet.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{}, // Can't see the documents yet
+				},
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can not update yet.
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				ExpectedError: "document not found or not authorized to access",
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "writer",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can now update.
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // This identity can now also read.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad Lone", // Note: updated name
+							"age":    int64(28),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwner(t *testing.T) {
+	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+
+	test := testUtils.TestCase{
+
+		Description: "Test acp, owner gives write(update) access to another actor, both can read",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -112,431 +452,87 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 
 				CollectionID: 0,
 
-				DocID: -1,
+				DocID: 0,
 
-				Relation: "reader",
+				Relation: "writer",
 
-				ExpectedError: "missing a required argument needed to add doc actor relationship.",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
-	test := testUtils.TestCase{
-
-		Description: "Test acp, add doc actor relationship with collection missing, return error",
-
-		Actions: []any{
-			testUtils.AddPolicy{
-
-				Identity: immutable.Some(1),
-
-				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + writer
-
-                          write:
-                            expr: owner + writer
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          writer:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: expectedPolicyID,
+				ExpectedExistence: false,
 			},
 
-			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
-			},
-
-			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
-
+			testUtils.UpdateDoc{
 				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can now update.
+
+				DocID: 0,
 
 				Doc: `
 					{
-						"name": "Shahzad",
-						"age": 28
+						"name": "Shahzad Lone"
 					}
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+			testUtils.Request{
+				Identity: immutable.Some(2), // This identity can now also read.
 
-				TargetIdentity: 2,
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
 
-				CollectionID: -1,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad Lone", // Note: updated name
+							"age":    int64(28),
+						},
+					},
+				},
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(1), // Owner can still also update (ownership not transferred)
 
 				DocID: 0,
 
-				Relation: "reader",
-
-				ExpectedError: "collection name can't be empty",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
-	test := testUtils.TestCase{
-
-		Description: "Test acp, add doc actor relationship with relation name missing, return error",
-
-		Actions: []any{
-			testUtils.AddPolicy{
-
-				Identity: immutable.Some(1),
-
-				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + writer
-
-                          write:
-                            expr: owner + writer
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          writer:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: expectedPolicyID,
-			},
-
-			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
-			},
-
-			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
-
-				CollectionID: 0,
-
 				Doc: `
 					{
-						"name": "Shahzad",
-						"age": 28
+						"name": "Lone"
 					}
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+			testUtils.Request{
+				Identity: immutable.Some(2), // Owner can still also read (ownership not transferred)
 
-				TargetIdentity: 2,
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "",
-
-				ExpectedError: "missing a required argument needed to add doc actor relationship.",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
-	test := testUtils.TestCase{
-
-		Description: "Test acp, add doc actor relationship with target actor missing, return error",
-
-		Actions: []any{
-			testUtils.AddPolicy{
-
-				Identity: immutable.Some(1),
-
-				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + writer
-
-                          write:
-                            expr: owner + writer
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          writer:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: expectedPolicyID,
-			},
-
-			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
 						}
-					`,
-					expectedPolicyID,
-				),
-			},
-
-			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
-
-				CollectionID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad",
-						"age": 28
 					}
 				`,
-			},
 
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
-
-				TargetIdentity: -1,
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
-				ExpectedError: "missing a required argument needed to add doc actor relationship.",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
-	test := testUtils.TestCase{
-
-		Description: "Test acp, add doc actor relationship with requesting identity missing, return error",
-
-		Actions: []any{
-			testUtils.AddPolicy{
-
-				Identity: immutable.Some(1),
-
-				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + writer
-
-                          write:
-                            expr: owner + writer
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          writer:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: expectedPolicyID,
-			},
-
-			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
-			},
-
-			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
-
-				CollectionID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad",
-						"age": 28
-					}
-				`,
-			},
-
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: -1,
-
-				TargetIdentity: 2,
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
-				ExpectedError: "missing a required argument needed to add doc actor relationship.",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Lone", // Note: updated name
+							"age":    int64(28),
+						},
+					},
+				},
 			},
 		},
 	}
