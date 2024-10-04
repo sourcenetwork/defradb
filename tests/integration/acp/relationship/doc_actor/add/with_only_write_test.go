@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_add
 
 import (
 	"fmt"
@@ -19,12 +19,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChanges(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCantUpdate(t *testing.T) {
+	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add doc actor relationship with a dummy relation defined on policy, nothing happens",
+		Description: "Test acp, owner gives write(update) access to another actor, without explicit read permission",
+
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -43,7 +48,7 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader
 
                           write:
                             expr: owner + writer
@@ -119,8 +124,24 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
 				`,
 
 				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents
+					"Users": []map[string]any{}, // Can't see the documents yet
 				},
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can not update yet.
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				ExpectedError: "document not found or not authorized to access",
 			},
 
 			testUtils.AddDocActorRelationship{
@@ -132,7 +153,174 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
 
 				DocID: 0,
 
-				Relation: "dummy", // Doesn't mean anything to the database.
+				Relation: "writer",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can still not update.
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				ExpectedError: "document not found or not authorized to access",
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // This identity can still not read.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCantDelete(t *testing.T) {
+	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
+
+	test := testUtils.TestCase{
+
+		Description: "Test acp, owner gives write(delete) access to another actor, without explicit read permission",
+
+		Actions: []any{
+			testUtils.AddPolicy{
+
+				Identity: immutable.Some(1),
+
+				Policy: `
+                    name: Test Policy
+
+                    description: A Policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          read:
+                            expr: owner + reader
+
+                          write:
+                            expr: owner + writer
+
+                          nothing:
+                            expr: dummy
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+
+                          reader:
+                            types:
+                              - actor
+
+                          writer:
+                            types:
+                              - actor
+
+                          admin:
+                            manages:
+                              - reader
+                            types:
+                              - actor
+
+                          dummy:
+                            types:
+                              - actor
+                `,
+
+				ExpectedPolicyID: expectedPolicyID,
+			},
+
+			testUtils.SchemaUpdate{
+				Schema: fmt.Sprintf(`
+						type Users @policy(
+							id: "%s",
+							resource: "users"
+						) {
+							name: String
+							age: Int
+						}
+					`,
+					expectedPolicyID,
+				),
+			},
+
+			testUtils.CreateDoc{
+				Identity: immutable.Some(1),
+
+				CollectionID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad",
+						"age": 28
+					}
+				`,
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // This identity can not read yet.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{}, // Can't see the documents yet
+				},
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can not delete yet.
+
+				DocID: 0,
+
+				ExpectedError: "document not found or not authorized to access",
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "writer",
 
 				ExpectedExistence: false,
 			},
@@ -151,149 +339,18 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
 				`,
 
 				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
-	test := testUtils.TestCase{
-
-		Description: "Test acp, add doc actor relationship with an invalid relation (not defined on policy), error",
-
-		Actions: []any{
-			testUtils.AddPolicy{
-
-				Identity: immutable.Some(1),
-
-				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + writer
-
-                          write:
-                            expr: owner + writer
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          writer:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: expectedPolicyID,
-			},
-
-			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
-			},
-
-			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
-
-				CollectionID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad",
-						"age": 28
-					}
-				`,
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents
+					"Users": []map[string]any{},
 				},
 			},
 
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
-
-				TargetIdentity: 2,
-
+			testUtils.DeleteDoc{
 				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can still not delete.
 
 				DocID: 0,
 
-				Relation: "NotOnPolicy", // Doesn't mean anything to the database and not on policy either.
-
-				ExpectedError: "failed to add document actor relationship with acp",
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents
-				},
+				ExpectedError: "document not found or not authorized to access",
 			},
 		},
 	}

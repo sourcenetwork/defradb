@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_delete
 
 import (
 	"testing"
@@ -18,10 +18,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedError(t *testing.T) {
+func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add doc actor relationship on a collection with no policy, not allowed error",
+		Description: "Test acp, delete doc actor relationship on a collection with no policy, not allowed error",
 
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -46,7 +46,7 @@ func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedErro
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.DeleteDocActorRelationship{
 				RequestorIdentity: 1,
 
 				TargetIdentity: 2,

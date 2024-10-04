@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_add
 
 import (
 	"fmt"

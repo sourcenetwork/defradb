@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_add
 
 import (
 	"fmt"
@@ -19,12 +19,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCantUpdate(t *testing.T) {
-	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
+func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotUpdate(t *testing.T) {
+	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor, without explicit read permission",
+		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
@@ -48,7 +48,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
                       users:
                         permissions:
                           read:
-                            expr: owner + reader
+                            expr: owner + reader + writer
 
                           write:
                             expr: owner + writer
@@ -128,10 +128,10 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 				},
 			},
 
-			testUtils.UpdateDoc{
+			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not update yet.
+				Identity: immutable.Some(2),
 
 				DocID: 0,
 
@@ -153,29 +153,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "reader",
 
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-
-				Identity: immutable.Some(2), // This identity can still not update.
-
-				DocID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad Lone"
-					}
-				`,
-
-				SkipLocalUpdateEvent: true,
-			},
-
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
+				Identity: immutable.Some(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -188,8 +172,30 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 				`,
 
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad",
+							"age":    int64(28),
+						},
+					},
 				},
+			},
+
+			testUtils.UpdateDoc{ // But this actor still can't update.
+				CollectionID: 0,
+
+				Identity: immutable.Some(2),
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				ExpectedError: "document not found or not authorized to access",
 			},
 		},
 	}

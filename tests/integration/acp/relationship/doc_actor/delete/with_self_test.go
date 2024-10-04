@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_delete
 
 import (
 	"fmt"
@@ -19,17 +19,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
+func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
-
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
-		}),
+		Description: "Test acp, admin tries to revoke it's own access, not allowed error.",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -110,41 +105,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 				`,
 			},
 
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents yet
-				},
-			},
-
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-
-				Identity: immutable.Some(2), // This identity can not update yet.
-
-				DocID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad Lone"
-					}
-				`,
-
-				SkipLocalUpdateEvent: true,
-			},
-
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
 				RequestorIdentity: 1,
 
 				TargetIdentity: 2,
@@ -153,13 +114,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "admin",
 
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+			testUtils.DeleteDocActorRelationship{ // Admin tries to revoke it's own relation.
+				RequestorIdentity: 2,
 
 				TargetIdentity: 2,
 
@@ -167,9 +128,23 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "admin",
 
-				ExpectedExistence: true, // is a no-op
+				ExpectedError: "failed to delete document actor relationship with acp",
+			},
+
+			testUtils.AddDocActorRelationship{ // Admin can still perform admin operations.
+				RequestorIdentity: 2,
+
+				TargetIdentity: 3,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "reader",
+
+				ExpectedExistence: false,
 			},
 		},
 	}
@@ -177,17 +152,12 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t *testing.T) {
+func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor",
-
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
-		}),
+		Description: "Test acp, owner tries to revoke it's own access, not allowed error.",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -268,41 +238,21 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t
 				`,
 			},
 
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+			testUtils.DeleteDocActorRelationship{ // Owner tries to revoke it's own relation.
+				RequestorIdentity: 1,
 
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
+				TargetIdentity: 1,
 
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents yet
-				},
-			},
-
-			testUtils.UpdateDoc{
 				CollectionID: 0,
-
-				Identity: immutable.Some(2), // This identity can not update yet.
 
 				DocID: 0,
 
-				Doc: `
-					{
-						"name": "Shahzad Lone"
-					}
-				`,
+				Relation: "owner",
 
-				SkipLocalUpdateEvent: true,
+				ExpectedError: "failed to delete document actor relationship with acp",
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDocActorRelationship{ // Owner can still perform admin operations.
 				RequestorIdentity: 1,
 
 				TargetIdentity: 2,
@@ -311,47 +261,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "reader",
 
 				ExpectedExistence: false,
-			},
-
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-
-				Identity: immutable.Some(2), // This identity can now update.
-
-				DocID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad Lone"
-					}
-				`,
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can now also read.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-							"name":   "Shahzad Lone", // Note: updated name
-							"age":    int64(28),
-						},
-					},
-				},
 			},
 		},
 	}

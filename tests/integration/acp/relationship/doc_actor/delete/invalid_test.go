@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_relationship_add_docactor
+package test_acp_relationship_doc_actor_delete
 
 import (
 	"fmt"
@@ -19,12 +19,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
+func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives read access to another actor twice, no-op",
+		Description: "Test acp, delete doc actor relationship with docID missing, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -105,50 +105,18 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 				`,
 			},
 
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents yet
-				},
-			},
-
-			testUtils.AddDocActorRelationship{
+			testUtils.DeleteDocActorRelationship{
 				RequestorIdentity: 1,
 
 				TargetIdentity: 2,
 
 				CollectionID: 0,
 
-				DocID: 0,
+				DocID: -1,
 
 				Relation: "reader",
 
-				ExpectedExistence: false,
-			},
-
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
-
-				TargetIdentity: 2,
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
-				ExpectedExistence: true, // is a no-op
+				ExpectedError: "missing a required argument needed to delete doc actor relationship.",
 			},
 		},
 	}
@@ -156,12 +124,12 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
+func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives read access to another actor",
+		Description: "Test acp, delete doc actor relationship with collection missing, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -242,60 +210,18 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 				`,
 			},
 
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents yet
-				},
-			},
-
-			testUtils.AddDocActorRelationship{
+			testUtils.DeleteDocActorRelationship{
 				RequestorIdentity: 1,
 
 				TargetIdentity: 2,
 
-				CollectionID: 0,
+				CollectionID: -1,
 
 				DocID: 0,
 
 				Relation: "reader",
 
-				ExpectedExistence: false,
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-							"name":   "Shahzad",
-							"age":    int64(28),
-						},
-					},
-				},
+				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}
@@ -303,14 +229,12 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Note: Testing that owner can still read after the relationship was formed is to ensure
-// that no transfer of ownership has taken place.
-func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t *testing.T) {
+func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives read access to another actor, both can read",
+		Description: "Test acp, delete doc actor relationship with relation name missing, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -391,7 +315,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.DeleteDocActorRelationship{
 				RequestorIdentity: 1,
 
 				TargetIdentity: 2,
@@ -400,57 +324,9 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 
 				DocID: 0,
 
-				Relation: "reader",
+				Relation: "",
 
-				ExpectedExistence: false,
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-							"name":   "Shahzad",
-							"age":    int64(28),
-						},
-					},
-				},
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(1), // And so can the owner (ownership not transferred).
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-							"name":   "Shahzad",
-							"age":    int64(28),
-						},
-					},
-				},
+				ExpectedError: "missing a required argument needed to delete doc actor relationship.",
 			},
 		},
 	}
@@ -458,17 +334,12 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdate(t *testing.T) {
+func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
-
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
+		Description: "Test acp, delete doc actor relationship with target actor missing, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -549,44 +420,10 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 				`,
 			},
 
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents yet
-				},
-			},
-
-			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
-				CollectionID: 0,
-
-				Identity: immutable.Some(2),
-
-				DocID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad Lone"
-					}
-				`,
-
-				ExpectedError: "document not found or not authorized to access",
-			},
-
-			testUtils.AddDocActorRelationship{
+			testUtils.DeleteDocActorRelationship{
 				RequestorIdentity: 1,
 
-				TargetIdentity: 2,
+				TargetIdentity: -1,
 
 				CollectionID: 0,
 
@@ -594,47 +431,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 
 				Relation: "reader",
 
-				ExpectedExistence: false,
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-							"name":   "Shahzad",
-							"age":    int64(28),
-						},
-					},
-				},
-			},
-
-			testUtils.UpdateDoc{ // But this actor still can't update.
-				CollectionID: 0,
-
-				Identity: immutable.Some(2),
-
-				DocID: 0,
-
-				Doc: `
-					{
-						"name": "Shahzad Lone"
-					}
-				`,
-
-				ExpectedError: "document not found or not authorized to access",
+				ExpectedError: "missing a required argument needed to delete doc actor relationship.",
 			},
 		},
 	}
@@ -642,12 +439,12 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelete(t *testing.T) {
+func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives read access to another actor, but the other actor can't delete",
+		Description: "Test acp, delete doc actor relationship with requesting identity missing, return error",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -728,36 +525,8 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 				`,
 			},
 
-			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{}, // Can't see the documents yet
-				},
-			},
-
-			testUtils.DeleteDoc{ // Since it can't read, it can't delete either.
-				CollectionID: 0,
-
-				Identity: immutable.Some(2),
-
-				DocID: 0,
-
-				ExpectedError: "document not found or not authorized to access",
-			},
-
-			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+			testUtils.DeleteDocActorRelationship{
+				RequestorIdentity: -1,
 
 				TargetIdentity: 2,
 
@@ -767,41 +536,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 
 				Relation: "reader",
 
-				ExpectedExistence: false,
-			},
-
-			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
-
-				Request: `
-					query {
-						Users {
-							_docID
-							name
-							age
-						}
-					}
-				`,
-
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
-							"name":   "Shahzad",
-							"age":    int64(28),
-						},
-					},
-				},
-			},
-
-			testUtils.DeleteDoc{ // But this actor still can't delete.
-				CollectionID: 0,
-
-				Identity: immutable.Some(2),
-
-				DocID: 0,
-
-				ExpectedError: "document not found or not authorized to access",
+				ExpectedError: "missing a required argument needed to delete doc actor relationship.",
 			},
 		},
 	}

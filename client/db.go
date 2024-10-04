@@ -120,6 +120,21 @@ type DB interface {
 		relation string,
 		targetActor string,
 	) (AddDocActorRelationshipResult, error)
+
+	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note: The request actor must either be the owner or manager of the document.
+	DeleteDocActorRelationship(
+		ctx context.Context,
+		collectionName string,
+		docID string,
+		relation string,
+		targetActor string,
+	) (DeleteDocActorRelationshipResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.
