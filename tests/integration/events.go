@@ -335,6 +335,12 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 
 		// check for any secondary relation fields that could publish an event
 		for f, v := range doc.Values() {
+			if v.Value() == nil {
+				// If the new relation value is nil there will be no related document
+				// to get an event for
+				continue
+			}
+
 			field, ok := def.GetFieldByName(f.Name())
 			if !ok {
 				continue // ignore unknown field

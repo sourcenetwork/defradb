@@ -13,8 +13,6 @@ package one_to_one
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -119,10 +117,33 @@ func TestMutationCreateOneToOne_WithExplicitNullOnSecondarySide(t *testing.T) {
 					"published": testUtils.NewDocIndex(0, 0),
 				},
 			},
+			testUtils.Request{
+				Request: `
+					query {
+						Book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Secrets at Maple Syrup Farm",
+							"author": nil,
+						},
+						{
+							"name": "How to Be a Canadian",
+							"author": map[string]any{
+								"name": "Will Ferguson",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
-	require.Panics(t, func() {
-		testUtils.ExecuteTestCase(t, test)
-	})
+	testUtils.ExecuteTestCase(t, test)
 }
