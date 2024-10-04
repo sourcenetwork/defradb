@@ -52,7 +52,31 @@ func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 					"name":      "Will Ferguson",
 					"published": testUtils.NewDocIndex(0, 0),
 				},
-				ExpectedError: "target document is already linked to another document",
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Secrets at Maple Syrup Farm",
+							"author": nil,
+						},
+						{
+							"name": "How to Be a Canadian",
+							"author": map[string]any{
+								"name": "Will Ferguson",
+							},
+						},
+					},
+				},
 			},
 		},
 	}

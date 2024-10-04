@@ -13,11 +13,19 @@ package create
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreate_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// Collection.Save would treat the second create as an update, and so
+			// is excluded from this test.
+			testUtils.CollectionNamedMutationType,
+			testUtils.GQLRequestMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -37,28 +45,7 @@ func TestMutationCreate_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 					"name": "John",
 					"age": null
 				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						Users {
-							name
-							age
-						}
-					}
-				`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-							"age":  nil,
-						},
-						{
-							"name": "John",
-							"age":  nil,
-						},
-					},
-				},
+				ExpectedError: "a document with the given ID already exist",
 			},
 		},
 	}
