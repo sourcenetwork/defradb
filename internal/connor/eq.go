@@ -72,8 +72,8 @@ func eq(condition, data any) (bool, error) {
 // objectsEqual returns true if the given condition and data
 // contain equal key value pairs.
 func objectsEqual(condition map[string]any, data any) (bool, error) {
-	if data == nil {
-		return false, nil
+	if data == nil || condition == nil {
+		return reflect.DeepEqual(condition, data), nil
 	}
 	d := data.(map[string]any)
 	if len(d) != len(condition) {
