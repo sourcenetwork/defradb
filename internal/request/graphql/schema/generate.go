@@ -1188,43 +1188,18 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			}
 
 			// generate basic filter operator blocks
-			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.DocIDFieldName {
+				_, ok := request.ReservedFields[f]
+				if ok && f != request.DocIDFieldName {
 					continue
 				}
-				// scalars (leafs)
-				if gql.IsLeafType(field.Type) {
-					var operatorName string
-					if list, isList := field.Type.(*gql.List); isList {
-						if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
-							operatorName = "NotNull" + notNull.OfType.Name() + "ListOperatorBlock"
-						} else {
-							operatorName = list.OfType.Name() + "ListOperatorBlock"
-						}
-					} else {
-						operatorName = field.Type.Name() + "OperatorBlock"
-					}
-					operatorType, isFilterable := g.manager.schema.TypeMap()[operatorName]
-					if !isFilterable {
-						continue
-					}
-					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: operatorType,
-					}
-				} else { // objects (relations)
-					fieldType := field.Type
-					if l, isList := field.Type.(*gql.List); isList {
-						// We want the FilterArg for the object, not the list of objects.
-						fieldType = l.OfType
-					}
-					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(fieldType, filterInputNameSuffix)]
-					if !isFilterable {
-						filterType = &gql.InputObjectField{}
-					}
-					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: filterType,
-					}
+				operatorName := genFilterOperatorName(field.Type)
+				filterType, isFilterable := g.manager.schema.TypeMap()[operatorName]
+				if !isFilterable {
+					continue
+				}
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: filterType,
 				}
 			}
 
@@ -1392,6 +1367,33 @@ func isNumericArray(list *gql.List) bool {
 		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
 		list.OfType == gql.Int ||
 		list.OfType == gql.Float
+}
+
+func genFilterOperatorName(fieldType gql.Type) string {
+	list, isList := fieldType.(*gql.List)
+	if isList {
+		fieldType = list.OfType
+	}
+	if !gql.IsLeafType(fieldType) {
+		return genTypeName(fieldType, filterInputNameSuffix)
+	}
+	notNull, isNotNull := fieldType.(*gql.NonNull)
+	if isNotNull {
+		fieldType = notNull.OfType
+	}
+	switch {
+	case fieldType.Name() == "JSON":
+		return "JSON"
+
+	case isList && isNotNull:
+		return "NotNull" + fieldType.Name() + "ListOperatorBlock"
+
+	case isList:
+		return fieldType.Name() + "ListOperatorBlock"
+
+	default:
+		return fieldType.Name() + "OperatorBlock"
+	}
 }
 
 /* Example

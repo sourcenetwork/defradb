@@ -1344,7 +1344,7 @@ func toFilterMap(
 		default:
 			return key, typedClause
 		}
-	} else {
+	} else if _, ok := mapping.IndexesByName[sourceKey]; ok {
 		// If there are multiple properties of the same name we can just take the first as
 		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
@@ -1375,6 +1375,40 @@ func toFilterMap(
 			return key, returnClause
 		default:
 			return key, sourceClause
+		}
+	} else {
+		key := &ObjectProperty{
+			Name: sourceKey,
+		}
+		switch typedClause := sourceClause.(type) {
+		case []any:
+			// If the clause is an array then we need to convert any inner maps.
+			returnClauses := []any{}
+			for _, innerSourceClause := range typedClause {
+				var returnClause any
+				switch typedInnerSourceClause := innerSourceClause.(type) {
+				case map[string]any:
+					innerMapClause := map[connor.FilterKey]any{}
+					for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
+						rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
+						innerMapClause[rKey] = rValue
+					}
+					returnClause = innerMapClause
+				default:
+					returnClause = innerSourceClause
+				}
+				returnClauses = append(returnClauses, returnClause)
+			}
+			return key, returnClauses
+		case map[string]any:
+			innerMapClause := map[connor.FilterKey]any{}
+			for innerSourceKey, innerSourceValue := range typedClause {
+				rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
+				innerMapClause[rKey] = rValue
+			}
+			return key, innerMapClause
+		default:
+			return key, typedClause
 		}
 	}
 }
