@@ -48,7 +48,7 @@ require (
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
-	github.com/sourcenetwork/graphql-go v0.7.10-0.20240924172903-a4088313b20d
+	github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274
 	github.com/spf13/cobra v1.8.1

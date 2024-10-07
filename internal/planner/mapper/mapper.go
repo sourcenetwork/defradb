@@ -1309,6 +1309,11 @@ func toFilterMap(
 		key := &Operator{
 			Operation: sourceKey,
 		}
+		// if the operator is simple (not compound) then
+		// it does not require further expansion
+		if connor.IsOpSimple(sourceKey) {
+			return key, sourceClause
+		}
 		switch typedClause := sourceClause.(type) {
 		case []any:
 			// If the clause is an array then we need to convert any inner maps.

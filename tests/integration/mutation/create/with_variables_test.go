@@ -84,3 +84,39 @@ func TestMutationCreateWithDefaultVariable(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreate_WithJSONVariable_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple create mutation with JSON variable input.",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						embed: JSON
+					}
+				`,
+			},
+			testUtils.Request{
+				Variables: immutable.Some(map[string]any{
+					"message": "hello",
+				}),
+				Request: `mutation($message: String) {
+					create_Users(input: {embed: {message: $message}}) {
+						embed
+					}
+				}`,
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"embed": map[string]any{
+								"message": "hello",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithEqOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQuerySimple_WithEqOpOnJSONFieldWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -28,27 +28,132 @@ func TestQuerySimple_WithEqOpOnJSONField_ShouldFilter(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "John",
-					"custom": "{\"tree\": \"maple\", \"age\": 250}",
-				},
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"tree": "maple",
+						"age": 250
+					}
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
-				},
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"tree": "oak",
+						"age": 450
+					}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": null
+				}`,
 			},
 			testUtils.Request{
-				// the filtered-by JSON has no spaces, because this is now it's stored.
 				Request: `query {
-					Users(filter: {custom: {_eq: "{\"tree\":\"oak\",\"age\":450}"}}) {
+					Users(filter: {custom: {_eq: {tree:"oak",age:450}}}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{"name": "Andy"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithEqOpOnJSONFieldWithNestedObjects_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						custom: JSON
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"level_1": {
+							"level_2": {
+								"level_3": [true, false]
+							}
+						}
+					}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"level_1": {
+							"level_2": {
+								"level_3": [false, true]
+							}
+						}
+					}
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_eq: {level_1: {level_2: {level_3: [true, false]}}}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithEqOpOnJSONFieldWithNullValue_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						custom: JSON
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": null
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {}
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_eq: null}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John"},
 					},
 				},
 			},

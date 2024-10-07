@@ -28,21 +28,26 @@ func TestQuerySimple_WithInOpOnJSONField_ShouldFilter(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "John",
-					"custom": "{\"tree\": \"maple\", \"age\": 250}",
-				},
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"tree": "maple",
+						"age": 250
+					}
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
-				},
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"tree": "oak",
+						"age": 450
+					}
+				}`,
 			},
 			testUtils.Request{
-				// the filtered-by JSON has no spaces, because this is now it's stored.
 				Request: `query {
-					Users(filter: {custom: {_in: ["{\"tree\":\"oak\",\"age\":450}"]}}) {
+					Users(filter: {custom: {_in: [{tree:"oak",age:450}]}}) {
 						name
 					}
 				}`,

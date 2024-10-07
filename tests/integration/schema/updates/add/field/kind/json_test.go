@@ -72,7 +72,7 @@ func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "{}"
+					"foo": {}
 				}`,
 			},
 			testUtils.Request{
@@ -86,7 +86,7 @@ func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"foo":  "{}",
+							"foo":  map[string]any{},
 						},
 					},
 				},
@@ -118,7 +118,7 @@ func TestSchemaUpdatesAddFieldKindJSONSubstitutionWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "{}"
+					"foo": {}
 				}`,
 			},
 			testUtils.Request{
@@ -132,7 +132,7 @@ func TestSchemaUpdatesAddFieldKindJSONSubstitutionWithCreate(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"foo":  "{}",
+							"foo":  map[string]any{},
 						},
 					},
 				},

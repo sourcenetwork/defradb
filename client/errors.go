@@ -166,7 +166,7 @@ func NewErrCRDTKindMismatch(cType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
 
-func NewErrInvalidJSONPaylaod(payload string) error {
+func NewErrInvalidJSONPayload(payload any) error {
 	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
 }
 

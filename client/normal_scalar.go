@@ -17,6 +17,13 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+// JSON contains a valid JSON value.
+//
+// The inner type can be any valid normal value or normal value array.
+type JSON struct {
+	inner any
+}
+
 // NormalValue is dummy implementation of NormalValue to be embedded in other types.
 type baseNormalValue[T any] struct {
 	NormalVoid
@@ -118,6 +125,18 @@ func (v normalDocument) Document() (*Document, bool) {
 	return v.val, true
 }
 
+type normalJSON struct {
+	baseNormalValue[*JSON]
+}
+
+func (v normalJSON) JSON() (*JSON, bool) {
+	return v.val, true
+}
+
+func (v normalJSON) Unwrap() any {
+	return v.val.inner
+}
+
 func newNormalInt(val int64) NormalValue {
 	return normalInt{newBaseNormalValue(val)}
 }
@@ -159,6 +178,11 @@ func NewNormalTime(val time.Time) NormalValue {
 // NewNormalDocument creates a new NormalValue that represents a `*Document` value.
 func NewNormalDocument(val *Document) NormalValue {
 	return normalDocument{baseNormalValue[*Document]{val: val}}
+}
+
+// NewNormalJSON creates a new NormalValue that represents a `JSON` value.
+func NewNormalJSON(val *JSON) NormalValue {
+	return normalJSON{baseNormalValue[*JSON]{val: val}}
 }
 
 func areNormalScalarsEqual[T comparable](val T, f func() (T, bool)) bool {
