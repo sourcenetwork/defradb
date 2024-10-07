@@ -124,7 +124,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint-go
 deps\:lint-go:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61
 
 .PHONY: deps\:lint-yaml
 deps\:lint-yaml:

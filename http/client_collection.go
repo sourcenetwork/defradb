@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -369,7 +368,7 @@ func (c *Collection) GetAllDocIDs(
 				ID: docID,
 			}
 			if res.Error != "" {
-				docIDResult.Err = fmt.Errorf(res.Error)
+				docIDResult.Err = errors.New(res.Error)
 			}
 			docIDCh <- docIDResult
 		}
