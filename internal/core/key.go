@@ -58,8 +58,10 @@ const (
 	FIELD_ID_SEQ                   = "/seq/field"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
-	REPLICATOR                     = "/replicator/id"
 	P2P_COLLECTION                 = "/p2p/collection"
+	REPLICATOR                     = "/rep/id"
+	REPLICATOR_RETRY_ID            = "/rep/retry/id"
+	REPLICATOR_RETRY_DOC           = "/rep/retry/doc"
 )
 
 // Key is an interface that represents a key in the database.
@@ -945,4 +947,74 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
+}
+
+type ReplicatorRetryIDKey struct {
+	PeerID string
+}
+
+var _ Key = (*ReplicatorRetryIDKey)(nil)
+
+func NewReplicatorRetryIDKey(peerID string) ReplicatorRetryIDKey {
+	return ReplicatorRetryIDKey{
+		PeerID: peerID,
+	}
+}
+
+func NewReplicatorRetryIDKeyFromString(key string) (ReplicatorRetryIDKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) != 5 {
+		return ReplicatorRetryIDKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
+	}
+	return NewReplicatorRetryIDKey(keyArr[4]), nil
+}
+
+func (k ReplicatorRetryIDKey) ToString() string {
+	return REPLICATOR_RETRY_ID + "/" + k.PeerID
+}
+
+func (k ReplicatorRetryIDKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k ReplicatorRetryIDKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+type ReplicatorRetryDocIDKey struct {
+	PeerID string
+	DocID  string
+}
+
+var _ Key = (*ReplicatorRetryDocIDKey)(nil)
+
+func NewReplicatorRetryDocIDKey(peerID, docID string) ReplicatorRetryDocIDKey {
+	return ReplicatorRetryDocIDKey{
+		PeerID: peerID,
+		DocID:  docID,
+	}
+}
+
+func NewReplicatorRetryDocIDKeyFromString(key string) (ReplicatorRetryDocIDKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) != 6 {
+		return ReplicatorRetryDocIDKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
+	}
+	return NewReplicatorRetryDocIDKey(keyArr[4], keyArr[5]), nil
+}
+
+func (k ReplicatorRetryDocIDKey) ToString() string {
+	keyString := REPLICATOR_RETRY_DOC + "/" + k.PeerID
+	if k.DocID != "" {
+		keyString += "/" + k.DocID
+	}
+	return keyString
+}
+
+func (k ReplicatorRetryDocIDKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k ReplicatorRetryDocIDKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
 }

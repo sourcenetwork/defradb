@@ -37,9 +37,9 @@ const (
 )
 
 const (
-	badgerIMType   DatabaseType = "badger-in-memory"
-	defraIMType    DatabaseType = "defra-memory-datastore"
-	badgerFileType DatabaseType = "badger-file-system"
+	BadgerIMType   DatabaseType = "badger-in-memory"
+	DefraIMType    DatabaseType = "defra-memory-datastore"
+	BadgerFileType DatabaseType = "badger-file-system"
 )
 
 var (
@@ -165,10 +165,10 @@ func setupNode(s *state, opts ...node.Option) (*node.Node, string, error) {
 
 	var path string
 	switch s.dbt {
-	case badgerIMType:
+	case BadgerIMType:
 		opts = append(opts, node.WithBadgerInMemory(true))
 
-	case badgerFileType:
+	case BadgerFileType:
 		switch {
 		case databaseDir != "":
 			// restarting database
@@ -185,7 +185,7 @@ func setupNode(s *state, opts ...node.Option) (*node.Node, string, error) {
 
 		opts = append(opts, node.WithStorePath(path), node.WithACPPath(path))
 
-	case defraIMType:
+	case DefraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:

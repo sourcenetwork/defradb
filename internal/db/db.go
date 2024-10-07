@@ -18,6 +18,7 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -80,6 +81,15 @@ type db struct {
 	// The peer ID and network address information for the current node
 	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
 	peerInfo atomic.Value
+
+	// To be able to close the context passed to NewDB on DB close,
+	// we need to keep a reference to the cancel function. Otherwise,
+	// some goroutines might leak.
+	ctxCancel context.CancelFunc
+
+	retryIntervals []time.Duration
+	retryChan      chan event.ReplicatorFailure
+	retryDone      chan retryStatus
 }
 
 // NewDB creates a new instance of the DB using the given options.
@@ -107,20 +117,25 @@ func newDB(
 		return nil, err
 	}
 
-	db := &db{
-		rootstore:    rootstore,
-		multistore:   multistore,
-		acp:          acp,
-		lensRegistry: lens,
-		parser:       parser,
-		options:      options,
-		events:       event.NewBus(commandBufferSize, eventBufferSize),
+	opts := defaultOptions()
+	for _, opt := range options {
+		opt(opts)
 	}
 
-	// apply options
-	var opts dbOptions
-	for _, opt := range options {
-		opt(&opts)
+	ctx, cancel := context.WithCancel(ctx)
+
+	db := &db{
+		rootstore:      rootstore,
+		multistore:     multistore,
+		acp:            acp,
+		lensRegistry:   lens,
+		parser:         parser,
+		options:        options,
+		events:         event.NewBus(commandBufferSize, eventBufferSize),
+		retryChan:      make(chan event.ReplicatorFailure, 100),
+		retryDone:      make(chan retryStatus),
+		retryIntervals: opts.RetryIntervals,
+		ctxCancel:      cancel,
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -136,11 +151,12 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, event.ReplicatorFailureName)
 	if err != nil {
 		return nil, err
 	}
 	go db.handleMessages(ctx, sub)
+	go db.handleReplicatorRetries(ctx)
 
 	return db, nil
 }
@@ -173,7 +189,7 @@ func (db *db) Encstore() datastore.Blockstore {
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Peerstore() datastore.DSBatching {
+func (db *db) Peerstore() datastore.DSReaderWriter {
 	return db.multistore.Peerstore()
 }
 
@@ -369,6 +385,8 @@ func (db *db) PrintDump(ctx context.Context) error {
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
+
+	db.ctxCancel()
 
 	db.events.Close()
 

@@ -702,7 +702,6 @@ func (c *collection) save(
 		Cid:        link.Cid,
 		SchemaRoot: c.Schema().Root,
 		Block:      headNode,
-		IsCreate:   isCreate,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))

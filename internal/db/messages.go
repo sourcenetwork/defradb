@@ -78,6 +78,9 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 						log.ErrorContextE(ctx, "Failed to load replicators", err)
 					}
 				})
+			case event.ReplicatorFailure:
+				// ReplicatorFailure is a notification that a replicator has failed to replicate a document.
+				db.retryChan <- evt
 			}
 		}
 	}
