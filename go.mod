@@ -19,7 +19,7 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.3.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/ipfs/boxo v0.23.0
+	github.com/ipfs/boxo v0.24.0
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
@@ -32,7 +32,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
 	github.com/lestrrat-go/jwx/v2 v2.1.1
-	github.com/libp2p/go-libp2p v0.36.3
+	github.com/libp2p/go-libp2p v0.36.4
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.26.1
 	github.com/libp2p/go-libp2p-pubsub v0.12.0
@@ -276,7 +276,7 @@ require (
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.2.0 // indirect
-	github.com/multiformats/go-multiaddr-dns v0.3.1 // indirect
+	github.com/multiformats/go-multiaddr-dns v0.4.0 // indirect
 	github.com/multiformats/go-multiaddr-fmt v0.1.0 // indirect
 	github.com/multiformats/go-multistream v0.5.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
