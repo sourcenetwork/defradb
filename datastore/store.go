@@ -47,7 +47,7 @@ type MultiStore interface {
 
 	// Peerstore is a wrapped root DSReaderWriter as a ds.Batching, embedded into a DSBatching
 	// under the /peers namespace
-	Peerstore() DSBatching
+	Peerstore() DSReaderWriter
 
 	// Blockstore is a wrapped root DSReaderWriter as a Blockstore, embedded into a Blockstore
 	// under the /blocks namespace
@@ -80,9 +80,4 @@ type Blockstore interface {
 type IPLDStorage interface {
 	storage.ReadableStorage
 	storage.WritableStorage
-}
-
-// DSBatching wraps the Batching interface from go-datastore
-type DSBatching interface {
-	ds.Batching
 }

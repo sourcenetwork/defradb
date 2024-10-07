@@ -10,10 +10,26 @@
 
 package client
 
-import "github.com/libp2p/go-libp2p/core/peer"
+import (
+	"time"
+
+	"github.com/libp2p/go-libp2p/core/peer"
+)
 
 // Replicator is a peer that a set of local collections are replicated to.
 type Replicator struct {
-	Info    peer.AddrInfo
-	Schemas []string
+	Info             peer.AddrInfo
+	Schemas          []string
+	Status           ReplicatorStatus
+	LastStatusChange time.Time
 }
+
+// ReplicatorStatus is the status of a Replicator.
+type ReplicatorStatus uint8
+
+const (
+	// ReplicatorStatusActive is the status of a Replicator that is actively replicating.
+	ReplicatorStatusActive ReplicatorStatus = iota
+	// ReplicatorStatusInactive is the status of a Replicator that is inactive/offline.
+	ReplicatorStatusInactive
+)

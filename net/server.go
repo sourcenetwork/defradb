@@ -266,10 +266,6 @@ func (s *server) removeAllPubsubTopics() error {
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // corresponding topic
 func (s *server) publishLog(ctx context.Context, topic string, req *pushLogRequest) error {
-	log.InfoContext(ctx, "Publish log",
-		corelog.String("PeerID", s.peer.PeerID().String()),
-		corelog.String("Topic", topic))
-
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
@@ -277,12 +273,20 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	t, ok := s.topics[topic]
 	s.mu.Unlock()
 	if !ok {
-		err := s.addPubSubTopic(topic, false, nil)
+		subscribe := true
+		if topic != req.SchemaRoot && s.hasPubSubTopic(req.SchemaRoot) {
+			subscribe = false
+		}
+		err := s.addPubSubTopic(topic, subscribe, nil)
 		if err != nil {
 			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
 		}
 		return s.publishLog(ctx, topic, req)
 	}
+
+	log.InfoContext(ctx, "Publish log",
+		corelog.String("PeerID", s.peer.PeerID().String()),
+		corelog.String("Topic", topic))
 
 	data, err := cbor.Marshal(req)
 	if err != nil {

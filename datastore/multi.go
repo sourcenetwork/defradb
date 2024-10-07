@@ -12,7 +12,6 @@ package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
 )
 
 var (
@@ -31,7 +30,7 @@ type multistore struct {
 	data   DSReaderWriter
 	enc    Blockstore
 	head   DSReaderWriter
-	peer   DSBatching
+	peer   DSReaderWriter
 	system DSReaderWriter
 	dag    Blockstore
 }
@@ -46,7 +45,7 @@ func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 		data:   prefix(rootRW, dataStoreKey),
 		enc:    newBlockstore(prefix(rootRW, encStoreKey)),
 		head:   prefix(rootRW, headStoreKey),
-		peer:   namespace.Wrap(rootstore, peerStoreKey),
+		peer:   prefix(rootRW, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),
 		dag:    newBlockstore(prefix(rootRW, blockStoreKey)),
 	}
@@ -70,7 +69,7 @@ func (ms multistore) Headstore() DSReaderWriter {
 }
 
 // Peerstore implements MultiStore.
-func (ms multistore) Peerstore() DSBatching {
+func (ms multistore) Peerstore() DSReaderWriter {
 	return ms.peer
 }
 

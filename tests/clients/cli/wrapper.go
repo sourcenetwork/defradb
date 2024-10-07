@@ -531,7 +531,7 @@ func (w *Wrapper) Headstore() ds.Read {
 	return w.node.DB.Headstore()
 }
 
-func (w *Wrapper) Peerstore() datastore.DSBatching {
+func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
 	return w.node.DB.Peerstore()
 }
 

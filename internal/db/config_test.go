@@ -12,6 +12,7 @@ package db
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -21,4 +22,10 @@ func TestWithMaxRetries(t *testing.T) {
 	WithMaxRetries(10)(&d)
 	assert.True(t, d.maxTxnRetries.HasValue())
 	assert.Equal(t, 10, d.maxTxnRetries.Value())
+}
+
+func TestWithRetryInterval(t *testing.T) {
+	d := dbOptions{}
+	WithRetryInterval([]time.Duration{time.Minute, time.Hour})(&d)
+	assert.Equal(t, []time.Duration{time.Minute, time.Hour}, d.RetryIntervals)
 }
