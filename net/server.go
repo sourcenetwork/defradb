@@ -273,9 +273,9 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	t, ok := s.topics[topic]
 	s.mu.Unlock()
 	if !ok {
-		subscribe := true
-		if topic != req.SchemaRoot && s.hasPubSubTopic(req.SchemaRoot) {
-			subscribe = false
+		subscribe := false
+		if topic != req.SchemaRoot && !s.hasPubSubTopic(req.SchemaRoot) {
+			subscribe = true
 		}
 		err := s.addPubSubTopic(topic, subscribe, nil)
 		if err != nil {
