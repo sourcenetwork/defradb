@@ -509,11 +509,20 @@
                         },
                         "type": "object"
                     },
+                    "LastStatusChange": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
                     "Schemas": {
                         "items": {
                             "type": "string"
                         },
                         "type": "array"
+                    },
+                    "Status": {
+                        "maximum": 255,
+                        "minimum": 0,
+                        "type": "integer"
                     }
                 },
                 "type": "object"
