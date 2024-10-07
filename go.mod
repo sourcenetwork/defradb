@@ -13,7 +13,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fxamacker/cbor/v2 v2.7.0
-	github.com/getkin/kin-openapi v0.127.0
+	github.com/getkin/kin-openapi v0.128.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
