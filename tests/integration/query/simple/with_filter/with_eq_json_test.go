@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithEqOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQuerySimple_WithEqOpOnJSONFieldWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -43,6 +43,12 @@ func TestQuerySimple_WithEqOpOnJSONField_ShouldFilter(t *testing.T) {
 						"tree": "oak",
 						"age": 450
 					}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": null
 				}`,
 			},
 			testUtils.Request{
