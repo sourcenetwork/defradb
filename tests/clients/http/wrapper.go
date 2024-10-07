@@ -121,6 +121,22 @@ func (w *Wrapper) AddDocActorRelationship(
 	)
 }
 
+func (w *Wrapper) DeleteDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteDocActorRelationshipResult, error) {
+	return w.client.DeleteDocActorRelationship(
+		ctx,
+		collectionName,
+		docID,
+		relation,
+		targetActor,
+	)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,

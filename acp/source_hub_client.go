@@ -106,6 +106,27 @@ type sourceHubClient interface {
 		creationTime *protoTypes.Timestamp,
 	) (bool, error)
 
+	// DeleteActorRelationship deletes a relationship within a policy which ties the target actor
+	// with the specified object, which means that the set of high level rules defined in the
+	// policy for that relation no-longer will apply to target actor anymore.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note: The requester identity must either be the owner of the object (being shared) or
+	//       the manager (i.e. the relation has `manages` defined in the policy).
+	DeleteActorRelationship(
+		ctx context.Context,
+		policyID string,
+		resourceName string,
+		objectID string,
+		relation string,
+		requester identity.Identity,
+		targetActor string,
+		creationTime *protoTypes.Timestamp,
+	) (bool, error)
+
 	// Close closes any resources in use by acp.
 	Close() error
 }
@@ -418,6 +439,70 @@ func (a *sourceHubBridge) AddDocActorRelationship(
 	)
 
 	return exists, nil
+}
+
+func (a *sourceHubBridge) DeleteDocActorRelationship(
+	ctx context.Context,
+	policyID string,
+	resourceName string,
+	docID string,
+	relation string,
+	requestActor identity.Identity,
+	targetActor string,
+) (bool, error) {
+	if policyID == "" ||
+		resourceName == "" ||
+		docID == "" ||
+		relation == "" ||
+		requestActor == (identity.Identity{}) ||
+		targetActor == "" {
+		return false, NewErrMissingRequiredArgToDeleteDocActorRelationship(
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	recordFound, err := a.client.DeleteActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		requestActor,
+		targetActor,
+		protoTypes.TimestampNow(),
+	)
+
+	if err != nil {
+		return false, NewErrFailedToDeleteDocActorRelationshipWithACP(
+			err,
+			"Local",
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	log.InfoContext(
+		ctx,
+		"Document and actor relationship delete",
+		corelog.Any("PolicyID", policyID),
+		corelog.Any("ResourceName", resourceName),
+		corelog.Any("DocID", docID),
+		corelog.Any("Relation", relation),
+		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("TargetActor", targetActor),
+		corelog.Any("RecordFound", recordFound),
+	)
+
+	return recordFound, nil
 }
 
 func (a *sourceHubBridge) SupportsP2P() bool {

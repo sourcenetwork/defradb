@@ -248,6 +248,46 @@ func (db *db) AddDocActorRelationship(
 	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
+func (db *db) DeleteDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteDocActorRelationshipResult, error) {
+	if !db.acp.HasValue() {
+		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+	}
+
+	collection, err := db.GetCollectionByName(ctx, collectionName)
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
+	if !hasPolicy {
+		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+	}
+
+	identity := GetContextIdentity(ctx)
+
+	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		identity.Value(),
+		targetActor,
+	)
+
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {

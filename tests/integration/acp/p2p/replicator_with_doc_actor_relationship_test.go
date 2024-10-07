@@ -212,6 +212,76 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 					},
 				},
 			},
+
+			testUtils.DeleteDocActorRelationship{
+				NodeID: immutable.Some(1),
+
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "reader",
+
+				ExpectedRecordFound: true,
+			},
+
+			testUtils.DeleteDocActorRelationship{
+				NodeID: immutable.Some(0), // Note: Different node than the previous
+
+				RequestorIdentity: 1,
+
+				TargetIdentity: 2,
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "reader",
+
+				ExpectedRecordFound: false, // Making the same relation through any node should be a no-op
+			},
+
+			testUtils.Request{
+				// Ensure that the document is now inaccessible on all nodes to the actor we revoked access from.
+				Identity: immutable.Some(2),
+
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+
+			testUtils.Request{
+				// Ensure that the document is still accessible on all nodes to the owner.
+				Identity: immutable.Some(1),
+
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
 		},
 	}
 

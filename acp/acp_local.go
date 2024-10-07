@@ -267,3 +267,33 @@ func (l *ACPLocal) AddActorRelationship(
 
 	return setRelationshipResponse.RecordExisted, nil
 }
+
+func (l *ACPLocal) DeleteActorRelationship(
+	ctx context.Context,
+	policyID string,
+	resourceName string,
+	objectID string,
+	relation string,
+	requester identity.Identity,
+	targetActor string,
+	creationTime *protoTypes.Timestamp,
+) (bool, error) {
+	principal, err := auth.NewDIDPrincipal(requester.DID)
+	if err != nil {
+		return false, newErrInvalidActorID(err, requester.DID)
+	}
+
+	ctx = auth.InjectPrincipal(ctx, principal)
+
+	deleteRelationshipRequest := types.DeleteRelationshipRequest{
+		PolicyId:     policyID,
+		Relationship: types.NewActorRelationship(resourceName, objectID, relation, targetActor),
+	}
+
+	deleteRelationshipResponse, err := l.engine.DeleteRelationship(ctx, &deleteRelationshipRequest)
+	if err != nil {
+		return false, err
+	}
+
+	return deleteRelationshipResponse.RecordFound, nil
+}

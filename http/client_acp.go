@@ -92,3 +92,51 @@ func (c *Client) AddDocActorRelationship(
 
 	return addDocActorRelResult, nil
 }
+
+type deleteDocActorRelationshipRequest struct {
+	CollectionName string
+	DocID          string
+	Relation       string
+	TargetActor    string
+}
+
+func (c *Client) DeleteDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteDocActorRelationshipResult, error) {
+	methodURL := c.http.baseURL.JoinPath("acp", "relationship")
+
+	body, err := json.Marshal(
+		deleteDocActorRelationshipRequest{
+			CollectionName: collectionName,
+			DocID:          docID,
+			Relation:       relation,
+			TargetActor:    targetActor,
+		},
+	)
+
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodDelete,
+		methodURL.String(),
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	var deleteDocActorRelResult client.DeleteDocActorRelationshipResult
+	if err := c.http.requestJson(req, &deleteDocActorRelResult); err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	return deleteDocActorRelResult, nil
+}

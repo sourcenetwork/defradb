@@ -61,8 +61,10 @@ run:
 
 #=====================================================================================[ Output Configuration Options ]
 output:
-  # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
-  format: colored-line-number
+  formats:
+    # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
+    - format: colored-line-number
+      path: stdout
 
   # print lines of code with issue.
   print-issued-lines: true
@@ -258,8 +260,6 @@ linters-settings:
     local-prefixes: github.com/sourcenetwork/defradb
 
   gosimple:
-    # Select the Go version to target.
-    go: "1.22"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
@@ -351,8 +351,6 @@ linters-settings:
             - must not end in punctuation
 
   staticcheck:
-    # Select the Go version to target.
-    go: "1.22"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 

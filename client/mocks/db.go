@@ -492,6 +492,66 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 	return _c
 }
 
+// DeleteDocActorRelationship provides a mock function with given fields: ctx, collectionName, docID, relation, targetActor
+func (_m *DB) DeleteDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteDocActorRelationshipResult, error) {
+	ret := _m.Called(ctx, collectionName, docID, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDocActorRelationship")
+	}
+
+	var r0 client.DeleteDocActorRelationshipResult
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.DeleteDocActorRelationshipResult, error)); ok {
+		return rf(ctx, collectionName, docID, relation, targetActor)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.DeleteDocActorRelationshipResult); ok {
+		r0 = rf(ctx, collectionName, docID, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.DeleteDocActorRelationshipResult)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, collectionName, docID, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_DeleteDocActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDocActorRelationship'
+type DB_DeleteDocActorRelationship_Call struct {
+	*mock.Call
+}
+
+// DeleteDocActorRelationship is a helper method to define mock.On call
+//   - ctx context.Context
+//   - collectionName string
+//   - docID string
+//   - relation string
+//   - targetActor string
+func (_e *DB_Expecter) DeleteDocActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *DB_DeleteDocActorRelationship_Call {
+	return &DB_DeleteDocActorRelationship_Call{Call: _e.mock.On("DeleteDocActorRelationship", ctx, collectionName, docID, relation, targetActor)}
+}
+
+func (_c *DB_DeleteDocActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *DB_DeleteDocActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *DB_DeleteDocActorRelationship_Call) Return(_a0 client.DeleteDocActorRelationshipResult, _a1 error) *DB_DeleteDocActorRelationship_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_DeleteDocActorRelationship_Call) RunAndReturn(run func(context.Context, string, string, string, string) (client.DeleteDocActorRelationshipResult, error)) *DB_DeleteDocActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteReplicator provides a mock function with given fields: ctx, rep
 func (_m *DB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	ret := _m.Called(ctx, rep)
