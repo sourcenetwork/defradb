@@ -19,12 +19,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCantUpdate(t *testing.T) {
+func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanUpdate(t *testing.T) {
 	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor, without explicit read permission",
+		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionNamedMutationType,
@@ -161,7 +161,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can still not update.
+				Identity: immutable.Some(2), // This identity can now update.
 
 				DocID: 0,
 
@@ -170,12 +170,10 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 						"name": "Shahzad Lone"
 					}
 				`,
-
-				ExpectedError: "document not found or not authorized to access",
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
+				Identity: immutable.Some(2), // This identity can now also read.
 
 				Request: `
 					query {
@@ -188,7 +186,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 				`,
 
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad Lone", // Note: updated name
+							"age":    int64(28),
+						},
+					},
 				},
 			},
 		},
@@ -197,12 +201,12 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCantDelete(t *testing.T) {
+func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanDelete(t *testing.T) {
 	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(delete) access to another actor, without explicit read permission",
+		Description: "Test acp, owner gives write(delete) access without explicit read permission, can still delete",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -326,7 +330,39 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
+				Identity: immutable.Some(2), // This identity can now read.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad",
+							"age":    int64(28),
+						},
+					},
+				},
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+
+				Identity: immutable.Some(2), // This identity can now delete.
+
+				DocID: 0,
+			},
+
+			testUtils.Request{
+				Identity: immutable.Some(2), // Check if actually deleted.
 
 				Request: `
 					query {
@@ -341,16 +377,6 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 				Results: map[string]any{
 					"Users": []map[string]any{},
 				},
-			},
-
-			testUtils.DeleteDoc{
-				CollectionID: 0,
-
-				Identity: immutable.Some(2), // This identity can still not delete.
-
-				DocID: 0,
-
-				ExpectedError: "document not found or not authorized to access",
 			},
 		},
 	}

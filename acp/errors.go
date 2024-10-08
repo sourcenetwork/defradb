@@ -129,6 +129,7 @@ func NewErrFailedToCheckIfDocIsRegisteredWithACP(
 func NewErrFailedToVerifyDocAccessWithACP(
 	inner error,
 	Type string,
+	permission string,
 	policyID string,
 	actorID string,
 	resourceName string,
@@ -138,6 +139,7 @@ func NewErrFailedToVerifyDocAccessWithACP(
 		errFailedToVerifyDocAccessWithACP,
 		inner,
 		errors.NewKV("Type", Type),
+		errors.NewKV("Permission", permission),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ActorID", actorID),
 		errors.NewKV("ResourceName", resourceName),

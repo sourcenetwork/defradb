@@ -19,12 +19,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCantUpdate(t *testing.T) {
+func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCanUpdate(t *testing.T) {
 	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor, without explicit read permission",
+		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
@@ -161,7 +161,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can still not update.
+				Identity: immutable.Some(2), // This identity can now update.
 
 				DocID: 0,
 
@@ -170,12 +170,10 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 						"name": "Shahzad Lone"
 					}
 				`,
-
-				SkipLocalUpdateEvent: true,
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
+				Identity: immutable.Some(2), // This identity can now also read.
 
 				Request: `
 					query {
@@ -188,7 +186,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 				`,
 
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad Lone", // Note: updated name
+							"age":    int64(28),
+						},
+					},
 				},
 			},
 		},

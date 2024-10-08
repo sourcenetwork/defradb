@@ -12,6 +12,7 @@ package acp
 
 import (
 	"context"
+	"strconv"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/corelog"
@@ -342,7 +343,55 @@ func (a *sourceHubBridge) CheckDocAccess(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	isValid, err := a.client.VerifyAccessRequest(
+	// We grant "read" access even if the identity does not explicitly have the "read" permission,
+	// as long as they have any of the permissions that imply read access.
+	if permission == ReadPermission {
+		var canRead bool = false
+		var withPermission string
+		var err error
+
+		for _, permissionThatImpliesRead := range permissionsThatImplyRead {
+			canRead, err = a.client.VerifyAccessRequest(
+				ctx,
+				permissionThatImpliesRead,
+				actorID,
+				policyID,
+				resourceName,
+				docID,
+			)
+
+			if err != nil {
+				return false, NewErrFailedToVerifyDocAccessWithACP(
+					err,
+					"Local",
+					permissionThatImpliesRead.String(),
+					policyID,
+					actorID,
+					resourceName,
+					docID,
+				)
+			}
+
+			if canRead {
+				withPermission = permissionThatImpliesRead.String()
+				break
+			}
+		}
+
+		log.InfoContext(
+			ctx,
+			"Document readable="+strconv.FormatBool(canRead),
+			corelog.Any("Permission", withPermission),
+			corelog.Any("PolicyID", policyID),
+			corelog.Any("Resource", resourceName),
+			corelog.Any("ActorID", actorID),
+			corelog.Any("DocID", docID),
+		)
+
+		return canRead, nil
+	}
+
+	hasAccess, err := a.client.VerifyAccessRequest(
 		ctx,
 		permission,
 		actorID,
@@ -350,31 +399,30 @@ func (a *sourceHubBridge) CheckDocAccess(
 		resourceName,
 		docID,
 	)
+
 	if err != nil {
-		return false, NewErrFailedToVerifyDocAccessWithACP(err, "Local", policyID, actorID, resourceName, docID)
+		return false, NewErrFailedToVerifyDocAccessWithACP(
+			err,
+			"Local",
+			permission.String(),
+			policyID,
+			actorID,
+			resourceName,
+			docID,
+		)
 	}
 
-	if isValid {
-		log.InfoContext(
-			ctx,
-			"Document accessible",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return true, nil
-	} else {
-		log.InfoContext(
-			ctx,
-			"Document inaccessible",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return false, nil
-	}
+	log.InfoContext(
+		ctx,
+		"Document accessible="+strconv.FormatBool(hasAccess),
+		corelog.Any("Permission", permission),
+		corelog.Any("PolicyID", policyID),
+		corelog.Any("Resource", resourceName),
+		corelog.Any("ActorID", actorID),
+		corelog.Any("DocID", docID),
+	)
+
+	return hasAccess, nil
 }
 
 func (a *sourceHubBridge) AddDocActorRelationship(

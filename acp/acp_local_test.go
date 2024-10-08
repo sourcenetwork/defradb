@@ -482,10 +482,23 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 		policyID,
 	)
 
-	// Invalid empty arguments such that we can't check doc access.
+	// Invalid empty arguments such that we can't check doc access (read).
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
+		identity1.DID,
+		validPolicyID,
+		"",
+		"",
+	)
+	require.Error(t, errCheckDocAccess)
+	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.False(t, hasAccess)
+
+	// Invalid empty arguments such that we can't check doc access (write).
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		WritePermission,
 		identity1.DID,
 		validPolicyID,
 		"",
@@ -568,10 +581,23 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 		policyID,
 	)
 
-	// Invalid empty arguments such that we can't check doc access.
+	// Invalid empty arguments such that we can't check doc access (read).
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		ReadPermission,
+		identity1.DID,
+		validPolicyID,
+		"",
+		"",
+	)
+	require.Error(t, errCheckDocAccess)
+	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.False(t, hasAccess)
+
+	// Invalid empty arguments such that we can't check doc access (write).
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		WritePermission,
 		identity1.DID,
 		validPolicyID,
 		"",
