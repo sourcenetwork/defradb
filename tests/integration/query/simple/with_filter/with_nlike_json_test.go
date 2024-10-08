@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQuerySimple_WithNotLikeOpOnJSONField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -41,7 +41,7 @@ func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
+					Users(filter: {custom: {_nlike: "%maple%"}}) {
 						name
 					}
 				}`,
@@ -57,7 +57,7 @@ func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithLikeOpOnJSONFieldAllTypes_ShouldFilter(t *testing.T) {
+func TestQuerySimple_WithNotLikeOpOnJSONFieldAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -94,19 +94,23 @@ func TestQuerySimple_WithLikeOpOnJSONFieldAllTypes_ShouldFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Bob",
+					"name": "David",
 					"custom": 32
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
+					Users(filter: {custom: {_nlike: "%maple%"}}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
+						{"name": "John"},
 						{"name": "Andy"},
+						{"name": "Fred"},
+						{"name": "David"},
+						{"name": "Shahzad"},
 					},
 				},
 			},

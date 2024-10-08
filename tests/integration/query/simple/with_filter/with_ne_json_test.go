@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQuerySimple_WithJSONFilterNotEqualObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -28,20 +28,86 @@ func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "John",
-					"custom": "{\"tree\": \"maple\", \"age\": 250}",
-				},
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"tree": "maple",
+						"age": 250
+					}
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
-				},
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"tree": "oak",
+						"age": 450
+					}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": null
+				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
+					Users(filter: {custom: {_ne: {tree:"oak",age:450}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithJSONFilterNotEqualNestedObjects_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						custom: JSON
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"level_1": {
+							"level_2": {
+								"level_3": [true, false]
+							}
+						}
+					}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"level_1": {
+							"level_2": {
+								"level_3": [false, true]
+							}
+						}
+					}
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_ne: {level_1: {level_2: {level_3: [true, false]}}}}}) {
 						name
 					}
 				}`,
@@ -57,7 +123,7 @@ func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithLikeOpOnJSONFieldAllTypes_ShouldFilter(t *testing.T) {
+func TestQuerySimple_WithJSONFilterNotEqualNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -69,38 +135,20 @@ func TestQuerySimple_WithLikeOpOnJSONFieldAllTypes_ShouldFilter(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
-				},
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Shahzad",
-					"custom": [1, 2]
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Fred",
-					"custom": {"one": 1}
-				}`,
-			},
-			testUtils.CreateDoc{
 				Doc: `{
 					"name": "John",
-					"custom": false
+					"custom": null
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Bob",
-					"custom": 32
+					"name": "Andy",
+					"custom": {}
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
+					Users(filter: {custom: {_ne: null}}) {
 						name
 					}
 				}`,

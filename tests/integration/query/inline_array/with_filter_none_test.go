@@ -303,3 +303,45 @@ func TestQueryInlineNonNullBooleanArrayWithNoneFilter(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryJSONArray_WithNoneFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple JSON array, filtered none of string array",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					name: String
+					custom: JSON
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": [1, false, "second", {"one": 1}, [1, 2]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"custom": [null, false, "second", {"one": 1}, [1, 2]]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_none: {_eq: null}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
