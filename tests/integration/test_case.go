@@ -60,6 +60,13 @@ type TestCase struct {
 	// differences between view types, or we need to temporarily document a bug.
 	SupportedViewTypes immutable.Option[[]ViewType]
 
+	// If provided a value, SupportedDatabaseTypes will cause this test to be skipped
+	// if the active database type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between database types, or we need to temporarily document a bug.
+	SupportedDatabaseTypes immutable.Option[[]DatabaseType]
+
 	// Configuration for KMS to be used in the test
 	KMS KMS
 }
@@ -92,6 +99,22 @@ type ConfigureNode func() []net.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
+
+// Close is an action that will close a node.
+type Close struct {
+	// NodeID may hold the ID (index) of a node to close.
+	//
+	// If a value is not provided the close will be applied to all nodes.
+	NodeID immutable.Option[int]
+}
+
+// Start is an action that will start a node that has been previously closed.
+type Start struct {
+	// NodeID may hold the ID (index) of a node to start.
+	//
+	// If a value is not provided the start will be applied to all nodes.
+	NodeID immutable.Option[int]
+}
 
 // SchemaUpdate is an action that will update the database schema.
 //

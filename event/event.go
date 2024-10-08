@@ -35,6 +35,8 @@ const (
 	PeerInfoName = Name("peer-info")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
+	// ReplicatorFailureName is the name of the replicator failure event.
+	ReplicatorFailureName = Name("replicator-failure")
 	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
 	P2PTopicCompletedName = Name("p2p-topic-completed")
 	// ReplicatorCompletedName is the name of the replicator completed event.
@@ -68,8 +70,12 @@ type Update struct {
 	// also formed this update.
 	Block []byte
 
-	// IsCreate is true if this update is the creation of a new document.
-	IsCreate bool
+	// IsRetry is true if this update is a retry of a previously failed update.
+	IsRetry bool
+
+	// Success is a channel that will receive a boolean value indicating if the update was successful.
+	// It is used during retries.
+	Success chan bool
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.
@@ -136,4 +142,12 @@ type Replicator struct {
 	// Docs will receive Updates if new collections have been added to the replicator
 	// and those collections have documents to be replicated.
 	Docs <-chan Update
+}
+
+// ReplicatorFailure is an event that is published when a replicator fails to replicate a document.
+type ReplicatorFailure struct {
+	// PeerID is the id of the peer that failed to replicate the document.
+	PeerID peer.ID
+	// DocID is the unique immutable identifier of the document that failed to replicate.
+	DocID string
 }

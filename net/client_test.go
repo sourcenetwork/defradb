@@ -95,7 +95,7 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	require.Contains(t, err.Error(), "failed to parse peer ID")
 }
 
-func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
+func TestPushlog_WithValidPeerID_NoError(t *testing.T) {
 	ctx := context.Background()
 	db1, p1 := newTestPeer(ctx, t)
 	defer db1.Close()

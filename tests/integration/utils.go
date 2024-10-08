@@ -178,13 +178,13 @@ func ExecuteTestCase(
 
 	var databases []DatabaseType
 	if badgerInMemory {
-		databases = append(databases, badgerIMType)
+		databases = append(databases, BadgerIMType)
 	}
 	if badgerFile {
-		databases = append(databases, badgerFileType)
+		databases = append(databases, BadgerFileType)
 	}
 	if inMemoryStore {
-		databases = append(databases, defraIMType)
+		databases = append(databases, DefraIMType)
 	}
 
 	var kmsList []KMSType
@@ -203,6 +203,7 @@ func ExecuteTestCase(
 	require.NotEmpty(t, databases)
 	require.NotEmpty(t, clients)
 
+	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
 
 	ctx := context.Background()
@@ -251,7 +252,7 @@ func executeTestCase(
 
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
-	defer closeNodes(s)
+	defer closeNodes(s, Close{})
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -291,6 +292,12 @@ func performAction(
 
 	case Restart:
 		restartNodes(s)
+
+	case Close:
+		closeNodes(s, action)
+
+	case Start:
+		startNodes(s, action)
 
 	case ConnectPeers:
 		connectPeers(s, action)
@@ -458,7 +465,7 @@ func benchmarkAction(
 	actionIndex int,
 	bench Benchmark,
 ) {
-	if s.dbt == defraIMType {
+	if s.dbt == DefraIMType {
 		// Benchmarking makes no sense for test in-memory storage
 		return
 	}
@@ -557,8 +564,9 @@ func getCollectionNamesFromSchema(result map[string]int, schema string, nextInde
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
 func closeNodes(
 	s *state,
+	action Close,
 ) {
-	for _, node := range s.nodes {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		node.Close()
 	}
 }
@@ -723,20 +731,18 @@ func setStartingNodes(
 	}
 }
 
-func restartNodes(
-	s *state,
-) {
-	if s.dbt == badgerIMType || s.dbt == defraIMType {
-		return
-	}
-	closeNodes(s)
-
+func startNodes(s *state, action Start) {
+	nodes := getNodes(action.NodeID, s.nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
-	for i := len(s.nodes) - 1; i >= 0; i-- {
+	for i := len(nodes) - 1; i >= 0; i-- {
+		nodeIndex := i
+		if action.NodeID.HasValue() {
+			nodeIndex = action.NodeID.Value()
+		}
 		originalPath := databaseDir
-		databaseDir = s.dbPaths[i]
+		databaseDir = s.dbPaths[nodeIndex]
 		node, _, err := setupNode(s)
-		require.Nil(s.t, err)
+		require.NoError(s.t, err)
 		databaseDir = originalPath
 
 		if len(s.nodeConfigs) == 0 {
@@ -744,22 +750,22 @@ func restartNodes(
 			// basic (i.e. no P2P stuff) and can be yielded now.
 			c, err := setupClient(s, node)
 			require.NoError(s.t, err)
-			s.nodes[i] = c
+			s.nodes[nodeIndex] = c
 
 			eventState, err := newEventState(c.Events())
 			require.NoError(s.t, err)
-			s.nodeEvents[i] = eventState
+			s.nodeEvents[nodeIndex] = eventState
 			continue
 		}
 
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
 		var addresses []string
-		for _, addr := range s.nodeAddresses[i].Addrs {
+		for _, addr := range s.nodeAddresses[nodeIndex].Addrs {
 			addresses = append(addresses, addr.String())
 		}
 
-		nodeOpts := s.nodeConfigs[i]
+		nodeOpts := s.nodeConfigs[nodeIndex]
 		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
 		node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Encstore(), node.DB.Events(), nodeOpts...)
@@ -767,11 +773,11 @@ func restartNodes(
 
 		c, err := setupClient(s, node)
 		require.NoError(s.t, err)
-		s.nodes[i] = c
+		s.nodes[nodeIndex] = c
 
 		eventState, err := newEventState(c.Events())
 		require.NoError(s.t, err)
-		s.nodeEvents[i] = eventState
+		s.nodeEvents[nodeIndex] = eventState
 
 		waitForNetworkSetupEvents(s, i)
 	}
@@ -780,6 +786,16 @@ func restartNodes(
 	// will reference the old (closed) database instances.
 	refreshCollections(s)
 	refreshIndexes(s)
+}
+
+func restartNodes(
+	s *state,
+) {
+	if s.dbt == BadgerIMType || s.dbt == DefraIMType {
+		return
+	}
+	closeNodes(s, Close{})
+	startNodes(s, Start{})
 	reconnectPeers(s)
 }
 
@@ -840,7 +856,7 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{node.WithDisableP2P(false)}
+	nodeOpts := []node.Option{node.WithDisableP2P(false), db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
@@ -2454,6 +2470,31 @@ func skipIfACPTypeUnsupported(t testing.TB, supporteACPTypes immutable.Option[[]
 			t.Skipf("test does not support given acp type. Type: %s", acpType)
 		}
 	}
+}
+
+func skipIfDatabaseTypeUnsupported(
+	t testing.TB,
+	databases []DatabaseType,
+	supporteDatabaseTypes immutable.Option[[]DatabaseType],
+) []DatabaseType {
+	if !supporteDatabaseTypes.HasValue() {
+		return databases
+	}
+	filteredDatabases := []DatabaseType{}
+	for _, supportedType := range supporteDatabaseTypes.Value() {
+		for _, database := range databases {
+			if supportedType == database {
+				filteredDatabases = append(filteredDatabases, database)
+				break
+			}
+		}
+	}
+
+	if len(filteredDatabases) == 0 {
+		t.Skipf("test does not support any given database type. Type: %v", filteredDatabases)
+	}
+
+	return filteredDatabases
 }
 
 // skipIfNetworkTest skips the current test if the given actions
