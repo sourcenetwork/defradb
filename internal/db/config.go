@@ -11,6 +11,7 @@
 package db
 
 import (
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -21,6 +22,7 @@ const (
 
 type dbOptions struct {
 	maxTxnRetries immutable.Option[int]
+	identity      immutable.Option[identity.Identity]
 }
 
 // Option is a funtion that sets a config value on the db.
@@ -30,5 +32,11 @@ type Option func(*dbOptions)
 func WithMaxRetries(num int) Option {
 	return func(opts *dbOptions) {
 		opts.maxTxnRetries = immutable.Some(num)
+	}
+}
+
+func WithNodeIdentity(ident identity.Identity) Option {
+	return func(opts *dbOptions) {
+		opts.identity = immutable.Some(ident)
 	}
 }

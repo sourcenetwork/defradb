@@ -736,7 +736,7 @@ func restartNodes(
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
 
-		node, _, err := setupNode(s, node.WithIdentity(getNodeIdentity(s, i)))
+		node, _, err := setupNode(s, db.WithNodeIdentity(getNodeIdentity(s, i)))
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
@@ -845,7 +845,7 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, node.WithIdentity(getNodeIdentity(s, len(s.nodes))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getNodeIdentity(s, len(s.nodes))))
 
 	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
