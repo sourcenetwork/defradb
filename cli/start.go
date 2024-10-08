@@ -14,10 +14,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -100,39 +105,21 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				// load the required peer key or generate one if it doesn't exist
-				peerKey, err := kr.Get(peerKeyName)
-				if err != nil && errors.Is(err, keyring.ErrNotFound) {
-					peerKey, err = crypto.GenerateEd25519()
-					if err != nil {
-						return err
-					}
-					err = kr.Set(peerKeyName, peerKey)
-					if err != nil {
-						return err
-					}
-					log.Info("generated peer key")
-				} else if err != nil {
+				opts, err = addPeerKey(kr, opts)
+				if err != nil {
 					return err
 				}
-				opts = append(opts, net.WithPrivateKey(peerKey))
 
-				// load the optional encryption key
-				encryptionKey, err := kr.Get(encryptionKeyName)
-				if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
-					encryptionKey, err = crypto.GenerateAES256()
-					if err != nil {
-						return err
-					}
-					err = kr.Set(encryptionKeyName, encryptionKey)
-					if err != nil {
-						return err
-					}
-					log.Info("generated encryption key")
-				} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+				opts, err = addEncryptionKey(kr, cfg, opts)
+				if err != nil {
 					return err
 				}
-				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+
+				opts, err = addIdentity(kr, opts)
+				if err != nil {
+					return err
+				}
+
 				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
@@ -251,4 +238,71 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetBool(configFlags["no-encryption"]),
 		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
 	return cmd
+}
+
+func addEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.Option) ([]node.Option, error) {
+	encryptionKey, err := kr.Get(encryptionKeyName)
+	if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
+		encryptionKey, err = crypto.GenerateAES256()
+		if err != nil {
+			return nil, err
+		}
+		err = kr.Set(encryptionKeyName, encryptionKey)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("generated encryption key")
+	} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+		return nil, err
+	}
+	opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+	return opts, nil
+}
+
+func addPeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+	peerKey, err := kr.Get(peerKeyName)
+	if err != nil && errors.Is(err, keyring.ErrNotFound) {
+		peerKey, err = crypto.GenerateEd25519()
+		if err != nil {
+			return nil, err
+		}
+		err = kr.Set(peerKeyName, peerKey)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("generated peer key")
+	} else if err != nil {
+		return nil, err
+	}
+	return append(opts, net.WithPrivateKey(peerKey)), nil
+}
+
+func addIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+	identityBytes, err := kr.Get(identityKeyName)
+	if err != nil && errors.Is(err, keyring.ErrNotFound) {
+		privateKey, err := crypto.GenerateSecp256k1()
+		if err != nil {
+			return nil, err
+		}
+		identityBytes = privateKey.Serialize()
+		err = kr.Set(identityKeyName, identityBytes)
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	privKey := secp256k1.PrivKeyFromBytes(identityBytes)
+
+	nodeIdentity, err := identity.FromPrivateKey(privKey, time.Duration(0), immutable.None[string](),
+		immutable.None[string](), false)
+
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("loaded identity", corelog.Any("Identity", nodeIdentity.IntoRawIdentity()))
+
+	return append(opts, node.WithIdentity(nodeIdentity)), nil
 }
