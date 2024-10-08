@@ -13,6 +13,7 @@ package db
 import (
 	"time"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -24,6 +25,7 @@ const (
 type dbOptions struct {
 	maxTxnRetries  immutable.Option[int]
 	RetryIntervals []time.Duration
+	identity       immutable.Option[identity.Identity]
 }
 
 // defaultOptions returns the default db options.
@@ -57,5 +59,11 @@ func WithRetryInterval(interval []time.Duration) Option {
 		if len(interval) > 0 {
 			opt.RetryIntervals = interval
 		}
+	}
+}
+
+func WithNodeIdentity(ident identity.Identity) Option {
+	return func(opts *dbOptions) {
+		opts.identity = immutable.Some(ident)
 	}
 }

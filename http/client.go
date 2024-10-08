@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -506,5 +507,9 @@ func (c *Client) Events() *event.Bus {
 }
 
 func (c *Client) MaxTxnRetries() int {
+	panic("client side database")
+}
+
+func (c *Client) GetNodeIdentity() immutable.Option[identity.Identity] {
 	panic("client side database")
 }
