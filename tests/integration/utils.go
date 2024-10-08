@@ -141,7 +141,7 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 	}
 
 	if httpClient || cliClient {
-		// The http / cli client will return an error instead of panicing at the moment.
+		// The http / cli client will return an error instead of panicking at the moment.
 		t.Skip("Assert panic with the http client is not currently supported.")
 	}
 
@@ -539,7 +539,7 @@ func getCollectionNames(testCase TestCase) []string {
 func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
 	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
 	splitByType := strings.Split(schema, "type ")
-	// Skip the first, as that preceeds `type ` if `type ` is present,
+	// Skip the first, as that precede `type ` if `type ` is present,
 	// else there are no types.
 	for i := 1; i < len(splitByType); i++ {
 		wipSplit := strings.TrimLeft(splitByType[i], " ")
@@ -690,7 +690,7 @@ ActionLoop:
 		} else {
 			// if we don't have any non-mutation actions and the change detector is enabled
 			// skip this test as we will not gain anything from running (change detector would
-			// run an idential profile to a normal test run)
+			// run an identical profile to a normal test run)
 			t.Skipf("no actions to execute")
 		}
 	}
@@ -741,7 +741,7 @@ func startNodes(s *state, action Start) {
 		}
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s)
+		node, _, err := setupNode(s, node.WithIdentity(getNodeIdentity(s, nodeIndex)))
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 
@@ -819,8 +819,8 @@ func refreshCollections(
 					if _, ok := s.collectionIndexesByRoot[collection.Description().RootID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
-						// we still wish to preserve the original index so test maintainers can refrence
-						// them in a convienient manner.
+						// we still wish to preserve the original index so test maintainers can reference
+						// them in a convenient manner.
 						s.collectionIndexesByRoot[collection.Description().RootID] = i
 					}
 					break
@@ -860,7 +860,9 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	node, path, err := setupNode(s, nodeOpts...) //disable change dector, or allow it?
+	nodeOpts = append(nodeOpts, node.WithIdentity(getNodeIdentity(s, len(s.nodes))))
+
+	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
 
 	s.nodeAddresses = append(s.nodeAddresses, node.Peer.PeerInfo())
@@ -2456,10 +2458,10 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfACPTypeUnsupported(t testing.TB, supporteACPTypes immutable.Option[[]ACPType]) {
-	if supporteACPTypes.HasValue() {
+func skipIfACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]ACPType]) {
+	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
-		for _, supportedType := range supporteACPTypes.Value() {
+		for _, supportedType := range supportedACPTypes.Value() {
 			if supportedType == acpType {
 				isTypeSupported = true
 				break

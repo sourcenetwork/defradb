@@ -612,18 +612,21 @@ func crossLock(port uint16) (func(), error) {
 		nil
 }
 
+func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
+	switch client := s.nodes[nodeIndex].(type) {
+	case *http.Wrapper:
+		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+	case *cli.Wrapper:
+		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+	}
+
+	return immutable.None[string]()
+}
+
 // Generate the keys using the index as the seed so that multiple
 // runs yield the same private key.  This is important for stuff like
 // the change detector.
-func generateIdentity(s *state, seedIndex int, nodeIndex int) (acpIdentity.Identity, error) {
-	var audience immutable.Option[string]
-	switch client := s.nodes[nodeIndex].(type) {
-	case *http.Wrapper:
-		audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
-	case *cli.Wrapper:
-		audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
-	}
-
+func generateIdentity(s *state, seedIndex int, audience immutable.Option[string]) (acpIdentity.Identity, error) {
 	source := rand.NewSource(int64(seedIndex))
 	r := rand.New(source)
 
@@ -663,7 +666,7 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 				identities[i] = nodeIdentities[i]
 				continue
 			}
-			newIdentity, err := generateIdentity(s, i, nodeIndex)
+			newIdentity, err := generateIdentity(s, i, getNodeAudience(s, nodeIndex))
 			require.NoError(s.t, err)
 			identities[i] = newIdentity
 		}
@@ -672,6 +675,25 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 	} else {
 		return immutable.Some(nodeIdentities[index.Value()])
 	}
+}
+
+func getNodeIdentity(s *state, nodeIndex int) acpIdentity.Identity {
+	identity, err := generateIdentity(s, nodeIndex, immutable.None[string]())
+	require.NoError(s.t, err)
+
+	if len(s.identities) <= nodeIndex {
+		identities := make([][]acpIdentity.Identity, nodeIndex+1)
+		copy(identities, s.identities)
+		s.identities = identities
+	}
+
+	if len(s.identities[nodeIndex]) == 0 {
+		s.identities[nodeIndex] = append(s.identities[nodeIndex], identity)
+	} else {
+		s.identities[nodeIndex][0] = identity
+	}
+
+	return identity
 }
 
 // testBuffer is a very simple, thread-safe (--race flag friendly), io.Writer
