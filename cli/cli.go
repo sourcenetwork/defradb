@@ -143,11 +143,17 @@ func NewDefraCommand() *cobra.Command {
 		MakeIdentityNewCommand(),
 	)
 
+	node := MakeNodeCommand()
+	node.AddCommand(
+		MakeNodeIdentityCommand(),
+	)
+
 	root := MakeRootCommand()
 	root.AddCommand(
 		client,
 		keyring,
 		identity,
+		node,
 		MakeStartCommand(),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(),

@@ -19,6 +19,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -135,6 +136,9 @@ type DB interface {
 		relation string,
 		targetActor string,
 	) (DeleteDocActorRelationshipResult, error)
+
+	// GetNodeIdentity returns the identity of the node.
+	GetNodeIdentity() immutable.Option[identity.Identity]
 }
 
 // Store contains the core DefraDB read-write operations.

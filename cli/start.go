@@ -134,6 +134,13 @@ func MakeStartCommand() *cobra.Command {
 			isDevMode := cfg.GetBool("development")
 			if isDevMode {
 				cmd.Printf(devModeBanner)
+				if cfg.GetBool("keyring.disabled") {
+					var err error
+					opts, err = addEphemeralIdentity(opts)
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			signalCh := make(chan os.Signal, 1)
@@ -279,30 +286,57 @@ func addPeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 
 func addIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 	identityBytes, err := kr.Get(identityKeyName)
-	if err != nil && errors.Is(err, keyring.ErrNotFound) {
+	info := "Loaded identity"
+	if err != nil {
+		if !errors.Is(err, keyring.ErrNotFound) {
+			return nil, err
+		}
 		privateKey, err := crypto.GenerateSecp256k1()
 		if err != nil {
 			return nil, err
 		}
-		identityBytes = privateKey.Serialize()
+		identityBytes := privateKey.Serialize()
 		err = kr.Set(identityKeyName, identityBytes)
 		if err != nil {
 			return nil, err
 		}
-	} else if err != nil {
-		return nil, err
+		info = "Generated identity"
 	}
 
-	privKey := secp256k1.PrivKeyFromBytes(identityBytes)
-
-	nodeIdentity, err := identity.FromPrivateKey(privKey, time.Duration(0), immutable.None[string](),
-		immutable.None[string](), false)
-
+	nodeIdentity, err := identity.FromPrivateKey(
+		secp256k1.PrivKeyFromBytes(identityBytes),
+		time.Duration(0),
+		immutable.None[string](),
+		immutable.None[string](),
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Info("loaded identity", corelog.Any("Identity", nodeIdentity.IntoRawIdentity()))
+	log.Info(info, corelog.Any("Identity", nodeIdentity.IntoRawIdentity()))
 
-	return append(opts, node.WithIdentity(nodeIdentity)), nil
+	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
+}
+
+func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
+	privateKey, err := crypto.GenerateSecp256k1()
+	if err != nil {
+		return nil, err
+	}
+
+	nodeIdentity, err := identity.FromPrivateKey(
+		secp256k1.PrivKeyFromBytes(privateKey.Serialize()),
+		time.Duration(0),
+		immutable.None[string](),
+		immutable.None[string](),
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("Generated ephemeral identity", corelog.Any("Identity", nodeIdentity.IntoRawIdentity()))
+
+	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
 }
