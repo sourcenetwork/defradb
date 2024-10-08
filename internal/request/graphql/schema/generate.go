@@ -1383,7 +1383,7 @@ func genFilterOperatorName(fieldType gql.Type) string {
 	}
 	switch {
 	case fieldType.Name() == "JSON":
-		return "JSON"
+		return fieldType.Name()
 
 	case isList && isNotNull:
 		return "NotNull" + fieldType.Name() + "ListOperatorBlock"
