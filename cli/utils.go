@@ -33,6 +33,7 @@ import (
 const (
 	peerKeyName       = "peer-key"
 	encryptionKeyName = "encryption-key"
+	identityKeyName   = "identity-key"
 )
 
 type contextKey string

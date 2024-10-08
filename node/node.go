@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -45,6 +46,7 @@ type Options struct {
 	disableAPI        bool
 	enableDevelopment bool
 	kmsType           immutable.Option[kms.ServiceType]
+	identity          immutable.Option[identity.Identity]
 }
 
 // DefaultOptions returns options with default settings.
@@ -82,12 +84,20 @@ func WithEnableDevelopment(enable bool) NodeOpt {
 	}
 }
 
+// WithBadgerEncryptionKey sets the badger encryption key.
+func WithIdentity(id identity.Identity) NodeOpt {
+	return func(o *Options) {
+		o.identity = immutable.Some(id)
+	}
+}
+
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
 	DB         client.DB
 	Peer       *net.Peer
 	Server     *http.Server
 	kmsService kms.Service
+	identity   immutable.Option[identity.Identity]
 
 	options    *Options
 	dbOpts     []db.Option
@@ -195,6 +205,8 @@ func (n *Node) Start(ctx context.Context) error {
 			}
 		}()
 	}
+
+	n.identity = n.options.identity
 
 	return nil
 }
