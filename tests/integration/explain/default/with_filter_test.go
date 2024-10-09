@@ -320,3 +320,52 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 
 	explainUtils.ExecuteTestCase(t, test)
 }
+
+func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Explain (default) request with JSON equal (_eq) filter.",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					name: String
+					custom: JSON
+				}`,
+			},
+			testUtils.ExplainRequest{
+				Request: `query @explain {
+					Users(filter: {custom: {_eq: {one: {two: 3}}}}) {
+						name
+					}
+				}`,
+				ExpectedPatterns: basicPattern,
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be last node, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "1",
+							"collectionName": "Users",
+							"filter": dataMap{
+								"custom": dataMap{
+									"_eq": dataMap{
+										"one": dataMap{
+											"two": int32(3),
+										},
+									},
+								},
+							},
+							"spans": []dataMap{
+								{
+									"start": "/1",
+									"end":   "/2",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}

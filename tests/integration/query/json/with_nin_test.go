@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithInOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithNotInFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -47,13 +47,13 @@ func TestQuerySimple_WithInOpOnJSONField_ShouldFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_in: [{tree:"oak",age:450}]}}) {
+					Users(filter: {custom: {_nin: [{tree:"oak",age:450}]}}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "Andy"},
+						{"name": "John"},
 					},
 				},
 			},

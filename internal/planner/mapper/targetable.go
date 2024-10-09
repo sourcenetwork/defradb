@@ -21,6 +21,7 @@ import (
 var (
 	_ connor.FilterKey = (*PropertyIndex)(nil)
 	_ connor.FilterKey = (*Operator)(nil)
+	_ connor.FilterKey = (*ObjectProperty)(nil)
 )
 
 // PropertyIndex is a FilterKey that represents a property in a document.
@@ -66,6 +67,34 @@ func (k *Operator) GetOperatorOrDefault(defaultOp string) string {
 
 func (k *Operator) Equal(other connor.FilterKey) bool {
 	if otherKey, isOk := other.(*Operator); isOk && *k == *otherKey {
+		return true
+	}
+	return false
+}
+
+// ObjectProperty is a FilterKey that represents a property in an object.
+//
+// This is used to target properties of an object when the fields
+// are not explicitly mapped, such as with JSON.
+type ObjectProperty struct {
+	// The name of the property on object.
+	Name string
+}
+
+func (k *ObjectProperty) GetProp(data any) any {
+	if data == nil {
+		return nil
+	}
+	object := data.(map[string]any)
+	return object[k.Name]
+}
+
+func (k *ObjectProperty) GetOperatorOrDefault(defaultOp string) string {
+	return defaultOp
+}
+
+func (k *ObjectProperty) Equal(other connor.FilterKey) bool {
+	if otherKey, isOk := other.(*ObjectProperty); isOk && *k == *otherKey {
 		return true
 	}
 	return false
@@ -143,6 +172,14 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 				}
 			default:
 				outmap[keyType.Operation] = v
+			}
+
+		case *ObjectProperty:
+			switch subObj := v.(type) {
+			case map[connor.FilterKey]any:
+				outmap[keyType.Name] = filterObjectToMap(mapping, subObj)
+			case nil:
+				outmap[keyType.Name] = nil
 			}
 		}
 	}

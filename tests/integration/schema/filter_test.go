@@ -287,3 +287,126 @@ var defaultBookArgsWithoutFilter = trimFields(
 	},
 	testFilterForOneToOneSchemaArgProps,
 )
+
+func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						custom: JSON
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__schema {
+							queryType {
+								fields {
+									name
+									args {
+										name
+										type {
+											name
+											inputFields {
+												name
+												type {
+													name
+													ofType {
+														name
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"queryType": map[string]any{
+							"fields": []any{
+								map[string]any{
+									"name": "Users",
+									"args": append(
+										// default args without filter
+										trimFields(
+											fields{
+												cidArg,
+												docIDArg,
+												showDeletedArg,
+												groupByArg,
+												limitArg,
+												offsetArg,
+												buildOrderArg("Users"),
+											},
+											map[string]any{
+												"name": struct{}{},
+												"type": map[string]any{
+													"name":        struct{}{},
+													"inputFields": struct{}{},
+												},
+											},
+										),
+										map[string]any{
+											"name": "filter",
+											"type": map[string]any{
+												"name": "UsersFilterArg",
+												"inputFields": []any{
+													map[string]any{
+														"name": "_and",
+														"type": map[string]any{
+															"name": nil,
+															"ofType": map[string]any{
+																"name": nil,
+															},
+														},
+													},
+													map[string]any{
+														"name": "_docID",
+														"type": map[string]any{
+															"name":   "IDOperatorBlock",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "_not",
+														"type": map[string]any{
+															"name":   "UsersFilterArg",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "_or",
+														"type": map[string]any{
+															"name": nil,
+															"ofType": map[string]any{
+																"name": nil,
+															},
+														},
+													},
+													map[string]any{
+														"name": "custom",
+														"type": map[string]any{
+															"name":   "JSON",
+															"ofType": nil,
+														},
+													},
+												},
+											},
+										},
+									).Tidy(),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
