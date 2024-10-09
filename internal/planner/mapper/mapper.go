@@ -1299,7 +1299,10 @@ func ToFilter(source request.Filter, mapping *core.DocumentMapping) *Filter {
 // toFilterKeyValue converts a consumer-defined filter key-value into a filter clause
 // keyed by connor.FilterKey.
 //
-// Return key will either be a property index, object property, or operator.
+// The returned key will be one of the following:
+// - Operator: if the sourceKey is one of the defined filter operators
+// - PropertyIndex: if the sourceKey exists in the document mapping
+// - ObjectProperty: if the sourceKey does not match one of the above
 func toFilterKeyValue(
 	sourceKey string,
 	sourceClause any,
@@ -1307,7 +1310,6 @@ func toFilterKeyValue(
 ) (connor.FilterKey, any) {
 	var key connor.FilterKey
 	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
-		// Key is a connor operator name
 		key = &Operator{
 			Operation: sourceKey,
 		}
@@ -1325,7 +1327,6 @@ func toFilterKeyValue(
 			Index: indexes[0],
 		}
 	} else {
-		// Key is an object property
 		key = &ObjectProperty{
 			Name: sourceKey,
 		}

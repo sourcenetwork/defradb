@@ -73,6 +73,9 @@ func (k *Operator) Equal(other connor.FilterKey) bool {
 }
 
 // ObjectProperty is a FilterKey that represents a property in an object.
+//
+// This is used to target properties of an object when the fields
+// are not explicitly mapped, such as with JSON.
 type ObjectProperty struct {
 	// The name of the property on object.
 	Name string

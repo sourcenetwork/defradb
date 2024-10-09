@@ -1386,6 +1386,8 @@ func genFilterOperatorName(fieldType gql.Type) string {
 		return fieldType.Name()
 
 	case isList && isNotNull:
+		// todo: There's a potential to have a name clash
+		// https://github.com/sourcenetwork/defradb/issues/3123
 		return "NotNull" + fieldType.Name() + "ListOperatorBlock"
 
 	case isList:
