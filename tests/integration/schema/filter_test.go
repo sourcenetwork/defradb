@@ -332,7 +332,25 @@ func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 								map[string]any{
 									"name": "Users",
 									"args": append(
-										defaultUserArgsWithoutFilter,
+										// default args without filter
+										trimFields(
+											fields{
+												cidArg,
+												docIDArg,
+												showDeletedArg,
+												groupByArg,
+												limitArg,
+												offsetArg,
+												buildOrderArg("Users"),
+											},
+											map[string]any{
+												"name": struct{}{},
+												"type": map[string]any{
+													"name":        struct{}{},
+													"inputFields": struct{}{},
+												},
+											},
+										),
 										map[string]any{
 											"name": "filter",
 											"type": map[string]any{

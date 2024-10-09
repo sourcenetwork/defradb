@@ -1373,17 +1373,16 @@ func toFilterMap(
 func toFilterList(sourceClause []any, mapping *core.DocumentMapping) []any {
 	returnClauses := make([]any, len(sourceClause))
 	for i, innerSourceClause := range sourceClause {
-		switch typedInnerSourceClause := innerSourceClause.(type) {
-		case map[string]any:
-			innerMapClause := map[connor.FilterKey]any{}
-			for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
-				rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, mapping)
-				innerMapClause[rKey] = rValue
-			}
-			returnClauses[i] = innerMapClause
-		default:
-			returnClauses[i] = innerSourceClause
+		// innerSourceClause must be a map because only compound
+		// operators (_and, _or) can reach this function and should
+		// have already passed GQL type validation
+		typedInnerSourceClause := innerSourceClause.(map[string]any)
+		innerMapClause := make(map[connor.FilterKey]any)
+		for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
+			rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, mapping)
+			innerMapClause[rKey] = rValue
 		}
+		returnClauses[i] = innerMapClause
 	}
 	return returnClauses
 }
