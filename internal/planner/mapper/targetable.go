@@ -173,6 +173,14 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 			default:
 				outmap[keyType.Operation] = v
 			}
+
+		case *ObjectProperty:
+			switch subObj := v.(type) {
+			case map[connor.FilterKey]any:
+				outmap[keyType.Name] = filterObjectToMap(mapping, subObj)
+			case nil:
+				outmap[keyType.Name] = nil
+			}
 		}
 	}
 	return outmap
