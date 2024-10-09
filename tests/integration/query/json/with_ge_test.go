@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithEqualValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter equal value",
 		Actions: []any{
@@ -60,7 +60,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithEqualValue_Succeeds(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithGreaterValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter greater value",
 		Actions: []any{
@@ -104,7 +104,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithGreaterValue_Succeeds(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithNullValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter null value",
 		Actions: []any{
@@ -150,7 +150,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithNullValue_Succeeds(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithNestedEqualValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithNestedEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter nested equal value",
 		Actions: []any{
@@ -194,7 +194,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithNestedEqualValue_Succeeds(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithNestedGreaterValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge nested filter nested greater value",
 		Actions: []any{
@@ -238,7 +238,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithNestedGreaterValue_Succeeds(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithNestedNullValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter nested null value",
 		Actions: []any{
@@ -284,7 +284,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithNestedNullValue_Succeeds(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter bool value",
 		Actions: []any{
@@ -322,7 +322,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithBoolValue_ReturnsError(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithStringValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter string value",
 		Actions: []any{
@@ -360,7 +360,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithStringValue_ReturnsError(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter object value",
 		Actions: []any{
@@ -398,7 +398,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithObjectValue_ReturnsError(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter array value",
 		Actions: []any{
@@ -436,7 +436,7 @@ func TestQuerySimple_WithJSONGreaterEqualFilterWithArrayValue_ReturnsError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONGreaterEqualFilterWithAllTypes_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _ge filter all types",
 		Actions: []any{

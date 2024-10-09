@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithGreaterValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), lesser than",
+		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -36,13 +36,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithGreaterValue_Succeeds(t *t
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: 20}}) {
+					Users(filter: {Custom: {_gt: 20}}) {
 						Name
 						Custom
 					}
@@ -50,8 +50,8 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithGreaterValue_Succeeds(t *t
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":   "Bob",
-							"Custom": int64(19),
+							"Name":   "John",
+							"Custom": int64(21),
 						},
 					},
 				},
@@ -62,9 +62,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithGreaterValue_Succeeds(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithLesserValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), lesser than",
+		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -82,13 +82,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithLesserValue_Succeeds(t *te
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: 19}}) {
+					Users(filter: {Custom: {_gt: 22}}) {
 						Name
 						Custom
 					}
@@ -103,9 +103,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithLesserValue_Succeeds(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithNullFilterValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic JSON lesser than filter, with null filter value",
+		Description: "Simple query with basic JSON greater than filter, with null filter value",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -123,17 +123,21 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNullFilterValue_Succeeds(t
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
+					"Name": "David"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: null}}) {
+					Users(filter: {Custom: {_gt: null}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -142,9 +146,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNullFilterValue_Succeeds(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedGreaterValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithNestedGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), nested lesser than",
+		Description: "Simple query with basic filter(custom), nested greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -162,13 +166,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedGreaterValue_Succeed
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": {"age": 19}
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_lt: 20}}}) {
+					Users(filter: {Custom: {age: {_gt: 20}}}) {
 						Name
 						Custom
 					}
@@ -176,9 +180,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedGreaterValue_Succeed
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 							"Custom": map[string]any{
-								"age": uint64(19),
+								"age": uint64(21),
 							},
 						},
 					},
@@ -190,9 +194,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedGreaterValue_Succeed
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedLesserValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), nested lesser than",
+		Description: "Simple query with basic filter(custom), nested greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -210,13 +214,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedLesserValue_Succeeds
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": {"age": 19}
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_lt: 19}}}) {
+					Users(filter: {Custom: {age: {_gt: 22}}}) {
 						Name
 						Custom
 					}
@@ -231,9 +235,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedLesserValue_Succeeds
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedNullFilterValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithNestedNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic JSON lesser than filter, with nested null filter value",
+		Description: "Simple query with basic JSON greater than filter, with nested null filter value",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -251,17 +255,21 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedNullFilterValue_Succ
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
+					"Name": "David"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_lt: null}}}) {
+					Users(filter: {Custom: {age: {_gt: null}}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
 				},
 			},
 		},
@@ -270,9 +278,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithNestedNullFilterValue_Succ
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), lesser than",
+		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -290,13 +298,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithBoolValue_ReturnsError(t *
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: false}}) {
+					Users(filter: {Custom: {_gt: false}}) {
 						Name
 						Custom
 					}
@@ -309,9 +317,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithBoolValue_ReturnsError(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), lesser than",
+		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -329,13 +337,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithStringValue_ReturnsError(t
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: ""}}) {
+					Users(filter: {Custom: {_gt: ""}}) {
 						Name
 						Custom
 					}
@@ -348,9 +356,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithStringValue_ReturnsError(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithObjectValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), lesser than",
+		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -368,13 +376,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithObjectValue_ReturnsError(t
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: {one: 1}}}) {
+					Users(filter: {Custom: {_gt: {one: 1}}}) {
 						Name
 						Custom
 					}
@@ -387,9 +395,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithObjectValue_ReturnsError(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterBlockWithArrayValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterBlockWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), lesser than",
+		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -407,13 +415,13 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithArrayValue_ReturnsError(t 
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob",
+					"Name": "David",
 					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: [1,2]}}) {
+					Users(filter: {Custom: {_gt: [1,2]}}) {
 						Name
 						Custom
 					}
@@ -426,9 +434,9 @@ func TestQuerySimple_WithJSONLesserThanFilterBlockWithArrayValue_ReturnsError(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserThanFilterWithAllTypes_Succeeds(t *testing.T) {
+func TestQueryJSON_WithGreaterThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _lt filter all types",
+		Description: "Simple query with JSON _gt filter all types",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -470,7 +478,7 @@ func TestQuerySimple_WithJSONLesserThanFilterWithAllTypes_Succeeds(t *testing.T)
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_lt: 33}}) {
+					Users(filter: {Custom: {_gt: 30}}) {
 						Name
 					}
 				}`,

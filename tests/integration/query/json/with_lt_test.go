@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithEqualValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter equal value",
+		Description: "Simple query with basic filter(custom), lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -36,20 +36,22 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithEqualValue_Succeeds(t *testing
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": 32
+					"Name": "Bob",
+					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: 21}}) {
+					Users(filter: {Custom: {_lt: 20}}) {
 						Name
+						Custom
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Name":   "Bob",
+							"Custom": int64(19),
 						},
 					},
 				},
@@ -60,9 +62,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithEqualValue_Succeeds(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithLesserValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter lesser value",
+		Description: "Simple query with basic filter(custom), lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -80,22 +82,19 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithLesserValue_Succeeds(t *testin
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": 32
+					"Name": "Bob",
+					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: 31}}) {
+					Users(filter: {Custom: {_lt: 19}}) {
 						Name
+						Custom
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},
@@ -104,9 +103,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithLesserValue_Succeeds(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithNullValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter null value",
+		Description: "Simple query with basic JSON lesser than filter, with null filter value",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -124,21 +123,17 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNullValue_Succeeds(t *testing.
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David"
+					"Name": "Bob"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: null}}) {
+					Users(filter: {Custom: {_lt: null}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "David",
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},
@@ -147,9 +142,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNullValue_Succeeds(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithNestedEqualValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter nested equal value",
+		Description: "Simple query with basic filter(custom), nested lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -167,20 +162,24 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNestedEqualValue_Succeeds(t *t
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": {"age": 32}
+					"Name": "Bob",
+					"Custom": {"age": 19}
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_le: 21}}}) {
+					Users(filter: {Custom: {age: {_lt: 20}}}) {
 						Name
+						Custom
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Name": "Bob",
+							"Custom": map[string]any{
+								"age": uint64(19),
+							},
 						},
 					},
 				},
@@ -191,9 +190,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNestedEqualValue_Succeeds(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithNestedLesserValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le nested filter nested lesser value",
+		Description: "Simple query with basic filter(custom), nested lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -211,22 +210,19 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNestedLesserValue_Succeeds(t *
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": {"age": 32}
+					"Name": "Bob",
+					"Custom": {"age": 19}
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_le: 31}}}) {
+					Users(filter: {Custom: {age: {_lt: 19}}}) {
 						Name
+						Custom
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},
@@ -235,9 +231,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNestedLesserValue_Succeeds(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithNestedNullValue_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter nested null value",
+		Description: "Simple query with basic JSON lesser than filter, with nested null filter value",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -255,21 +251,17 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNestedNullValue_Succeeds(t *te
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David"
+					"Name": "Bob"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_le: null}}}) {
+					Users(filter: {Custom: {age: {_lt: null}}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "David",
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},
@@ -278,9 +270,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithNestedNullValue_Succeeds(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter bool value",
+		Description: "Simple query with basic filter(custom), lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -298,14 +290,15 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithBoolValue_ReturnsError(t *test
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": 32
+					"Name": "Bob",
+					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: true}}) {
+					Users(filter: {Custom: {_lt: false}}) {
 						Name
+						Custom
 					}
 				}`,
 				ExpectedError: `unexpected type. Property: condition, Actual: bool`,
@@ -316,9 +309,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithBoolValue_ReturnsError(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithStringValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter string value",
+		Description: "Simple query with basic filter(custom), lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -336,14 +329,15 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithStringValue_ReturnsError(t *te
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": 32
+					"Name": "Bob",
+					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: ""}}) {
+					Users(filter: {Custom: {_lt: ""}}) {
 						Name
+						Custom
 					}
 				}`,
 				ExpectedError: `unexpected type. Property: condition, Actual: string`,
@@ -354,9 +348,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithStringValue_ReturnsError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter object value",
+		Description: "Simple query with basic filter(custom), lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -374,14 +368,15 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithObjectValue_ReturnsError(t *te
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": 32
+					"Name": "Bob",
+					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: {one: 1}}}) {
+					Users(filter: {Custom: {_lt: {one: 1}}}) {
 						Name
+						Custom
 					}
 				}`,
 				ExpectedError: `unexpected type. Property: condition, Actual: map[string]interface {}`,
@@ -392,9 +387,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithObjectValue_ReturnsError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter array value",
+		Description: "Simple query with basic filter(custom), lesser than",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -412,14 +407,15 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithArrayValue_ReturnsError(t *tes
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "David",
-					"Custom": 32
+					"Name": "Bob",
+					"Custom": 19
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: [1, 2]}}) {
+					Users(filter: {Custom: {_lt: [1,2]}}) {
 						Name
+						Custom
 					}
 				}`,
 				ExpectedError: `unexpected type. Property: condition, Actual: []interface {}`,
@@ -430,9 +426,9 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithArrayValue_ReturnsError(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONLesserEqualFilterWithAllTypes_Succeeds(t *testing.T) {
+func TestQueryJSON_WithLesserThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter all types",
+		Description: "Simple query with JSON _lt filter all types",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -474,7 +470,7 @@ func TestQuerySimple_WithJSONLesserEqualFilterWithAllTypes_Succeeds(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_le: 32}}) {
+					Users(filter: {Custom: {_lt: 33}}) {
 						Name
 					}
 				}`,

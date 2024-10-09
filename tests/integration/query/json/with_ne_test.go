@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithJSONFilterNotEqualObject_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -70,7 +70,7 @@ func TestQuerySimple_WithJSONFilterNotEqualObject_ShouldFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONFilterNotEqualNestedObjects_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -123,7 +123,7 @@ func TestQuerySimple_WithJSONFilterNotEqualNestedObjects_ShouldFilter(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithJSONFilterNotEqualNullValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{

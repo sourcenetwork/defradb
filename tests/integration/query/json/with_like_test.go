@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,97 +16,57 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLikeFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						name: String
 						custom: JSON
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"name":   "John",
-					"custom": "{\"tree\": \"maple\", \"age\": 250}",
+					"custom": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "Andy"},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestQuerySimple_WithLikeOpOnJSONFieldAllTypes_ShouldFilter(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						custom: JSON
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
+					"custom": "Viserys I Targaryen, King of the Andals",
 				},
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Shahzad",
 					"custom": [1, 2]
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Fred",
 					"custom": {"one": 1}
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "John",
 					"custom": false
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Bob",
 					"custom": 32
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
-						name
+					Users(filter: {custom: {_like: "Daenerys%Name"}}) {
+						custom
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "Andy"},
+						{
+							"custom": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+						},
 					},
 				},
 			},
