@@ -233,55 +233,6 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 	}
 }
 
-func TestGeneratePredefinedFromSchema_TwoPrimaryToOneMiddle(t *testing.T) {
-	schema := `
-		type User {
-			name: String
-			device: Device 
-		}
-		type Device {
-			model: String
-			owner: User @primary
-			specs: Specs @primary
-		}
-		type Specs {
-			OS: String
-			device: Device
-		}`
-
-	docs, err := CreateFromSDL(schema, DocsList{
-		ColName: "User",
-		Docs: []map[string]any{
-			{
-				"name": "John",
-				"device": map[string]any{
-					"model": "iPhone",
-					"specs": map[string]any{
-						"OS": "iOS",
-					},
-				},
-			},
-		},
-	})
-	assert.NoError(t, err)
-
-	colDefMap, err := gen.ParseSDL(schema)
-	require.NoError(t, err)
-
-	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS"}, colDefMap["Specs"])
-	userDoc := mustAddDocIDToDoc(map[string]any{"name": "John"}, colDefMap["User"])
-	deviceDoc := mustAddDocIDToDoc(map[string]any{
-		"model":    "iPhone",
-		"specs_id": specsDoc[request.DocIDFieldName],
-		"owner_id": userDoc[request.DocIDFieldName],
-	}, colDefMap["Device"])
-
-	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
-	if errorMsg != "" {
-		t.Error(errorMsg)
-	}
-}
-
 func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 	schema := `
 		type User {

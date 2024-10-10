@@ -34,29 +34,29 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Go Guide for Rust developers"
-				}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"name": "John Grisham",
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"name": "Andrew Lone",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Go Guide for Rust developers",
+					"author_id": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.Request{
@@ -74,24 +74,24 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-fc7bf08d-9117-5acd-8b49-bc7431b1b238",
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-							"_group": []map[string]any{
-								{
-									"name": "Painted House",
-								},
-							},
-						},
-						{
-							"author_id": "bae-fcb12812-4c38-574e-bc8b-91b37ee6cd9b",
+							"author_id": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
 							"_group": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
+								},
+							},
+						},
+						{
+							"author_id": "bae-ee5973cf-73c3-558f-8aec-8b590b8e77cf",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"_group": []map[string]any{
+								{
+									"name": "Painted House",
 								},
 							},
 						},

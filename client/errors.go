@@ -34,6 +34,7 @@ const (
 	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
 	errFailedToParseKind                   string = "failed to parse kind"
+	errCannotSetRelationFromSecondarySide  string = "cannot set relation from secondary side"
 )
 
 // Errors returnable from this package.
@@ -189,4 +190,8 @@ func ReviveError(message string) error {
 	default:
 		return fmt.Errorf("%s", message)
 	}
+}
+
+func NewErrCannotSetRelationFromSecondarySide(name string) error {
+	return errors.New(errCannotSetRelationFromSecondarySide, errors.NewKV("Name", name))
 }

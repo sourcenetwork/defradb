@@ -73,23 +73,6 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "One to one create mutation, from the secondary side",
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House",
-					"author_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
-				}`,
-				ExpectedError: "document not found or not authorized to access",
-			},
-		},
-	}
-	executeTestCase(t, test)
-}
-
 func TestMutationCreateOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation",
@@ -155,9 +138,13 @@ func TestMutationCreateOneToOne(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
+func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation from secondary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionSaveMutationType,
+			testUtils.CollectionNamedMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -168,51 +155,37 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
-					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
 				},
+				ExpectedError: "cannot set relation from secondary side",
 			},
-			testUtils.Request{
-				Request: `
-					query {
-						Author {
-							name
-							published {
-								name
-							}
-						}
-					}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name": "John Grisham",
-							"published": map[string]any{
-								"name": "Painted House",
-							},
-						},
-					},
-				},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestMutationCreateOneToOneSecondarySide_GQL(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to one create mutation from secondary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `
-					query {
-						Book {
-							name
-							author {
-								name
-							}
-						}
-					}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name": "Painted House",
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-						},
-					},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
 				},
+				ExpectedError: "Argument \"input\" has invalid value",
 			},
 		},
 	}
@@ -242,37 +215,6 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 				DocMap: map[string]any{
 					"name":         "Saadi Shirazi",
 					"published_id": testUtils.NewDocIndex(0, 0),
-				},
-				ExpectedError: "target document is already linked to another document.",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondary(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "One to one create mutation, errors due to link already existing, secondary side",
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				DocMap: map[string]any{
-					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(1, 0),
-				},
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				DocMap: map[string]any{
-					"name":      "Golestan",
-					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 				ExpectedError: "target document is already linked to another document.",
 			},

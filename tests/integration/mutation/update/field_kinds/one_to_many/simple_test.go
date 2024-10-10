@@ -72,8 +72,6 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 	executeTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
 func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.T) {
 	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
@@ -106,42 +104,7 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 					}`,
 					invalidAuthorID,
 				),
-			},
-			testUtils.Request{
-				Request: `query {
- 					Author {
- 						name
- 						published {
- 							name
- 						}
- 					}
- 				}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name":      "John Grisham",
-							"published": []map[string]any{},
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-						author {
-							name
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name":   "Painted House",
-							"author": nil, // Linked to incorrect id
-						},
-					},
-				},
+				ExpectedError: "uuid: incorrect UUID length 30 in string",
 			},
 		},
 	}

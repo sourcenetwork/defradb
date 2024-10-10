@@ -566,6 +566,20 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 					continue
 				}
 
+				if field.Kind == client.FieldKind_DocID && strings.HasSuffix(field.Name, request.RelatedObjectID) {
+					objFieldName := strings.TrimSuffix(field.Name, request.RelatedObjectID)
+					ofd, exists := collection.GetFieldByName(objFieldName)
+					if exists && !ofd.IsPrimaryRelation {
+						// We do not allow the mutation of relations from the secondary side,
+						// they must not be included in the input type(s)
+						continue
+					}
+				} else if field.Kind.IsObject() && !field.IsPrimaryRelation {
+					// We do not allow the mutation of relations from the secondary side,
+					// they must not be included in the input type(s)
+					continue
+				}
+
 				var ttype gql.Type
 				if field.Kind.IsObject() {
 					if field.Kind.IsArray() {

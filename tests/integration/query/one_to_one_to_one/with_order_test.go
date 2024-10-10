@@ -40,43 +40,43 @@ func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Old Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "New Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
+				CollectionID: 2,
 				DocMap: map[string]any{
-					"name":         "Painted House",
-					"publisher_id": testUtils.NewDocIndex(0, 0),
-				},
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				DocMap: map[string]any{
-					"name":         "Theif Lord",
-					"publisher_id": testUtils.NewDocIndex(0, 1),
+					"name": "John Grisham",
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
-					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(1, 0),
+					"name": "Cornelia Funke",
 				},
 			},
 			testUtils.CreateDoc{
-				CollectionID: 2,
+				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "Cornelia Funke",
-					"published_id": testUtils.NewDocIndex(1, 1),
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"author_id": testUtils.NewDocIndex(2, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":       "Old Publisher",
+					"printed_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":       "New Publisher",
+					"printed_id": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.Request{
