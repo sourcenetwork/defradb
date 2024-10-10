@@ -1,18 +1,31 @@
-## defradb
+## defradb node identity
 
-DefraDB Edge Database
+Get information about the node's identity
 
 ### Synopsis
 
-DefraDB is the edge database to power the user-centric future.
+Get information about the node's identity
 
-Start a DefraDB node, interact with a local or remote node, and much more.
+The identity contains:
+- A secp256k1 private key that is a 256-bit big-endian binary-encoded number,
+padded to a length of 32 bytes in HEX format.
+- A compressed 33-byte secp256k1 public key in HEX format.
+- A "did:key" generated from the public key.
 
+
+```
+defradb node identity [flags]
+```
 
 ### Options
 
 ```
-  -h, --help                        help for defradb
+  -h, --help   help for identity
+```
+
+### Options inherited from parent commands
+
+```
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
@@ -32,11 +45,5 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb identity](defradb_identity.md)	 - Interact with identity features of DefraDB instance
-* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
 * [defradb node](defradb_node.md)	 - Interact with DefraDB node
-* [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
-* [defradb start](defradb_start.md)	 - Start a DefraDB node
-* [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components
 
