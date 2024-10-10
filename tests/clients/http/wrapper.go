@@ -283,6 +283,6 @@ func (w *Wrapper) Host() string {
 	return w.httpServer.URL
 }
 
-func (w *Wrapper) GetNodeIdentity() immutable.Option[identity.Identity] {
-	return w.node.DB.GetNodeIdentity()
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.RawIdentity], error) {
+	return w.node.DB.GetNodeIdentity(ctx)
 }

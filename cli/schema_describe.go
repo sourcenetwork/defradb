@@ -53,8 +53,6 @@ Example: view a single schema by version id
 				options.Name = immutable.Some(name)
 			}
 
-			return nil
-
 			schemas, err := store.GetSchemas(cmd.Context(), options)
 			if err != nil {
 				return err

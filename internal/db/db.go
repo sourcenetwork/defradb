@@ -308,8 +308,11 @@ func (db *db) DeleteDocActorRelationship(
 	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
-func (db *db) GetNodeIdentity() immutable.Option[identity.Identity] {
-	return db.nodeIdentity
+func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.RawIdentity], error) {
+	if db.nodeIdentity.HasValue() {
+		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity()), nil
+	}
+	return immutable.None[identity.RawIdentity](), nil
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data

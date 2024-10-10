@@ -551,7 +551,10 @@ func (w *Wrapper) MaxTxnRetries() int {
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return w.node.DB.PrintDump(ctx)
+	args := []string{"dump"}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
@@ -562,6 +565,16 @@ func (w *Wrapper) Host() string {
 	return w.httpServer.URL
 }
 
-func (w *Wrapper) GetNodeIdentity() immutable.Option[identity.Identity] {
-	return w.node.DB.GetNodeIdentity()
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.RawIdentity], error) {
+	args := []string{"node", "identity"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return immutable.None[identity.RawIdentity](), err
+	}
+	var res identity.RawIdentity
+	if err := json.Unmarshal(data, &res); err != nil {
+		return immutable.None[identity.RawIdentity](), err
+	}
+	return immutable.Some(res), nil
 }

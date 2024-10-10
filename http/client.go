@@ -510,6 +510,16 @@ func (c *Client) MaxTxnRetries() int {
 	panic("client side database")
 }
 
-func (c *Client) GetNodeIdentity() immutable.Option[identity.Identity] {
-	panic("client side database")
+func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.RawIdentity], error) {
+	methodURL := c.http.baseURL.JoinPath("node", "identity")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return immutable.None[identity.RawIdentity](), err
+	}
+	var ident immutable.Option[identity.RawIdentity]
+	if err := c.http.requestJson(req, &ident); err != nil {
+		return immutable.None[identity.RawIdentity](), err
+	}
+	return ident, err
 }

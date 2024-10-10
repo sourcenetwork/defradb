@@ -27,18 +27,18 @@ padded to a length of 32 bytes in HEX format.
 - A "did:key" generated from the public key.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			out2 := cmd.OutOrStdout()
-			out2.Write([]byte("BLAH BLAH BLAH"))
-
 			db := mustGetContextDB(cmd)
-			identity := db.GetNodeIdentity()
+			identity, err := db.GetNodeIdentity(cmd.Context())
+			if err != nil {
+				return err
+			}
 
 			if identity.HasValue() {
 				return writeJSON(cmd, identity.Value())
 			}
 
 			out := cmd.OutOrStdout()
-			_, err := out.Write([]byte("Node has no identity assigned to it\n"))
+			_, err = out.Write([]byte("Node has no identity assigned to it\n"))
 			return err
 		},
 	}
