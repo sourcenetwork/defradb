@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -409,6 +410,9 @@ func performAction(
 
 	case CreatePredefinedDocs:
 		generatePredefinedDocs(s, action)
+
+	case CheckNodesIdentities:
+		checkNodesIdentities(s)
 
 	case SetupComplete:
 		// no-op, just continue.
@@ -2565,5 +2569,28 @@ func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.
 			return nil, err
 		}
 		return []*client.Document{val}, nil
+	}
+}
+
+func checkNodesIdentities(s *state) {
+	for i, node := range s.nodes {
+		var actualIdent immutable.Option[identity.RawIdentity]
+		err := withRetryOnNode(
+			node,
+			func() error {
+				var err error
+				actualIdent, err = node.GetNodeIdentity(s.ctx)
+				return err
+			},
+		)
+		require.NoError(s.t, err, s.testCase.Description)
+
+		expectedIdent := getIdentity(s, i, immutable.Some(0))
+		expectedRawIdent := immutable.None[identity.RawIdentity]()
+		if expectedIdent.HasValue() {
+			expectedRawIdent = immutable.Some(expectedIdent.Value().IntoRawIdentity())
+		}
+
+		require.Equal(s.t, expectedRawIdent, actualIdent, "identities mismatch")
 	}
 }

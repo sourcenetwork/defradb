@@ -15,8 +15,6 @@ import (
 )
 
 func MakeNodeCommand() *cobra.Command {
-	var txID uint64
-	var identity string
 	var cmd = &cobra.Command{
 		Use:   "node",
 		Short: "Interact with DefraDB node",
@@ -28,19 +26,9 @@ func MakeNodeCommand() *cobra.Command {
 			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
-			if err := setContextIdentity(cmd, identity); err != nil {
-				return err
-			}
-			if err := setContextTransaction(cmd, txID); err != nil {
-				return err
-			}
 			return setContextDB(cmd)
 		},
 	}
-
-	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
-		"Hex formatted private key used to authenticate with ACP")
-	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 
 	return cmd
 }
