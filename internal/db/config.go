@@ -13,8 +13,9 @@ package db
 import (
 	"time"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
 const (
