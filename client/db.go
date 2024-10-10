@@ -138,7 +138,7 @@ type DB interface {
 	) (DeleteDocActorRelationshipResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
-	GetNodeIdentity() immutable.Option[identity.Identity]
+	GetNodeIdentity(context.Context) (immutable.Option[identity.RawIdentity], error)
 }
 
 // Store contains the core DefraDB read-write operations.
