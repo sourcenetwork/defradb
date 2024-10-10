@@ -778,3 +778,8 @@ type BackupImport struct {
 	// contains this string.
 	ExpectedError string
 }
+
+// CheckNodesIdentities is an action that will check the identities of the nodes.
+// It asserts that the `GetNodeIdentity` method returns an identity of the node that matches
+// the first generated identity (with index 0 in the nodes array of identities) for the node.
+type CheckNodesIdentities struct{}
