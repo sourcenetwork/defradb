@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
@@ -73,6 +74,9 @@ type db struct {
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
+
+	// The identity of the current node
+	nodeIdentity immutable.Option[identity.Identity]
 
 	// Contains ACP if it exists
 	acp immutable.Option[acp.ACP]
@@ -126,6 +130,8 @@ func newDB(
 	if opts.maxTxnRetries.HasValue() {
 		db.maxTxnRetries = opts.maxTxnRetries
 	}
+
+	db.nodeIdentity = opts.identity
 
 	if lens != nil {
 		lens.Init(db)
@@ -286,6 +292,13 @@ func (db *db) DeleteDocActorRelationship(
 	}
 
 	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
+}
+
+func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.RawIdentity], error) {
+	if db.nodeIdentity.HasValue() {
+		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity()), nil
+	}
+	return immutable.None[identity.RawIdentity](), nil
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data

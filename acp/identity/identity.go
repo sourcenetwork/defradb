@@ -158,3 +158,8 @@ func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (str
 	}
 	return did.String(), nil
 }
+
+// IntoRawIdentity converts an `Identity` into a `RawIdentity`.
+func (identity Identity) IntoRawIdentity() RawIdentity {
+	return newRawIdentity(identity.PrivateKey, identity.PublicKey, identity.DID)
+}
