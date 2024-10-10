@@ -241,11 +241,32 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Validate that the given value is a valid docID
+		_, err = NewDocIDFromString(v)
+		if err != nil {
+			return nil, err
+		}
+
 		return NewNormalString(v), nil
 	}
 
 	switch field.Kind {
-	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
+	case FieldKind_DocID:
+		v, err := getString(val)
+		if err != nil {
+			return nil, err
+		}
+
+		// Validate that the given value is a valid docID
+		_, err = NewDocIDFromString(v)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewNormalString(v), nil
+
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
 		v, err := getString(val)
 		if err != nil {
 			return nil, err
@@ -692,6 +713,17 @@ func (doc *Document) Set(field string, value any) error {
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
+
+	if fd.Kind == FieldKind_DocID && strings.HasSuffix(field, request.RelatedObjectID) {
+		objFieldName := strings.TrimSuffix(field, request.RelatedObjectID)
+		ofd, exists := doc.collectionDefinition.GetFieldByName(objFieldName)
+		if exists && !ofd.IsPrimaryRelation {
+			return NewErrCannotSetRelationFromSecondarySide(field)
+		}
+	} else if fd.Kind.IsObject() && !fd.IsPrimaryRelation {
+		return NewErrCannotSetRelationFromSecondarySide(field)
+	}
+
 	if fd.Kind.IsObject() && !fd.Kind.IsArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
