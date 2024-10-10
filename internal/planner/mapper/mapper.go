@@ -1308,39 +1308,39 @@ func toFilterKeyValue(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
-	var key connor.FilterKey
+	var returnKey connor.FilterKey
 	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
-		key = &Operator{
+		returnKey = &Operator{
 			Operation: sourceKey,
 		}
 		// if the operator is simple (not compound) then
 		// it does not require further expansion
 		if connor.IsOpSimple(sourceKey) {
-			return key, sourceClause
+			return returnKey, sourceClause
 		}
-	} else if indexes, ok := mapping.IndexesByName[sourceKey]; ok {
+	} else if mapping != nil && len(mapping.IndexesByName[sourceKey]) > 0 {
 		// If there are multiple properties of the same name we can just take the first as
 		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
 		// impact this as they are added after selects.
-		key = &PropertyIndex{
-			Index: indexes[0],
+		returnKey = &PropertyIndex{
+			Index: mapping.FirstIndexOfName(sourceKey),
 		}
 	} else {
-		key = &ObjectProperty{
+		returnKey = &ObjectProperty{
 			Name: sourceKey,
 		}
 	}
 
 	switch typedClause := sourceClause.(type) {
 	case []any:
-		return key, toFilterList(typedClause, mapping)
+		return returnKey, toFilterList(typedClause, mapping)
 
 	case map[string]any:
-		return key, toFilterMap(key, typedClause, mapping)
+		return returnKey, toFilterMap(returnKey, typedClause, mapping)
 
 	default:
-		return key, typedClause
+		return returnKey, typedClause
 	}
 }
 
@@ -1349,19 +1349,26 @@ func toFilterMap(
 	sourceClause map[string]any,
 	mapping *core.DocumentMapping,
 ) map[connor.FilterKey]any {
-	prop, isProp := sourceKey.(*PropertyIndex)
 	innerMapClause := make(map[connor.FilterKey]any)
 	for innerSourceKey, innerSourceValue := range sourceClause {
 		var innerMapping *core.DocumentMapping
-		// innerSourceValue may refer to a child mapping or
-		// an inline array if we don't have a child mapping
-		_, ok := innerSourceValue.(map[string]any)
-		if ok && isProp && prop.Index < len(mapping.ChildMappings) {
-			// If the innerSourceValue is also a map, then we should parse the nested clause
-			// using the child mapping, as this key must refer to a host property in a join
-			// and deeper keys must refer to properties on the child items.
-			innerMapping = mapping.ChildMappings[prop.Index]
-		} else {
+		switch t := sourceKey.(type) {
+		case *PropertyIndex:
+			_, ok := innerSourceValue.(map[string]any)
+			if ok && mapping != nil && t.Index < len(mapping.ChildMappings) {
+				// If the innerSourceValue is also a map, then we should parse the nested clause
+				// using the child mapping, as this key must refer to a host property in a join
+				// and deeper keys must refer to properties on the child items.
+				innerMapping = mapping.ChildMappings[t.Index]
+			} else {
+				innerMapping = mapping
+			}
+		case *ObjectProperty:
+			// Object properties can never refer to mapped document fields.
+			// Set the mapping to null for any nested filter values so
+			// that we don't filter any fields outside of this object.
+			innerMapping = nil
+		case *Operator:
 			innerMapping = mapping
 		}
 		rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, innerMapping)
