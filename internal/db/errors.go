@@ -149,6 +149,7 @@ var (
 	ErrColNotMaterialized                       = errors.New(errColNotMaterialized)
 	ErrMaterializedViewAndACPNotSupported       = errors.New(errMaterializedViewAndACPNotSupported)
 	ErrContextDone                              = errors.New("context done")
+	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
 	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
 )
 

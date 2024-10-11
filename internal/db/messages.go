@@ -80,7 +80,10 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 				})
 			case event.ReplicatorFailure:
 				// ReplicatorFailure is a notification that a replicator has failed to replicate a document.
-				db.retryChan <- evt
+				err := db.handleReplicatorFailure(ctx, evt.PeerID.String(), evt.DocID)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to handle replicator failure", err)
+				}
 			}
 		}
 	}

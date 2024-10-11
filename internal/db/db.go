@@ -87,9 +87,9 @@ type db struct {
 	// some goroutines might leak.
 	ctxCancel context.CancelFunc
 
+	// The intervals at which to retry replicator failures.
+	// For example, this can define an exponential backoff strategy.
 	retryIntervals []time.Duration
-	retryChan      chan event.ReplicatorFailure
-	retryDone      chan retryStatus
 }
 
 // NewDB creates a new instance of the DB using the given options.
@@ -132,10 +132,8 @@ func newDB(
 		parser:         parser,
 		options:        options,
 		events:         event.NewBus(commandBufferSize, eventBufferSize),
-		retryChan:      make(chan event.ReplicatorFailure, 100),
-		retryDone:      make(chan retryStatus),
-		retryIntervals: opts.RetryIntervals,
 		ctxCancel:      cancel,
+		retryIntervals: opts.RetryIntervals,
 	}
 
 	if opts.maxTxnRetries.HasValue() {

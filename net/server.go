@@ -143,7 +143,7 @@ func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogRepl
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// subscribed to the collection.
-	if !s.hasPubSubTopic(req.SchemaRoot) {
+	if !s.hasPubSubTopicAndSubscribed(req.SchemaRoot) {
 		err = s.addPubSubTopic(docID.String(), true, nil)
 		if err != nil {
 			return nil, err
@@ -217,12 +217,12 @@ func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) er
 	return s.addPubSubTopic(topicName, true, handler)
 }
 
-// hasPubSubTopic checks if we are subscribed to a topic.
-func (s *server) hasPubSubTopic(topic string) bool {
+// hasPubSubTopicAndSubscribed checks if we are subscribed to a topic.
+func (s *server) hasPubSubTopicAndSubscribed(topic string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, ok := s.topics[topic]
-	return ok
+	t, ok := s.topics[topic]
+	return ok && t.subscribed
 }
 
 // removePubSubTopic unsubscribes to a topic
@@ -273,10 +273,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	t, ok := s.topics[topic]
 	s.mu.Unlock()
 	if !ok {
-		subscribe := false
-		if topic != req.SchemaRoot && !s.hasPubSubTopic(req.SchemaRoot) {
-			subscribe = true
-		}
+		subscribe := topic != req.SchemaRoot && !s.hasPubSubTopicAndSubscribed(req.SchemaRoot)
 		err := s.addPubSubTopic(topic, subscribe, nil)
 		if err != nil {
 			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)

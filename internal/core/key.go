@@ -961,12 +961,15 @@ func NewReplicatorRetryIDKey(peerID string) ReplicatorRetryIDKey {
 	}
 }
 
+// NewReplicatorRetryIDKeyFromString creates a new [ReplicatorRetryIDKey] from a string.
+//
+// It expects the input string to be in the format `/rep/retry/id/[PeerID]`.
 func NewReplicatorRetryIDKeyFromString(key string) (ReplicatorRetryIDKey, error) {
-	keyArr := strings.Split(key, "/")
-	if len(keyArr) != 5 {
+	peerID := strings.TrimPrefix(key, REPLICATOR_RETRY_ID+"/")
+	if peerID == "" {
 		return ReplicatorRetryIDKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
 	}
-	return NewReplicatorRetryIDKey(keyArr[4]), nil
+	return NewReplicatorRetryIDKey(peerID), nil
 }
 
 func (k ReplicatorRetryIDKey) ToString() string {
@@ -995,12 +998,16 @@ func NewReplicatorRetryDocIDKey(peerID, docID string) ReplicatorRetryDocIDKey {
 	}
 }
 
+// NewReplicatorRetryDocIDKeyFromString creates a new [ReplicatorRetryDocIDKey] from a string.
+//
+// It expects the input string to be in the format `/rep/retry/doc/[PeerID]/[DocID]`.
 func NewReplicatorRetryDocIDKeyFromString(key string) (ReplicatorRetryDocIDKey, error) {
-	keyArr := strings.Split(key, "/")
-	if len(keyArr) != 6 {
+	trimmedKey := strings.TrimPrefix(key, REPLICATOR_RETRY_DOC+"/")
+	keyArr := strings.Split(trimmedKey, "/")
+	if len(keyArr) != 2 {
 		return ReplicatorRetryDocIDKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
 	}
-	return NewReplicatorRetryDocIDKey(keyArr[4], keyArr[5]), nil
+	return NewReplicatorRetryDocIDKey(keyArr[0], keyArr[1]), nil
 }
 
 func (k ReplicatorRetryDocIDKey) ToString() string {
