@@ -32,6 +32,8 @@ var (
 // over libp2p grpc connection
 func (s *server) pushLog(evt event.Update, pid peer.ID) (err error) {
 	defer func() {
+		// When the event is a retry, we don't need to republish the failure as
+		// it is already being handled by the retry mechanism through the success channel.
 		if err != nil && !evt.IsRetry {
 			s.peer.bus.Publish(event.NewMessage(event.ReplicatorFailureName, event.ReplicatorFailure{
 				DocID:  evt.DocID,
