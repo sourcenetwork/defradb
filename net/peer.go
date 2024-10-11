@@ -263,6 +263,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(evt)
 
+	// Retries are for replicators only and should not polluting the pubsub network.
 	if !evt.IsRetry {
 		req := &pushLogRequest{
 			DocID:      evt.DocID,
