@@ -275,47 +275,20 @@ func updateNetworkState(s *state, nodeID int, evt event.Update) {
 
 // getEventsForUpdateDoc returns a map of docIDs that should be
 // published to the local event bus after an UpdateDoc action.
-//
-// This will take into account any primary documents that are patched as a result
-// of the create or update.
 func getEventsForUpdateDoc(s *state, action UpdateDoc) map[string]struct{} {
-	var collection client.Collection
-	if action.NodeID.HasValue() {
-		collection = s.collections[action.NodeID.Value()][action.CollectionID]
-	} else {
-		collection = s.collections[0][action.CollectionID]
-	}
-
 	docID := s.docIDs[action.CollectionID][action.DocID]
-	def := collection.Definition()
 
 	docMap := make(map[string]any)
 	err := json.Unmarshal([]byte(action.Doc), &docMap)
 	require.NoError(s.t, err)
 
-	expect := make(map[string]struct{})
-	expect[docID.String()] = struct{}{}
-
-	// check for any secondary relation fields that could publish an event
-	for name, value := range docMap {
-		field, ok := def.GetFieldByName(name)
-		if !ok {
-			continue // ignore unknown field
-		}
-		_, ok = field.GetSecondaryRelationField(def)
-		if ok {
-			expect[value.(string)] = struct{}{}
-		}
+	return map[string]struct{}{
+		docID.String(): {},
 	}
-
-	return expect
 }
 
 // getEventsForCreateDoc returns a map of docIDs that should be
 // published to the local event bus after a CreateDoc action.
-//
-// This will take into account any primary documents that are patched as a result
-// of the create or update.
 func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	var collection client.Collection
 	if action.NodeID.HasValue() {
@@ -327,29 +300,10 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	docs, err := parseCreateDocs(action, collection)
 	require.NoError(s.t, err)
 
-	def := collection.Definition()
 	expect := make(map[string]struct{})
 
 	for _, doc := range docs {
 		expect[doc.ID().String()] = struct{}{}
-
-		// check for any secondary relation fields that could publish an event
-		for f, v := range doc.Values() {
-			if v.Value() == nil {
-				// If the new relation value is nil there will be no related document
-				// to get an event for
-				continue
-			}
-
-			field, ok := def.GetFieldByName(f.Name())
-			if !ok {
-				continue // ignore unknown field
-			}
-			_, ok = field.GetSecondaryRelationField(def)
-			if ok {
-				expect[v.Value().(string)] = struct{}{}
-			}
-		}
 	}
 
 	return expect
@@ -361,42 +315,19 @@ func waitForSync(s *state) {
 
 // getEventsForUpdateWithFilter returns a map of docIDs that should be
 // published to the local event bus after a UpdateWithFilter action.
-//
-// This will take into account any primary documents that are patched as a result
-// of the create or update.
 func getEventsForUpdateWithFilter(
 	s *state,
 	action UpdateWithFilter,
 	result *client.UpdateResult,
 ) map[string]struct{} {
-	var collection client.Collection
-	if action.NodeID.HasValue() {
-		collection = s.collections[action.NodeID.Value()][action.CollectionID]
-	} else {
-		collection = s.collections[0][action.CollectionID]
-	}
-
 	var docPatch map[string]any
 	err := json.Unmarshal([]byte(action.Updater), &docPatch)
 	require.NoError(s.t, err)
 
-	def := collection.Definition()
 	expect := make(map[string]struct{})
 
 	for _, docID := range result.DocIDs {
 		expect[docID] = struct{}{}
-
-		// check for any secondary relation fields that could publish an event
-		for name, value := range docPatch {
-			field, ok := def.GetFieldByName(name)
-			if !ok {
-				continue // ignore unknown field
-			}
-			_, ok = field.GetSecondaryRelationField(def)
-			if ok {
-				expect[value.(string)] = struct{}{}
-			}
-		}
 	}
 
 	return expect

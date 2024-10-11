@@ -33,89 +33,22 @@ func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				Doc: `{
-					"name": "How to Be a Canadian",
-					"author": null
-				}`,
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Will Ferguson",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "How to Be a Canadian",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "Secrets at Maple Syrup Farm",
 					"author": null
 				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				DocMap: map[string]any{
-					"name":      "Will Ferguson",
-					"published": testUtils.NewDocIndex(0, 0),
-				},
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						Book {
-							name
-							author {
-								name
-							}
-						}
-					}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name":   "Secrets at Maple Syrup Farm",
-							"author": nil,
-						},
-						{
-							"name": "How to Be a Canadian",
-							"author": map[string]any{
-								"name": "Will Ferguson",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestMutationCreateOneToOne_WithExplicitNullOnSecondarySide(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Book {
-						name: String
-						author: Author
-					}
-
-					type Author {
-						name: String
-						published: Book @primary
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "How to Be a Canadian",
-					"author": null
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Secrets at Maple Syrup Farm",
-					"author": null
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				DocMap: map[string]any{
-					"name":      "Will Ferguson",
-					"published": testUtils.NewDocIndex(0, 0),
-				},
 			},
 			testUtils.Request{
 				Request: `
