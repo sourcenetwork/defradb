@@ -30,7 +30,22 @@ var (
 
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
-func (s *server) pushLog(evt event.Update, pid peer.ID) error {
+func (s *server) pushLog(evt event.Update, pid peer.ID) (err error) {
+	defer func() {
+		// When the event is a retry, we don't need to republish the failure as
+		// it is already being handled by the retry mechanism through the success channel.
+		if err != nil && !evt.IsRetry {
+			s.peer.bus.Publish(event.NewMessage(event.ReplicatorFailureName, event.ReplicatorFailure{
+				DocID:  evt.DocID,
+				PeerID: pid,
+			}))
+		}
+		// Success is not nil when the pushLog is called from a retry
+		if evt.Success != nil {
+			evt.Success <- err == nil
+		}
+	}()
+
 	client, err := s.dial(pid) // grpc dial over P2P stream
 	if err != nil {
 		return NewErrPushLog(err)

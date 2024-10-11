@@ -83,7 +83,7 @@ func (w *Transaction) Headstore() datastore.DSReaderWriter {
 	return w.tx.Headstore()
 }
 
-func (w *Transaction) Peerstore() datastore.DSBatching {
+func (w *Transaction) Peerstore() datastore.DSReaderWriter {
 	return w.tx.Peerstore()
 }
 
