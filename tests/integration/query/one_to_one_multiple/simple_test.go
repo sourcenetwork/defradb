@@ -144,18 +144,6 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Old Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "New Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
@@ -170,17 +158,29 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
-					"name":         "Painted House",
-					"publisher_id": testUtils.NewDocIndex(0, 0),
-					"author_id":    testUtils.NewDocIndex(1, 0),
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
-					"name":         "Theif Lord",
-					"publisher_id": testUtils.NewDocIndex(0, 1),
-					"author_id":    testUtils.NewDocIndex(1, 1),
+					"name":      "Theif Lord",
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":       "Old Publisher",
+					"printed_id": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":       "New Publisher",
+					"printed_id": testUtils.NewDocIndex(2, 1),
 				},
 			},
 			testUtils.Request{
@@ -248,43 +248,43 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Old Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "New Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "Cornelia Funke"
-				}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
-					"name":         "Painted House",
-					"publisher_id": testUtils.NewDocIndex(0, 0),
-					"author_id":    testUtils.NewDocIndex(1, 0),
+					"name": "Painted House",
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
-					"name":         "Theif Lord",
-					"publisher_id": testUtils.NewDocIndex(0, 1),
-					"author_id":    testUtils.NewDocIndex(1, 1),
+					"name": "Theif Lord",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":       "Old Publisher",
+					"printed_id": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":       "New Publisher",
+					"printed_id": testUtils.NewDocIndex(2, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Cornelia Funke",
+					"published_id": testUtils.NewDocIndex(2, 1),
 				},
 			},
 			testUtils.Request{
@@ -302,21 +302,21 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name": "Theif Lord",
-							"publisher": map[string]any{
-								"name": "New Publisher",
-							},
-							"author": map[string]any{
-								"name": "Cornelia Funke",
-							},
-						},
-						{
 							"name": "Painted House",
 							"publisher": map[string]any{
 								"name": "Old Publisher",
 							},
 							"author": map[string]any{
 								"name": "John Grisham",
+							},
+						},
+						{
+							"name": "Theif Lord",
+							"publisher": map[string]any{
+								"name": "New Publisher",
+							},
+							"author": map[string]any{
+								"name": "Cornelia Funke",
 							},
 						},
 					},

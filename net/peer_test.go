@@ -13,6 +13,7 @@ package net
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
@@ -67,7 +68,13 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 	store := memory.NewDatastore(ctx)
 	acpLocal := acp.NewLocalACP()
 	acpLocal.Init(context.Background(), "")
-	db, err := db.NewDB(ctx, store, immutable.Some[acp.ACP](acpLocal), nil)
+	db, err := db.NewDB(
+		ctx,
+		store,
+		immutable.Some[acp.ACP](acpLocal),
+		nil,
+		db.WithRetryInterval([]time.Duration{time.Second}),
+	)
 	require.NoError(t, err)
 
 	n, err := NewPeer(
@@ -134,60 +141,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestRegisterNewDocument_NoError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	cid, err := createCID(doc)
-	require.NoError(t, err)
-
-	err = p.RegisterNewDocument(ctx, doc.ID(), cid, emptyBlock(), col.SchemaRoot())
-	require.NoError(t, err)
-}
-
-func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), doc.ID().String(), true)
-	require.NoError(t, err)
-
-	cid, err := createCID(doc)
-	require.NoError(t, err)
-
-	err = p.RegisterNewDocument(ctx, doc.ID(), cid, emptyBlock(), col.SchemaRoot())
-	require.Equal(t, err.Error(), "creating topic: joining topic: topic already exists")
-}
-
-func TestHandleDocCreateLog_NoError(t *testing.T) {
+func TestHandleLog_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
@@ -214,7 +168,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	err = p.handleDocCreateLog(event.Update{
+	err = p.handleLog(event.Update{
 		DocID:      doc.ID().String(),
 		Cid:        headCID,
 		SchemaRoot: col.SchemaRoot(),
@@ -223,19 +177,19 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestHandleDocCreateLog_WithInvalidDocID_NoError(t *testing.T) {
+func TestHandleLog_WithInvalidDocID_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
 
-	err := p.handleDocCreateLog(event.Update{
+	err := p.handleLog(event.Update{
 		DocID: "some-invalid-key",
 	})
 	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
 }
 
-func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
+func TestHandleLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
@@ -256,87 +210,14 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-7fca96a2-5f01-5558-a81f-09b47587f26d", true)
 	require.NoError(t, err)
 
-	err = p.handleDocCreateLog(event.Update{
+	err = p.handleLog(event.Update{
 		DocID:      doc.ID().String(),
 		SchemaRoot: col.SchemaRoot(),
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func TestHandleDocUpdateLog_NoError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	cid, err := createCID(doc)
-	require.NoError(t, err)
-
-	err = p.handleDocUpdateLog(event.Update{
-		DocID:      doc.ID().String(),
-		Cid:        cid,
-		SchemaRoot: col.SchemaRoot(),
-	})
-	require.NoError(t, err)
-}
-
-func TestHandleDoUpdateLog_WithInvalidDocID_NoError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	err := p.handleDocUpdateLog(event.Update{
-		DocID: "some-invalid-key",
-	})
-	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
-}
-
-func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	cid, err := createCID(doc)
-	require.NoError(t, err)
-
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-7fca96a2-5f01-5558-a81f-09b47587f26d", true)
-	require.NoError(t, err)
-
-	err = p.handleDocUpdateLog(event.Update{
-		DocID:      doc.ID().String(),
-		Cid:        cid,
-		SchemaRoot: col.SchemaRoot(),
-	})
-	require.ErrorContains(t, err, "topic already exists")
-}
-
-func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
+func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
@@ -360,7 +241,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bafkreia7ljiy5oief4dp5xsk7t7zlgfjzqh3537hw7rtttjzchybfxtn4u", true)
 	require.NoError(t, err)
 
-	err = p.handleDocUpdateLog(event.Update{
+	err = p.handleLog(event.Update{
 		DocID:      doc.ID().String(),
 		Cid:        cid,
 		SchemaRoot: col.SchemaRoot(),

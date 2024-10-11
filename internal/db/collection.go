@@ -655,31 +655,6 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
-			relationFieldDescription, isSecondaryRelationID := fieldDescription.GetSecondaryRelationField(c.Definition())
-			if isSecondaryRelationID {
-				if val.Value() == nil {
-					// If the value (relation) is nil, we don't need to check for any documents already linked to it
-					continue
-				}
-
-				primaryId := val.Value().(string)
-
-				err = c.patchPrimaryDoc(
-					ctx,
-					c.Name().Value(),
-					relationFieldDescription,
-					primaryKey.DocID,
-					primaryId,
-				)
-				if err != nil {
-					return cid.Undef, err
-				}
-
-				// If this field was a secondary relation ID the related document will have been
-				// updated instead and we should discard this value
-				continue
-			}
-
 			err = c.validateOneToOneLinkDoesntAlreadyExist(
 				ctx,
 				doc.ID().String(),
@@ -727,7 +702,6 @@ func (c *collection) save(
 		Cid:        link.Cid,
 		SchemaRoot: c.Schema().Root,
 		Block:      headNode,
-		IsCreate:   isCreate,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))

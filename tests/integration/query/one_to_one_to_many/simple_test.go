@@ -115,16 +115,16 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"name":	"Indicator1"
-					}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "Observable1",
-					"indicator_id": testUtils.NewDocIndex(0, 0),
+					"name": "Observable1",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Indicator1",
+					"observable_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -192,16 +192,16 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"name":	"Indicator1"
-					}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "Observable1",
-					"indicator_id": testUtils.NewDocIndex(0, 0),
+					"name": "Observable1",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":          "Indicator1",
+					"observable_id": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{

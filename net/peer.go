@@ -22,7 +22,6 @@ import (
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/bootstrap"
 	blocks "github.com/ipfs/go-block-format"
-	"github.com/ipfs/go-cid"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -237,13 +236,7 @@ func (p *Peer) handleMessageLoop() {
 
 		switch evt := msg.Data.(type) {
 		case event.Update:
-			var err error
-			if evt.IsCreate {
-				err = p.handleDocCreateLog(evt)
-			} else {
-				err = p.handleDocUpdateLog(evt)
-			}
-
+			err := p.handleLog(evt)
 			if err != nil {
 				log.ErrorE("Error while handling broadcast log", err)
 			}
@@ -253,6 +246,7 @@ func (p *Peer) handleMessageLoop() {
 
 		case event.Replicator:
 			p.server.updateReplicators(evt)
+
 		default:
 			// ignore other events
 			continue
@@ -260,77 +254,32 @@ func (p *Peer) handleMessageLoop() {
 	}
 }
 
-// RegisterNewDocument registers a new document with the peer node.
-func (p *Peer) RegisterNewDocument(
-	ctx context.Context,
-	docID client.DocID,
-	c cid.Cid,
-	rawBlock []byte,
-	schemaRoot string,
-) error {
-	// register topic
-	err := p.server.addPubSubTopic(docID.String(), !p.server.hasPubSubTopic(schemaRoot), nil)
-	if err != nil {
-		log.ErrorE(
-			"Failed to create new pubsub topic",
-			err,
-			corelog.String("DocID", docID.String()),
-		)
-		return err
-	}
-
-	req := &pushLogRequest{
-		DocID:      docID.String(),
-		CID:        c.Bytes(),
-		SchemaRoot: schemaRoot,
-		Creator:    p.host.ID().String(),
-		Block:      rawBlock,
-	}
-
-	return p.server.publishLog(ctx, schemaRoot, req)
-}
-
-func (p *Peer) handleDocCreateLog(evt event.Update) error {
-	docID, err := client.NewDocIDFromString(evt.DocID)
-	if err != nil {
-		return NewErrFailedToGetDocID(err)
-	}
-
-	// We need to register the document before pushing to the replicators if we want to
-	// ensure that we have subscribed to the topic.
-	err = p.RegisterNewDocument(p.ctx, docID, evt.Cid, evt.Block, evt.SchemaRoot)
-	if err != nil {
-		return err
-	}
-	// push to each peer (replicator)
-	p.pushLogToReplicators(evt)
-
-	return nil
-}
-
-func (p *Peer) handleDocUpdateLog(evt event.Update) error {
-	// push to each peer (replicator)
-	p.pushLogToReplicators(evt)
-
+func (p *Peer) handleLog(evt event.Update) error {
 	_, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDocID(err)
 	}
 
-	req := &pushLogRequest{
-		DocID:      evt.DocID,
-		CID:        evt.Cid.Bytes(),
-		SchemaRoot: evt.SchemaRoot,
-		Creator:    p.host.ID().String(),
-		Block:      evt.Block,
-	}
+	// push to each peer (replicator)
+	p.pushLogToReplicators(evt)
 
-	if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
-		return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
-	}
+	// Retries are for replicators only and should not polluting the pubsub network.
+	if !evt.IsRetry {
+		req := &pushLogRequest{
+			DocID:      evt.DocID,
+			CID:        evt.Cid.Bytes(),
+			SchemaRoot: evt.SchemaRoot,
+			Creator:    p.host.ID().String(),
+			Block:      evt.Block,
+		}
 
-	if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
-		return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
+		if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
+			return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+		}
+
+		if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
+			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
+		}
 	}
 
 	return nil
@@ -344,26 +293,12 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 		log.ErrorE("Failed to notify new blocks", err)
 	}
 
-	// push to each peer (replicator)
-	peers := make(map[string]struct{})
-	for _, peer := range p.ps.ListPeers(lg.DocID) {
-		peers[peer.String()] = struct{}{}
-	}
-	for _, peer := range p.ps.ListPeers(lg.SchemaRoot) {
-		peers[peer.String()] = struct{}{}
-	}
-
 	p.server.mu.Lock()
 	reps, exists := p.server.replicators[lg.SchemaRoot]
 	p.server.mu.Unlock()
 
 	if exists {
 		for pid := range reps {
-			// Don't push if pid is in the list of peers for the topic.
-			// It will be handled by the pubsub system.
-			if _, ok := peers[pid.String()]; ok {
-				continue
-			}
 			go func(peerID peer.ID) {
 				if err := p.server.pushLog(lg, peerID); err != nil {
 					log.ErrorE(

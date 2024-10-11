@@ -34,29 +34,29 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Go Guide for Rust developers"
-				}`,
-			},
-			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"name": "John Grisham",
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"name": "Andrew Lone",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Go Guide for Rust developers",
+					"author_id": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.Request{
@@ -71,18 +71,18 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-fc7bf08d-9117-5acd-8b49-bc7431b1b238",
+							"author_id": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
 							"_group": []map[string]any{
 								{
-									"name": "Painted House",
+									"name": "Go Guide for Rust developers",
 								},
 							},
 						},
 						{
-							"author_id": "bae-f2dcf043-d24d-5885-9a0a-60196094c782",
+							"author_id": "bae-ee5973cf-73c3-558f-8aec-8b590b8e77cf",
 							"_group": []map[string]any{
 								{
-									"name": "Go Guide for Rust developers",
+									"name": "Painted House",
 								},
 							},
 						},

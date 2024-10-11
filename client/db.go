@@ -60,7 +60,7 @@ type DB interface {
 	// Peerstore returns the peerstore where known host information is stored.
 	//
 	// It sits within the rootstore returned by [Root].
-	Peerstore() datastore.DSBatching
+	Peerstore() datastore.DSReaderWriter
 
 	// Headstore returns the headstore where the current heads of the database are stored.
 	//

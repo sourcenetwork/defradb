@@ -148,6 +148,9 @@ var (
 	ErrSelfReferenceWithoutSelf                 = errors.New(errSelfReferenceWithoutSelf)
 	ErrColNotMaterialized                       = errors.New(errColNotMaterialized)
 	ErrMaterializedViewAndACPNotSupported       = errors.New(errMaterializedViewAndACPNotSupported)
+	ErrContextDone                              = errors.New("context done")
+	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
+	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
