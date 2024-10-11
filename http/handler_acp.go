@@ -22,11 +22,7 @@ import (
 type acpHandler struct{}
 
 func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
-	db, ok := req.Context().Value(dbContextKey).(client.DB)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
-		return
-	}
+	db := req.Context().Value(dbContextKey).(client.DB)
 
 	policyBytes, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -47,11 +43,7 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
-	db, ok := req.Context().Value(dbContextKey).(client.DB)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
-		return
-	}
+	db := req.Context().Value(dbContextKey).(client.DB)
 
 	var message addDocActorRelationshipRequest
 	err := requestJSON(req, &message)
@@ -76,11 +68,7 @@ func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.R
 }
 
 func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
-	db, ok := req.Context().Value(dbContextKey).(client.DB)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrFailedToGetContext("db")})
-		return
-	}
+	db := req.Context().Value(dbContextKey).(client.DB)
 
 	var message deleteDocActorRelationshipRequest
 	err := requestJSON(req, &message)
