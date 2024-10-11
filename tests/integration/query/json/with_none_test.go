@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package json
 
 import (
 	"testing"
@@ -16,38 +16,39 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithLikeOpOnJSONField_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple JSON array, filtered none of string array",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						custom: JSON
-					}
-				`,
+				Schema: `type Users {
+					name: String
+					custom: JSON
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "John",
-					"custom": "{\"tree\": \"maple\", \"age\": 250}",
-				},
+				Doc: `{
+					"name": "Shahzad",
+					"custom": [1, false, "second", {"one": 1}, [1, 2]]
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name":   "Andy",
-					"custom": "{\"tree\": \"oak\", \"age\": 450}",
-				},
+				Doc: `{
+					"name": "Fred",
+					"custom": [null, false, "second", {"one": 1}, [1, 2]]
+				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_like: "%oak%"}}) {
+					Users(filter: {custom: {_none: {_eq: null}}}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "Andy"},
+						{
+							"name": "Shahzad",
+						},
 					},
 				},
 			},

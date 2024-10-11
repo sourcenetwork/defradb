@@ -193,7 +193,6 @@ func defaultTypes(
 	floatOpBlock := schemaTypes.FloatOperatorBlock()
 	booleanOpBlock := schemaTypes.BooleanOperatorBlock()
 	stringOpBlock := schemaTypes.StringOperatorBlock()
-	jsonOpBlock := schemaTypes.JSONOperatorBlock(jsonScalarType)
 	blobOpBlock := schemaTypes.BlobOperatorBlock(blobScalarType)
 	dateTimeOpBlock := schemaTypes.DateTimeOperatorBlock()
 
@@ -201,7 +200,6 @@ func defaultTypes(
 	notNullFloatOpBlock := schemaTypes.NotNullFloatOperatorBlock()
 	notNullBooleanOpBlock := schemaTypes.NotNullBooleanOperatorBlock()
 	notNullStringOpBlock := schemaTypes.NotNullStringOperatorBlock()
-	notNullJSONOpBlock := schemaTypes.NotNullJSONOperatorBlock(jsonScalarType)
 	notNullBlobOpBlock := schemaTypes.NotNullBlobOperatorBlock(blobScalarType)
 
 	return []gql.Type{
@@ -228,7 +226,6 @@ func defaultTypes(
 		floatOpBlock,
 		booleanOpBlock,
 		stringOpBlock,
-		jsonOpBlock,
 		blobOpBlock,
 		dateTimeOpBlock,
 
@@ -237,7 +234,6 @@ func defaultTypes(
 		notNullFloatOpBlock,
 		notNullBooleanOpBlock,
 		notNullStringOpBlock,
-		notNullJSONOpBlock,
 		notNullBlobOpBlock,
 
 		// Filter scalar list blocks

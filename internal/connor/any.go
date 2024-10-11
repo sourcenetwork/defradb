@@ -11,6 +11,9 @@ import (
 // matching if any of them match.
 func anyOp(condition, data any) (bool, error) {
 	switch t := data.(type) {
+	case []any:
+		return anySlice(condition, t)
+
 	case []string:
 		return anySlice(condition, t)
 

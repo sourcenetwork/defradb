@@ -1286,7 +1286,7 @@ func ToFilter(source request.Filter, mapping *core.DocumentMapping) *Filter {
 	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
 
 	for sourceKey, sourceClause := range source.Conditions {
-		key, clause := toFilterMap(sourceKey, sourceClause, mapping)
+		key, clause := toFilterKeyValue(sourceKey, sourceClause, mapping)
 		conditions[key] = clause
 	}
 
@@ -1296,87 +1296,102 @@ func ToFilter(source request.Filter, mapping *core.DocumentMapping) *Filter {
 	}
 }
 
-// toFilterMap converts a consumer-defined filter key-value into a filter clause
-// keyed by field index.
+// toFilterKeyValue converts a consumer-defined filter key-value into a filter clause
+// keyed by connor.FilterKey.
 //
-// Return key will either be an int (field index), or a string (operator).
-func toFilterMap(
+// The returned key will be one of the following:
+// - Operator: if the sourceKey is one of the defined filter operators
+// - PropertyIndex: if the sourceKey exists in the document mapping
+// - ObjectProperty: if the sourceKey does not match one of the above
+func toFilterKeyValue(
 	sourceKey string,
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
+	var returnKey connor.FilterKey
 	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
-		key := &Operator{
+		returnKey = &Operator{
 			Operation: sourceKey,
 		}
 		// if the operator is simple (not compound) then
 		// it does not require further expansion
 		if connor.IsOpSimple(sourceKey) {
-			return key, sourceClause
+			return returnKey, sourceClause
 		}
-		switch typedClause := sourceClause.(type) {
-		case []any:
-			// If the clause is an array then we need to convert any inner maps.
-			returnClauses := []any{}
-			for _, innerSourceClause := range typedClause {
-				var returnClause any
-				switch typedInnerSourceClause := innerSourceClause.(type) {
-				case map[string]any:
-					innerMapClause := map[connor.FilterKey]any{}
-					for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
-						rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
-						innerMapClause[rKey] = rValue
-					}
-					returnClause = innerMapClause
-				default:
-					returnClause = innerSourceClause
-				}
-				returnClauses = append(returnClauses, returnClause)
-			}
-			return key, returnClauses
-		case map[string]any:
-			innerMapClause := map[connor.FilterKey]any{}
-			for innerSourceKey, innerSourceValue := range typedClause {
-				rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
-				innerMapClause[rKey] = rValue
-			}
-			return key, innerMapClause
-		default:
-			return key, typedClause
-		}
-	} else {
+	} else if mapping != nil && len(mapping.IndexesByName[sourceKey]) > 0 {
 		// If there are multiple properties of the same name we can just take the first as
 		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
 		// impact this as they are added after selects.
-		index := mapping.FirstIndexOfName(sourceKey)
-		key := &PropertyIndex{
-			Index: index,
+		returnKey = &PropertyIndex{
+			Index: mapping.FirstIndexOfName(sourceKey),
 		}
-		switch typedClause := sourceClause.(type) {
-		case map[string]any:
-			returnClause := map[connor.FilterKey]any{}
-			for innerSourceKey, innerSourceValue := range typedClause {
-				var innerMapping *core.DocumentMapping
-				// innerSourceValue may refer to a child mapping or
-				// an inline array if we don't have a child mapping
-				_, ok := innerSourceValue.(map[string]any)
-				if ok && index < len(mapping.ChildMappings) {
-					// If the innerSourceValue is also a map, then we should parse the nested clause
-					// using the child mapping, as this key must refer to a host property in a join
-					// and deeper keys must refer to properties on the child items.
-					innerMapping = mapping.ChildMappings[index]
-				} else {
-					innerMapping = mapping
-				}
-				rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, innerMapping)
-				returnClause[rKey] = rValue
-			}
-			return key, returnClause
-		default:
-			return key, sourceClause
+	} else {
+		returnKey = &ObjectProperty{
+			Name: sourceKey,
 		}
 	}
+
+	switch typedClause := sourceClause.(type) {
+	case []any:
+		return returnKey, toFilterList(typedClause, mapping)
+
+	case map[string]any:
+		return returnKey, toFilterMap(returnKey, typedClause, mapping)
+
+	default:
+		return returnKey, typedClause
+	}
+}
+
+func toFilterMap(
+	sourceKey connor.FilterKey,
+	sourceClause map[string]any,
+	mapping *core.DocumentMapping,
+) map[connor.FilterKey]any {
+	innerMapClause := make(map[connor.FilterKey]any)
+	for innerSourceKey, innerSourceValue := range sourceClause {
+		var innerMapping *core.DocumentMapping
+		switch t := sourceKey.(type) {
+		case *PropertyIndex:
+			_, ok := innerSourceValue.(map[string]any)
+			if ok && mapping != nil && t.Index < len(mapping.ChildMappings) {
+				// If the innerSourceValue is also a map, then we should parse the nested clause
+				// using the child mapping, as this key must refer to a host property in a join
+				// and deeper keys must refer to properties on the child items.
+				innerMapping = mapping.ChildMappings[t.Index]
+			} else {
+				innerMapping = mapping
+			}
+		case *ObjectProperty:
+			// Object properties can never refer to mapped document fields.
+			// Set the mapping to null for any nested filter values so
+			// that we don't filter any fields outside of this object.
+			innerMapping = nil
+		case *Operator:
+			innerMapping = mapping
+		}
+		rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, innerMapping)
+		innerMapClause[rKey] = rValue
+	}
+	return innerMapClause
+}
+
+func toFilterList(sourceClause []any, mapping *core.DocumentMapping) []any {
+	returnClauses := make([]any, len(sourceClause))
+	for i, innerSourceClause := range sourceClause {
+		// innerSourceClause must be a map because only compound
+		// operators (_and, _or) can reach this function and should
+		// have already passed GQL type validation
+		typedInnerSourceClause := innerSourceClause.(map[string]any)
+		innerMapClause := make(map[connor.FilterKey]any)
+		for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
+			rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, mapping)
+			innerMapClause[rKey] = rValue
+		}
+		returnClauses[i] = innerMapClause
+	}
+	return returnClauses
 }
 
 func toLimit(limit immutable.Option[uint64], offset immutable.Option[uint64]) *Limit {
