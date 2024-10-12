@@ -2574,7 +2574,7 @@ func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.
 
 func checkNodesIdentities(s *state) {
 	for i, node := range s.nodes {
-		var actualIdent immutable.Option[identity.RawIdentity]
+		var actualIdent immutable.Option[identity.PublicRawIdentity]
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -2586,9 +2586,9 @@ func checkNodesIdentities(s *state) {
 		require.NoError(s.t, err, s.testCase.Description)
 
 		expectedIdent := getIdentity(s, i, immutable.Some(0))
-		expectedRawIdent := immutable.None[identity.RawIdentity]()
+		expectedRawIdent := immutable.None[identity.PublicRawIdentity]()
 		if expectedIdent.HasValue() {
-			expectedRawIdent = immutable.Some(expectedIdent.Value().IntoRawIdentity())
+			expectedRawIdent = immutable.Some(expectedIdent.Value().IntoRawIdentity().Public())
 		}
 
 		require.Equal(s.t, expectedRawIdent, actualIdent, "identities mismatch")

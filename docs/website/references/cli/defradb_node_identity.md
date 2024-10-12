@@ -4,11 +4,11 @@ Get information about the node's identity
 
 ### Synopsis
 
-Get information about the node's identity
+Get information about the node's identity.
+
+Node uses the identity to be able to exchange encryption keys with other nodes.
 
 The identity contains:
-- A secp256k1 private key that is a 256-bit big-endian binary-encoded number,
-padded to a length of 32 bytes in HEX format.
 - A compressed 33-byte secp256k1 public key in HEX format.
 - A "did:key" generated from the public key.
 

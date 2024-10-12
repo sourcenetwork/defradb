@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,6 +41,11 @@ const devModeBanner = `
 **   or you may risk losing all data    **
 ******************************************
 
+`
+
+const developmentDescription = `Enables a set of features that make development easier but should not be enabled in production:
+- allows purging of all persisted data 
+- generates temporary node identity if keyring is disabled
 `
 
 func MakeStartCommand() *cobra.Command {
@@ -105,17 +109,17 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				opts, err = addPeerKey(kr, opts)
+				opts, err = getOrCreatePeerKey(kr, opts)
 				if err != nil {
 					return err
 				}
 
-				opts, err = addEncryptionKey(kr, cfg, opts)
+				opts, err = getOrCreateEncryptionKey(kr, cfg, opts)
 				if err != nil {
 					return err
 				}
 
-				opts, err = addIdentity(kr, opts)
+				opts, err = getOrCreateIdentity(kr, opts)
 				if err != nil {
 					return err
 				}
@@ -238,7 +242,7 @@ func MakeStartCommand() *cobra.Command {
 	cmd.PersistentFlags().Bool(
 		"development",
 		cfg.GetBool(configFlags["development"]),
-		"Enables a set of features that make development easier but should not be enabled in production",
+		developmentDescription,
 	)
 	cmd.Flags().Bool(
 		"no-encryption",
@@ -247,7 +251,7 @@ func MakeStartCommand() *cobra.Command {
 	return cmd
 }
 
-func addEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.Option) ([]node.Option, error) {
+func getOrCreateEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.Option) ([]node.Option, error) {
 	encryptionKey, err := kr.Get(encryptionKeyName)
 	if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
 		encryptionKey, err = crypto.GenerateAES256()
@@ -266,7 +270,7 @@ func addEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.Option) 
 	return opts, nil
 }
 
-func addPeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 	peerKey, err := kr.Get(peerKeyName)
 	if err != nil && errors.Is(err, keyring.ErrNotFound) {
 		peerKey, err = crypto.GenerateEd25519()
@@ -284,9 +288,8 @@ func addPeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 	return append(opts, net.WithPrivateKey(peerKey)), nil
 }
 
-func addIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 	identityBytes, err := kr.Get(identityKeyName)
-	info := "Loaded identity"
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
 			return nil, err
@@ -300,7 +303,6 @@ func addIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) 
 		if err != nil {
 			return nil, err
 		}
-		info = "Generated identity"
 	}
 
 	nodeIdentity, err := identity.FromPrivateKey(
@@ -313,8 +315,6 @@ func addIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) 
 	if err != nil {
 		return nil, err
 	}
-
-	log.Info(info, corelog.Any("Identity", nodeIdentity.IntoRawIdentity()))
 
 	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
 }
@@ -335,8 +335,6 @@ func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Info("Generated ephemeral identity", corelog.Any("Identity", nodeIdentity.IntoRawIdentity()))
 
 	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
 }
