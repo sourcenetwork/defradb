@@ -130,7 +130,7 @@ type state struct {
 	txns []datastore.Txn
 
 	// Identities by node index, by identity index.
-	identities [][]identity.Identity
+	identities []identity.Identity
 
 	// Identities by name.
 	// It is used in order to anchor the identity to a specific name as opposed to a identity's

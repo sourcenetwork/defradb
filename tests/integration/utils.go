@@ -746,7 +746,7 @@ func startNodes(s *state, action Start) {
 		}
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s, db.WithNodeIdentity(generateNodeIdentity(s, nodeIndex)))
+		node, _, err := setupNode(s, db.WithNodeIdentity(getNodeIdentity(s, nodeIndex)))
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 
@@ -865,7 +865,7 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(generateNodeIdentity(s, len(s.nodes))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getNodeIdentity(s, len(s.nodes))))
 
 	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
@@ -1314,7 +1314,7 @@ func createDocViaColSave(
 }
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	ctx = identity.WithContext(ctx, getIdentity(s, nodeIndex, action.Identity))
+	ctx = identity.WithContext(ctx, getIdentity(s, action.Identity))
 	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
@@ -1393,7 +1393,7 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := identity.WithContext(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
+	ctx := identity.WithContext(db.SetContextTxn(s.ctx, txn), getIdentity(s, action.Identity))
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1447,7 +1447,7 @@ func deleteDoc(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
+		ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1520,7 +1520,7 @@ func updateDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := identity.WithContext(s.ctx, getIdentity(s, nodeIndex, action.Identity))
+	ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1540,7 +1540,7 @@ func updateDocViaColUpdate(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := identity.WithContext(s.ctx, getIdentity(s, nodeIndex, action.Identity))
+	ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1576,7 +1576,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	ctx := identity.WithContext(s.ctx, getIdentity(s, nodeIndex, action.Identity))
+	ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1594,7 +1594,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
+		ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1836,7 +1836,7 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		ctx = identity.WithContext(ctx, getIdentity(s, nodeID, action.Identity))
+		ctx = identity.WithContext(ctx, getIdentity(s, action.Identity))
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {
@@ -2337,13 +2337,13 @@ func skipIfACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[
 func skipIfDatabaseTypeUnsupported(
 	t testing.TB,
 	databases []DatabaseType,
-	supporteDatabaseTypes immutable.Option[[]DatabaseType],
+	supportedDatabaseTypes immutable.Option[[]DatabaseType],
 ) []DatabaseType {
-	if !supporteDatabaseTypes.HasValue() {
+	if !supportedDatabaseTypes.HasValue() {
 		return databases
 	}
 	filteredDatabases := []DatabaseType{}
-	for _, supportedType := range supporteDatabaseTypes.Value() {
+	for _, supportedType := range supportedDatabaseTypes.Value() {
 		for _, database := range databases {
 			if supportedType == database {
 				filteredDatabases = append(filteredDatabases, database)
@@ -2436,7 +2436,7 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
 	require.NoError(s.t, err, s.testCase.Description)
 
-	expectedIdent := getIdentity(s, action.NodeID, immutable.Some(0)).Value()
+	expectedIdent := getIdentity(s, immutable.Some(0)).Value()
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
 	require.Equal(s.t, expectedRawIdent, actualIdent, "identity at %d mismatch", action.NodeID)
 
@@ -2461,7 +2461,7 @@ func performAssignNodeIdentityAction(s *state, action AssignNodeIdentity) {
 		s.t.Fatalf("identity name not provided")
 	}
 
-	ident := generateNodeIdentity(s, action.NodeID)
+	ident := getNodeIdentity(s, action.NodeID)
 	s.identitiesByName[action.Name] = ident
 
 	err := s.nodes[action.NodeID].AssignNodeIdentity(s.ctx, ident)

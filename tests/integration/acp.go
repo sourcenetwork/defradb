@@ -112,10 +112,9 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
+		ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -189,14 +188,14 @@ func addDocActorRelationshipACP(
 		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
-		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, nodeID)
+		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity)
 
 		exists, err := node.AddDocActorRelationship(
 			identity.WithContext(s.ctx, requestorIdentity),
 			collectionName,
 			docID,
 			action.Relation,
-			getTargetIdentity(s, action.TargetIdentity, nodeID),
+			getTargetIdentity(s, action.TargetIdentity),
 		)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -271,14 +270,14 @@ func deleteDocActorRelationshipACP(
 		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
-		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, nodeID)
+		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity)
 
 		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
 			identity.WithContext(s.ctx, requestorIdentity),
 			collectionName,
 			docID,
 			action.Relation,
-			getTargetIdentity(s, action.TargetIdentity, nodeID),
+			getTargetIdentity(s, action.TargetIdentity),
 		)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -314,9 +313,9 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	return collectionName, docID
 }
 
-func getTargetIdentity(s *state, targetIdent, nodeID int) string {
+func getTargetIdentity(s *state, targetIdent int) string {
 	if targetIdent != -1 {
-		optionalTargetIdentity := getIdentity(s, nodeID, immutable.Some(targetIdent))
+		optionalTargetIdentity := getIdentity(s, immutable.Some(targetIdent))
 		if !optionalTargetIdentity.HasValue() {
 			require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
 		}
@@ -325,9 +324,9 @@ func getTargetIdentity(s *state, targetIdent, nodeID int) string {
 	return ""
 }
 
-func getRequestorIdentity(s *state, requestorIdent, nodeID int) immutable.Option[acpIdentity.Identity] {
+func getRequestorIdentity(s *state, requestorIdent int) immutable.Option[acpIdentity.Identity] {
 	if requestorIdent != -1 {
-		requestorIdentity := getIdentity(s, nodeID, immutable.Some(requestorIdent))
+		requestorIdentity := getIdentity(s, immutable.Some(requestorIdent))
 		if !requestorIdentity.HasValue() {
 			require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
 		}
@@ -612,11 +611,12 @@ func crossLock(port uint16) (func(), error) {
 		nil
 }
 
-func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
-	if nodeIndex >= len(s.nodes) {
-		return immutable.None[string]()
-	}
-	switch client := s.nodes[nodeIndex].(type) {
+func getNodeAudience(s *state) immutable.Option[string] {
+	//if nodeIndex >= len(s.nodes) {
+	//return immutable.None[string]()
+	//}
+	//switch client := s.nodes[nodeIndex].(type) {
+	switch client := s.nodes[0].(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	case *cli.Wrapper:
@@ -649,17 +649,12 @@ func generateIdentity(s *state, seedIndex int, audience immutable.Option[string]
 	return identity, err
 }
 
-func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable.Option[acpIdentity.Identity] {
+func getIdentity(s *state, index immutable.Option[int]) immutable.Option[acpIdentity.Identity] {
 	if !index.HasValue() {
 		return immutable.None[acpIdentity.Identity]()
 	}
 
-	if len(s.identities) <= nodeIndex {
-		identities := make([][]acpIdentity.Identity, nodeIndex+1)
-		copy(identities, s.identities)
-		s.identities = identities
-	}
-	nodeIdentities := s.identities[nodeIndex]
+	nodeIdentities := s.identities
 
 	if len(nodeIdentities) <= index.Value() {
 		identities := make([]acpIdentity.Identity, index.Value()+1)
@@ -669,33 +664,28 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 				identities[i] = nodeIdentities[i]
 				continue
 			}
-			newIdentity, err := generateIdentity(s, i, getNodeAudience(s, nodeIndex))
+			newIdentity, err := generateIdentity(s, i, getNodeAudience(s))
 			require.NoError(s.t, err)
 			identities[i] = newIdentity
 		}
-		s.identities[nodeIndex] = identities
+		s.identities = identities
 		return immutable.Some(identities[index.Value()])
 	} else {
 		return immutable.Some(nodeIdentities[index.Value()])
 	}
 }
 
-func generateNodeIdentity(s *state, nodeIndex int) acpIdentity.Identity {
-	if len(s.identities) <= nodeIndex {
-		identities := make([][]acpIdentity.Identity, nodeIndex+1)
-		copy(identities, s.identities)
-		s.identities = identities
-	}
-
-	identity, err := generateIdentity(s, s.nextNodeIdentityGenSeed, getNodeAudience(s, nodeIndex))
+func getNodeIdentity(s *state, nodeIndex int) acpIdentity.Identity {
+	// TODO: check if it makes sense to create a wrapper over the node to store client and identity
+	identity, err := generateIdentity(s, s.nextNodeIdentityGenSeed, immutable.None[string]())
 	require.NoError(s.t, err)
 
 	s.nextNodeIdentityGenSeed--
 
-	if len(s.identities[nodeIndex]) == 0 {
-		s.identities[nodeIndex] = append(s.identities[nodeIndex], identity)
+	if len(s.identities) == 0 {
+		s.identities = append(s.identities, identity)
 	} else {
-		s.identities[nodeIndex][0] = identity
+		s.identities[0] = identity
 	}
 
 	return identity
