@@ -1052,22 +1052,22 @@ func (_c *DB_GetCollections_Call) RunAndReturn(run func(context.Context, client.
 }
 
 // GetNodeIdentity provides a mock function with given fields: _a0
-func (_m *DB) GetNodeIdentity(_a0 context.Context) (immutable.Option[identity.RawIdentity], error) {
+func (_m *DB) GetNodeIdentity(_a0 context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNodeIdentity")
 	}
 
-	var r0 immutable.Option[identity.RawIdentity]
+	var r0 immutable.Option[identity.PublicRawIdentity]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (immutable.Option[identity.RawIdentity], error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (immutable.Option[identity.PublicRawIdentity], error)); ok {
 		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) immutable.Option[identity.RawIdentity]); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) immutable.Option[identity.PublicRawIdentity]); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Get(0).(immutable.Option[identity.RawIdentity])
+		r0 = ret.Get(0).(immutable.Option[identity.PublicRawIdentity])
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -1097,12 +1097,12 @@ func (_c *DB_GetNodeIdentity_Call) Run(run func(_a0 context.Context)) *DB_GetNod
 	return _c
 }
 
-func (_c *DB_GetNodeIdentity_Call) Return(_a0 immutable.Option[identity.RawIdentity], _a1 error) *DB_GetNodeIdentity_Call {
+func (_c *DB_GetNodeIdentity_Call) Return(_a0 immutable.Option[identity.PublicRawIdentity], _a1 error) *DB_GetNodeIdentity_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetNodeIdentity_Call) RunAndReturn(run func(context.Context) (immutable.Option[identity.RawIdentity], error)) *DB_GetNodeIdentity_Call {
+func (_c *DB_GetNodeIdentity_Call) RunAndReturn(run func(context.Context) (immutable.Option[identity.PublicRawIdentity], error)) *DB_GetNodeIdentity_Call {
 	_c.Call.Return(run)
 	return _c
 }
