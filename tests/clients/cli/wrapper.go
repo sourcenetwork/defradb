@@ -565,16 +565,16 @@ func (w *Wrapper) Host() string {
 	return w.httpServer.URL
 }
 
-func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.RawIdentity], error) {
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	args := []string{"node", "identity"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return immutable.None[identity.RawIdentity](), err
+		return immutable.None[identity.PublicRawIdentity](), err
 	}
-	var res identity.RawIdentity
+	var res identity.PublicRawIdentity
 	if err := json.Unmarshal(data, &res); err != nil {
-		return immutable.None[identity.RawIdentity](), err
+		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
 }

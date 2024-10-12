@@ -29,10 +29,26 @@ type RawIdentity struct {
 	DID string
 }
 
+// PublicRawIdentity holds the raw bytes that make up an actor's identity that can be shared publicly.
+type PublicRawIdentity struct {
+	// PublicKey is a compressed 33-byte secp256k1 public key in HEX format.
+	PublicKey string
+
+	// DID is `did:key` key generated from the public key address.
+	DID string
+}
+
 func newRawIdentity(privateKey *secp256k1.PrivateKey, publicKey *secp256k1.PublicKey, did string) RawIdentity {
 	return RawIdentity{
 		PrivateKey: hex.EncodeToString(privateKey.Serialize()),
 		PublicKey:  hex.EncodeToString(publicKey.SerializeCompressed()),
 		DID:        did,
+	}
+}
+
+func (r RawIdentity) Public() PublicRawIdentity {
+	return PublicRawIdentity{
+		PublicKey: r.PublicKey,
+		DID:       r.DID,
 	}
 }

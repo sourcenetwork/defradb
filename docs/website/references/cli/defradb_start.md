@@ -14,7 +14,10 @@ defradb start [flags]
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
-      --development                   Enables a set of features that make development easier but should not be enabled in production
+      --development                   Enables a set of features that make development easier but should not be enabled in production:
+                                      - allows purging of all persisted data 
+                                      - generates temporary node identity if keyring is disabled
+                                      
   -h, --help                          help for start
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --no-encryption                 Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
