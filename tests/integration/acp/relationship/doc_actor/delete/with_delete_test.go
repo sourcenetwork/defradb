@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -94,7 +92,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Creating two documents because need one to do the test on after one is deleted.
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,7 +104,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -120,9 +118,9 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Give access to the other actor to delete and read both documents.
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -133,9 +131,9 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 				ExpectedExistence: false,
 			},
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -148,7 +146,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Now the other identity can read both and delete both of those documents
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can read.
+				Identity: testUtils.UserIdentity(2), // This identity can read.
 
 				Request: `
 					query {
@@ -176,15 +174,15 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can also delete.
+				Identity: testUtils.UserIdentity(2), // This identity can also delete.
 
 				DocID: 1,
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to delete (and read) the document.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -197,7 +195,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// The other identity can neither delete nor read the other document anymore.
 			testUtils.Request{
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				Request: `
 					query {
@@ -216,7 +214,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 
@@ -225,7 +223,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Ensure document was not accidentally deleted using owner identity.
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Request: `
 					query {

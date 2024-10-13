@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +91,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,9 +104,9 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -120,9 +118,9 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{ // Owner gives an actor read access
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -134,7 +132,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // The other actor can read
+				Identity: testUtils.UserIdentity(3), // The other actor can read
 
 				Request: `
 					query {
@@ -156,9 +154,9 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Admin revokes access of the other actor that could read.
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -171,7 +169,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 
 			// The other actor can no longer read.
 			testUtils.Request{
-				Identity: immutable.Some(3),
+				Identity: testUtils.UserIdentity(3),
 
 				Request: `
 					query {
@@ -202,7 +200,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -266,7 +264,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -279,9 +277,9 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -293,9 +291,9 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager gives an actor read access
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -307,7 +305,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // The other actor can read
+				Identity: testUtils.UserIdentity(3), // The other actor can read
 
 				Request: `
 					query {
@@ -329,9 +327,9 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Admin revokes access of the admin.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -343,9 +341,9 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager can no longer grant read access.
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 4, // This identity has no access previously.
+				TargetIdentity: testUtils.UserIdentity(4), // This identity has no access previously.
 
 				CollectionID: 0,
 
@@ -357,7 +355,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(4), // The other actor can ofcourse still not read.
+				Identity: testUtils.UserIdentity(4), // The other actor can ofcourse still not read.
 
 				Request: `
 					query {
@@ -388,7 +386,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -452,7 +450,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -465,9 +463,9 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -479,9 +477,9 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Admin tries to revoke owners `owner` relation.
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 1,
+				TargetIdentity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -493,9 +491,9 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Owner can still perform owner operations, like restrict admin.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -507,7 +505,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1), // The owner can still read
+				Identity: testUtils.UserIdentity(1), // The owner can still read
 
 				Request: `
 					query {

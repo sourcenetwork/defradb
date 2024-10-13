@@ -13,8 +13,6 @@ package test_acp_add_policy
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +23,7 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -80,7 +78,7 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -132,7 +130,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test

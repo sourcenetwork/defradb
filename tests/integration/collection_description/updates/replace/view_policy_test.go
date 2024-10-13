@@ -27,7 +27,7 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
 		}),
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 				Policy: `
                     name: test
                     description: a test policy which marks a collection in a database as a resource

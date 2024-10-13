@@ -52,12 +52,14 @@ Example to assign an identity to the node:
 				return err
 			}
 			privKey := secp256k1.PrivKeyFromBytes(data)
-			identity, err := acpIdentity.FromPrivateKey(
-				privKey,
+			identity, err := acpIdentity.FromPrivateKey(privKey)
+			if err != nil {
+				return err
+			}
+			err = identity.UpdateToken(
 				getDefaultNodeIdentityDuration(),
 				immutable.Some(cfg.GetString("api.address")),
 				immutable.None[string](),
-				false,
 			)
 			if err != nil {
 				return err

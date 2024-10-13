@@ -17,7 +17,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
-	identity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -129,19 +128,15 @@ type state struct {
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
 
-	// Identities by node index, by identity index.
-	identities []identity.Identity
+	// identities contains all identities created in this test.
+	// The map key is the identity reference that uniquely identifies identities of different 
+	// types. See [identRef].
+	// The map value is the identity holder that contains the identity itself and token
+	// generated for different target nodes. See [identityHolder].
+	identities map[identRef]*identityHolder
 
-	// Identities by name.
-	// It is used in order to anchor the identity to a specific name as opposed to a identity's
-	// index that can't be controlled manually, hence doesn't add this level of explicitness.
-	identitiesByName map[string]identity.Identity
-
-	// The seed for the next node identity generation. It starts at max int (0x7fffffff) to avoid
-	// collisions with the user identities.
-	// We want identities to be deterministic and we want to distinguish between user identities
-	// and node identities.
-	nextNodeIdentityGenSeed int
+	// The seed for the next identity generation. We want identities to be deterministic.
+	nextIdentityGenSeed int
 
 	// Will receive an item once all actions have finished processing.
 	allActionsDone chan struct{}
@@ -218,8 +213,7 @@ func newState(
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
-		identitiesByName:         map[string]identity.Identity{},
-		nextNodeIdentityGenSeed:  0x7fffffff,
+		identities:               map[identRef]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
 		nodeEvents:               []*eventState{},
 		nodeAddresses:            []peer.AddrInfo{},

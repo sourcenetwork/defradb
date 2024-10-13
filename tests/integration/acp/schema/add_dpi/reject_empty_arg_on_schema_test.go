@@ -13,8 +13,6 @@ package test_acp_schema_add_dpi
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_AddDPISchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T)
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -104,7 +102,7 @@ func TestACP_AddDPISchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testin
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test

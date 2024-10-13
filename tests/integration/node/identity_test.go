@@ -13,8 +13,6 @@ package node
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,28 +22,28 @@ func TestNodeIdentity_NodeIdentity_Succeed(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AssignNodeIdentity{
-				NodeID: 0,
-				Name:   "node1",
+				NodeID:   0,
+				Identity: testUtils.UserIdentity(1),
 			},
 			testUtils.AssignNodeIdentity{
-				NodeID: 1,
-				Name:   "node2",
+				NodeID:   1,
+				Identity: testUtils.UserIdentity(2),
 			},
 			testUtils.GetNodeIdentity{
-				NodeID:               0,
-				ExpectedIdentityName: immutable.Some("node1"),
+				NodeID:           0,
+				ExpectedIdentity: testUtils.UserIdentity(1),
 			},
 			testUtils.GetNodeIdentity{
-				NodeID:               1,
-				ExpectedIdentityName: immutable.Some("node2"),
+				NodeID:           1,
+				ExpectedIdentity: testUtils.UserIdentity(2),
 			},
 			testUtils.AssignNodeIdentity{
-				NodeID: 0,
-				Name:   "node1_new",
+				NodeID:   0,
+				Identity: testUtils.UserIdentity(3),
 			},
 			testUtils.GetNodeIdentity{
-				NodeID:               0,
-				ExpectedIdentityName: immutable.Some("node1_new"),
+				NodeID:           0,
+				ExpectedIdentity: testUtils.UserIdentity(3),
 			},
 		},
 	}

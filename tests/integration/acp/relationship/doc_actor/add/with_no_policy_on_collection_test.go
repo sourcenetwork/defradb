@@ -13,8 +13,6 @@ package test_acp_relationship_doc_actor_add
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +32,7 @@ func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedErro
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -47,9 +45,9 @@ func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedErro
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 

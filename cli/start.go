@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
@@ -307,13 +306,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option,
 		}
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(
-		secp256k1.PrivKeyFromBytes(identityBytes),
-		time.Duration(0),
-		immutable.None[string](),
-		immutable.None[string](),
-		false,
-	)
+	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(identityBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -327,13 +320,7 @@ func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
 		return nil, err
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(
-		secp256k1.PrivKeyFromBytes(privateKey.Serialize()),
-		time.Duration(0),
-		immutable.None[string](),
-		immutable.None[string](),
-		false,
-	)
+	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(privateKey.Serialize()))
 	if err != nil {
 		return nil, err
 	}

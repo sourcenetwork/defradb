@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -167,15 +166,15 @@ func ExecuteTestCase(
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 
 	var clients []ClientType
-	if httpClient {
-		clients = append(clients, HTTPClientType)
-	}
-	if goClient {
-		clients = append(clients, GoClientType)
-	}
-	if cliClient {
-		clients = append(clients, CLIClientType)
-	}
+	//if httpClient {
+	clients = append(clients, HTTPClientType)
+	//}
+	//if goClient {
+	clients = append(clients, GoClientType)
+	//}
+	//if cliClient {
+	clients = append(clients, CLIClientType)
+	//}
 
 	var databases []DatabaseType
 	if badgerInMemory {
@@ -746,7 +745,7 @@ func startNodes(s *state, action Start) {
 		}
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s, db.WithNodeIdentity(getNodeIdentity(s, nodeIndex)))
+		node, _, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))))
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 
@@ -764,7 +763,7 @@ func startNodes(s *state, action Start) {
 		}
 
 		// We need to make sure the node is configured with its old address, otherwise
-		// a new one may be selected and reconnnection to it will fail.
+		// a new one may be selected and reconnection to it will fail.
 		var addresses []string
 		for _, addr := range s.nodeAddresses[nodeIndex].Addrs {
 			addresses = append(addresses, addr.String())
@@ -865,7 +864,7 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getNodeIdentity(s, len(s.nodes))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
 
 	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
@@ -1314,7 +1313,7 @@ func createDocViaColSave(
 }
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	ctx = identity.WithContext(ctx, getIdentity(s, action.Identity))
+	ctx = getContextWithIdentity(s, action.Identity, nodeIndex)
 	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
@@ -1393,7 +1392,8 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := identity.WithContext(db.SetContextTxn(s.ctx, txn), getIdentity(s, action.Identity))
+	s.ctx = db.SetContextTxn(s.ctx, txn)
+	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1447,7 +1447,7 @@ func deleteDoc(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
+		ctx := getContextWithIdentity(s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1520,7 +1520,7 @@ func updateDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
+	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1540,7 +1540,7 @@ func updateDocViaColUpdate(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
+	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1576,7 +1576,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
+	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1594,7 +1594,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
+		ctx := getContextWithIdentity(s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1835,8 +1835,8 @@ func executeRequest(
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
-		ctx := db.SetContextTxn(s.ctx, txn)
-		ctx = identity.WithContext(ctx, getIdentity(s, action.Identity))
+		s.ctx = db.SetContextTxn(s.ctx, txn)
+		ctx := getContextWithIdentity(s, action.Identity, nodeID)
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {
@@ -2436,33 +2436,17 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
 	require.NoError(s.t, err, s.testCase.Description)
 
-	expectedIdent := getIdentity(s, immutable.Some(0)).Value()
+	expectedIdent := getIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
-	require.Equal(s.t, expectedRawIdent, actualIdent, "identity at %d mismatch", action.NodeID)
-
-	if action.ExpectedIdentityName.HasValue() {
-		targetName := action.ExpectedIdentityName.Value()
-		for name, ident := range s.identitiesByName {
-			expectedRawIdent := immutable.Some(ident.IntoRawIdentity().Public())
-			if name == targetName {
-				require.Equal(s.t, expectedRawIdent, actualIdent, "identity \"%s\" mismatch", name)
-			} else {
-				require.NotEqual(s.t, expectedRawIdent, actualIdent, "identity \"%s\" should not match", name)
-			}
-		}
-	}
+	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
 
 func performAssignNodeIdentityAction(s *state, action AssignNodeIdentity) {
 	if action.NodeID >= len(s.nodes) {
 		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
-	if action.Name == "" {
-		s.t.Fatalf("identity name not provided")
-	}
 
-	ident := getNodeIdentity(s, action.NodeID)
-	s.identitiesByName[action.Name] = ident
+	ident := getIdentity(s, action.Identity)
 
 	err := s.nodes[action.NodeID].AssignNodeIdentity(s.ctx, ident)
 	require.NoError(s.t, err, s.testCase.Description)

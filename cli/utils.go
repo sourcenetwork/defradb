@@ -165,13 +165,14 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	}
 
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	ident, err := acpIdentity.FromPrivateKey(
-		privKey,
+	ident, err := acpIdentity.FromPrivateKey(privKey)
+	if err != nil {
+		return err
+	}
+	err = ident.UpdateToken(
 		authTokenExpiration,
 		immutable.Some(cfg.GetString("api.address")),
-		sourcehubAddress,
-		false,
-	)
+		sourcehubAddress)
 	if err != nil {
 		return err
 	}

@@ -29,8 +29,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	identity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -90,7 +88,7 @@ type AddPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity immutable.Option[int]
+	Identity identRef
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -112,9 +110,9 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
-		ctx := identity.WithContext(s.ctx, getIdentity(s, action.Identity))
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		ctx := getContextWithIdentity(s, action.Identity, nodeIDs[index])
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -161,13 +159,13 @@ type AddDocActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	TargetIdentity int
+	TargetIdentity identRef
 
 	// The requestor identity, i.e. identity of the actor creating the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	RequestorIdentity int
+	RequestorIdentity identRef
 
 	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
 	ExpectedExistence bool
@@ -188,14 +186,13 @@ func addDocActorRelationshipACP(
 		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
-		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity)
 
 		exists, err := node.AddDocActorRelationship(
-			identity.WithContext(s.ctx, requestorIdentity),
+			getContextWithIdentity(s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
 			action.Relation,
-			getTargetIdentity(s, action.TargetIdentity),
+			getIdentityDID(s, action.TargetIdentity),
 		)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -242,13 +239,13 @@ type DeleteDocActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	TargetIdentity int
+	TargetIdentity identRef
 
 	// The requestor identity, i.e. identity of the actor deleting the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	RequestorIdentity int
+	RequestorIdentity identRef
 
 	// Result returns true if the relationship record was expected to be found and deleted,
 	// and returns false if no matching relationship record was found (no-op).
@@ -270,14 +267,13 @@ func deleteDocActorRelationshipACP(
 		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
-		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity)
 
 		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
-			identity.WithContext(s.ctx, requestorIdentity),
+			getContextWithIdentity(s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
 			action.Relation,
-			getTargetIdentity(s, action.TargetIdentity),
+			getIdentityDID(s, action.TargetIdentity),
 		)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -311,28 +307,6 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 		}
 	}
 	return collectionName, docID
-}
-
-func getTargetIdentity(s *state, targetIdent int) string {
-	if targetIdent != -1 {
-		optionalTargetIdentity := getIdentity(s, immutable.Some(targetIdent))
-		if !optionalTargetIdentity.HasValue() {
-			require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
-		}
-		return optionalTargetIdentity.Value().DID
-	}
-	return ""
-}
-
-func getRequestorIdentity(s *state, requestorIdent int) immutable.Option[acpIdentity.Identity] {
-	if requestorIdent != -1 {
-		requestorIdentity := getIdentity(s, immutable.Some(requestorIdent))
-		if !requestorIdentity.HasValue() {
-			require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
-		}
-		return requestorIdentity
-	}
-	return acpIdentity.None
 }
 
 func setupSourceHub(s *state) ([]node.ACPOpt, error) {
@@ -611,12 +585,11 @@ func crossLock(port uint16) (func(), error) {
 		nil
 }
 
-func getNodeAudience(s *state) immutable.Option[string] {
-	//if nodeIndex >= len(s.nodes) {
-	//return immutable.None[string]()
-	//}
-	//switch client := s.nodes[nodeIndex].(type) {
-	switch client := s.nodes[0].(type) {
+func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
+	if nodeIndex >= len(s.nodes) {
+		return immutable.None[string]()
+	}
+	switch client := s.nodes[nodeIndex].(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	case *cli.Wrapper:
@@ -624,71 +597,6 @@ func getNodeAudience(s *state) immutable.Option[string] {
 	}
 
 	return immutable.None[string]()
-}
-
-// Generate the keys using the index as the seed so that multiple
-// runs yield the same private key.  This is important for stuff like
-// the change detector.
-func generateIdentity(s *state, seedIndex int, audience immutable.Option[string]) (acpIdentity.Identity, error) {
-	source := rand.NewSource(int64(seedIndex))
-	r := rand.New(source)
-
-	privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-	require.NoError(s.t, err)
-
-	identity, err := acpIdentity.FromPrivateKey(
-		privateKey,
-		authTokenExpiration,
-		audience,
-		immutable.Some(s.sourcehubAddress),
-		// Creating and signing the bearer token is slow, so we skip it if it not
-		// required.
-		!(acpType == SourceHubACPType || audience.HasValue()),
-	)
-
-	return identity, err
-}
-
-func getIdentity(s *state, index immutable.Option[int]) immutable.Option[acpIdentity.Identity] {
-	if !index.HasValue() {
-		return immutable.None[acpIdentity.Identity]()
-	}
-
-	nodeIdentities := s.identities
-
-	if len(nodeIdentities) <= index.Value() {
-		identities := make([]acpIdentity.Identity, index.Value()+1)
-		// Fill any empty identities up to the index.
-		for i := range identities {
-			if i < len(nodeIdentities) && nodeIdentities[i] != (acpIdentity.Identity{}) {
-				identities[i] = nodeIdentities[i]
-				continue
-			}
-			newIdentity, err := generateIdentity(s, i, getNodeAudience(s))
-			require.NoError(s.t, err)
-			identities[i] = newIdentity
-		}
-		s.identities = identities
-		return immutable.Some(identities[index.Value()])
-	} else {
-		return immutable.Some(nodeIdentities[index.Value()])
-	}
-}
-
-func getNodeIdentity(s *state, nodeIndex int) acpIdentity.Identity {
-	// TODO: check if it makes sense to create a wrapper over the node to store client and identity
-	identity, err := generateIdentity(s, s.nextNodeIdentityGenSeed, immutable.None[string]())
-	require.NoError(s.t, err)
-
-	s.nextNodeIdentityGenSeed--
-
-	if len(s.identities) == 0 {
-		s.identities = append(s.identities, identity)
-	} else {
-		s.identities[0] = identity
-	}
-
-	return identity
 }
 
 // testBuffer is a very simple, thread-safe (--race flag friendly), io.Writer

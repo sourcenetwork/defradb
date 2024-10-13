@@ -293,7 +293,10 @@ type CreateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity identRef
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -362,7 +365,10 @@ type DeleteDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity identRef
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -392,7 +398,10 @@ type UpdateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity identRef
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -432,7 +441,10 @@ type UpdateWithFilter struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity identRef
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -586,7 +598,10 @@ type Request struct {
 	//
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity identRef
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -785,13 +800,11 @@ type GetNodeIdentity struct {
 	// NodeID holds the ID (index) of a node to get the identity from.
 	NodeID int
 
-	// ExpectedIdentityName is the name associated with the expected identity of the node.
-	// It is used in order to anchor the identity to a specific name as opposed to a identity's
-	// index that can't be controlled manually, hence doesn't add this level of explicitness.
-	// If set, it will ensure that the actual identity matches an identity associated only
-	// with this name. It's done to make sure identities with difference names are not
-	// accidentally duplicated because, for examples, of poor random seed handling.
-	ExpectedIdentityName immutable.Option[string]
+	// ExpectedIdentity holds the identity that is expected to be found.
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	ExpectedIdentity identRef
 }
 
 // AssignNodeIdentity is an action that generates a new identity for the node and associates it
@@ -801,8 +814,9 @@ type AssignNodeIdentity struct {
 	// NodeID holds the ID (index) of a node to assign the identity to.
 	NodeID int
 
-	// Name is the name associated with a newly generated identity.
-	// It is used in order to anchor the identity to a specific name as opposed to a identity's
-	// index that can't be controlled manually, hence doesn't add this level of explicitness.
-	Name string
+	// IdentityName is the name associated with the identity of the node.
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity identRef
 }

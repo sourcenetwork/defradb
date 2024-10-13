@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +91,7 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,9 +104,9 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -134,7 +132,7 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -198,7 +196,7 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -211,9 +209,9 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: -1,
 
@@ -239,7 +237,7 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -303,7 +301,7 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -316,9 +314,9 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -344,7 +342,7 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -408,7 +406,7 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -421,9 +419,9 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: -1,
+				TargetIdentity: testUtils.NoIdentity(),
 
 				CollectionID: 0,
 
@@ -449,7 +447,7 @@ func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *tes
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -513,7 +511,7 @@ func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *tes
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -526,9 +524,9 @@ func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *tes
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: -1,
+				RequestorIdentity: testUtils.NoIdentity(),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
