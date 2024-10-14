@@ -59,8 +59,8 @@ require (
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.1.2
 	github.com/zalando/go-keyring v0.2.5
-	go.opentelemetry.io/otel/metric v1.30.0
-	go.opentelemetry.io/otel/sdk/metric v1.30.0
+	go.opentelemetry.io/otel/metric v1.31.0
+	go.opentelemetry.io/otel/sdk/metric v1.31.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.28.0
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
@@ -352,9 +352,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0 // indirect
-	go.opentelemetry.io/otel v1.30.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.30.0 // indirect
-	go.opentelemetry.io/otel/trace v1.30.0 // indirect
+	go.opentelemetry.io/otel v1.31.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.31.0 // indirect
+	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	go.uber.org/dig v1.18.0 // indirect
 	go.uber.org/fx v1.22.2 // indirect
 	go.uber.org/mock v0.4.0 // indirect
