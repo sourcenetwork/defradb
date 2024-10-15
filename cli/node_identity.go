@@ -16,7 +16,7 @@ import (
 
 func MakeNodeIdentityCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "identity",
+		Use:   "node_identity",
 		Short: "Get information about the node's identity",
 		Long: `Get information about the node's identity.
 
