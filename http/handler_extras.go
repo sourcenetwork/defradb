@@ -15,7 +15,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -23,7 +22,7 @@ import (
 type extrasHandler struct{}
 
 func (s *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
+	db := mustGetContextClientDB(req)
 	rw.WriteHeader(http.StatusOK) // write the response before we restart to purge
 	db.Events().Publish(event.NewMessage(event.PurgeName, nil))
 }

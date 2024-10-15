@@ -13,12 +13,10 @@ package http
 import (
 	"net/http"
 	"strconv"
-	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -29,8 +27,8 @@ type CreateTxResponse struct {
 }
 
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
-	txs := req.Context().Value(txsContextKey).(*sync.Map)
+	db := mustGetContextClientDB(req)
+	txs := mustGetContextSyncMap(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
 	tx, err := db.NewTxn(req.Context(), readOnly)
@@ -43,8 +41,8 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
-	txs := req.Context().Value(txsContextKey).(*sync.Map)
+	db := mustGetContextClientDB(req)
+	txs := mustGetContextSyncMap(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
 	tx, err := db.NewConcurrentTxn(req.Context(), readOnly)
@@ -57,41 +55,55 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
-	txs := req.Context().Value(txsContextKey).(*sync.Map)
+	txs := mustGetContextSyncMap(req)
 
-	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
+	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.Load(txId)
+	txVal, ok := txs.Load(txID)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	err = txVal.(datastore.Txn).Commit(req.Context())
+
+	dsTxn, ok := txVal.(datastore.Txn)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidDataStoreTransaction})
+		return
+	}
+
+	err = dsTxn.Commit(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Delete(txId)
+	txs.Delete(txID)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
-	txs := req.Context().Value(txsContextKey).(*sync.Map)
+	txs := mustGetContextSyncMap(req)
 
-	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
+	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.LoadAndDelete(txId)
+	txVal, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal.(datastore.Txn).Discard(req.Context())
+
+	dsTxn, ok := txVal.(datastore.Txn)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidDataStoreTransaction})
+		return
+	}
+
+	dsTxn.Discard(req.Context())
 	rw.WriteHeader(http.StatusOK)
 }
 

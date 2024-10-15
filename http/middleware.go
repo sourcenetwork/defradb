@@ -46,6 +46,43 @@ var (
 	colContextKey = contextKey("col")
 )
 
+// mustGetContextClientCollection returns the client collection from the http request context or panics.
+//
+// This should only be called from functions within the http package.
+func mustGetContextClientCollection(req *http.Request) client.Collection {
+	return req.Context().Value(colContextKey).(client.Collection) //nolint:forcetypeassert
+}
+
+// mustGetContextSyncMap returns the sync map from the http request context or panics.
+//
+// This should only be called from functions within the http package.
+func mustGetContextSyncMap(req *http.Request) *sync.Map {
+	return req.Context().Value(txsContextKey).(*sync.Map) //nolint:forcetypeassert
+}
+
+// mustGetContextClientDB returns the client DB from the http request context or panics.
+//
+// This should only be called from functions within the http package.
+func mustGetContextClientDB(req *http.Request) client.DB {
+	return req.Context().Value(dbContextKey).(client.DB) //nolint:forcetypeassert
+}
+
+// mustGetContextClientStore returns the client store from the http request context or panics.
+//
+// This should only be called from functions within the http package.
+func mustGetContextClientStore(req *http.Request) client.Store {
+	return req.Context().Value(dbContextKey).(client.Store) //nolint:forcetypeassert
+}
+
+// tryGetContextClientP2P returns the P2P client from the http request context and a boolean
+// indicating if p2p was enabled.
+//
+// This should only be called from functions within the http package.
+func tryGetContextClientP2P(req *http.Request) (client.P2P, bool) {
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	return p2p, ok
+}
+
 // CorsMiddleware handles cross origin request
 func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
@@ -76,7 +113,7 @@ func ApiMiddleware(db client.DB, txs *sync.Map) func(http.Handler) http.Handler 
 // TransactionMiddleware sets the transaction context for the current request.
 func TransactionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		txs := req.Context().Value(txsContextKey).(*sync.Map)
+		txs := mustGetContextSyncMap(req)
 
 		txValue := req.Header.Get(txHeaderName)
 		if txValue == "" {
@@ -104,7 +141,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		db := req.Context().Value(dbContextKey).(client.DB)
+		db := mustGetContextClientDB(req)
 
 		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
 		if err != nil {
