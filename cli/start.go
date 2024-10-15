@@ -43,8 +43,8 @@ const devModeBanner = `
 
 `
 
-const developmentDescription = `Enables a set of features that make development easier but should not be enabled 
-in production:
+const developmentDescription = `Enables a set of features that make development easier but should not be enabled ` +
+	`in production:
 
 - allows purging of all persisted data 
 - generates temporary node identity if keyring is disabled

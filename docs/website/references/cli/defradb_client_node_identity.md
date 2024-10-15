@@ -1,4 +1,4 @@
-## defradb node identity
+## defradb client node_identity
 
 Get information about the node's identity
 
@@ -14,18 +14,19 @@ The identity contains:
 
 
 ```
-defradb node identity [flags]
+defradb client node_identity [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for identity
+  -h, --help   help for node_identity
 ```
 
 ### Options inherited from parent commands
 
 ```
+  -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
@@ -40,10 +41,11 @@ defradb node identity [flags]
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
+      --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb node](defradb_node.md)	 - Interact with DefraDB node
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 
