@@ -427,23 +427,35 @@ func defaultFromAST(
 	if !ok {
 		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, astNamed.Name.Value)
 	}
+	if len(directive.Arguments) != 1 {
+		return nil, NewErrDefaultValueOneArg(field.Name.Value)
+	}
+	arg := directive.Arguments[0]
+	if propName != arg.Name.Value {
+		return nil, NewErrDefaultValueType(field.Name.Value, propName, arg.Name.Value)
+	}
 	var value any
-	for _, arg := range directive.Arguments {
-		if propName != arg.Name.Value {
-			return nil, NewErrDefaultValueInvalid(field.Name.Value, propName, arg.Name.Value)
-		}
-		switch t := arg.Value.(type) {
-		case *ast.IntValue:
-			value = gql.Int.ParseLiteral(arg.Value, nil)
-		case *ast.FloatValue:
-			value = gql.Float.ParseLiteral(arg.Value, nil)
-		case *ast.BooleanValue:
-			value = t.Value
-		case *ast.StringValue:
-			value = t.Value
-		default:
-			value = arg.Value.GetValue()
-		}
+	switch propName {
+	case types.DefaultDirectivePropInt:
+		value = gql.Int.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropFloat:
+		value = gql.Float.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropBool:
+		value = gql.Boolean.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropString:
+		value = gql.String.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropDateTime:
+		value = gql.DateTime.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropJSON:
+		value = types.JSONScalarType().ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropBlob:
+		value = types.BlobScalarType().ParseLiteral(arg.Value, nil)
+	}
+	// If the value is nil, then parsing has failed, or a nil value was provided.
+	// Since setting a default value to nil is the same as not providing one,
+	// it is safer to return an error to let the user know something is wrong.
+	if value == nil {
+		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
 	}
 	return value, nil
 }

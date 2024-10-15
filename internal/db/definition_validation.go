@@ -166,6 +166,7 @@ var globalValidators = []definitionValidator{
 	validateSelfReferences,
 	validateCollectionMaterialized,
 	validateMaterializedHasNoPolicy,
+	validateCollectionFieldDefaultValue,
 }
 
 var createValidators = append(
@@ -1013,6 +1014,23 @@ func validateMaterializedHasNoPolicy(
 	for _, col := range newState.collections {
 		if col.IsMaterialized && len(col.QuerySources()) != 0 && col.Policy.HasValue() {
 			return NewErrMaterializedViewAndACPNotSupported(col.Name.Value())
+		}
+	}
+
+	return nil
+}
+
+func validateCollectionFieldDefaultValue(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for name, col := range newState.definitionsByName {
+		// default values are set when a doc is first created
+		_, err := client.NewDocFromMap(map[string]any{}, col)
+		if err != nil {
+			return NewErrDefaultFieldValueInvalid(name, err)
 		}
 	}
 
