@@ -79,7 +79,7 @@ func TestCompositeIndexCreate_UsingObjectDirective_SetsDefaultDirection(t *testi
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(direction: DESC, includes: [{name: "name"}, {name: "age"}]) {
+					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int 
 					}
@@ -117,7 +117,7 @@ func TestCompositeIndexCreate_UsingObjectDirective_OverridesDefaultDirection(t *
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(direction: DESC, includes: [{name: "name"}, {name: "age", direction: ASC}]) {
+					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int 
 					}
@@ -156,7 +156,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_ImplicitlyAddsField(t *testing
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index(includes: [{name: "age"}])
+						name: String @index(includes: [{field: "age"}])
 						age: Int 
 					}
 				`,
@@ -191,7 +191,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_SetsDefaultDirection(t *testin
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index(direction: DESC, includes: [{name: "age"}])
+						name: String @index(direction: DESC, includes: [{field: "age"}])
 						age: Int 
 					}
 				`,
@@ -229,7 +229,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_OverridesDefaultDirection(t *t
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index(direction: DESC, includes: [{name: "age", direction: ASC}])
+						name: String @index(direction: DESC, includes: [{field: "age", direction: ASC}])
 						age: Int 
 					}
 				`,
@@ -267,7 +267,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_WithExplicitIncludes_RespectsO
 			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
-						name: String @index(includes: [{name: "age"}, {name: "name"}])
+						name: String @index(includes: [{field: "age"}, {field: "name"}])
 						age: Int 
 					}
 				`,

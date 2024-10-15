@@ -292,7 +292,7 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users @index(includes: [{name: "name"}, {name: "age"}], unique: true) {
+					type Users @index(includes: [{field: "name"}, {field: "age"}], unique: true) {
 						name: String 
 						age: Int
 					}

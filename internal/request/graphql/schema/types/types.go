@@ -39,7 +39,7 @@ const (
 	IndexDirectivePropDirection = "direction"
 	IndexDirectivePropIncludes  = "includes"
 
-	IndexFieldInputName      = "name"
+	IndexFieldInputName      = "field"
 	IndexFieldInputDirection = "direction"
 
 	DefaultDirectiveLabel        = "default"
