@@ -15,14 +15,12 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/sourcenetwork/immutable/enumerable"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 type lensHandler struct{}
 
 func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	err := store.LensRegistry().ReloadLenses(req.Context())
 	if err != nil {
@@ -33,7 +31,7 @@ func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var request setMigrationRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -50,7 +48,7 @@ func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var request migrateRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -75,7 +73,7 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var request migrateRequest
 	if err := requestJSON(req, &request); err != nil {

@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PInfoCommand() *cobra.Command {
@@ -22,7 +20,7 @@ func MakeP2PInfoCommand() *cobra.Command {
 		Short: "Get peer info from a DefraDB node",
 		Long:  `Get peer info from a DefraDB node`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := cmd.Context().Value(dbContextKey).(*http.Client)
+			db := mustGetContextHTTP(cmd)
 			return writeJSON(cmd, db.PeerInfo())
 		},
 	}
