@@ -400,9 +400,6 @@
                     "DID": {
                         "type": "string"
                     },
-                    "PrivateKey": {
-                        "type": "string"
-                    },
                     "PublicKey": {
                         "type": "string"
                     }
