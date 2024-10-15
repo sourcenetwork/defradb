@@ -105,6 +105,7 @@ const (
 	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                       string = "non-materialized collections are not supported"
 	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
+	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 )
 
 var (
@@ -679,5 +680,13 @@ func NewErrMaterializedViewAndACPNotSupported(collection string) error {
 	return errors.New(
 		errMaterializedViewAndACPNotSupported,
 		errors.NewKV("Collection", collection),
+	)
+}
+
+func NewErrDefaultFieldValueInvalid(collection string, inner error) error {
+	return errors.New(
+		errInvalidDefaultFieldValue,
+		errors.NewKV("Collection", collection),
+		errors.NewKV("Inner", inner),
 	)
 }

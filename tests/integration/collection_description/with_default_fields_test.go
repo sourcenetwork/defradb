@@ -58,7 +58,7 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 							{
 								ID:           3,
 								Name:         "created",
-								DefaultValue: "2000-07-23T03:00:00-00:00",
+								DefaultValue: "2000-07-23T03:00:00Z",
 							},
 							{
 								ID:           4,
@@ -83,6 +83,23 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionDescription_WithInvalidDefaultFieldValueType_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						active: Boolean @default(bool: invalid)
+					}
+				`,
+				ExpectedError: "default value is invalid. Field: active, Arg: bool",
 			},
 		},
 	}
@@ -116,7 +133,7 @@ func TestCollectionDescription_WithMultipleDefaultFieldValueTypes_ReturnsError(t
 						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
 					}
 				`,
-				ExpectedError: "default value type must match field type. Name: name, Expected: string, Actual: int",
+				ExpectedError: "default value must specify one argument. Field: name",
 			},
 		},
 	}
