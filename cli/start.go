@@ -291,7 +291,7 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 }
 
 func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
-	identityBytes, err := kr.Get(identityKeyName)
+	identityBytes, err := kr.Get(nodeIdentityKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
 			return nil, err
@@ -301,7 +301,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option,
 			return nil, err
 		}
 		identityBytes := privateKey.Serialize()
-		err = kr.Set(identityKeyName, identityBytes)
+		err = kr.Set(nodeIdentityKeyName, identityBytes)
 		if err != nil {
 			return nil, err
 		}
