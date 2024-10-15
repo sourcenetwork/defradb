@@ -31,9 +31,9 @@ import (
 )
 
 const (
-	peerKeyName       = "peer-key"
-	encryptionKeyName = "encryption-key"
-	identityKeyName   = "identity-key"
+	peerKeyName         = "peer-key"
+	encryptionKeyName   = "encryption-key"
+	nodeIdentityKeyName = "node-identity-key"
 )
 
 type contextKey string
