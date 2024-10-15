@@ -180,7 +180,8 @@ type AddDocActorRelationship struct {
 }
 
 func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
-	processNode := func(nodeID int) {
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
 		node := s.nodes[nodeID]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
@@ -195,9 +196,27 @@ func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
 		)
 
 		assertACPResult(s, action.ExpectedError, err, action.ExpectedExistence, result.ExistedAlready, "existed")
-	}
+	} else {
+		for i := range getNodes(action.NodeID, s.nodes) {
+			node := s.nodes[i]
 
-	executeACPAction(action.NodeID, processNode, s)
+			collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, i)
+			requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, i)
+
+			result, err := node.AddDocActorRelationship(
+				db.SetContextIdentity(s.ctx, requestorIdentity),
+				collectionName,
+				docID,
+				action.Relation,
+				getTargetIdentity(s, action.TargetIdentity, i),
+			)
+
+			assertACPResult(s, action.ExpectedError, err, action.ExpectedExistence, result.ExistedAlready, "existed")
+			if acpType == SourceHubACPType {
+				break
+			}
+		}
+	}
 }
 
 // DeleteDocActorRelationship will attempt to delete a relationship between a document and an actor.
@@ -248,7 +267,8 @@ type DeleteDocActorRelationship struct {
 }
 
 func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) {
-	processNode := func(nodeID int) {
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
 		node := s.nodes[nodeID]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
@@ -263,17 +283,22 @@ func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) 
 		)
 
 		assertACPResult(s, action.ExpectedError, err, action.ExpectedRecordFound, result.RecordFound, "record found")
-	}
-
-	executeACPAction(action.NodeID, processNode, s)
-}
-
-func executeACPAction(nodeID immutable.Option[int], processNode func(nodeID int), s *state) {
-	if nodeID.HasValue() {
-		processNode(nodeID.Value())
 	} else {
-		for i := range getNodes(nodeID, s.nodes) {
-			processNode(i)
+		for i := range getNodes(action.NodeID, s.nodes) {
+			node := s.nodes[i]
+
+			collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, i)
+			requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, i)
+
+			result, err := node.DeleteDocActorRelationship(
+				db.SetContextIdentity(s.ctx, requestorIdentity),
+				collectionName,
+				docID,
+				action.Relation,
+				getTargetIdentity(s, action.TargetIdentity, i),
+			)
+
+			assertACPResult(s, action.ExpectedError, err, action.ExpectedRecordFound, result.RecordFound, "record found")
 			if acpType == SourceHubACPType {
 				break
 			}
