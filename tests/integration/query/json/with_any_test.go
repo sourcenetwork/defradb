@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryJSON_WithAnyFilter_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered any of string array",
+		Description: "Simple JSON array, filtered any of all types array",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `type Users {
@@ -36,6 +36,30 @@ func TestQueryJSON_WithAnyFilter_ShouldFilter(t *testing.T) {
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", {"one": 1}, [1, 2]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": null
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Keenan",
+					"custom": 0
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": ""
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": true
 				}`,
 			},
 			testUtils.Request{
