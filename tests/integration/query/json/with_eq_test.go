@@ -162,3 +162,65 @@ func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with JSON _eq filter all types",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Custom: JSON
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Shahzad",
+					"Custom": "32"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Andy",
+					"Custom": [1, 2]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Custom": {"one": 1}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Custom": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "David",
+					"Custom": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Custom: {_eq: {one: 1}}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
