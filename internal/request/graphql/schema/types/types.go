@@ -39,8 +39,8 @@ const (
 	IndexDirectivePropDirection = "direction"
 	IndexDirectivePropIncludes  = "includes"
 
-	IndexFieldInputName      = "name"
-	IndexFieldInputDirection = "direction"
+	IncludesPropField     = "field"
+	IncludesPropDirection = "direction"
 
 	DefaultDirectiveLabel        = "default"
 	DefaultDirectivePropString   = "string"
@@ -175,10 +175,10 @@ func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
 		Name:        "IndexField",
 		Description: "Used to create an index from a field.",
 		Fields: gql.InputObjectConfigFieldMap{
-			IndexFieldInputName: &gql.InputObjectFieldConfig{
+			IncludesPropField: &gql.InputObjectFieldConfig{
 				Type: gql.String,
 			},
-			IndexFieldInputDirection: &gql.InputObjectFieldConfig{
+			IncludesPropDirection: &gql.InputObjectFieldConfig{
 				Type: orderingEnum,
 			},
 		},
