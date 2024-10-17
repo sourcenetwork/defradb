@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -100,9 +99,15 @@ func NewHandler(db client.DB) (*Handler, error) {
 func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
 	tx, ok := h.txs.Load(id)
 	if !ok {
-		return nil, fmt.Errorf("invalid transaction id")
+		return nil, ErrInvalidTransactionId
 	}
-	return tx.(datastore.Txn), nil
+
+	dsTxn, ok := tx.(datastore.Txn)
+	if !ok {
+		return nil, ErrInvalidDataStoreTransaction
+	}
+
+	return dsTxn, nil
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
