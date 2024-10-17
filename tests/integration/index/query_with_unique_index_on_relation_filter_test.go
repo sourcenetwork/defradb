@@ -28,7 +28,7 @@ func TestQueryWithUniqueCompositeIndex_WithFilterOnIndexedRelation_ShouldFilter(
 
 					type Device  {
 						manufacturer: String 
-						owner: User @index(unique: true, includes: [{name: "manufacturer"}])
+						owner: User @index(unique: true, includes: [{field: "manufacturer"}])
 					}
 				`,
 			},

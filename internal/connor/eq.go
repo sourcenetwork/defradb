@@ -75,8 +75,8 @@ func objectsEqual(condition map[string]any, data any) (bool, error) {
 	if data == nil {
 		return condition == nil, nil
 	}
-	d := data.(map[string]any)
-	if len(d) != len(condition) {
+	d, ok := data.(map[string]any)
+	if !ok || len(d) != len(condition) {
 		return false, nil
 	}
 	for k, v := range d {
