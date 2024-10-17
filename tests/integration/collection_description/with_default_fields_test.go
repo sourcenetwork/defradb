@@ -99,7 +99,7 @@ func TestCollectionDescription_WithInvalidDefaultFieldValueType_ReturnsError(t *
 						active: Boolean @default(bool: invalid)
 					}
 				`,
-				ExpectedError: "default value is invalid. Field: active, Arg: bool",
+				ExpectedError: "Argument \"bool\" has invalid value invalid",
 			},
 		},
 	}

@@ -12,8 +12,6 @@ package schema
 
 import (
 	gql "github.com/sourcenetwork/graphql-go"
-
-	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // SchemaManager creates an instanced management point
@@ -26,40 +24,14 @@ type SchemaManager struct {
 // NewSchemaManager returns a new instance of a SchemaManager
 // with a new default type map
 func NewSchemaManager() (*SchemaManager, error) {
-	sm := &SchemaManager{}
-
-	orderEnum := schemaTypes.OrderingEnum()
-	crdtEnum := schemaTypes.CRDTEnum()
-	explainEnum := schemaTypes.ExplainEnum()
-
-	commitLinkObject := schemaTypes.CommitLinkObject()
-	commitObject := schemaTypes.CommitObject(commitLinkObject)
-	commitsOrderArg := schemaTypes.CommitsOrderArg(orderEnum)
-
-	indexFieldInput := schemaTypes.IndexFieldInputObject(orderEnum)
-
-	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types: defaultTypes(
-			commitObject,
-			commitLinkObject,
-			commitsOrderArg,
-			orderEnum,
-			crdtEnum,
-			explainEnum,
-			indexFieldInput,
-		),
-		Query:        defaultQueryType(commitObject, commitsOrderArg),
-		Mutation:     defaultMutationType(),
-		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
-		Subscription: defaultSubscriptionType(),
-	})
+	schema, err := defaultSchema()
 	if err != nil {
-		return sm, err
+		return nil, err
 	}
-	sm.schema = schema
-
+	sm := &SchemaManager{
+		schema: schema,
+	}
 	sm.NewGenerator()
-
 	return sm, nil
 }
 
@@ -97,164 +69,4 @@ func (s *SchemaManager) ResolveTypes() error {
 
 	query := s.schema.QueryType()
 	return s.schema.AppendType(query)
-}
-
-// @todo: Use a better default Query type
-func defaultQueryType(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Object {
-	queryCommits := schemaTypes.QueryCommits(commitObject, commitsOrderArg)
-	queryLatestCommits := schemaTypes.QueryLatestCommits(commitObject)
-
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Query",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-
-			// database API queries
-			queryCommits.Name:       queryCommits,
-			queryLatestCommits.Name: queryLatestCommits,
-		},
-	})
-}
-
-func defaultMutationType() *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Mutation",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-		},
-	})
-}
-
-func defaultSubscriptionType() *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Subscription",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-		},
-	})
-}
-
-// default directives type.
-func defaultDirectivesType(
-	crdtEnum *gql.Enum,
-	explainEnum *gql.Enum,
-	orderEnum *gql.Enum,
-	indexFieldInput *gql.InputObject,
-) []*gql.Directive {
-	return []*gql.Directive{
-		schemaTypes.CRDTFieldDirective(crdtEnum),
-		schemaTypes.DefaultDirective(),
-		schemaTypes.ExplainDirective(explainEnum),
-		schemaTypes.PolicyDirective(),
-		schemaTypes.IndexDirective(orderEnum, indexFieldInput),
-		schemaTypes.PrimaryDirective(),
-		schemaTypes.RelationDirective(),
-		schemaTypes.MaterializedDirective(),
-	}
-}
-
-func inlineArrayTypes() []gql.Type {
-	return []gql.Type{
-		gql.Boolean,
-		gql.Float,
-		gql.Int,
-		gql.String,
-		gql.NewNonNull(gql.Boolean),
-		gql.NewNonNull(gql.Float),
-		gql.NewNonNull(gql.Int),
-		gql.NewNonNull(gql.String),
-	}
-}
-
-// default type map includes all the native scalar types
-func defaultTypes(
-	commitObject *gql.Object,
-	commitLinkObject *gql.Object,
-	commitsOrderArg *gql.InputObject,
-	orderEnum *gql.Enum,
-	crdtEnum *gql.Enum,
-	explainEnum *gql.Enum,
-	indexFieldInput *gql.InputObject,
-) []gql.Type {
-	blobScalarType := schemaTypes.BlobScalarType()
-	jsonScalarType := schemaTypes.JSONScalarType()
-
-	idOpBlock := schemaTypes.IDOperatorBlock()
-	intOpBlock := schemaTypes.IntOperatorBlock()
-	floatOpBlock := schemaTypes.FloatOperatorBlock()
-	booleanOpBlock := schemaTypes.BooleanOperatorBlock()
-	stringOpBlock := schemaTypes.StringOperatorBlock()
-	blobOpBlock := schemaTypes.BlobOperatorBlock(blobScalarType)
-	dateTimeOpBlock := schemaTypes.DateTimeOperatorBlock()
-
-	notNullIntOpBlock := schemaTypes.NotNullIntOperatorBlock()
-	notNullFloatOpBlock := schemaTypes.NotNullFloatOperatorBlock()
-	notNullBooleanOpBlock := schemaTypes.NotNullBooleanOperatorBlock()
-	notNullStringOpBlock := schemaTypes.NotNullStringOperatorBlock()
-	notNullBlobOpBlock := schemaTypes.NotNullBlobOperatorBlock(blobScalarType)
-
-	return []gql.Type{
-		// Base Scalar types
-		gql.Boolean,
-		gql.DateTime,
-		gql.Float,
-		gql.ID,
-		gql.Int,
-		gql.String,
-
-		// Custom Scalar types
-		blobScalarType,
-		jsonScalarType,
-
-		// Base Query types
-
-		// Sort/Order enum
-		orderEnum,
-
-		// Filter scalar blocks
-		idOpBlock,
-		intOpBlock,
-		floatOpBlock,
-		booleanOpBlock,
-		stringOpBlock,
-		blobOpBlock,
-		dateTimeOpBlock,
-
-		// Filter non null scalar blocks
-		notNullIntOpBlock,
-		notNullFloatOpBlock,
-		notNullBooleanOpBlock,
-		notNullStringOpBlock,
-		notNullBlobOpBlock,
-
-		// Filter scalar list blocks
-		schemaTypes.IntListOperatorBlock(intOpBlock),
-		schemaTypes.FloatListOperatorBlock(floatOpBlock),
-		schemaTypes.BooleanListOperatorBlock(booleanOpBlock),
-		schemaTypes.StringListOperatorBlock(stringOpBlock),
-
-		// Filter non null scalar list blocks
-		schemaTypes.NotNullIntListOperatorBlock(notNullIntOpBlock),
-		schemaTypes.NotNullFloatListOperatorBlock(notNullFloatOpBlock),
-		schemaTypes.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
-		schemaTypes.NotNullStringListOperatorBlock(notNullStringOpBlock),
-
-		commitsOrderArg,
-		commitLinkObject,
-		commitObject,
-
-		crdtEnum,
-		explainEnum,
-
-		indexFieldInput,
-	}
 }
