@@ -1,10 +1,10 @@
 ## defradb client node_identity
 
-Get information about the node's identity
+Get the information public about the node's identity
 
 ### Synopsis
 
-Get information about the node's identity.
+Get the information public about the node's identity.
 
 Node uses the identity to be able to exchange encryption keys with other nodes.
 
