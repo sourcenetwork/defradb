@@ -38,7 +38,7 @@ func (db *db) addView(
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
 	query := fmt.Sprintf(`query { %s }`, inputQuery)
 
-	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	newDefinitions, err := db.parser.ParseSDL(sdl)
 	if err != nil {
 		return nil, err
 	}

@@ -94,19 +94,11 @@ func (p *parser) Parse(ast *ast.Document, options *client.GQLOptions) (*request.
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseRequest(*schema, ast, options)
-	if len(parsingErrors) > 0 {
-		return nil, parsingErrors
-	}
-
-	return query, nil
+	return defrap.ParseRequest(*schema, ast, options)
 }
 
-func (p *parser) ParseSDL(ctx context.Context, schemaString string) (
-	[]client.CollectionDefinition,
-	error,
-) {
-	return schema.FromString(ctx, schemaString)
+func (p *parser) ParseSDL(sdl string) ([]client.CollectionDefinition, error) {
+	return p.schemaManager.ParseSDL(sdl)
 }
 
 func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error {

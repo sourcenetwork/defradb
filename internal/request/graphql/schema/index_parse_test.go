@@ -11,7 +11,6 @@
 package schema
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -386,9 +385,10 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 }
 
 func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
-	ctx := context.Background()
+	schemaManager, err := NewSchemaManager()
+	require.NoError(t, err)
 
-	cols, err := FromString(ctx, testCase.sdl)
+	cols, err := schemaManager.ParseSDL(testCase.sdl)
 	require.NoError(t, err, testCase.description)
 
 	require.Equal(t, len(cols), 1, testCase.description)
@@ -400,9 +400,10 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 }
 
 func parseInvalidIndexAndTest(t *testing.T, testCase invalidIndexTestCase) {
-	ctx := context.Background()
+	schemaManager, err := NewSchemaManager()
+	require.NoError(t, err)
 
-	_, err := FromString(ctx, testCase.sdl)
+	_, err = schemaManager.ParseSDL(testCase.sdl)
 	assert.ErrorContains(t, err, testCase.expectedErr, testCase.description)
 }
 

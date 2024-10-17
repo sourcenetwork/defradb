@@ -11,7 +11,13 @@
 package schema
 
 import (
+	"errors"
+
+	"github.com/sourcenetwork/defradb/client"
+
 	gql "github.com/sourcenetwork/graphql-go"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 // SchemaManager creates an instanced management point
@@ -69,4 +75,24 @@ func (s *SchemaManager) ResolveTypes() error {
 
 	query := s.schema.QueryType()
 	return s.schema.AppendType(query)
+}
+
+func (s *SchemaManager) ParseSDL(sdl string) ([]client.CollectionDefinition, error) {
+	src := source.NewSource(&source.Source{
+		Body: []byte(sdl),
+	})
+	doc, err := gqlp.Parse(gqlp.ParseParams{
+		Source: src,
+	})
+	if err != nil {
+		return nil, err
+	}
+	validation := gql.ValidateDocument(&s.schema, doc, gql.SpecifiedRules)
+	if !validation.IsValid {
+		for _, e := range validation.Errors {
+			err = errors.Join(err, e)
+		}
+		return nil, err
+	}
+	return fromAst(doc)
 }

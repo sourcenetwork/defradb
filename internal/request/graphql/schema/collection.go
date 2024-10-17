@@ -11,16 +11,12 @@
 package schema
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -49,34 +45,6 @@ var TypeToDefaultPropName = map[string]string{
 	typeDateTime: types.DefaultDirectivePropDateTime,
 	typeJSON:     types.DefaultDirectivePropJSON,
 	typeBlob:     types.DefaultDirectivePropBlob,
-}
-
-// FromString parses a GQL SDL string into a set of collection descriptions.
-func FromString(ctx context.Context, schemaString string) (
-	[]client.CollectionDefinition,
-	error,
-) {
-	source := source.NewSource(&source.Source{
-		Body: []byte(schemaString),
-	})
-	doc, err := gqlp.Parse(gqlp.ParseParams{
-		Source: source,
-	})
-	if err != nil {
-		return nil, err
-	}
-	schema, err := defaultSchema()
-	if err != nil {
-		return nil, err
-	}
-	validation := gql.ValidateDocument(&schema, doc, gql.SpecifiedRules)
-	if !validation.IsValid {
-		for _, e := range validation.Errors {
-			err = errors.Join(err, e)
-		}
-		return nil, err
-	}
-	return fromAst(doc)
 }
 
 // fromAst parses a GQL AST into a set of collection descriptions.

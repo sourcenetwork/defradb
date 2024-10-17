@@ -2517,7 +2517,7 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	if err != nil {
 		return nil, err
 	}
-	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
+	cols, err := parser.ParseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
