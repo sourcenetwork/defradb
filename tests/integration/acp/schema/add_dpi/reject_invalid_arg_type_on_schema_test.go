@@ -66,7 +66,7 @@ func TestACP_AddDPISchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejec
 						age: Int
 					}
 				`,
-				ExpectedError: "policy directive with invalid id property",
+				ExpectedError: `Argument "id" has invalid value 123`,
 			},
 
 			testUtils.IntrospectionRequest{
@@ -144,7 +144,7 @@ func TestACP_AddDPISchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejec
 					policyIDOfValidDPI,
 				),
 
-				ExpectedError: "policy directive with invalid resource property",
+				ExpectedError: `Argument "resource" has invalid value 123`,
 			},
 
 			testUtils.IntrospectionRequest{

@@ -311,7 +311,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -365,7 +365,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -419,7 +419,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -468,7 +468,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pcounter")
+						points: Float @crdt(type: pcounter)
 					}
 				`,
 			},

@@ -132,12 +132,12 @@ func TestParseInvalidIndexOnStruct(t *testing.T) {
 		{
 			description: "unknown argument",
 			sdl:         `type user @index(unknown: "something", includes: [{name: "name"}]) {}`,
-			expectedErr: errIndexUnknownArgument,
+			expectedErr: `Unknown argument "unknown" on directive "@index".`,
 		},
 		{
 			description: "invalid index name type",
 			sdl:         `type user @index(name: 1, includes: [{name: "name"}]) {}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: `Argument "name" has invalid value 1`,
 		},
 		{
 			description: "index name starts with a number",
@@ -162,17 +162,17 @@ func TestParseInvalidIndexOnStruct(t *testing.T) {
 		{
 			description: "invalid 'unique' value type",
 			sdl:         `type user @index(includes: [{name: "name"}], unique: "true") {}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: `Argument "unique" has invalid value "true"`,
 		},
 		{
 			description: "invalid 'includes' value type (not a list)",
 			sdl:         `type user @index(includes: "name") {}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: `Argument "includes" has invalid value "name"`,
 		},
 		{
 			description: "invalid 'includes' value type (not an object list)",
 			sdl:         `type user @index(includes: [1]) {}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: `Argument "includes" has invalid value [1]`,
 		},
 	}
 
@@ -334,14 +334,14 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(field: "name") 
 			}`,
-			expectedErr: errIndexUnknownArgument,
+			expectedErr: `Unknown argument "field" on directive "@index`,
 		},
 		{
 			description: "invalid field index name type",
 			sdl: `type user {
 				name: String @index(name: 1) 
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: `Argument "name" has invalid value 1`,
 		},
 		{
 			description: "field index name starts with a number",
@@ -376,7 +376,7 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(unique: "true") 
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: `Argument "unique" has invalid value "true"`,
 		},
 	}
 

@@ -24,7 +24,7 @@ func TestPCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},

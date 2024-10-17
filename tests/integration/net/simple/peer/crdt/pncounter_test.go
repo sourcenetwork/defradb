@@ -27,7 +27,7 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -79,7 +79,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						Name: String
-						Age: Int @crdt(type: "pncounter")
+						Age: Int @crdt(type: pncounter)
 					}
 				`,
 			},

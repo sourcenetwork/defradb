@@ -232,7 +232,7 @@ func MaterializedDirective() *gql.Directive {
 			},
 		},
 		Locations: []string{
-			gql.DirectiveLocationSchema,
+			gql.DirectiveLocationObject,
 		},
 	})
 }
@@ -277,7 +277,7 @@ func CRDTFieldDirective(crdtEnum *gql.Enum) *gql.Directive {
 			},
 		},
 		Locations: []string{
-			gql.DirectiveLocationField,
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }

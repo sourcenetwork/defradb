@@ -36,7 +36,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -81,7 +81,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -135,7 +135,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
