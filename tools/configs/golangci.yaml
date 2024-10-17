@@ -152,7 +152,9 @@ issues:
       linters:
         - goheader
 
-    # Exclude running force type assert check in these paths (should likely fix them all)
+    # Exclude running force type assert check in these file paths, we are ignoring these files for now
+    # because there are many linter complaints in them, we want to resolve all of them eventually.
+    # TODO: https://github.com/sourcenetwork/defradb/issues/3154
     # Note: The last item must not have a `|` at the end otherwise linter ignores everyfile.
     - path: "(\
              client/document.go|\
