@@ -439,7 +439,7 @@ func resolveAggregates(
 				if err != nil {
 					return nil, err
 				}
-				fixAggregateNestedTargets(childMapping, hostSelectRequest)
+				removeJSONSubFields(childMapping, hostSelectRequest)
 
 				childFields, _, err := getRequestables(
 					ctx,
@@ -570,13 +570,13 @@ func resolveAggregates(
 	return fields, nil
 }
 
-// fixAggregateNestedTargets ensures that selections of
+// removeJSONSubFields ensures that selections of
 // JSON objects are not interpreted as joins.
 //
 // This can happen when an aggregate contains a filter
 // on a JSON object, but we can't tell if it is a relation
 // until the child mapping is created.
-func fixAggregateNestedTargets(
+func removeJSONSubFields(
 	mapping *core.DocumentMapping,
 	hostSelectRequest *request.Select,
 ) {
