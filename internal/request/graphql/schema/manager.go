@@ -87,6 +87,8 @@ func (s *SchemaManager) ParseSDL(sdl string) ([]client.CollectionDefinition, err
 	if err != nil {
 		return nil, err
 	}
+	// The user provided SDL must be validated using the latest generated schema
+	// so that relations to other user defined types do not return an error.
 	validation := gql.ValidateDocument(&s.schema, doc, gql.SpecifiedRules)
 	if !validation.IsValid {
 		for _, e := range validation.Errors {
