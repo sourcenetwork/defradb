@@ -571,15 +571,26 @@ func closeNodes(
 	}
 }
 
-// getNodes gets the set of applicable nodes for the given nodeID.
+// getNodesWithIDs gets the applicable node(s) and their ID(s) for the given target nodeID.
 //
-// If nodeID has a value it will return that node only, otherwise all nodes will be returned.
-func getNodes(nodeID immutable.Option[int], nodes []clients.Client) []clients.Client {
+// If nodeID has a value it will return that node and it's ID only. Otherwise all nodes will
+// be returned with their corresponding IDs in a list.
+//
+// WARNING:
+// The caller must not assume the returned node's ID is in order of the node's index if the specified nodeID is
+// greater than 0. For example if requesting a node with nodeID=2 then the resulting output will contain only
+// one element (at index 0) caller might accidentally assume that this node belongs to node 0. Therefore, the
+// caller should always use the returned IDs, instead of guessing the IDs based on node indexes.
+func getNodesWithIDs(nodeID immutable.Option[int], nodes []clients.Client) ([]int, []clients.Client) {
 	if !nodeID.HasValue() {
-		return nodes
+		indexes := make([]int, len(nodes))
+		for i := range nodes {
+			indexes[i] = i
+		}
+		return indexes, nodes
 	}
 
-	return []clients.Client{nodes[nodeID.Value()]}
+	return []int{nodeID.Value()}, []clients.Client{nodes[nodeID.Value()]}
 }
 
 // getNodeCollections gets the set of applicable collections for the given nodeID.
