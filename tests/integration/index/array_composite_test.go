@@ -27,7 +27,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "age"}]) {
+					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						age: Int
@@ -93,7 +93,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "age"}]) {
+					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						age: Int
@@ -160,7 +160,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "age"}]) {
+					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						age: Int
@@ -228,7 +228,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "hobbies"}, {name: "age"}]) {
+					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						hobbies: [String!] 
@@ -302,7 +302,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "numbers"}, {name: "name"}, {name: "age"}, {name: "hobbies"}]) {
+					type User @index(includes: [{field: "numbers"}, {field: "name"}, {field: "age"}, {field: "hobbies"}]) {
 						name: String 
 						numbers: [Int!] 
 						hobbies: [String!] 
@@ -377,7 +377,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "numbers1"}, {name: "numbers2"}, {name: "numbers3"}]) {
+					type User @index(includes: [{field: "numbers1"}, {field: "numbers2"}, {field: "numbers3"}]) {
 						name: String 
 						numbers1: [Int!] 
 						numbers2: [Int!] 
@@ -444,7 +444,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "hobbies"}]) {
+					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
 						numbers: [Int!] 
 						hobbies: [String!] 
@@ -549,7 +549,7 @@ func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testin
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"}, {name: "numbers"}, {name: "hobbies"}]) {
+					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
 						numbers: [Int!] 
 						hobbies: [String!] 

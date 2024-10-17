@@ -22,7 +22,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"},  {name: "age"}]) {
+					type User @index(includes: [{field: "name"},  {field: "age"}]) {
 						name: String
 						age: Int
 					}`,
@@ -100,7 +100,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDe
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name"},  {name: "age"}]) {
+					type User @index(includes: [{field: "name"},  {field: "age"}]) {
 						name: String
 						age: Int
 					}`,
@@ -178,7 +178,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: DESC}, {name: "age", direction: ASC}]) {
+					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
 					}`,
@@ -268,7 +268,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_Sh
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: DESC}, {name: "age", direction: ASC}]) {
+					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
 					}`,
@@ -358,7 +358,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRev
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: ASC}, {name: "age", direction: DESC}]) {
+					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
 					}`,
@@ -438,7 +438,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: ASC}, {name: "age", direction: DESC}]) {
+					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
 					}`,
@@ -516,7 +516,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: DESC}, {name: "age", direction: ASC}]) {
+					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
 					}`,
@@ -574,7 +574,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: ASC}, {name: "age", direction: DESC}]) {
+					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
 					}`,
@@ -632,7 +632,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: DESC}, {name: "age", direction: ASC}]) {
+					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
 						email: String
@@ -667,7 +667,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(includes: [{name: "name", direction: ASC}, {name: "age", direction: DESC}]) {
+					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
 						email: String

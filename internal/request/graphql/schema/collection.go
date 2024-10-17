@@ -357,14 +357,14 @@ func indexFieldFromAST(value ast.Value, defaultDirection *ast.EnumValue) (client
 
 	for _, field := range argTypeObject.Fields {
 		switch field.Name.Value {
-		case types.IndexFieldInputName:
+		case types.IncludesPropField:
 			nameVal, ok := field.Value.(*ast.StringValue)
 			if !ok {
 				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 			}
 			name = nameVal.Value
 
-		case types.IndexFieldInputDirection:
+		case types.IncludesPropDirection:
 			directionVal, ok := field.Value.(*ast.EnumValue)
 			if !ok {
 				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg

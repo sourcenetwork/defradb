@@ -23,7 +23,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 	cases := []indexTestCase{
 		{
 			description: "Index with a single field",
-			sdl:         `type user @index(includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(includes: [{field: "name"}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Name: "",
@@ -36,7 +36,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with a name",
-			sdl:         `type user @index(name: "userIndex", includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(name: "userIndex", includes: [{field: "name"}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Name: "userIndex",
@@ -48,7 +48,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Unique index",
-			sdl:         `type user @index(includes: [{name: "name"}], unique: true) {}`,
+			sdl:         `type user @index(includes: [{field: "name"}], unique: true) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -60,7 +60,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index explicitly not unique",
-			sdl:         `type user @index(includes: [{name: "name"}], unique: false) {}`,
+			sdl:         `type user @index(includes: [{field: "name"}], unique: false) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -72,7 +72,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with explicit ascending field",
-			sdl:         `type user @index(includes: [{name: "name", direction: ASC}]) {}`,
+			sdl:         `type user @index(includes: [{field: "name", direction: ASC}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -82,7 +82,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with descending field",
-			sdl:         `type user @index(includes: [{name: "name", direction: DESC}]) {}`,
+			sdl:         `type user @index(includes: [{field: "name", direction: DESC}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -92,7 +92,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with 2 fields",
-			sdl:         `type user @index(includes: [{name: "name"}, {name: "age"}]) {}`,
+			sdl:         `type user @index(includes: [{field: "name"}, {field: "age"}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -104,7 +104,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "Index with 2 fields and 2 directions",
-			sdl:         `type user @index(includes: [{name: "name", direction: ASC}, {name: "age", direction: DESC}]) {}`,
+			sdl:         `type user @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -130,37 +130,37 @@ func TestParseInvalidIndexOnStruct(t *testing.T) {
 		},
 		{
 			description: "unknown argument",
-			sdl:         `type user @index(unknown: "something", includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(unknown: "something", includes: [{field: "name"}]) {}`,
 			expectedErr: `Unknown argument "unknown" on directive "@index".`,
 		},
 		{
 			description: "invalid index name type",
-			sdl:         `type user @index(name: 1, includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(name: 1, includes: [{field: "name"}]) {}`,
 			expectedErr: `Argument "name" has invalid value 1`,
 		},
 		{
 			description: "index name starts with a number",
-			sdl:         `type user @index(name: "1_user_name", includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(name: "1_user_name", includes: [{field: "name"}]) {}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "index with empty name",
-			sdl:         `type user @index(name: "", includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(name: "", includes: [{field: "name"}]) {}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "index name with spaces",
-			sdl:         `type user @index(name: "user name", includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(name: "user name", includes: [{field: "name"}]) {}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "index name with special symbols",
-			sdl:         `type user @index(name: "user!name", includes: [{name: "name"}]) {}`,
+			sdl:         `type user @index(name: "user!name", includes: [{field: "name"}]) {}`,
 			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "invalid 'unique' value type",
-			sdl:         `type user @index(includes: [{name: "name"}], unique: "true") {}`,
+			sdl:         `type user @index(includes: [{field: "name"}], unique: "true") {}`,
 			expectedErr: `Argument "unique" has invalid value "true"`,
 		},
 		{
@@ -271,7 +271,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "composite field index with implicit include and implicit ordering",
 			sdl: `type user {
-				name: String @index(direction: DESC, includes: [{name: "age"}])
+				name: String @index(direction: DESC, includes: [{field: "age"}])
 				age: Int
 			}`,
 			targetDescriptions: []client.IndexDescription{
@@ -288,7 +288,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "composite field index with implicit include and explicit ordering",
 			sdl: `type user {
-				name: String @index(direction: DESC, includes: [{name: "age", direction: ASC}])
+				name: String @index(direction: DESC, includes: [{field: "age", direction: ASC}])
 				age: Int
 			}`,
 			targetDescriptions: []client.IndexDescription{
@@ -305,7 +305,7 @@ func TestParseIndexOnField(t *testing.T) {
 		{
 			description: "composite field index with explicit includes",
 			sdl: `type user {
-				name: String @index(includes: [{name: "age"}, {name: "name"}])
+				name: String @index(includes: [{field: "age"}, {field: "name"}])
 				age: Int
 			}`,
 			targetDescriptions: []client.IndexDescription{
