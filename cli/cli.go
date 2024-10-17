@@ -121,6 +121,7 @@ func NewDefraCommand() *cobra.Command {
 		MakePurgeCommand(),
 		MakeDumpCommand(),
 		MakeRequestCommand(),
+		MakeNodeIdentityCommand(),
 		schema,
 		acp,
 		view,
