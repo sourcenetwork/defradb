@@ -43,7 +43,7 @@ Execute queries, add schema types, obtain node info, etc.
 * [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
 * [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
 * [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
-* [defradb client node_identity](defradb_client_node_identity.md)	 - Get information about the node's identity
+* [defradb client node_identity](defradb_client_node_identity.md)	 - Get the information public about the node's identity
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 * [defradb client purge](defradb_client_purge.md)	 - Delete all persisted data and restart
 * [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request
