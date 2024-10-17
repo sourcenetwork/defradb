@@ -17,8 +17,8 @@ import (
 func MakeNodeIdentityCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "node_identity",
-		Short: "Get information about the node's identity",
-		Long: `Get information about the node's identity.
+		Short: "Get the information public about the node's identity",
+		Long: `Get the information public about the node's identity.
 
 Node uses the identity to be able to exchange encryption keys with other nodes.
 

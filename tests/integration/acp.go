@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
@@ -195,7 +196,7 @@ func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
 			getTargetIdentity(s, action.TargetIdentity, nodeID),
 		)
 
-		assertACPResult(s, action.ExpectedError, err, action.ExpectedExistence, result.ExistedAlready, "existed")
+		assertAddDocActorRelationship(s, err, action, result)
 	} else {
 		for i := range getNodes(action.NodeID, s.nodes) {
 			node := s.nodes[i]
@@ -211,11 +212,26 @@ func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
 				getTargetIdentity(s, action.TargetIdentity, i),
 			)
 
-			assertACPResult(s, action.ExpectedError, err, action.ExpectedExistence, result.ExistedAlready, "existed")
+			assertAddDocActorRelationship(s, err, action, result)
 			if acpType == SourceHubACPType {
 				break
 			}
 		}
+	}
+}
+
+func assertAddDocActorRelationship(
+	s *state,
+	actualErr error,
+	action AddDocActorRelationship,
+	result client.AddDocActorRelationshipResult,
+) {
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, actualErr, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		require.Equal(s.t, action.ExpectedError, "")
+		require.Equal(s.t, action.ExpectedExistence, result.ExistedAlready, "existed")
 	}
 }
 
@@ -282,7 +298,7 @@ func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) 
 			getTargetIdentity(s, action.TargetIdentity, nodeID),
 		)
 
-		assertACPResult(s, action.ExpectedError, err, action.ExpectedRecordFound, result.RecordFound, "record found")
+		assertDeleteDocActorRelationship(s, err, action, result)
 	} else {
 		for i := range getNodes(action.NodeID, s.nodes) {
 			node := s.nodes[i]
@@ -297,12 +313,26 @@ func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) 
 				action.Relation,
 				getTargetIdentity(s, action.TargetIdentity, i),
 			)
-
-			assertACPResult(s, action.ExpectedError, err, action.ExpectedRecordFound, result.RecordFound, "record found")
+			assertDeleteDocActorRelationship(s, err, action, result)
 			if acpType == SourceHubACPType {
 				break
 			}
 		}
+	}
+}
+
+func assertDeleteDocActorRelationship(
+	s *state,
+	actualErr error,
+	action DeleteDocActorRelationship,
+	result client.DeleteDocActorRelationshipResult,
+) {
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, actualErr, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		require.Equal(s.t, action.ExpectedError, "")
+		require.Equal(s.t, action.ExpectedRecordFound, result.RecordFound, "record found mismatch")
 	}
 }
 
@@ -343,22 +373,6 @@ func getRequestorIdentity(s *state, requestorIdent, nodeID int) immutable.Option
 		return requestorIdentity
 	}
 	return acpIdentity.None
-}
-
-func assertACPResult(
-	s *state,
-	expectedError string,
-	actualErr error,
-	expectedBool, actualBool bool,
-	boolDesc string,
-) {
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, actualErr, expectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, expectedError, expectedErrorRaised)
-
-	if !expectedErrorRaised {
-		require.Equal(s.t, expectedError, "")
-		require.Equal(s.t, expectedBool, actualBool, boolDesc)
-	}
 }
 
 func setupSourceHub(s *state) ([]node.ACPOpt, error) {

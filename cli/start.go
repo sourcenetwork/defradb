@@ -142,6 +142,8 @@ func MakeStartCommand() *cobra.Command {
 				cmd.Printf(devModeBanner)
 				if cfg.GetBool("keyring.disabled") {
 					var err error
+					// TODO: we want to persist this identity so we can restart the node with the same identity
+					// even in development mode. https://github.com/sourcenetwork/defradb/issues/3148
 					opts, err = addEphemeralIdentity(opts)
 					if err != nil {
 						return err
