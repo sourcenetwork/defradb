@@ -1,8 +1,11 @@
-/*
-Package connor provides a domain-specific language to express conditions against data.
-
-It is derived from https://github.com/SierraSoftworks/connor.
-*/
+// Package connor provides a domain-specific language to express conditions against data.
+//
+// It is derived from https://github.com/SierraSoftworks/connor.
+//
+// Note to developers:
+// Never assume that the data given to an operator is of a certain type.
+// Operators should work with any data type so that untyped data
+// such as JSON can be filtered as expected.
 package connor
 
 const (
