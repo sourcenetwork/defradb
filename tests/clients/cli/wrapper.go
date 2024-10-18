@@ -566,7 +566,7 @@ func (w *Wrapper) Host() string {
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	args := []string{"node", "identity"}
+	args := []string{"client", "node-identity"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
