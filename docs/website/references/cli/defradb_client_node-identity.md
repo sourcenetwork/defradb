@@ -1,4 +1,4 @@
-## defradb client node_identity
+## defradb client node-identity
 
 Get the information public about the node's identity
 
@@ -14,13 +14,13 @@ The identity contains:
 
 
 ```
-defradb client node_identity [flags]
+defradb client node-identity [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for node_identity
+  -h, --help   help for node-identity
 ```
 
 ### Options inherited from parent commands

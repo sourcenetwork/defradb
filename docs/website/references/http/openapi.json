@@ -1690,7 +1690,7 @@
         },
         "/node/identity": {
             "get": {
-                "description": "Get node's identity",
+                "description": "Get node's public identity",
                 "operationId": "node_identity",
                 "responses": {
                     "200": {

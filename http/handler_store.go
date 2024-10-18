@@ -649,7 +649,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	nodeIdentity := openapi3.NewOperation()
 	nodeIdentity.OperationID = "node_identity"
-	nodeIdentity.Description = "Get node's identity"
+	nodeIdentity.Description = "Get node's public identity"
 	nodeIdentity.Tags = []string{"node", "identity"}
 	nodeIdentity.AddResponse(200, identityResponse)
 	nodeIdentity.Responses.Set("400", errorResponse)
