@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakePurgeCommand() *cobra.Command {
@@ -24,7 +22,7 @@ func MakePurgeCommand() *cobra.Command {
 		Long: `Delete all persisted data and restart.
 WARNING this operation cannot be reversed.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd).(*http.Client)
+			db := mustGetContextHTTP(cmd)
 			if !force {
 				return ErrPurgeForceFlagRequired
 			}
