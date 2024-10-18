@@ -70,7 +70,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 				Schema: `
                     type Users {
                         name: String
-                        points: Int @crdt(type: "pcounter")
+                        points: Int @crdt(type: pcounter)
                     }
                 `},
 			testUtils.CreateDoc{

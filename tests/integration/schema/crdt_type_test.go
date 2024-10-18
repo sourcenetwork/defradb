@@ -27,7 +27,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -66,7 +66,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -103,7 +103,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: String @crdt(type: "pncounter")
+						points: String @crdt(type: pncounter)
 					}
 				`,
 				ExpectedError: "CRDT type pncounter can't be assigned to field kind String",
@@ -123,7 +123,7 @@ func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 						points: Int @crdt(type: "invalid")
 					}
 				`,
-				ExpectedError: "CRDT type not supported. Name: points, CRDTType: invalid",
+				ExpectedError: `Argument "type" has invalid value "invalid"`,
 			},
 		},
 	}
@@ -139,7 +139,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -178,7 +178,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: Float @crdt(type: "pcounter")
+						points: Float @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -215,7 +215,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: String @crdt(type: "pcounter")
+						points: String @crdt(type: pcounter)
 					}
 				`,
 				ExpectedError: "CRDT type pcounter can't be assigned to field kind String",

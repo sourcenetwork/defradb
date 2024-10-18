@@ -28,7 +28,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -88,7 +88,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -134,7 +134,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -195,7 +195,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -249,7 +249,7 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -295,7 +295,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},

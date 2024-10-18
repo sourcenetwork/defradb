@@ -55,7 +55,7 @@ type Parser interface {
 	// The parsing should validate the syntax, but not validate what that syntax expresses
 	// is valid or not, i.e. we don't want the parser to make remote calls to verify the
 	// policy description is valid or not (that is the callers responsiblity).
-	ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDefinition, error)
+	ParseSDL(sdl string) ([]client.CollectionDefinition, error)
 
 	// Adds the given schema to this parser's model.
 	//

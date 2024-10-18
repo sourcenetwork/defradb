@@ -28,7 +28,7 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -75,7 +75,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -135,7 +135,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -181,7 +181,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pcounter")
+						points: Float @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -236,7 +236,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pcounter")
+						points: Float @crdt(type: pcounter)
 					}
 				`,
 			},
