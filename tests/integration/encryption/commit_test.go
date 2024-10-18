@@ -200,7 +200,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 			testUtils.SchemaUpdate{
 				Schema: `
                     type Users {
-                        points: Int @crdt(type: "pcounter")
+                        points: Int @crdt(type: pcounter)
                     }
                 `},
 			testUtils.CreateDoc{
@@ -243,7 +243,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 			testUtils.SchemaUpdate{
 				Schema: `
                     type Users {
-                        points: Int @crdt(type: "pcounter")
+                        points: Int @crdt(type: pcounter)
                     }
                 `},
 			testUtils.CreateDoc{

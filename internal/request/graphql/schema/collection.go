@@ -11,15 +11,12 @@
 package schema
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -48,27 +45,6 @@ var TypeToDefaultPropName = map[string]string{
 	typeDateTime: types.DefaultDirectivePropDateTime,
 	typeJSON:     types.DefaultDirectivePropJSON,
 	typeBlob:     types.DefaultDirectivePropBlob,
-}
-
-// FromString parses a GQL SDL string into a set of collection descriptions.
-func FromString(ctx context.Context, schemaString string) (
-	[]client.CollectionDefinition,
-	error,
-) {
-	source := source.NewSource(&source.Source{
-		Body: []byte(schemaString),
-	})
-
-	doc, err := gqlp.Parse(
-		gqlp.ParseParams{
-			Source: source,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return fromAst(doc)
 }
 
 // fromAst parses a GQL AST into a set of collection descriptions.
@@ -381,14 +357,14 @@ func indexFieldFromAST(value ast.Value, defaultDirection *ast.EnumValue) (client
 
 	for _, field := range argTypeObject.Fields {
 		switch field.Name.Value {
-		case types.IndexFieldInputName:
+		case types.IncludesPropField:
 			nameVal, ok := field.Value.(*ast.StringValue)
 			if !ok {
 				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 			}
 			name = nameVal.Value
 
-		case types.IndexFieldInputDirection:
+		case types.IncludesPropDirection:
 			directionVal, ok := field.Value.(*ast.EnumValue)
 			if !ok {
 				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg

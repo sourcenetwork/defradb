@@ -283,7 +283,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				Schema: `
 					type User {
 						name: String
-						age: Int @crdt(type: "pcounter")
+						age: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -342,7 +342,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				Schema: `
 					type User {
 						name: String
-						age: Int @crdt(type: "pcounter")
+						age: Int @crdt(type: pcounter)
 					}
 				`,
 			},

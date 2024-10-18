@@ -38,7 +38,7 @@ func (db *db) addSchema(
 	ctx context.Context,
 	schemaString string,
 ) ([]client.CollectionDescription, error) {
-	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
+	newDefinitions, err := db.parser.ParseSDL(schemaString)
 	if err != nil {
 		return nil, err
 	}
