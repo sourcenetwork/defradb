@@ -771,7 +771,7 @@ func (doc *Document) setAndParseObjectType(value map[string]any) error {
 }
 
 func (doc *Document) setDefaultValues() error {
-	for _, field := range doc.collectionDefinition.GetFields() {
+	for _, field := range doc.collectionDefinition.Description.Fields {
 		if field.DefaultValue == nil {
 			continue // no default value to set
 		}

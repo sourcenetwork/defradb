@@ -30,7 +30,7 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 						name: String @default(string: "Bob")
 						age: Int @default(int: 10)
 						points: Float @default(float: 30)
-						metadata: JSON @default(json: "{\"value\":1}")
+						metadata: JSON @default(json: {value: 1})
 						image: Blob @default(blob: "ff0099")
 					}
 				`,
@@ -66,9 +66,11 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 								DefaultValue: "ff0099",
 							},
 							{
-								ID:           5,
-								Name:         "metadata",
-								DefaultValue: "{\"value\":1}",
+								ID:   5,
+								Name: "metadata",
+								DefaultValue: map[string]any{
+									"value": float64(1),
+								},
 							},
 							{
 								ID:           6,
