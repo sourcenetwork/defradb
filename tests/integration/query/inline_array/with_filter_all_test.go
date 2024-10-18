@@ -303,3 +303,29 @@ func TestQueryInlineNotNullBooleanArray_WithAllFilter_Succeeds(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryInlineStringArray_WithAllFilterAndNullValue_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple inline array, filtered all of string array with null",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"pageHeaders": null
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {pageHeaders: {_all: {_eq: null}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
