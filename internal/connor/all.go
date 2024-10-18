@@ -1,8 +1,6 @@
 package connor
 
 import (
-	"github.com/sourcenetwork/defradb/client"
-
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -39,7 +37,7 @@ func all(condition, data any) (bool, error) {
 		return allSlice(condition, t)
 
 	default:
-		return false, client.NewErrUnhandledType("data", data)
+		return false, nil
 	}
 }
 
