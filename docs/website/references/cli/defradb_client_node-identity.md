@@ -8,7 +8,7 @@ Get the information public about the node's identity.
 
 Node uses the identity to be able to exchange encryption keys with other nodes.
 
-The identity contains:
+A public identity contains:
 - A compressed 33-byte secp256k1 public key in HEX format.
 - A "did:key" generated from the public key.
 

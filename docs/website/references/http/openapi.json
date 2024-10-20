@@ -1688,6 +1688,27 @@
                 ]
             }
         },
+        "/node/assign-identity": {
+            "post": {
+                "description": "Assign node's identity",
+                "operationId": "assign_node_identity",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "node",
+                    "identity"
+                ]
+            }
+        },
         "/node/identity": {
             "get": {
                 "description": "Get node's public identity",
