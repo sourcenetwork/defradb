@@ -566,7 +566,8 @@ func closeNodes(
 	s *state,
 	action Close,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		node.Close()
 	}
 }
@@ -743,7 +744,7 @@ func setStartingNodes(
 }
 
 func startNodes(s *state, action Start) {
-	nodes := getNodes(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(nodes) - 1; i >= 0; i-- {
 		nodeIndex := i
@@ -1082,7 +1083,8 @@ func updateSchema(
 	s *state,
 	action SchemaUpdate,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		results, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1102,7 +1104,8 @@ func patchSchema(
 	s *state,
 	action SchemaPatch,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		var setAsDefaultVersion bool
 		if action.SetAsDefaultVersion.HasValue() {
 			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
@@ -1125,7 +1128,8 @@ func patchCollection(
 	s *state,
 	action PatchCollection,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		err := node.PatchCollection(s.ctx, action.Patch)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1141,7 +1145,8 @@ func getSchema(
 	s *state,
 	action GetSchema,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		var results []client.SchemaDescription
 		var err error
 		switch {
@@ -1172,7 +1177,8 @@ func getCollections(
 	s *state,
 	action GetCollections,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.SetContextTxn(s.ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
@@ -1194,7 +1200,8 @@ func setActiveSchemaVersion(
 	s *state,
 	action SetActiveSchemaVersion,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		err := node.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1222,7 +1229,8 @@ func createView(
 		}, "")
 	}
 
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1234,7 +1242,8 @@ func refreshViews(
 	s *state,
 	action RefreshViews,
 ) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		err := node.RefreshViews(s.ctx, action.FilterOptions)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1983,7 +1992,9 @@ func executeRequest(
 	action Request,
 ) {
 	var expectedErrorRaised bool
-	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
@@ -2035,7 +2046,8 @@ func executeSubscriptionRequest(
 ) {
 	subscriptionAssert := make(chan func())
 
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		result := node.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
@@ -2286,7 +2298,8 @@ func assertIntrospectionResults(
 	s *state,
 	action IntrospectionRequest,
 ) bool {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
@@ -2317,7 +2330,8 @@ func assertClientIntrospectionResults(
 	s *state,
 	action ClientIntrospectionRequest,
 ) bool {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
