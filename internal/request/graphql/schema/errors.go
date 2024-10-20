@@ -30,6 +30,11 @@ const (
 	errPolicyUnknownArgument         string = "policy with unknown argument"
 	errPolicyInvalidIDProp           string = "policy directive with invalid id property"
 	errPolicyInvalidResourceProp     string = "policy directive with invalid resource property"
+	errDefaultValueType              string = "default value type must match field type"
+	errDefaultValueNotAllowed        string = "default value is not allowed for this field type"
+	errDefaultValueInvalid           string = "default value is invalid"
+	errDefaultValueOneArg            string = "default value must specify one argument"
+	errFieldTypeNotSpecified         string = "field type not specified"
 )
 
 var (
@@ -56,6 +61,7 @@ var (
 	ErrPolicyWithUnknownArg      = errors.New(errPolicyUnknownArgument)
 	ErrPolicyInvalidIDProp       = errors.New(errPolicyInvalidIDProp)
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
+	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -134,5 +140,45 @@ func NewErrRelationNotFound(relationName string) error {
 	return errors.New(
 		errRelationNotFound,
 		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrDefaultValueOneArg(field string) error {
+	return errors.New(
+		errDefaultValueOneArg,
+		errors.NewKV("Field", field),
+	)
+}
+
+func NewErrDefaultValueInvalid(field string, arg string) error {
+	return errors.New(
+		errDefaultValueInvalid,
+		errors.NewKV("Field", field),
+		errors.NewKV("Arg", arg),
+	)
+}
+
+func NewErrDefaultValueType(name string, expected string, actual string) error {
+	return errors.New(
+		errDefaultValueType,
+		errors.NewKV("Name", name),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
+}
+
+func NewErrDefaultValueNotAllowed(fieldName, fieldType string) error {
+	return errors.New(
+		errDefaultValueNotAllowed,
+		errors.NewKV("Name", fieldName),
+		errors.NewKV("Type", fieldType),
+	)
+}
+
+func NewErrFieldTypeNotSpecified(objectName, fieldName string) error {
+	return errors.New(
+		errFieldTypeNotSpecified,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("Field", fieldName),
 	)
 }

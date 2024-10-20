@@ -4,6 +4,10 @@ The default DefraDB directory is `$HOME/.defradb`. It can be changed via the --r
 
 Relative paths are interpreted as being rooted in the DefraDB directory.
 
+## `development`
+
+Enables a set of features that make development easier but should not be enabled in production.
+
 ## `datastore.store`
 
 Store can be badger or memory. Defaults to `badger`.
@@ -16,6 +20,10 @@ Store can be badger or memory. Defaults to `badger`.
 The number of retries to make in the event of a transaction conflict. Defaults to `5`.
 
 Currently this is only used within the P2P system and will not affect operations initiated by users.
+
+## `datastore.noencryption`
+
+Skip generating an encryption key. Encryption at rest will be disabled. **WARNING**: This cannot be undone.
 
 ## `datastore.badger.path`
 
@@ -152,3 +160,7 @@ transactions created by the node is stored. Required when using `acp.type`:`sour
 The SourceHub address of the actor that client-side actions should permit to make SourceHub actions on
 their behalf.  This is a client-side only config param.  It is required if the client wishes to make
 SourceHub ACP requests in order to create protected data.
+
+## `secretfile`
+
+Path to the file containing secrets. Defaults to `.env`.

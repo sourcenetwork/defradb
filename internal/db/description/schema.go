@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 // CreateSchemaVersion creates and saves to the store a new schema version.
@@ -35,31 +34,13 @@ func CreateSchemaVersion(
 		return client.SchemaDescription{}, err
 	}
 
-	scid, err := cid.NewSHA256CidV1(buf)
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-	versionID := scid.String()
-	isNew := desc.Root == ""
-
-	desc.VersionID = versionID
-	if isNew {
-		// If this is a new schema, the Root will match the version ID
-		desc.Root = versionID
-	}
-
-	// Rebuild the json buffer to include the newly set ID properties
-	buf, err = json.Marshal(desc)
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-
-	key := core.NewSchemaVersionKey(versionID)
+	key := core.NewSchemaVersionKey(desc.VersionID)
 	err = txn.Systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
 
+	isNew := desc.Root == desc.VersionID
 	if !isNew {
 		// We don't need to add a root key if this is the first version
 		schemaVersionHistoryKey := core.NewSchemaRootKey(desc.Root, desc.VersionID)

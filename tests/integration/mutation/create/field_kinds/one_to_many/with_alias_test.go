@@ -94,35 +94,6 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 	}
 	executeTestCase(t, test)
 }
-func TestMutationCreateOneToMany_AliasedRelationNameInvalidIDManySide_CreatedDoc(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "One to many create mutation, invalid id, from the many side, with alias",
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House",
-					"author": "ValueDoesntMatter"
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name": "Painted House",
-						},
-					},
-				},
-			},
-		},
-	}
-	executeTestCase(t, test)
-}
 
 func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
@@ -191,7 +162,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
 	// These IDs MUST be shared by both tests below.
-	bookID := "bae-e4888569-d423-58b7-94c5-5886e3cffe22"
+	bookID := "bae-1d943ec7-1701-5910-a467-7d863beada5d"
 
 	nonAliasedTest := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",

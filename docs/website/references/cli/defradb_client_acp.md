@@ -32,6 +32,7 @@ Learn more about [ACP](/acp/README.md)
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
+      --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
@@ -41,4 +42,5 @@ Learn more about [ACP](/acp/README.md)
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client acp policy](defradb_client_acp_policy.md)	 - Interact with the acp policy features of DefraDB instance
+* [defradb client acp relationship](defradb_client_acp_relationship.md)	 - Interact with the acp relationship features of DefraDB instance
 

@@ -11,24 +11,23 @@
 package cli
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestKeyringGenerate(t *testing.T) {
 	rootdir := t.TempDir()
-	readPassword = func(_ *cobra.Command, _ string) ([]byte, error) {
-		return []byte("secret"), nil
-	}
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	require.NoError(t, err)
 
 	cmd := NewDefraCommand()
 	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
 
-	err := cmd.Execute()
+	err = cmd.Execute()
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "keys", encryptionKeyName))
@@ -37,14 +36,13 @@ func TestKeyringGenerate(t *testing.T) {
 
 func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
 	rootdir := t.TempDir()
-	readPassword = func(_ *cobra.Command, _ string) ([]byte, error) {
-		return []byte("secret"), nil
-	}
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	require.NoError(t, err)
 
 	cmd := NewDefraCommand()
-	cmd.SetArgs([]string{"keyring", "generate", "--no-encryption-key", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "generate", "--no-encryption", "--rootdir", rootdir})
 
-	err := cmd.Execute()
+	err = cmd.Execute()
 	require.NoError(t, err)
 
 	assert.NoFileExists(t, filepath.Join(rootdir, "keys", encryptionKeyName))
@@ -53,14 +51,13 @@ func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
 
 func TestKeyringGenerateNoPeerKey(t *testing.T) {
 	rootdir := t.TempDir()
-	readPassword = func(_ *cobra.Command, _ string) ([]byte, error) {
-		return []byte("secret"), nil
-	}
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	require.NoError(t, err)
 
 	cmd := NewDefraCommand()
 	cmd.SetArgs([]string{"keyring", "generate", "--no-peer-key", "--rootdir", rootdir})
 
-	err := cmd.Execute()
+	err = cmd.Execute()
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "keys", encryptionKeyName))

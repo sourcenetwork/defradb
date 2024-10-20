@@ -18,26 +18,26 @@ import (
 )
 
 // execRequest executes a request against the database.
-func (db *db) execRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *db) execRequest(ctx context.Context, request string, options *client.GQLOptions) *client.RequestResult {
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
 	if err != nil {
-		res.GQL.Errors = []error{err}
+		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 	if db.parser.IsIntrospection(ast) {
 		return db.parser.ExecuteIntrospection(request)
 	}
 
-	parsedRequest, errors := db.parser.Parse(ast)
+	parsedRequest, errors := db.parser.Parse(ast, options)
 	if len(errors) > 0 {
-		res.GQL.Errors = errors
+		res.GQL.Errors = append(res.GQL.Errors, errors...)
 		return res
 	}
 
 	pub, err := db.handleSubscription(ctx, parsedRequest)
 	if err != nil {
-		res.GQL.Errors = []error{err}
+		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 
@@ -52,7 +52,7 @@ func (db *db) execRequest(ctx context.Context, request string) *client.RequestRe
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
-		res.GQL.Errors = []error{err}
+		res.GQL.Errors = append(res.GQL.Errors, err)
 	}
 	res.GQL.Data = results
 	return res

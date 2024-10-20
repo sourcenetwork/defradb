@@ -11,7 +11,9 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
@@ -50,10 +52,15 @@ type DB interface {
 	// It sits within the rootstore returned by [Root].
 	Blockstore() datastore.Blockstore
 
+	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
+	//
+	// It sits within the rootstore returned by [Root].
+	Encstore() datastore.Blockstore
+
 	// Peerstore returns the peerstore where known host information is stored.
 	//
 	// It sits within the rootstore returned by [Root].
-	Peerstore() datastore.DSBatching
+	Peerstore() datastore.DSReaderWriter
 
 	// Headstore returns the headstore where the current heads of the database are stored.
 	//
@@ -99,6 +106,35 @@ type DB interface {
 	//
 	// Note: A policy can not be added without the creatorID (identity).
 	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
+
+	// AddDocActorRelationship creates a relationship between document and the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship already existed (no-op), and false if a new relationship was made.
+	//
+	// Note: The request actor must either be the owner or manager of the document.
+	AddDocActorRelationship(
+		ctx context.Context,
+		collectionName string,
+		docID string,
+		relation string,
+		targetActor string,
+	) (AddDocActorRelationshipResult, error)
+
+	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note: The request actor must either be the owner or manager of the document.
+	DeleteDocActorRelationship(
+		ctx context.Context,
+		collectionName string,
+		docID string,
+		relation string,
+		targetActor string,
+	) (DeleteDocActorRelationshipResult, error)
 }
 
 // Store contains the core DefraDB read-write operations.
@@ -196,6 +232,14 @@ type Store interface {
 		transform immutable.Option[model.Lens],
 	) ([]CollectionDefinition, error)
 
+	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
+	// will be refreshed.
+	//
+	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
+	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
+	// when making this call.
+	RefreshViews(context.Context, CollectionFetchOptions) error
+
 	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
 	//
 	// There may only be one migration per collection version.  If another migration was registered it will be
@@ -246,7 +290,32 @@ type Store interface {
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(ctx context.Context, request string) *RequestResult
+	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
+}
+
+// GQLOptions contains optional arguments for GQL requests.
+type GQLOptions struct {
+	// OperationName is the name of the operation to exec.
+	OperationName string
+	// Variables is a map of names to varible values.
+	Variables map[string]any
+}
+
+// RequestOption sets an optional request setting.
+type RequestOption func(*GQLOptions)
+
+// WithOperationName sets the operation name for a GQL request.
+func WithOperationName(operationName string) RequestOption {
+	return func(o *GQLOptions) {
+		o.OperationName = operationName
+	}
+}
+
+// WithVariables sets the variables for a GQL request.
+func WithVariables(variables map[string]any) RequestOption {
+	return func(o *GQLOptions) {
+		o.Variables = variables
+	}
 }
 
 // GQLResult represents the immediate results of a GQL request.
@@ -263,6 +332,48 @@ type GQLResult struct {
 	//
 	// It will be nil if any errors were raised during execution.
 	Data any `json:"data"`
+}
+
+// gqlError represents an error that was encountered during a GQL request.
+//
+// This is only used for marshalling to keep our responses spec compliant.
+type gqlError struct {
+	// Message contains a description of the error.
+	Message string `json:"message"`
+}
+
+// gqlResult is used to marshal and unmarshal GQLResults.
+//
+// The serialized data should always match the graphQL spec.
+type gqlResult struct {
+	// Errors contains the formatted result errors
+	Errors []gqlError `json:"errors,omitempty"`
+	// Data contains the result data
+	Data any `json:"data"`
+}
+
+func (res *GQLResult) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.UseNumber()
+	var out gqlResult
+	if err := dec.Decode(&out); err != nil {
+		return err
+	}
+	res.Data = out.Data
+	res.Errors = make([]error, len(out.Errors))
+	for i, e := range out.Errors {
+		res.Errors[i] = ReviveError(e.Message)
+	}
+	return nil
+}
+
+func (res GQLResult) MarshalJSON() ([]byte, error) {
+	out := gqlResult{Data: res.Data}
+	out.Errors = make([]gqlError, len(res.Errors))
+	for i, e := range res.Errors {
+		out.Errors[i] = gqlError{Message: e.Error()}
+	}
+	return json.Marshal(out)
 }
 
 // RequestResult represents the results of a GQL request.
@@ -282,6 +393,9 @@ type CollectionFetchOptions struct {
 
 	// If provided, only collections with schemas of this root will be returned.
 	SchemaRoot immutable.Option[string]
+
+	// If provided, only collections with this root will be returned.
+	Root immutable.Option[uint32]
 
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]

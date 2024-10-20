@@ -13,14 +13,11 @@ package db
 import (
 	"context"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -142,24 +139,11 @@ func (c *collection) applyDelete(
 
 	txn := mustGetContextTxn(ctx)
 	dsKey := primaryKey.ToDataStoreKey()
-	headset := clock.NewHeadSet(
-		txn.Headstore(),
-		dsKey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
-	)
-	cids, _, err := headset.List(ctx)
-	if err != nil {
-		return err
-	}
-
-	dagLinks := make([]coreblock.DAGLink, len(cids))
-	for i, cid := range cids {
-		dagLinks[i] = coreblock.NewDAGLink(core.HEAD, cidlink.Link{Cid: cid})
-	}
 
 	link, b, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		dsKey,
-		dagLinks,
+		[]coreblock.DAGLink{},
 		client.Deleted,
 	)
 	if err != nil {

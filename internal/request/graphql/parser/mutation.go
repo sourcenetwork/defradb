@@ -17,40 +17,28 @@ import (
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-)
-
-var (
-	mutationNameToType = map[string]request.MutationType{
-		"create": request.CreateObjects,
-		"update": request.UpdateObjects,
-		"delete": request.DeleteObjects,
-	}
 )
 
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(
-	schema gql.Schema,
-	def *ast.OperationDefinition,
+	exe *gql.ExecutionContext,
+	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, error) {
-	qdef := &request.OperationDefinition{
-		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
-	}
-
-	for i, selection := range def.SelectionSet.Selections {
-		switch node := selection.(type) {
-		case *ast.Field:
-			mut, err := parseMutation(schema, schema.MutationType(), node)
+	var selections []request.Selection
+	for _, fields := range collectedFields {
+		for _, node := range fields {
+			mut, err := parseMutation(exe, exe.Schema.MutationType(), node)
 			if err != nil {
 				return nil, err
 			}
-
-			qdef.Selections[i] = mut
+			selections = append(selections, mut)
 		}
 	}
-	return qdef, nil
+	return &request.OperationDefinition{
+		Selections: selections,
+	}, nil
 }
 
 // @todo: Create separate mutation parse functions
@@ -60,15 +48,13 @@ func parseMutationOperationDefinition(
 // parseMutation parses a typed mutation field
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
-func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.ObjectMutation, error) {
+func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Field) (*request.ObjectMutation, error) {
 	mut := &request.ObjectMutation{
 		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
 	}
-
-	fieldDef := gql.GetFieldDef(schema, parent, mut.Name)
 
 	// parse the mutation type
 	// mutation names are either generated from a type
@@ -80,11 +66,6 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 	// get back one of our defined types.
 	mutNameParts := strings.Split(mut.Name, "_")
 	typeStr := mutNameParts[0]
-	var ok bool
-	mut.Type, ok = mutationNameToType[typeStr]
-	if !ok {
-		return nil, ErrUnknownMutationName
-	}
 
 	if len(mutNameParts) > 1 { // only generated object mutations
 		// reconstruct the name.
@@ -95,61 +76,28 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 		mut.Collection = strings.Join(mutNameParts[1:], "_")
 	}
 
-	// parse arguments
-	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
-		// parse each individual arg type seperately
-		if prop == request.Input { // parse input
-			raw := argument.Value.(*ast.ObjectValue)
-			mut.Input = parseMutationInputObject(raw)
-		} else if prop == request.Inputs {
-			raw := argument.Value.(*ast.ListValue)
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, mut.Name)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-			mut.Inputs = make([]map[string]any, len(raw.Values))
+	switch typeStr {
+	case "create":
+		mut.Type = request.CreateObjects
+		parseCreateMutationArgs(mut, arguments)
 
-			for i, val := range raw.Values {
-				doc, ok := val.(*ast.ObjectValue)
-				if !ok {
-					return nil, client.NewErrUnexpectedType[*ast.ObjectValue]("doc array element", val)
-				}
-				mut.Inputs[i] = parseMutationInputObject(doc)
-			}
-		} else if prop == request.FilterClause { // parse filter
-			obj := argument.Value.(*ast.ObjectValue)
-			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
-			if !ok {
-				return nil, ErrFilterMissingArgumentType
-			}
-			filter, err := NewFilter(obj, filterType)
-			if err != nil {
-				return nil, err
-			}
+	case "update":
+		mut.Type = request.UpdateObjects
+		parseUpdateMutationArgs(mut, arguments)
 
-			mut.Filter = filter
-		} else if prop == request.DocIDArgName {
-			raw := argument.Value.(*ast.StringValue)
-			mut.DocIDs = immutable.Some([]string{raw.Value})
-		} else if prop == request.DocIDsArgName {
-			raw := argument.Value.(*ast.ListValue)
-			ids := make([]string, len(raw.Values))
-			for i, val := range raw.Values {
-				id, ok := val.(*ast.StringValue)
-				if !ok {
-					return nil, client.NewErrUnexpectedType[*ast.StringValue]("ids argument", val)
-				}
-				ids[i] = id.Value
-			}
-			mut.DocIDs = immutable.Some(ids)
-		} else if prop == request.EncryptDocArgName {
-			mut.Encrypt = argument.Value.(*ast.BooleanValue).Value
-		} else if prop == request.EncryptFieldsArgName {
-			raw := argument.Value.(*ast.ListValue)
-			fieldNames := make([]string, len(raw.Values))
-			for i, val := range raw.Values {
-				fieldNames[i] = val.GetValue().(string)
-			}
-			mut.EncryptFields = fieldNames
-		}
+	case "delete":
+		mut.Type = request.DeleteObjects
+		parseDeleteMutationArgs(mut, arguments)
+
+	case "upsert":
+		mut.Type = request.UpsertObjects
+		parseUpsertMutationArgs(mut, arguments)
+
+	default:
+		return nil, ErrUnknownMutationName
 	}
 
 	// if theres no field selections, just return
@@ -162,47 +110,113 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 		return nil, err
 	}
 
-	mut.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
+	mut.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
+	if err != nil {
+		return nil, err
+	}
+
 	return mut, err
 }
 
-// parseMutationInput parses the correct underlying
-// value type of the given ast.Value
-func parseMutationInput(val ast.Value) any {
-	switch t := val.(type) {
-	case *ast.IntValue:
-		return gql.Int.ParseLiteral(val)
-	case *ast.FloatValue:
-		return gql.Float.ParseLiteral(val)
-	case *ast.BooleanValue:
-		return t.Value
-	case *ast.StringValue:
-		return t.Value
-	case *ast.ObjectValue:
-		return parseMutationInputObject(t)
-	case *ast.ListValue:
-		return parseMutationInputList(t)
-	default:
-		return val.GetValue()
+func parseCreateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+	for name, value := range args {
+		switch name {
+		case request.Input:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			inputs := make([]map[string]any, len(v))
+			for i, v := range v {
+				inputs[i] = v.(map[string]any)
+			}
+			mut.CreateInput = inputs
+
+		case request.EncryptDocArgName:
+			if v, ok := value.(bool); ok {
+				mut.Encrypt = v
+			}
+
+		case request.EncryptFieldsArgName:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			fields := make([]string, len(v))
+			for i, v := range v {
+				fields[i] = v.(string)
+			}
+			mut.EncryptFields = fields
+		}
 	}
 }
 
-// parseMutationInputList parses the correct underlying
-// value type for all of the values in the ast.ListValue
-func parseMutationInputList(val *ast.ListValue) []any {
-	list := make([]any, 0)
-	for _, val := range val.Values {
-		list = append(list, parseMutationInput(val))
+func parseDeleteMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+	for name, value := range args {
+		switch name {
+		case request.DocIDArgName:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, v := range v {
+				docIDs[i] = v.(string)
+			}
+			mut.DocIDs = immutable.Some(docIDs)
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				mut.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
+		}
 	}
-	return list
 }
 
-// parseMutationInputObject parses the correct underlying
-// value type for all of the fields in the ast.ObjectValue
-func parseMutationInputObject(val *ast.ObjectValue) map[string]any {
-	obj := make(map[string]any)
-	for _, field := range val.Fields {
-		obj[field.Name.Value] = parseMutationInput(field.Value)
+func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+	for name, value := range args {
+		switch name {
+		case request.Input:
+			if v, ok := value.(map[string]any); ok {
+				mut.UpdateInput = v
+			}
+
+		case request.DocIDArgName:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, v := range v {
+				docIDs[i] = v.(string)
+			}
+			mut.DocIDs = immutable.Some(docIDs)
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				mut.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
+		}
 	}
-	return obj
+}
+
+func parseUpsertMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+	for name, value := range args {
+		switch name {
+		case request.CreateInput:
+			if v, ok := value.(map[string]any); ok {
+				mut.CreateInput = []map[string]any{v}
+			}
+
+		case request.UpdateInput:
+			if v, ok := value.(map[string]any); ok {
+				mut.UpdateInput = v
+			}
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				mut.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
+		}
+	}
 }

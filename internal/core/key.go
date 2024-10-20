@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 var (
@@ -47,7 +48,9 @@ const (
 	COLLECTION_ID                  = "/collection/id"
 	COLLECTION_NAME                = "/collection/name"
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
+	COLLECTION_ROOT                = "/collection/root"
 	COLLECTION_INDEX               = "/collection/index"
+	COLLECTION_VIEW_ITEMS          = "/collection/vi"
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	COLLECTION_SEQ                 = "/seq/collection"
@@ -55,8 +58,10 @@ const (
 	FIELD_ID_SEQ                   = "/seq/field"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
-	REPLICATOR                     = "/replicator/id"
 	P2P_COLLECTION                 = "/p2p/collection"
+	REPLICATOR                     = "/rep/id"
+	REPLICATOR_RETRY_ID            = "/rep/retry/id"
+	REPLICATOR_RETRY_DOC           = "/rep/retry/doc"
 )
 
 // Key is an interface that represents a key in the database.
@@ -75,6 +80,24 @@ type DataStoreKey struct {
 }
 
 var _ Key = (*DataStoreKey)(nil)
+
+// ViewCacheKey is a trimmed down [DataStoreKey] used for caching the results
+// of View items.
+//
+// It is stored in the format `/collection/vi/[CollectionRootID]/[ItemID]`. It points to the
+// full serialized View item.
+type ViewCacheKey struct {
+	// CollectionRootID is the Root of the Collection that this item belongs to.
+	CollectionRootID uint32
+
+	// ItemID is the unique (to this CollectionRootID) ID of the View item.
+	//
+	// For now this is essentially just the index of the item in the result-set, however
+	// that is likely to change in the near future.
+	ItemID uint
+}
+
+var _ Key = (*ViewCacheKey)(nil)
 
 // IndexedField contains information necessary for storing a single
 // value of a field in an index.
@@ -106,7 +129,7 @@ var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocID   string
-	FieldId string //can be 'C'
+	FieldID string //can be 'C'
 	Cid     cid.Cid
 }
 
@@ -141,6 +164,17 @@ type CollectionSchemaVersionKey struct {
 }
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
+
+// CollectionRootKey points to nil, but the keys/prefix can be used
+// to get collections that are of a given RootID.
+//
+// It is stored in the format `/collection/root/[RootID]/[CollectionID]`.
+type CollectionRootKey struct {
+	RootID       uint32
+	CollectionID uint32
+}
+
+var _ Key = (*CollectionRootKey)(nil)
 
 // CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
@@ -253,7 +287,7 @@ func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	return HeadStoreKey{
 		// elements[0] is empty (key has leading '/')
 		DocID:   elements[1],
-		FieldId: elements[2],
+		FieldID: elements[2],
 		Cid:     cid,
 	}, nil
 }
@@ -285,6 +319,37 @@ func NewCollectionSchemaVersionKeyFromString(key string) (CollectionSchemaVersio
 	return CollectionSchemaVersionKey{
 		SchemaVersionID: elements[len(elements)-2],
 		CollectionID:    uint32(colID),
+	}, nil
+}
+
+func NewCollectionRootKey(rootID uint32, collectionID uint32) CollectionRootKey {
+	return CollectionRootKey{
+		RootID:       rootID,
+		CollectionID: collectionID,
+	}
+}
+
+// NewCollectionRootKeyFromString creates a new [CollectionRootKey].
+//
+// It expects the key to be in the format `/collection/root/[RootID]/[CollectionID]`.
+func NewCollectionRootKeyFromString(key string) (CollectionRootKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) != 5 || keyArr[1] != COLLECTION || keyArr[2] != "root" {
+		return CollectionRootKey{}, ErrInvalidKey
+	}
+	rootID, err := strconv.Atoi(keyArr[3])
+	if err != nil {
+		return CollectionRootKey{}, err
+	}
+
+	collectionID, err := strconv.Atoi(keyArr[4])
+	if err != nil {
+		return CollectionRootKey{}, err
+	}
+
+	return CollectionRootKey{
+		RootID:       uint32(rootID),
+		CollectionID: uint32(collectionID),
 	}, nil
 }
 
@@ -408,16 +473,16 @@ func (k DataStoreKey) WithInstanceInfo(key DataStoreKey) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
+func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 	newKey := k
-	newKey.FieldID = fieldId
+	newKey.FieldID = fieldID
 	return newKey
 }
 
 func (k DataStoreKey) ToHeadStoreKey() HeadStoreKey {
 	return HeadStoreKey{
 		DocID:   k.DocID,
-		FieldId: k.FieldID,
+		FieldID: k.FieldID,
 	}
 }
 
@@ -433,9 +498,9 @@ func (k HeadStoreKey) WithCid(c cid.Cid) HeadStoreKey {
 	return newKey
 }
 
-func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
+func (k HeadStoreKey) WithFieldID(fieldID string) HeadStoreKey {
 	newKey := k
-	newKey.FieldId = fieldId
+	newKey.FieldID = fieldID
 	return newKey
 }
 
@@ -484,6 +549,56 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	}
 }
 
+func NewViewCacheColPrefix(rootID uint32) ViewCacheKey {
+	return ViewCacheKey{
+		CollectionRootID: rootID,
+	}
+}
+
+func NewViewCacheKey(rootID uint32, itemID uint) ViewCacheKey {
+	return ViewCacheKey{
+		CollectionRootID: rootID,
+		ItemID:           itemID,
+	}
+}
+
+func (k ViewCacheKey) ToString() string {
+	return string(k.Bytes())
+}
+
+func (k ViewCacheKey) Bytes() []byte {
+	result := []byte(COLLECTION_VIEW_ITEMS)
+
+	if k.CollectionRootID != 0 {
+		result = append(result, '/')
+		result = encoding.EncodeUvarintAscending(result, uint64(k.CollectionRootID))
+	}
+
+	if k.ItemID != 0 {
+		result = append(result, '/')
+		result = encoding.EncodeUvarintAscending(result, uint64(k.ItemID))
+	}
+
+	return result
+}
+
+func (k ViewCacheKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k ViewCacheKey) PrettyPrint() string {
+	result := COLLECTION_VIEW_ITEMS
+
+	if k.CollectionRootID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
+	}
+	if k.ItemID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.ItemID))
+	}
+
+	return result
+}
+
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
 // It also validates values of the fields.
 func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) IndexDataStoreKey {
@@ -511,6 +626,25 @@ func (k *IndexDataStoreKey) ToDS() ds.Key {
 // is empty, the string is returned up to that point
 func (k *IndexDataStoreKey) ToString() string {
 	return string(k.Bytes())
+}
+
+// Equal returns true if the two keys are equal
+func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
+	if k.CollectionID != other.CollectionID || k.IndexID != other.IndexID {
+		return false
+	}
+
+	if len(k.Fields) != len(other.Fields) {
+		return false
+	}
+
+	for i, field := range k.Fields {
+		if !field.Value.Equal(other.Fields[i].Value) || field.Descending != other.Fields[i].Descending {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
@@ -585,6 +719,28 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k CollectionRootKey) ToString() string {
+	result := COLLECTION_ROOT
+
+	if k.RootID != 0 {
+		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.RootID)))
+	}
+
+	if k.CollectionID != 0 {
+		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.CollectionID)))
+	}
+
+	return result
+}
+
+func (k CollectionRootKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k CollectionRootKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
@@ -723,8 +879,8 @@ func (k HeadStoreKey) ToString() string {
 	if k.DocID != "" {
 		result = result + "/" + k.DocID
 	}
-	if k.FieldId != "" {
-		result = result + "/" + k.FieldId
+	if k.FieldID != "" {
+		result = result + "/" + k.FieldID
 	}
 	if k.Cid.Defined() {
 		result = result + "/" + k.Cid.String()
@@ -793,33 +949,79 @@ func bytesPrefixEnd(b []byte) []byte {
 	return b
 }
 
-// EncStoreDocKey is a key for the encryption store.
-type EncStoreDocKey struct {
-	DocID     string
-	FieldName string
+type ReplicatorRetryIDKey struct {
+	PeerID string
 }
 
-var _ Key = (*EncStoreDocKey)(nil)
+var _ Key = (*ReplicatorRetryIDKey)(nil)
 
-// NewEncStoreDocKey creates a new EncStoreDocKey from a docID and fieldID.
-func NewEncStoreDocKey(docID string, fieldName string) EncStoreDocKey {
-	return EncStoreDocKey{
-		DocID:     docID,
-		FieldName: fieldName,
+func NewReplicatorRetryIDKey(peerID string) ReplicatorRetryIDKey {
+	return ReplicatorRetryIDKey{
+		PeerID: peerID,
 	}
 }
 
-func (k EncStoreDocKey) ToString() string {
-	if k.FieldName == "" {
-		return k.DocID
+// NewReplicatorRetryIDKeyFromString creates a new [ReplicatorRetryIDKey] from a string.
+//
+// It expects the input string to be in the format `/rep/retry/id/[PeerID]`.
+func NewReplicatorRetryIDKeyFromString(key string) (ReplicatorRetryIDKey, error) {
+	peerID := strings.TrimPrefix(key, REPLICATOR_RETRY_ID+"/")
+	if peerID == "" {
+		return ReplicatorRetryIDKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
 	}
-	return fmt.Sprintf("%s/%s", k.DocID, k.FieldName)
+	return NewReplicatorRetryIDKey(peerID), nil
 }
 
-func (k EncStoreDocKey) Bytes() []byte {
+func (k ReplicatorRetryIDKey) ToString() string {
+	return REPLICATOR_RETRY_ID + "/" + k.PeerID
+}
+
+func (k ReplicatorRetryIDKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k EncStoreDocKey) ToDS() ds.Key {
+func (k ReplicatorRetryIDKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+type ReplicatorRetryDocIDKey struct {
+	PeerID string
+	DocID  string
+}
+
+var _ Key = (*ReplicatorRetryDocIDKey)(nil)
+
+func NewReplicatorRetryDocIDKey(peerID, docID string) ReplicatorRetryDocIDKey {
+	return ReplicatorRetryDocIDKey{
+		PeerID: peerID,
+		DocID:  docID,
+	}
+}
+
+// NewReplicatorRetryDocIDKeyFromString creates a new [ReplicatorRetryDocIDKey] from a string.
+//
+// It expects the input string to be in the format `/rep/retry/doc/[PeerID]/[DocID]`.
+func NewReplicatorRetryDocIDKeyFromString(key string) (ReplicatorRetryDocIDKey, error) {
+	trimmedKey := strings.TrimPrefix(key, REPLICATOR_RETRY_DOC+"/")
+	keyArr := strings.Split(trimmedKey, "/")
+	if len(keyArr) != 2 {
+		return ReplicatorRetryDocIDKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
+	}
+	return NewReplicatorRetryDocIDKey(keyArr[0], keyArr[1]), nil
+}
+
+func (k ReplicatorRetryDocIDKey) ToString() string {
+	keyString := REPLICATOR_RETRY_DOC + "/" + k.PeerID
+	if k.DocID != "" {
+		keyString += "/" + k.DocID
+	}
+	return keyString
+}
+
+func (k ReplicatorRetryDocIDKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k ReplicatorRetryDocIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }

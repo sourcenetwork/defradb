@@ -29,7 +29,7 @@ func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"custom": "{\"foo\": \"bar\"}"
+					"custom": {"foo": "bar"}
 				}`,
 			},
 			testUtils.UpdateDoc{

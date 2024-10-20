@@ -13,6 +13,10 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -55,6 +59,136 @@ func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
 					}
 				`,
 				ExpectedError: "relation can only have a single field set as primary",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						boss: User @primary
+						minion: User
+					}
+				`,
+			},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionDescription{
+					{
+						Name:           immutable.Some("User"),
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+							},
+							{
+								Name:         "boss",
+								ID:           1,
+								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "boss_id",
+								ID:           2,
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "minion",
+								ID:           3,
+								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								Name:         "minion_id",
+								ID:           4,
+								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								RelationName: immutable.Some("user_user"),
+							},
+						},
+					},
+				},
+			},
+			testUtils.GetSchema{
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "User",
+						Root:      "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
+						VersionID: "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "boss",
+								Kind: client.NewSelfKind("", false),
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "boss_id",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+				},
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "User") {
+							name
+							fields {
+								name
+								type {
+									name
+									kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "User",
+						"fields": append(DefaultFields,
+							Field{
+								"name": "boss",
+								"type": map[string]any{
+									"kind": "OBJECT",
+									"name": "User",
+								},
+							},
+							Field{
+								"name": "boss_id",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "ID",
+								},
+							},
+							Field{
+								"name": "minion",
+								"type": map[string]any{
+									"kind": "OBJECT",
+									"name": "User",
+								},
+							},
+							Field{
+								"name": "minion_id",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "ID",
+								},
+							},
+						).Tidy(),
+					},
+				},
 			},
 		},
 	}

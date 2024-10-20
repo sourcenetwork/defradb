@@ -16,74 +16,83 @@ import (
 func eq(condition, data any) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
-		for _, item := range arr {
-			m, err := eq(condition, item)
-			if err != nil {
-				return false, err
-			}
-
-			if m {
-				return true, nil
-			}
-		}
-		return false, nil
+		return anySlice(condition, arr)
 
 	case immutable.Option[bool]:
-		if !arr.HasValue() {
-			return condition == nil, nil
-		}
-		data = arr.Value()
+		data = immutableValueOrNil(arr)
 
 	case immutable.Option[int64]:
-		if !arr.HasValue() {
-			return condition == nil, nil
-		}
-		data = arr.Value()
+		data = immutableValueOrNil(arr)
 
 	case immutable.Option[float64]:
-		if !arr.HasValue() {
-			return condition == nil, nil
-		}
-		data = arr.Value()
+		data = immutableValueOrNil(arr)
 
 	case immutable.Option[string]:
-		if !arr.HasValue() {
-			return condition == nil, nil
-		}
-		data = arr.Value()
+		data = immutableValueOrNil(arr)
 	}
 
 	switch cn := condition.(type) {
+	case map[FilterKey]any:
+		for prop, cond := range cn {
+			m, err := matchWith(prop.GetOperatorOrDefault(EqualOp), cond, prop.GetProp(data))
+			if err != nil {
+				return false, err
+			} else if !m {
+				return false, nil
+			}
+		}
+		return true, nil
+
+	case map[string]any:
+		return objectsEqual(cn, data)
+
 	case string:
 		if d, ok := data.(string); ok {
 			return d == cn, nil
 		}
 		return false, nil
+
 	case int64:
 		return numbers.Equal(cn, data), nil
+
 	case int32:
 		return numbers.Equal(cn, data), nil
+
 	case float64:
 		return numbers.Equal(cn, data), nil
-	case map[FilterKey]any:
-		m := true
-		for prop, cond := range cn {
-			var err error
-			m, err = matchWith(prop.GetOperatorOrDefault("_eq"), cond, prop.GetProp(data))
-			if err != nil {
-				return false, err
-			}
 
-			if !m {
-				// No need to evaluate after we fail
-				break
-			}
-		}
-
-		return m, nil
 	case time.Time:
 		return ctime.Equal(cn, data), nil
+
 	default:
 		return reflect.DeepEqual(condition, data), nil
 	}
+}
+
+// objectsEqual returns true if the given condition and data
+// contain equal key value pairs.
+func objectsEqual(condition map[string]any, data any) (bool, error) {
+	if data == nil {
+		return condition == nil, nil
+	}
+	d, ok := data.(map[string]any)
+	if !ok || len(d) != len(condition) {
+		return false, nil
+	}
+	for k, v := range d {
+		m, err := eq(condition[k], v)
+		if err != nil {
+			return false, err
+		} else if !m {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func immutableValueOrNil[T any](data immutable.Option[T]) any {
+	if data.HasValue() {
+		return data.Value()
+	}
+	return nil
 }

@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
-	"github.com/valyala/fastjson"
 )
 
 // BlobPattern is a regex for validating blob hex strings
@@ -55,7 +54,7 @@ func BlobScalarType() *graphql.Scalar {
 		// ParseValue converts the value to a hex string
 		ParseValue: coerceBlob,
 		// ParseLiteral converts the ast value to a hex string
-		ParseLiteral: func(valueAST ast.Value) any {
+		ParseLiteral: func(valueAST ast.Value, variables map[string]any) any {
 			switch valueAST := valueAST.(type) {
 			case *ast.StringValue:
 				return coerceBlob(valueAST.Value)
@@ -67,33 +66,39 @@ func BlobScalarType() *graphql.Scalar {
 	})
 }
 
-// coerceJSON converts the given value into a valid json string.
-// If the value cannot be converted nil is returned.
-func coerceJSON(value any) any {
-	switch value := value.(type) {
-	case []byte:
-		err := fastjson.ValidateBytes(value)
-		if err != nil {
-			// ignore this error because the value
-			// cannot be converted to a json string
-			return nil
+func parseJSON(valueAST ast.Value, variables map[string]any) any {
+	switch valueAST := valueAST.(type) {
+	case *ast.ObjectValue:
+		out := make(map[string]any)
+		for _, f := range valueAST.Fields {
+			out[f.Name.Value] = parseJSON(f.Value, variables)
 		}
-		return string(value)
+		return out
 
-	case *[]byte:
-		return coerceJSON(*value)
-
-	case string:
-		err := fastjson.Validate(value)
-		if err != nil {
-			// ignore this error because the value
-			// cannot be converted to a json string
-			return nil
+	case *ast.ListValue:
+		out := make([]any, len(valueAST.Values))
+		for i, v := range valueAST.Values {
+			out[i] = parseJSON(v, variables)
 		}
-		return value
+		return out
 
-	case *string:
-		return coerceJSON(*value)
+	case *ast.BooleanValue:
+		return graphql.Boolean.ParseLiteral(valueAST, variables)
+
+	case *ast.FloatValue:
+		return graphql.Float.ParseLiteral(valueAST, variables)
+
+	case *ast.IntValue:
+		return graphql.Int.ParseLiteral(valueAST, variables)
+
+	case *ast.StringValue:
+		return graphql.String.ParseLiteral(valueAST, variables)
+
+	case *ast.EnumValue:
+		return valueAST.Value
+
+	case *ast.Variable:
+		return variables[valueAST.Name.Value]
 
 	default:
 		return nil
@@ -103,20 +108,16 @@ func coerceJSON(value any) any {
 func JSONScalarType() *graphql.Scalar {
 	return graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "JSON",
-		Description: "The `JSON` scalar type represents a JSON string.",
-		// Serialize converts the value to a json string
-		Serialize: coerceJSON,
-		// ParseValue converts the value to a json string
-		ParseValue: coerceJSON,
-		// ParseLiteral converts the ast value to a json string
-		ParseLiteral: func(valueAST ast.Value) any {
-			switch valueAST := valueAST.(type) {
-			case *ast.StringValue:
-				return coerceJSON(valueAST.Value)
-			default:
-				// return nil if the value cannot be parsed
-				return nil
-			}
+		Description: "The `JSON` scalar type represents a JSON value.",
+		// Serialize converts the value to json value
+		Serialize: func(value any) any {
+			return value
 		},
+		// ParseValue converts the value to json value
+		ParseValue: func(value any) any {
+			return value
+		},
+		// ParseLiteral converts the ast value to a json value
+		ParseLiteral: parseJSON,
 	})
 }

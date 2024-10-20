@@ -40,6 +40,28 @@ func BooleanOperatorBlock() *gql.InputObject {
 	})
 }
 
+// BooleanListOperatorBlock filter block for [Boolean] types.
+func BooleanListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "BooleanListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Boolean] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
 // NotNullBooleanOperatorBlock filter block for boolean! types.
 func NotNullBooleanOperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
@@ -61,6 +83,28 @@ func NotNullBooleanOperatorBlock() *gql.InputObject {
 			"_nin": &gql.InputObjectFieldConfig{
 				Description: ninOperatorDescription,
 				Type:        gql.NewList(gql.NewNonNull(gql.Boolean)),
+			},
+		},
+	})
+}
+
+// NotNullBooleanListOperatorBlock filter block for [Boolean!] types.
+func NotNullBooleanListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullBooleanListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Boolean!] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
 			},
 		},
 	})
@@ -150,6 +194,28 @@ func FloatOperatorBlock() *gql.InputObject {
 	})
 }
 
+// FloatListOperatorBlock filter block for [Float] types.
+func FloatListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "FloatListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Float] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
 // NotNullFloatOperatorBlock filter block for Float! types.
 func NotNullFloatOperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
@@ -187,6 +253,28 @@ func NotNullFloatOperatorBlock() *gql.InputObject {
 			"_nin": &gql.InputObjectFieldConfig{
 				Description: ninOperatorDescription,
 				Type:        gql.NewList(gql.NewNonNull(gql.Float)),
+			},
+		},
+	})
+}
+
+// NotNullFloatListOperatorBlock filter block for [NotNullFloat] types.
+func NotNullFloatListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullFloatListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Float!] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
 			},
 		},
 	})
@@ -234,6 +322,28 @@ func IntOperatorBlock() *gql.InputObject {
 	})
 }
 
+// IntListOperatorBlock filter block for [Int] types.
+func IntListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "IntListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Int] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
 // NotNullIntOperatorBlock filter block for Int! types.
 func NotNullIntOperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
@@ -271,6 +381,28 @@ func NotNullIntOperatorBlock() *gql.InputObject {
 			"_nin": &gql.InputObjectFieldConfig{
 				Description: ninOperatorDescription,
 				Type:        gql.NewList(gql.NewNonNull(gql.Int)),
+			},
+		},
+	})
+}
+
+// NotNullIntListOperatorBlock filter block for [NotNullInt] types.
+func NotNullIntListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullIntListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Int!] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
 			},
 		},
 	})
@@ -318,8 +450,30 @@ func StringOperatorBlock() *gql.InputObject {
 	})
 }
 
-// NotNullstringOperatorBlock filter block for string! types.
-func NotNullstringOperatorBlock() *gql.InputObject {
+// StringListOperatorBlock filter block for [String] types.
+func StringListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "StringListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [String] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
+// NotNullStringOperatorBlock filter block for string! types.
+func NotNullStringOperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name:        "NotNullStringOperatorBlock",
 		Description: notNullStringOperatorBlockDescription,
@@ -360,85 +514,23 @@ func NotNullstringOperatorBlock() *gql.InputObject {
 	})
 }
 
-// JSONOperatorBlock filter block for string types.
-func JSONOperatorBlock(jsonScalarType *gql.Scalar) *gql.InputObject {
+// NotNullStringListOperatorBlock filter block for [String!] types.
+func NotNullStringListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "JSONOperatorBlock",
-		Description: stringOperatorBlockDescription,
+		Name:        "NotNullStringListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [String!] values.",
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
-				Description: eqOperatorDescription,
-				Type:        jsonScalarType,
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
-				Description: neOperatorDescription,
-				Type:        jsonScalarType,
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
 			},
-			"_in": &gql.InputObjectFieldConfig{
-				Description: inOperatorDescription,
-				Type:        gql.NewList(jsonScalarType),
-			},
-			"_nin": &gql.InputObjectFieldConfig{
-				Description: ninOperatorDescription,
-				Type:        gql.NewList(jsonScalarType),
-			},
-			"_like": &gql.InputObjectFieldConfig{
-				Description: likeStringOperatorDescription,
-				Type:        gql.String,
-			},
-			"_nlike": &gql.InputObjectFieldConfig{
-				Description: nlikeStringOperatorDescription,
-				Type:        gql.String,
-			},
-			"_ilike": &gql.InputObjectFieldConfig{
-				Description: ilikeStringOperatorDescription,
-				Type:        gql.String,
-			},
-			"_nilike": &gql.InputObjectFieldConfig{
-				Description: nilikeStringOperatorDescription,
-				Type:        gql.String,
-			},
-		},
-	})
-}
-
-// NotNullJSONOperatorBlock filter block for string! types.
-func NotNullJSONOperatorBlock(jsonScalarType *gql.Scalar) *gql.InputObject {
-	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "NotNullJSONOperatorBlock",
-		Description: notNullStringOperatorBlockDescription,
-		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
-				Description: eqOperatorDescription,
-				Type:        jsonScalarType,
-			},
-			"_ne": &gql.InputObjectFieldConfig{
-				Description: neOperatorDescription,
-				Type:        jsonScalarType,
-			},
-			"_in": &gql.InputObjectFieldConfig{
-				Description: inOperatorDescription,
-				Type:        gql.NewList(gql.NewNonNull(jsonScalarType)),
-			},
-			"_nin": &gql.InputObjectFieldConfig{
-				Description: ninOperatorDescription,
-				Type:        gql.NewList(gql.NewNonNull(jsonScalarType)),
-			},
-			"_like": &gql.InputObjectFieldConfig{
-				Description: likeStringOperatorDescription,
-				Type:        gql.String,
-			},
-			"_nlike": &gql.InputObjectFieldConfig{
-				Description: nlikeStringOperatorDescription,
-				Type:        gql.String,
-			},
-			"_ilike": &gql.InputObjectFieldConfig{
-				Description: ilikeStringOperatorDescription,
-				Type:        gql.String,
-			},
-			"_nilike": &gql.InputObjectFieldConfig{
-				Description: nilikeStringOperatorDescription,
-				Type:        gql.String,
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
 			},
 		},
 	})
@@ -527,8 +619,8 @@ func NotNullBlobOperatorBlock(blobScalarType *gql.Scalar) *gql.InputObject {
 	})
 }
 
-// IdOperatorBlock filter block for ID types.
-func IdOperatorBlock() *gql.InputObject {
+// IDOperatorBlock filter block for ID types.
+func IDOperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name:        "IDOperatorBlock",
 		Description: idOperatorBlockDescription,

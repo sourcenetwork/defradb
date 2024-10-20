@@ -112,16 +112,16 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 							"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 							"_group": []map[string]any{
 								{
-									"name":   "The Client",
-									"rating": 4.5,
+									"name":   "Painted House",
+									"rating": 4.9,
 									"author": map[string]any{
 										"age":  int64(65),
 										"name": "John Grisham",
 									},
 								},
 								{
-									"name":   "Painted House",
-									"rating": 4.9,
+									"name":   "The Client",
+									"rating": 4.5,
 									"author": map[string]any{
 										"age":  int64(65),
 										"name": "John Grisham",
@@ -133,19 +133,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 									"author": map[string]any{
 										"age":  int64(65),
 										"name": "John Grisham",
-									},
-								},
-							},
-						},
-						{
-							"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
-							"_group": []map[string]any{
-								{
-									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-									"rating": 2.0,
-									"author": map[string]any{
-										"age":  int64(327),
-										"name": "Simon Pelloutier",
 									},
 								},
 							},
@@ -167,6 +154,19 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 									"author": map[string]any{
 										"age":  int64(327),
 										"name": "Voltaire",
+									},
+								},
+							},
+						},
+						{
+							"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+							"_group": []map[string]any{
+								{
+									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+									"rating": 2.0,
+									"author": map[string]any{
+										"age":  int64(327),
+										"name": "Simon Pelloutier",
 									},
 								},
 							},
@@ -276,16 +276,16 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 							"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
 							"_group": []map[string]any{
 								{
-									"name":   "The Client",
-									"rating": 4.5,
+									"name":   "Painted House",
+									"rating": 4.9,
 									"author": map[string]any{
 										"age":  int64(65),
 										"name": "John Grisham",
 									},
 								},
 								{
-									"name":   "Painted House",
-									"rating": 4.9,
+									"name":   "The Client",
+									"rating": 4.5,
 									"author": map[string]any{
 										"age":  int64(65),
 										"name": "John Grisham",
@@ -297,19 +297,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 									"author": map[string]any{
 										"age":  int64(65),
 										"name": "John Grisham",
-									},
-								},
-							},
-						},
-						{
-							"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
-							"_group": []map[string]any{
-								{
-									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-									"rating": 2.0,
-									"author": map[string]any{
-										"age":  int64(327),
-										"name": "Simon Pelloutier",
 									},
 								},
 							},
@@ -331,6 +318,19 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 									"author": map[string]any{
 										"age":  int64(327),
 										"name": "Voltaire",
+									},
+								},
+							},
+						},
+						{
+							"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+							"_group": []map[string]any{
+								{
+									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+									"rating": 2.0,
+									"author": map[string]any{
+										"age":  int64(327),
+										"name": "Simon Pelloutier",
 									},
 								},
 							},

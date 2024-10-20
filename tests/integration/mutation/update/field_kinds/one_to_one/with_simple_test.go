@@ -138,11 +138,15 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
-	authorID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
+func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
+	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the secondary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionSaveMutationType,
+			testUtils.CollectionNamedMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -161,52 +165,48 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"author": "%s"
 					}`,
 					authorID,
 				),
+				ExpectedError: "cannot set relation from secondary side",
 			},
-			testUtils.Request{
-				Request: `
-					query {
-						Book {
-							name
-							author {
-								name
-							}
-						}
-					}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name": "Painted House",
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-						},
-					},
-				},
+		},
+	}
+	executeTestCase(t, test)
+}
+
+func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
+	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, from the secondary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
 			},
-			testUtils.Request{
-				Request: `
-					query {
-						Author {
-							name
-							published {
-								name
-							}
-						}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author": "%s"
 					}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name": "John Grisham",
-							"published": map[string]any{
-								"name": "Painted House",
-							},
-						},
-					},
-				},
+					authorID,
+				),
+				ExpectedError: "Argument \"input\" has invalid value",
 			},
 		},
 	}
@@ -214,33 +214,29 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	bookID := "bae-dfce6a1a-27fa-5dde-bea7-44df2dffac1a"
+	bookID := "bae-dafb74e9-2bf1-5f12-aea9-967814592bad"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from single side (wrong)",
 		Actions: []any{
 			testUtils.CreateDoc{
-				CollectionID: 1,
+				CollectionID: 0,
 				Doc: `{
-					"name": "John Grisham"
+					"name": "Painted House"
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
 				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					author1ID,
-				),
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 1,
@@ -259,12 +255,15 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	author2ID := "bae-a34d8759-e549-5083-8ba6-e04038c41caa"
+func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(t *testing.T) {
+	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionSaveMutationType,
+			testUtils.CollectionNamedMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -280,13 +279,9 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					author1ID,
-				),
+				Doc: `{
+					"name": "Painted House"
+				}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
@@ -297,7 +292,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 					}`,
 					author2ID,
 				),
-				ExpectedError: "target document is already linked to another document.",
+				ExpectedError: "cannot set relation from secondary side",
 			},
 		},
 	}
@@ -305,95 +300,11 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	invalidLenSubID := "35953ca-518d-9e6b-9ce6cd00eff5"
-	invalidAuthorID := "bae-" + invalidLenSubID
-
-	test := testUtils.TestCase{
-		Description: "One to one update mutation using invalid relation id",
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					author1ID,
-				),
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: fmt.Sprintf(
-					`{
-						"author_id": "%s"
-					}`,
-					invalidAuthorID,
-				),
-				ExpectedError: "uuid: incorrect UUID length 30 in string \"" + invalidLenSubID + "\"",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	invalidAuthorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
+func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing.T) {
+	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc: `{
-					"name": "John Grisham"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					author1ID,
-				),
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: fmt.Sprintf(
-					`{
-						"author_id": "%s"
-					}`,
-					invalidAuthorID,
-				),
-				ExpectedError: "document not found or not authorized to access",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-42d197b8-d14f-5570-a55d-9e8714b2a82a"
-	author2ID := "bae-a34d8759-e549-5083-8ba6-e04038c41caa"
-
-	test := testUtils.TestCase{
-		Description: "One to one update mutation using relation id from secondary side, with a wrong field.",
-		// This restiction is temporary due to a bug in the collection api, see
-		// https://github.com/sourcenetwork/defradb/issues/1852 for more info.
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.GQLRequestMutationType,
 		}),
@@ -412,25 +323,56 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc: fmt.Sprintf(
-					`{
-						"name": "Painted House",
-						"author_id": "%s"
-					}`,
-					author1ID,
-				),
+				Doc: `{
+					"name": "Painted House"
+				}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"notName": "Unpainted Condo",
 						"author_id": "%s"
 					}`,
 					author2ID,
 				),
-				ExpectedError: "In field \"notName\": Unknown field.",
+				ExpectedError: "Argument \"input\" has invalid value",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T) {
+	invalidLenSubID := "35953ca-518d-9e6b-9ce6cd00eff5"
+	invalidBookID := "bae-" + invalidLenSubID
+
+	test := testUtils.TestCase{
+		Description: "One to one update mutation using invalid relation id",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 1,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"published_id": "%s"
+					}`,
+					invalidBookID,
+				),
+				ExpectedError: "uuid: incorrect UUID length 30 in string \"" + invalidLenSubID + "\"",
 			},
 		},
 	}

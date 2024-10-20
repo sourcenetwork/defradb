@@ -40,14 +40,14 @@ type MultiStore interface {
 	// Encstore is a wrapped root DSReaderWriter under the /enc namespace
 	// This store is used for storing symmetric encryption keys for doc encryption.
 	// The store keys are comprised of docID + field name.
-	Encstore() DSReaderWriter
+	Encstore() Blockstore
 
 	// Headstore is a wrapped root DSReaderWriter under the /head namespace
 	Headstore() DSReaderWriter
 
 	// Peerstore is a wrapped root DSReaderWriter as a ds.Batching, embedded into a DSBatching
 	// under the /peers namespace
-	Peerstore() DSBatching
+	Peerstore() DSReaderWriter
 
 	// Blockstore is a wrapped root DSReaderWriter as a Blockstore, embedded into a Blockstore
 	// under the /blocks namespace
@@ -80,9 +80,4 @@ type Blockstore interface {
 type IPLDStorage interface {
 	storage.ReadableStorage
 	storage.WritableStorage
-}
-
-// DSBatching wraps the Batching interface from go-datastore
-type DSBatching interface {
-	ds.Batching
 }

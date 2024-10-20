@@ -14,8 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // docEncContextKey is the key type for document encryption context values.
@@ -24,35 +22,32 @@ type docEncContextKey struct{}
 // configContextKey is the key type for encryption context values.
 type configContextKey struct{}
 
-// TryGetContextDocEnc returns a document encryption and a bool indicating if
-// it was retrieved from the given context.
-func TryGetContextEncryptor(ctx context.Context) (*DocEncryptor, bool) {
+// GetEncryptorFromContext returns a document encryptor from the given context.
+// It returns nil if no encryptor exists in the context.
+func GetEncryptorFromContext(ctx context.Context) *DocEncryptor {
 	enc, ok := ctx.Value(docEncContextKey{}).(*DocEncryptor)
 	if ok {
 		setConfig(ctx, enc)
 	}
-	return enc, ok
+	return enc
 }
 
 func setConfig(ctx context.Context, enc *DocEncryptor) {
 	enc.SetConfig(GetContextConfig(ctx))
+	enc.ctx = ctx
 }
 
-func ensureContextWithDocEnc(ctx context.Context) (context.Context, *DocEncryptor) {
-	enc, ok := TryGetContextEncryptor(ctx)
-	if !ok {
+// EnsureContextWithEncryptor returns a context with a document encryptor and the
+// document encryptor itself. If the context already has an encryptor, it
+// returns the context and encryptor as is. Otherwise, it creates a new
+// document encryptor and stores it in the context.
+func EnsureContextWithEncryptor(ctx context.Context) (context.Context, *DocEncryptor) {
+	enc := GetEncryptorFromContext(ctx)
+	if enc == nil {
 		enc = newDocEncryptor(ctx)
 		ctx = context.WithValue(ctx, docEncContextKey{}, enc)
 	}
 	return ctx, enc
-}
-
-// ContextWithStore sets the store on the doc encryptor in the context.
-// If the doc encryptor is not present, it will be created.
-func ContextWithStore(ctx context.Context, txn datastore.Txn) context.Context {
-	ctx, encryptor := ensureContextWithDocEnc(ctx)
-	encryptor.SetStore(txn.Encstore())
-	return ctx
 }
 
 // GetContextConfig returns the doc encryption config from the given context.
@@ -66,6 +61,7 @@ func GetContextConfig(ctx context.Context) immutable.Option[DocEncConfig] {
 
 // SetContextConfig returns a new context with the doc encryption config set.
 func SetContextConfig(ctx context.Context, encConfig DocEncConfig) context.Context {
+	ctx, _ = EnsureContextWithEncryptor(ctx)
 	return context.WithValue(ctx, configContextKey{}, encConfig)
 }
 

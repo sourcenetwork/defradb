@@ -8,13 +8,17 @@ Generate private keys.
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
+The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+This can also be done with a .env file in the working directory or at a path
+defined with the --secret-file flag.
+
 WARNING: This will overwrite existing keys in the keyring.
 
 Example:
   defradb keyring generate
 
 Example: with no encryption key
-  defradb keyring generate --no-encryption-key
+  defradb keyring generate --no-encryption
 
 Example: with no peer key
   defradb keyring generate --no-peer-key
@@ -29,9 +33,9 @@ defradb keyring generate [flags]
 ### Options
 
 ```
-  -h, --help                help for generate
-      --no-encryption-key   Skip generating an encryption key. Encryption at rest will be disabled
-      --no-peer-key         Skip generating a peer key.
+  -h, --help            help for generate
+      --no-encryption   Skip generating an encryption key. Encryption at rest will be disabled
+      --no-peer-key     Skip generating a peer key.
 ```
 
 ### Options inherited from parent commands
@@ -49,6 +53,7 @@ defradb keyring generate [flags]
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
+      --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```

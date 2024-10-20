@@ -11,9 +11,11 @@
 package node
 
 import (
+	"context"
 	"testing"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/defradb/client"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,13 +32,55 @@ func TestWithDisableAPI(t *testing.T) {
 	assert.Equal(t, true, options.disableAPI)
 }
 
-func TestWithPeers(t *testing.T) {
-	peer, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/9000/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+func TestWithEnableDevelopment(t *testing.T) {
+	options := &Options{}
+	WithEnableDevelopment(true)(options)
+	assert.Equal(t, true, options.enableDevelopment)
+}
+
+func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
+	ctx := context.Background()
+
+	opts := []Option{
+		WithDisableAPI(true),
+		WithDisableP2P(true),
+		WithStorePath(t.TempDir()),
+	}
+
+	n, err := New(ctx, opts...)
 	require.NoError(t, err)
 
-	options := &Options{}
-	WithPeers(*peer)(options)
+	err = n.Start(ctx)
+	require.NoError(t, err)
 
-	require.Len(t, options.peers, 1)
-	assert.Equal(t, *peer, options.peers[0])
+	err = n.PurgeAndRestart(ctx)
+	require.ErrorIs(t, err, ErrPurgeWithDevModeDisabled)
+}
+
+func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
+	ctx := context.Background()
+
+	opts := []Option{
+		WithDisableAPI(true),
+		WithDisableP2P(true),
+		WithStorePath(t.TempDir()),
+		WithEnableDevelopment(true),
+	}
+
+	n, err := New(ctx, opts...)
+	require.NoError(t, err)
+
+	err = n.Start(ctx)
+	require.NoError(t, err)
+
+	_, err = n.DB.AddSchema(ctx, "type User { name: String }")
+	require.NoError(t, err)
+
+	err = n.PurgeAndRestart(ctx)
+	require.NoError(t, err)
+
+	schemas, err := n.DB.GetSchemas(ctx, client.SchemaFetchOptions{})
+	require.NoError(t, err)
+
+	assert.Len(t, schemas, 0)
 }

@@ -92,10 +92,10 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 		switch requestable := r.(type) {
 		// field is simple as its just a base level field
 		case *mapper.Field:
-			n.tryAddField(requestable.GetName())
+			n.tryAddFieldWithName(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddField(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
+			n.tryAddFieldWithName(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err
@@ -112,13 +112,13 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 						return err
 					}
 					for _, fd := range fieldDescs {
-						n.tryAddField(fd.Name)
+						n.tryAddFieldWithName(fd.Name)
 					}
 				}
 				if target.ChildTarget.HasValue {
-					n.tryAddField(target.ChildTarget.Name)
+					n.tryAddFieldWithName(target.ChildTarget.Name)
 				} else {
-					n.tryAddField(target.Field.Name)
+					n.tryAddFieldWithName(target.Field.Name)
 				}
 			}
 		}
@@ -126,7 +126,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 	return nil
 }
 
-func (n *scanNode) tryAddField(fieldName string) bool {
+func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
 	fd, ok := n.col.Definition().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
@@ -134,8 +134,23 @@ func (n *scanNode) tryAddField(fieldName string) bool {
 		// is only responsible for basic fields
 		return false
 	}
-	n.fields = append(n.fields, fd)
+	n.addField(fd)
 	return true
+}
+
+// addField adds a field to the list of fields to be fetched.
+// It will not add the field if it is already in the list.
+func (n *scanNode) addField(field client.FieldDefinition) {
+	found := false
+	for i := range n.fields {
+		if n.fields[i].Name == field.Name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		n.fields = append(n.fields, field)
+	}
 }
 
 func (scan *scanNode) initFetcher(
@@ -149,14 +164,26 @@ func (scan *scanNode) initFetcher(
 		f = new(fetcher.DocumentFetcher)
 
 		if index.HasValue() {
-			fields := make([]mapper.Field, 0, len(index.Value().Fields))
+			fieldsToMove := make([]mapper.Field, 0, len(index.Value().Fields))
+			fieldsToCopy := make([]mapper.Field, 0, len(index.Value().Fields))
 			for _, field := range index.Value().Fields {
 				fieldName := field.Name
 				typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
-				fields = append(fields, mapper.Field{Index: typeIndex, Name: fieldName})
+				indexField := mapper.Field{Index: typeIndex, Name: fieldName}
+				fd, _ := scan.col.Definition().Schema.GetFieldByName(fieldName)
+				// if the field is an array, we need to copy it instead of moving so that the
+				// top select node can do final filter check on the whole array of the document
+				if fd.Kind.IsArray() {
+					fieldsToCopy = append(fieldsToCopy, indexField)
+				} else {
+					fieldsToMove = append(fieldsToMove, indexField)
+				}
 			}
 			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fields...)
+			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fieldsToMove...)
+			for i := range fieldsToCopy {
+				indexFilter = filter.Merge(indexFilter, filter.CopyField(scan.filter, fieldsToCopy[i]))
+			}
 			if indexFilter != nil {
 				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
 			}

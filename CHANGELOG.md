@@ -1,3 +1,89 @@
+<a name="v0.14.0"></a>
+## [v0.14.0](https://github.com/sourcenetwork/defradb/compare/v0.13.0...v0.14.0)
+
+> 2024-10-18
+
+DefraDB v0.14 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.13.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* JSON type filter ([#3122](https://github.com/sourcenetwork/defradb/issues/3122))
+* Add replicator retry ([#3107](https://github.com/sourcenetwork/defradb/issues/3107))
+* Inherit `read` permission if only `write` access ([#3108](https://github.com/sourcenetwork/defradb/issues/3108))
+* JSON type coercion ([#3098](https://github.com/sourcenetwork/defradb/issues/3098))
+* Ability to unrelate private documents from actors ([#3099](https://github.com/sourcenetwork/defradb/issues/3099))
+* Enable Indexing of array fields ([#3092](https://github.com/sourcenetwork/defradb/issues/3092))
+* Min and max numerical aggregates ([#3078](https://github.com/sourcenetwork/defradb/issues/3078))
+* Ability to relate private documents to actors ([#2907](https://github.com/sourcenetwork/defradb/issues/2907))
+* GraphQL upsert mutation ([#3075](https://github.com/sourcenetwork/defradb/issues/3075))
+* GraphQL fragments ([#3066](https://github.com/sourcenetwork/defradb/issues/3066))
+* Secure document encryption key exchange ([#2891](https://github.com/sourcenetwork/defradb/issues/2891))
+* Inline array filters ([#3028](https://github.com/sourcenetwork/defradb/issues/3028))
+* CLI purge command ([#2998](https://github.com/sourcenetwork/defradb/issues/2998))
+* Add support for one sided relations ([#3021](https://github.com/sourcenetwork/defradb/issues/3021))
+* Add materialized views ([#3000](https://github.com/sourcenetwork/defradb/issues/3000))
+* Default scalar field values ([#2997](https://github.com/sourcenetwork/defradb/issues/2997))
+* GQL variables and operation name ([#2993](https://github.com/sourcenetwork/defradb/issues/2993))
+
+### Fixes
+
+* Make GraphQL errors spec compliant ([#3040](https://github.com/sourcenetwork/defradb/issues/3040))
+* Ignore badger path if in-memory ([#2967](https://github.com/sourcenetwork/defradb/issues/2967))
+* Rework relation field kinds ([#2961](https://github.com/sourcenetwork/defradb/issues/2961))
+* Panic with filter on unique composite index on relation ([#3020](https://github.com/sourcenetwork/defradb/issues/3020))
+* Handle missing type in an SDL ([#3023](https://github.com/sourcenetwork/defradb/issues/3023))
+* GraphQL null argument parsing ([#3013](https://github.com/sourcenetwork/defradb/issues/3013))
+* Prevent mutations from secondary side of relation ([#3124](https://github.com/sourcenetwork/defradb/issues/3124))
+* Treat explicitly set nil values like omitted values ([#3101](https://github.com/sourcenetwork/defradb/issues/3101))
+* Remove duplication of block heads on delete ([#3096](https://github.com/sourcenetwork/defradb/issues/3096))
+* Log GQL endpoint correctly on node start ([#3037](https://github.com/sourcenetwork/defradb/issues/3037))
+* Panic with different composite-indexed child objects ([#2947](https://github.com/sourcenetwork/defradb/issues/2947))
+* Validate GraphQL schemas ([#3152](https://github.com/sourcenetwork/defradb/issues/3152))
+* Queries with filter on 2 rel fields of composite index ([#3035](https://github.com/sourcenetwork/defradb/issues/3035))
+
+### Documentation
+
+* Rename _key to _docID in docs ([#2989](https://github.com/sourcenetwork/defradb/issues/2989))
+
+### Refactoring
+
+* Change from protobuf to cbor for gRPC ([#3061](https://github.com/sourcenetwork/defradb/issues/3061))
+* GraphQL order input ([#3044](https://github.com/sourcenetwork/defradb/issues/3044))
+* Merge duplicate input args ([#3046](https://github.com/sourcenetwork/defradb/issues/3046))
+* Index field directive ([#2994](https://github.com/sourcenetwork/defradb/issues/2994))
+* Make SourceHub dep internal-only ([#2963](https://github.com/sourcenetwork/defradb/issues/2963))
+
+### Testing
+
+* Add bug bash tests for gql fragments ([#3136](https://github.com/sourcenetwork/defradb/issues/3136))
+
+### Chore
+
+* Make keyring non-interactive ([#3026](https://github.com/sourcenetwork/defradb/issues/3026))
+* Change from ipld traversal to direct link access ([#2931](https://github.com/sourcenetwork/defradb/issues/2931))
+* Bump to GoLang v1.22 ([#2913](https://github.com/sourcenetwork/defradb/issues/2913))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 14-10-2024 ([#3131](https://github.com/sourcenetwork/defradb/issues/3131))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 8.8.0 to 8.8.1 in /playground ([#3121](https://github.com/sourcenetwork/defradb/issues/3121))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 8.8.0 to 8.8.1 in /playground ([#3120](https://github.com/sourcenetwork/defradb/issues/3120))
+* Update dependencies (bulk dependabot PRs) 07-10-2024 ([#3118](https://github.com/sourcenetwork/defradb/issues/3118))
+* Update dependencies (bulk dependabot PRs) 30-09-2024 ([#3088](https://github.com/sourcenetwork/defradb/issues/3088))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 8.6.0 to 8.7.0 in /playground ([#3060](https://github.com/sourcenetwork/defradb/issues/3060))
+* Bump rollup from 4.21.0 to 4.22.4 in /playground ([#3058](https://github.com/sourcenetwork/defradb/issues/3058))
+* Bump eslint from 9.11.0 to 9.11.1 in /playground ([#3059](https://github.com/sourcenetwork/defradb/issues/3059))
+* Update dependencies (bulk dependabot PRs) 23-09-2024 ([#3055](https://github.com/sourcenetwork/defradb/issues/3055))
+* Update dependencies (bulk dependabot PRs) 17-09-2024 ([#3019](https://github.com/sourcenetwork/defradb/issues/3019))
+* Update dependencies (bulk dependabot PRs) 16-09-2024 ([#3011](https://github.com/sourcenetwork/defradb/issues/3011))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 8.4.0 to 8.5.0 in /playground ([#2991](https://github.com/sourcenetwork/defradb/issues/2991))
+* Update dependencies (bulk dependabot PRs) 09-09-2024 ([#2990](https://github.com/sourcenetwork/defradb/issues/2990))
+* Update dependencies (bulk dependabot PRs) 02-09-2024 ([#2975](https://github.com/sourcenetwork/defradb/issues/2975))
+* Update dependencies (bulk dependabot PRs) 27-08-2024 ([#2966](https://github.com/sourcenetwork/defradb/issues/2966))
+
+
 <a name="v0.13.0"></a>
 ## [v0.13.0](https://github.com/sourcenetwork/defradb/compare/v0.12.0...v0.13.0)
 

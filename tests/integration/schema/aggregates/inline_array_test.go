@@ -246,7 +246,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name": "UsersOrderArg",
+														"name": nil,
 													},
 												},
 											},
@@ -388,59 +388,67 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 }
 */
 
-var aggregateGroupArg = map[string]any{
-	"name": "_group",
-	"type": map[string]any{
-		"name": "Users__CountSelector",
-		"inputFields": []any{
-			map[string]any{
-				"name": "filter",
-				"type": map[string]any{
-					"name": "UsersFilterArg",
-					"inputFields": []any{
-						map[string]any{
-							"name": "_and",
-							"type": map[string]any{
-								"name": nil,
+func aggregateGroupArg(fieldType string) map[string]any {
+	return map[string]any{
+		"name": "_group",
+		"type": map[string]any{
+			"name": "Users__CountSelector",
+			"inputFields": []any{
+				map[string]any{
+					"name": "filter",
+					"type": map[string]any{
+						"name": "UsersFilterArg",
+						"inputFields": []any{
+							map[string]any{
+								"name": "Favourites",
+								"type": map[string]any{
+									"name": fieldType + "ListOperatorBlock",
+								},
 							},
-						},
-						map[string]any{
-							"name": "_docID",
-							"type": map[string]any{
-								"name": "IDOperatorBlock",
+							map[string]any{
+								"name": "_and",
+								"type": map[string]any{
+									"name": nil,
+								},
 							},
-						},
-						map[string]any{
-							"name": "_not",
-							"type": map[string]any{
-								"name": "UsersFilterArg",
+							map[string]any{
+								"name": "_docID",
+								"type": map[string]any{
+									"name": "IDOperatorBlock",
+								},
 							},
-						},
-						map[string]any{
-							"name": "_or",
-							"type": map[string]any{
-								"name": nil,
+							map[string]any{
+								"name": "_not",
+								"type": map[string]any{
+									"name": "UsersFilterArg",
+								},
+							},
+							map[string]any{
+								"name": "_or",
+								"type": map[string]any{
+									"name": nil,
+								},
 							},
 						},
 					},
 				},
-			},
-			map[string]any{
-				"name": "limit",
-				"type": map[string]any{
-					"name":        "Int",
-					"inputFields": nil,
+				map[string]any{
+					"name": "limit",
+					"type": map[string]any{
+						"name":        "Int",
+						"inputFields": nil,
+					},
 				},
-			},
-			map[string]any{
-				"name": "offset",
-				"type": map[string]any{
-					"name":        "Int",
-					"inputFields": nil,
+				map[string]any{
+					"name": "offset",
+					"type": map[string]any{
+						"name":        "Int",
+						"inputFields": nil,
+					},
 				},
 			},
 		},
-	},
+	}
 }
 
 var aggregateVersionArg = map[string]any{
@@ -578,7 +586,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("Boolean"),
 									aggregateVersionArg,
 								},
 							},
@@ -704,7 +712,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("NotNullBoolean"),
 									aggregateVersionArg,
 								},
 							},
@@ -854,7 +862,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("Int"),
 									aggregateVersionArg,
 								},
 							},
@@ -1004,7 +1012,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("NotNullInt"),
 									aggregateVersionArg,
 								},
 							},
@@ -1154,7 +1162,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("Float"),
 									aggregateVersionArg,
 								},
 							},
@@ -1304,7 +1312,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("NotNullFloat"),
 									aggregateVersionArg,
 								},
 							},
@@ -1454,7 +1462,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("String"),
 									aggregateVersionArg,
 								},
 							},
@@ -1604,7 +1612,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 											},
 										},
 									},
-									aggregateGroupArg,
+									aggregateGroupArg("NotNullString"),
 									aggregateVersionArg,
 								},
 							},

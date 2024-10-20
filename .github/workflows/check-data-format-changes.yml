@@ -34,17 +34,8 @@ jobs:
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
-      - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache: false
-
-      - name: Build dependencies
-        run: |
-          make deps:modules
-          make deps:test
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
 
       - name: Run data format change detection tests
         run: make test:changes

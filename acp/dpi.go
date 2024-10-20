@@ -22,6 +22,14 @@ const (
 	WritePermission
 )
 
+// permissionsThatImplyRead is a list of any permissions that if we have, we assume that the user can read.
+// This is because for DefraDB's purposes if an identity has access to the write permission, then they don't
+// need to explicitly have read permission inorder to read, we can just imply that they have read access.
+var permissionsThatImplyRead = []DPIPermission{
+	ReadPermission,
+	WritePermission,
+}
+
 // List of all valid DPI permissions, the order of permissions in this list must match
 // the above defined ordering such that iota matches the index position within the list.
 var dpiRequiredPermissions = []string{

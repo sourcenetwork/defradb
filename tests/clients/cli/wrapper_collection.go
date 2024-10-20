@@ -13,7 +13,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -276,7 +275,10 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc := client.NewDocWithID(docID, c.Definition())
+	doc, err := client.NewDocWithID(docID, c.Definition())
+	if err != nil {
+		return nil, err
+	}
 	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
@@ -319,7 +321,7 @@ func (c *Collection) GetAllDocIDs(
 				ID: docID,
 			}
 			if res.Error != "" {
-				docIDResult.Err = fmt.Errorf(res.Error)
+				docIDResult.Err = errors.New(res.Error)
 			}
 			docIDCh <- docIDResult
 		}

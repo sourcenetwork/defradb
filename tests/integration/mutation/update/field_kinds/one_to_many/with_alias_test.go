@@ -19,12 +19,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collection(t *testing.T) {
+func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_CollectionApi(t *testing.T) {
 	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionSaveMutationType,
+			testUtils.CollectionNamedMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -51,14 +55,62 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 			testUtils.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
-				// NOTE: There is no `published` on book.
 				Doc: fmt.Sprintf(
 					`{
 						"published": "%s"
 					}`,
 					bookID,
 				),
-				ExpectedError: "The given field does not exist. Name: published",
+				ExpectedError: "cannot set relation from secondary side",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *testing.T) {
+	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
+
+	test := testUtils.TestCase{
+		Description: "One to many update mutation using relation alias name from single side (wrong)",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author": "%s"
+					}`,
+					author1ID,
+				),
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 1,
+				DocID:        1,
+				Doc: fmt.Sprintf(
+					`{
+						"published": "%s"
+					}`,
+					bookID,
+				),
+				ExpectedError: "Argument \"input\" has invalid value",
 			},
 		},
 	}
@@ -100,42 +152,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 					}`,
 					invalidAuthorID,
 				),
-			},
-			testUtils.Request{
-				Request: `query {
- 					Author {
- 						name
- 						published {
- 							name
- 						}
- 					}
- 				}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name":      "John Grisham",
-							"published": []map[string]any{},
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-						author {
-							name
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name":   "Painted House",
-							"author": nil, // Linked to incorrect id
-						},
-					},
-				},
+				ExpectedError: "uuid: incorrect UUID length 30 in string",
 			},
 		},
 	}
@@ -143,8 +160,6 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 	executeTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
 func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection(t *testing.T) {
 	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
@@ -177,24 +192,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 					}`,
 					invalidAuthorID,
 				),
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-						author {
-							name
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name":   "Painted House",
-							"author": nil,
-						},
-					},
-				},
+				ExpectedError: "uuid: incorrect UUID length 30 in string",
 			},
 		},
 	}

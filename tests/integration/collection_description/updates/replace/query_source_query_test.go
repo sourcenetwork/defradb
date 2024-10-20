@@ -41,7 +41,7 @@ func TestColDescrUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type View {
+					type View @materialized(if: false) {
 						name: String
 					}
 				`,
@@ -105,7 +105,7 @@ func TestColDescrUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 				SDL: `
-					type View {
+					type View @materialized(if: false) {
 						name: String
 					}
 				`,

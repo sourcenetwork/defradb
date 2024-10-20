@@ -61,7 +61,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-7697f14d-7b32-5884-8677-344e183c14bf", Has 1 Publisher
+				// "bae-86f7a96a-be15-5b4d-91c7-bb6047aa4008", Has 1 Publisher
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
@@ -70,7 +70,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-374998e0-e84d-5f6b-9e87-5edaaa2d9c7d", Has no Publisher.
+				// "bae-5ce5698b-5af6-5f50-a6fb-633252be8d12", Has no Publisher.
 				DocMap: map[string]any{
 					"name":      "The Associate",
 					"rating":    4.2,

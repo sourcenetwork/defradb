@@ -72,7 +72,7 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "nhgfdsfd"
+					"foo": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55"
 				}`,
 			},
 			testUtils.Request{
@@ -86,7 +86,7 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"foo":  "nhgfdsfd",
+							"foo":  "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
 						},
 					},
 				},
@@ -118,7 +118,7 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "nhgfdsfd"
+					"foo": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55"
 				}`,
 			},
 			testUtils.Request{
@@ -132,7 +132,7 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"foo":  "nhgfdsfd",
+							"foo":  "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
 						},
 					},
 				},

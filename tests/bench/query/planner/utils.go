@@ -17,12 +17,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
-	gqlSchema "github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -41,7 +41,7 @@ func runQueryParserBench(
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ast, _ := parser.BuildRequestAST(query)
-		_, errs := parser.Parse(ast)
+		_, errs := parser.Parse(ast, &client.GQLOptions{})
 		if errs != nil {
 			return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 		}
@@ -69,7 +69,7 @@ func runMakePlanBench(
 	}
 
 	ast, _ := parser.BuildRequestAST(query)
-	q, errs := parser.Parse(ast)
+	q, errs := parser.Parse(ast, &client.GQLOptions{})
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
@@ -115,7 +115,7 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionDescriptions, err := gqlSchema.FromString(ctx, schema)
+	collectionDescriptions, err := parser.ParseSDL(schema)
 	if err != nil {
 		return nil, err
 	}
@@ -134,9 +134,9 @@ type dummyTxn struct{}
 
 func (*dummyTxn) Rootstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Datastore() datastore.DSReaderWriter   { return nil }
-func (*dummyTxn) Encstore() datastore.DSReaderWriter    { return nil }
+func (*dummyTxn) Encstore() datastore.Blockstore        { return nil }
 func (*dummyTxn) Headstore() datastore.DSReaderWriter   { return nil }
-func (*dummyTxn) Peerstore() datastore.DSBatching       { return nil }
+func (*dummyTxn) Peerstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Blockstore() datastore.Blockstore      { return nil }
 func (*dummyTxn) Systemstore() datastore.DSReaderWriter { return nil }
 func (*dummyTxn) Commit(ctx context.Context) error      { return nil }

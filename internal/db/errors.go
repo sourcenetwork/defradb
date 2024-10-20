@@ -101,6 +101,11 @@ const (
 	errReplicatorCollections                    string = "failed to get collections for replicator"
 	errReplicatorNotFound                       string = "replicator not found"
 	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
+	errFailedToHandleEncKeysReceivedEvent       string = "failed to handle encryption-keys-received event"
+	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
+	errColNotMaterialized                       string = "non-materialized collections are not supported"
+	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
+	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 )
 
 var (
@@ -141,6 +146,12 @@ var (
 	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
 	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)
 	ErrCanNotEncryptBuiltinField                = errors.New(errCanNotEncryptBuiltinField)
+	ErrSelfReferenceWithoutSelf                 = errors.New(errSelfReferenceWithoutSelf)
+	ErrColNotMaterialized                       = errors.New(errColNotMaterialized)
+	ErrMaterializedViewAndACPNotSupported       = errors.New(errMaterializedViewAndACPNotSupported)
+	ErrContextDone                              = errors.New("context done")
+	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
+	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -649,4 +660,33 @@ func NewErrReplicatorDocID(inner error, kv ...errors.KV) error {
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errReplicatorCollections, inner, kv...)
+}
+
+func NewErrSelfReferenceWithoutSelf(fieldName string) error {
+	return errors.New(
+		errSelfReferenceWithoutSelf,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrColNotMaterialized(collection string) error {
+	return errors.New(
+		errColNotMaterialized,
+		errors.NewKV("Collection", collection),
+	)
+}
+
+func NewErrMaterializedViewAndACPNotSupported(collection string) error {
+	return errors.New(
+		errMaterializedViewAndACPNotSupported,
+		errors.NewKV("Collection", collection),
+	)
+}
+
+func NewErrDefaultFieldValueInvalid(collection string, inner error) error {
+	return errors.New(
+		errInvalidDefaultFieldValue,
+		errors.NewKV("Collection", collection),
+		errors.NewKV("Inner", inner),
+	)
 }

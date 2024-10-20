@@ -219,6 +219,32 @@ func (c *Client) AddView(
 	return descriptions, nil
 }
 
+func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	methodURL := c.http.baseURL.JoinPath("view", "refresh")
+	params := url.Values{}
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		params.Add("version_id", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		params.Add("schema_root", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+	methodURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
 	methodURL := c.http.baseURL.JoinPath("lens")
 
@@ -340,19 +366,30 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 func (c *Client) ExecRequest(
 	ctx context.Context,
 	query string,
+	opts ...client.RequestOption,
 ) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
-	body, err := json.Marshal(&GraphQLRequest{query})
+	gqlOptions := &client.GQLOptions{}
+	for _, o := range opts {
+		o(gqlOptions)
+	}
+	gqlRequest := &GraphQLRequest{
+		Query:         query,
+		OperationName: gqlOptions.OperationName,
+		Variables:     gqlOptions.Variables,
+	}
+
+	body, err := json.Marshal(gqlRequest)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	err = c.http.setDefaultHeaders(req)
@@ -360,13 +397,13 @@ func (c *Client) ExecRequest(
 	setDocEncryptionFlagIfNeeded(ctx, req)
 
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 
 	res, err := c.http.client.Do(req)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if res.Header.Get("Content-Type") == "text/event-stream" {
@@ -380,16 +417,13 @@ func (c *Client) ExecRequest(
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	var response GraphQLResponse
-	if err = json.Unmarshal(data, &response); err != nil {
-		result.GQL.Errors = []error{err}
+	if err = json.Unmarshal(data, &result.GQL); err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	result.GQL.Data = response.Data
-	result.GQL.Errors = response.Errors
 	return result
 }
 
@@ -410,14 +444,11 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult 
 			if err != nil {
 				return
 			}
-			var response GraphQLResponse
-			if err := json.Unmarshal(evt.Data, &response); err != nil {
-				return
+			var res client.GQLResult
+			if err := json.Unmarshal(evt.Data, &res); err != nil {
+				res.Errors = append(res.Errors, err)
 			}
-			resCh <- client.GQLResult{
-				Errors: response.Errors,
-				Data:   response.Data,
-			}
+			resCh <- res
 		}
 	}()
 
@@ -428,6 +459,17 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	methodURL := c.http.baseURL.JoinPath("debug", "dump")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) Purge(ctx context.Context) error {
+	methodURL := c.http.baseURL.JoinPath("purge")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -447,7 +489,11 @@ func (c *Client) Blockstore() datastore.Blockstore {
 	panic("client side database")
 }
 
-func (c *Client) Peerstore() datastore.DSBatching {
+func (c *Client) Encstore() datastore.Blockstore {
+	panic("client side database")
+}
+
+func (c *Client) Peerstore() datastore.DSReaderWriter {
 	panic("client side database")
 }
 

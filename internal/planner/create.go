@@ -65,7 +65,7 @@ func docIDsToSpans(ids []string, desc client.CollectionDescription) core.Spans {
 	return core.NewSpans(spans...)
 }
 
-func documentsToDocIDs(docs []*client.Document) []string {
+func documentsToDocIDs(docs ...*client.Document) []string {
 	docIDs := make([]string, len(docs))
 	for i, doc := range docs {
 		docIDs[i] = doc.ID().String()
@@ -96,7 +96,7 @@ func (n *createNode) Next() (bool, error) {
 			return false, err
 		}
 
-		n.results.Spans(docIDsToSpans(documentsToDocIDs(n.docs), n.collection.Description()))
+		n.results.Spans(docIDsToSpans(documentsToDocIDs(n.docs...), n.collection.Description()))
 
 		err = n.results.Init()
 		if err != nil {
@@ -151,12 +151,9 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
-		input:     parsed.Inputs,
+		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-	}
-	if parsed.Input != nil {
-		create.input = []map[string]any{parsed.Input}
 	}
 
 	p.ctx = encryption.SetContextConfigFromParams(p.ctx, parsed.Encrypt, parsed.EncryptFields)

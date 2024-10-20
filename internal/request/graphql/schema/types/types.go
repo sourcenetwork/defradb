@@ -33,12 +33,26 @@ const (
 	PolicySchemaDirectivePropID       = "id"
 	PolicySchemaDirectivePropResource = "resource"
 
-	IndexDirectiveLabel          = "index"
-	IndexDirectivePropName       = "name"
-	IndexDirectivePropUnique     = "unique"
-	IndexDirectivePropFields     = "fields"
-	IndexDirectivePropDirection  = "direction"
-	IndexDirectivePropDirections = "directions"
+	IndexDirectiveLabel         = "index"
+	IndexDirectivePropName      = "name"
+	IndexDirectivePropUnique    = "unique"
+	IndexDirectivePropDirection = "direction"
+	IndexDirectivePropIncludes  = "includes"
+
+	IncludesPropField     = "field"
+	IncludesPropDirection = "direction"
+
+	DefaultDirectiveLabel        = "default"
+	DefaultDirectivePropString   = "string"
+	DefaultDirectivePropBool     = "bool"
+	DefaultDirectivePropInt      = "int"
+	DefaultDirectivePropFloat    = "float"
+	DefaultDirectivePropDateTime = "dateTime"
+	DefaultDirectivePropJSON     = "json"
+	DefaultDirectivePropBlob     = "blob"
+
+	MaterializedDirectiveLabel  = "materialized"
+	MaterializedDirectivePropIf = "if"
 
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
@@ -84,6 +98,41 @@ func ExplainEnum() *gql.Enum {
 	})
 }
 
+func DefaultDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name: DefaultDirectiveLabel,
+		Description: `@default is a directive that can be used to set a default field value.
+		
+		Setting a default value on a field within a view has no effect.`,
+		Args: gql.FieldConfigArgument{
+			DefaultDirectivePropString: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+			DefaultDirectivePropBool: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+			DefaultDirectivePropInt: &gql.ArgumentConfig{
+				Type: gql.Int,
+			},
+			DefaultDirectivePropFloat: &gql.ArgumentConfig{
+				Type: gql.Float,
+			},
+			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
+				Type: gql.DateTime,
+			},
+			DefaultDirectivePropJSON: &gql.ArgumentConfig{
+				Type: JSONScalarType(),
+			},
+			DefaultDirectivePropBlob: &gql.ArgumentConfig{
+				Type: BlobScalarType(),
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
 func ExplainDirective(explainEnum *gql.Enum) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        ExplainLabel,
@@ -121,44 +170,69 @@ func PolicyDirective() *gql.Directive {
 	})
 }
 
-func IndexDirective(orderingEnum *gql.Enum) *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        IndexDirectiveLabel,
-		Description: "@index is a directive that can be used to create an index on a type.",
-		Args: gql.FieldConfigArgument{
-			IndexDirectivePropName: &gql.ArgumentConfig{
+func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "IndexField",
+		Description: "Used to create an index from a field.",
+		Fields: gql.InputObjectConfigFieldMap{
+			IncludesPropField: &gql.InputObjectFieldConfig{
 				Type: gql.String,
 			},
-			IndexDirectivePropFields: &gql.ArgumentConfig{
-				Type: gql.NewList(gql.String),
+			IncludesPropDirection: &gql.InputObjectFieldConfig{
+				Type: orderingEnum,
 			},
-			IndexDirectivePropDirections: &gql.ArgumentConfig{
-				Type: gql.NewList(orderingEnum),
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationObject,
 		},
 	})
 }
 
-func IndexFieldDirective(orderingEnum *gql.Enum) *gql.Directive {
+func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObject) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
-		Description: "@index is a directive that can be used to create an index on a field.",
+		Description: "@index is a directive that can be used to create an index on a type or a field.",
 		Args: gql.FieldConfigArgument{
 			IndexDirectivePropName: &gql.ArgumentConfig{
-				Type: gql.String,
+				Description: "Sets the index name.",
+				Type:        gql.String,
 			},
 			IndexDirectivePropUnique: &gql.ArgumentConfig{
-				Type: gql.Boolean,
+				Description: "Makes the index unique.",
+				Type:        gql.Boolean,
 			},
 			IndexDirectivePropDirection: &gql.ArgumentConfig{
+				Description: `Sets the default index ordering for all fields.
+				
+	If a field in the includes list does not specify a direction
+	the default ordering from this value will be used instead.`,
 				Type: orderingEnum,
+			},
+			IndexDirectivePropIncludes: &gql.ArgumentConfig{
+				Description: `Sets the fields the index is created on.
+
+	When used on a field definition and the field is not in the includes list
+	it will be implicitly added as the first entry.`,
+				Type: gql.NewList(indexFieldInputObject),
 			},
 		},
 		Locations: []string{
-			gql.DirectiveLocationField,
+			gql.DirectiveLocationObject,
+			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
+func MaterializedDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name: MaterializedDirectiveLabel,
+		Description: `@materialized is a directive that specifies whether a collection is cached or not.
+ It will default to true if ommited.  If multiple @materialized directives are provided, they will aggregated
+ with OR logic (if any are true, the collection will be cached).`,
+		Args: gql.FieldConfigArgument{
+			MaterializedDirectivePropIf: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationObject,
 		},
 	})
 }
@@ -203,7 +277,7 @@ func CRDTFieldDirective(crdtEnum *gql.Enum) *gql.Directive {
 			},
 		},
 		Locations: []string{
-			gql.DirectiveLocationField,
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }

@@ -28,7 +28,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -121,7 +121,7 @@ func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},

@@ -12,12 +12,8 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func requestJSON(req *http.Request, out any) error {
@@ -37,16 +33,5 @@ func responseJSON(rw http.ResponseWriter, status int, data any) {
 	err := json.NewEncoder(rw).Encode(data)
 	if err != nil {
 		log.ErrorE("failed to write response", err)
-	}
-}
-
-func parseError(msg any) error {
-	switch msg {
-	case client.ErrDocumentNotFoundOrNotAuthorized.Error():
-		return client.ErrDocumentNotFoundOrNotAuthorized
-	case datastore.ErrTxnConflict.Error():
-		return datastore.ErrTxnConflict
-	default:
-		return fmt.Errorf("%s", msg)
 	}
 }

@@ -47,14 +47,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 							"Age":  int64(21),
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+									"cid": "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
+											"cid":  "bafyreidqxuofjmcmo6cmoesfcozsixgh7pghbl57mcstlqqausvswutzzm",
 											"name": "Age",
 										},
 										{
-											"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
+											"cid":  "bafyreiercz7wngub3kxluee2mevdtis7la6piunceuol63qv5u32ngm3zu",
 											"name": "Name",
 										},
 									},
@@ -184,14 +184,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 							"Age":  int64(21),
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+									"cid": "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 									"L1": []map[string]any{
 										{
-											"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
+											"cid":  "bafyreidqxuofjmcmo6cmoesfcozsixgh7pghbl57mcstlqqausvswutzzm",
 											"name": "Age",
 										},
 										{
-											"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
+											"cid":  "bafyreiercz7wngub3kxluee2mevdtis7la6piunceuol63qv5u32ngm3zu",
 											"name": "Name",
 										},
 									},
@@ -259,7 +259,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 							"_docID": docID,
 							"_version": []map[string]any{
 								{
-									"cid":          "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+									"cid":          "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 									"collectionID": int64(1),
 									"delta":        nil,
 									"docID":        "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
@@ -268,11 +268,11 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 									"height":       int64(1),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
+											"cid":  "bafyreidqxuofjmcmo6cmoesfcozsixgh7pghbl57mcstlqqausvswutzzm",
 											"name": "Age",
 										},
 										{
-											"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
+											"cid":  "bafyreiercz7wngub3kxluee2mevdtis7la6piunceuol63qv5u32ngm3zu",
 											"name": "Name",
 										},
 									},
@@ -340,7 +340,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							"_docID": docID,
 							"_version": []map[string]any{
 								{
-									"cid":          "bafyreigfstknvmsl77pg443lqqf2g64y7hr575tts5c4nxuzk3dynffkem",
+									"cid":          "bafyreichg2fm3tzwibfzakwmzguk5wlmyw7vmyhz6zt6gqu37pnzywk564",
 									"collectionID": int64(1),
 									"delta":        nil,
 									"docID":        docID,
@@ -349,18 +349,18 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 									"height":       int64(2),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+											"cid":  "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 											"name": "_head",
 										},
 										{
-											"cid":  "bafyreiapjg22e47sanhjtqgu453mvmxcfcl4ksrcoctyfl6nfsh3xwfcvm",
+											"cid":  "bafyreib7cyhflarpdlelordkmfaqppggvgtxl67tykpzrvsof7e764q5cy",
 											"name": "Age",
 										},
 									},
 									"schemaVersionId": "bafkreigqmcqzkbg3elpe24vfza4rjle2r6cxu7ihzvg56aov57crhaebry",
 								},
 								{
-									"cid":          "bafyreiby7drdzfsg4wwo7f6vkdqhurbe74s4lhayn3k3226zvkgwjd2fbu",
+									"cid":          "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 									"collectionID": int64(1),
 									"delta":        nil,
 									"docID":        docID,
@@ -369,11 +369,11 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 									"height":       int64(1),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreid4sasigytiflrh3rupyevo6wy43b6mlfi4jwkjjwvohgjcd3oscu",
+											"cid":  "bafyreidqxuofjmcmo6cmoesfcozsixgh7pghbl57mcstlqqausvswutzzm",
 											"name": "Age",
 										},
 										{
-											"cid":  "bafyreieg3p2kpyxwiowskvb3pp35nedzawmapjuib7glrvszcgmv6z37fm",
+											"cid":  "bafyreiercz7wngub3kxluee2mevdtis7la6piunceuol63qv5u32ngm3zu",
 											"name": "Name",
 										},
 									},

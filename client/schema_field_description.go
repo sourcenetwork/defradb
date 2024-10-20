@@ -12,20 +12,16 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
-	"strings"
+
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 // FieldKind describes the type of a field.
 type FieldKind interface {
 	// String returns the string representation of this FieldKind.
 	String() string
-
-	// Underlying returns the underlying Kind as a string.
-	//
-	// If this is an array, it will return the element kind, else it will return the same as
-	// [String()].
-	Underlying() string
 
 	// IsNillable returns true if this kind supports nil values.
 	IsNillable() bool
@@ -62,16 +58,63 @@ type ScalarKind uint8
 // ScalarArrayKind represents arrays of simple scalar field kinds, such as `[Int]`.
 type ScalarArrayKind uint8
 
-// ObjectKind represents singular objects (foreign and embedded), such as `User`.
-type ObjectKind string
+// CollectionKind represents a relationship with a [CollectionDescription].
+type CollectionKind struct {
+	// If true, this side of the relationship points to many related records.
+	Array bool
 
-// ObjectKind represents arrays of objects (foreign and embedded), such as `[User]`.
-type ObjectArrayKind string
+	// The root ID of the related [CollectionDescription].
+	Root uint32
+}
+
+// SchemaKind represents a relationship with a [SchemaDescription].
+type SchemaKind struct {
+	// If true, this side of the relationship points to many related records.
+	Array bool
+
+	// The root ID of the related [SchemaDescription].
+	Root string
+}
+
+// NamedKind represents a temporary declaration of a relationship to another
+// [CollectionDefinition].
+//
+// This is used only to temporarily describe a relationship, this kind will
+// never be persisted in the store and instead will be converted to one of
+// [CollectionKind], [SchemaKind] or [SelfKind] first.
+type NamedKind struct {
+	// The current name of the related [CollectionDefinition].
+	Name string
+
+	// If true, this side of the relationship points to many related records.
+	Array bool
+}
+
+// SelfKind represents a relationship with the host.
+//
+// This includes any other schema that formed a circular dependency with the
+// host at the point at which they were created.
+//
+// For example: the relations in User=>Dog=>User form a circle, and would be
+// defined using [SelfKind] instead of [SchemaKind].
+//
+// This is because schema IDs are content IDs and cannot be generated for a
+// single element within a circular dependency tree.
+type SelfKind struct {
+	// The relative ID to the related type.  If this points at its host this
+	// will be empty.
+	RelativeID string
+
+	// If true, this side of the relationship points to many related records.
+	Array bool
+}
 
 var _ FieldKind = ScalarKind(0)
 var _ FieldKind = ScalarArrayKind(0)
-var _ FieldKind = ObjectKind("")
-var _ FieldKind = ObjectArrayKind("")
+var _ FieldKind = (*CollectionKind)(nil)
+var _ FieldKind = (*SchemaKind)(nil)
+var _ FieldKind = (*SelfKind)(nil)
+var _ FieldKind = (*NamedKind)(nil)
 
 func (k ScalarKind) String() string {
 	switch k {
@@ -94,10 +137,6 @@ func (k ScalarKind) String() string {
 	default:
 		return strconv.Itoa(int(k))
 	}
-}
-
-func (k ScalarKind) Underlying() string {
-	return k.String()
 }
 
 func (k ScalarKind) IsNillable() bool {
@@ -135,10 +174,6 @@ func (k ScalarArrayKind) String() string {
 	}
 }
 
-func (k ScalarArrayKind) Underlying() string {
-	return strings.Trim(k.String(), "[]")
-}
-
 func (k ScalarArrayKind) IsNillable() bool {
 	return true
 }
@@ -151,48 +186,138 @@ func (k ScalarArrayKind) IsArray() bool {
 	return true
 }
 
-func (k ObjectKind) String() string {
-	return string(k)
+func (k ScalarArrayKind) SubKind() FieldKind {
+	switch k {
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return FieldKind_NILLABLE_BOOL
+	case FieldKind_BOOL_ARRAY:
+		return FieldKind_NILLABLE_BOOL
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return FieldKind_NILLABLE_INT
+	case FieldKind_INT_ARRAY:
+		return FieldKind_NILLABLE_INT
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_FLOAT_ARRAY:
+		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return FieldKind_NILLABLE_STRING
+	case FieldKind_STRING_ARRAY:
+		return FieldKind_NILLABLE_STRING
+	default:
+		return FieldKind_None
+	}
 }
 
-func (k ObjectKind) Underlying() string {
-	return k.String()
+func NewCollectionKind(root uint32, isArray bool) *CollectionKind {
+	return &CollectionKind{
+		Root:  root,
+		Array: isArray,
+	}
 }
 
-func (k ObjectKind) IsNillable() bool {
+func (k *CollectionKind) String() string {
+	if k.Array {
+		return fmt.Sprintf("[%v]", k.Root)
+	}
+	return strconv.FormatInt(int64(k.Root), 10)
+}
+
+func (k *CollectionKind) IsNillable() bool {
 	return true
 }
 
-func (k ObjectKind) IsObject() bool {
+func (k *CollectionKind) IsObject() bool {
 	return true
 }
 
-func (k ObjectKind) IsArray() bool {
-	return false
+func (k *CollectionKind) IsArray() bool {
+	return k.Array
 }
 
-func (k ObjectArrayKind) String() string {
-	return "[" + string(k) + "]"
+func NewSchemaKind(root string, isArray bool) *SchemaKind {
+	return &SchemaKind{
+		Root:  root,
+		Array: isArray,
+	}
 }
 
-func (k ObjectArrayKind) Underlying() string {
-	return strings.Trim(k.String(), "[]")
+func (k *SchemaKind) String() string {
+	if k.Array {
+		return fmt.Sprintf("[%v]", k.Root)
+	}
+	return k.Root
 }
 
-func (k ObjectArrayKind) IsNillable() bool {
+func (k *SchemaKind) IsNillable() bool {
 	return true
 }
 
-func (k ObjectArrayKind) IsObject() bool {
+func (k *SchemaKind) IsObject() bool {
 	return true
 }
 
-func (k ObjectArrayKind) IsArray() bool {
+func (k *SchemaKind) IsArray() bool {
+	return k.Array
+}
+
+func NewSelfKind(relativeID string, isArray bool) *SelfKind {
+	return &SelfKind{
+		RelativeID: relativeID,
+		Array:      isArray,
+	}
+}
+
+func (k *SelfKind) String() string {
+	var relativeName string
+	if k.RelativeID != "" {
+		relativeName = fmt.Sprintf("%s-%s", request.SelfTypeName, k.RelativeID)
+	} else {
+		relativeName = request.SelfTypeName
+	}
+
+	if k.Array {
+		return fmt.Sprintf("[%s]", relativeName)
+	}
+	return relativeName
+}
+
+func (k *SelfKind) IsNillable() bool {
 	return true
 }
 
-func (k ObjectArrayKind) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + k.String() + `"`), nil
+func (k *SelfKind) IsObject() bool {
+	return true
+}
+
+func (k *SelfKind) IsArray() bool {
+	return k.Array
+}
+
+func NewNamedKind(name string, isArray bool) *NamedKind {
+	return &NamedKind{
+		Name:  name,
+		Array: isArray,
+	}
+}
+
+func (k *NamedKind) String() string {
+	if k.Array {
+		return fmt.Sprintf("[%v]", k.Name)
+	}
+	return k.Name
+}
+
+func (k *NamedKind) IsNillable() bool {
+	return true
+}
+
+func (k *NamedKind) IsObject() bool {
+	return true
+}
+
+func (k *NamedKind) IsArray() bool {
+	return k.Array
 }
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
@@ -229,22 +354,24 @@ const (
 // in the future.  They currently roughly correspond to the GQL field types, but this
 // equality is not guaranteed.
 var FieldKindStringToEnumMapping = map[string]FieldKind{
-	"ID":         FieldKind_DocID,
-	"Boolean":    FieldKind_NILLABLE_BOOL,
-	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
-	"[Boolean!]": FieldKind_BOOL_ARRAY,
-	"Int":        FieldKind_NILLABLE_INT,
-	"[Int]":      FieldKind_NILLABLE_INT_ARRAY,
-	"[Int!]":     FieldKind_INT_ARRAY,
-	"DateTime":   FieldKind_NILLABLE_DATETIME,
-	"Float":      FieldKind_NILLABLE_FLOAT,
-	"[Float]":    FieldKind_NILLABLE_FLOAT_ARRAY,
-	"[Float!]":   FieldKind_FLOAT_ARRAY,
-	"String":     FieldKind_NILLABLE_STRING,
-	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
-	"[String!]":  FieldKind_STRING_ARRAY,
-	"Blob":       FieldKind_NILLABLE_BLOB,
-	"JSON":       FieldKind_NILLABLE_JSON,
+	"ID":                 FieldKind_DocID,
+	"Boolean":            FieldKind_NILLABLE_BOOL,
+	"[Boolean]":          FieldKind_NILLABLE_BOOL_ARRAY,
+	"[Boolean!]":         FieldKind_BOOL_ARRAY,
+	"Int":                FieldKind_NILLABLE_INT,
+	"[Int]":              FieldKind_NILLABLE_INT_ARRAY,
+	"[Int!]":             FieldKind_INT_ARRAY,
+	"DateTime":           FieldKind_NILLABLE_DATETIME,
+	"Float":              FieldKind_NILLABLE_FLOAT,
+	"[Float]":            FieldKind_NILLABLE_FLOAT_ARRAY,
+	"[Float!]":           FieldKind_FLOAT_ARRAY,
+	"String":             FieldKind_NILLABLE_STRING,
+	"[String]":           FieldKind_NILLABLE_STRING_ARRAY,
+	"[String!]":          FieldKind_STRING_ARRAY,
+	"Blob":               FieldKind_NILLABLE_BLOB,
+	"JSON":               FieldKind_NILLABLE_JSON,
+	request.SelfTypeName: NewSelfKind("", false),
+	fmt.Sprintf("[%s]", request.SelfTypeName): NewSelfKind("", true),
 }
 
 // IsRelation returns true if this field is a relation.
@@ -279,9 +406,38 @@ func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+// objectKind is a private type used to facilitate the unmarshalling
+// of json to a [FieldKind].
+type objectKind struct {
+	Array      bool
+	Root       any
+	RelativeID string
+}
+
 func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 	if len(bytes) == 0 {
 		return FieldKind_None, nil
+	}
+
+	if bytes[0] == '{' {
+		var objKind objectKind
+		err := json.Unmarshal(bytes, &objKind)
+		if err != nil {
+			return nil, err
+		}
+
+		if objKind.Root == nil {
+			return NewSelfKind(objKind.RelativeID, objKind.Array), nil
+		}
+
+		switch root := objKind.Root.(type) {
+		case float64:
+			return NewCollectionKind(uint32(root), objKind.Array), nil
+		case string:
+			return NewSchemaKind(root, objKind.Array), nil
+		default:
+			return nil, NewErrFailedToParseKind(bytes)
+		}
 	}
 
 	if bytes[0] != '"' {
@@ -313,12 +469,13 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 		return kind, nil
 	}
 
-	// If we don't find the string representation of this type in the
-	// scalar mapping, assume it is an object - if it is not, validation
-	// will catch this later.  If it is unknown we have no way of telling
-	// as to whether the user thought it was a scalar or an object anyway.
-	if strKind[0] == '[' {
-		return ObjectArrayKind(strings.Trim(strKind, "[]")), nil
+	isArray := strKind[0] == '['
+	if isArray {
+		// Strip the brackets
+		strKind = strKind[1 : len(strKind)-1]
 	}
-	return ObjectKind(strKind), nil
+
+	// This is used by patch schema/collection, where new fields added
+	// by users will be initially added as [NamedKind]s.
+	return NewNamedKind(strKind, isArray), nil
 }

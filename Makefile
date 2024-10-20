@@ -124,7 +124,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint-go
 deps\:lint-go:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61
 
 .PHONY: deps\:lint-yaml
 deps\:lint-yaml:
@@ -134,6 +134,10 @@ ifeq (, $(shell which yamllint))
 else
 	$(info YAML linter 'yamllint' already installed.)
 endif
+
+.PHONY: deps\:vulncheck
+deps\:vulncheck:
+	go install golang.org/x/vuln/cmd/govulncheck@latest
 
 .PHONY: deps\:lint
 deps\:lint:
@@ -172,6 +176,7 @@ deps:
 	$(MAKE) deps:bench && \
 	$(MAKE) deps:chglog && \
 	$(MAKE) deps:lint && \
+	$(MAKE) deps:vulncheck && \
 	$(MAKE) deps:test && \
 	$(MAKE) deps:mocks
 
@@ -202,7 +207,7 @@ verify:
 
 .PHONY: tidy
 tidy:
-	go mod tidy -go=1.21.3
+	go mod tidy -go=1.22
 
 .PHONY: clean
 clean:

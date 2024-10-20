@@ -21,6 +21,7 @@ import (
 var (
 	_ connor.FilterKey = (*PropertyIndex)(nil)
 	_ connor.FilterKey = (*Operator)(nil)
+	_ connor.FilterKey = (*ObjectProperty)(nil)
 )
 
 // PropertyIndex is a FilterKey that represents a property in a document.
@@ -71,6 +72,34 @@ func (k *Operator) Equal(other connor.FilterKey) bool {
 	return false
 }
 
+// ObjectProperty is a FilterKey that represents a property in an object.
+//
+// This is used to target properties of an object when the fields
+// are not explicitly mapped, such as with JSON.
+type ObjectProperty struct {
+	// The name of the property on object.
+	Name string
+}
+
+func (k *ObjectProperty) GetProp(data any) any {
+	if data == nil {
+		return nil
+	}
+	object := data.(map[string]any)
+	return object[k.Name]
+}
+
+func (k *ObjectProperty) GetOperatorOrDefault(defaultOp string) string {
+	return defaultOp
+}
+
+func (k *ObjectProperty) Equal(other connor.FilterKey) bool {
+	if otherKey, isOk := other.(*ObjectProperty); isOk && *k == *otherKey {
+		return true
+	}
+	return false
+}
+
 // Filter represents a series of conditions that may reduce the number of
 // records that a request returns.
 type Filter struct {
@@ -110,19 +139,26 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 	for k, v := range obj {
 		switch keyType := k.(type) {
 		case *PropertyIndex:
-			subObj := v.(map[connor.FilterKey]any)
 			outkey, _ := mapping.TryToFindNameFromIndex(keyType.Index)
-			childMapping, ok := tryGetChildMapping(mapping, keyType.Index)
-			if ok {
-				outmap[outkey] = filterObjectToMap(childMapping, subObj)
-			} else {
-				outmap[outkey] = filterObjectToMap(mapping, subObj)
+			switch subObj := v.(type) {
+			case map[connor.FilterKey]any:
+				childMapping, ok := tryGetChildMapping(mapping, keyType.Index)
+				if ok {
+					outmap[outkey] = filterObjectToMap(childMapping, subObj)
+				} else {
+					outmap[outkey] = filterObjectToMap(mapping, subObj)
+				}
+			case nil:
+				outmap[outkey] = nil
 			}
 
 		case *Operator:
 			switch keyType.Operation {
 			case request.FilterOpAnd, request.FilterOpOr:
-				v := v.([]any)
+				v, ok := v.([]any)
+				if !ok {
+					continue // value is nil
+				}
 				logicMapEntries := make([]any, len(v))
 				for i, item := range v {
 					itemMap := item.(map[connor.FilterKey]any)
@@ -130,10 +166,20 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 				}
 				outmap[keyType.Operation] = logicMapEntries
 			case request.FilterOpNot:
-				itemMap := v.(map[connor.FilterKey]any)
-				outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
+				itemMap, ok := v.(map[connor.FilterKey]any)
+				if ok {
+					outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
+				}
 			default:
 				outmap[keyType.Operation] = v
+			}
+
+		case *ObjectProperty:
+			switch subObj := v.(type) {
+			case map[connor.FilterKey]any:
+				outmap[keyType.Name] = filterObjectToMap(mapping, subObj)
+			case nil:
+				outmap[keyType.Name] = nil
 			}
 		}
 	}

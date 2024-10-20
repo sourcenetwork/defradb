@@ -31,7 +31,8 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				`,
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name: immutable.Some("Users"),
+						Name:           immutable.Some("Users"),
+						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,
@@ -317,6 +318,52 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "Blob",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaSimple_WithJSONField_CreatesSchemaGivenType(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						data: JSON
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users",
+						"fields": DefaultFields.Append(
+							Field{
+								"name": "data",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "JSON",
 								},
 							},
 						).Tidy(),

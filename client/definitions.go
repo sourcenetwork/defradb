@@ -11,9 +11,15 @@
 package client
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // CollectionDefinition contains the metadata defining what a Collection is.
@@ -139,6 +145,9 @@ type FieldDefinition struct {
 
 	// If true, this is the primary half of a relation, otherwise is false.
 	IsPrimaryRelation bool
+
+	// DefaultValue contains the default value for this field.
+	DefaultValue any
 }
 
 // NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
@@ -158,6 +167,7 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		RelationName:      local.RelationName.Value(),
 		Typ:               global.Typ,
 		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
+		DefaultValue:      local.DefaultValue,
 	}
 }
 
@@ -168,6 +178,7 @@ func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 		ID:           local.ID,
 		Kind:         local.Kind.Value(),
 		RelationName: local.RelationName.Value(),
+		DefaultValue: local.DefaultValue,
 	}
 }
 
@@ -194,4 +205,169 @@ func (f FieldDefinition) GetSecondaryRelationField(c CollectionDefinition) (Fiel
 	}
 	secondary, valid := c.GetFieldByName(strings.TrimSuffix(f.Name, request.RelatedObjectID))
 	return secondary, valid && !secondary.IsPrimaryRelation
+}
+
+// DefinitionCache is an object providing easy access to cached collection definitions.
+type DefinitionCache struct {
+	// The full set of [CollectionDefinition]s within this cache
+	Definitions []CollectionDefinition
+
+	// The cached Definitions mapped by the Root of their [SchemaDescription]
+	DefinitionsBySchemaRoot map[string]CollectionDefinition
+
+	// The cached Definitions mapped by the Root of their [CollectionDescription]
+	DefinitionsByCollectionRoot map[uint32]CollectionDefinition
+}
+
+// NewDefinitionCache creates a new [DefinitionCache] populated with the given [CollectionDefinition]s.
+func NewDefinitionCache(definitions []CollectionDefinition) DefinitionCache {
+	definitionsBySchemaRoot := make(map[string]CollectionDefinition, len(definitions))
+	definitionsByCollectionRoot := make(map[uint32]CollectionDefinition, len(definitions))
+
+	for _, def := range definitions {
+		definitionsBySchemaRoot[def.Schema.Root] = def
+		definitionsByCollectionRoot[def.Description.RootID] = def
+	}
+
+	return DefinitionCache{
+		Definitions:                 definitions,
+		DefinitionsBySchemaRoot:     definitionsBySchemaRoot,
+		DefinitionsByCollectionRoot: definitionsByCollectionRoot,
+	}
+}
+
+// GetDefinition returns the definition that the given [FieldKind] points to, if it is found in the
+// given [DefinitionCache].
+//
+// If the related definition is not found, default and false will be returned.
+func GetDefinition(
+	cache DefinitionCache,
+	host CollectionDefinition,
+	kind FieldKind,
+) (CollectionDefinition, bool) {
+	switch typedKind := kind.(type) {
+	case *NamedKind:
+		for _, def := range cache.Definitions {
+			if def.GetName() == typedKind.Name {
+				return def, true
+			}
+		}
+
+		return CollectionDefinition{}, false
+
+	case *SchemaKind:
+		def, ok := cache.DefinitionsBySchemaRoot[typedKind.Root]
+		return def, ok
+
+	case *CollectionKind:
+		def, ok := cache.DefinitionsByCollectionRoot[typedKind.Root]
+		return def, ok
+
+	case *SelfKind:
+		if host.Description.RootID != 0 {
+			return host, true
+		}
+
+		if typedKind.RelativeID == "" {
+			return host, true
+		}
+
+		hostIDBase := strings.Split(host.Schema.Root, "-")[0]
+		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
+
+		def, ok := cache.DefinitionsBySchemaRoot[targetID]
+		return def, ok
+
+	default:
+		// no-op
+	}
+
+	return CollectionDefinition{}, false
+}
+
+// GetDefinitionFromStore returns the definition that the given [FieldKind] points to, if it is found
+// in the given store.
+//
+// If the related definition is not found, or an error occurs, default and false will be returned.
+func GetDefinitionFromStore(
+	ctx context.Context,
+	store Store,
+	host CollectionDefinition,
+	kind FieldKind,
+) (CollectionDefinition, bool, error) {
+	switch typedKind := kind.(type) {
+	case *NamedKind:
+		col, err := store.GetCollectionByName(ctx, typedKind.Name)
+		if errors.Is(err, datastore.ErrNotFound) {
+			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
+				Name: immutable.Some(typedKind.Name),
+			})
+			if len(schemas) == 0 || err != nil {
+				return CollectionDefinition{}, false, err
+			}
+
+			return CollectionDefinition{
+				// todo - returning the first is a temporary simplification until
+				// https://github.com/sourcenetwork/defradb/issues/2934
+				Schema: schemas[0],
+			}, true, nil
+		} else if err != nil {
+			return CollectionDefinition{}, false, err
+		}
+
+		return col.Definition(), true, nil
+
+	case *SchemaKind:
+		schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
+			Root: immutable.Some(typedKind.Root),
+		})
+		if len(schemas) == 0 || err != nil {
+			return CollectionDefinition{}, false, err
+		}
+
+		return CollectionDefinition{
+			// todo - returning the first is a temporary simplification until
+			// https://github.com/sourcenetwork/defradb/issues/2934
+			Schema: schemas[0],
+		}, true, nil
+
+	case *CollectionKind:
+		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
+			Root: immutable.Some(typedKind.Root),
+		})
+
+		if len(cols) == 0 || err != nil {
+			return CollectionDefinition{}, false, err
+		}
+
+		return cols[0].Definition(), true, nil
+
+	case *SelfKind:
+		if host.Description.RootID != 0 {
+			return host, true, nil
+		}
+
+		if typedKind.RelativeID == "" {
+			return host, true, nil
+		}
+
+		hostIDBase := strings.Split(host.Schema.Root, "-")[0]
+		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
+
+		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
+			SchemaRoot: immutable.Some(targetID),
+		})
+		if len(cols) == 0 || err != nil {
+			return CollectionDefinition{}, false, err
+		}
+		def := cols[0].Definition()
+		def.Description = CollectionDescription{}
+
+		return def, true, nil
+
+	default:
+		// no-op
+	}
+
+	return CollectionDefinition{}, false, nil
 }

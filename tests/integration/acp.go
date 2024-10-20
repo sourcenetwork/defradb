@@ -27,7 +27,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -57,6 +56,20 @@ const (
 var (
 	acpType ACPType
 )
+
+// KMSType is the type of KMS to use.
+type KMSType string
+
+const (
+	// NoneKMSType is the none KMS type. It is used to indicate that no KMS should be used.
+	NoneKMSType KMSType = "none"
+	// PubSubKMSType is the PubSub KMS type.
+	PubSubKMSType KMSType = "pubsub"
+)
+
+func getKMSTypes() []KMSType {
+	return []KMSType{PubSubKMSType}
+}
 
 func init() {
 	acpType = ACPType(os.Getenv(acpTypeEnvName))
@@ -104,13 +117,13 @@ func addPolicyACP(
 		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
-		if err == nil {
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
 			require.Equal(s.t, action.ExpectedPolicyID, policyResult.PolicyID)
 		}
-
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
@@ -120,14 +133,373 @@ func addPolicyACP(
 	}
 }
 
+// AddDocActorRelationship will attempt to create a new relationship for a document with an actor.
+type AddDocActorRelationship struct {
+	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
+	//
+	// If a value is not provided the relationship will be added in all nodes, unless testing with
+	// sourcehub ACP, in which case the relationship will only be defined once.
+	NodeID immutable.Option[int]
+
+	// The collection in which this document we want to add a relationship for exists.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	CollectionID int
+
+	// The index-identifier of the document within the collection.  This is based on
+	// the order in which it was created, not the ordering of the document within the
+	// database.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	DocID int
+
+	// The name of the relation to set between document and target actor (should be defined in the policy).
+	//
+	// This is a required field.
+	Relation string
+
+	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	TargetIdentity int
+
+	// The requestor identity, i.e. identity of the actor creating the relationship.
+	// Note: This identity must either own or have managing access defined in the policy.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	RequestorIdentity int
+
+	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
+	ExpectedExistence bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+func addDocActorRelationshipACP(
+	s *state,
+	action AddDocActorRelationship,
+) {
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
+		node := s.nodes[nodeID]
+
+		var collectionName string
+		if action.CollectionID == -1 {
+			collectionName = ""
+		} else {
+			collection := collections[action.CollectionID]
+			if !collection.Description().Name.HasValue() {
+				require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+			}
+			collectionName = collection.Description().Name.Value()
+		}
+
+		var docID string
+		if action.DocID == -1 || action.CollectionID == -1 {
+			docID = ""
+		} else {
+			docID = s.docIDs[action.CollectionID][action.DocID].String()
+		}
+
+		var targetIdentity string
+		if action.TargetIdentity == -1 {
+			targetIdentity = ""
+		} else {
+			optionalTargetIdentity := getIdentity(s, nodeID, immutable.Some(action.TargetIdentity))
+			if !optionalTargetIdentity.HasValue() {
+				require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
+			}
+			targetIdentity = optionalTargetIdentity.Value().DID
+		}
+
+		var requestorIdentity immutable.Option[acpIdentity.Identity]
+		if action.RequestorIdentity == -1 {
+			requestorIdentity = acpIdentity.None
+		} else {
+			requestorIdentity = getIdentity(s, nodeID, immutable.Some(action.RequestorIdentity))
+			if !requestorIdentity.HasValue() {
+				require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
+			}
+		}
+		ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
+
+		exists, err := node.AddDocActorRelationship(
+			ctx,
+			collectionName,
+			docID,
+			action.Relation,
+			targetIdentity,
+		)
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
+			require.Equal(s.t, action.ExpectedError, "")
+			require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
+		}
+	} else {
+		for i, node := range getNodes(action.NodeID, s.nodes) {
+			var collectionName string
+			if action.CollectionID == -1 {
+				collectionName = ""
+			} else {
+				collection := s.collections[i][action.CollectionID]
+				if !collection.Description().Name.HasValue() {
+					require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+				}
+				collectionName = collection.Description().Name.Value()
+			}
+
+			var docID string
+			if action.DocID == -1 || action.CollectionID == -1 {
+				docID = ""
+			} else {
+				docID = s.docIDs[action.CollectionID][action.DocID].String()
+			}
+
+			var targetIdentity string
+			if action.TargetIdentity == -1 {
+				targetIdentity = ""
+			} else {
+				optionalTargetIdentity := getIdentity(s, i, immutable.Some(action.TargetIdentity))
+				if !optionalTargetIdentity.HasValue() {
+					require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
+				}
+				targetIdentity = optionalTargetIdentity.Value().DID
+			}
+
+			var requestorIdentity immutable.Option[acpIdentity.Identity]
+			if action.RequestorIdentity == -1 {
+				requestorIdentity = acpIdentity.None
+			} else {
+				requestorIdentity = getIdentity(s, i, immutable.Some(action.RequestorIdentity))
+				if !requestorIdentity.HasValue() {
+					require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
+				}
+			}
+			ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
+
+			exists, err := node.AddDocActorRelationship(
+				ctx,
+				collectionName,
+				docID,
+				action.Relation,
+				targetIdentity,
+			)
+
+			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+			if !expectedErrorRaised {
+				require.Equal(s.t, action.ExpectedError, "")
+				require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
+			}
+
+			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+			// the nodes.
+			if acpType == SourceHubACPType {
+				break
+			}
+		}
+	}
+}
+
+// DeleteDocActorRelationship will attempt to delete a relationship between a document and an actor.
+type DeleteDocActorRelationship struct {
+	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
+	//
+	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
+	// sourcehub ACP, in which case the relationship will only be deleted once.
+	NodeID immutable.Option[int]
+
+	// The collection in which the target document we want to delete relationship for exists.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	CollectionID int
+
+	// The index-identifier of the document within the collection.  This is based on
+	// the order in which it was created, not the ordering of the document within the
+	// database.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	DocID int
+
+	// The name of the relation within the relationship we want to delete (should be defined in the policy).
+	//
+	// This is a required field.
+	Relation string
+
+	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	TargetIdentity int
+
+	// The requestor identity, i.e. identity of the actor deleting the relationship.
+	// Note: This identity must either own or have managing access defined in the policy.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
+	RequestorIdentity int
+
+	// Result returns true if the relationship record was expected to be found and deleted,
+	// and returns false if no matching relationship record was found (no-op).
+	ExpectedRecordFound bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+func deleteDocActorRelationshipACP(
+	s *state,
+	action DeleteDocActorRelationship,
+) {
+	if action.NodeID.HasValue() {
+		nodeID := action.NodeID.Value()
+		collections := s.collections[nodeID]
+		node := s.nodes[nodeID]
+
+		var collectionName string
+		if action.CollectionID == -1 {
+			collectionName = ""
+		} else {
+			collection := collections[action.CollectionID]
+			if !collection.Description().Name.HasValue() {
+				require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+			}
+			collectionName = collection.Description().Name.Value()
+		}
+
+		var docID string
+		if action.DocID == -1 || action.CollectionID == -1 {
+			docID = ""
+		} else {
+			docID = s.docIDs[action.CollectionID][action.DocID].String()
+		}
+
+		var targetIdentity string
+		if action.TargetIdentity == -1 {
+			targetIdentity = ""
+		} else {
+			optionalTargetIdentity := getIdentity(s, nodeID, immutable.Some(action.TargetIdentity))
+			if !optionalTargetIdentity.HasValue() {
+				require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
+			}
+			targetIdentity = optionalTargetIdentity.Value().DID
+		}
+
+		var requestorIdentity immutable.Option[acpIdentity.Identity]
+		if action.RequestorIdentity == -1 {
+			requestorIdentity = acpIdentity.None
+		} else {
+			requestorIdentity = getIdentity(s, nodeID, immutable.Some(action.RequestorIdentity))
+			if !requestorIdentity.HasValue() {
+				require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
+			}
+		}
+		ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
+
+		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+			ctx,
+			collectionName,
+			docID,
+			action.Relation,
+			targetIdentity,
+		)
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
+			require.Equal(s.t, action.ExpectedError, "")
+			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
+		}
+	} else {
+		for i, node := range getNodes(action.NodeID, s.nodes) {
+			var collectionName string
+			if action.CollectionID == -1 {
+				collectionName = ""
+			} else {
+				collection := s.collections[i][action.CollectionID]
+				if !collection.Description().Name.HasValue() {
+					require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+				}
+				collectionName = collection.Description().Name.Value()
+			}
+
+			var docID string
+			if action.DocID == -1 || action.CollectionID == -1 {
+				docID = ""
+			} else {
+				docID = s.docIDs[action.CollectionID][action.DocID].String()
+			}
+
+			var targetIdentity string
+			if action.TargetIdentity == -1 {
+				targetIdentity = ""
+			} else {
+				optionalTargetIdentity := getIdentity(s, i, immutable.Some(action.TargetIdentity))
+				if !optionalTargetIdentity.HasValue() {
+					require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
+				}
+				targetIdentity = optionalTargetIdentity.Value().DID
+			}
+
+			var requestorIdentity immutable.Option[acpIdentity.Identity]
+			if action.RequestorIdentity == -1 {
+				requestorIdentity = acpIdentity.None
+			} else {
+				requestorIdentity = getIdentity(s, i, immutable.Some(action.RequestorIdentity))
+				if !requestorIdentity.HasValue() {
+					require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
+				}
+			}
+			ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
+
+			deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+				ctx,
+				collectionName,
+				docID,
+				action.Relation,
+				targetIdentity,
+			)
+
+			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+			if !expectedErrorRaised {
+				require.Equal(s.t, action.ExpectedError, "")
+				require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
+			}
+
+			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+			// the nodes.
+			if acpType == SourceHubACPType {
+				break
+			}
+		}
+	}
+}
+
 func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	var isACPTest bool
 	for _, a := range s.testCase.Actions {
-		if _, ok := a.(AddPolicy); ok {
+		switch a.(type) {
+		case
+			AddPolicy,
+			AddDocActorRelationship,
+			DeleteDocActorRelationship:
 			isACPTest = true
-			break
 		}
 	}
+
 	if !isACPTest {
 		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
 		// runtime of the test suite when SourceHub ACP is selected.
@@ -142,9 +514,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 
 	kr, err := keyring.OpenFileKeyring(
 		directory,
-		keyring.PromptFunc(func(s string) ([]byte, error) {
-			return []byte("secret"), nil
-		}),
+		[]byte("secret"),
 	)
 	if err != nil {
 		return nil, err
@@ -352,7 +722,7 @@ cmdReaderLoop:
 	}
 
 	return []node.ACPOpt{
-		node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)),
+		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
 		node.WithSourceHubChainID(chainID),
 		node.WithSourceHubGRPCAddress(gRpcAddress),
 		node.WithSourceHubCometRPCAddress(rpcAddress),
@@ -394,6 +764,37 @@ func crossLock(port uint16) (func(), error) {
 		nil
 }
 
+// Generate the keys using the index as the seed so that multiple
+// runs yield the same private key.  This is important for stuff like
+// the change detector.
+func generateIdentity(s *state, seedIndex int, nodeIndex int) (acpIdentity.Identity, error) {
+	var audience immutable.Option[string]
+	switch client := s.nodes[nodeIndex].(type) {
+	case *http.Wrapper:
+		audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+	case *cli.Wrapper:
+		audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+	}
+
+	source := rand.NewSource(int64(seedIndex))
+	r := rand.New(source)
+
+	privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
+	require.NoError(s.t, err)
+
+	identity, err := acpIdentity.FromPrivateKey(
+		privateKey,
+		authTokenExpiration,
+		audience,
+		immutable.Some(s.sourcehubAddress),
+		// Creating and signing the bearer token is slow, so we skip it if it not
+		// required.
+		!(acpType == SourceHubACPType || audience.HasValue()),
+	)
+
+	return identity, err
+}
+
 func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable.Option[acpIdentity.Identity] {
 	if !index.HasValue() {
 		return immutable.None[acpIdentity.Identity]()
@@ -408,40 +809,18 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 
 	if len(nodeIdentities) <= index.Value() {
 		identities := make([]acpIdentity.Identity, index.Value()+1)
-		copy(identities, nodeIdentities)
-		nodeIdentities = identities
-		s.identities[nodeIndex] = nodeIdentities
-
-		var audience immutable.Option[string]
-		switch client := s.nodes[nodeIndex].(type) {
-		case *http.Wrapper:
-			audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
-		case *cli.Wrapper:
-			audience = immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
+		// Fill any empty identities up to the index.
+		for i := range identities {
+			if i < len(nodeIdentities) && nodeIdentities[i] != (acpIdentity.Identity{}) {
+				identities[i] = nodeIdentities[i]
+				continue
+			}
+			newIdentity, err := generateIdentity(s, i, nodeIndex)
+			require.NoError(s.t, err)
+			identities[i] = newIdentity
 		}
-
-		// Generate the keys using the index as the seed so that multiple
-		// runs yield the same private key.  This is important for stuff like
-		// the change detector.
-		source := rand.NewSource(int64(index.Value()))
-		r := rand.New(source)
-
-		privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-		require.NoError(s.t, err)
-
-		identity, err := acpIdentity.FromPrivateKey(
-			privateKey,
-			authTokenExpiration,
-			audience,
-			immutable.Some(s.sourcehubAddress),
-			// Creating and signing the bearer token is slow, so we skip it if it not
-			// required.
-			!(acpType == SourceHubACPType || audience.HasValue()),
-		)
-		require.NoError(s.t, err)
-
-		nodeIdentities[index.Value()] = identity
-		return immutable.Some(identity)
+		s.identities[nodeIndex] = identities
+		return immutable.Some(identities[index.Value()])
 	} else {
 		return immutable.Some(nodeIdentities[index.Value()])
 	}

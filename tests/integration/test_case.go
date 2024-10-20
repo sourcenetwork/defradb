@@ -52,6 +52,32 @@ type TestCase struct {
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between acp types, or we need to temporarily document a bug.
 	SupportedACPTypes immutable.Option[[]ACPType]
+
+	// If provided a value, SupportedACPTypes will cause this test to be skipped
+	// if the active view type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between view types, or we need to temporarily document a bug.
+	SupportedViewTypes immutable.Option[[]ViewType]
+
+	// If provided a value, SupportedDatabaseTypes will cause this test to be skipped
+	// if the active database type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between database types, or we need to temporarily document a bug.
+	SupportedDatabaseTypes immutable.Option[[]DatabaseType]
+
+	// Configuration for KMS to be used in the test
+	KMS KMS
+}
+
+// KMS contains the configuration for KMS to be used in the test
+type KMS struct {
+	// Activated indicates if the KMS should be used in the test
+	Activated bool
+	// ExcludedTypes specifies the KMS types that should be excluded from the test.
+	// If none are specified all types will be used.
+	ExcludedTypes []KMSType
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
@@ -73,6 +99,22 @@ type ConfigureNode func() []net.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
+
+// Close is an action that will close a node.
+type Close struct {
+	// NodeID may hold the ID (index) of a node to close.
+	//
+	// If a value is not provided the close will be applied to all nodes.
+	NodeID immutable.Option[int]
+}
+
+// Start is an action that will start a node that has been previously closed.
+type Start struct {
+	// NodeID may hold the ID (index) of a node to start.
+	//
+	// If a value is not provided the start will be applied to all nodes.
+	NodeID immutable.Option[int]
+}
 
 // SchemaUpdate is an action that will update the database schema.
 //
@@ -212,6 +254,23 @@ type CreateView struct {
 
 	// An optional Lens transform to add to the view.
 	Transform immutable.Option[model.Lens]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
+type RefreshViews struct {
+	// NodeID may hold the ID (index) of a node to create this View on.
+	//
+	// If a value is not provided the view will be created on all nodes.
+	NodeID immutable.Option[int]
+
+	// The set of fetch options for the views.
+	FilterOptions client.CollectionFetchOptions
 
 	// Any error expected from the action. Optional.
 	//
@@ -532,6 +591,12 @@ type Request struct {
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
 
+	// OperationName sets the operation name option for the request.
+	OperationName immutable.Option[string]
+
+	// Variables sets the variables option for the request.
+	Variables immutable.Option[map[string]any]
+
 	// The request to execute.
 	Request string
 
@@ -676,7 +741,8 @@ type ClientIntrospectionRequest struct {
 type BackupExport struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
-	// If a value is not provided the indexes will be retrieved from the first nodes.
+	// If a value is not provided the backup export will be done for all the nodes.
+	// todo: https://github.com/sourcenetwork/defradb/issues/3067
 	NodeID immutable.Option[int]
 
 	// The backup configuration.
@@ -696,7 +762,8 @@ type BackupExport struct {
 type BackupImport struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
-	// If a value is not provided the indexes will be retrieved from the first nodes.
+	// If a value is not provided the backup import will be done for all the nodes.
+	// todo: https://github.com/sourcenetwork/defradb/issues/3067
 	NodeID immutable.Option[int]
 
 	// The backup file path.

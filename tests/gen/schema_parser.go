@@ -17,21 +17,48 @@ import (
 	"unicode"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/node"
 )
 
-func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
-	parser, err := graphql.NewParser()
+func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
+	ctx := context.Background()
+
+	// Spinning up a temporary in-memory node with all extras disabled is the
+	// most reliable and cheapest maintainance-cost-wise way to fully parse
+	// the SDL and correctly link all relations.
+	node, err := node.New(
+		ctx,
+		node.WithBadgerInMemory(true),
+		node.WithDisableAPI(true),
+		node.WithDisableP2P(true),
+	)
 	if err != nil {
 		return nil, err
 	}
-	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
+
+	err = node.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[string]client.CollectionDefinition)
+
+	_, err = node.DB.AddSchema(ctx, gqlSDL)
+	if err != nil {
+		return nil, err
+	}
+
+	cols, err := node.DB.GetCollections(ctx, client.CollectionFetchOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = node.Close(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]client.CollectionDefinition, len(cols))
 	for _, col := range cols {
-		result[col.Description.Name.Value()] = col
+		result[col.Definition().GetName()] = col.Definition()
 	}
 	return result, nil
 }

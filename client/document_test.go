@@ -161,7 +161,16 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
-		"Custom": "{\"tree\":\"maple\", \"age\": 260}"
+		"Custom": {
+			"string": "maple", 
+			"int": 260,
+			"float": 3.14,
+			"false": false,
+			"true": true,
+			"null": null,
+			"array": ["one", 1],
+			"object": {"one": 1}
+		}
 	}`)
 	doc, err := NewDocFromJSON(objWithJSONField, def)
 	if err != nil {
@@ -183,7 +192,16 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(26))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
-	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), "{\"tree\":\"maple\",\"age\":260}")
+	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), map[string]any{
+		"string": "maple",
+		"int":    int64(260),
+		"float":  float64(3.14),
+		"false":  false,
+		"true":   true,
+		"null":   nil,
+		"array":  []any{"one", int64(1)},
+		"object": map[string]any{"one": int64(1)},
+	})
 	assert.Equal(t, doc.values[doc.fields["Custom"]].IsDocument(), false)
 }
 
@@ -191,20 +209,20 @@ func TestNewFromJSON_WithInvalidJSONFieldValue_Error(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
-		"Custom": "{\"tree\":\"maple, \"age\": 260}"
+		"Custom": {"tree":"maple, "age": 260}
 	}`)
 	_, err := NewDocFromJSON(objWithJSONField, def)
-	require.ErrorContains(t, err, "invalid JSON payload. Payload: {\"tree\":\"maple, \"age\": 260}")
+	require.ErrorContains(t, err, "cannot parse JSON")
 }
 
-func TestNewFromJSON_WithInvalidJSONFieldValueSimpleString_Error(t *testing.T) {
+func TestNewFromJSON_WithJSONFieldValueSimpleString_Succeed(t *testing.T) {
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
 		"Custom": "blah"
 	}`)
 	_, err := NewDocFromJSON(objWithJSONField, def)
-	require.ErrorContains(t, err, "invalid JSON payload. Payload: blah")
+	require.NoError(t, err)
 }
 
 func TestIsJSONArray(t *testing.T) {

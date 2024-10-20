@@ -17,6 +17,7 @@ const (
 	CreateObjects
 	UpdateObjects
 	DeleteObjects
+	UpsertObjects
 )
 
 // ObjectMutation is a field on the `mutation` operation of a graphql request. It includes
@@ -36,17 +37,11 @@ type ObjectMutation struct {
 	// Collection is the target collection name.
 	Collection string
 
-	// Input is the json representation of the fieldName-value pairs of document properties
-	// to mutate.
-	//
-	// This is ignored for [DeleteObjects] mutations.
-	Input map[string]any
+	// CreateInput is the array of maps of fields and values used for a create mutation.
+	CreateInput []map[string]any
 
-	// Inputs is the array of json representations of the fieldName-value pairs of document
-	// properties to mutate.
-	//
-	// This is ignored for [DeleteObjects] mutations.
-	Inputs []map[string]any
+	// UpdateInput is a map of fields and values used for an update mutation.
+	UpdateInput map[string]any
 
 	// Encrypt is a boolean flag that indicates whether the input data should be encrypted.
 	Encrypt bool

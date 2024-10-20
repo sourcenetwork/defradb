@@ -56,8 +56,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "Shahzad"},
+						{"name": "Islam"},
 						{"name": "Keenan"},
 					},
 				},
@@ -124,8 +124,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "Shahzad"},
+						{"name": "Islam"},
 						{"name": "Keenan"},
 					},
 				},
@@ -182,7 +182,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 
 					type Address {
 						user: User @primary
-						city: String @index 
+						city: String @index
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -204,8 +204,8 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Shahzad"},
 						{"name": "John"},
+						{"name": "Shahzad"},
 						{"name": "Fred"},
 					},
 				},
@@ -490,11 +490,11 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 							"devices": []map[string]any{
 								{
 									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
+									"manufacturer": "Sony",
 								},
 								{
 									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"manufacturer": "The Proclaimers",
 								},
 								// The filter is on User, so all devices belonging to it will be returned
 								{
@@ -580,11 +580,11 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 							"devices": []map[string]any{
 								{
 									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
+									"manufacturer": "Sony",
 								},
 								{
 									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"manufacturer": "The Proclaimers",
 								},
 								{
 									"model":        "Running Man",
@@ -1018,36 +1018,36 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndex_UniqueIndexOnChildWithEmptyParentCollection(t *testing.T) {
+func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Action {
-						key: String @index(unique: true)
-						playerActions: [PlayerAction]
+					type User {
+						name: String @index(unique: true)
+						devices: [Device]
 					}
 
-					type PlayerAction {
-						deleted: Boolean
-						action: Action
+					type Device {
+						trusted: Boolean
+						owner: User
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
-					"key": "ACTION_KEY",
+					"name": "John",
 				},
 			},
 			testUtils.Request{
 				Request: `query {
-					PlayerAction(filter: {action: {key: {_eq: "ACTION_KEY"}}}) {
-						deleted
+					Device(filter: {owner: {name: {_eq: "John"}}}) {
+						trusted
 					}
 				}`,
 				Results: map[string]any{
-					"PlayerAction": []map[string]any{},
+					"Device": []map[string]any{},
 				},
 			},
 		},

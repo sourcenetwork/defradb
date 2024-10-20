@@ -129,6 +129,13 @@ func (db *db) getCollections(
 
 	var cols []client.CollectionDescription
 	switch {
+	case options.Root.HasValue():
+		var err error
+		cols, err = description.GetCollectionsByRoot(ctx, txn, options.Root.Value())
+		if err != nil {
+			return nil, err
+		}
+
 	case options.Name.HasValue():
 		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
 		if err != nil {
@@ -173,6 +180,13 @@ func (db *db) getCollections(
 				continue
 			}
 		}
+
+		if options.Root.HasValue() {
+			if col.RootID != options.Root.Value() {
+				continue
+			}
+		}
+
 		// By default, we don't return inactive collections unless a specific version is requested.
 		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.SchemaVersionID.HasValue() {
 			continue
@@ -641,26 +655,6 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
-			relationFieldDescription, isSecondaryRelationID := fieldDescription.GetSecondaryRelationField(c.Definition())
-			if isSecondaryRelationID {
-				primaryId := val.Value().(string)
-
-				err = c.patchPrimaryDoc(
-					ctx,
-					c.Name().Value(),
-					relationFieldDescription,
-					primaryKey.DocID,
-					primaryId,
-				)
-				if err != nil {
-					return cid.Undef, err
-				}
-
-				// If this field was a secondary relation ID the related document will have been
-				// updated instead and we should discard this value
-				continue
-			}
-
 			err = c.validateOneToOneLinkDoesntAlreadyExist(
 				ctx,
 				doc.ID().String(),
@@ -708,7 +702,6 @@ func (c *collection) save(
 		Cid:        link.Cid,
 		SchemaRoot: c.Schema().Root,
 		Block:      headNode,
-		IsCreate:   isCreate,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
@@ -745,11 +738,12 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, err := c.db.getCollectionByName(ctx, objFieldDescription.Kind.Underlying())
+	otherCol, _, err := client.GetDefinitionFromStore(ctx, c.db, c.Definition(), objFieldDescription.Kind)
 	if err != nil {
 		return err
 	}
-	otherObjFieldDescription, _ := otherCol.Description().GetFieldByRelation(
+
+	otherObjFieldDescription, _ := otherCol.Description.GetFieldByRelation(
 		fieldDescription.RelationName,
 		c.Name().Value(),
 		objFieldDescription.Name,
@@ -832,6 +826,11 @@ func (c *collection) Delete(
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
+	err = c.deleteIndexedDocWithID(ctx, docID)
+	if err != nil {
+		return false, err
+	}
+
 	err = c.applyDelete(ctx, primaryKey)
 	if err != nil {
 		return false, err
@@ -900,12 +899,11 @@ func (c *collection) saveCompositeToMerkleCRDT(
 	status client.DocumentStatus,
 ) (cidlink.Link, []byte, error) {
 	txn := mustGetContextTxn(ctx)
-	dsKey = dsKey.WithFieldId(core.COMPOSITE_NAMESPACE)
+	dsKey = dsKey.WithFieldID(core.COMPOSITE_NAMESPACE)
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,
 		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 		dsKey,
-		"",
 	)
 
 	if status.IsDeleted() {

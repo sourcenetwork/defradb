@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"fmt"
+
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -23,10 +25,28 @@ import (
 
 // ParseRequest parses a root ast.Document, and returns a formatted Request object.
 // Requires a non-nil doc, will error otherwise.
-func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []error) {
+func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
 	if doc == nil {
 		return nil, []error{client.NewErrUninitializeProperty("ParseRequest", "doc")}
 	}
+	exe, err := gql.BuildExecutionContext(gql.BuildExecutionCtxParams{
+		Schema:        schema,
+		AST:           doc,
+		OperationName: options.OperationName,
+		Args:          options.Variables,
+	})
+	if err != nil {
+		return nil, []error{err}
+	}
+	operationType, err := gql.GetOperationRootType(exe.Schema, exe.Operation)
+	if err != nil {
+		return nil, []error{err}
+	}
+	collectedFields := gql.CollectFields(gql.CollectFieldsParams{
+		ExeContext:   exe,
+		RuntimeType:  operationType,
+		SelectionSet: exe.Operation.GetSelectionSet(),
+	})
 
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -34,58 +54,51 @@ func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []err
 		Subscription: make([]*request.OperationDefinition, 0),
 	}
 
-	for _, def := range doc.Definitions {
-		astOpDef, isOpDef := def.(*ast.OperationDefinition)
-		if !isOpDef {
-			continue
+	astOpDef := exe.Operation.(*ast.OperationDefinition)
+	switch exe.Operation.GetOperation() {
+	case ast.OperationTypeQuery:
+		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		if errs != nil {
+			return nil, errs
+		}
+		parsedDirectives, err := parseDirectives(astOpDef.Directives)
+		if err != nil {
+			return nil, []error{err}
+		}
+		parsedQueryOpDef.Directives = parsedDirectives
+
+		r.Queries = append(r.Queries, parsedQueryOpDef)
+
+	case ast.OperationTypeMutation:
+		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, collectedFields)
+		if err != nil {
+			return nil, []error{err}
 		}
 
-		switch astOpDef.Operation {
-		case ast.OperationTypeQuery:
-			parsedQueryOpDef, errs := parseQueryOperationDefinition(schema, astOpDef)
-			if errs != nil {
-				return nil, errs
-			}
-
-			parsedDirectives, err := parseDirectives(astOpDef.Directives)
-			if err != nil {
-				return nil, []error{err}
-			}
-			parsedQueryOpDef.Directives = parsedDirectives
-
-			r.Queries = append(r.Queries, parsedQueryOpDef)
-
-		case ast.OperationTypeMutation:
-			parsedMutationOpDef, err := parseMutationOperationDefinition(schema, astOpDef)
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			parsedDirectives, err := parseDirectives(astOpDef.Directives)
-			if err != nil {
-				return nil, []error{err}
-			}
-			parsedMutationOpDef.Directives = parsedDirectives
-
-			r.Mutations = append(r.Mutations, parsedMutationOpDef)
-
-		case ast.OperationTypeSubscription:
-			parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(schema, astOpDef)
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			parsedDirectives, err := parseDirectives(astOpDef.Directives)
-			if err != nil {
-				return nil, []error{err}
-			}
-			parsedSubscriptionOpDef.Directives = parsedDirectives
-
-			r.Subscription = append(r.Subscription, parsedSubscriptionOpDef)
-
-		default:
-			return nil, []error{ErrUnknownGQLOperation}
+		parsedDirectives, err := parseDirectives(astOpDef.Directives)
+		if err != nil {
+			return nil, []error{err}
 		}
+		parsedMutationOpDef.Directives = parsedDirectives
+
+		r.Mutations = append(r.Mutations, parsedMutationOpDef)
+
+	case ast.OperationTypeSubscription:
+		parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(exe, collectedFields)
+		if err != nil {
+			return nil, []error{err}
+		}
+
+		parsedDirectives, err := parseDirectives(astOpDef.Directives)
+		if err != nil {
+			return nil, []error{err}
+		}
+		parsedSubscriptionOpDef.Directives = parsedDirectives
+
+		r.Subscription = append(r.Subscription, parsedSubscriptionOpDef)
+
+	default:
+		return nil, []error{ErrUnknownGQLOperation}
 	}
 
 	return r, nil
@@ -161,29 +174,49 @@ func getFieldAlias(field *ast.Field) immutable.Option[string] {
 }
 
 func parseSelectFields(
-	schema gql.Schema,
+	exe *gql.ExecutionContext,
 	parent *gql.Object,
-	fields *ast.SelectionSet) ([]request.Selection, error) {
-	selections := make([]request.Selection, len(fields.Selections))
-	// parse field selections
-	for i, selection := range fields.Selections {
+	fields *ast.SelectionSet,
+) ([]request.Selection, error) {
+	var selections []request.Selection
+	for _, selection := range fields.Selections {
 		switch node := selection.(type) {
-		case *ast.Field:
-			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
-				s, err := parseAggregate(schema, parent, node, i)
-				if err != nil {
-					return nil, err
-				}
-				selections[i] = s
-			} else if node.SelectionSet == nil { // regular field
-				selections[i] = parseField(node)
-			} else { // sub type with extra fields
-				s, err := parseSelect(schema, parent, node, i)
-				if err != nil {
-					return nil, err
-				}
-				selections[i] = s
+		case *ast.InlineFragment:
+			selection, err := parseSelectFields(exe, parent, node.GetSelectionSet())
+			if err != nil {
+				return nil, err
 			}
+			selections = append(selections, selection...)
+
+		case *ast.FragmentSpread:
+			fragment, ok := exe.Fragments[node.Name.Value]
+			if !ok {
+				return nil, fmt.Errorf("fragment not found %s", node.Name.Value)
+			}
+			selection, err := parseSelectFields(exe, parent, fragment.GetSelectionSet())
+			if err != nil {
+				return nil, err
+			}
+			selections = append(selections, selection...)
+
+		case *ast.Field:
+			var selection request.Selection
+			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
+				s, err := parseAggregate(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
+			} else if node.SelectionSet == nil { // regular field
+				selection = parseField(node)
+			} else { // sub type with extra fields
+				s, err := parseSelect(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
+			}
+			selections = append(selections, selection)
 		}
 	}
 
@@ -199,28 +232,10 @@ func parseField(field *ast.Field) *request.Field {
 	}
 }
 
-func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
-	for _, field := range fields {
-		if field.Name.Value == name {
-			return field, true
-		}
-	}
-	return nil, false
-}
-
 func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) {
 	for _, arg := range field.Args {
 		if arg.Name() == name {
 			return arg.Type, true
-		}
-	}
-	return nil, false
-}
-
-func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, bool) {
-	for fname, ftype := range input.Fields() {
-		if fname == name {
-			return ftype.Type, true
 		}
 	}
 	return nil, false

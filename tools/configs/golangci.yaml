@@ -57,12 +57,14 @@ run:
 
   # Define the Go version limit.
   # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`.
-  go: "1.21"
+  go: "1.22"
 
 #=====================================================================================[ Output Configuration Options ]
 output:
-  # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
-  format: colored-line-number
+  formats:
+    # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
+    - format: colored-line-number
+      path: stdout
 
   # print lines of code with issue.
   print-issued-lines: true
@@ -105,15 +107,11 @@ linters:
 
   enable-all: false
 
-  disable:
-    # - prealloc
-
   disable-all: true
 
   enable:
     - errcheck
     - errorlint
-    - exportloopref
     - forbidigo
     - goconst
     - gofmt
@@ -262,8 +260,6 @@ linters-settings:
     local-prefixes: github.com/sourcenetwork/defradb
 
   gosimple:
-    # Select the Go version to target.
-    go: "1.21"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
@@ -355,14 +351,12 @@ linters-settings:
             - must not end in punctuation
 
   staticcheck:
-    # Select the Go version to target.
-    go: "1.21"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
   unused:
     # Select the Go version to target.
-    go: "1.21"
+    go: "1.22"
 
   whitespace:
     # Enforces newlines (or comments) after every multi-line if statement.

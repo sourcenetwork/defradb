@@ -11,13 +11,9 @@
 package parser
 
 import (
-	"strconv"
-
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -25,26 +21,22 @@ import (
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(
-	schema gql.Schema,
-	def *ast.OperationDefinition,
+	exe *gql.ExecutionContext,
+	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, []error) {
-	qdef := &request.OperationDefinition{
-		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
-	}
-
-	for i, selection := range def.SelectionSet.Selections {
-		var parsedSelection request.Selection
-		switch node := selection.(type) {
-		case *ast.Field:
-			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
-				parsed, err := parseCommitSelect(schema, schema.QueryType(), node)
+	var selections []request.Selection
+	for name, fields := range collectedFields {
+		for _, node := range fields {
+			var parsedSelection request.Selection
+			if _, isCommitQuery := request.CommitQueries[name]; isCommitQuery {
+				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
-			} else if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
-				parsed, err := parseAggregate(schema, schema.QueryType(), node, i)
+			} else if _, isAggregate := request.Aggregates[name]; isAggregate {
+				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -64,7 +56,7 @@ func parseQueryOperationDefinition(
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(schema, schema.QueryType(), node, i)
+				parsed, err := parseSelect(exe, exe.Schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -76,11 +68,13 @@ func parseQueryOperationDefinition(
 
 				parsedSelection = parsed
 			}
-
-			qdef.Selections[i] = parsedSelection
+			selections = append(selections, parsedSelection)
 		}
 	}
-	return qdef, nil
+
+	return &request.OperationDefinition{
+		Selections: selections,
+	}, nil
 }
 
 // @todo: Create separate select parse functions
@@ -91,10 +85,9 @@ func parseQueryOperationDefinition(
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
 func parseSelect(
-	schema gql.Schema,
+	exe *gql.ExecutionContext,
 	parent *gql.Object,
 	field *ast.Field,
-	index int,
 ) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
@@ -103,80 +96,75 @@ func parseSelect(
 		},
 	}
 
-	fieldDef := gql.GetFieldDef(schema, parent, slct.Name)
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-	// parse arguments
 	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
-		astValue := argument.Value
+		name := argument.Name.Value
+		value := arguments[name]
 
-		// parse filter
-		switch prop {
+		switch name {
 		case request.FilterClause:
-			obj := astValue.(*ast.ObjectValue)
-			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
-			if !ok {
-				return nil, ErrFilterMissingArgumentType
-			}
-			filter, err := NewFilter(obj, filterType)
-			if err != nil {
-				return slct, err
+			if v, ok := value.(map[string]any); ok {
+				slct.Filter = immutable.Some(request.Filter{Conditions: v})
 			}
 
-			slct.Filter = filter
 		case request.DocIDArgName: // parse single DocID field
-			docIDValue := astValue.(*ast.StringValue)
-			slct.DocIDs = immutable.Some([]string{docIDValue.Value})
-		case request.DocIDsArgName:
-			docIDValues := astValue.(*ast.ListValue).Values
-			docIDs := make([]string, len(docIDValues))
-			for i, value := range docIDValues {
-				docIDs[i] = value.(*ast.StringValue).Value
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, value := range v {
+				docIDs[i] = value.(string)
 			}
 			slct.DocIDs = immutable.Some(docIDs)
+
 		case request.Cid: // parse single CID query field
-			val := astValue.(*ast.StringValue)
-			slct.CID = immutable.Some(val.Value)
-		case request.LimitClause: // parse limit/offset
-			val := astValue.(*ast.IntValue)
-			limit, err := strconv.ParseUint(val.Value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			slct.Limit = immutable.Some(limit)
-		case request.OffsetClause: // parse limit/offset
-			val := astValue.(*ast.IntValue)
-			offset, err := strconv.ParseUint(val.Value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			slct.Offset = immutable.Some(offset)
-		case request.OrderClause: // parse order by
-			obj := astValue.(*ast.ObjectValue)
-			cond, err := ParseConditionsInOrder(obj)
-			if err != nil {
-				return nil, err
-			}
-			slct.OrderBy = immutable.Some(
-				request.OrderBy{
-					Conditions: cond,
-				},
-			)
-		case request.GroupByClause:
-			obj := astValue.(*ast.ListValue)
-			fields := make([]string, 0)
-			for _, v := range obj.Values {
-				fields = append(fields, v.GetValue().(string))
+			if v, ok := value.(string); ok {
+				slct.CID = immutable.Some(v)
 			}
 
-			slct.GroupBy = immutable.Some(
-				request.GroupBy{
-					Fields: fields,
-				},
-			)
+		case request.LimitClause: // parse limit/offset
+			if v, ok := value.(int32); ok {
+				slct.Limit = immutable.Some(uint64(v))
+			}
+
+		case request.OffsetClause: // parse limit/offset
+			if v, ok := value.(int32); ok {
+				slct.Offset = immutable.Some(uint64(v))
+			}
+
+		case request.OrderClause: // parse order by
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			conditions, err := parseOrderConditionList(v)
+			if err != nil {
+				return nil, err
+			}
+			slct.OrderBy = immutable.Some(request.OrderBy{
+				Conditions: conditions,
+			})
+
+		case request.GroupByClause:
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			fields := make([]string, len(v))
+			for i, c := range v {
+				fields[i] = c.(string)
+			}
+			slct.GroupBy = immutable.Some(request.GroupBy{
+				Fields: fields,
+			})
+
 		case request.ShowDeleted:
-			val := astValue.(*ast.BooleanValue)
-			slct.ShowDeleted = val.Value
+			if v, ok := value.(bool); ok {
+				slct.ShowDeleted = v
+			}
 		}
 	}
 
@@ -191,7 +179,7 @@ func parseSelect(
 		return nil, err
 	}
 
-	slct.Fields, err = parseSelectFields(schema, fieldObject, field.SelectionSet)
+	slct.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
 	if err != nil {
 		return nil, err
 	}
@@ -199,126 +187,30 @@ func parseSelect(
 	return slct, err
 }
 
-func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, index int) (*request.Aggregate, error) {
-	targets := make([]*request.AggregateTarget, len(field.Arguments))
+func parseAggregate(
+	exe *gql.ExecutionContext,
+	parent *gql.Object,
+	field *ast.Field,
+) (*request.Aggregate, error) {
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
-	for i, argument := range field.Arguments {
-		switch argumentValue := argument.Value.GetValue().(type) {
+	var targets []*request.AggregateTarget
+	for _, argument := range field.Arguments {
+		name := argument.Name.Value
+
+		switch v := arguments[name].(type) {
 		case string:
-			targets[i] = &request.AggregateTarget{
-				HostName: argumentValue,
+			targets = append(targets, &request.AggregateTarget{
+				HostName: v,
+			})
+
+		case map[string]any:
+			target, err := parseAggregateTarget(name, v)
+			if err != nil {
+				return nil, err
 			}
-		case []*ast.ObjectField:
-			hostName := argument.Name.Value
-			var childName string
-			var filter immutable.Option[request.Filter]
-			var limit immutable.Option[uint64]
-			var offset immutable.Option[uint64]
-			var order immutable.Option[request.OrderBy]
-
-			fieldArg, hasFieldArg := tryGet(argumentValue, request.FieldName)
-			if hasFieldArg {
-				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
-					childName = innerPathStringValue
-				}
-			}
-
-			filterArg, hasFilterArg := tryGet(argumentValue, request.FilterClause)
-			if hasFilterArg {
-				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
-				argType, ok := getArgumentType(fieldDef, hostName)
-				if !ok {
-					return nil, ErrFilterMissingArgumentType
-				}
-				argTypeObject, ok := argType.(*gql.InputObject)
-				if !ok {
-					return nil, client.NewErrUnexpectedType[*gql.InputObject]("arg type", argType)
-				}
-				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
-				if !ok {
-					return nil, ErrFilterMissingArgumentType
-				}
-				filterObjVal, ok := filterArg.Value.(*ast.ObjectValue)
-				if !ok {
-					return nil, client.NewErrUnexpectedType[*gql.InputObject]("filter arg", filterArg.Value)
-				}
-				filterValue, err := NewFilter(filterObjVal, filterType)
-				if err != nil {
-					return nil, err
-				}
-				filter = filterValue
-			}
-
-			limitArg, hasLimitArg := tryGet(argumentValue, request.LimitClause)
-			if hasLimitArg {
-				limitValue, err := strconv.ParseUint(limitArg.Value.(*ast.IntValue).Value, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				limit = immutable.Some(limitValue)
-			}
-
-			offsetArg, hasOffsetArg := tryGet(argumentValue, request.OffsetClause)
-			if hasOffsetArg {
-				offsetValue, err := strconv.ParseUint(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				offset = immutable.Some(offsetValue)
-			}
-
-			orderArg, hasOrderArg := tryGet(argumentValue, request.OrderClause)
-			if hasOrderArg {
-				switch orderArgValue := orderArg.Value.(type) {
-				case *ast.EnumValue:
-					// For inline arrays the order arg will be a simple enum declaring the order direction
-					orderDirectionString := orderArgValue.Value
-					orderDirection := request.OrderDirection(orderDirectionString)
-
-					order = immutable.Some(
-						request.OrderBy{
-							Conditions: []request.OrderCondition{
-								{
-									Direction: orderDirection,
-								},
-							},
-						},
-					)
-
-				case *ast.ObjectValue:
-					// For relations the order arg will be the complex order object as used by the host object
-					// for non-aggregate ordering
-
-					// We use the parser package parsing for convienience here
-					orderConditions, err := ParseConditionsInOrder(orderArgValue)
-					if err != nil {
-						return nil, err
-					}
-
-					order = immutable.Some(
-						request.OrderBy{
-							Conditions: orderConditions,
-						},
-					)
-				}
-			}
-
-			targets[i] = &request.AggregateTarget{
-				HostName:  hostName,
-				ChildName: immutable.Some(childName),
-				Filterable: request.Filterable{
-					Filter: filter,
-				},
-				Limitable: request.Limitable{
-					Limit: limit,
-				},
-				Offsetable: request.Offsetable{
-					Offset: offset,
-				},
-				Orderable: request.Orderable{
-					OrderBy: order,
-				},
-			}
+			targets = append(targets, target)
 		}
 	}
 
@@ -328,5 +220,81 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 			Alias: getFieldAlias(field),
 		},
 		Targets: targets,
+	}, nil
+}
+
+func parseAggregateTarget(
+	hostName string,
+	arguments map[string]any,
+) (*request.AggregateTarget, error) {
+	var childName string
+	var filter immutable.Option[request.Filter]
+	var limit immutable.Option[uint64]
+	var offset immutable.Option[uint64]
+	var order immutable.Option[request.OrderBy]
+
+	for name, value := range arguments {
+		switch name {
+		case request.FieldName:
+			if v, ok := value.(string); ok {
+				childName = v
+			}
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				filter = immutable.Some(request.Filter{Conditions: v})
+			}
+
+		case request.LimitClause:
+			if v, ok := value.(int32); ok {
+				limit = immutable.Some(uint64(v))
+			}
+
+		case request.OffsetClause:
+			if v, ok := value.(int32); ok {
+				offset = immutable.Some(uint64(v))
+			}
+
+		case request.OrderClause:
+			switch t := value.(type) {
+			case int:
+				// For inline arrays the order arg will be a simple enum declaring the order direction
+				dir, err := parseOrderDirection(t)
+				if err != nil {
+					return nil, err
+				}
+				order = immutable.Some(request.OrderBy{
+					Conditions: []request.OrderCondition{{Direction: dir}},
+				})
+
+			case []any:
+				// For relations the order arg will be the complex order object as used by the host object
+				// for non-aggregate ordering
+				conditions, err := parseOrderConditionList(t)
+				if err != nil {
+					return nil, err
+				}
+				order = immutable.Some(request.OrderBy{
+					Conditions: conditions,
+				})
+			}
+		}
+	}
+
+	return &request.AggregateTarget{
+		HostName:  hostName,
+		ChildName: immutable.Some(childName),
+		Filterable: request.Filterable{
+			Filter: filter,
+		},
+		Limitable: request.Limitable{
+			Limit: limit,
+		},
+		Offsetable: request.Offsetable{
+			Offset: offset,
+		},
+		Orderable: request.Orderable{
+			OrderBy: order,
+		},
 	}, nil
 }

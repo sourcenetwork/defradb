@@ -14,8 +14,11 @@ func and(condition, data any) (bool, error) {
 				return false, nil
 			}
 		}
-
 		return true, nil
+
+	case nil:
+		return true, nil
+
 	default:
 		return false, client.NewErrUnhandledType("condition", cn)
 	}

@@ -175,26 +175,6 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
-func (w *Wrapper) AddPolicy(
-	ctx context.Context,
-	policy string,
-) (client.AddPolicyResult, error) {
-	args := []string{"client", "acp", "policy", "add"}
-	args = append(args, policy)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	var addPolicyResult client.AddPolicyResult
-	if err := json.Unmarshal(data, &addPolicyResult); err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	return addPolicyResult, err
-}
-
 func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
@@ -279,6 +259,25 @@ func (w *Wrapper) AddView(
 		return nil, err
 	}
 	return defs, nil
+}
+
+func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	args := []string{"client", "view", "refresh"}
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
+	}
+	if options.SchemaVersionID.HasValue() {
+		args = append(args, "--version", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		args = append(args, "--schema", options.SchemaRoot.Value())
+	}
+	if options.IncludeInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
@@ -396,21 +395,38 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
+	opts ...client.RequestOption,
 ) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
 
+	options := &client.GQLOptions{}
+	for _, o := range opts {
+		o(options)
+	}
+
 	result := &client.RequestResult{}
+	if options.OperationName != "" {
+		args = append(args, "--operation", options.OperationName)
+	}
+	if len(options.Variables) > 0 {
+		enc, err := json.Marshal(options.Variables)
+		if err != nil {
+			result.GQL.Errors = append(result.GQL.Errors, err)
+			return result
+		}
+		args = append(args, "--variables", string(enc))
+	}
 
 	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	buffer := bufio.NewReader(stdOut)
 	header, err := buffer.ReadString('\n')
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if header == cli.SUB_RESULTS_HEADER {
@@ -419,26 +435,22 @@ func (w *Wrapper) ExecRequest(
 	}
 	data, err := io.ReadAll(buffer)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	errData, err := io.ReadAll(stdErr)
 	if err != nil {
-		result.GQL.Errors = []error{err}
+		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
 	if len(errData) > 0 {
-		result.GQL.Errors = []error{fmt.Errorf("%s", errData)}
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errData))
 		return result
 	}
 
-	var response http.GraphQLResponse
-	if err = json.Unmarshal(data, &response); err != nil {
-		result.GQL.Errors = []error{err}
-		return result
+	if err = json.Unmarshal(data, &result.GQL); err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
 	}
-	result.GQL.Data = response.Data
-	result.GQL.Errors = response.Errors
 	return result
 }
 
@@ -449,14 +461,11 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 		defer close(resCh)
 
 		for {
-			var response http.GraphQLResponse
-			if err := dec.Decode(&response); err != nil {
-				return
+			var res client.GQLResult
+			if err := dec.Decode(&res); err != nil {
+				res.Errors = append(res.Errors, err)
 			}
-			resCh <- client.GQLResult{
-				Errors: response.Errors,
-				Data:   response.Data,
-			}
+			resCh <- res
 		}
 	}()
 	return resCh
@@ -510,6 +519,10 @@ func (w *Wrapper) Rootstore() datastore.Rootstore {
 	return w.node.DB.Rootstore()
 }
 
+func (w *Wrapper) Encstore() datastore.Blockstore {
+	return w.node.DB.Encstore()
+}
+
 func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }
@@ -518,7 +531,7 @@ func (w *Wrapper) Headstore() ds.Read {
 	return w.node.DB.Headstore()
 }
 
-func (w *Wrapper) Peerstore() datastore.DSBatching {
+func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
 	return w.node.DB.Peerstore()
 }
 
@@ -540,8 +553,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
-	w.node.Peer.Bootstrap(addrs)
+func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
+	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

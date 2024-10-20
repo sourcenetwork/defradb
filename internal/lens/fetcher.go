@@ -307,7 +307,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			// in which case we have to skip them for now.
 			continue
 		}
-		fieldKey := datastoreKeyBase.WithFieldId(fieldDesc.ID.String())
+		fieldKey := datastoreKeyBase.WithFieldID(fieldDesc.ID.String())
 
 		bytes, err := cbor.Marshal(value)
 		if err != nil {
@@ -320,7 +320,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 	}
 
-	versionKey := datastoreKeyBase.WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
+	versionKey := datastoreKeyBase.WithFieldID(core.DATASTORE_DOC_VERSION_FIELD_ID)
 	err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
 	if err != nil {
 		return err

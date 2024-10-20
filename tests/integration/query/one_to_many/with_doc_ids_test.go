@@ -65,7 +65,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 					Author {
 						name
 						published (
-								docIDs: ["bae-5366ba09-54e8-5381-8169-a770aa9282ae", "bae-1ccf3043-d760-543e-be1b-6691fa6aa7a8"]
+								docID: ["bae-064f13c1-7726-5d53-8eec-c395d94da4d0", "bae-649c8101-76b8-5d18-a701-21c97a5c66b3"]
 							) {
 							name
 						}
@@ -77,10 +77,10 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 							"name": "John Grisham",
 							"published": []map[string]any{
 								{
-									"name": "The Associate",
+									"name": "Painted House",
 								},
 								{
-									"name": "Painted House",
+									"name": "The Associate",
 								},
 							},
 						},

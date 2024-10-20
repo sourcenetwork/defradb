@@ -86,7 +86,7 @@ In addition to using `Commits` specific queries, include commit version sub-fiel
 ```graphql 
 query {
     User {
-        _key
+        _docID
         name
         age
         

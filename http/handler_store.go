@@ -11,7 +11,6 @@
 package http
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -220,6 +219,38 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, schema)
 }
 
+func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(dbContextKey).(client.Store)
+
+	options := client.CollectionFetchOptions{}
+	if req.URL.Query().Has("name") {
+		options.Name = immutable.Some(req.URL.Query().Get("name"))
+	}
+	if req.URL.Query().Has("version_id") {
+		options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+	}
+	if req.URL.Query().Has("schema_root") {
+		options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
+	}
+	if req.URL.Query().Has("get_inactive") {
+		getInactiveStr := req.URL.Query().Get("get_inactive")
+		var err error
+		getInactive, err := strconv.ParseBool(getInactiveStr)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		options.IncludeInactive = immutable.Some(getInactive)
+	}
+
+	err := store.RefreshViews(req.Context(), options)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(dbContextKey).(client.Store)
 
@@ -242,44 +273,9 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 }
 
 type GraphQLRequest struct {
-	Query string `json:"query"`
-}
-
-type GraphQLResponse struct {
-	Data   any     `json:"data"`
-	Errors []error `json:"errors,omitempty"`
-}
-
-func (res GraphQLResponse) MarshalJSON() ([]byte, error) {
-	var errors []string
-	for _, err := range res.Errors {
-		errors = append(errors, err.Error())
-	}
-	return json.Marshal(map[string]any{"data": res.Data, "errors": errors})
-}
-
-func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
-	// decode numbers to json.Number
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	dec.UseNumber()
-
-	var out map[string]any
-	if err := dec.Decode(&out); err != nil {
-		return err
-	}
-	res.Data = out["data"]
-
-	// fix errors type to match tests
-	switch t := out["errors"].(type) {
-	case []any:
-		for _, v := range t {
-			res.Errors = append(res.Errors, parseError(v))
-		}
-	default:
-		res.Errors = nil
-	}
-
-	return nil
+	Query         string         `json:"query"`
+	OperationName string         `json:"operationName"`
+	Variables     map[string]any `json:"variables"`
 }
 
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
@@ -299,10 +295,17 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := store.ExecRequest(req.Context(), request.Query)
+	var options []client.RequestOption
+	if request.OperationName != "" {
+		options = append(options, client.WithOperationName(request.OperationName))
+	}
+	if len(request.Variables) > 0 {
+		options = append(options, client.WithVariables(request.Variables))
+	}
+	result := store.ExecRequest(req.Context(), request.Query, options...)
 
 	if result.Subscription == nil {
-		responseJSON(rw, http.StatusOK, GraphQLResponse{result.GQL.Data, result.GQL.Errors})
+		responseJSON(rw, http.StatusOK, result.GQL)
 		return
 	}
 	flusher, ok := rw.(http.Flusher)
@@ -330,7 +333,10 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				return
 			}
-			fmt.Fprintf(rw, "data: %s\n\n", data)
+			_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
+			if err != nil {
+				return
+			}
 			flusher.Flush()
 		}
 	}
@@ -355,9 +361,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
-	graphQLResponseSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/graphql_response",
-	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
 	}
@@ -370,6 +373,16 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
 	}
+
+	graphQLResponseSchema := openapi3.NewObjectSchema().
+		WithProperties(map[string]*openapi3.Schema{
+			"errors": openapi3.NewArraySchema().WithItems(
+				openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+					"message": openapi3.NewStringSchema(),
+				}),
+			),
+			"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
+		})
 
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
@@ -482,6 +495,18 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDescribe.AddResponse(200, collectionsResponse)
 	collectionDescribe.Responses.Set("400", errorResponse)
 
+	viewRefresh := openapi3.NewOperation()
+	viewRefresh.OperationID = "view_refresh"
+	viewRefresh.Description = "Refresh view(s) by name, schema id, or version id."
+	viewRefresh.Tags = []string{"view"}
+	viewRefresh.AddParameter(collectionNameQueryParam)
+	viewRefresh.AddParameter(collectionSchemaRootQueryParam)
+	viewRefresh.AddParameter(collectionVersionIdQueryParam)
+	viewRefresh.AddParameter(collectionGetInactiveQueryParam)
+	viewRefresh.Responses = openapi3.NewResponses()
+	viewRefresh.Responses.Set("200", successResponse)
+	viewRefresh.Responses.Set("400", errorResponse)
+
 	patchCollection := openapi3.NewOperation()
 	patchCollection.OperationID = "patch_collection"
 	patchCollection.Description = "Update collection definitions"
@@ -573,7 +598,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	graphQLResponse := openapi3.NewResponse().
 		WithDescription("GraphQL response").
-		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema))
 
 	graphQLPost := openapi3.NewOperation()
 	graphQLPost.Description = "GraphQL POST endpoint"
@@ -609,6 +634,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
+	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)

@@ -67,7 +67,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 							"childSelects": []dataMap{
 								{
 									"collectionName": "Author",
-									"docIDs":         nil,
+									"docID":          nil,
 									"groupBy":        nil,
 									"limit":          nil,
 									"orderBy":        nil,
@@ -159,7 +159,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 								{
 									"collectionName": "Author",
 									"groupBy":        []string{"verified", "name"},
-									"docIDs":         nil,
+									"docID":          nil,
 									"limit":          nil,
 									"orderBy":        nil,
 									"filter":         nil,
@@ -241,7 +241,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 								{
 									"collectionName": "Author",
 									"groupBy":        []string{"verified", "name"},
-									"docIDs":         nil,
+									"docID":          nil,
 									"limit":          nil,
 									"orderBy":        nil,
 									"filter":         nil,
@@ -324,7 +324,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 								{
 									"collectionName": "Author",
 									"groupBy":        []string{"verified", "name"},
-									"docIDs":         nil,
+									"docID":          nil,
 									"limit":          nil,
 									"orderBy":        nil,
 									"filter":         nil,

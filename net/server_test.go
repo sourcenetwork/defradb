@@ -16,15 +16,12 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/query"
-	"github.com/libp2p/go-libp2p/core/event"
-	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/stretchr/testify/require"
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	net_pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
 func TestNewServerSimple(t *testing.T) {
@@ -36,61 +33,12 @@ func TestNewServerSimple(t *testing.T) {
 	require.NoError(t, err)
 }
 
-var mockError = errors.New("mock error")
-
-type mockHost struct {
-	host.Host
-}
-
-func (mH *mockHost) EventBus() event.Bus {
-	return &mockBus{}
-}
-
-type mockBus struct {
-	event.Bus
-}
-
-func (mB *mockBus) Emitter(eventType any, opts ...event.EmitterOpt) (event.Emitter, error) {
-	return nil, mockError
-}
-
-func (mB *mockBus) Subscribe(eventType any, opts ...event.SubscriptionOpt) (event.Subscription, error) {
-	return nil, mockError
-}
-
-func TestNewServerWithEmitterError(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	p.host = &mockHost{p.host}
-
-	_, err = newServer(p)
-	require.NoError(t, err)
-}
-
 func TestGetDocGraph(t *testing.T) {
 	ctx := context.Background()
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.GetDocGraph(ctx, &net_pb.GetDocGraphRequest{})
+	r, err := p.server.GetDocGraph(ctx, &getDocGraphRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -100,7 +48,7 @@ func TestPushDocGraph(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.PushDocGraph(ctx, &net_pb.PushDocGraphRequest{})
+	r, err := p.server.PushDocGraph(ctx, &pushDocGraphRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -110,7 +58,7 @@ func TestGetLog(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.GetLog(ctx, &net_pb.GetLogRequest{})
+	r, err := p.server.GetLog(ctx, &getLogRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
@@ -120,13 +68,13 @@ func TestGetHeadLog(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	r, err := p.server.GetHeadLog(ctx, &net_pb.GetHeadLogRequest{})
+	r, err := p.server.GetHeadLog(ctx, &getHeadLogRequest{})
 	require.Nil(t, r)
 	require.Nil(t, err)
 }
 
 func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
-	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE).ToString()
+	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToString()
 	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return cid.Undef, err
@@ -151,10 +99,8 @@ func TestPushLog(t *testing.T) {
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
-	err := p.Start()
-	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err := db.AddSchema(ctx, `type User {
 		name: String
 		age: Int
 	}`)
@@ -179,16 +125,12 @@ func TestPushLog(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	_, err = p.server.PushLog(ctx, &net_pb.PushLogRequest{
-		Body: &net_pb.PushLogRequest_Body{
-			DocID:      []byte(doc.ID().String()),
-			Cid:        headCID.Bytes(),
-			SchemaRoot: []byte(col.SchemaRoot()),
-			Creator:    p.PeerID().String(),
-			Log: &net_pb.Document_Log{
-				Block: b,
-			},
-		},
+	_, err = p.server.PushLog(ctx, &pushLogRequest{
+		DocID:      doc.ID().String(),
+		CID:        headCID.Bytes(),
+		SchemaRoot: col.SchemaRoot(),
+		Creator:    p.PeerID().String(),
+		Block:      b,
 	})
 	require.NoError(t, err)
 }

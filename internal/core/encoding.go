@@ -94,6 +94,9 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 			if err != nil {
 				return nil, err
 			}
+
+		case client.FieldKind_NILLABLE_JSON:
+			return convertToJSON(fieldDesc.Name, val)
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch fieldDesc.Kind {
@@ -136,6 +139,8 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 			case []byte:
 				return string(v), nil
 			}
+		case client.FieldKind_NILLABLE_JSON:
+			return convertToJSON(fieldDesc.Name, val)
 		}
 	}
 
@@ -188,6 +193,43 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 		return int64(value), nil
 	default:
 		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
+	}
+}
+
+// convertToJSON converts the given value to a valid JSON value.
+//
+// When maps are decoded, they are of type map[any]any, and need to
+// be converted to map[string]any. All other values are valid JSON.
+func convertToJSON(propertyName string, untypedValue any) (any, error) {
+	switch t := untypedValue.(type) {
+	case map[any]any:
+		resultValue := make(map[string]any)
+		for k, v := range t {
+			key, ok := k.(string)
+			if !ok {
+				return nil, client.NewErrUnexpectedType[string](propertyName, k)
+			}
+			val, err := convertToJSON(fmt.Sprintf("%s.%s", propertyName, key), v)
+			if err != nil {
+				return nil, err
+			}
+			resultValue[key] = val
+		}
+		return resultValue, nil
+
+	case []any:
+		resultValue := make([]any, len(t))
+		for i, v := range t {
+			val, err := convertToJSON(fmt.Sprintf("%s[%d]", propertyName, i), v)
+			if err != nil {
+				return nil, err
+			}
+			resultValue[i] = val
+		}
+		return resultValue, nil
+
+	default:
+		return untypedValue, nil
 	}
 }
 
@@ -252,6 +294,12 @@ func DecodeIndexDataStoreKey(
 			kind = fields[i].Kind
 		} else if i > len(indexDesc.Fields) {
 			return IndexDataStoreKey{}, ErrInvalidKey
+		}
+
+		if kind != nil && kind.IsArray() {
+			if arrKind, ok := kind.(client.ScalarArrayKind); ok {
+				kind = arrKind.SubKind()
+			}
 		}
 
 		var val client.NormalValue

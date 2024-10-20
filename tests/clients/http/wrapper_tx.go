@@ -69,7 +69,7 @@ func (w *TxWrapper) Datastore() datastore.DSReaderWriter {
 	return w.server.Datastore()
 }
 
-func (w *TxWrapper) Encstore() datastore.DSReaderWriter {
+func (w *TxWrapper) Encstore() datastore.Blockstore {
 	return w.server.Encstore()
 }
 
@@ -77,7 +77,7 @@ func (w *TxWrapper) Headstore() datastore.DSReaderWriter {
 	return w.server.Headstore()
 }
 
-func (w *TxWrapper) Peerstore() datastore.DSBatching {
+func (w *TxWrapper) Peerstore() datastore.DSReaderWriter {
 	return w.server.Peerstore()
 }
 

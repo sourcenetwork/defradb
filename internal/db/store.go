@@ -21,22 +21,27 @@ import (
 )
 
 // ExecRequest executes a request against the database.
-func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *db) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}
-		res.GQL.Errors = []error{err}
+		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 	defer txn.Discard(ctx)
 
-	res := db.execRequest(ctx, request)
+	options := &client.GQLOptions{}
+	for _, o := range opts {
+		o(options)
+	}
+
+	res := db.execRequest(ctx, request, options)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		res.GQL.Errors = []error{err}
+		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 
@@ -235,6 +240,26 @@ func (db *db) AddView(
 	}
 
 	return defs, nil
+}
+
+func (db *db) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.refreshViews(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // BasicImport imports a json dataset.

@@ -11,30 +11,12 @@
 package predefined
 
 import (
-	"context"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
-
-func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
-	parser, err := graphql.NewParser()
-	if err != nil {
-		return nil, err
-	}
-	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[string]client.CollectionDefinition)
-	for _, col := range cols {
-		result[col.Description.Name.Value()] = col
-	}
-	return result, nil
-}
 
 // CreateFromSDL generates documents for GraphQL SDL from a predefined list
 // of docs that might include nested docs.
@@ -44,11 +26,21 @@ func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 // fields, and create SDLs with different fields from it.
 func CreateFromSDL(gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error) {
 	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
-	typeDefs, err := parseSDL(gqlSDL)
+	typeDefsByName, err := gen.ParseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
-	generator := docGenerator{types: typeDefs}
+
+	defs := make([]client.CollectionDefinition, 0, len(typeDefsByName))
+	for _, def := range typeDefsByName {
+		defs = append(defs, def)
+	}
+
+	generator := docGenerator{
+		types:           typeDefsByName,
+		definitionCache: client.NewDefinitionCache(defs),
+	}
+
 	for _, doc := range docsList.Docs {
 		docs, err := generator.generateRelatedDocs(doc, docsList.ColName)
 		if err != nil {
@@ -87,7 +79,12 @@ func Create(defs []client.CollectionDefinition, docsList DocsList) ([]gen.Genera
 	for _, col := range defs {
 		typeDefs[col.Description.Name.Value()] = col
 	}
-	generator := docGenerator{types: typeDefs}
+
+	generator := docGenerator{
+		types:           typeDefs,
+		definitionCache: client.NewDefinitionCache(defs),
+	}
+
 	for _, doc := range docsList.Docs {
 		docs, err := generator.generateRelatedDocs(doc, docsList.ColName)
 		if err != nil {
@@ -99,7 +96,8 @@ func Create(defs []client.CollectionDefinition, docsList DocsList) ([]gen.Genera
 }
 
 type docGenerator struct {
-	types map[string]client.CollectionDefinition
+	types           map[string]client.CollectionDefinition
+	definitionCache client.DefinitionCache
 }
 
 // toRequestedDoc removes the fields that are not in the schema of the collection.
@@ -132,31 +130,31 @@ func (this *docGenerator) generatePrimary(
 	result := []gen.GeneratedDoc{}
 	requestedSecondary := toRequestedDoc(secDocMap, secType)
 	for _, secDocField := range secType.GetFields() {
-		if secDocField.IsRelation() {
+		if secDocField.IsRelation() && secDocField.IsPrimaryRelation {
 			if secDocMapField, hasField := secDocMap[secDocField.Name]; hasField {
-				if secDocField.IsPrimaryRelation {
-					primType := this.types[secDocField.Kind.Underlying()]
-					primDocMap, subResult, err := this.generatePrimary(
-						secDocMap[secDocField.Name].(map[string]any), &primType)
-					if err != nil {
-						return nil, nil, NewErrFailedToGenerateDoc(err)
-					}
-					primDoc, err := client.NewDocFromMap(primDocMap, primType)
-					if err != nil {
-						return nil, nil, NewErrFailedToGenerateDoc(err)
-					}
-					docID := primDoc.ID().String()
-					requestedSecondary[secDocField.Name+request.RelatedObjectID] = docID
-					subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
-					result = append(result, subResult...)
+				primaryDef, _ := client.GetDefinition(this.definitionCache, *secType, secDocField.Kind)
+				primType := this.types[primaryDef.GetName()]
 
-					secondaryDocs, err := this.generateSecondaryDocs(
-						secDocMapField.(map[string]any), docID, &primType, secType.Description.Name.Value())
-					if err != nil {
-						return nil, nil, err
-					}
-					result = append(result, secondaryDocs...)
+				primDocMap, subResult, err := this.generatePrimary(
+					secDocMap[secDocField.Name].(map[string]any), &primType)
+				if err != nil {
+					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
+				primDoc, err := client.NewDocFromMap(primDocMap, primType)
+				if err != nil {
+					return nil, nil, NewErrFailedToGenerateDoc(err)
+				}
+				docID := primDoc.ID().String()
+				requestedSecondary[secDocField.Name+request.RelatedObjectID] = docID
+				subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
+				result = append(result, subResult...)
+
+				secondaryDocs, err := this.generateSecondaryDocs(
+					secDocMapField.(map[string]any), docID, &primType, secType.Description.Name.Value())
+				if err != nil {
+					return nil, nil, err
+				}
+				result = append(result, secondaryDocs...)
 			}
 		}
 	}
@@ -186,6 +184,7 @@ func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName st
 		return nil, err
 	}
 	result = append(result, secondaryDocs...)
+
 	return result, nil
 }
 
@@ -197,15 +196,16 @@ func (this *docGenerator) generateSecondaryDocs(
 ) ([]gen.GeneratedDoc, error) {
 	result := []gen.GeneratedDoc{}
 	for _, field := range primaryType.GetFields() {
-		if field.IsRelation() {
+		if field.IsRelation() && !field.IsPrimaryRelation {
 			if _, hasProp := primaryDocMap[field.Name]; hasProp {
-				if !field.IsPrimaryRelation &&
-					(parentTypeName == "" || parentTypeName != field.Kind.Underlying()) {
+				otherDef, _ := client.GetDefinition(this.definitionCache, *primaryType, field.Kind)
+				if parentTypeName == "" || parentTypeName != otherDef.GetName() {
 					docs, err := this.generateSecondaryDocsForField(
-						primaryDocMap, primaryType.Description.Name.Value(), &field, docID)
+						primaryDocMap, *primaryType, &field, docID)
 					if err != nil {
 						return nil, err
 					}
+
 					result = append(result, docs...)
 				}
 			}
@@ -217,15 +217,19 @@ func (this *docGenerator) generateSecondaryDocs(
 // generateSecondaryDocsForField generates secondary docs for the given field of a primary doc.
 func (this *docGenerator) generateSecondaryDocsForField(
 	primaryDoc map[string]any,
-	primaryTypeName string,
+	primaryType client.CollectionDefinition,
 	relField *client.FieldDefinition,
 	primaryDocID string,
 ) ([]gen.GeneratedDoc, error) {
 	result := []gen.GeneratedDoc{}
-	relTypeDef := this.types[relField.Kind.Underlying()]
+
+	relTypeDef, _ := client.GetDefinition(this.definitionCache, primaryType, relField.Kind)
+
 	primaryPropName := ""
 	for _, relDocField := range relTypeDef.GetFields() {
-		if relDocField.Kind.Underlying() == primaryTypeName && relDocField.IsPrimaryRelation {
+		relDocDef, _ := client.GetDefinition(this.definitionCache, relTypeDef, relDocField.Kind)
+
+		if relDocDef.GetName() == primaryType.GetName() && relDocField.IsPrimaryRelation {
 			primaryPropName = relDocField.Name + request.RelatedObjectID
 			switch relVal := primaryDoc[relField.Name].(type) {
 			case []map[string]any:

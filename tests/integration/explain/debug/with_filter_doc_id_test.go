@@ -53,7 +53,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					Author(docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
+					Author(docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
 						name
 						age
 					}
@@ -79,7 +79,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *test
 
 				Request: `query @explain(type: debug) {
 					Author(
-						docIDs: [
+						docID: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						]
@@ -109,7 +109,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T)
 
 				Request: `query @explain(type: debug) {
 					Author(
-						docIDs: [
+						docID: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 						]

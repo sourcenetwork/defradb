@@ -24,6 +24,11 @@ func (NormalVoid) Unwrap() any {
 	return nil
 }
 
+func (NormalVoid) Equal(other NormalValue) bool {
+	_, ok := other.(NormalVoid)
+	return ok
+}
+
 func (NormalVoid) IsNil() bool {
 	return false
 }
@@ -57,6 +62,10 @@ func (NormalVoid) Time() (time.Time, bool) {
 }
 
 func (NormalVoid) Document() (*Document, bool) {
+	return nil, false
+}
+
+func (NormalVoid) JSON() (*JSON, bool) {
 	return nil, false
 }
 

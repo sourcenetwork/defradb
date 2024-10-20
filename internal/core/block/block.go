@@ -29,18 +29,26 @@ import (
 
 // Schema is the IPLD schema type that represents a `Block`.
 var (
-	Schema          schema.Type
-	SchemaPrototype ipld.NodePrototype
+	Schema                    schema.Type
+	SchemaPrototype           ipld.NodePrototype
+	EncryptionSchema          schema.Type
+	EncryptionSchemaPrototype ipld.NodePrototype
 )
 
 func init() {
 	Schema, SchemaPrototype = mustSetSchema(
+		"Block",
 		&Block{},
 		&DAGLink{},
 		&crdt.CRDT{},
 		&crdt.LWWRegDelta{},
 		&crdt.CompositeDAGDelta{},
 		&crdt.CounterDelta{},
+	)
+
+	EncryptionSchema, EncryptionSchemaPrototype = mustSetSchema(
+		"Encryption",
+		&Encryption{},
 	)
 }
 
@@ -49,7 +57,7 @@ type schemaDefinition interface {
 	IPLDSchemaBytes() []byte
 }
 
-func mustSetSchema(schemas ...schemaDefinition) (schema.Type, ipld.NodePrototype) {
+func mustSetSchema(schemaName string, schemas ...schemaDefinition) (schema.Type, ipld.NodePrototype) {
 	schemaBytes := make([][]byte, 0, len(schemas))
 	for _, s := range schemas {
 		schemaBytes = append(schemaBytes, s.IPLDSchemaBytes())
@@ -59,12 +67,12 @@ func mustSetSchema(schemas ...schemaDefinition) (schema.Type, ipld.NodePrototype
 	if err != nil {
 		panic(err)
 	}
-	blockSchemaType := ts.TypeByName("Block")
+	blockSchemaType := ts.TypeByName(schemaName)
 
 	// Calling bindnode.Prototype here ensure that [Block] and all the types it contains
 	// are compatible with the IPLD schema defined by blockSchemaType.
 	// If [Block] and `blockSchematype` do not match, this will panic.
-	proto := bindnode.Prototype(&Block{}, blockSchemaType)
+	proto := bindnode.Prototype(schemas[0], blockSchemaType)
 
 	return blockSchemaType, proto.Representation()
 }
@@ -74,6 +82,11 @@ type DAGLink struct {
 	// Name is the name of the link.
 	//
 	// This will be either the field name of the CRDT delta or "_head" for the head link.
+	//
+	// This field currently serves no purpose and is duplicating data already held on the target
+	// block.  However we want to have this long term to enable some fancy P2P magic to allow users
+	// to configure the collection to only sync particular fields using
+	// [GraphSync](https://github.com/ipfs/go-graphsync) which will need to make use of this property.
 	Name string
 	// Link is the CID link to the object.
 	cidlink.Link
@@ -97,45 +110,112 @@ func NewDAGLink(name string, link cidlink.Link) DAGLink {
 	}
 }
 
+// Encryption contains the encryption information for the block's delta.
+type Encryption struct {
+	// DocID is the ID of the document that is encrypted with the associated encryption key.
+	DocID []byte
+	// FieldName is the name of the field that is encrypted with the associated encryption key.
+	// It is set if encryption is applied to a field instead of the whole doc.
+	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
+	FieldName *string
+	// Encryption key.
+	Key []byte
+}
+
 // Block is a block that contains a CRDT delta and links to other blocks.
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
 	Delta crdt.CRDT
+
+	// The previous block-CIDs that this block is based on.
+	//
+	// For example:
+	// - This will be empty for all 'create' blocks.
+	// - Most 'update' blocks will have a single head, however they will have multiple if the history has
+	//   diverged and there were multiple blocks at the previous height.
+	Heads []cidlink.Link
+
 	// Links are the links to other blocks in the DAG.
+	//
+	// This does not include `Heads`.  This will be empty for field-level blocks. It will never be empty
+	// for composite blocks (and will contain links to field-level blocks).
 	Links []DAGLink
-	// IsEncrypted is a flag that indicates if the block's delta is encrypted.
-	// It needs to be a pointer so that it can be translated from and to `optional Bool` in the IPLD schema.
-	IsEncrypted *bool
+
+	// Encryption contains the encryption information for the block's delta.
+	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
+	Encryption *cidlink.Link
+}
+
+// IsEncrypted returns true if the block is encrypted.
+func (block *Block) IsEncrypted() bool {
+	return block.Encryption != nil
+}
+
+// Clone returns a shallow copy of the block with cloned delta.
+func (block *Block) Clone() *Block {
+	return &Block{
+		Delta:      block.Delta.Clone(),
+		Heads:      block.Heads,
+		Links:      block.Links,
+		Encryption: block.Encryption,
+	}
+}
+
+// AllLinks returns the block `Heads` and `Links` combined into a single set.
+//
+// All heads will be first in the set, followed by other links.
+func (block *Block) AllLinks() []cidlink.Link {
+	result := make([]cidlink.Link, 0, len(block.Heads)+len(block.Links))
+
+	result = append(result, block.Heads...)
+
+	for _, link := range block.Links {
+		result = append(result, link.Link)
+	}
+
+	return result
 }
 
 // IPLDSchemaBytes returns the IPLD schema representation for the block.
 //
 // This needs to match the [Block] struct or [mustSetSchema] will panic on init.
-func (b Block) IPLDSchemaBytes() []byte {
+func (block *Block) IPLDSchemaBytes() []byte {
 	return []byte(`
-	type Block struct {
-		delta				 CRDT
-		links				 [ DAGLink ]
-		isEncrypted optional Bool
-	}`)
+		type Block struct {
+			delta       CRDT
+			heads       optional [Link]
+			links       optional [DAGLink]
+			encryption  optional Link
+		}
+	`)
+}
+
+// IPLDSchemaBytes returns the IPLD schema representation for the encryption block.
+//
+// This needs to match the [Encryption] struct or [mustSetSchema] will panic on init.
+func (enc *Encryption) IPLDSchemaBytes() []byte {
+	return []byte(`
+		type Encryption struct {
+			docID     Bytes
+			fieldName optional String
+			key       Bytes
+		}
+	`)
 }
 
 // New creates a new block with the given delta and links.
 func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
-	blockLinks := make([]DAGLink, 0, len(links)+len(heads))
-
 	// Sort the heads lexicographically by CID.
 	// We need to do this to ensure that the block is deterministic.
 	sort.Slice(heads, func(i, j int) bool {
 		return strings.Compare(heads[i].String(), heads[j].String()) < 0
 	})
+
+	headLinks := make([]cidlink.Link, 0, len(heads))
 	for _, head := range heads {
-		blockLinks = append(
-			blockLinks,
-			DAGLink{
-				Name: core.HEAD,
-				Link: cidlink.Link{Cid: head},
-			},
+		headLinks = append(
+			headLinks,
+			cidlink.Link{Cid: head},
 		)
 	}
 
@@ -145,12 +225,40 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 
+	blockLinks := make([]DAGLink, 0, len(links))
 	blockLinks = append(blockLinks, links...)
 
+	if len(headLinks) == 0 {
+		// The encoding used for block serialization will consume space if an empty set is
+		// provided, but it will not consume space if nil is provided, so if empty we set it
+		// to nil.  The would-be space consumed includes the property name, so this is not an
+		// insignificant amount.
+		headLinks = nil
+	}
+
+	if len(blockLinks) == 0 {
+		// The encoding used for block serialization will consume space if an empty set is
+		// provided, but it will not consume space if nil is provided, so if empty we set it
+		// to nil.  The would-be space consumed includes the property name, so this is not an
+		// insignificant amount.
+		blockLinks = nil
+	}
+
 	return &Block{
+		Heads: headLinks,
 		Links: blockLinks,
 		Delta: crdt.NewCRDT(delta),
 	}
+}
+
+// GetFromBytes returns a block from encoded bytes.
+func GetEncryptionBlockFromBytes(b []byte) (*Encryption, error) {
+	enc := &Encryption{}
+	err := enc.Unmarshal(b)
+	if err != nil {
+		return nil, err
+	}
+	return enc, nil
 }
 
 // GetFromBytes returns a block from encoded bytes.
@@ -172,8 +280,17 @@ func GetFromNode(node ipld.Node) (*Block, error) {
 	return block, nil
 }
 
+// GetFromNode returns a block from a node.
+func GetEncryptionBlockFromNode(node ipld.Node) (*Encryption, error) {
+	encBlock, ok := bindnode.Unwrap(node).(*Encryption)
+	if !ok {
+		return nil, NewErrNodeToBlock(node)
+	}
+	return encBlock, nil
+}
+
 // Marshal encodes the delta using CBOR encoding.
-func (block *Block) Marshal() (data []byte, err error) {
+func (block *Block) Marshal() ([]byte, error) {
 	b, err := ipld.Marshal(dagcbor.Encode, block, Schema)
 	if err != nil {
 		return nil, NewErrEncodingBlock(err)
@@ -183,12 +300,25 @@ func (block *Block) Marshal() (data []byte, err error) {
 
 // Unmarshal decodes the delta from CBOR encoding.
 func (block *Block) Unmarshal(b []byte) error {
-	_, err := ipld.Unmarshal(
-		b,
-		dagcbor.Decode,
-		block,
-		Schema,
-	)
+	_, err := ipld.Unmarshal(b, dagcbor.Decode, block, Schema)
+	if err != nil {
+		return NewErrUnmarshallingBlock(err)
+	}
+	return nil
+}
+
+// Marshal encodes the delta using CBOR encoding.
+func (enc *Encryption) Marshal() ([]byte, error) {
+	b, err := ipld.Marshal(dagcbor.Encode, enc, EncryptionSchema)
+	if err != nil {
+		return nil, NewErrEncodingBlock(err)
+	}
+	return b, nil
+}
+
+// Unmarshal decodes the delta from CBOR encoding.
+func (enc *Encryption) Unmarshal(b []byte) error {
+	_, err := ipld.Unmarshal(b, dagcbor.Decode, enc, EncryptionSchema)
 	if err != nil {
 		return NewErrUnmarshallingBlock(err)
 	}
@@ -196,8 +326,13 @@ func (block *Block) Unmarshal(b []byte) error {
 }
 
 // GenerateNode generates an IPLD node from the block in its representation form.
-func (block *Block) GenerateNode() (node ipld.Node) {
+func (block *Block) GenerateNode() ipld.Node {
 	return bindnode.Wrap(block, Schema).Representation()
+}
+
+// GenerateNode generates an IPLD node from the encryption block in its representation form.
+func (enc *Encryption) GenerateNode() ipld.Node {
+	return bindnode.Wrap(enc, EncryptionSchema).Representation()
 }
 
 // GetLinkByName returns the link by name. It will return false if the link does not exist.

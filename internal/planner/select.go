@@ -201,9 +201,9 @@ func (n *selectNode) simpleExplain() (map[string]any, error) {
 
 	// Add the docIDs attribute if it exists.
 	if !n.docIDs.HasValue() {
-		simpleExplainMap[request.DocIDsArgName] = nil
+		simpleExplainMap[request.DocIDArgName] = nil
 	} else {
-		simpleExplainMap[request.DocIDsArgName] = n.docIDs.Value()
+		simpleExplainMap[request.DocIDArgName] = n.docIDs.Value()
 	}
 
 	return simpleExplainMap, nil
@@ -347,6 +347,10 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				plan, aggregateError = n.planner.Sum(f, selectReq)
 			case request.AverageFieldName:
 				plan, aggregateError = n.planner.Average(f)
+			case request.MaxFieldName:
+				plan, aggregateError = n.planner.Max(f, selectReq)
+			case request.MinFieldName:
+				plan, aggregateError = n.planner.Min(f, selectReq)
 			}
 
 			if aggregateError != nil {

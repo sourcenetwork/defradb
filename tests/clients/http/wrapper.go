@@ -105,6 +105,38 @@ func (w *Wrapper) AddPolicy(
 	return w.client.AddPolicy(ctx, policy)
 }
 
+func (w *Wrapper) AddDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddDocActorRelationshipResult, error) {
+	return w.client.AddDocActorRelationship(
+		ctx,
+		collectionName,
+		docID,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) DeleteDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteDocActorRelationshipResult, error) {
+	return w.client.DeleteDocActorRelationship(
+		ctx,
+		collectionName,
+		docID,
+		relation,
+		targetActor,
+	)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
@@ -132,6 +164,10 @@ func (w *Wrapper) AddView(
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
 	return w.client.AddView(ctx, query, sdl, transform)
+}
+
+func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+	return w.client.RefreshViews(ctx, opts)
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
@@ -171,8 +207,9 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
+	opts ...client.RequestOption,
 ) *client.RequestResult {
-	return w.client.ExecRequest(ctx, query)
+	return w.client.ExecRequest(ctx, query, opts...)
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
@@ -203,6 +240,10 @@ func (w *Wrapper) Rootstore() datastore.Rootstore {
 	return w.node.DB.Rootstore()
 }
 
+func (w *Wrapper) Encstore() datastore.Blockstore {
+	return w.node.DB.Encstore()
+}
+
 func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }
@@ -211,7 +252,7 @@ func (w *Wrapper) Headstore() ds.Read {
 	return w.node.DB.Headstore()
 }
 
-func (w *Wrapper) Peerstore() datastore.DSBatching {
+func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
 	return w.node.DB.Peerstore()
 }
 
@@ -233,8 +274,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
-	w.node.Peer.Bootstrap(addrs)
+func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
+	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

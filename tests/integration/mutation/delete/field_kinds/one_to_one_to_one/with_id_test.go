@@ -34,7 +34,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				testUtils.CreateDoc{
 					// Authors
 					CollectionID: 1,
-					// bae-455081f4-b810-5363-ab95-50dbd2ec03d0
+					// bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48
 					Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
@@ -53,14 +53,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_Author(docID: "bae-455081f4-b810-5363-ab95-50dbd2ec03d0") {
+						delete_Author(docID: "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48") {
 							_docID
 						}
 					}`,
 					Results: map[string]any{
 						"delete_Author": []map[string]any{
 							{
-								"_docID": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+								"_docID": "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48",
 							},
 						},
 					},
@@ -84,7 +84,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				testUtils.CreateDoc{
 					// Authors
 					CollectionID: 1,
-					// bae-455081f4-b810-5363-ab95-50dbd2ec03d0
+					// bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48
 					Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
@@ -103,14 +103,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_Author(docID: "bae-455081f4-b810-5363-ab95-50dbd2ec03d0") {
+						delete_Author(docID: "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48") {
 							AliasOfKey: _docID
 						}
 					}`,
 					Results: map[string]any{
 						"delete_Author": []map[string]any{
 							{
-								"AliasOfKey": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+								"AliasOfKey": "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48",
 							},
 						},
 					},
@@ -134,7 +134,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				testUtils.CreateDoc{
 					// Authors
 					CollectionID: 1,
-					// bae-455081f4-b810-5363-ab95-50dbd2ec03d0
+					// bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48
 					Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
@@ -170,14 +170,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_Author(docID: "bae-455081f4-b810-5363-ab95-50dbd2ec03d0") {
+						delete_Author(docID: "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48") {
 							Key: _docID
 						}
 					}`,
 					Results: map[string]any{
 						"delete_Author": []map[string]any{
 							{
-								"Key": "bae-455081f4-b810-5363-ab95-50dbd2ec03d0",
+								"Key": "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48",
 							},
 						},
 					},

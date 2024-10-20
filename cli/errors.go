@@ -16,14 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-const errKeyringHelp = `%w
-
-Did you forget to initialize the keyring?
-
-Use the following command to generate the required keys: 
-  defradb keyring generate
-`
-
 const (
 	errInvalidLensConfig        string = "invalid lens configuration"
 	errSchemaVersionNotOfSchema string = "the given schema version is from a different schema"
@@ -40,6 +32,8 @@ var (
 	ErrSchemaVersionNotOfSchema   = errors.New(errSchemaVersionNotOfSchema)
 	ErrViewAddMissingArgs         = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty = errors.New("policy file argument can not be empty")
+	ErrPurgeForceFlagRequired     = errors.New("run this command again with --force if you really want to purge all data")
+	ErrMissingKeyringSecret       = errors.New("missing keyring secret")
 )
 
 func NewErrRequiredFlagEmpty(longName string, shortName string) error {
@@ -60,8 +54,4 @@ func NewErrSchemaVersionNotOfSchema(schemaRoot string, schemaVersionID string) e
 		errors.NewKV("SchemaRoot", schemaRoot),
 		errors.NewKV("SchemaVersionID", schemaVersionID),
 	)
-}
-
-func NewErrKeyringHelp(inner error) error {
-	return fmt.Errorf(errKeyringHelp, inner)
 }

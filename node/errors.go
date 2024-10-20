@@ -23,6 +23,7 @@ var (
 	ErrSignerMissingForSourceHubACP = errors.New("a txn signer must be provided for SourceHub ACP")
 	ErrLensRuntimeNotSupported      = errors.New(errLensRuntimeNotSupported)
 	ErrStoreTypeNotSupported        = errors.New(errStoreTypeNotSupported)
+	ErrPurgeWithDevModeDisabled     = errors.New("cannot purge database when development mode is disabled")
 )
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {

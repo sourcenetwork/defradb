@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -44,21 +46,18 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	ls := cidlink.DefaultLinkSystem()
-	ls.SetReadStorage(txn.Blockstore().AsIPLDStorage())
-
 	docID, err := client.NewDocIDFromString(dagMerge.DocID)
 	if err != nil {
 		return err
 	}
 	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
 
-	mp, err := db.newMergeProcessor(txn, ls, col, dsKey)
+	mp, err := db.newMergeProcessor(txn, col, dsKey)
 	if err != nil {
 		return err
 	}
 
-	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey)
+	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey.WithFieldID(core.COMPOSITE_NAMESPACE))
 	if err != nil {
 		return err
 	}
@@ -130,26 +129,40 @@ func (m *mergeQueue) done(docID string) {
 
 type mergeProcessor struct {
 	txn        datastore.Txn
-	lsys       linking.LinkSystem
+	blockLS    linking.LinkSystem
+	encBlockLS linking.LinkSystem
 	mCRDTs     map[string]merklecrdt.MerkleCRDT
 	col        *collection
 	dsKey      core.DataStoreKey
+	// composites is a list of composites that need to be merged.
 	composites *list.List
+	// missingEncryptionBlocks is a list of blocks that we failed to fetch
+	missingEncryptionBlocks map[cidlink.Link]struct{}
+	// availableEncryptionBlocks is a list of blocks that we have successfully fetched
+	availableEncryptionBlocks map[cidlink.Link]*coreblock.Encryption
 }
 
 func (db *db) newMergeProcessor(
 	txn datastore.Txn,
-	lsys linking.LinkSystem,
 	col *collection,
 	dsKey core.DataStoreKey,
 ) (*mergeProcessor, error) {
+	blockLS := cidlink.DefaultLinkSystem()
+	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
+
+	encBlockLS := cidlink.DefaultLinkSystem()
+	encBlockLS.SetReadStorage(txn.Encstore().AsIPLDStorage())
+
 	return &mergeProcessor{
-		txn:        txn,
-		lsys:       lsys,
-		mCRDTs:     make(map[string]merklecrdt.MerkleCRDT),
-		col:        col,
-		dsKey:      dsKey,
-		composites: list.New(),
+		txn:                       txn,
+		blockLS:                   blockLS,
+		encBlockLS:                encBlockLS,
+		mCRDTs:                    make(map[string]merklecrdt.MerkleCRDT),
+		col:                       col,
+		dsKey:                     dsKey,
+		composites:                list.New(),
+		missingEncryptionBlocks:   make(map[cidlink.Link]struct{}),
+		availableEncryptionBlocks: make(map[cidlink.Link]*coreblock.Encryption),
 	}, nil
 }
 
@@ -165,7 +178,7 @@ func newMergeTarget() mergeTarget {
 }
 
 // loadComposites retrieves and stores into the merge processor the composite blocks for the given
-// document until it reaches a block that has already been merged or until we reach the genesis block.
+// CID until it reaches a block that has already been merged or until we reach the genesis block.
 func (mp *mergeProcessor) loadComposites(
 	ctx context.Context,
 	blockCid cid.Cid,
@@ -176,7 +189,7 @@ func (mp *mergeProcessor) loadComposites(
 		return nil
 	}
 
-	nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
+	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
 	if err != nil {
 		return err
 	}
@@ -191,32 +204,28 @@ func (mp *mergeProcessor) loadComposites(
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
 		mp.composites.PushFront(block)
-		for _, link := range block.Links {
-			if link.Name == core.HEAD {
-				err := mp.loadComposites(ctx, link.Cid, mt)
-				if err != nil {
-					return err
-				}
+		for _, head := range block.Heads {
+			err := mp.loadComposites(ctx, head.Cid, mt)
+			if err != nil {
+				return err
 			}
 		}
 	} else {
 		newMT := newMergeTarget()
 		for _, b := range mt.heads {
-			for _, link := range b.Links {
-				if link.Name == core.HEAD {
-					nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
-					if err != nil {
-						return err
-					}
-
-					childBlock, err := coreblock.GetFromNode(nd)
-					if err != nil {
-						return err
-					}
-
-					newMT.heads[link.Cid] = childBlock
-					newMT.headHeight = childBlock.Delta.GetPriority()
+			for _, link := range b.Heads {
+				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.SchemaPrototype)
+				if err != nil {
+					return err
 				}
+
+				childBlock, err := coreblock.GetFromNode(nd)
+				if err != nil {
+					return err
+				}
+
+				newMT.heads[link.Cid] = childBlock
+				newMT.headHeight = childBlock.Delta.GetPriority()
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
@@ -227,15 +236,50 @@ func (mp *mergeProcessor) loadComposites(
 func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
-		var onlyHeads bool
-		if block.IsEncrypted != nil && *block.IsEncrypted {
-			onlyHeads = true
-		}
 		link, err := block.GenerateLink()
 		if err != nil {
 			return err
 		}
-		err = mp.processBlock(ctx, block, link, onlyHeads)
+		err = mp.processBlock(ctx, block, link)
+		if err != nil {
+			return err
+		}
+	}
+
+	return mp.tryFetchMissingBlocksAndMerge(ctx)
+}
+
+func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) error {
+	for len(mp.missingEncryptionBlocks) > 0 {
+		links := make([]cidlink.Link, 0, len(mp.missingEncryptionBlocks))
+		for link := range mp.missingEncryptionBlocks {
+			links = append(links, link)
+		}
+		msg, results := encryption.NewRequestKeysMessage(links)
+		mp.col.db.events.Publish(msg)
+
+		res := <-results.Get()
+		if res.Error != nil {
+			return res.Error
+		}
+
+		clear(mp.missingEncryptionBlocks)
+
+		for i := range res.Items {
+			_, link, err := cid.CidFromBytes(res.Items[i].Link)
+			if err != nil {
+				return err
+			}
+			var encBlock coreblock.Encryption
+			err = encBlock.Unmarshal(res.Items[i].Block)
+			if err != nil {
+				return err
+			}
+
+			mp.availableEncryptionBlocks[cidlink.Link{Cid: link}] = &encBlock
+		}
+
+		err := mp.mergeComposites(ctx)
 		if err != nil {
 			return err
 		}
@@ -243,36 +287,105 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	return nil
 }
 
-// processBlock merges the block and its children to the datastore and sets the head accordingly.
-// If onlyHeads is true, it will skip merging and update only the heads.
-func (mp *mergeProcessor) processBlock(
+func (mp *mergeProcessor) loadEncryptionBlock(
 	ctx context.Context,
-	block *coreblock.Block,
-	blockLink cidlink.Link,
-	onlyHeads bool,
-) error {
-	crdt, err := mp.initCRDTForType(block.Delta.GetFieldName())
+	encLink cidlink.Link,
+) (*coreblock.Encryption, error) {
+	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
 	if err != nil {
-		return err
+		if errors.Is(err, ipld.ErrNotFound{}) {
+			mp.missingEncryptionBlocks[encLink] = struct{}{}
+			return nil, nil
+		}
+		return nil, err
 	}
 
-	// If the CRDT is nil, it means the field is not part
-	// of the schema and we can safely ignore it.
-	if crdt == nil {
-		return nil
+	return coreblock.GetEncryptionBlockFromNode(nd)
+}
+
+func (mp *mergeProcessor) tryGetEncryptionBlock(
+	ctx context.Context,
+	encLink cidlink.Link,
+) (*coreblock.Encryption, error) {
+	if encBlock, ok := mp.availableEncryptionBlocks[encLink]; ok {
+		return encBlock, nil
+	}
+	if _, ok := mp.missingEncryptionBlocks[encLink]; ok {
+		return nil, nil
 	}
 
-	err = crdt.Clock().ProcessBlock(ctx, block, blockLink, onlyHeads)
+	encBlock, err := mp.loadEncryptionBlock(ctx, encLink)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for _, link := range block.Links {
-		if link.Name == core.HEAD {
-			continue
+	if encBlock != nil {
+		mp.availableEncryptionBlocks[encLink] = encBlock
+	}
+
+	return encBlock, nil
+}
+
+// processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
+// If the block is encrypted and we were not able to decrypt it, it returns false as the second return value
+// which indicates that the we can't read the block.
+// If we were able to decrypt the block, we return the decrypted block and true as the second return value.
+func (mp *mergeProcessor) processEncryptedBlock(
+	ctx context.Context,
+	dagBlock *coreblock.Block,
+) (*coreblock.Block, bool, error) {
+	if dagBlock.IsEncrypted() {
+		encBlock, err := mp.tryGetEncryptionBlock(ctx, *dagBlock.Encryption)
+		if err != nil {
+			return nil, false, err
 		}
 
-		nd, err := mp.lsys.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+		if encBlock == nil {
+			return dagBlock, false, nil
+		}
+
+		plainTextBlock, err := decryptBlock(ctx, dagBlock, encBlock)
+		if err != nil {
+			return nil, false, err
+		}
+		if plainTextBlock != nil {
+			return plainTextBlock, true, nil
+		}
+	}
+	return dagBlock, true, nil
+}
+
+// processBlock merges the block and its children to the datastore and sets the head accordingly.
+func (mp *mergeProcessor) processBlock(
+	ctx context.Context,
+	dagBlock *coreblock.Block,
+	blockLink cidlink.Link,
+) error {
+	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
+	if err != nil {
+		return err
+	}
+
+	if canRead {
+		crdt, err := mp.initCRDTForType(dagBlock.Delta.GetFieldName())
+		if err != nil {
+			return err
+		}
+
+		// If the CRDT is nil, it means the field is not part
+		// of the schema and we can safely ignore it.
+		if crdt == nil {
+			return nil
+		}
+
+		err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, link := range dagBlock.Links {
+		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
 		if err != nil {
 			return err
 		}
@@ -282,7 +395,7 @@ func (mp *mergeProcessor) processBlock(
 			return err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link, onlyHeads); err != nil {
+		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
 			return err
 		}
 	}
@@ -290,9 +403,31 @@ func (mp *mergeProcessor) processBlock(
 	return nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(
-	field string,
-) (merklecrdt.MerkleCRDT, error) {
+func decryptBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+	encBlock *coreblock.Encryption,
+) (*coreblock.Block, error) {
+	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
+
+	if block.Delta.IsComposite() {
+		// for composite blocks there is nothing to decrypt
+		return block, nil
+	}
+
+	bytes, err := encryptor.Decrypt(block.Delta.GetData(), encBlock.Key)
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes) == 0 {
+		return nil, nil
+	}
+	newBlock := block.Clone()
+	newBlock.Delta.SetData(bytes)
+	return newBlock, nil
+}
+
+func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, error) {
 	mcrdt, exists := mp.mCRDTs[field]
 	if exists {
 		return mcrdt, nil
@@ -307,8 +442,7 @@ func (mp *mergeProcessor) initCRDTForType(
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			mp.txn,
 			schemaVersionKey,
-			mp.dsKey.WithFieldId(core.COMPOSITE_NAMESPACE),
-			"",
+			mp.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
 		)
 		mp.mCRDTs[field] = mcrdt
 		return mcrdt, nil
@@ -325,7 +459,7 @@ func (mp *mergeProcessor) initCRDTForType(
 		schemaVersionKey,
 		fd.Typ,
 		fd.Kind,
-		mp.dsKey.WithFieldId(fd.ID.String()),
+		mp.dsKey.WithFieldID(fd.ID.String()),
 		field,
 	)
 	if err != nil {
@@ -357,24 +491,15 @@ func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string)
 // getHeadsAsMergeTarget retrieves the heads of the composite DAG for the given document
 // and returns them as a merge target.
 func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.DataStoreKey) (mergeTarget, error) {
-	headset := clock.NewHeadSet(
-		txn.Headstore(),
-		dsKey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
-	)
+	cids, err := getHeads(ctx, txn, dsKey)
 
-	cids, _, err := headset.List(ctx)
 	if err != nil {
 		return mergeTarget{}, err
 	}
 
 	mt := newMergeTarget()
 	for _, cid := range cids {
-		b, err := txn.Blockstore().Get(ctx, cid)
-		if err != nil {
-			return mergeTarget{}, err
-		}
-
-		block, err := coreblock.GetFromBytes(b.RawData())
+		block, err := loadBlockFromBlockStore(ctx, txn, cid)
 		if err != nil {
 			return mergeTarget{}, err
 		}
@@ -384,6 +509,33 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.Da
 		mt.headHeight = block.Delta.GetPriority()
 	}
 	return mt, nil
+}
+
+// getHeads retrieves the heads associated with the given datastore key.
+func getHeads(ctx context.Context, txn datastore.Txn, dsKey core.DataStoreKey) ([]cid.Cid, error) {
+	headset := clock.NewHeadSet(txn.Headstore(), dsKey.ToHeadStoreKey())
+
+	cids, _, err := headset.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return cids, nil
+}
+
+// loadBlockFromBlockStore loads a block from the blockstore.
+func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid) (*coreblock.Block, error) {
+	b, err := txn.Blockstore().Get(ctx, cid)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := coreblock.GetFromBytes(b.RawData())
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
 }
 
 func syncIndexedDoc(
@@ -406,10 +558,10 @@ func syncIndexedDoc(
 		return err
 	}
 
-	if isDeletedDoc {
-		return col.deleteIndexedDoc(ctx, oldDoc)
-	} else if isNewDoc {
+	if isNewDoc {
 		return col.indexNewDoc(ctx, doc)
+	} else if isDeletedDoc {
+		return col.deleteIndexedDoc(ctx, oldDoc)
 	} else {
 		return col.updateDocIndex(ctx, oldDoc, doc)
 	}

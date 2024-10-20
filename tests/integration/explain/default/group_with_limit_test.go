@@ -125,7 +125,7 @@ func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *
 										"offset": uint64(0),
 									},
 									"orderBy": nil,
-									"docIDs":  nil,
+									"docID":   nil,
 									"groupBy": nil,
 									"filter":  nil,
 								},

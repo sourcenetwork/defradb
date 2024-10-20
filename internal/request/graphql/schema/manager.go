@@ -11,9 +11,13 @@
 package schema
 
 import (
-	gql "github.com/sourcenetwork/graphql-go"
+	"errors"
 
-	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
+	"github.com/sourcenetwork/defradb/client"
+
+	gql "github.com/sourcenetwork/graphql-go"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 // SchemaManager creates an instanced management point
@@ -26,36 +30,14 @@ type SchemaManager struct {
 // NewSchemaManager returns a new instance of a SchemaManager
 // with a new default type map
 func NewSchemaManager() (*SchemaManager, error) {
-	sm := &SchemaManager{}
-
-	orderEnum := schemaTypes.OrderingEnum()
-	crdtEnum := schemaTypes.CRDTEnum()
-	explainEnum := schemaTypes.ExplainEnum()
-
-	commitLinkObject := schemaTypes.CommitLinkObject()
-	commitObject := schemaTypes.CommitObject(commitLinkObject)
-	commitsOrderArg := schemaTypes.CommitsOrderArg(orderEnum)
-
-	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types: defaultTypes(
-			commitObject,
-			commitLinkObject,
-			commitsOrderArg,
-			orderEnum,
-			crdtEnum,
-			explainEnum,
-		),
-		Query:      defaultQueryType(commitObject, commitsOrderArg),
-		Mutation:   defaultMutationType(),
-		Directives: defaultDirectivesType(crdtEnum, explainEnum, orderEnum),
-	})
+	schema, err := defaultSchema()
 	if err != nil {
-		return sm, err
+		return nil, err
 	}
-	sm.schema = schema
-
+	sm := &SchemaManager{
+		schema: schema,
+	}
 	sm.NewGenerator()
-
 	return sm, nil
 }
 
@@ -95,119 +77,24 @@ func (s *SchemaManager) ResolveTypes() error {
 	return s.schema.AppendType(query)
 }
 
-// @todo: Use a better default Query type
-func defaultQueryType(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Object {
-	queryCommits := schemaTypes.QueryCommits(commitObject, commitsOrderArg)
-	queryLatestCommits := schemaTypes.QueryLatestCommits(commitObject)
-
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Query",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-
-			// database API queries
-			queryCommits.Name:       queryCommits,
-			queryLatestCommits.Name: queryLatestCommits,
-		},
+func (s *SchemaManager) ParseSDL(sdl string) ([]client.CollectionDefinition, error) {
+	src := source.NewSource(&source.Source{
+		Body: []byte(sdl),
 	})
-}
-
-func defaultMutationType() *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Mutation",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-		},
+	doc, err := gqlp.Parse(gqlp.ParseParams{
+		Source: src,
 	})
-}
-
-// default directives type.
-func defaultDirectivesType(
-	crdtEnum *gql.Enum,
-	explainEnum *gql.Enum,
-	orderEnum *gql.Enum,
-) []*gql.Directive {
-	return []*gql.Directive{
-		schemaTypes.CRDTFieldDirective(crdtEnum),
-		schemaTypes.ExplainDirective(explainEnum),
-		schemaTypes.PolicyDirective(),
-		schemaTypes.IndexDirective(orderEnum),
-		schemaTypes.IndexFieldDirective(orderEnum),
-		schemaTypes.PrimaryDirective(),
-		schemaTypes.RelationDirective(),
+	if err != nil {
+		return nil, err
 	}
-}
-
-func inlineArrayTypes() []gql.Type {
-	return []gql.Type{
-		gql.Boolean,
-		gql.Float,
-		gql.Int,
-		gql.String,
-		gql.NewNonNull(gql.Boolean),
-		gql.NewNonNull(gql.Float),
-		gql.NewNonNull(gql.Int),
-		gql.NewNonNull(gql.String),
+	// The user provided SDL must be validated using the latest generated schema
+	// so that relations to other user defined types do not return an error.
+	validation := gql.ValidateDocument(&s.schema, doc, gql.SpecifiedRules)
+	if !validation.IsValid {
+		for _, e := range validation.Errors {
+			err = errors.Join(err, e)
+		}
+		return nil, err
 	}
-}
-
-// default type map includes all the native scalar types
-func defaultTypes(
-	commitObject *gql.Object,
-	commitLinkObject *gql.Object,
-	commitsOrderArg *gql.InputObject,
-	orderEnum *gql.Enum,
-	crdtEnum *gql.Enum,
-	explainEnum *gql.Enum,
-) []gql.Type {
-	blobScalarType := schemaTypes.BlobScalarType()
-	jsonScalarType := schemaTypes.JSONScalarType()
-
-	return []gql.Type{
-		// Base Scalar types
-		gql.Boolean,
-		gql.DateTime,
-		gql.Float,
-		gql.ID,
-		gql.Int,
-		gql.String,
-
-		// Custom Scalar types
-		blobScalarType,
-		jsonScalarType,
-
-		// Base Query types
-
-		// Sort/Order enum
-		orderEnum,
-
-		// Filter scalar blocks
-		schemaTypes.BooleanOperatorBlock(),
-		schemaTypes.NotNullBooleanOperatorBlock(),
-		schemaTypes.DateTimeOperatorBlock(),
-		schemaTypes.FloatOperatorBlock(),
-		schemaTypes.NotNullFloatOperatorBlock(),
-		schemaTypes.IdOperatorBlock(),
-		schemaTypes.IntOperatorBlock(),
-		schemaTypes.NotNullIntOperatorBlock(),
-		schemaTypes.StringOperatorBlock(),
-		schemaTypes.NotNullstringOperatorBlock(),
-		schemaTypes.JSONOperatorBlock(jsonScalarType),
-		schemaTypes.NotNullJSONOperatorBlock(jsonScalarType),
-		schemaTypes.BlobOperatorBlock(blobScalarType),
-		schemaTypes.NotNullBlobOperatorBlock(blobScalarType),
-
-		commitsOrderArg,
-		commitLinkObject,
-		commitObject,
-
-		crdtEnum,
-		explainEnum,
-	}
+	return fromAst(doc)
 }

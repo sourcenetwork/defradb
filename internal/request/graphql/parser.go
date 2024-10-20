@@ -72,19 +72,18 @@ func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 
 	res := &client.RequestResult{
 		GQL: client.GQLResult{
-			Data:   r.Data,
-			Errors: make([]error, len(r.Errors)),
+			Data: r.Data,
 		},
 	}
 
-	for i, err := range r.Errors {
-		res.GQL.Errors[i] = err
+	for _, err := range r.Errors {
+		res.GQL.Errors = append(res.GQL.Errors, err)
 	}
 
 	return res
 }
 
-func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
+func (p *parser) Parse(ast *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
 	schema := p.schemaManager.Schema()
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
@@ -95,19 +94,11 @@ func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseRequest(*schema, ast)
-	if len(parsingErrors) > 0 {
-		return nil, parsingErrors
-	}
-
-	return query, nil
+	return defrap.ParseRequest(*schema, ast, options)
 }
 
-func (p *parser) ParseSDL(ctx context.Context, schemaString string) (
-	[]client.CollectionDefinition,
-	error,
-) {
-	return schema.FromString(ctx, schemaString)
+func (p *parser) ParseSDL(sdl string) ([]client.CollectionDefinition, error) {
+	return p.schemaManager.ParseSDL(sdl)
 }
 
 func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error {

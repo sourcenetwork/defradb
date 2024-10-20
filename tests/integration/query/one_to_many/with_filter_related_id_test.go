@@ -100,8 +100,8 @@ func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
-						{"name": "The Client"},
 						{"name": "Painted House"},
+						{"name": "The Client"},
 						{"name": "A Time for Mercy"},
 					},
 				},
@@ -196,8 +196,8 @@ func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
-						{"name": "The Client"},
 						{"name": "Painted House"},
+						{"name": "The Client"},
 						{"name": "A Time for Mercy"},
 					},
 				},
@@ -297,8 +297,8 @@ func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
-						{"name": "The Client"},
 						{"name": "Painted House"},
+						{"name": "The Client"},
 						{"name": "A Time for Mercy"},
 					},
 				},
@@ -387,7 +387,7 @@ func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Author(filter: {published: {_docID: {_eq: "bae-96c9de0f-2903-5589-9604-b42882afde8c"}}}) {
+					Author(filter: {published: {_docID: {_eq: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"}}}) {
 						name
 					}
 				}`,
@@ -483,11 +483,11 @@ func TestQueryFromSingleSideWithFilterOnRelatedObjectID_Error(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Author(filter: {published_id: {_eq: "bae-5366ba09-54e8-5381-8169-a770aa9282ae"}}) {
+					Author(filter: {published_id: {_eq: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"}}) {
 						name
 					}
 				}`,
-				ExpectedError: "Argument \"filter\" has invalid value {published_id: {_eq: \"bae-5366ba09-54e8-5381-8169-a770aa9282ae\"}}.\nIn field \"published_id\": Unknown field.",
+				ExpectedError: "Argument \"filter\" has invalid value {published_id: {_eq: \"bae-064f13c1-7726-5d53-8eec-c395d94da4d0\"}}.\nIn field \"published_id\": Unknown field.",
 			},
 		},
 	}

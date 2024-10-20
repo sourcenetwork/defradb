@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -307,7 +306,10 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc := client.NewDocWithID(docID, c.def)
+	doc, err := client.NewDocWithID(docID, c.def)
+	if err != nil {
+		return nil, err
+	}
 	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
@@ -366,7 +368,7 @@ func (c *Collection) GetAllDocIDs(
 				ID: docID,
 			}
 			if res.Error != "" {
-				docIDResult.Err = fmt.Errorf(res.Error)
+				docIDResult.Err = errors.New(res.Error)
 			}
 			docIDCh <- docIDResult
 		}

@@ -88,7 +88,7 @@ func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
-									"docIDs": nil,
+									"docID":  nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,

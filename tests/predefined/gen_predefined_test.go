@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
 func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
@@ -36,7 +37,7 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 	docs, err := CreateFromSDL(schema, docsList)
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	errorMsg := assertDocs(mustAddDocIDsToDocs(docsList.Docs, colDefMap["User"]), docs)
@@ -60,7 +61,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
@@ -102,7 +103,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	userDocs := mustAddDocIDsToDocs([]map[string]any{
@@ -157,7 +158,7 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	userDocs := mustAddDocIDsToDocs([]map[string]any{
@@ -213,7 +214,7 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS"}, colDefMap["Specs"])
@@ -225,55 +226,6 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 		"name":      "John",
 		"device_id": deviceDoc[request.DocIDFieldName],
 	}, colDefMap["User"])
-
-	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
-	if errorMsg != "" {
-		t.Error(errorMsg)
-	}
-}
-
-func TestGeneratePredefinedFromSchema_TwoPrimaryToOneMiddle(t *testing.T) {
-	schema := `
-		type User {
-			name: String
-			device: Device 
-		}
-		type Device {
-			model: String
-			owner: User @primary
-			specs: Specs @primary
-		}
-		type Specs {
-			OS: String
-			device: Device
-		}`
-
-	docs, err := CreateFromSDL(schema, DocsList{
-		ColName: "User",
-		Docs: []map[string]any{
-			{
-				"name": "John",
-				"device": map[string]any{
-					"model": "iPhone",
-					"specs": map[string]any{
-						"OS": "iOS",
-					},
-				},
-			},
-		},
-	})
-	assert.NoError(t, err)
-
-	colDefMap, err := parseSDL(schema)
-	require.NoError(t, err)
-
-	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS"}, colDefMap["Specs"])
-	userDoc := mustAddDocIDToDoc(map[string]any{"name": "John"}, colDefMap["User"])
-	deviceDoc := mustAddDocIDToDoc(map[string]any{
-		"model":    "iPhone",
-		"specs_id": specsDoc[request.DocIDFieldName],
-		"owner_id": userDoc[request.DocIDFieldName],
-	}, colDefMap["Device"])
 
 	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
 	if errorMsg != "" {
@@ -313,7 +265,7 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone"}, colDefMap["Device"])
@@ -364,7 +316,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	colDefMap, err := parseSDL(schema)
+	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
 	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone"}, colDefMap["Device"])

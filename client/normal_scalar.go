@@ -11,10 +11,18 @@
 package client
 
 import (
+	"bytes"
 	"time"
 
 	"golang.org/x/exp/constraints"
 )
+
+// JSON contains a valid JSON value.
+//
+// The inner type can be any valid normal value or normal value array.
+type JSON struct {
+	inner any
+}
 
 // NormalValue is dummy implementation of NormalValue to be embedded in other types.
 type baseNormalValue[T any] struct {
@@ -38,12 +46,20 @@ func (v normalBool) Bool() (bool, bool) {
 	return v.val, true
 }
 
+func (v normalBool) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Bool)
+}
+
 type normalInt struct {
 	baseNormalValue[int64]
 }
 
 func (v normalInt) Int() (int64, bool) {
 	return v.val, true
+}
+
+func (v normalInt) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Int)
 }
 
 type normalFloat struct {
@@ -54,12 +70,20 @@ func (v normalFloat) Float() (float64, bool) {
 	return v.val, true
 }
 
+func (v normalFloat) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Float)
+}
+
 type normalString struct {
 	baseNormalValue[string]
 }
 
 func (v normalString) String() (string, bool) {
 	return v.val, true
+}
+
+func (v normalString) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.String)
 }
 
 type normalBytes struct {
@@ -70,6 +94,13 @@ func (v normalBytes) Bytes() ([]byte, bool) {
 	return v.val, true
 }
 
+func (v normalBytes) Equal(other NormalValue) bool {
+	if otherVal, ok := other.Bytes(); ok {
+		return bytes.Equal(v.val, otherVal)
+	}
+	return false
+}
+
 type normalTime struct {
 	baseNormalValue[time.Time]
 }
@@ -78,12 +109,32 @@ func (v normalTime) Time() (time.Time, bool) {
 	return v.val, true
 }
 
+func (v normalTime) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Time)
+}
+
 type normalDocument struct {
 	baseNormalValue[*Document]
 }
 
+func (v normalDocument) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Document)
+}
+
 func (v normalDocument) Document() (*Document, bool) {
 	return v.val, true
+}
+
+type normalJSON struct {
+	baseNormalValue[*JSON]
+}
+
+func (v normalJSON) JSON() (*JSON, bool) {
+	return v.val, true
+}
+
+func (v normalJSON) Unwrap() any {
+	return v.val.inner
 }
 
 func newNormalInt(val int64) NormalValue {
@@ -127,4 +178,16 @@ func NewNormalTime(val time.Time) NormalValue {
 // NewNormalDocument creates a new NormalValue that represents a `*Document` value.
 func NewNormalDocument(val *Document) NormalValue {
 	return normalDocument{baseNormalValue[*Document]{val: val}}
+}
+
+// NewNormalJSON creates a new NormalValue that represents a `JSON` value.
+func NewNormalJSON(val *JSON) NormalValue {
+	return normalJSON{baseNormalValue[*JSON]{val: val}}
+}
+
+func areNormalScalarsEqual[T comparable](val T, f func() (T, bool)) bool {
+	if otherVal, ok := f(); ok {
+		return val == otherVal
+	}
+	return false
 }

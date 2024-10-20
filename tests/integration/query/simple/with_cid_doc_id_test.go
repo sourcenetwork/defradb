@@ -93,7 +93,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreia5ph2hvwebdsxe7m2f6bwuq7ngwxzqp7esiuzjihtcz2jswma6xu",
+							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
 							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
@@ -137,7 +137,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreia5ph2hvwebdsxe7m2f6bwuq7ngwxzqp7esiuzjihtcz2jswma6xu",
+							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
 							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
@@ -181,7 +181,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreid2idg2eod3zv7zqxnv7pvrbcmlxiizho3s6xnk6c5zmxemi5gcxu",
+							cid: "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
 							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
@@ -230,7 +230,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreid2idg2eod3zv7zqxnv7pvrbcmlxiizho3s6xnk6c5zmxemi5gcxu",
+							cid: "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
 							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
@@ -274,7 +274,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreia5ph2hvwebdsxe7m2f6bwuq7ngwxzqp7esiuzjihtcz2jswma6xu",
+							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
 							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
@@ -311,7 +311,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pncounter")
+						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -334,7 +334,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreib4e2q5uvv6iabkja4s4yoep6b4ifs7rclkteqhwrwr7lkzn56po4",
+						cid: "bafyreihsqayh6zvmjrvmma3sjmrb4bkeiyy6l56nt6y2t2tm4xajkif3gu",
 						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
 					) {
 						name
@@ -365,7 +365,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pncounter")
+						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -388,7 +388,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreia4qbtcckxhyaplunzj5waoli5btfpwyhsx5fpk7o62xawuqjxjti",
+						cid: "bafyreigkdjnvkpqfjoqoke3aqc3b6ibb45xjuxx5djpk7c6tart2lw3dcm",
 						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
 					) {
 						name
@@ -419,7 +419,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: "pcounter")
+						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -437,7 +437,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreibkt7zaipwafro2wajbsqbipma27g6hc2uedquhtjfwyulmwzz4ry",
+						cid: "bafyreihxjjootrhxhapn563gsoagmtpld6uqhzf5mtn3fmmzp5sawadheu",
 						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
 					) {
 						name
@@ -468,7 +468,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Float @crdt(type: "pcounter")
+						points: Float @crdt(type: pcounter)
 					}
 				`,
 			},
@@ -486,7 +486,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihbfsbje6lqmot6xpv2hcseduxu5rv5hf3adsmk7hlkzfuaa6lj5e",
+						cid: "bafyreihf2nipoyoxu3wjicqj6pftndjnnxljdw6nephkamgwyw5n6lcwca",
 						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
 					) {
 						name

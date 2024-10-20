@@ -18,6 +18,7 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -31,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
@@ -79,6 +81,15 @@ type db struct {
 	// The peer ID and network address information for the current node
 	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
 	peerInfo atomic.Value
+
+	// To be able to close the context passed to NewDB on DB close,
+	// we need to keep a reference to the cancel function. Otherwise,
+	// some goroutines might leak.
+	ctxCancel context.CancelFunc
+
+	// The intervals at which to retry replicator failures.
+	// For example, this can define an exponential backoff strategy.
+	retryIntervals []time.Duration
 }
 
 // NewDB creates a new instance of the DB using the given options.
@@ -106,19 +117,27 @@ func newDB(
 		return nil, err
 	}
 
-	db := &db{
-		rootstore:    rootstore,
-		multistore:   multistore,
-		acp:          acp,
-		lensRegistry: lens,
-		parser:       parser,
-		options:      options,
-		events:       event.NewBus(commandBufferSize, eventBufferSize),
+	opts := defaultOptions()
+	for _, opt := range options {
+		opt(opts)
 	}
 
-	// apply options
-	for _, opt := range options {
-		opt(db)
+	ctx, cancel := context.WithCancel(ctx)
+
+	db := &db{
+		rootstore:      rootstore,
+		multistore:     multistore,
+		acp:            acp,
+		lensRegistry:   lens,
+		parser:         parser,
+		options:        options,
+		events:         event.NewBus(commandBufferSize, eventBufferSize),
+		ctxCancel:      cancel,
+		retryIntervals: opts.RetryIntervals,
+	}
+
+	if opts.maxTxnRetries.HasValue() {
+		db.maxTxnRetries = opts.maxTxnRetries
 	}
 
 	if lens != nil {
@@ -130,11 +149,12 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, event.ReplicatorFailureName)
 	if err != nil {
 		return nil, err
 	}
 	go db.handleMessages(ctx, sub)
+	go db.handleReplicatorRetries(ctx)
 
 	return db, nil
 }
@@ -161,8 +181,13 @@ func (db *db) Blockstore() datastore.Blockstore {
 	return db.multistore.Blockstore()
 }
 
+// Encstore returns the internal enc store which contains encryption key for documents and their fields.
+func (db *db) Encstore() datastore.Blockstore {
+	return db.multistore.Encstore()
+}
+
 // Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Peerstore() datastore.DSBatching {
+func (db *db) Peerstore() datastore.DSReaderWriter {
 	return db.multistore.Peerstore()
 }
 
@@ -180,8 +205,9 @@ func (db *db) AddPolicy(
 	policy string,
 ) (client.AddPolicyResult, error) {
 	if !db.acp.HasValue() {
-		return client.AddPolicyResult{}, client.ErrPolicyAddFailureNoACP
+		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
+
 	identity := GetContextIdentity(ctx)
 
 	policyID, err := db.acp.Value().AddPolicy(
@@ -194,6 +220,86 @@ func (db *db) AddPolicy(
 	}
 
 	return client.AddPolicyResult{PolicyID: policyID}, nil
+}
+
+func (db *db) AddDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddDocActorRelationshipResult, error) {
+	if !db.acp.HasValue() {
+		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+	}
+
+	collection, err := db.GetCollectionByName(ctx, collectionName)
+	if err != nil {
+		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
+	if !hasPolicy {
+		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+	}
+
+	identity := GetContextIdentity(ctx)
+
+	exists, err := db.acp.Value().AddDocActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		identity.Value(),
+		targetActor,
+	)
+
+	if err != nil {
+		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
+}
+
+func (db *db) DeleteDocActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteDocActorRelationshipResult, error) {
+	if !db.acp.HasValue() {
+		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+	}
+
+	collection, err := db.GetCollectionByName(ctx, collectionName)
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
+	if !hasPolicy {
+		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+	}
+
+	identity := GetContextIdentity(ctx)
+
+	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		identity.Value(),
+		targetActor,
+	)
+
+	if err != nil {
+		return client.DeleteDocActorRelationshipResult{}, err
+	}
+
+	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
@@ -277,6 +383,8 @@ func (db *db) PrintDump(ctx context.Context) error {
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close() {
 	log.Info("Closing DefraDB process...")
+
+	db.ctxCancel()
 
 	db.events.Close()
 

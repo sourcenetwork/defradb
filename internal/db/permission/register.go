@@ -37,7 +37,7 @@ func RegisterDocOnCollectionWithACP(
 	docID string,
 ) error {
 	// An identity exists and the collection has a policy.
-	if policyID, resourceName, hasPolicy := isPermissioned(collection); hasPolicy && identity.HasValue() {
+	if policyID, resourceName, hasPolicy := IsPermissioned(collection); hasPolicy && identity.HasValue() {
 		return acpSystem.RegisterDocObject(
 			ctx,
 			identity.Value(),

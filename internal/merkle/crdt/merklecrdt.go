@@ -27,6 +27,7 @@ import (
 type Stores interface {
 	Datastore() datastore.DSReaderWriter
 	Blockstore() datastore.Blockstore
+	Encstore() datastore.Blockstore
 	Headstore() datastore.DSReaderWriter
 }
 
@@ -48,9 +49,7 @@ type MerkleClock interface {
 		links ...coreblock.DAGLink,
 	) (cidlink.Link, []byte, error)
 	// ProcessBlock processes a block and updates the CRDT state.
-	// The bool argument indicates whether only heads need to be updated. It is needed in case
-	// merge should be skipped for example if the block is encrypted.
-	ProcessBlock(context.Context, *coreblock.Block, cidlink.Link, bool) error
+	ProcessBlock(ctx context.Context, block *coreblock.Block, cid cidlink.Link) error
 }
 
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
@@ -104,7 +103,6 @@ func InstanceWithStore(
 			store,
 			schemaVersionKey,
 			key,
-			fieldName,
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)

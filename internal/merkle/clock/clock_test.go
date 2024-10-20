@@ -37,7 +37,8 @@ func newTestMerkleClock() *MerkleClock {
 	return NewMerkleClock(
 		multistore.Headstore(),
 		multistore.Blockstore(),
-		core.HeadStoreKey{DocID: request.DocIDArgName, FieldId: "1"},
+		multistore.Encstore(),
+		core.HeadStoreKey{DocID: request.DocIDArgName, FieldID: "1"},
 		reg,
 	)
 }
@@ -46,7 +47,7 @@ func TestNewMerkleClock(t *testing.T) {
 	s := newDS()
 	multistore := datastore.MultiStoreFrom(s)
 	reg := crdt.NewLWWRegister(multistore.Rootstore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
-	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), core.HeadStoreKey{}, reg)
+	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), multistore.Encstore(), core.HeadStoreKey{}, reg)
 
 	if clk.headstore != multistore.Headstore() {
 		t.Error("MerkleClock store not correctly set")
@@ -96,8 +97,8 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 		return
 	}
 
-	if len(block.Links) != 1 {
-		t.Errorf("putBlock has incorrect number of heads. Have %v, want %v", len(block.Links), 1)
+	if len(block.Heads) != 1 {
+		t.Errorf("putBlock has incorrect number of heads. Have %v, want %v", len(block.Heads), 1)
 	}
 }
 

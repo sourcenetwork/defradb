@@ -37,7 +37,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 				Schema: `
 					type Users {
 						Name: String
-						Age: Float @crdt(type: "pncounter")
+						Age: Float @crdt(type: pncounter)
 					}
 				`,
 			},
@@ -133,7 +133,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 				Schema: `
 					type Users {
 						Name: String
-						Age: Float @crdt(type: "pncounter")
+						Age: Float @crdt(type: pncounter)
 					}
 				`,
 			},

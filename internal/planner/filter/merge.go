@@ -15,9 +15,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// Merge merges two filters into one.
+// MergeConditions merges two sets of filter conditions into one.
 // It basically applies _and to both filters and normalizes them.
-func Merge(c1 map[connor.FilterKey]any, c2 map[connor.FilterKey]any) map[connor.FilterKey]any {
+func MergeConditions(c1 map[connor.FilterKey]any, c2 map[connor.FilterKey]any) map[connor.FilterKey]any {
 	if len(c1) == 0 {
 		return c2
 	}
@@ -36,4 +36,19 @@ func Merge(c1 map[connor.FilterKey]any, c2 map[connor.FilterKey]any) map[connor.
 	// and put both filters as its children. This makes the resulting filter
 	// more complex, that's why simplify if by normalizing it.
 	return normalize(result)
+}
+
+// Merge merges two filters into one.
+// It basically applies _and to both filters and normalizes them.
+func Merge(f1 *mapper.Filter, f2 *mapper.Filter) *mapper.Filter {
+	if f1 == nil {
+		return f2
+	}
+	if f2 == nil {
+		return f1
+	}
+
+	return &mapper.Filter{
+		Conditions: MergeConditions(f1.Conditions, f2.Conditions),
+	}
 }

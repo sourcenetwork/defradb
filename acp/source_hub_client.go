@@ -12,6 +12,7 @@ package acp
 
 import (
 	"context"
+	"strconv"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/corelog"
@@ -83,6 +84,48 @@ type sourceHubClient interface {
 		policyID string,
 		resourceName string,
 		docID string,
+	) (bool, error)
+
+	// AddActorRelationship creates a relationship within a policy which ties the target actor
+	// with the specified object, which means that the set of high level rules defined in the
+	// policy will now apply to target actor as well.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship with actor already existed (no-op), and false if a new
+	// relationship was made.
+	//
+	// Note: The requester identity must either be the owner of the object (being shared) or
+	//       the manager (i.e. the relation has `manages` defined in the policy).
+	AddActorRelationship(
+		ctx context.Context,
+		policyID string,
+		resourceName string,
+		objectID string,
+		relation string,
+		requester identity.Identity,
+		targetActor string,
+		creationTime *protoTypes.Timestamp,
+	) (bool, error)
+
+	// DeleteActorRelationship deletes a relationship within a policy which ties the target actor
+	// with the specified object, which means that the set of high level rules defined in the
+	// policy for that relation no-longer will apply to target actor anymore.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note: The requester identity must either be the owner of the object (being shared) or
+	//       the manager (i.e. the relation has `manages` defined in the policy).
+	DeleteActorRelationship(
+		ctx context.Context,
+		policyID string,
+		resourceName string,
+		objectID string,
+		relation string,
+		requester identity.Identity,
+		targetActor string,
+		creationTime *protoTypes.Timestamp,
 	) (bool, error)
 
 	// Close closes any resources in use by acp.
@@ -300,7 +343,55 @@ func (a *sourceHubBridge) CheckDocAccess(
 	resourceName string,
 	docID string,
 ) (bool, error) {
-	isValid, err := a.client.VerifyAccessRequest(
+	// We grant "read" access even if the identity does not explicitly have the "read" permission,
+	// as long as they have any of the permissions that imply read access.
+	if permission == ReadPermission {
+		var canRead bool = false
+		var withPermission string
+		var err error
+
+		for _, permissionThatImpliesRead := range permissionsThatImplyRead {
+			canRead, err = a.client.VerifyAccessRequest(
+				ctx,
+				permissionThatImpliesRead,
+				actorID,
+				policyID,
+				resourceName,
+				docID,
+			)
+
+			if err != nil {
+				return false, NewErrFailedToVerifyDocAccessWithACP(
+					err,
+					"Local",
+					permissionThatImpliesRead.String(),
+					policyID,
+					actorID,
+					resourceName,
+					docID,
+				)
+			}
+
+			if canRead {
+				withPermission = permissionThatImpliesRead.String()
+				break
+			}
+		}
+
+		log.InfoContext(
+			ctx,
+			"Document readable="+strconv.FormatBool(canRead),
+			corelog.Any("Permission", withPermission),
+			corelog.Any("PolicyID", policyID),
+			corelog.Any("Resource", resourceName),
+			corelog.Any("ActorID", actorID),
+			corelog.Any("DocID", docID),
+		)
+
+		return canRead, nil
+	}
+
+	hasAccess, err := a.client.VerifyAccessRequest(
 		ctx,
 		permission,
 		actorID,
@@ -308,31 +399,158 @@ func (a *sourceHubBridge) CheckDocAccess(
 		resourceName,
 		docID,
 	)
+
 	if err != nil {
-		return false, NewErrFailedToVerifyDocAccessWithACP(err, "Local", policyID, actorID, resourceName, docID)
+		return false, NewErrFailedToVerifyDocAccessWithACP(
+			err,
+			"Local",
+			permission.String(),
+			policyID,
+			actorID,
+			resourceName,
+			docID,
+		)
 	}
 
-	if isValid {
-		log.InfoContext(
-			ctx,
-			"Document accessible",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
+	log.InfoContext(
+		ctx,
+		"Document accessible="+strconv.FormatBool(hasAccess),
+		corelog.Any("Permission", permission),
+		corelog.Any("PolicyID", policyID),
+		corelog.Any("Resource", resourceName),
+		corelog.Any("ActorID", actorID),
+		corelog.Any("DocID", docID),
+	)
+
+	return hasAccess, nil
+}
+
+func (a *sourceHubBridge) AddDocActorRelationship(
+	ctx context.Context,
+	policyID string,
+	resourceName string,
+	docID string,
+	relation string,
+	requestActor identity.Identity,
+	targetActor string,
+) (bool, error) {
+	if policyID == "" ||
+		resourceName == "" ||
+		docID == "" ||
+		relation == "" ||
+		requestActor == (identity.Identity{}) ||
+		targetActor == "" {
+		return false, NewErrMissingRequiredArgToAddDocActorRelationship(
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
 		)
-		return true, nil
-	} else {
-		log.InfoContext(
-			ctx,
-			"Document inaccessible",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return false, nil
 	}
+
+	exists, err := a.client.AddActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		requestActor,
+		targetActor,
+		protoTypes.TimestampNow(),
+	)
+
+	if err != nil {
+		return false, NewErrFailedToAddDocActorRelationshipWithACP(
+			err,
+			"Local",
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	log.InfoContext(
+		ctx,
+		"Document and actor relationship set",
+		corelog.Any("PolicyID", policyID),
+		corelog.Any("ResourceName", resourceName),
+		corelog.Any("DocID", docID),
+		corelog.Any("Relation", relation),
+		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("TargetActor", targetActor),
+		corelog.Any("Existed", exists),
+	)
+
+	return exists, nil
+}
+
+func (a *sourceHubBridge) DeleteDocActorRelationship(
+	ctx context.Context,
+	policyID string,
+	resourceName string,
+	docID string,
+	relation string,
+	requestActor identity.Identity,
+	targetActor string,
+) (bool, error) {
+	if policyID == "" ||
+		resourceName == "" ||
+		docID == "" ||
+		relation == "" ||
+		requestActor == (identity.Identity{}) ||
+		targetActor == "" {
+		return false, NewErrMissingRequiredArgToDeleteDocActorRelationship(
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	recordFound, err := a.client.DeleteActorRelationship(
+		ctx,
+		policyID,
+		resourceName,
+		docID,
+		relation,
+		requestActor,
+		targetActor,
+		protoTypes.TimestampNow(),
+	)
+
+	if err != nil {
+		return false, NewErrFailedToDeleteDocActorRelationshipWithACP(
+			err,
+			"Local",
+			policyID,
+			resourceName,
+			docID,
+			relation,
+			requestActor.DID,
+			targetActor,
+		)
+	}
+
+	log.InfoContext(
+		ctx,
+		"Document and actor relationship delete",
+		corelog.Any("PolicyID", policyID),
+		corelog.Any("ResourceName", resourceName),
+		corelog.Any("DocID", docID),
+		corelog.Any("Relation", relation),
+		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("TargetActor", targetActor),
+		corelog.Any("RecordFound", recordFound),
+	)
+
+	return recordFound, nil
 }
 
 func (a *sourceHubBridge) SupportsP2P() bool {

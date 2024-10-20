@@ -11,24 +11,33 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
-	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
+
+const devModeBanner = `
+******************************************
+**     DEVELOPMENT MODE IS ENABLED      **
+** ------------------------------------ **
+**   if this is a production database   **
+** disable development mode and restart **
+**   or you may risk losing all data    **
+******************************************
+
+`
 
 func MakeStartCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -49,35 +58,28 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			var peers []peer.AddrInfo
-			if val := cfg.GetStringSlice("net.peers"); len(val) > 0 {
-				addrs, err := netutils.ParsePeers(val)
-				if err != nil {
-					return errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %s", val), err)
-				}
-				peers = addrs
-			}
-
 			opts := []node.Option{
-				node.WithStorePath(cfg.GetString("datastore.badger.path")),
-				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
-				node.WithPeers(peers...),
+				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
+				node.WithEnableDevelopment(cfg.GetBool("development")),
+				// store options
+				node.WithStorePath(cfg.GetString("datastore.badger.path")),
+				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// net node options
 				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
 				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				net.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
 				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
 				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
-				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 			}
 
 			if cfg.GetString("datastore.store") != configStoreMemory {
@@ -88,67 +90,108 @@ func MakeStartCommand() *cobra.Command {
 				opts = append(opts, node.WithACPPath(rootDir))
 			}
 
+			acpType := cfg.GetString("acp.type")
+			if acpType != "" {
+				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
+			}
+
 			if !cfg.GetBool("keyring.disabled") {
 				kr, err := openKeyring(cmd)
 				if err != nil {
-					return NewErrKeyringHelp(err)
-				}
-				// load the required peer key
-				peerKey, err := kr.Get(peerKeyName)
-				if err != nil {
-					return NewErrKeyringHelp(err)
-				}
-				opts = append(opts, net.WithPrivateKey(peerKey))
-				// load the optional encryption key
-				encryptionKey, err := kr.Get(encryptionKeyName)
-				if err != nil && !errors.Is(err, keyring.ErrNotFound) {
 					return err
 				}
+				// load the required peer key or generate one if it doesn't exist
+				peerKey, err := kr.Get(peerKeyName)
+				if err != nil && errors.Is(err, keyring.ErrNotFound) {
+					peerKey, err = crypto.GenerateEd25519()
+					if err != nil {
+						return err
+					}
+					err = kr.Set(peerKeyName, peerKey)
+					if err != nil {
+						return err
+					}
+					log.Info("generated peer key")
+				} else if err != nil {
+					return err
+				}
+				opts = append(opts, net.WithPrivateKey(peerKey))
 
+				// load the optional encryption key
+				encryptionKey, err := kr.Get(encryptionKeyName)
+				if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
+					encryptionKey, err = crypto.GenerateAES256()
+					if err != nil {
+						return err
+					}
+					err = kr.Set(encryptionKeyName, encryptionKey)
+					if err != nil {
+						return err
+					}
+					log.Info("generated encryption key")
+				} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+					return err
+				}
 				opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
-
+				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
 					if err != nil {
 						return err
 					}
-					opts = append(opts, node.WithTxnSigner(immutable.Some[sdk.TxSigner](signer)))
+					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
 
-			acpType := cfg.GetString("acp.type")
-			if acpType != "" {
-				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
-			}
-
-			n, err := node.NewNode(cmd.Context(), opts...)
-			if err != nil {
-				return err
-			}
-
-			defer func() {
-				if err := n.Close(cmd.Context()); err != nil {
-					log.ErrorContextE(cmd.Context(), "Stopping DefraDB", err)
-				}
-			}()
-
-			log.InfoContext(cmd.Context(), "Starting DefraDB")
-			if err := n.Start(cmd.Context()); err != nil {
-				return err
+			isDevMode := cfg.GetBool("development")
+			if isDevMode {
+				cmd.Printf(devModeBanner)
 			}
 
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
+			n, err := node.New(cmd.Context(), opts...)
+			if err != nil {
+				return err
+			}
+			log.InfoContext(cmd.Context(), "Starting DefraDB")
+			if err := n.Start(cmd.Context()); err != nil {
+				return err
+			}
+
+		RESTART:
+			// after a restart we need to resubscribe
+			purgeSub, err := n.DB.Events().Subscribe(event.PurgeName)
+			if err != nil {
+				return err
+			}
+
+		SELECT:
 			select {
+			case <-purgeSub.Message():
+				log.InfoContext(cmd.Context(), "Received purge event; restarting...")
+
+				err := n.PurgeAndRestart(cmd.Context())
+				if err != nil {
+					log.ErrorContextE(cmd.Context(), "failed to purge", err)
+				}
+				if err == nil {
+					goto RESTART
+				}
+				if errors.Is(err, node.ErrPurgeWithDevModeDisabled) {
+					goto SELECT
+				}
+
 			case <-cmd.Context().Done():
 				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
+
 			case <-signalCh:
 				log.InfoContext(cmd.Context(), "Received interrupt; shutting down...")
 			}
 
-			return nil
+			return n.Close(cmd.Context())
 		},
 	}
 	// set default flag values from config
@@ -198,5 +241,14 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetString(configFlags["privkeypath"]),
 		"Path to the private key for tls",
 	)
+	cmd.PersistentFlags().Bool(
+		"development",
+		cfg.GetBool(configFlags["development"]),
+		"Enables a set of features that make development easier but should not be enabled in production",
+	)
+	cmd.Flags().Bool(
+		"no-encryption",
+		cfg.GetBool(configFlags["no-encryption"]),
+		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
 	return cmd
 }

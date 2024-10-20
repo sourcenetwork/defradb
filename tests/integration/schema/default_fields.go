@@ -120,6 +120,20 @@ var aggregateFields = fields{
 		},
 	},
 	map[string]any{
+		"name": "_max",
+		"type": map[string]any{
+			"kind": "SCALAR",
+			"name": "Float",
+		},
+	},
+	map[string]any{
+		"name": "_min",
+		"type": map[string]any{
+			"kind": "SCALAR",
+			"name": "Float",
+		},
+	},
+	map[string]any{
 		"name": "_count",
 		"type": map[string]any{
 			"kind": "SCALAR",
@@ -144,13 +158,6 @@ var cidArg = Field{
 }
 var docIDArg = Field{
 	"name": request.DocIDArgName,
-	"type": map[string]any{
-		"name":        "String",
-		"inputFields": nil,
-	},
-}
-var docIDsArg = Field{
-	"name": request.DocIDsArgName,
 	"type": map[string]any{
 		"name":        nil,
 		"inputFields": nil,
@@ -203,21 +210,16 @@ type argDef struct {
 	typeName  string
 }
 
-func buildOrderArg(objectName string, fields []argDef) Field {
-	inputFields := []any{
-		makeInputObject("_docID", "Ordering", nil),
-	}
-
-	for _, field := range fields {
-		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
-	}
-
+func buildOrderArg(objectName string) Field {
 	return Field{
 		"name": "order",
-		"type": Field{
-			"name":        objectName + "OrderArg",
-			"ofType":      nil,
-			"inputFields": inputFields,
+		"type": map[string]any{
+			"name": nil,
+			"ofType": map[string]any{
+				"kind": "INPUT_OBJECT",
+				"name": objectName + "OrderArg",
+			},
+			"inputFields": nil,
 		},
 	}
 }
@@ -227,14 +229,14 @@ func buildFilterArg(objectName string, fields []argDef) Field {
 
 	inputFields := []any{
 		makeInputObject("_and", nil, map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
+			"kind": "NON_NULL",
+			"name": nil,
 		}),
 		makeInputObject("_docID", "IDOperatorBlock", nil),
 		makeInputObject("_not", filterArgName, nil),
 		makeInputObject("_or", nil, map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
+			"kind": "NON_NULL",
+			"name": nil,
 		}),
 	}
 

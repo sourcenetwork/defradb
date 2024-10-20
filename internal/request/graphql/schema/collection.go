@@ -11,14 +11,12 @@
 package schema
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
 
+	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -26,25 +24,27 @@ import (
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
-// FromString parses a GQL SDL string into a set of collection descriptions.
-func FromString(ctx context.Context, schemaString string) (
-	[]client.CollectionDefinition,
-	error,
-) {
-	source := source.NewSource(&source.Source{
-		Body: []byte(schemaString),
-	})
+const (
+	typeID       string = "ID"
+	typeBoolean  string = "Boolean"
+	typeInt      string = "Int"
+	typeFloat    string = "Float"
+	typeDateTime string = "DateTime"
+	typeString   string = "String"
+	typeBlob     string = "Blob"
+	typeJSON     string = "JSON"
+)
 
-	doc, err := gqlp.Parse(
-		gqlp.ParseParams{
-			Source: source,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return fromAst(doc)
+// this mapping is used to check that the default prop value
+// matches the field type
+var TypeToDefaultPropName = map[string]string{
+	typeString:   types.DefaultDirectivePropString,
+	typeBoolean:  types.DefaultDirectivePropBool,
+	typeInt:      types.DefaultDirectivePropInt,
+	typeFloat:    types.DefaultDirectivePropFloat,
+	typeDateTime: types.DefaultDirectivePropDateTime,
+	typeJSON:     types.DefaultDirectivePropJSON,
+	typeBlob:     types.DefaultDirectivePropBlob,
 }
 
 // fromAst parses a GQL AST into a set of collection descriptions.
@@ -133,7 +133,7 @@ func collectionFromAstDefinition(
 
 		for _, directive := range field.Directives {
 			if directive.Name.Value == types.IndexDirectiveLabel {
-				index, err := fieldIndexFromAST(field, directive)
+				index, err := indexFromAST(directive, field)
 				if err != nil {
 					return client.CollectionDefinition{}, err
 				}
@@ -162,29 +162,51 @@ func collectionFromAstDefinition(
 		return collectionFieldDescriptions[i].Name < collectionFieldDescriptions[j].Name
 	})
 
+	isMaterialized := immutable.None[bool]()
 	for _, directive := range def.Directives {
-		if directive.Name.Value == types.IndexDirectiveLabel {
-			index, err := indexFromAST(directive)
+		switch directive.Name.Value {
+		case types.IndexDirectiveLabel:
+			index, err := indexFromAST(directive, nil)
 			if err != nil {
 				return client.CollectionDefinition{}, err
 			}
 			indexDescriptions = append(indexDescriptions, index)
-		}
-		if directive.Name.Value == types.PolicySchemaDirectiveLabel {
+
+		case types.PolicySchemaDirectiveLabel:
 			policy, err := policyFromAST(directive)
 			if err != nil {
 				return client.CollectionDefinition{}, err
 			}
 			policyDescription = immutable.Some(policy)
+
+		case types.MaterializedDirectiveLabel:
+			if isMaterialized.Value() {
+				continue
+			}
+
+			explicitIsMaterialized := immutable.None[bool]()
+			for _, arg := range directive.Arguments {
+				if arg.Name.Value == types.MaterializedDirectivePropIf {
+					explicitIsMaterialized = immutable.Some(arg.Value.GetValue().(bool))
+					break
+				}
+			}
+
+			if explicitIsMaterialized.HasValue() {
+				isMaterialized = immutable.Some(isMaterialized.Value() || explicitIsMaterialized.Value())
+			} else {
+				isMaterialized = immutable.Some(true)
+			}
 		}
 	}
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
-			Name:    immutable.Some(def.Name.Value),
-			Indexes: indexDescriptions,
-			Policy:  policyDescription,
-			Fields:  collectionFieldDescriptions,
+			Name:           immutable.Some(def.Name.Value),
+			Indexes:        indexDescriptions,
+			Policy:         policyDescription,
+			Fields:         collectionFieldDescriptions,
+			IsMaterialized: !isMaterialized.HasValue() || isMaterialized.Value(),
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
@@ -239,49 +261,13 @@ func IsValidIndexName(name string) bool {
 	return true
 }
 
-func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (client.IndexDescription, error) {
-	desc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{
-			{
-				Name: field.Name.Value,
-			},
-		},
-	}
-	for _, arg := range directive.Arguments {
-		switch arg.Name.Value {
-		case types.IndexDirectivePropName:
-			nameVal, ok := arg.Value.(*ast.StringValue)
-			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
-			}
-			desc.Name = nameVal.Value
-			if !IsValidIndexName(desc.Name) {
-				return client.IndexDescription{}, NewErrIndexWithInvalidName(desc.Name)
-			}
-		case types.IndexDirectivePropUnique:
-			boolVal, ok := arg.Value.(*ast.BooleanValue)
-			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
-			}
-			desc.Unique = boolVal.Value
-		case types.IndexDirectivePropDirection:
-			dirVal, ok := arg.Value.(*ast.EnumValue)
-			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
-			}
-			if dirVal.Value == types.FieldOrderDESC {
-				desc.Fields[0].Descending = true
-			}
-		default:
-			return client.IndexDescription{}, ErrIndexWithUnknownArg
-		}
-	}
-	return desc, nil
-}
+func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.IndexDescription, error) {
+	var name string
+	var unique bool
 
-func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
-	desc := client.IndexDescription{}
-	var directions *ast.ListValue
+	var direction *ast.EnumValue
+	var includes *ast.ListValue
+
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.IndexDirectivePropName:
@@ -289,60 +275,165 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			desc.Name = nameVal.Value
-			if !IsValidIndexName(desc.Name) {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			name = nameVal.Value
+			if !IsValidIndexName(name) {
+				return client.IndexDescription{}, NewErrIndexWithInvalidName(name)
 			}
-		case types.IndexDirectivePropFields:
-			fieldsVal, ok := arg.Value.(*ast.ListValue)
+
+		case types.IndexDirectivePropIncludes:
+			includesVal, ok := arg.Value.(*ast.ListValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			for _, field := range fieldsVal.Values {
-				fieldVal, ok := field.(*ast.StringValue)
-				if !ok {
-					return client.IndexDescription{}, ErrIndexWithInvalidArg
-				}
-				desc.Fields = append(desc.Fields, client.IndexedFieldDescription{
-					Name: fieldVal.Value,
-				})
-			}
-		case types.IndexDirectivePropDirections:
-			var ok bool
-			directions, ok = arg.Value.(*ast.ListValue)
+			includes = includesVal
+
+		case types.IndexDirectivePropDirection:
+			directionVal, ok := arg.Value.(*ast.EnumValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
+			direction = directionVal
+
 		case types.IndexDirectivePropUnique:
-			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			uniqueVal, ok := arg.Value.(*ast.BooleanValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			desc.Unique = boolVal.Value
+			unique = uniqueVal.Value
+
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
 	}
-	if len(desc.Fields) == 0 {
+
+	var containsField bool
+	var fields []client.IndexedFieldDescription
+
+	if includes != nil {
+		for _, include := range includes.Values {
+			field, err := indexFieldFromAST(include, direction)
+			if err != nil {
+				return client.IndexDescription{}, err
+			}
+			if fieldDef != nil && fieldDef.Name.Value == field.Name {
+				containsField = true
+			}
+			fields = append(fields, field)
+		}
+	}
+
+	// if the directive is applied to a field and
+	// the field is not in the includes list
+	// implicitly add it as the first entry
+	if !containsField && fieldDef != nil {
+		field := client.IndexedFieldDescription{
+			Name: fieldDef.Name.Value,
+		}
+		if direction != nil {
+			field.Descending = direction.Value == types.FieldOrderDESC
+		}
+		fields = append([]client.IndexedFieldDescription{field}, fields...)
+	}
+
+	if len(fields) == 0 {
 		return client.IndexDescription{}, ErrIndexMissingFields
 	}
-	if directions != nil {
-		if len(directions.Values) != len(desc.Fields) {
-			return client.IndexDescription{}, ErrIndexWithInvalidArg
-		}
-		for i := range desc.Fields {
-			dirVal, ok := directions.Values[i].(*ast.EnumValue)
+
+	return client.IndexDescription{
+		Name:   name,
+		Fields: fields,
+		Unique: unique,
+	}, nil
+}
+
+func indexFieldFromAST(value ast.Value, defaultDirection *ast.EnumValue) (client.IndexedFieldDescription, error) {
+	argTypeObject, ok := value.(*ast.ObjectValue)
+	if !ok {
+		return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
+	}
+
+	var name string
+	var direction *ast.EnumValue
+
+	for _, field := range argTypeObject.Fields {
+		switch field.Name.Value {
+		case types.IncludesPropField:
+			nameVal, ok := field.Value.(*ast.StringValue)
 			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == types.FieldOrderASC {
-				desc.Fields[i].Descending = false
-			} else if dirVal.Value == types.FieldOrderDESC {
-				desc.Fields[i].Descending = true
+			name = nameVal.Value
+
+		case types.IncludesPropDirection:
+			directionVal, ok := field.Value.(*ast.EnumValue)
+			if !ok {
+				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 			}
+			direction = directionVal
+
+		default:
+			return client.IndexedFieldDescription{}, ErrIndexWithUnknownArg
 		}
 	}
-	return desc, nil
+
+	var descending bool
+	// if the direction is explicitly set use that value, otherwise
+	// if the default direction was set on the index use that value
+	if direction != nil {
+		descending = direction.Value == types.FieldOrderDESC
+	} else if defaultDirection != nil {
+		descending = defaultDirection.Value == types.FieldOrderDESC
+	}
+
+	return client.IndexedFieldDescription{
+		Name:       name,
+		Descending: descending,
+	}, nil
+}
+
+func defaultFromAST(
+	field *ast.FieldDefinition,
+	directive *ast.Directive,
+) (any, error) {
+	astNamed, ok := field.Type.(*ast.Named)
+	if !ok {
+		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, field.Type.String())
+	}
+	propName, ok := TypeToDefaultPropName[astNamed.Name.Value]
+	if !ok {
+		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, astNamed.Name.Value)
+	}
+	if len(directive.Arguments) != 1 {
+		return nil, NewErrDefaultValueOneArg(field.Name.Value)
+	}
+	arg := directive.Arguments[0]
+	if propName != arg.Name.Value {
+		return nil, NewErrDefaultValueType(field.Name.Value, propName, arg.Name.Value)
+	}
+	var value any
+	switch propName {
+	case types.DefaultDirectivePropInt:
+		value = gql.Int.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropFloat:
+		value = gql.Float.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropBool:
+		value = gql.Boolean.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropString:
+		value = gql.String.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropDateTime:
+		value = gql.DateTime.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropJSON:
+		value = types.JSONScalarType().ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropBlob:
+		value = types.BlobScalarType().ParseLiteral(arg.Value, nil)
+	}
+	// If the value is nil, then parsing has failed, or a nil value was provided.
+	// Since setting a default value to nil is the same as not providing one,
+	// it is safer to return an error to let the user know something is wrong.
+	if value == nil {
+		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
+	}
+	return value, nil
 }
 
 func fieldsFromAST(
@@ -351,7 +442,7 @@ func fieldsFromAST(
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 	schemaOnly bool,
 ) ([]client.SchemaFieldDescription, []client.CollectionFieldDescription, error) {
-	kind, err := astTypeToKind(field.Type)
+	kind, err := astTypeToKind(hostObjectName, field)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -368,11 +459,21 @@ func fieldsFromAST(
 	}
 	hostMap[field.Name.Value] = cType
 
+	var defaultValue any
+	for _, directive := range field.Directives {
+		if directive.Name.Value == types.DefaultDirectiveLabel {
+			defaultValue, err = defaultFromAST(field, directive)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+
 	schemaFieldDescriptions := []client.SchemaFieldDescription{}
 	collectionFieldDescriptions := []client.CollectionFieldDescription{}
 
-	if kind.IsObject() {
-		relationName, err := getRelationshipName(field, hostObjectName, kind.Underlying())
+	if namedKind, ok := kind.(*client.NamedKind); ok {
+		relationName, err := getRelationshipName(field, hostObjectName, namedKind.Name)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -443,7 +544,8 @@ func fieldsFromAST(
 		collectionFieldDescriptions = append(
 			collectionFieldDescriptions,
 			client.CollectionFieldDescription{
-				Name: field.Name.Value,
+				Name:         field.Name.Value,
+				DefaultValue: defaultValue,
 			},
 		)
 	}
@@ -504,19 +606,11 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 	return defaultCRDTForFieldKind[kind], nil
 }
 
-func astTypeToKind(t ast.Type) (client.FieldKind, error) {
-	const (
-		typeID       string = "ID"
-		typeBoolean  string = "Boolean"
-		typeInt      string = "Int"
-		typeFloat    string = "Float"
-		typeDateTime string = "DateTime"
-		typeString   string = "String"
-		typeBlob     string = "Blob"
-		typeJSON     string = "JSON"
-	)
-
-	switch astTypeVal := t.(type) {
+func astTypeToKind(
+	hostObjectName string,
+	field *ast.FieldDefinition,
+) (client.FieldKind, error) {
+	switch astTypeVal := field.Type.(type) {
 	case *ast.List:
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
 		case *ast.NonNull:
@@ -544,7 +638,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
 			default:
-				return client.ObjectArrayKind(astTypeVal.Type.(*ast.Named).Name.Value), nil
+				return client.NewNamedKind(astTypeVal.Type.(*ast.Named).Name.Value, true), nil
 			}
 		}
 
@@ -567,14 +661,17 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		case typeJSON:
 			return client.FieldKind_NILLABLE_JSON, nil
 		default:
-			return client.ObjectKind(astTypeVal.Name.Value), nil
+			return client.NewNamedKind(astTypeVal.Name.Value, false), nil
 		}
 
 	case *ast.NonNull:
 		return client.FieldKind_None, ErrNonNullNotSupported
 
 	default:
-		return client.FieldKind_None, NewErrTypeNotFound(t.String())
+		if field.Type == nil {
+			return client.FieldKind_None, NewErrFieldTypeNotSpecified(hostObjectName, field.Name.Value)
+		}
+		return client.FieldKind_None, NewErrTypeNotFound(field.Type.String())
 	}
 }
 
@@ -644,7 +741,12 @@ func finalizeRelations(
 		}
 
 		for _, field := range definition.Description.Fields {
-			if !field.Kind.HasValue() || !field.Kind.Value().IsObject() || field.Kind.Value().IsArray() {
+			if !field.Kind.HasValue() {
+				continue
+			}
+
+			namedKind, ok := field.Kind.Value().(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
 				// We only need to process the primary side of a relation here, if the field is not a relation
 				// or if it is an array, we can skip it.
 				continue
@@ -654,7 +756,7 @@ func finalizeRelations(
 			for _, otherDef := range definitions {
 				// Check the 'other' schema name, there can only be a one-one mapping in an SDL
 				// appart from embedded, which will be schema only.
-				if otherDef.Schema.Name == field.Kind.Value().Underlying() {
+				if otherDef.Schema.Name == namedKind.Name {
 					otherColDefinition = immutable.Some(otherDef)
 					break
 				}

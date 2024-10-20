@@ -196,19 +196,19 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard
 }
 
 // Encstore provides a mock function with given fields:
-func (_m *Txn) Encstore() datastore.DSReaderWriter {
+func (_m *Txn) Encstore() datastore.Blockstore {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Encstore")
 	}
 
-	var r0 datastore.DSReaderWriter
-	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
+	var r0 datastore.Blockstore
+	if rf, ok := ret.Get(0).(func() datastore.Blockstore); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
+			r0 = ret.Get(0).(datastore.Blockstore)
 		}
 	}
 
@@ -232,12 +232,12 @@ func (_c *Txn_Encstore_Call) Run(run func()) *Txn_Encstore_Call {
 	return _c
 }
 
-func (_c *Txn_Encstore_Call) Return(_a0 datastore.DSReaderWriter) *Txn_Encstore_Call {
+func (_c *Txn_Encstore_Call) Return(_a0 datastore.Blockstore) *Txn_Encstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Txn_Encstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Encstore_Call {
+func (_c *Txn_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_Encstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -533,19 +533,19 @@ func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccess
 }
 
 // Peerstore provides a mock function with given fields:
-func (_m *Txn) Peerstore() datastore.DSBatching {
+func (_m *Txn) Peerstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Peerstore")
 	}
 
-	var r0 datastore.DSBatching
-	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
+	var r0 datastore.DSReaderWriter
+	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSBatching)
+			r0 = ret.Get(0).(datastore.DSReaderWriter)
 		}
 	}
 
@@ -569,12 +569,12 @@ func (_c *Txn_Peerstore_Call) Run(run func()) *Txn_Peerstore_Call {
 	return _c
 }
 
-func (_c *Txn_Peerstore_Call) Return(_a0 datastore.DSBatching) *Txn_Peerstore_Call {
+func (_c *Txn_Peerstore_Call) Return(_a0 datastore.DSReaderWriter) *Txn_Peerstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *Txn_Peerstore_Call {
+func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Peerstore_Call {
 	_c.Call.Return(run)
 	return _c
 }

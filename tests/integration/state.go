@@ -116,6 +116,8 @@ type state struct {
 	// The TestCase currently being executed.
 	testCase TestCase
 
+	kms KMSType
+
 	// The type of database currently being tested.
 	dbt DatabaseType
 
@@ -159,8 +161,13 @@ type state struct {
 	collections [][]client.Collection
 
 	// The names of the collections active in this test.
-	// Indexes matches that of collections.
+	// Indexes matches that of inital collections.
 	collectionNames []string
+
+	// A map of the collection indexes by their Root, this allows easier
+	// identification of collections in a natural, human readable, order
+	// even when they are renamed.
+	collectionIndexesByRoot map[uint32]int
 
 	// Document IDs by index, by collection index.
 	//
@@ -186,6 +193,7 @@ func newState(
 	ctx context.Context,
 	t testing.TB,
 	testCase TestCase,
+	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
 	collectionNames []string,
@@ -194,6 +202,7 @@ func newState(
 		ctx:                      ctx,
 		t:                        t,
 		testCase:                 testCase,
+		kms:                      kms,
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
@@ -207,6 +216,7 @@ func newState(
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
+		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
 		indexes:                  [][][]client.IndexDescription{},
 		isBench:                  false,

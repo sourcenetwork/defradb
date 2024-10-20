@@ -56,7 +56,7 @@ func TestMutationDeletion_WithUpdateAndIDsAndSelectAlias(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docIDs: ["bae-959725a4-17cb-5e04-8908-98bc78fd06dd", "bae-3eed37ed-5c7b-53ff-b125-d04fb173f6c0"]) {
+					delete_User(docID: ["bae-959725a4-17cb-5e04-8908-98bc78fd06dd", "bae-3eed37ed-5c7b-53ff-b125-d04fb173f6c0"]) {
 						AliasID: _docID
 					}
 				}`,

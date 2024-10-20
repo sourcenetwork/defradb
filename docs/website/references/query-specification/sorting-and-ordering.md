@@ -25,7 +25,7 @@ Sorting can be applied to multiple fields in the same query. The sort order is s
 The query below finds all books ordered by earliest published date and then by descending order of titles.
 ```graphql
 {
-    Books(order: { published_at: ASC, title: DESC }) {
+    Books(order: [{ published_at: ASC }, { title: DESC }]) {
         title
         genre
         description
@@ -38,7 +38,7 @@ Additionally, you can sort sub-object fields along with root object fields.
 The query below finds all books ordered by earliest published date and then by the latest authors' birthday.
 ```graphql
 {
-    Books(order: { published_at: ASC, Author: { birthday: DESC }}) {
+    Books(order: [{ published_at: ASC }, { Author: { birthday: DESC }}]) {
         title
         description
         published_at
@@ -63,7 +63,7 @@ If the DocKey is included in the sort fields, any field included afterwards will
 *So, instead of:*
 ```graphql
 {
-    Authors(order: { name: DESC, Books: { title: ASC }}) {
+    Authors(order: [{ name: DESC }, { Books: { title: ASC }}]) {
         name
         Books {
             title
@@ -114,7 +114,7 @@ If you have the following objects in the database:
 > and the following query
 ```graphql
 {
-    Authors(order: { name: DESC, books: { title: ASC }}) {
+    Authors(order: [{ name: DESC }, { books: { title: ASC }}]) {
         name
         books {
             title

@@ -30,7 +30,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 
 			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
-					delete_ContactAddress(docIDs: ["bae-49f715e7-7f01-5509-a213-ed98cb81583f"]) {
+					delete_ContactAddress(docID: ["bae-49f715e7-7f01-5509-a213-ed98cb81583f"]) {
 						city
 					}
 				}`,
@@ -76,7 +76,8 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			// Author
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
 			testUtils.ExplainRequest{

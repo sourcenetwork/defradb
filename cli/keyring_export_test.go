@@ -13,21 +13,20 @@ package cli
 import (
 	"bytes"
 	"encoding/hex"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/crypto"
 
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestKeyringExport(t *testing.T) {
 	rootdir := t.TempDir()
-	readPassword = func(_ *cobra.Command, _ string) ([]byte, error) {
-		return []byte("secret"), nil
-	}
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	require.NoError(t, err)
 
 	keyBytes, err := crypto.GenerateAES256()
 	require.NoError(t, err)

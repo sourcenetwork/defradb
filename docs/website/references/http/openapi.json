@@ -27,6 +27,64 @@
             }
         },
         "schemas": {
+            "acp_policy_add_result": {
+                "properties": {
+                    "PolicyID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_add_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_add_result": {
+                "properties": {
+                    "ExistedAlready": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_delete_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_relationship_delete_result": {
+                "properties": {
+                    "RecordFound": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -83,6 +141,7 @@
                     "Fields": {
                         "items": {
                             "properties": {
+                                "DefaultValue": {},
                                 "ID": {
                                     "maximum": 4294967295,
                                     "minimum": 0,
@@ -136,6 +195,9 @@
                         },
                         "type": "array"
                     },
+                    "IsMaterialized": {
+                        "type": "boolean"
+                    },
                     "Name": {},
                     "Policy": {},
                     "RootID": {
@@ -160,6 +222,7 @@
                             "Fields": {
                                 "items": {
                                     "properties": {
+                                        "DefaultValue": {},
                                         "ID": {
                                             "maximum": 4294967295,
                                             "minimum": 0,
@@ -212,6 +275,9 @@
                                     "type": "object"
                                 },
                                 "type": "array"
+                            },
+                            "IsMaterialized": {
+                                "type": "boolean"
                             },
                             "Name": {},
                             "Policy": {},
@@ -316,18 +382,15 @@
             },
             "graphql_request": {
                 "properties": {
+                    "operationName": {
+                        "type": "string"
+                    },
                     "query": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "graphql_response": {
-                "properties": {
-                    "data": {},
-                    "errors": {
-                        "items": {},
-                        "type": "array"
+                    },
+                    "variables": {
+                        "additionalProperties": {},
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -446,11 +509,20 @@
                         },
                         "type": "object"
                     },
+                    "LastStatusChange": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
                     "Schemas": {
                         "items": {
                             "type": "string"
                         },
                         "type": "array"
+                    },
+                    "Status": {
+                        "maximum": 255,
+                        "minimum": 0,
+                        "type": "integer"
                     }
                 },
                 "type": "object"
@@ -569,7 +641,14 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_policy_add_result"
+                                }
+                            }
+                        },
+                        "description": "Add acp policy result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -580,6 +659,78 @@
                 },
                 "tags": [
                     "acp_policy"
+                ]
+            }
+        },
+        "/acp/relationship": {
+            "delete": {
+                "description": "Delete an actor relationship using acp system",
+                "operationId": "delete relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_relationship_delete_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_relationship"
+                ]
+            },
+            "post": {
+                "description": "Add an actor relationship using acp system",
+                "operationId": "add relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_relationship_add_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_add_result"
+                                }
+                            }
+                        },
+                        "description": "Add acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_relationship"
                 ]
             }
         },
@@ -1280,7 +1431,24 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/graphql_response"
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         },
@@ -1314,7 +1482,24 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/graphql_response"
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         },
@@ -1696,6 +1881,23 @@
                 ]
             }
         },
+        "/purge": {
+            "post": {
+                "description": "Purge all persisted data and restart",
+                "operationId": "purge",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/schema": {
             "get": {
                 "description": "Introspect schema(s) by name, schema root, or version id.",
@@ -2022,6 +2224,60 @@
                             }
                         },
                         "description": "The created collection and embedded schemas for the added view."
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "view"
+                ]
+            }
+        },
+        "/view/refresh": {
+            "post": {
+                "description": "Refresh view(s) by name, schema id, or version id.",
+                "operationId": "view_refresh",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Collection schema root",
+                        "in": "query",
+                        "name": "schema_root",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Collection schema version id",
+                        "in": "query",
+                        "name": "version_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "If true, inactive collections will be returned in addition to active ones",
+                        "in": "query",
+                        "name": "get_inactive",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"

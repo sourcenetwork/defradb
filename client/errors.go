@@ -13,6 +13,7 @@ package client
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -32,6 +33,8 @@ const (
 	errCanNotNormalizeValue                string = "can not normalize value"
 	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
+	errFailedToParseKind                   string = "failed to parse kind"
+	errCannotSetRelationFromSecondarySide  string = "cannot set relation from secondary side"
 )
 
 // Errors returnable from this package.
@@ -39,24 +42,26 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFieldNotExist                       = errors.New(errFieldNotExist)
-	ErrUnexpectedType                      = errors.New(errUnexpectedType)
-	ErrFailedToUnmarshalCollection         = errors.New(errFailedToUnmarshalCollection)
-	ErrOperationNotPermittedOnNamelessCols = errors.New(errOperationNotPermittedOnNamelessCols)
-	ErrFieldNotObject                      = errors.New("trying to access field on a non object type")
-	ErrValueTypeMismatch                   = errors.New("value does not match indicated type")
-	ErrDocumentNotFoundOrNotAuthorized     = errors.New("document not found or not authorized to access")
-	ErrPolicyAddFailureNoACP               = errors.New("failure adding policy because ACP was not available")
-	ErrInvalidUpdateTarget                 = errors.New("the target document to update is of invalid type")
-	ErrInvalidUpdater                      = errors.New("the updater of a document is of invalid type")
-	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")
-	ErrMalformedDocID                      = errors.New("malformed document ID, missing either version or cid")
-	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
-	ErrInvalidJSONPayload                  = errors.New(errInvalidJSONPayload)
-	ErrCanNotNormalizeValue                = errors.New(errCanNotNormalizeValue)
-	ErrCanNotTurnNormalValueIntoArray      = errors.New(errCanNotTurnNormalValueIntoArray)
-	ErrCanNotMakeNormalNilFromFieldKind    = errors.New(errCanNotMakeNormalNilFromFieldKind)
-	ErrCollectionNotFound                  = errors.New(errCollectionNotFound)
+	ErrFieldNotExist                        = errors.New(errFieldNotExist)
+	ErrUnexpectedType                       = errors.New(errUnexpectedType)
+	ErrFailedToUnmarshalCollection          = errors.New(errFailedToUnmarshalCollection)
+	ErrOperationNotPermittedOnNamelessCols  = errors.New(errOperationNotPermittedOnNamelessCols)
+	ErrFieldNotObject                       = errors.New("trying to access field on a non object type")
+	ErrValueTypeMismatch                    = errors.New("value does not match indicated type")
+	ErrDocumentNotFoundOrNotAuthorized      = errors.New("document not found or not authorized to access")
+	ErrACPOperationButACPNotAvailable       = errors.New("operation requires ACP, but ACP not available")
+	ErrACPOperationButCollectionHasNoPolicy = errors.New("operation requires ACP, but collection has no policy")
+	ErrInvalidUpdateTarget                  = errors.New("the target document to update is of invalid type")
+	ErrInvalidUpdater                       = errors.New("the updater of a document is of invalid type")
+	ErrInvalidDeleteTarget                  = errors.New("the target document to delete is of invalid type")
+	ErrMalformedDocID                       = errors.New("malformed document ID, missing either version or cid")
+	ErrInvalidDocIDVersion                  = errors.New("invalid document ID version")
+	ErrInvalidJSONPayload                   = errors.New(errInvalidJSONPayload)
+	ErrCanNotNormalizeValue                 = errors.New(errCanNotNormalizeValue)
+	ErrCanNotTurnNormalValueIntoArray       = errors.New(errCanNotTurnNormalValueIntoArray)
+	ErrCanNotMakeNormalNilFromFieldKind     = errors.New(errCanNotMakeNormalNilFromFieldKind)
+	ErrCollectionNotFound                   = errors.New(errCollectionNotFound)
+	ErrFailedToParseKind                    = errors.New(errFailedToParseKind)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -162,6 +167,31 @@ func NewErrCRDTKindMismatch(cType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
 
-func NewErrInvalidJSONPaylaod(payload string) error {
+func NewErrInvalidJSONPayload(payload any) error {
 	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
+}
+
+func NewErrFailedToParseKind(kind []byte) error {
+	return errors.New(
+		errCRDTKindMismatch,
+		errors.NewKV("Kind", kind),
+	)
+}
+
+// ReviveError attempts to return a client specific error from
+// the given message. If no matching error is found the message
+// is wrapped in a new anonymous error type.
+func ReviveError(message string) error {
+	switch message {
+	case ErrDocumentNotFoundOrNotAuthorized.Error():
+		return ErrDocumentNotFoundOrNotAuthorized
+	case datastore.ErrTxnConflict.Error():
+		return datastore.ErrTxnConflict
+	default:
+		return fmt.Errorf("%s", message)
+	}
+}
+
+func NewErrCannotSetRelationFromSecondarySide(name string) error {
+	return errors.New(errCannotSetRelationFromSecondarySide, errors.NewKV("Name", name))
 }
