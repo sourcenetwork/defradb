@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
@@ -157,7 +158,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	}
 
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	identity, err := acpIdentity.FromPrivateKey(
+	ident, err := acpIdentity.FromPrivateKey(
 		privKey,
 		authTokenExpiration,
 		immutable.Some(cfg.GetString("api.address")),
@@ -168,7 +169,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := db.SetContextIdentity(cmd.Context(), immutable.Some(identity))
+	ctx := identity.WithContext(cmd.Context(), immutable.Some(ident))
 	cmd.SetContext(ctx)
 	return nil
 }

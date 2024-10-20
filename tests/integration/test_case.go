@@ -779,7 +779,26 @@ type BackupImport struct {
 	ExpectedError string
 }
 
-// CheckNodesIdentities is an action that will check the identities of the nodes.
-// It asserts that the `GetNodeIdentity` method returns an identity of the node that matches
-// the first generated identity (with index 0 in the nodes array of identities) for the node.
-type CheckNodesIdentities struct{}
+// GetNodeIdentity is an action that calls the [DB.GetNodeIdentity] method and asserts the result.
+// It checks if a node at the given index has an identity matching another identity under the same index.
+type GetNodeIdentity struct {
+	// NodeID holds the ID (index) of a node to get the identity from.
+	NodeID int
+
+	// ExpectedIdentityName is the name associated with the expected identity of the node.
+	// If set, it will ensure that the actual identity matches an identity associated only
+	// with this name. It's done to make sure identities with difference names are not
+	// accidentally duplicated because, for examples, of poor random seed handling.
+	ExpectedIdentityName immutable.Option[string]
+}
+
+// AssignNodeIdentity is an action that generates a new identity for the node and associates it
+// with a specific name. The name can be used to refer to the identity with
+// [GetNodeIdentity.ExpectedIdentityName].
+type AssignNodeIdentity struct {
+	// NodeID holds the ID (index) of a node to assign the identity to.
+	NodeID int
+
+	// Name is the name associated with a newly generated identity.
+	Name string
+}

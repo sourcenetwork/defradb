@@ -411,8 +411,11 @@ func performAction(
 	case CreatePredefinedDocs:
 		generatePredefinedDocs(s, action)
 
-	case CheckNodesIdentities:
-		checkNodesIdentities(s)
+	case GetNodeIdentity:
+		performGetNodeIdentityAction(s, action)
+
+	case AssignNodeIdentity:
+		performAssignNodeIdentityAction(s, action)
 
 	case SetupComplete:
 		// no-op, just continue.
@@ -745,7 +748,7 @@ func startNodes(s *state, action Start) {
 		}
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s, db.WithNodeIdentity(getNodeIdentity(s, nodeIndex)))
+		node, _, err := setupNode(s, db.WithNodeIdentity(generateNodeIdentity(s, nodeIndex)))
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 
@@ -864,7 +867,7 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getNodeIdentity(s, len(s.nodes))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(generateNodeIdentity(s, len(s.nodes))))
 
 	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
@@ -1339,8 +1342,7 @@ func createDocViaColSave(
 }
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx = db.SetContextIdentity(ctx, identity)
+	ctx = identity.WithContext(ctx, getIdentity(s, nodeIndex, action.Identity))
 	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
@@ -1419,7 +1421,7 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
+	ctx := identity.WithContext(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1473,8 +1475,7 @@ func deleteDoc(
 		nodeID := action.NodeID.Value()
 		actionNode := s.nodes[nodeID]
 		collections := s.collections[nodeID]
-		identity := getIdentity(s, nodeID, action.Identity)
-		ctx := db.SetContextIdentity(s.ctx, identity)
+		ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
 		err := withRetryOnNode(
 			actionNode,
 			func() error {
@@ -1485,8 +1486,7 @@ func deleteDoc(
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	} else {
 		for nodeID, collections := range s.collections {
-			identity := getIdentity(s, nodeID, action.Identity)
-			ctx := db.SetContextIdentity(s.ctx, identity)
+			ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
 			err := withRetryOnNode(
 				s.nodes[nodeID],
 				func() error {
@@ -1577,8 +1577,7 @@ func updateDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
+	ctx := identity.WithContext(s.ctx, getIdentity(s, nodeIndex, action.Identity))
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1598,8 +1597,7 @@ func updateDocViaColUpdate(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
+	ctx := identity.WithContext(s.ctx, getIdentity(s, nodeIndex, action.Identity))
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1635,8 +1633,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
+	ctx := identity.WithContext(s.ctx, getIdentity(s, nodeIndex, action.Identity))
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1652,8 +1649,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	if action.NodeID.HasValue() {
 		nodeID := action.NodeID.Value()
 		collections := s.collections[nodeID]
-		identity := getIdentity(s, nodeID, action.Identity)
-		ctx := db.SetContextIdentity(s.ctx, identity)
+		ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
 		err := withRetryOnNode(
 			s.nodes[nodeID],
 			func() error {
@@ -1665,8 +1661,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	} else {
 		for nodeID, collections := range s.collections {
-			identity := getIdentity(s, nodeID, action.Identity)
-			ctx := db.SetContextIdentity(s.ctx, identity)
+			ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
 			err := withRetryOnNode(
 				s.nodes[nodeID],
 				func() error {
@@ -1982,8 +1977,7 @@ func executeRequest(
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := db.SetContextTxn(s.ctx, txn)
-		identity := getIdentity(s, nodeID, action.Identity)
-		ctx = db.SetContextIdentity(ctx, identity)
+		ctx = identity.WithContext(ctx, getIdentity(s, nodeID, action.Identity))
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {
@@ -2572,25 +2566,42 @@ func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.
 	}
 }
 
-func checkNodesIdentities(s *state) {
-	for i, node := range s.nodes {
-		var actualIdent immutable.Option[identity.PublicRawIdentity]
-		err := withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				actualIdent, err = node.GetNodeIdentity(s.ctx)
-				return err
-			},
-		)
-		require.NoError(s.t, err, s.testCase.Description)
-
-		expectedIdent := getIdentity(s, i, immutable.Some(0))
-		expectedRawIdent := immutable.None[identity.PublicRawIdentity]()
-		if expectedIdent.HasValue() {
-			expectedRawIdent = immutable.Some(expectedIdent.Value().IntoRawIdentity().Public())
-		}
-
-		require.Equal(s.t, expectedRawIdent, actualIdent, "identities mismatch")
+func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
+	if action.NodeID >= len(s.nodes) {
+		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
+
+	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
+	require.NoError(s.t, err, s.testCase.Description)
+
+	expectedIdent := getIdentity(s, action.NodeID, immutable.Some(0)).Value()
+	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
+	require.Equal(s.t, expectedRawIdent, actualIdent, "identity at %d mismatch", action.NodeID)
+
+	if action.ExpectedIdentityName.HasValue() {
+		targetName := action.ExpectedIdentityName.Value()
+		for name, ident := range s.identitiesByName {
+			expectedRawIdent := immutable.Some(ident.IntoRawIdentity().Public())
+			if name == targetName {
+				require.Equal(s.t, expectedRawIdent, actualIdent, "identity \"%s\" mismatch", name)
+			} else {
+				require.NotEqual(s.t, expectedRawIdent, actualIdent, "identity \"%s\" should not match", name)
+			}
+		}
+	}
+}
+
+func performAssignNodeIdentityAction(s *state, action AssignNodeIdentity) {
+	if action.NodeID >= len(s.nodes) {
+		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
+	}
+	if action.Name == "" {
+		s.t.Fatalf("identity name not provided")
+	}
+
+	ident := generateNodeIdentity(s, action.NodeID)
+	s.identitiesByName[action.Name] = ident
+
+	err := s.nodes[action.NodeID].AssignNodeIdentity(s.ctx, ident)
+	require.NoError(s.t, err, s.testCase.Description)
 }

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestNodeIdentity_NodeIdentity_Succeed(t *testing.T) {
@@ -21,7 +22,30 @@ func TestNodeIdentity_NodeIdentity_Succeed(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.CheckNodesIdentities{},
+			testUtils.AssignNodeIdentity{
+				NodeID: 0,
+				Name:   "node1",
+			},
+			testUtils.AssignNodeIdentity{
+				NodeID: 1,
+				Name:   "node2",
+			},
+			testUtils.GetNodeIdentity{
+				NodeID:               0,
+				ExpectedIdentityName: immutable.Some("node1"),
+			},
+			testUtils.GetNodeIdentity{
+				NodeID:               1,
+				ExpectedIdentityName: immutable.Some("node2"),
+			},
+			testUtils.AssignNodeIdentity{
+				NodeID: 0,
+				Name:   "node1_new",
+			},
+			testUtils.GetNodeIdentity{
+				NodeID:               0,
+				ExpectedIdentityName: immutable.Some("node1_new"),
+			},
 		},
 	}
 

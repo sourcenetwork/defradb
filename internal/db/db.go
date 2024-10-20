@@ -214,11 +214,9 @@ func (db *db) AddPolicy(
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	identity := GetContextIdentity(ctx)
-
 	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
-		identity.Value(),
+		identity.FromContext(ctx).Value(),
 		policy,
 	)
 	if err != nil {
@@ -249,15 +247,13 @@ func (db *db) AddDocActorRelationship(
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
-	identity := GetContextIdentity(ctx)
-
 	exists, err := db.acp.Value().AddDocActorRelationship(
 		ctx,
 		policyID,
 		resourceName,
 		docID,
 		relation,
-		identity.Value(),
+		identity.FromContext(ctx).Value(),
 		targetActor,
 	)
 
@@ -289,15 +285,13 @@ func (db *db) DeleteDocActorRelationship(
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
-	identity := GetContextIdentity(ctx)
-
 	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
 		ctx,
 		policyID,
 		resourceName,
 		docID,
 		relation,
-		identity.Value(),
+		identity.FromContext(ctx).Value(),
 		targetActor,
 	)
 
@@ -313,6 +307,11 @@ func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.Public
 		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
 	}
 	return immutable.None[identity.PublicRawIdentity](), nil
+}
+
+func (db *db) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
+	db.nodeIdentity = immutable.Some(ident)
+	return nil
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data

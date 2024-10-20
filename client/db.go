@@ -139,6 +139,9 @@ type DB interface {
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+
+	// AssignNodeIdentity assigns the given identity to the node.
+	AssignNodeIdentity(context.Context, identity.Identity) error
 }
 
 // Store contains the core DefraDB read-write operations.

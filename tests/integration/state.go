@@ -132,10 +132,17 @@ type state struct {
 	// Identities by node index, by identity index.
 	identities [][]identity.Identity
 
-	// Will recieve an item once all actions have finished processing.
+	// identitiesByName
+	identitiesByName map[string]identity.Identity
+
+	// The seed for the next node identity generation. It starts at 0x7fffffff to avoid
+	// collisions with the default identities.
+	nextNodeIdentityGenSeed int
+
+	// Will receive an item once all actions have finished processing.
 	allActionsDone chan struct{}
 
-	// These channels will recieve a function which asserts results of any subscription requests.
+	// These channels will receive a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
 
 	// nodeEvents contains all event node subscriptions.
@@ -161,7 +168,7 @@ type state struct {
 	collections [][]client.Collection
 
 	// The names of the collections active in this test.
-	// Indexes matches that of inital collections.
+	// Indexes matches that of initial collections.
 	collectionNames []string
 
 	// A map of the collection indexes by their Root, this allows easier
@@ -207,6 +214,8 @@ func newState(
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
+		identitiesByName:         map[string]identity.Identity{},
+		nextNodeIdentityGenSeed:  0x7fffffff,
 		subscriptionResultsChans: []chan func(){},
 		nodeEvents:               []*eventState{},
 		nodeAddresses:            []peer.AddrInfo{},

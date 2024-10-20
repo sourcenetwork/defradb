@@ -13,6 +13,7 @@ package cli
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -577,4 +578,12 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
+}
+
+func (w *Wrapper) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
+	privateKeyHex := hex.EncodeToString(ident.PrivateKey.Serialize())
+	args := []string{"client", "assign-node-identity", privateKeyHex}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }

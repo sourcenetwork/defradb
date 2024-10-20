@@ -39,11 +39,14 @@ type PublicRawIdentity struct {
 }
 
 func newRawIdentity(privateKey *secp256k1.PrivateKey, publicKey *secp256k1.PublicKey, did string) RawIdentity {
-	return RawIdentity{
-		PrivateKey: hex.EncodeToString(privateKey.Serialize()),
-		PublicKey:  hex.EncodeToString(publicKey.SerializeCompressed()),
-		DID:        did,
+	res := RawIdentity{
+		PublicKey: hex.EncodeToString(publicKey.SerializeCompressed()),
+		DID:       did,
 	}
+	if privateKey != nil {
+		res.PrivateKey = hex.EncodeToString(privateKey.Serialize())
+	}
+	return res
 }
 
 func (r RawIdentity) Public() PublicRawIdentity {
@@ -51,4 +54,38 @@ func (r RawIdentity) Public() PublicRawIdentity {
 		PublicKey: r.PublicKey,
 		DID:       r.DID,
 	}
+}
+
+// IntoIdentity converts a RawIdentity into an Identity.
+func (r RawIdentity) IntoIdentity() (Identity, error) {
+	privateKeyBytes, err := hex.DecodeString(r.PrivateKey)
+	if err != nil {
+		return Identity{}, err
+	}
+
+	privateKey := secp256k1.PrivKeyFromBytes(privateKeyBytes)
+
+	return Identity{
+		PublicKey:  privateKey.PubKey(),
+		PrivateKey: privateKey,
+		DID:        r.DID,
+	}, nil
+}
+
+// IntoIdentity converts a PublicRawIdentity into an Identity.
+func (r PublicRawIdentity) IntoIdentity() (Identity, error) {
+	publicKeyBytes, err := hex.DecodeString(r.PublicKey)
+	if err != nil {
+		return Identity{}, err
+	}
+
+	publicKey, err := secp256k1.ParsePubKey(publicKeyBytes)
+	if err != nil {
+		return Identity{}, err
+	}
+
+	return Identity{
+		PublicKey: publicKey,
+		DID:       r.DID,
+	}, nil
 }

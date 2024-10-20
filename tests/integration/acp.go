@@ -30,8 +30,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	identity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -114,8 +114,7 @@ func addPolicyACP(
 	}
 
 	for i, node := range getNodes(action.NodeID, s.nodes) {
-		identity := getIdentity(s, i, action.Identity)
-		ctx := db.SetContextIdentity(s.ctx, identity)
+		ctx := identity.WithContext(s.ctx, getIdentity(s, i, action.Identity))
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -189,7 +188,7 @@ func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
 		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, nodeID)
 
 		result, err := node.AddDocActorRelationship(
-			db.SetContextIdentity(s.ctx, requestorIdentity),
+			identity.WithContext(s.ctx, requestorIdentity),
 			collectionName,
 			docID,
 			action.Relation,
@@ -205,7 +204,7 @@ func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
 			requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, i)
 
 			result, err := node.AddDocActorRelationship(
-				db.SetContextIdentity(s.ctx, requestorIdentity),
+				identity.WithContext(s.ctx, requestorIdentity),
 				collectionName,
 				docID,
 				action.Relation,
@@ -291,7 +290,7 @@ func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) 
 		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, nodeID)
 
 		result, err := node.DeleteDocActorRelationship(
-			db.SetContextIdentity(s.ctx, requestorIdentity),
+			identity.WithContext(s.ctx, requestorIdentity),
 			collectionName,
 			docID,
 			action.Relation,
@@ -307,7 +306,7 @@ func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) 
 			requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, i)
 
 			result, err := node.DeleteDocActorRelationship(
-				db.SetContextIdentity(s.ctx, requestorIdentity),
+				identity.WithContext(s.ctx, requestorIdentity),
 				collectionName,
 				docID,
 				action.Relation,
@@ -652,6 +651,9 @@ func crossLock(port uint16) (func(), error) {
 }
 
 func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
+	if nodeIndex >= len(s.nodes) {
+		return immutable.None[string]()
+	}
 	switch client := s.nodes[nodeIndex].(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
@@ -716,15 +718,17 @@ func getIdentity(s *state, nodeIndex int, index immutable.Option[int]) immutable
 	}
 }
 
-func getNodeIdentity(s *state, nodeIndex int) acpIdentity.Identity {
-	identity, err := generateIdentity(s, nodeIndex, immutable.None[string]())
-	require.NoError(s.t, err)
-
+func generateNodeIdentity(s *state, nodeIndex int) acpIdentity.Identity {
 	if len(s.identities) <= nodeIndex {
 		identities := make([][]acpIdentity.Identity, nodeIndex+1)
 		copy(identities, s.identities)
 		s.identities = identities
 	}
+
+	identity, err := generateIdentity(s, s.nextNodeIdentityGenSeed, getNodeAudience(s, nodeIndex))
+	require.NoError(s.t, err)
+
+	s.nextNodeIdentityGenSeed--
 
 	if len(s.identities[nodeIndex]) == 0 {
 		s.identities[nodeIndex] = append(s.identities[nodeIndex], identity)
