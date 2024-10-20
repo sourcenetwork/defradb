@@ -1,23 +1,33 @@
-## defradb client
+## defradb client node-identity assign
 
-Interact with a DefraDB node
+Assign an identity to the node
 
 ### Synopsis
 
-Interact with a DefraDB node.
-Execute queries, add schema types, obtain node info, etc.
+Assign an identity to the node.
+
+Identity is hex-formatted private key.
+Node uses the identity to be able to exchange encryption keys with other nodes.
+		
+Example to assign an identity to the node:
+  defradb client node-identity assign 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
+
+
+
+```
+defradb client node-identity assign [identity] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help              help for client
-  -i, --identity string   Hex formatted private key used to authenticate with ACP
-      --tx uint           Transaction ID
+  -h, --help   help for assign
 ```
 
 ### Options inherited from parent commands
 
 ```
+  -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
@@ -32,22 +42,11 @@ Execute queries, add schema types, obtain node info, etc.
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
+      --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
-* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system of a DefraDB node
-* [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
-* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
-* [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
-* [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
 * [defradb client node-identity](defradb_client_node-identity.md)	 - Manage DefraDB node's identity
-* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client purge](defradb_client_purge.md)	 - Delete all persisted data and restart
-* [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
-* [defradb client tx](defradb_client_tx.md)	 - Create, commit, and discard DefraDB transactions
-* [defradb client view](defradb_client_view.md)	 - Manage views within a running DefraDB instance
 

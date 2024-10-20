@@ -1,27 +1,30 @@
-## defradb client assign-node-identity
+## defradb client node-identity get
 
-Assign an identity to the node
+Get the information public about the node's identity
 
 ### Synopsis
 
-Assign an identity to the node.
+Get the information public about the node's identity.
 
-Identity is hex-formatted private key.
 Node uses the identity to be able to exchange encryption keys with other nodes.
-		
-Example to assign an identity to the node:
-  defradb client assign-node-identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
+
+A public identity contains:
+- A compressed 33-byte secp256k1 public key in HEX format.
+- A "did:key" generated from the public key.
+
+Example to get the identity of the node:
+  defradb client node-identity get 
 
 
 
 ```
-defradb client assign-node-identity [identity] [flags]
+defradb client node-identity get [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for assign-node-identity
+  -h, --help   help for get
 ```
 
 ### Options inherited from parent commands
@@ -48,5 +51,5 @@ defradb client assign-node-identity [identity] [flags]
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client node-identity](defradb_client_node-identity.md)	 - Manage DefraDB node's identity
 

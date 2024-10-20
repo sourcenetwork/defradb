@@ -695,5 +695,5 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
-	router.AddRoute("/node/assign-identity", http.MethodPost, assignNodeIdentity, h.AssignNodeIdentity)
+	router.AddRoute("/node/identity", http.MethodPost, assignNodeIdentity, h.AssignNodeIdentity)
 }

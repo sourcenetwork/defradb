@@ -22,9 +22,9 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
-func MakeAssignNodeIdentityCommand() *cobra.Command {
+func MakeNodeIdentityAssignCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "assign-node-identity [identity]",
+		Use:   "assign [identity]",
 		Short: "Assign an identity to the node",
 		Long: `Assign an identity to the node.
 
@@ -32,7 +32,7 @@ Identity is hex-formatted private key.
 Node uses the identity to be able to exchange encryption keys with other nodes.
 		
 Example to assign an identity to the node:
-  defradb client assign-node-identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
+  defradb client node-identity assign 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {

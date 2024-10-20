@@ -567,7 +567,7 @@ func (w *Wrapper) Host() string {
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	args := []string{"client", "node-identity"}
+	args := []string{"client", "node-identity", "get"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -582,7 +582,7 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 
 func (w *Wrapper) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
 	privateKeyHex := hex.EncodeToString(ident.PrivateKey.Serialize())
-	args := []string{"client", "assign-node-identity", privateKeyHex}
+	args := []string{"client", "node-identity", "assign", privateKeyHex}
 
 	_, err := w.cmd.execute(ctx, args)
 	return err

@@ -525,7 +525,7 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 }
 
 func (c *Client) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
-	methodURL := c.http.baseURL.JoinPath("node", "assign-identity")
+	methodURL := c.http.baseURL.JoinPath("node", "identity")
 
 	ctx = identity.WithContext(ctx, immutable.Some(ident))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
