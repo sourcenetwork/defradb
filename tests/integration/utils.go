@@ -433,11 +433,13 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 }
 
 func generateDocs(s *state, action GenerateDocs) {
-	collections := getNodeCollections(action.NodeID, s.collections)
-	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
-	for _, col := range collections[0] {
-		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, col.Name().Value()) {
-			defs = append(defs, col.Definition())
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+	firstNodesID := nodeIDs[0]
+	collections := s.collections[firstNodesID]
+	defs := make([]client.CollectionDefinition, 0, len(collections))
+	for _, collection := range collections {
+		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name().Value()) {
+			defs = append(defs, collection.Definition())
 		}
 	}
 	docs, err := gen.AutoGenerate(defs, action.Options...)
@@ -448,9 +450,11 @@ func generateDocs(s *state, action GenerateDocs) {
 }
 
 func generatePredefinedDocs(s *state, action CreatePredefinedDocs) {
-	collections := getNodeCollections(action.NodeID, s.collections)
-	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
-	for _, col := range collections[0] {
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+	firstNodesID := nodeIDs[0]
+	collections := s.collections[firstNodesID]
+	defs := make([]client.CollectionDefinition, 0, len(collections))
+	for _, col := range collections {
 		defs = append(defs, col.Definition())
 	}
 	docs, err := predefined.Create(defs, action.Docs)
@@ -592,24 +596,6 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []clients.Client) ([]in
 	}
 
 	return []int{nodeID.Value()}, []clients.Client{nodes[nodeID.Value()]}
-}
-
-// getNodeCollections gets the set of applicable collections for the given nodeID.
-//
-// If nodeID has a value it will return collections for that node only, otherwise all collections across all
-// nodes will be returned.
-//
-// WARNING:
-// The caller must not assume the returned collections are in order of the node index if the specified
-// index is greater than 0. For example if requesting collections with nodeID=2 then the resulting output
-// will contain only one element (at index 0) that will be the collections of the respective node, the
-// caller might accidentally assume that these collections belong to node 0.
-func getNodeCollections(nodeID immutable.Option[int], collections [][]client.Collection) [][]client.Collection {
-	if !nodeID.HasValue() {
-		return collections
-	}
-
-	return [][]client.Collection{collections[nodeID.Value()]}
 }
 
 func calculateLenForFlattenedActions(testCase *TestCase) int {
@@ -915,9 +901,11 @@ func refreshDocuments(
 		// otherwise they cannot be referenced correctly by other actions.
 		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
+			nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
-			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
+			firstNodesID := nodeIDs[0]
+			collection := s.collections[firstNodesID][action.CollectionID]
 
 			if action.DocMap != nil {
 				substituteRelations(s, action)
