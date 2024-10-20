@@ -112,8 +112,10 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
-	for i, node := range getNodes(action.NodeID, s.nodes) {
-		identity := getIdentity(s, i, action.Identity)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		identity := getIdentity(s, nodeID, action.Identity)
 		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
