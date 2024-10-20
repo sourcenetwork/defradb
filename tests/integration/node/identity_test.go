@@ -13,8 +13,9 @@ package encryption
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestNodeIdentity_NodeIdentity_Succeed(t *testing.T) {
