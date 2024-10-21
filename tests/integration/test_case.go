@@ -786,6 +786,8 @@ type GetNodeIdentity struct {
 	NodeID int
 
 	// ExpectedIdentityName is the name associated with the expected identity of the node.
+	// It is used in order to anchor the identity to a specific name as opposed to a identity's
+	// index that can't be controlled manually, hence doesn't add this level of explicitness.
 	// If set, it will ensure that the actual identity matches an identity associated only
 	// with this name. It's done to make sure identities with difference names are not
 	// accidentally duplicated because, for examples, of poor random seed handling.
@@ -800,5 +802,7 @@ type AssignNodeIdentity struct {
 	NodeID int
 
 	// Name is the name associated with a newly generated identity.
+	// It is used in order to anchor the identity to a specific name as opposed to a identity's
+	// index that can't be controlled manually, hence doesn't add this level of explicitness.
 	Name string
 }

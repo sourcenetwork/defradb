@@ -22,6 +22,10 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
+func getDefaultNodeIdentityDuration() time.Duration {
+	return time.Hour * 24 * 365 * 10 // 10 years
+}
+
 func MakeNodeIdentityAssignCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "assign [identity]",
@@ -50,7 +54,7 @@ Example to assign an identity to the node:
 			privKey := secp256k1.PrivKeyFromBytes(data)
 			identity, err := acpIdentity.FromPrivateKey(
 				privKey,
-				time.Hour*24*365*10, // 10 years
+				getDefaultNodeIdentityDuration(),
 				immutable.Some(cfg.GetString("api.address")),
 				immutable.None[string](),
 				false,

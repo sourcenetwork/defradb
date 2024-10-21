@@ -132,11 +132,15 @@ type state struct {
 	// Identities by node index, by identity index.
 	identities [][]identity.Identity
 
-	// identitiesByName
+	// Identities by name.
+	// It is used in order to anchor the identity to a specific name as opposed to a identity's
+	// index that can't be controlled manually, hence doesn't add this level of explicitness.
 	identitiesByName map[string]identity.Identity
 
-	// The seed for the next node identity generation. It starts at 0x7fffffff to avoid
-	// collisions with the default identities.
+	// The seed for the next node identity generation. It starts at max int (0x7fffffff) to avoid
+	// collisions with the user identities.
+	// We want identities to be deterministic and we want to distinguish between user identities
+	// and node identities.
 	nextNodeIdentityGenSeed int
 
 	// Will receive an item once all actions have finished processing.
