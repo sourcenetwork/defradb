@@ -133,7 +133,8 @@ func executeExplainRequest(
 		require.Fail(s.t, "Expected error should not have other expected results with it.", s.testCase.Description)
 	}
 
-	for _, node := range getNodes(action.NodeID, s.nodes) {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		result := node.ExecRequest(
 			s.ctx,
 			action.Request,
