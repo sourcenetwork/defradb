@@ -112,8 +112,10 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
-	for i, node := range getNodes(action.NodeID, s.nodes) {
-		identity := getIdentity(s, i, action.Identity)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		identity := getIdentity(s, nodeID, action.Identity)
 		ctx := db.SetContextIdentity(s.ctx, identity)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
@@ -183,16 +185,15 @@ func addDocActorRelationshipACP(
 	s *state,
 	action AddDocActorRelationship,
 ) {
-	if action.NodeID.HasValue() {
-		nodeID := action.NodeID.Value()
-		collections := s.collections[nodeID]
-		node := s.nodes[nodeID]
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 
 		var collectionName string
 		if action.CollectionID == -1 {
 			collectionName = ""
 		} else {
-			collection := collections[action.CollectionID]
+			collection := s.collections[nodeID][action.CollectionID]
 			if !collection.Description().Name.HasValue() {
 				require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
 			}
@@ -243,69 +244,11 @@ func addDocActorRelationshipACP(
 			require.Equal(s.t, action.ExpectedError, "")
 			require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
 		}
-	} else {
-		for i, node := range getNodes(action.NodeID, s.nodes) {
-			var collectionName string
-			if action.CollectionID == -1 {
-				collectionName = ""
-			} else {
-				collection := s.collections[i][action.CollectionID]
-				if !collection.Description().Name.HasValue() {
-					require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
-				}
-				collectionName = collection.Description().Name.Value()
-			}
 
-			var docID string
-			if action.DocID == -1 || action.CollectionID == -1 {
-				docID = ""
-			} else {
-				docID = s.docIDs[action.CollectionID][action.DocID].String()
-			}
-
-			var targetIdentity string
-			if action.TargetIdentity == -1 {
-				targetIdentity = ""
-			} else {
-				optionalTargetIdentity := getIdentity(s, i, immutable.Some(action.TargetIdentity))
-				if !optionalTargetIdentity.HasValue() {
-					require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
-				}
-				targetIdentity = optionalTargetIdentity.Value().DID
-			}
-
-			var requestorIdentity immutable.Option[acpIdentity.Identity]
-			if action.RequestorIdentity == -1 {
-				requestorIdentity = acpIdentity.None
-			} else {
-				requestorIdentity = getIdentity(s, i, immutable.Some(action.RequestorIdentity))
-				if !requestorIdentity.HasValue() {
-					require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
-				}
-			}
-			ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
-
-			exists, err := node.AddDocActorRelationship(
-				ctx,
-				collectionName,
-				docID,
-				action.Relation,
-				targetIdentity,
-			)
-
-			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-			if !expectedErrorRaised {
-				require.Equal(s.t, action.ExpectedError, "")
-				require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
-			}
-
-			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
-			// the nodes.
-			if acpType == SourceHubACPType {
-				break
-			}
+		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+		// the nodes.
+		if acpType == SourceHubACPType {
+			break
 		}
 	}
 }
@@ -361,16 +304,15 @@ func deleteDocActorRelationshipACP(
 	s *state,
 	action DeleteDocActorRelationship,
 ) {
-	if action.NodeID.HasValue() {
-		nodeID := action.NodeID.Value()
-		collections := s.collections[nodeID]
-		node := s.nodes[nodeID]
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 
 		var collectionName string
 		if action.CollectionID == -1 {
 			collectionName = ""
 		} else {
-			collection := collections[action.CollectionID]
+			collection := s.collections[nodeID][action.CollectionID]
 			if !collection.Description().Name.HasValue() {
 				require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
 			}
@@ -421,69 +363,11 @@ func deleteDocActorRelationshipACP(
 			require.Equal(s.t, action.ExpectedError, "")
 			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
 		}
-	} else {
-		for i, node := range getNodes(action.NodeID, s.nodes) {
-			var collectionName string
-			if action.CollectionID == -1 {
-				collectionName = ""
-			} else {
-				collection := s.collections[i][action.CollectionID]
-				if !collection.Description().Name.HasValue() {
-					require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
-				}
-				collectionName = collection.Description().Name.Value()
-			}
 
-			var docID string
-			if action.DocID == -1 || action.CollectionID == -1 {
-				docID = ""
-			} else {
-				docID = s.docIDs[action.CollectionID][action.DocID].String()
-			}
-
-			var targetIdentity string
-			if action.TargetIdentity == -1 {
-				targetIdentity = ""
-			} else {
-				optionalTargetIdentity := getIdentity(s, i, immutable.Some(action.TargetIdentity))
-				if !optionalTargetIdentity.HasValue() {
-					require.Fail(s.t, "Expected non-empty target identity, but it was empty.", s.testCase.Description)
-				}
-				targetIdentity = optionalTargetIdentity.Value().DID
-			}
-
-			var requestorIdentity immutable.Option[acpIdentity.Identity]
-			if action.RequestorIdentity == -1 {
-				requestorIdentity = acpIdentity.None
-			} else {
-				requestorIdentity = getIdentity(s, i, immutable.Some(action.RequestorIdentity))
-				if !requestorIdentity.HasValue() {
-					require.Fail(s.t, "Expected non-empty requestor identity, but it was empty.", s.testCase.Description)
-				}
-			}
-			ctx := db.SetContextIdentity(s.ctx, requestorIdentity)
-
-			deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
-				ctx,
-				collectionName,
-				docID,
-				action.Relation,
-				targetIdentity,
-			)
-
-			expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-			assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-			if !expectedErrorRaised {
-				require.Equal(s.t, action.ExpectedError, "")
-				require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
-			}
-
-			// The relationship should only be added to a SourceHub chain once - there is no need to loop through
-			// the nodes.
-			if acpType == SourceHubACPType {
-				break
-			}
+		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+		// the nodes.
+		if acpType == SourceHubACPType {
+			break
 		}
 	}
 }
