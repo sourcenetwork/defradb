@@ -21,7 +21,7 @@ import (
 type p2pHandler struct{}
 
 func (s *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -30,7 +30,7 @@ func (s *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -50,7 +50,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -70,7 +70,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 }
 
 func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -85,7 +85,7 @@ func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 }
 
 func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -105,7 +105,7 @@ func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request)
 }
 
 func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -125,7 +125,7 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 }
 
 func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
