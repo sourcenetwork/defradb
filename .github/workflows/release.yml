@@ -56,7 +56,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: latest
+          version: 2.3.2
           args: release --clean --split ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,7 +67,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: actions/cache/save@v4
         with:
-          path: dist/linux_amd64
+          path: dist/linux_amd64_v1
           key: linux-${{ env.sha_short }}
 
       - name: Save cache on MacOS
@@ -81,7 +81,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: actions/cache/save@v4
         with:
-          path: dist/windows_amd64
+          path: dist/windows_amd64_v1
           key: windows-${{ env.sha_short }}
           enableCrossOsArchive: true
 
@@ -113,7 +113,7 @@ jobs:
         id: restore-linux
         uses: actions/cache/restore@v4
         with:
-          path: dist/linux_amd64
+          path: dist/linux_amd64_v1
           key: linux-${{ env.sha_short }}
           fail-on-cache-miss: true
 
@@ -129,7 +129,7 @@ jobs:
         id: restore-windows
         uses: actions/cache/restore@v4
         with:
-          path: dist/windows_amd64
+          path: dist/windows_amd64_v1
           key: windows-${{ env.sha_short }}
           fail-on-cache-miss: true
           enableCrossOsArchive: true
@@ -147,7 +147,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: latest
+          version: 2.3.2
           args: continue --merge
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
