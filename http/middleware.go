@@ -26,26 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 
-const (
-	// txHeaderName is the name of the transaction header.
-	// This header should contain a valid transaction id.
-	txHeaderName = "x-defradb-tx"
-)
-
-type contextKey string
-
-var (
-	// txsContextKey is the context key for the transaction *sync.Map
-	txsContextKey = contextKey("txs")
-	// dbContextKey is the context key for the client.DB
-	dbContextKey = contextKey("db")
-	// colContextKey is the context key for the client.Collection
-	//
-	// If a transaction exists, all operations will be executed
-	// in the current transaction context.
-	colContextKey = contextKey("col")
-)
-
 // CorsMiddleware handles cross origin request
 func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
@@ -76,7 +56,7 @@ func ApiMiddleware(db client.DB, txs *sync.Map) func(http.Handler) http.Handler 
 // TransactionMiddleware sets the transaction context for the current request.
 func TransactionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		txs := req.Context().Value(txsContextKey).(*sync.Map)
+		txs := mustGetContextSyncMap(req)
 
 		txValue := req.Header.Get(txHeaderName)
 		if txValue == "" {
@@ -104,7 +84,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		db := req.Context().Value(dbContextKey).(client.DB)
+		db := mustGetContextClientDB(req)
 
 		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
 		if err != nil {
