@@ -102,12 +102,7 @@ func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
 		return nil, ErrInvalidTransactionId
 	}
 
-	dsTxn, ok := tx.(datastore.Txn)
-	if !ok {
-		return nil, ErrInvalidDataStoreTransaction
-	}
-
-	return dsTxn, nil
+	return mustGetDataStoreTxn(tx), nil
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

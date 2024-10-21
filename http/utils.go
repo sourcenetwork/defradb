@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 const (
@@ -65,6 +66,13 @@ func mustGetContextClientDB(req *http.Request) client.DB {
 // This should only be called from functions within the http package.
 func mustGetContextClientStore(req *http.Request) client.Store {
 	return req.Context().Value(dbContextKey).(client.Store) //nolint:forcetypeassert
+}
+
+// mustGetDataStoreTxn returns the datastore transaction or panics.
+//
+// This should only be called from functions within the http package.
+func mustGetDataStoreTxn(tx any) datastore.Txn {
+	return tx.(datastore.Txn) //nolint:forcetypeassert
 }
 
 // tryGetContextClientP2P returns the P2P client from the http request context and a boolean

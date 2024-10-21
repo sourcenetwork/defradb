@@ -16,8 +16,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type txHandler struct{}
@@ -68,12 +66,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	dsTxn, ok := txVal.(datastore.Txn)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidDataStoreTransaction})
-		return
-	}
-
+	dsTxn := mustGetDataStoreTxn(txVal)
 	err = dsTxn.Commit(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -97,13 +90,9 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	dsTxn, ok := txVal.(datastore.Txn)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidDataStoreTransaction})
-		return
-	}
-
+	dsTxn := mustGetDataStoreTxn(txVal)
 	dsTxn.Discard(req.Context())
+
 	rw.WriteHeader(http.StatusOK)
 }
 
