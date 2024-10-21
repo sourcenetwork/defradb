@@ -1097,7 +1097,7 @@ type shimEncodedDocument struct {
 	key             []byte
 	schemaVersionID string
 	status          client.DocumentStatus
-	properties      map[client.FieldDefinition]any
+	properties      map[client.FieldDefinitionKey]any
 }
 
 var _ fetcher.EncodedDocument = (*shimEncodedDocument)(nil)
@@ -1114,7 +1114,7 @@ func (encdoc *shimEncodedDocument) Status() client.DocumentStatus {
 	return encdoc.status
 }
 
-func (encdoc *shimEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
+func (encdoc *shimEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinitionKey]any, error) {
 	return encdoc.properties, nil
 }
 
@@ -1122,7 +1122,7 @@ func (encdoc *shimEncodedDocument) Reset() {
 	encdoc.key = nil
 	encdoc.schemaVersionID = ""
 	encdoc.status = 0
-	encdoc.properties = map[client.FieldDefinition]any{}
+	encdoc.properties = map[client.FieldDefinitionKey]any{}
 }
 
 func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {

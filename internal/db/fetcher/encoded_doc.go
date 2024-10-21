@@ -31,7 +31,7 @@ type EncodedDocument interface {
 
 	// Properties returns a copy of the decoded property values mapped by their field
 	// description.
-	Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error)
+	Properties(onlyFilterProps bool) (map[client.FieldDefinitionKey]any, error)
 
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
@@ -68,8 +68,8 @@ type encodedDocument struct {
 	id                   []byte
 	schemaVersionID      string
 	status               client.DocumentStatus
-	properties           map[client.FieldDefinition]*encProperty
-	decodedPropertyCache map[client.FieldDefinition]any
+	properties           map[client.FieldDefinitionKey]*encProperty
+	decodedPropertyCache map[client.FieldDefinitionKey]any
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -96,7 +96,7 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.properties = make(map[client.FieldDefinition]*encProperty, 0)
+	encdoc.properties = make(map[client.FieldDefinitionKey]*encProperty, 0)
 	encdoc.id = nil
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
@@ -175,10 +175,10 @@ func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter b
 	return doc, nil
 }
 
-func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
-	result := map[client.FieldDefinition]any{}
+func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinitionKey]any, error) {
+	result := map[client.FieldDefinitionKey]any{}
 	if encdoc.decodedPropertyCache == nil {
-		encdoc.decodedPropertyCache = map[client.FieldDefinition]any{}
+		encdoc.decodedPropertyCache = map[client.FieldDefinitionKey]any{}
 	}
 
 	for _, prop := range encdoc.properties {
@@ -188,9 +188,9 @@ func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.Fiel
 		}
 
 		// used cached decoded fields
-		cachedValue := encdoc.decodedPropertyCache[prop.Desc]
+		cachedValue := encdoc.decodedPropertyCache[prop.Desc.Key()]
 		if cachedValue != nil {
-			result[prop.Desc] = cachedValue
+			result[prop.Desc.Key()] = cachedValue
 			continue
 		}
 
@@ -200,8 +200,8 @@ func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.Fiel
 		}
 
 		// cache value
-		encdoc.decodedPropertyCache[prop.Desc] = val
-		result[prop.Desc] = val
+		encdoc.decodedPropertyCache[prop.Desc.Key()] = val
+		result[prop.Desc.Key()] = val
 	}
 
 	return result, nil
