@@ -18,8 +18,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 type ccipHandler struct{}
@@ -35,7 +33,7 @@ type CCIPResponse struct {
 
 // ExecCCIP handles GraphQL over Cross Chain Interoperability Protocol requests.
 func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var ccipReq CCIPRequest
 	switch req.Method {

@@ -31,7 +31,6 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	identity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -113,8 +112,10 @@ func addPolicyACP(
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
-	for i, node := range getNodes(action.NodeID, s.nodes) {
-		ctx := identity.WithContext(s.ctx, getIdentity(s, i, action.Identity))
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		ctx := identity.WithContext(s.ctx, getIdentity(s, nodeID, action.Identity))
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -179,15 +180,18 @@ type AddDocActorRelationship struct {
 	ExpectedError string
 }
 
-func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
-	if action.NodeID.HasValue() {
-		nodeID := action.NodeID.Value()
-		node := s.nodes[nodeID]
+func addDocActorRelationshipACP(
+	s *state,
+	action AddDocActorRelationship,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, nodeID)
 
-		result, err := node.AddDocActorRelationship(
+		exists, err := node.AddDocActorRelationship(
 			identity.WithContext(s.ctx, requestorIdentity),
 			collectionName,
 			docID,
@@ -195,42 +199,19 @@ func addDocActorRelationshipACP(s *state, action AddDocActorRelationship) {
 			getTargetIdentity(s, action.TargetIdentity, nodeID),
 		)
 
-		assertAddDocActorRelationship(s, err, action, result)
-	} else {
-		for i := range getNodes(action.NodeID, s.nodes) {
-			node := s.nodes[i]
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
-			collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, i)
-			requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, i)
-
-			result, err := node.AddDocActorRelationship(
-				identity.WithContext(s.ctx, requestorIdentity),
-				collectionName,
-				docID,
-				action.Relation,
-				getTargetIdentity(s, action.TargetIdentity, i),
-			)
-
-			assertAddDocActorRelationship(s, err, action, result)
-			if acpType == SourceHubACPType {
-				break
-			}
+		if !expectedErrorRaised {
+			require.Equal(s.t, action.ExpectedError, "")
+			require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
 		}
-	}
-}
 
-func assertAddDocActorRelationship(
-	s *state,
-	actualErr error,
-	action AddDocActorRelationship,
-	result client.AddDocActorRelationshipResult,
-) {
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, actualErr, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if !expectedErrorRaised {
-		require.Equal(s.t, action.ExpectedError, "")
-		require.Equal(s.t, action.ExpectedExistence, result.ExistedAlready, "existed")
+		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+		// the nodes.
+		if acpType == SourceHubACPType {
+			break
+		}
 	}
 }
 
@@ -281,15 +262,18 @@ type DeleteDocActorRelationship struct {
 	ExpectedError string
 }
 
-func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) {
-	if action.NodeID.HasValue() {
-		nodeID := action.NodeID.Value()
-		node := s.nodes[nodeID]
+func deleteDocActorRelationshipACP(
+	s *state,
+	action DeleteDocActorRelationship,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 		requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, nodeID)
 
-		result, err := node.DeleteDocActorRelationship(
+		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
 			identity.WithContext(s.ctx, requestorIdentity),
 			collectionName,
 			docID,
@@ -297,41 +281,19 @@ func deleteDocActorRelationshipACP(s *state, action DeleteDocActorRelationship) 
 			getTargetIdentity(s, action.TargetIdentity, nodeID),
 		)
 
-		assertDeleteDocActorRelationship(s, err, action, result)
-	} else {
-		for i := range getNodes(action.NodeID, s.nodes) {
-			node := s.nodes[i]
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
-			collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, i)
-			requestorIdentity := getRequestorIdentity(s, action.RequestorIdentity, i)
-
-			result, err := node.DeleteDocActorRelationship(
-				identity.WithContext(s.ctx, requestorIdentity),
-				collectionName,
-				docID,
-				action.Relation,
-				getTargetIdentity(s, action.TargetIdentity, i),
-			)
-			assertDeleteDocActorRelationship(s, err, action, result)
-			if acpType == SourceHubACPType {
-				break
-			}
+		if !expectedErrorRaised {
+			require.Equal(s.t, action.ExpectedError, "")
+			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
 		}
-	}
-}
 
-func assertDeleteDocActorRelationship(
-	s *state,
-	actualErr error,
-	action DeleteDocActorRelationship,
-	result client.DeleteDocActorRelationshipResult,
-) {
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, actualErr, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if !expectedErrorRaised {
-		require.Equal(s.t, action.ExpectedError, "")
-		require.Equal(s.t, action.ExpectedRecordFound, result.RecordFound, "record found mismatch")
+		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+		// the nodes.
+		if acpType == SourceHubACPType {
+			break
+		}
 	}
 }
 
@@ -475,7 +437,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	// The result is suffexed with a newline char so we must trim the whitespace
+	// The result is suffixed with a newline char so we must trim the whitespace
 	validatorAddress := strings.TrimSpace(string(out))
 	s.sourcehubAddress = validatorAddress
 
@@ -510,7 +472,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	// process involves finding free ports, dropping them, and then assigning them to the source hub node.
 	//
 	// We have to do this because source hub (cosmos) annoyingly does not support automatic port assignment
-	// (appart from the p2p port which we just manage here for consistency).
+	// (apart from the p2p port which we just manage here for consistency).
 	//
 	// We need to lock before getting the ports, otherwise they may try and use the port we use for locking.
 	// We can only unlock after the source hub node has started and begun listening on the assigned ports.
@@ -583,7 +545,7 @@ cmdReaderLoop:
 				// can safely unlock here.
 				unlock()
 			}
-			// This is guarenteed to be logged after the gRPC server has been spun up
+			// This is guaranteed to be logged after the gRPC server has been spun up
 			// so we can be sure that the lock has been unlocked.
 			if strings.Contains(line, "committed state") {
 				break cmdReaderLoop

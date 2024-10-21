@@ -62,35 +62,42 @@ const (
 //
 // If a db is not set in the current context this function panics.
 func mustGetContextDB(cmd *cobra.Command) client.DB {
-	return cmd.Context().Value(dbContextKey).(client.DB)
+	return cmd.Context().Value(dbContextKey).(client.DB) //nolint:forcetypeassert
 }
 
 // mustGetContextStore returns the store for the current command context.
 //
 // If a store is not set in the current context this function panics.
 func mustGetContextStore(cmd *cobra.Command) client.Store {
-	return cmd.Context().Value(dbContextKey).(client.Store)
+	return cmd.Context().Value(dbContextKey).(client.Store) //nolint:forcetypeassert
 }
 
 // mustGetContextP2P returns the p2p implementation for the current command context.
 //
 // If a p2p implementation is not set in the current context this function panics.
 func mustGetContextP2P(cmd *cobra.Command) client.P2P {
-	return cmd.Context().Value(dbContextKey).(client.P2P)
+	return cmd.Context().Value(dbContextKey).(client.P2P) //nolint:forcetypeassert
+}
+
+// mustGetContextHTTP returns the http client for the current command context.
+//
+// If http client is not set in the current context this function panics.
+func mustGetContextHTTP(cmd *cobra.Command) *http.Client {
+	return cmd.Context().Value(dbContextKey).(*http.Client) //nolint:forcetypeassert
 }
 
 // mustGetContextConfig returns the config for the current command context.
 //
 // If a config is not set in the current context this function panics.
 func mustGetContextConfig(cmd *cobra.Command) *viper.Viper {
-	return cmd.Context().Value(cfgContextKey).(*viper.Viper)
+	return cmd.Context().Value(cfgContextKey).(*viper.Viper) //nolint:forcetypeassert
 }
 
 // mustGetContextRootDir returns the rootdir for the current command context.
 //
 // If a rootdir is not set in the current context this function panics.
 func mustGetContextRootDir(cmd *cobra.Command) string {
-	return cmd.Context().Value(rootDirContextKey).(string)
+	return cmd.Context().Value(rootDirContextKey).(string) //nolint:forcetypeassert
 }
 
 // tryGetContextCollection returns the collection for the current command context
