@@ -1714,25 +1714,6 @@
                     "node",
                     "identity"
                 ]
-            },
-            "post": {
-                "description": "Assign node's identity",
-                "operationId": "assign_node_identity",
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "node",
-                    "identity"
-                ]
             }
         },
         "/p2p/collections": {
