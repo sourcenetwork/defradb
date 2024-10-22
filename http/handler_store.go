@@ -343,7 +343,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
+	db := mustGetContextClientDB(req)
 
 	identity, err := db.GetNodeIdentity(req.Context())
 	if err != nil {
