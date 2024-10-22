@@ -129,7 +129,7 @@ type state struct {
 	txns []datastore.Txn
 
 	// identities contains all identities created in this test.
-	// The map key is the identity reference that uniquely identifies identities of different 
+	// The map key is the identity reference that uniquely identifies identities of different
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].

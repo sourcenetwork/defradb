@@ -15,10 +15,11 @@ import (
 	"math/rand"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	identity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	identity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
 // identRef is a type that refers to a specific identity of a certain type.
@@ -128,12 +129,12 @@ func generateIdentity(s *state) acpIdentity.Identity {
 // getContextWithIdentity returns a context with the identity for the given reference and node index.
 // If the identity does not exist, it will be generated.
 // The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
-func getContextWithIdentity(s *state, ref identRef, nodeIndex int) context.Context {
+func getContextWithIdentity(ctx context.Context, s *state, ref identRef, nodeIndex int) context.Context {
 	if !ref.hasValue {
-		return s.ctx
+		return ctx
 	}
 	ident := getIdentityForRequest(s, ref, nodeIndex)
-	return identity.WithContext(s.ctx, immutable.Some(ident))
+	return identity.WithContext(ctx, immutable.Some(ident))
 }
 
 func getIdentityDID(s *state, ident identRef) string {

@@ -1313,7 +1313,7 @@ func createDocViaColSave(
 }
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	ctx = getContextWithIdentity(s, action.Identity, nodeIndex)
+	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
 	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
@@ -1392,8 +1392,7 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	s.ctx = db.SetContextTxn(s.ctx, txn)
-	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1447,7 +1446,7 @@ func deleteDoc(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		ctx := getContextWithIdentity(s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1520,7 +1519,7 @@ func updateDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1540,7 +1539,7 @@ func updateDocViaColUpdate(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1576,7 +1575,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	ctx := getContextWithIdentity(s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1594,7 +1593,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		ctx := getContextWithIdentity(s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1835,8 +1834,7 @@ func executeRequest(
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
-		s.ctx = db.SetContextTxn(s.ctx, txn)
-		ctx := getContextWithIdentity(s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {

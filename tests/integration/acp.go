@@ -112,7 +112,7 @@ func addPolicyACP(
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
-		ctx := getContextWithIdentity(s, action.Identity, nodeIDs[index])
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIDs[index])
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -188,7 +188,7 @@ func addDocActorRelationshipACP(
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		exists, err := node.AddDocActorRelationship(
-			getContextWithIdentity(s, action.RequestorIdentity, nodeID),
+			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
 			action.Relation,
@@ -269,7 +269,7 @@ func deleteDocActorRelationshipACP(
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
-			getContextWithIdentity(s, action.RequestorIdentity, nodeID),
+			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
 			action.Relation,
