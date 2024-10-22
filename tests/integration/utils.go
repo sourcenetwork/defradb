@@ -167,15 +167,15 @@ func ExecuteTestCase(
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 
 	var clients []ClientType
-	//if httpClient {
-	clients = append(clients, HTTPClientType)
-	//}
-	//if goClient {
-	clients = append(clients, GoClientType)
-	//}
-	//if cliClient {
-	clients = append(clients, CLIClientType)
-	//}
+	if httpClient {
+		clients = append(clients, HTTPClientType)
+	}
+	if goClient {
+		clients = append(clients, GoClientType)
+	}
+	if cliClient {
+		clients = append(clients, CLIClientType)
+	}
 
 	var databases []DatabaseType
 	if badgerInMemory {

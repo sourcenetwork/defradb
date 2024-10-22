@@ -62,6 +62,19 @@ Example to assign an identity to the node:
 			if err != nil {
 				return err
 			}
+
+			if !cfg.GetBool("keyring.disabled") {
+				kr, err := openKeyring(cmd)
+				if err != nil {
+					return err
+				}
+
+				err = kr.Set(nodeIdentityKeyName, data)
+				if err != nil {
+					return err
+				}
+			}
+
 			return db.AssignNodeIdentity(cmd.Context(), identity)
 		},
 	}

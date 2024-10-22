@@ -288,5 +288,5 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
-	return w.client.AssignNodeIdentity(ctx, ident)
+	return w.node.DB.AssignNodeIdentity(ctx, ident)
 }

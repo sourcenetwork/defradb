@@ -20,7 +20,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -354,23 +353,6 @@ func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 	responseJSON(rw, http.StatusOK, identity)
 }
 
-func (s *storeHandler) AssignNodeIdentity(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
-
-	ident := identity.FromContext(req.Context())
-
-	if !ident.HasValue() {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingIdentity})
-		return
-	}
-
-	err := db.AssignNodeIdentity(req.Context(), ident.Value())
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-}
-
 func (h *storeHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -672,14 +654,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	nodeIdentity.AddResponse(200, identityResponse)
 	nodeIdentity.Responses.Set("400", errorResponse)
 
-	assignNodeIdentity := openapi3.NewOperation()
-	assignNodeIdentity.OperationID = "assign_node_identity"
-	assignNodeIdentity.Description = "Assign node's identity"
-	assignNodeIdentity.Tags = []string{"node", "identity"}
-	assignNodeIdentity.Responses = openapi3.NewResponses()
-	assignNodeIdentity.Responses.Set("200", successResponse)
-	assignNodeIdentity.Responses.Set("400", errorResponse)
-
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
@@ -695,5 +669,4 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
-	router.AddRoute("/node/identity", http.MethodPost, assignNodeIdentity, h.AssignNodeIdentity)
 }

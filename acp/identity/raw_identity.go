@@ -71,21 +71,3 @@ func (r RawIdentity) IntoIdentity() (Identity, error) {
 		DID:        r.DID,
 	}, nil
 }
-
-// IntoIdentity converts a PublicRawIdentity into an Identity.
-func (r PublicRawIdentity) IntoIdentity() (Identity, error) {
-	publicKeyBytes, err := hex.DecodeString(r.PublicKey)
-	if err != nil {
-		return Identity{}, err
-	}
-
-	publicKey, err := secp256k1.ParsePubKey(publicKeyBytes)
-	if err != nil {
-		return Identity{}, err
-	}
-
-	return Identity{
-		PublicKey: publicKey,
-		DID:       r.DID,
-	}, nil
-}
