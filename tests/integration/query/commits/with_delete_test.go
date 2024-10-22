@@ -40,8 +40,10 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 				Request: `
 					query {
 						commits(fieldId: "C") {
+							cid
 							fieldName
 							links {
+								cid
 								name
 							}
 						}
@@ -50,20 +52,25 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
+							"cid":       testUtils.NewCompCidIndex(0, 0, 1),
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
+									"cid":  testUtils.NewCompCidIndex(0, 0, 0),
 									"name": "_head",
 								},
 							},
 						},
 						{
+							"cid":       testUtils.NewCompCidIndex(0, 0, 0),
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
+									"cid":  testUtils.NewCidIndex(0, 0, "1", 0),
 									"name": "age",
 								},
 								{
+									"cid":  testUtils.NewCidIndex(0, 0, "2", 0),
 									"name": "name",
 								},
 							},
