@@ -175,6 +175,9 @@ type state struct {
 	// nodes.
 	docIDs [][]client.DocID
 
+	// CIDs by index, by field name, by doc index, by collection index.
+	cids [][]map[string][]cid.Cid
+
 	// Indexes, by index, by collection index, by node index.
 	indexes [][][]client.IndexDescription
 

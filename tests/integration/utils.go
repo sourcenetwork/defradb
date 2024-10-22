@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -34,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
@@ -1271,7 +1274,58 @@ func createDoc(
 		// Expand the slice if required, so that the document can be accessed by collection index
 		s.docIDs = append(s.docIDs, make([][]client.DocID, action.CollectionID-len(s.docIDs)+1)...)
 	}
+	startDocIndex := len(s.docIDs[action.CollectionID])
 	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
+
+	if action.CollectionID >= len(s.cids) {
+		// Expand the slice if required, so that the cids can be accessed by collection index
+		s.cids = append(s.cids, make([][]map[string][]cid.Cid, action.CollectionID+1)...)
+	}
+
+	endDocIndex := startDocIndex + len(docIDs) - 1
+	if endDocIndex >= len(s.cids[action.CollectionID]) {
+		s.cids[action.CollectionID] = append(
+			s.cids[action.CollectionID],
+			make([]map[string][]cid.Cid, endDocIndex-len(s.cids[action.CollectionID])+1)...,
+		)
+	}
+
+	for relativeDocIndex, docID := range docIDs {
+		results, err := nodes[0].Headstore().Query(
+			s.ctx,
+			query.Query{
+				Prefix: core.HeadStoreKey{
+					DocID: docID.String(),
+				}.ToString(),
+				KeysOnly: true,
+			},
+		)
+		if err != nil {
+			s.t.Fatalf("failed to fetch cids: %s", err.Error())
+		}
+
+		for res := range results.Next() {
+			if res.Error != nil {
+				s.t.Fatalf("failed to fetch cids: %s", res.Error.Error())
+			}
+
+			key, err := core.NewHeadStoreKey(res.Key)
+			if err != nil {
+				s.t.Fatalf("failed to fetch cids: %s", err.Error())
+			}
+
+			docIndex := startDocIndex + relativeDocIndex
+
+			if s.cids[action.CollectionID][docIndex] == nil {
+				s.cids[action.CollectionID][docIndex] = map[string][]cid.Cid{}
+			}
+
+			// This is a new doc, so we can blindly overwrite the array of cids
+			s.cids[action.CollectionID][docIndex][key.FieldID] = []cid.Cid{
+				key.Cid,
+			}
+		}
+	}
 
 	if action.ExpectedError == "" {
 		waitForUpdateEvents(s, action.NodeID, getEventsForCreateDoc(s, action))
@@ -1453,6 +1507,35 @@ func deleteDoc(
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
+	results, err := nodes[0].Headstore().Query(
+		s.ctx,
+		query.Query{
+			Prefix: core.HeadStoreKey{
+				DocID: s.docIDs[action.CollectionID][action.DocID].String(),
+			}.ToString(),
+			KeysOnly: true,
+		},
+	)
+	if err != nil {
+		s.t.Fatalf("failed to fetch cids: %s", err.Error())
+	}
+
+	for res := range results.Next() {
+		if res.Error != nil {
+			s.t.Fatalf("failed to fetch cids: %s", res.Error.Error())
+		}
+
+		key, err := core.NewHeadStoreKey(res.Key)
+		if err != nil {
+			s.t.Fatalf("failed to fetch cids: %s", err.Error())
+		}
+
+		s.cids[action.CollectionID][action.DocID][key.FieldID] = append(
+			s.cids[action.CollectionID][action.DocID][key.FieldID],
+			key.Cid,
+		)
+	}
+
 	if action.ExpectedError == "" {
 		docIDs := map[string]struct{}{
 			docID.String(): {},
@@ -1503,6 +1586,35 @@ func updateDoc(
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
 		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateDoc(s, action))
+	}
+
+	results, err := nodes[0].Headstore().Query(
+		s.ctx,
+		query.Query{
+			Prefix: core.HeadStoreKey{
+				DocID: s.docIDs[action.CollectionID][action.DocID].String(),
+			}.ToString(),
+			KeysOnly: true,
+		},
+	)
+	if err != nil {
+		s.t.Fatalf("failed to fetch cids: %s", err.Error())
+	}
+
+	for res := range results.Next() {
+		if res.Error != nil {
+			s.t.Fatalf("failed to fetch cids: %s", res.Error.Error())
+		}
+
+		key, err := core.NewHeadStoreKey(res.Key)
+		if err != nil {
+			s.t.Fatalf("failed to fetch cids: %s", err.Error())
+		}
+
+		s.cids[action.CollectionID][action.DocID][key.FieldID] = append(
+			s.cids[action.CollectionID][action.DocID][key.FieldID],
+			key.Cid,
+		)
 	}
 }
 
@@ -2079,6 +2191,18 @@ func assertRequestResultDocs(
 					actualValue,
 					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
+
+			case CidIndex:
+				//nolint:lll
+				expectedCid := s.cids[expectedValue.CollectionIndex][expectedValue.DocIndex][expectedValue.FieldName][expectedValue.Index].String()
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedCid,
+					actualValue,
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+				)
+
 			case []map[string]any:
 				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
 

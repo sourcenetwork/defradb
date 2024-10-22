@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
@@ -344,6 +345,50 @@ type DocIndex struct {
 func NewDocIndex(collectionIndex int, index int) DocIndex {
 	return DocIndex{
 		CollectionIndex: collectionIndex,
+		Index:           index,
+	}
+}
+
+// CidIndex represents a Cid previously stored in the node, it allows Cids to be referenced without worrying
+// about the specific bytes.
+type CidIndex struct {
+	// CollectionIndex is the index of the collection used to create the document that the Cid belongs to.
+	CollectionIndex int
+
+	// DocIndex is the index of the document that the Cid belongs to.
+	DocIndex int
+
+	// FieldName is the name of the field that this cid is for.
+	//
+	// Composite commits can be targetted with "C".
+	FieldName string
+
+	// The index of the Cid given the other parameters.
+	//
+	// This is typically equal to commit height - 1.
+	Index int
+}
+
+// NewCompCidIndex creates a new [CidIndex] instance targetting the cid of a composite commit.
+//
+// It allows cids to be referenced without worrying about the specific bytes that form it.
+func NewCompCidIndex(collectionIndex int, docIndex int, index int) CidIndex {
+	return CidIndex{
+		CollectionIndex: collectionIndex,
+		DocIndex:        docIndex,
+		FieldName:       core.COMPOSITE_NAMESPACE,
+		Index:           index,
+	}
+}
+
+// NewCidIndex creates a new [CidIndex] instance targetting a cid of a commit.
+//
+// It allows cids to be referenced without worrying about the specific bytes that form it.
+func NewCidIndex(collectionIndex int, docIndex int, fieldName string, index int) CidIndex {
+	return CidIndex{
+		CollectionIndex: collectionIndex,
+		DocIndex:        docIndex,
+		FieldName:       fieldName,
 		Index:           index,
 	}
 }
