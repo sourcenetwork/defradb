@@ -17,9 +17,34 @@ import (
 func MakeNodeIdentityCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "node-identity",
-		Short: "Manage DefraDB node's identity",
-		Long:  `Manage DefraDB node's identity`,
-	}
+		Short: "Get the public information about the node's identity",
+		Long: `Get the public information about the node's identity.
 
+Node uses the identity to be able to exchange encryption keys with other nodes.
+
+A public identity contains:
+- A compressed 33-byte secp256k1 public key in HEX format.
+- A "did:key" generated from the public key.
+
+Example to get the identity of the node:
+  defradb client node-identity 
+
+`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			db := mustGetContextDB(cmd)
+			identity, err := db.GetNodeIdentity(cmd.Context())
+			if err != nil {
+				return err
+			}
+
+			if identity.HasValue() {
+				return writeJSON(cmd, identity.Value())
+			}
+
+			out := cmd.OutOrStdout()
+			_, err = out.Write([]byte("Node has no identity assigned to it\n"))
+			return err
+		},
+	}
 	return cmd
 }

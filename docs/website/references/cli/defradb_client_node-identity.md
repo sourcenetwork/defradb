@@ -1,10 +1,25 @@
 ## defradb client node-identity
 
-Manage DefraDB node's identity
+Get the public information about the node's identity
 
 ### Synopsis
 
-Manage DefraDB node's identity
+Get the public information about the node's identity.
+
+Node uses the identity to be able to exchange encryption keys with other nodes.
+
+A public identity contains:
+- A compressed 33-byte secp256k1 public key in HEX format.
+- A "did:key" generated from the public key.
+
+Example to get the identity of the node:
+  defradb client node-identity 
+
+
+
+```
+defradb client node-identity [flags]
+```
 
 ### Options
 
@@ -37,6 +52,4 @@ Manage DefraDB node's identity
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client node-identity assign](defradb_client_node-identity_assign.md)	 - Assign an identity to the node
-* [defradb client node-identity get](defradb_client_node-identity_get.md)	 - Get the information public about the node's identity
 

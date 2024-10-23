@@ -286,7 +286,3 @@ func (w *Wrapper) Host() string {
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	return w.client.GetNodeIdentity(ctx)
 }
-
-func (w *Wrapper) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
-	return w.node.DB.AssignNodeIdentity(ctx, ident)
-}

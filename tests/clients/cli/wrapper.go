@@ -13,12 +13,10 @@ package cli
 import (
 	"bufio"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"strings"
 
@@ -568,7 +566,7 @@ func (w *Wrapper) Host() string {
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	args := []string{"client", "node-identity", "get"}
+	args := []string{"client", "node-identity"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -579,17 +577,4 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
-}
-
-func (w *Wrapper) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
-	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
-	if err != nil {
-		return err
-	}
-
-	privateKeyHex := hex.EncodeToString(ident.PrivateKey.Serialize())
-	args := []string{"client", "node-identity", "assign", privateKeyHex}
-
-	_, err = w.cmd.execute(ctx, args)
-	return err
 }

@@ -321,53 +321,6 @@ func (_c *DB_AddView_Call) RunAndReturn(run func(context.Context, string, string
 	return _c
 }
 
-// AssignNodeIdentity provides a mock function with given fields: _a0, _a1
-func (_m *DB) AssignNodeIdentity(_a0 context.Context, _a1 identity.Identity) error {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AssignNodeIdentity")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, identity.Identity) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DB_AssignNodeIdentity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssignNodeIdentity'
-type DB_AssignNodeIdentity_Call struct {
-	*mock.Call
-}
-
-// AssignNodeIdentity is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 identity.Identity
-func (_e *DB_Expecter) AssignNodeIdentity(_a0 interface{}, _a1 interface{}) *DB_AssignNodeIdentity_Call {
-	return &DB_AssignNodeIdentity_Call{Call: _e.mock.On("AssignNodeIdentity", _a0, _a1)}
-}
-
-func (_c *DB_AssignNodeIdentity_Call) Run(run func(_a0 context.Context, _a1 identity.Identity)) *DB_AssignNodeIdentity_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(identity.Identity))
-	})
-	return _c
-}
-
-func (_c *DB_AssignNodeIdentity_Call) Return(_a0 error) *DB_AssignNodeIdentity_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_AssignNodeIdentity_Call) RunAndReturn(run func(context.Context, identity.Identity) error) *DB_AssignNodeIdentity_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // BasicExport provides a mock function with given fields: ctx, config
 func (_m *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
 	ret := _m.Called(ctx, config)

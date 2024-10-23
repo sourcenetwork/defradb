@@ -806,17 +806,3 @@ type GetNodeIdentity struct {
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity identRef
 }
-
-// AssignNodeIdentity is an action that generates a new identity for the node and associates it
-// with a specific name. The name can be used to refer to the identity with
-// [GetNodeIdentity.ExpectedIdentityName].
-type AssignNodeIdentity struct {
-	// NodeID holds the ID (index) of a node to assign the identity to.
-	NodeID int
-
-	// IdentityName is the name associated with the identity of the node.
-	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	Identity identRef
-}

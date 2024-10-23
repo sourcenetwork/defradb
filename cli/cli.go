@@ -116,18 +116,12 @@ func NewDefraCommand() *cobra.Command {
 		MakeCollectionPatchCommand(),
 	)
 
-	nodeIdentity := MakeNodeIdentityCommand()
-	nodeIdentity.AddCommand(
-		MakeNodeIdentityGetCommand(),
-		MakeNodeIdentityAssignCommand(),
-	)
-
 	client := MakeClientCommand()
 	client.AddCommand(
 		MakePurgeCommand(),
 		MakeDumpCommand(),
 		MakeRequestCommand(),
-		nodeIdentity,
+		MakeNodeIdentityCommand(),
 		schema,
 		acp,
 		view,

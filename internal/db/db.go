@@ -309,11 +309,6 @@ func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.Public
 	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
-func (db *db) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
-	db.nodeIdentity = immutable.Some(ident)
-	return nil
-}
-
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {

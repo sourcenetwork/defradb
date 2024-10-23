@@ -115,6 +115,7 @@ func init() {
 		// mutation type.
 		mutationType = CollectionSaveMutationType
 	}
+	mutationType = GQLRequestMutationType
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
 		viewType = ViewType(value)
@@ -412,9 +413,6 @@ func performAction(
 
 	case GetNodeIdentity:
 		performGetNodeIdentityAction(s, action)
-
-	case AssignNodeIdentity:
-		performAssignNodeIdentityAction(s, action)
 
 	case SetupComplete:
 		// no-op, just continue.
@@ -2437,15 +2435,4 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
 	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
-}
-
-func performAssignNodeIdentityAction(s *state, action AssignNodeIdentity) {
-	if action.NodeID >= len(s.nodes) {
-		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
-	}
-
-	ident := getIdentity(s, action.Identity)
-
-	err := s.nodes[action.NodeID].AssignNodeIdentity(s.ctx, ident)
-	require.NoError(s.t, err, s.testCase.Description)
 }
