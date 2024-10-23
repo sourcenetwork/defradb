@@ -36,7 +36,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var rep client.Replicator
+	var rep client.ReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -56,7 +56,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	var rep client.Replicator
+	var rep client.ReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -152,6 +152,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	replicatorSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/replicator",
 	}
+	replicatorParamsSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/replicator_params",
+	}
 
 	peerInfoResponse := openapi3.NewResponse().
 		WithDescription("Peer network info").
@@ -178,7 +181,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 
 	replicatorRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorParamsSchema))
 
 	setReplicator := openapi3.NewOperation()
 	setReplicator.Description = "Add peer replicators"
