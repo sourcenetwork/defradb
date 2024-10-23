@@ -13,18 +13,12 @@ package cli
 import (
 	"encoding/hex"
 	"fmt"
-	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
-
-func getDefaultNodeIdentityDuration() time.Duration {
-	return time.Hour * 24 * 365 * 10 // 10 years
-}
 
 func MakeNodeIdentityAssignCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -53,14 +47,6 @@ Example to assign an identity to the node:
 			}
 			privKey := secp256k1.PrivKeyFromBytes(data)
 			identity, err := acpIdentity.FromPrivateKey(privKey)
-			if err != nil {
-				return err
-			}
-			err = identity.UpdateToken(
-				getDefaultNodeIdentityDuration(),
-				immutable.Some(cfg.GetString("api.address")),
-				immutable.None[string](),
-			)
 			if err != nil {
 				return err
 			}

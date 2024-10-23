@@ -188,11 +188,11 @@ func setContextRootDir(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
 	if rootdir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
 		rootdir = filepath.Join(home, ".defradb")
 	}
 	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)

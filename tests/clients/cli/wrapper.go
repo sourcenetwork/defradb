@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 
@@ -581,9 +582,14 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) AssignNodeIdentity(ctx context.Context, ident identity.Identity) error {
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	if err != nil {
+		return err
+	}
+
 	privateKeyHex := hex.EncodeToString(ident.PrivateKey.Serialize())
 	args := []string{"client", "node-identity", "assign", privateKeyHex}
 
-	_, err := w.cmd.execute(ctx, args)
+	_, err = w.cmd.execute(ctx, args)
 	return err
 }
