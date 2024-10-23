@@ -38,7 +38,7 @@ const (
 	retryTimeout = 10 * time.Second
 )
 
-func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *db) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -85,9 +85,9 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	var collections []client.Collection
 	switch {
-	case len(rep.Schemas) > 0:
+	case len(rep.Collections) > 0:
 		// if specific collections are chosen get them by name
-		for _, name := range rep.Schemas {
+		for _, name := range rep.Collections {
 			col, err := db.GetCollectionByName(ctx, name)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
@@ -210,7 +210,7 @@ func (db *db) getDocsHeads(
 	return updateChan
 }
 
-func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *db) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -247,9 +247,9 @@ func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error
 	}
 
 	var collections []client.Collection
-	if len(rep.Schemas) > 0 {
+	if len(rep.Collections) > 0 {
 		// if specific collections are chosen get them by name
-		for _, name := range rep.Schemas {
+		for _, name := range rep.Collections {
 			col, err := db.GetCollectionByName(ctx, name)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
@@ -277,7 +277,7 @@ func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error
 
 	// Persist the replicator to the store, deleting it if no schemas remain
 	key := core.NewReplicatorKey(rep.Info.ID.String())
-	if len(rep.Schemas) == 0 {
+	if len(rep.Collections) == 0 {
 		err := txn.Peerstore().Delete(ctx, key.ToDS())
 		if err != nil {
 			return err
