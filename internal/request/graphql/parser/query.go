@@ -25,18 +25,18 @@ func parseQueryOperationDefinition(
 	collectedFields map[string][]*ast.Field,
 ) (*request.OperationDefinition, []error) {
 	var selections []request.Selection
-	for name, fields := range collectedFields {
-		for _, node := range fields {
+	for _, fields := range collectedFields {
+		for _, field := range fields {
 			var parsedSelection request.Selection
-			if _, isCommitQuery := request.CommitQueries[name]; isCommitQuery {
-				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), node)
+			if _, isCommitQuery := request.CommitQueries[field.Name.Value]; isCommitQuery {
+				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), field)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
-			} else if _, isAggregate := request.Aggregates[name]; isAggregate {
-				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), node)
+			} else if _, isAggregate := request.Aggregates[field.Name.Value]; isAggregate {
+				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), field)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -56,7 +56,7 @@ func parseQueryOperationDefinition(
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(exe, exe.Schema.QueryType(), node)
+				parsed, err := parseSelect(exe, exe.Schema.QueryType(), field)
 				if err != nil {
 					return nil, []error{err}
 				}
