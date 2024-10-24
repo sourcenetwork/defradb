@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	identity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
 // identRef is a type that refers to a specific identity of a certain type.
@@ -54,16 +53,16 @@ func NodeIdentity(index int) identRef {
 	}
 }
 
-// identityHolder holds an identity and the generated tokens for each node.
+// identityHolder holds an identity and the generated tokens for each target node.
 // This is used to cache the generated tokens for each node.
 type identityHolder struct {
 	// Identity is the identity.
-	Identity identity.Identity
+	Identity acpIdentity.Identity
 	// NodeTokens is a map of node index to the generated token for that node.
 	NodeTokens map[int]string
 }
 
-func newIdentityHolder(ident identity.Identity) *identityHolder {
+func newIdentityHolder(ident acpIdentity.Identity) *identityHolder {
 	return &identityHolder{
 		Identity:   ident,
 		NodeTokens: make(map[int]string),
@@ -134,7 +133,7 @@ func getContextWithIdentity(ctx context.Context, s *state, ref identRef, nodeInd
 		return ctx
 	}
 	ident := getIdentityForRequest(s, ref, nodeIndex)
-	return identity.WithContext(ctx, immutable.Some(ident))
+	return acpIdentity.WithContext(ctx, immutable.Some(ident))
 }
 
 func getIdentityDID(s *state, ident identRef) string {

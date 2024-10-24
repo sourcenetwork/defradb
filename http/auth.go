@@ -18,7 +18,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
@@ -70,7 +69,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := identity.WithContext(req.Context(), immutable.Some(ident))
+		ctx := acpIdentity.WithContext(req.Context(), immutable.Some(ident))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
