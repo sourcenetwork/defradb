@@ -77,9 +77,9 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return info
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	args := []string{"client", "p2p", "replicator", "set"}
-	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
+	args = append(args, "--collection", strings.Join(rep.Collections, ","))
 
 	info, err := json.Marshal(rep.Info)
 	if err != nil {
@@ -91,9 +91,9 @@ func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) erro
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
-	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
+	args = append(args, "--collection", strings.Join(rep.Collections, ","))
 
 	info, err := json.Marshal(rep.Info)
 	if err != nil {
