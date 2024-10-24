@@ -69,23 +69,23 @@ func (_c *EncodedDocument_ID_Call) RunAndReturn(run func() []byte) *EncodedDocum
 }
 
 // Properties provides a mock function with given fields: onlyFilterProps
-func (_m *EncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]interface{}, error) {
+func (_m *EncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinitionKey]interface{}, error) {
 	ret := _m.Called(onlyFilterProps)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Properties")
 	}
 
-	var r0 map[client.FieldDefinition]interface{}
+	var r0 map[client.FieldDefinitionKey]interface{}
 	var r1 error
-	if rf, ok := ret.Get(0).(func(bool) (map[client.FieldDefinition]interface{}, error)); ok {
+	if rf, ok := ret.Get(0).(func(bool) (map[client.FieldDefinitionKey]interface{}, error)); ok {
 		return rf(onlyFilterProps)
 	}
-	if rf, ok := ret.Get(0).(func(bool) map[client.FieldDefinition]interface{}); ok {
+	if rf, ok := ret.Get(0).(func(bool) map[client.FieldDefinitionKey]interface{}); ok {
 		r0 = rf(onlyFilterProps)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[client.FieldDefinition]interface{})
+			r0 = ret.Get(0).(map[client.FieldDefinitionKey]interface{})
 		}
 	}
 
@@ -116,12 +116,12 @@ func (_c *EncodedDocument_Properties_Call) Run(run func(onlyFilterProps bool)) *
 	return _c
 }
 
-func (_c *EncodedDocument_Properties_Call) Return(_a0 map[client.FieldDefinition]interface{}, _a1 error) *EncodedDocument_Properties_Call {
+func (_c *EncodedDocument_Properties_Call) Return(_a0 map[client.FieldDefinitionKey]interface{}, _a1 error) *EncodedDocument_Properties_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *EncodedDocument_Properties_Call) RunAndReturn(run func(bool) (map[client.FieldDefinition]interface{}, error)) *EncodedDocument_Properties_Call {
+func (_c *EncodedDocument_Properties_Call) RunAndReturn(run func(bool) (map[client.FieldDefinitionKey]interface{}, error)) *EncodedDocument_Properties_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -110,6 +110,15 @@ func (def CollectionDefinition) GetName() string {
 	return def.Schema.Name
 }
 
+// FieldDefinitionKey is used a map key to uniquely identify a FieldDefinition.
+type FieldDefinitionKey struct {
+	// Name contains the name of the field.
+	Name string
+
+	// ID contains the local, internal ID to the field.
+	ID FieldID
+}
+
 // FieldDefinition describes the combined local and global set of properties that constitutes
 // a field on a collection.
 //
@@ -188,6 +197,14 @@ func NewSchemaOnlyFieldDefinition(global SchemaFieldDescription) FieldDefinition
 		Name: global.Name,
 		Kind: global.Kind,
 		Typ:  global.Typ,
+	}
+}
+
+// Key returns the FieldDefinitionKey for this FieldDefinition.
+func (f FieldDefinition) Key() FieldDefinitionKey {
+	return FieldDefinitionKey{
+		ID:   f.ID,
+		Name: f.Name,
 	}
 }
 

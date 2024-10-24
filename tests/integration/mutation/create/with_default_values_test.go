@@ -31,7 +31,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
-						metadata: JSON @default(json: "{\"one\":1}")
+						metadata: JSON @default(json: {tree: "oak"})
 						image: Blob @default(blob: "ff0099")
 					}
 				`,
@@ -60,7 +60,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 							"name":     "Bob",
 							"points":   float64(10),
 							"created":  time.Time(time.Date(2000, time.July, 23, 3, 0, 0, 0, time.UTC)),
-							"metadata": "{\"one\":1}",
+							"metadata": map[string]any{"tree": "oak"},
 							"image":    "ff0099",
 						},
 					},
@@ -84,7 +84,7 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
-						metadata: JSON @default(json: "{\"one\":1}")
+						metadata: JSON @default(json: {tree: "oak"})
 						image: Blob @default(blob: "ff0099")
 					}
 				`,
@@ -144,7 +144,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
-						metadata: JSON @default(json: "{\"one\":1}")
+						metadata: JSON @default(json: {tree: "oak"})
 						image: Blob @default(blob: "ff0099")
 					}
 				`,
@@ -156,7 +156,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 					"name":     "Alice",
 					"points":   float64(5),
 					"created":  time.Time(time.Date(2024, time.June, 18, 1, 0, 0, 0, time.UTC)),
-					"metadata": "{\"two\":2}",
+					"metadata": map[string]any{"tree": "maple"},
 					"image":    "aabb33",
 				},
 			},
@@ -180,7 +180,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 							"name":     "Alice",
 							"points":   float64(5),
 							"created":  time.Time(time.Date(2024, time.June, 18, 1, 0, 0, 0, time.UTC)),
-							"metadata": "{\"two\":2}",
+							"metadata": map[string]any{"tree": "maple"},
 							"image":    "aabb33",
 						},
 					},
