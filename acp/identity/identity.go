@@ -50,72 +50,22 @@ type Identity struct {
 }
 
 // FromPrivateKey returns a new identity using the given private key.
-//
-//   - duration: The [time.Duration] that this identity is valid for.
-//   - audience: The audience that this identity is valid for.  This is required
-//     by the Defra http client.  For example `github.com/sourcenetwork/defradb`
-//   - authorizedAccount: An account that this identity is authorizing to make
-//     SourceHub calls on behalf of this actor.  This is currently required when
-//     using SourceHub ACP.
-//   - skipTokenGeneration: If true, BearerToken will not be set.  This parameter is
-//     provided as generating and signing the token is relatively slow, and only required
-//     by remote Defra clients (CLI, http), or if using SourceHub ACP.
-func FromPrivateKey(
-	privateKey *secp256k1.PrivateKey,
-	duration time.Duration,
-	audience immutable.Option[string],
-	authorizedAccount immutable.Option[string],
-	skipTokenGeneration bool,
-) (Identity, error) {
+// In order to generate a fresh token for this identity, use the [UpdateToken]
+func FromPrivateKey(privateKey *secp256k1.PrivateKey) (Identity, error) {
 	publicKey := privateKey.PubKey()
 	did, err := DIDFromPublicKey(publicKey)
 	if err != nil {
 		return Identity{}, err
 	}
 
-	var signedToken []byte
-	if !skipTokenGeneration {
-		subject := hex.EncodeToString(publicKey.SerializeCompressed())
-		now := time.Now()
-
-		jwtBuilder := jwt.NewBuilder()
-		jwtBuilder = jwtBuilder.Subject(subject)
-		jwtBuilder = jwtBuilder.Expiration(now.Add(duration))
-		jwtBuilder = jwtBuilder.NotBefore(now)
-		jwtBuilder = jwtBuilder.Issuer(did)
-		jwtBuilder = jwtBuilder.IssuedAt(now)
-
-		if audience.HasValue() {
-			jwtBuilder = jwtBuilder.Audience([]string{audience.Value()})
-		}
-
-		token, err := jwtBuilder.Build()
-		if err != nil {
-			return Identity{}, err
-		}
-
-		if authorizedAccount.HasValue() {
-			err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
-			if err != nil {
-				return Identity{}, err
-			}
-		}
-
-		signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, privateKey.ToECDSA()))
-		if err != nil {
-			return Identity{}, err
-		}
-	}
-
 	return Identity{
-		DID:         did,
-		PrivateKey:  privateKey,
-		PublicKey:   publicKey,
-		BearerToken: string(signedToken),
+		DID:        did,
+		PrivateKey: privateKey,
+		PublicKey:  publicKey,
 	}, nil
 }
 
-// FromToken constructs a new `Indentity` from a bearer token.
+// FromToken constructs a new `Identity` from a bearer token.
 func FromToken(data []byte) (Identity, error) {
 	token, err := jwt.Parse(data, jwt.WithVerify(false))
 	if err != nil {
@@ -157,4 +107,58 @@ func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (str
 		return "", newErrDIDCreation(err, "secp256k1", bytes)
 	}
 	return did.String(), nil
+}
+
+// IntoRawIdentity converts an `Identity` into a `RawIdentity`.
+func (identity Identity) IntoRawIdentity() RawIdentity {
+	return newRawIdentity(identity.PrivateKey, identity.PublicKey, identity.DID)
+}
+
+// UpdateToken updates the `BearerToken` field of the `Identity`.
+//
+//   - duration: The [time.Duration] that this identity is valid for.
+//   - audience: The audience that this identity is valid for.  This is required
+//     by the Defra http client.  For example `github.com/sourcenetwork/defradb`
+//   - authorizedAccount: An account that this identity is authorizing to make
+//     SourceHub calls on behalf of this actor.  This is currently required when
+//     using SourceHub ACP.
+func (identity *Identity) UpdateToken(
+	duration time.Duration,
+	audience immutable.Option[string],
+	authorizedAccount immutable.Option[string],
+) error {
+	var signedToken []byte
+	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
+	now := time.Now()
+
+	jwtBuilder := jwt.NewBuilder()
+	jwtBuilder = jwtBuilder.Subject(subject)
+	jwtBuilder = jwtBuilder.Expiration(now.Add(duration))
+	jwtBuilder = jwtBuilder.NotBefore(now)
+	jwtBuilder = jwtBuilder.Issuer(identity.DID)
+	jwtBuilder = jwtBuilder.IssuedAt(now)
+
+	if audience.HasValue() {
+		jwtBuilder = jwtBuilder.Audience([]string{audience.Value()})
+	}
+
+	token, err := jwtBuilder.Build()
+	if err != nil {
+		return err
+	}
+
+	if authorizedAccount.HasValue() {
+		err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
+		if err != nil {
+			return err
+		}
+	}
+
+	signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, identity.PrivateKey.ToECDSA()))
+	if err != nil {
+		return err
+	}
+
+	identity.BearerToken = string(signedToken)
+	return nil
 }

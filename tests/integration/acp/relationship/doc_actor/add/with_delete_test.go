@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +91,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,7 +104,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -126,7 +124,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not delete yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not delete yet.
 
 				DocID: 0,
 
@@ -134,9 +132,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -148,9 +146,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -176,7 +174,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -240,7 +238,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -253,7 +251,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -273,7 +271,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not delete yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not delete yet.
 
 				DocID: 0,
 
@@ -281,9 +279,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -295,7 +293,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can now read.
+				Identity: testUtils.UserIdentity(2), // This identity can now read.
 
 				Request: `
 					query {
@@ -321,13 +319,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can now delete.
+				Identity: testUtils.UserIdentity(2), // This identity can now delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Check if actually deleted.
+				Identity: testUtils.UserIdentity(2), // Check if actually deleted.
 
 				Request: `
 					query {
@@ -359,7 +357,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -423,7 +421,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -436,9 +434,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -450,7 +448,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1), // Owner can still also delete (ownership not transferred)
+				Identity: testUtils.UserIdentity(1), // Owner can still also delete (ownership not transferred)
 
 				Request: `
 					query {
@@ -476,13 +474,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1), // Owner can still also delete.
+				Identity: testUtils.UserIdentity(1), // Owner can still also delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1), // Check if actually deleted.
+				Identity: testUtils.UserIdentity(1), // Check if actually deleted.
 
 				Request: `
 					query {

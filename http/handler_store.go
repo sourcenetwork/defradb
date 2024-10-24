@@ -342,6 +342,17 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	identity, err := db.GetNodeIdentity(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, identity)
+}
+
 func (h *storeHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -372,6 +383,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
+	}
+	identitySchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/identity",
 	}
 
 	graphQLResponseSchema := openapi3.NewObjectSchema().
@@ -518,13 +532,13 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchCollection.Responses.Set("200", successResponse)
 	patchCollection.Responses.Set("400", errorResponse)
 
-	collectionDefintionsSchema := openapi3.NewArraySchema()
-	collectionDefintionsSchema.Items = collectionDefinitionSchema
+	collectionDefinitionsSchema := openapi3.NewArraySchema()
+	collectionDefinitionsSchema.Items = collectionDefinitionSchema
 
 	addViewResponseSchema := openapi3.NewOneOfSchema()
 	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
 		collectionDefinitionSchema,
-		openapi3.NewSchemaRef("", collectionDefintionsSchema),
+		openapi3.NewSchemaRef("", collectionDefinitionsSchema),
 	}
 
 	addViewResponse := openapi3.NewResponse().
@@ -629,6 +643,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	debugDump.Responses.Set("200", successResponse)
 	debugDump.Responses.Set("400", errorResponse)
 
+	identityResponse := openapi3.NewResponse().
+		WithDescription("Identity").
+		WithJSONSchemaRef(identitySchema)
+
+	nodeIdentity := openapi3.NewOperation()
+	nodeIdentity.OperationID = "node_identity"
+	nodeIdentity.Description = "Get node's public identity"
+	nodeIdentity.Tags = []string{"node", "identity"}
+	nodeIdentity.AddResponse(200, identityResponse)
+	nodeIdentity.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
@@ -643,4 +668,5 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/schema", http.MethodGet, schemaDescribe, h.GetSchema)
 	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

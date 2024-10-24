@@ -29,7 +29,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +93,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,7 +106,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(3), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -124,9 +124,9 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -138,9 +138,9 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			},
 
 			testUtils.AddDocActorRelationship{ // Admin makes another actor a reader
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -152,7 +152,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // The other actor can read
+				Identity: testUtils.UserIdentity(3), // The other actor can read
 
 				Request: `
 					query {
@@ -178,7 +178,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(3), // The other actor can not update
+				Identity: testUtils.UserIdentity(3), // The other actor can not update
 
 				DocID: 0,
 
@@ -194,7 +194,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(3), // The other actor can not delete
+				Identity: testUtils.UserIdentity(3), // The other actor can not delete
 
 				DocID: 0,
 
@@ -216,7 +216,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -280,7 +280,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -293,7 +293,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(3), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -311,9 +311,9 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -325,9 +325,9 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			},
 
 			testUtils.AddDocActorRelationship{ // Admin makes another actor a writer
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -341,7 +341,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(3), // The other actor can update
+				Identity: testUtils.UserIdentity(3), // The other actor can update
 
 				DocID: 0,
 
@@ -353,7 +353,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // The other actor can read
+				Identity: testUtils.UserIdentity(3), // The other actor can read
 
 				Request: `
 					query {
@@ -379,13 +379,13 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(3), // The other actor can delete
+				Identity: testUtils.UserIdentity(3), // The other actor can delete
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3),
+				Identity: testUtils.UserIdentity(3),
 
 				Request: `
 					query {
@@ -417,7 +417,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -481,7 +481,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -494,7 +494,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity (to be manager) can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
 					query {
@@ -512,9 +512,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -526,9 +526,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager makes itself a reader
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -540,7 +540,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Manager can read now
+				Identity: testUtils.UserIdentity(2), // Manager can read now
 
 				Request: `
 					query {
@@ -566,7 +566,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager still can't update
+				Identity: testUtils.UserIdentity(2), // Manager still can't update
 
 				DocID: 0,
 
@@ -582,7 +582,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager still can't delete
+				Identity: testUtils.UserIdentity(2), // Manager still can't delete
 
 				DocID: 0,
 
@@ -609,7 +609,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -674,7 +674,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -687,7 +687,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity (to be manager) can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
 					query {
@@ -707,7 +707,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager can't update yet.
+				Identity: testUtils.UserIdentity(2), // Manager can't update yet.
 
 				DocID: 0,
 
@@ -723,7 +723,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager can't delete yet.
+				Identity: testUtils.UserIdentity(2), // Manager can't delete yet.
 
 				DocID: 0,
 
@@ -731,9 +731,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -745,9 +745,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager makes itself a writer
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -760,9 +760,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 
 			// Note: It is not neccesary to make itself a reader, as becoming a writer allows reading.
 			testUtils.AddDocActorRelationship{ // Manager makes itself a reader
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -776,7 +776,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager can now update.
+				Identity: testUtils.UserIdentity(2), // Manager can now update.
 
 				DocID: 0,
 
@@ -788,7 +788,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Manager can read now
+				Identity: testUtils.UserIdentity(2), // Manager can read now
 
 				Request: `
 					query {
@@ -814,13 +814,13 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager can now delete.
+				Identity: testUtils.UserIdentity(2), // Manager can now delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Make sure manager was able to delete the document.
+				Identity: testUtils.UserIdentity(2), // Make sure manager was able to delete the document.
 
 				Request: `
 					query {
@@ -857,7 +857,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -921,7 +921,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -934,9 +934,9 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -948,9 +948,9 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a writer
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -962,7 +962,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(3), // The other actor can't read
+				Identity: testUtils.UserIdentity(3), // The other actor can't read
 
 				Request: `
 					query {
@@ -982,7 +982,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(3), // The other actor can not update
+				Identity: testUtils.UserIdentity(3), // The other actor can not update
 
 				DocID: 0,
 
@@ -998,7 +998,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(3), // The other actor can not delete
+				Identity: testUtils.UserIdentity(3), // The other actor can not delete
 
 				DocID: 0,
 
@@ -1025,7 +1025,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -1089,7 +1089,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -1102,9 +1102,9 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -1116,7 +1116,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Manager can not read
+				Identity: testUtils.UserIdentity(2), // Manager can not read
 
 				Request: `
 					query {
@@ -1136,7 +1136,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager can not update.
+				Identity: testUtils.UserIdentity(2), // Manager can not update.
 
 				DocID: 0,
 
@@ -1152,7 +1152,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // Manager can not delete.
+				Identity: testUtils.UserIdentity(2), // Manager can not delete.
 
 				DocID: 0,
 
@@ -1160,9 +1160,9 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager can manage only.
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.UserIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 
@@ -1188,7 +1188,7 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -1252,7 +1252,7 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -1265,9 +1265,9 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 2, // This identity can not manage as not an admin yet
+				RequestorIdentity: testUtils.UserIdentity(2), // This identity can not manage as not an admin yet
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.UserIdentity(3),
 
 				CollectionID: 0,
 

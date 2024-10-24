@@ -34,7 +34,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -98,7 +98,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -112,9 +112,9 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 
 			// Give access to the other actor to update and read the document.
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -128,7 +128,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can update.
+				Identity: testUtils.UserIdentity(2), // This identity can update.
 
 				DocID: 0,
 
@@ -141,7 +141,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 
 			// Ensure the other identity can read and update the document.
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can also read.
+				Identity: testUtils.UserIdentity(2), // This identity can also read.
 
 				Request: `
 					query {
@@ -163,9 +163,9 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to update (and read) the document.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -178,7 +178,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 
 			// The other identity can neither update nor read the other document anymore.
 			testUtils.Request{
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				Request: `
 					query {
@@ -197,7 +197,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 
@@ -212,7 +212,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 
 			// Ensure document was not accidentally updated using owner identity.
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Request: `
 					query {
@@ -253,7 +253,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -317,7 +317,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -331,9 +331,9 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 
 			// Give access to the other actor to update and read the document.
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -347,7 +347,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can update.
+				Identity: testUtils.UserIdentity(2), // This identity can update.
 
 				DocID: 0,
 
@@ -360,7 +360,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 
 			// Ensure the other identity can read and update the document.
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can also read.
+				Identity: testUtils.UserIdentity(2), // This identity can also read.
 
 				Request: `
 					query {
@@ -382,9 +382,9 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to update (and read) the document.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -397,7 +397,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 
 			// The other identity can neither update nor read the other document anymore.
 			testUtils.Request{
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				Request: `
 					query {
@@ -416,7 +416,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 
@@ -431,7 +431,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 
 			// Ensure document was not accidentally updated using owner identity.
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Request: `
 					query {

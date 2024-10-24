@@ -7,7 +7,7 @@ Add new relationship
 Add new relationship
 
 To share a document (or grant a more restricted access) with another actor, we must add a relationship between the
-actor and the document. Inorder to make the relationship we require all of the following:
+actor and the document. In order to make the relationship we require all of the following:
 1) Target DocID: The docID of the document we want to make a relationship for.
 2) Collection Name: The name of the collection that has the Target DocID.
 3) Relation Name: The type of relation (name must be defined within the linked policy on collection).
@@ -18,7 +18,7 @@ Notes:
   - ACP must be available (i.e. ACP can not be disabled).
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
-  - If the specified relation was not granted the miminum DPI permissions (read or write) within the policy,
+  - If the specified relation was not granted the minimum DPI permissions (read or write) within the policy,
   and a relationship is formed, the subject/actor will still not be able to access (read or write) the resource.
   - Learn more about [ACP & DPI Rules](/acp/README.md)
 
@@ -30,7 +30,7 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 
-Example: Creating a dummy relationship does nothing (from database prespective):
+Example: Creating a dummy relationship does nothing (from database perspective):
   defradb client acp relationship add \
 	-c Users \
 	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \

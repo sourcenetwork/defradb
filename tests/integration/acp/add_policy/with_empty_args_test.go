@@ -13,8 +13,6 @@ package test_acp_add_policy
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +23,7 @@ func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: "",
 
@@ -44,7 +42,7 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.None[int](),
+				Identity: testUtils.NoIdentity(),
 
 				Policy: `
                     name: test
@@ -83,7 +81,7 @@ func TestACP_AddPolicy_EmptyCreatorAndPolicyArgs_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.None[int](),
+				Identity: testUtils.NoIdentity(),
 
 				Policy: "",
 

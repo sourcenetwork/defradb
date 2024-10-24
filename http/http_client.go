@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 
@@ -48,7 +49,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	if ok {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
-	id := db.GetContextIdentity(req.Context())
+	id := identity.FromContext(req.Context())
 	if !id.HasValue() {
 		return nil
 	}

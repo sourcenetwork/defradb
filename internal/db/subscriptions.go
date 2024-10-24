@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/event"
@@ -65,9 +66,8 @@ func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 
 			ctx := SetContextTxn(ctx, txn)
-			identity := GetContextIdentity(ctx)
 
-			p := planner.New(ctx, identity, db.acp, db, txn)
+			p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
 			s := subRequest.ToSelect(evt.DocID, evt.Cid.String())
 
 			result, err := p.RunSelection(ctx, s)

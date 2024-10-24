@@ -28,13 +28,10 @@ func TestVerifyAuthToken(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(
-		privKey,
-		time.Hour,
-		immutable.Some(audience),
-		immutable.None[string](),
-		false,
-	)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some(audience), immutable.None[string]())
 	require.NoError(t, err)
 
 	err = verifyAuthToken(identity, audience)
@@ -45,13 +42,10 @@ func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(
-		privKey,
-		time.Hour,
-		immutable.Some("valid"),
-		immutable.None[string](),
-		false,
-	)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("valid"), immutable.None[string]())
 	require.NoError(t, err)
 
 	err = verifyAuthToken(identity, "invalid")
@@ -64,14 +58,11 @@ func TestVerifyAuthTokenErrorsWithExpired(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(
-		privKey,
-		// negative expiration
-		-time.Hour,
-		immutable.Some(audience),
-		immutable.None[string](),
-		false,
-	)
+	identity, err := acpIdentity.FromPrivateKey(privKey)
+	require.NoError(t, err)
+
+	// negative expiration
+	err = identity.UpdateToken(-time.Hour, immutable.Some(audience), immutable.None[string]())
 	require.NoError(t, err)
 
 	err = verifyAuthToken(identity, "123abc")

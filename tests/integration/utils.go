@@ -115,6 +115,7 @@ func init() {
 		// mutation type.
 		mutationType = CollectionSaveMutationType
 	}
+	mutationType = GQLRequestMutationType
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
 		viewType = ViewType(value)
@@ -141,7 +142,7 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 	}
 
 	if httpClient || cliClient {
-		// The http / cli client will return an error instead of panicing at the moment.
+		// The http / cli client will return an error instead of panicking at the moment.
 		t.Skip("Assert panic with the http client is not currently supported.")
 	}
 
@@ -410,6 +411,9 @@ func performAction(
 	case CreatePredefinedDocs:
 		generatePredefinedDocs(s, action)
 
+	case GetNodeIdentity:
+		performGetNodeIdentityAction(s, action)
+
 	case SetupComplete:
 		// no-op, just continue.
 
@@ -543,7 +547,7 @@ func getCollectionNames(testCase TestCase) []string {
 func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
 	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
 	splitByType := strings.Split(schema, "type ")
-	// Skip the first, as that preceeds `type ` if `type ` is present,
+	// Skip the first, as that precede `type ` if `type ` is present,
 	// else there are no types.
 	for i := 1; i < len(splitByType); i++ {
 		wipSplit := strings.TrimLeft(splitByType[i], " ")
@@ -688,7 +692,7 @@ ActionLoop:
 		} else {
 			// if we don't have any non-mutation actions and the change detector is enabled
 			// skip this test as we will not gain anything from running (change detector would
-			// run an idential profile to a normal test run)
+			// run an identical profile to a normal test run)
 			t.Skipf("no actions to execute")
 		}
 	}
@@ -739,7 +743,7 @@ func startNodes(s *state, action Start) {
 		}
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s)
+		node, _, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))))
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 
@@ -757,7 +761,7 @@ func startNodes(s *state, action Start) {
 		}
 
 		// We need to make sure the node is configured with its old address, otherwise
-		// a new one may be selected and reconnnection to it will fail.
+		// a new one may be selected and reconnection to it will fail.
 		var addresses []string
 		for _, addr := range s.nodeAddresses[nodeIndex].Addrs {
 			addresses = append(addresses, addr.String())
@@ -817,8 +821,8 @@ func refreshCollections(
 					if _, ok := s.collectionIndexesByRoot[collection.Description().RootID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
-						// we still wish to preserve the original index so test maintainers can refrence
-						// them in a convienient manner.
+						// we still wish to preserve the original index so test maintainers can reference
+						// them in a convenient manner.
 						s.collectionIndexesByRoot[collection.Description().RootID] = i
 					}
 					break
@@ -858,7 +862,9 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	node, path, err := setupNode(s, nodeOpts...) //disable change dector, or allow it?
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
+
+	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
 
 	s.nodeAddresses = append(s.nodeAddresses, node.Peer.PeerInfo())
@@ -1305,8 +1311,7 @@ func createDocViaColSave(
 }
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx = db.SetContextIdentity(ctx, identity)
+	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
 	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
 }
@@ -1385,7 +1390,7 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := db.SetContextIdentity(db.SetContextTxn(s.ctx, txn), getIdentity(s, nodeIndex, action.Identity))
+	ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1439,8 +1444,7 @@ func deleteDoc(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		identity := getIdentity(s, nodeID, action.Identity)
-		ctx := db.SetContextIdentity(s.ctx, identity)
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1513,8 +1517,7 @@ func updateDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
+	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1534,8 +1537,7 @@ func updateDocViaColUpdate(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
+	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
 
 	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
@@ -1571,8 +1573,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	identity := getIdentity(s, nodeIndex, action.Identity)
-	ctx := db.SetContextIdentity(s.ctx, identity)
+	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1590,8 +1591,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.collections[nodeID][action.CollectionID]
-		identity := getIdentity(s, nodeID, action.Identity)
-		ctx := db.SetContextIdentity(s.ctx, identity)
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1832,9 +1832,7 @@ func executeRequest(
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
-		ctx := db.SetContextTxn(s.ctx, txn)
-		identity := getIdentity(s, nodeID, action.Identity)
-		ctx = db.SetContextIdentity(ctx, identity)
+		ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {
@@ -2316,10 +2314,10 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfACPTypeUnsupported(t testing.TB, supporteACPTypes immutable.Option[[]ACPType]) {
-	if supporteACPTypes.HasValue() {
+func skipIfACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]ACPType]) {
+	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
-		for _, supportedType := range supporteACPTypes.Value() {
+		for _, supportedType := range supportedACPTypes.Value() {
 			if supportedType == acpType {
 				isTypeSupported = true
 				break
@@ -2335,13 +2333,13 @@ func skipIfACPTypeUnsupported(t testing.TB, supporteACPTypes immutable.Option[[]
 func skipIfDatabaseTypeUnsupported(
 	t testing.TB,
 	databases []DatabaseType,
-	supporteDatabaseTypes immutable.Option[[]DatabaseType],
+	supportedDatabaseTypes immutable.Option[[]DatabaseType],
 ) []DatabaseType {
-	if !supporteDatabaseTypes.HasValue() {
+	if !supportedDatabaseTypes.HasValue() {
 		return databases
 	}
 	filteredDatabases := []DatabaseType{}
-	for _, supportedType := range supporteDatabaseTypes.Value() {
+	for _, supportedType := range supportedDatabaseTypes.Value() {
 		for _, database := range databases {
 			if supportedType == database {
 				filteredDatabases = append(filteredDatabases, database)
@@ -2424,4 +2422,17 @@ func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.
 		}
 		return []*client.Document{val}, nil
 	}
+}
+
+func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
+	if action.NodeID >= len(s.nodes) {
+		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
+	}
+
+	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
+	require.NoError(s.t, err, s.testCase.Description)
+
+	expectedIdent := getIdentity(s, action.ExpectedIdentity)
+	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
+	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }

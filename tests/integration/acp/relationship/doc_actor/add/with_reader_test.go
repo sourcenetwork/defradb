@@ -29,7 +29,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +93,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,7 +106,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -124,9 +124,9 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -138,9 +138,9 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -166,7 +166,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -230,7 +230,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -243,7 +243,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -261,9 +261,9 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -275,7 +275,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
+				Identity: testUtils.UserIdentity(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -315,7 +315,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -379,7 +379,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -392,9 +392,9 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -406,7 +406,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
+				Identity: testUtils.UserIdentity(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -430,7 +430,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1), // And so can the owner (ownership not transferred).
+				Identity: testUtils.UserIdentity(1), // And so can the owner (ownership not transferred).
 
 				Request: `
 					query {
@@ -473,7 +473,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -537,7 +537,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -550,7 +550,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -570,7 +570,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 
@@ -584,9 +584,9 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -598,7 +598,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
+				Identity: testUtils.UserIdentity(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -624,7 +624,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 			testUtils.UpdateDoc{ // But this actor still can't update.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 
@@ -652,7 +652,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -716,7 +716,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -729,7 +729,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -749,7 +749,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 			testUtils.DeleteDoc{ // Since it can't read, it can't delete either.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 
@@ -757,9 +757,9 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
@@ -771,7 +771,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
+				Identity: testUtils.UserIdentity(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -797,7 +797,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 			testUtils.DeleteDoc{ // But this actor still can't delete.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.UserIdentity(2),
 
 				DocID: 0,
 

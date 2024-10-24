@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -47,8 +48,7 @@ func (db *db) execRequest(ctx context.Context, request string, options *client.G
 	}
 
 	txn := mustGetContextTxn(ctx)
-	identity := GetContextIdentity(ctx)
-	planner := planner.New(ctx, identity, db.acp, db, txn)
+	planner := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {

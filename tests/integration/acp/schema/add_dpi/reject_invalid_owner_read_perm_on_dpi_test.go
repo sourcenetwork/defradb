@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -30,7 +28,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionOnDPI_SchemaRejected
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -115,7 +113,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredReadPermissionLabelOnDPI_SchemaRej
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -199,7 +197,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDPI_Sch
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -284,7 +282,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOn
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test
@@ -369,7 +367,7 @@ func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDPI_Schem
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				Policy: `
                     name: test

@@ -13,8 +13,6 @@ package test_acp_relationship_doc_actor_delete
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +32,7 @@ func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedE
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.UserIdentity(1),
 
 				CollectionID: 0,
 
@@ -47,9 +45,9 @@ func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedE
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.UserIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.UserIdentity(2),
 
 				CollectionID: 0,
 
