@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,6 +78,55 @@ func areResultsAnyOf(expected AnyOf, actual any) bool {
 		}
 	}
 	return false
+}
+
+// UniqueCid allows the referencing of Cids by an arbitrary test-defined ID.
+//
+// Instead of asserting on a specific Cid value, this type will assert that
+// no other [UniqueCid]s with different [ID]s has the first Cid value that this instance
+// describes.
+//
+// It will also ensure that all Cids described by this [UniqueCid] have the same
+// valid, Cid value.
+type UniqueCid struct {
+	// ID is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
+	ID any
+}
+
+var _ Validator = (*UniqueCid)(nil)
+
+// NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
+// id.
+//
+// All results described by [UniqueCid]s with the given id must have the same valid Cid value.
+// No other [UniqueCid] ids may describe the same Cid value.
+func NewUniqueCid(id any) *UniqueCid {
+	return &UniqueCid{
+		ID: id,
+	}
+}
+
+func (ucid *UniqueCid) Validate(s *state, actualValue any, msgAndArgs ...any) {
+	isNew := true
+	for id, value := range s.cids {
+		if id == ucid.ID {
+			require.Equal(s.t, value, actualValue)
+			isNew = false
+		} else {
+			require.NotEqual(s.t, value, actualValue, "UniqueCid must be unique!", msgAndArgs)
+		}
+	}
+
+	if isNew {
+		require.IsType(s.t, "", actualValue)
+
+		cid, err := cid.Decode(actualValue.(string))
+		if err != nil {
+			require.NoError(s.t, err)
+		}
+
+		s.cids[ucid.ID] = cid.String()
+	}
 }
 
 // areResultsEqual returns true if the expected and actual results are of equal value.
