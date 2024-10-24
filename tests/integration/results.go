@@ -23,22 +23,33 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// Validator instances can be substituted in place of concrete values
+// and will be asserted on using their [Validate] function instead of
+// asserting direct equality.
+//
+// They may mutate test state.
+type Validator interface {
+	Validate(s *state, actualValue any, msgAndArgs ...any)
+}
+
 // AnyOf may be used as `Results` field where the value may
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
 type AnyOf []any
 
-// assertResultsAnyOf asserts that actual result is equal to at least one of the expected results.
+var _ Validator = (AnyOf)(nil)
+
+// Validate asserts that actual result is equal to at least one of the expected results.
 //
 // The comparison is relaxed when using client types other than goClientType.
-func assertResultsAnyOf(t testing.TB, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
-	switch client {
+func (a AnyOf) Validate(s *state, actualValue any, msgAndArgs ...any) {
+	switch s.clientType {
 	case HTTPClientType, CLIClientType:
-		if !areResultsAnyOf(expected, actual) {
-			assert.Contains(t, expected, actual, msgAndArgs...)
+		if !areResultsAnyOf(a, actualValue) {
+			assert.Contains(s.t, a, actualValue, msgAndArgs...)
 		}
 	default:
-		assert.Contains(t, expected, actual, msgAndArgs...)
+		assert.Contains(s.t, a, actualValue, msgAndArgs...)
 	}
 }
 
