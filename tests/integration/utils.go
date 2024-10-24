@@ -2022,8 +2022,10 @@ func assertRequestResults(
 				actualDocs,
 				stack,
 			)
-		case AnyOf:
-			assertResultsAnyOf(s.t, s.clientType, exp, actual)
+
+		case Validator:
+			exp.Validate(s, actual)
+
 		default:
 			assertResultsEqual(
 				s.t,
@@ -2067,9 +2069,12 @@ func assertRequestResultDocs(
 
 		for field, actualValue := range actualDoc {
 			stack.pushMap(field)
+			pathInfo := fmt.Sprintf("node: %v, path: %s", nodeID, stack)
+
 			switch expectedValue := expectedDoc[field].(type) {
-			case AnyOf:
-				assertResultsAnyOf(s.t, s.clientType, expectedValue, actualValue)
+			case Validator:
+				expectedValue.Validate(s, actualValue, pathInfo)
+
 			case DocIndex:
 				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
 				assertResultsEqual(
@@ -2077,7 +2082,7 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedDocID,
 					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+					pathInfo,
 				)
 			case []map[string]any:
 				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
@@ -2096,7 +2101,7 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedValue,
 					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+					pathInfo,
 				)
 			}
 			stack.pop()
