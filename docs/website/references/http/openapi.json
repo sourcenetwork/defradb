@@ -538,6 +538,29 @@
                 },
                 "type": "object"
             },
+            "replicator_params": {
+                "properties": {
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Info": {
+                        "properties": {
+                            "Addrs": {
+                                "items": {},
+                                "type": "array"
+                            },
+                            "ID": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "schema": {
                 "properties": {
                     "Fields": {
@@ -1842,7 +1865,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator"
+                                "$ref": "#/components/schemas/replicator_params"
                             }
                         }
                     },
@@ -1898,7 +1921,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator"
+                                "$ref": "#/components/schemas/replicator_params"
                             }
                         }
                     },

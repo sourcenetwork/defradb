@@ -16,6 +16,14 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// ReplicatorParams contains the replicator fields that can be modified by the user.
+type ReplicatorParams struct {
+	// Info is the address of the peer to replicate to.
+	Info peer.AddrInfo
+	// Collections is the list of collection names to replicate.
+	Collections []string
+}
+
 // Replicator is a peer that a set of local collections are replicated to.
 type Replicator struct {
 	Info             peer.AddrInfo

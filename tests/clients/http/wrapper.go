@@ -63,11 +63,11 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	return w.client.SetReplicator(ctx, rep)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	return w.client.DeleteReplicator(ctx, rep)
 }
 

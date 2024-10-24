@@ -174,7 +174,7 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
+	err := sourceNode.SetReplicator(s.ctx, client.ReplicatorParams{
 		Info: targetNode.PeerInfo(),
 	})
 
@@ -193,7 +193,7 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+	err := sourceNode.DeleteReplicator(s.ctx, client.ReplicatorParams{
 		Info: targetNode.PeerInfo(),
 	})
 	require.NoError(s.t, err)
