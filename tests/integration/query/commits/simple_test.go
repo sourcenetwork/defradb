@@ -37,13 +37,13 @@ func TestQueryCommits(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": testUtils.NewUniqueCid("name"),
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": testUtils.NewUniqueCid("age"),
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": testUtils.NewUniqueCid("head"),
 						},
 					},
 				},
@@ -364,7 +364,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+							"cid":          testUtils.NewUniqueCid("age update"),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(22),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -373,13 +373,13 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":       int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+									"cid":  testUtils.NewUniqueCid("age create"),
 									"name": "_head",
 								},
 							},
 						},
 						{
-							"cid":          "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":          testUtils.NewUniqueCid("age create"),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(21),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -389,7 +389,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":          testUtils.NewUniqueCid("name create"),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue("John"),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -399,7 +399,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":          testUtils.NewUniqueCid("update composite"),
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -408,17 +408,17 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":       int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+									"cid":  testUtils.NewUniqueCid("create composite"),
 									"name": "_head",
 								},
 								{
-									"cid":  "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+									"cid":  testUtils.NewUniqueCid("age update"),
 									"name": "age",
 								},
 							},
 						},
 						{
-							"cid":          "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid":          testUtils.NewUniqueCid("create composite"),
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -427,11 +427,11 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+									"cid":  testUtils.NewUniqueCid("age create"),
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+									"cid":  testUtils.NewUniqueCid("name create"),
 									"name": "name",
 								},
 							},
