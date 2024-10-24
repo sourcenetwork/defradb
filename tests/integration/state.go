@@ -132,6 +132,9 @@ type state struct {
 	// Identities by node index, by identity index.
 	identities [][]identity.Identity
 
+	// Policy IDs, by node index, by policyID index (in the order they were added).
+	policyIDs [][]string
+
 	// Will recieve an item once all actions have finished processing.
 	allActionsDone chan struct{}
 
@@ -218,6 +221,7 @@ func newState(
 		collectionNames:          collectionNames,
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
+		policyIDs:                [][]string{},
 		indexes:                  [][][]client.IndexDescription{},
 		isBench:                  false,
 	}
