@@ -444,3 +444,41 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits with alias query",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					history: commits {
+						cid
+					}
+				}`,
+				Results: map[string]any{
+					"history": []map[string]any{
+						{
+							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+						},
+						{
+							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+						},
+						{
+							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

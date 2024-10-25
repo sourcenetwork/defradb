@@ -91,3 +91,47 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryLatestCommits_WithDocIDAndAliased_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple latest commits query with docID and aliased",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					history: latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
+						cid
+						links {
+							cid
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"history": []map[string]any{
+						{
+							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"links": []map[string]any{
+								{
+									"cid":  "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+									"name": "age",
+								},
+								{
+									"cid":  "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+									"name": "name",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

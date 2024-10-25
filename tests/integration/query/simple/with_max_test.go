@@ -127,3 +127,21 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithAliasedMaxOnEmptyCollection_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query aliased max on empty",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					maximum: _max(Users: {field: Age})
+				}`,
+				Results: map[string]any{
+					"maximum": nil,
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

@@ -79,3 +79,21 @@ func TestQuerySimpleWithCount(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithAliasedCount_OnEmptyCollection_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, aliased count on empty",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					number: _count(Users: {})
+				}`,
+				Results: map[string]any{
+					"number": 0,
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
