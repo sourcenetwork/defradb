@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
@@ -36,10 +37,9 @@ func (c *collection) registerDocWithACP(
 	if !c.db.acp.HasValue() {
 		return nil
 	}
-	identity := GetContextIdentity(ctx)
 	return permission.RegisterDocOnCollectionWithACP(
 		ctx,
-		identity,
+		identity.FromContext(ctx),
 		c.db.acp.Value(),
 		c,
 		docID,
@@ -55,10 +55,9 @@ func (c *collection) checkAccessOfDocWithACP(
 	if !c.db.acp.HasValue() {
 		return true, nil
 	}
-	identity := GetContextIdentity(ctx)
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		identity,
+		identity.FromContext(ctx),
 		c.db.acp.Value(),
 		c,
 		dpiPermission,

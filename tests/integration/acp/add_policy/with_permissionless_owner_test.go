@@ -13,8 +13,6 @@ package test_acp_add_policy
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -32,7 +30,7 @@ func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -73,7 +71,7 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -114,7 +112,7 @@ func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

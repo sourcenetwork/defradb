@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -31,7 +29,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -131,7 +129,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -231,7 +229,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

@@ -136,14 +136,17 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	acp, err := NewACP(ctx, n.acpOpts...)
 	if err != nil {
 		return err
 	}
+
 	lens, err := NewLens(ctx, n.lensOpts...)
 	if err != nil {
 		return err
 	}
+
 	n.DB, err = db.NewDB(ctx, rootstore, acp, lens, n.dbOpts...)
 	if err != nil {
 		return err

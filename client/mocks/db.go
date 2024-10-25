@@ -13,6 +13,8 @@ import (
 
 	go_datastore "github.com/ipfs/go-datastore"
 
+	identity "github.com/sourcenetwork/defradb/acp/identity"
+
 	immutable "github.com/sourcenetwork/immutable"
 
 	mock "github.com/stretchr/testify/mock"
@@ -1045,6 +1047,62 @@ func (_c *DB_GetCollections_Call) Return(_a0 []client.Collection, _a1 error) *DB
 }
 
 func (_c *DB_GetCollections_Call) RunAndReturn(run func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)) *DB_GetCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetNodeIdentity provides a mock function with given fields: _a0
+func (_m *DB) GetNodeIdentity(_a0 context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNodeIdentity")
+	}
+
+	var r0 immutable.Option[identity.PublicRawIdentity]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (immutable.Option[identity.PublicRawIdentity], error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) immutable.Option[identity.PublicRawIdentity]); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(immutable.Option[identity.PublicRawIdentity])
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetNodeIdentity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNodeIdentity'
+type DB_GetNodeIdentity_Call struct {
+	*mock.Call
+}
+
+// GetNodeIdentity is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *DB_Expecter) GetNodeIdentity(_a0 interface{}) *DB_GetNodeIdentity_Call {
+	return &DB_GetNodeIdentity_Call{Call: _e.mock.On("GetNodeIdentity", _a0)}
+}
+
+func (_c *DB_GetNodeIdentity_Call) Run(run func(_a0 context.Context)) *DB_GetNodeIdentity_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_GetNodeIdentity_Call) Return(_a0 immutable.Option[identity.PublicRawIdentity], _a1 error) *DB_GetNodeIdentity_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetNodeIdentity_Call) RunAndReturn(run func(context.Context) (immutable.Option[identity.PublicRawIdentity], error)) *DB_GetNodeIdentity_Call {
 	_c.Call.Return(run)
 	return _c
 }

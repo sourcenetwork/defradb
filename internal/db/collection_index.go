@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -297,12 +298,11 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	txn := mustGetContextTxn(ctx)
-	identity := GetContextIdentity(ctx)
 
 	df := c.newFetcher()
 	err := df.Init(
 		ctx,
-		identity,
+		identity.FromContext(ctx),
 		txn,
 		c.db.acp,
 		c,

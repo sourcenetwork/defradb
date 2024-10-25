@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +91,7 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,9 +104,9 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -120,9 +118,9 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Admin tries to revoke it's own relation.
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.ClientIdentity(2),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -134,9 +132,9 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{ // Admin can still perform admin operations.
-				RequestorIdentity: 2,
+				RequestorIdentity: testUtils.ClientIdentity(2),
 
-				TargetIdentity: 3,
+				TargetIdentity: testUtils.ClientIdentity(3),
 
 				CollectionID: 0,
 
@@ -162,7 +160,7 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -226,7 +224,7 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -239,9 +237,9 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Owner tries to revoke it's own relation.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 1,
+				TargetIdentity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -253,9 +251,9 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{ // Owner can still perform admin operations.
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 

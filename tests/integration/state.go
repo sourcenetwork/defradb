@@ -17,7 +17,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
-	identity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -129,13 +128,20 @@ type state struct {
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
 
-	// Identities by node index, by identity index.
-	identities [][]identity.Identity
+	// identities contains all identities created in this test.
+	// The map key is the identity reference that uniquely identifies identities of different
+	// types. See [identRef].
+	// The map value is the identity holder that contains the identity itself and token
+	// generated for different target nodes. See [identityHolder].
+	identities map[identityRef]*identityHolder
 
-	// Will recieve an item once all actions have finished processing.
+	// The seed for the next identity generation. We want identities to be deterministic.
+	nextIdentityGenSeed int
+
+	// Will receive an item once all actions have finished processing.
 	allActionsDone chan struct{}
 
-	// These channels will recieve a function which asserts results of any subscription requests.
+	// These channels will receive a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
 
 	// nodeEvents contains all event node subscriptions.
@@ -161,7 +167,7 @@ type state struct {
 	collections [][]client.Collection
 
 	// The names of the collections active in this test.
-	// Indexes matches that of inital collections.
+	// Indexes matches that of initial collections.
 	collectionNames []string
 
 	// A map of the collection indexes by their Root, this allows easier
@@ -207,6 +213,7 @@ func newState(
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
+		identities:               map[identityRef]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
 		nodeEvents:               []*eventState{},
 		nodeAddresses:            []peer.AddrInfo{},

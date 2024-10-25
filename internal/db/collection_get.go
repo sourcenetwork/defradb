@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -59,11 +60,10 @@ func (c *collection) get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	txn := mustGetContextTxn(ctx)
-	identity := GetContextIdentity(ctx)
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
-	err := df.Init(ctx, identity, txn, c.db.acp, c, fields, nil, nil, false, showDeleted)
+	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, c, fields, nil, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

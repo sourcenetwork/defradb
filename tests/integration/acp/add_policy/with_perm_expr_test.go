@@ -13,8 +13,6 @@ package test_acp_add_policy
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +23,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -67,7 +65,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

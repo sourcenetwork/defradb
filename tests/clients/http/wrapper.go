@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -280,4 +281,8 @@ func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
 
 func (w *Wrapper) Host() string {
 	return w.httpServer.URL
+}
+
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	return w.client.GetNodeIdentity(ctx)
 }

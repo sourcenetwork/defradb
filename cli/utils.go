@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
@@ -31,8 +32,9 @@ import (
 )
 
 const (
-	peerKeyName       = "peer-key"
-	encryptionKeyName = "encryption-key"
+	peerKeyName         = "peer-key"
+	encryptionKeyName   = "encryption-key"
+	nodeIdentityKeyName = "node-identity-key"
 )
 
 type contextKey string
@@ -163,18 +165,19 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	}
 
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	identity, err := acpIdentity.FromPrivateKey(
-		privKey,
+	ident, err := acpIdentity.FromPrivateKey(privKey)
+	if err != nil {
+		return err
+	}
+	err = ident.UpdateToken(
 		authTokenExpiration,
 		immutable.Some(cfg.GetString("api.address")),
-		sourcehubAddress,
-		false,
-	)
+		sourcehubAddress)
 	if err != nil {
 		return err
 	}
 
-	ctx := db.SetContextIdentity(cmd.Context(), immutable.Some(identity))
+	ctx := identity.WithContext(cmd.Context(), immutable.Some(ident))
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -185,11 +188,11 @@ func setContextRootDir(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
 	if rootdir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
 		rootdir = filepath.Join(home, ".defradb")
 	}
 	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)

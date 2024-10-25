@@ -395,6 +395,17 @@
                 },
                 "type": "object"
             },
+            "identity": {
+                "properties": {
+                    "DID": {
+                        "type": "string"
+                    },
+                    "PublicKey": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "index": {
                 "properties": {
                     "Fields": {
@@ -1697,6 +1708,34 @@
                 },
                 "tags": [
                     "lens"
+                ]
+            }
+        },
+        "/node/identity": {
+            "get": {
+                "description": "Get node's public identity",
+                "operationId": "node_identity",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/identity"
+                                }
+                            }
+                        },
+                        "description": "Identity"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "node",
+                    "identity"
                 ]
             }
         },
