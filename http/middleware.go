@@ -36,7 +36,7 @@ func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 			return slices.Contains(allowedOrigins, strings.ToLower(origin))
 		},
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		MaxAge:         300,
 	})
 }
