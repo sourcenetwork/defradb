@@ -133,7 +133,7 @@ type state struct {
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[identRef]*identityHolder
+	identities map[identityRef]*identityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
@@ -213,7 +213,7 @@ func newState(
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
-		identities:               map[identRef]*identityHolder{},
+		identities:               map[identityRef]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
 		nodeEvents:               []*eventState{},
 		nodeAddresses:            []peer.AddrInfo{},

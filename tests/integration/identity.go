@@ -21,36 +21,31 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// identRef is a type that refers to a specific identity of a certain type.
-type identRef struct {
-	hasValue bool
-	isUser   bool
-	index    int
+// identityRef is a type that refers to a specific identity of a certain type.
+type identityRef struct {
+	isUser bool
+	index  int
 }
 
 // NoIdentity returns an reference to an identity that represents no identity.
-func NoIdentity() identRef {
-	return identRef{
-		hasValue: false,
-	}
+func NoIdentity() immutable.Option[identityRef] {
+	return immutable.None[identityRef]()
 }
 
 // UserIdentity returns a reference to a user identity with a given index.
-func UserIdentity(index int) identRef {
-	return identRef{
-		hasValue: true,
-		isUser:   true,
-		index:    index,
-	}
+func UserIdentity(index int) immutable.Option[identityRef] {
+	return immutable.Some(identityRef{
+		isUser: true,
+		index:  index,
+	})
 }
 
 // NodeIdentity returns a reference to a node identity with a given index.
-func NodeIdentity(index int) identRef {
-	return identRef{
-		hasValue: true,
-		isUser:   false,
-		index:    index,
-	}
+func NodeIdentity(index int) immutable.Option[identityRef] {
+	return immutable.Some(identityRef{
+		isUser: false,
+		index:  index,
+	})
 }
 
 // identityHolder holds an identity and the generated tokens for each target node.
@@ -71,13 +66,16 @@ func newIdentityHolder(ident acpIdentity.Identity) *identityHolder {
 
 // getIdentity returns the identity for the given reference.
 // If the identity does not exist, it will be generated.
-func getIdentity(s *state, ref identRef) acpIdentity.Identity {
-	return getIdentityHolder(s, ref).Identity
+func getIdentity(s *state, ref immutable.Option[identityRef]) acpIdentity.Identity {
+	if !ref.HasValue() {
+		return acpIdentity.Identity{}
+	}
+	return getIdentityHolder(s, ref.Value()).Identity
 }
 
 // getIdentityHolder returns the identity holder for the given reference.
 // If the identity does not exist, it will be generated.
-func getIdentityHolder(s *state, ref identRef) *identityHolder {
+func getIdentityHolder(s *state, ref identityRef) *identityHolder {
 	ident, ok := s.identities[ref]
 	if ok {
 		return ident
@@ -90,7 +88,7 @@ func getIdentityHolder(s *state, ref identRef) *identityHolder {
 // getIdentityForRequest returns the identity for the given reference and node index.
 // It prepares the identity for a request by generating a token if needed, i.e. it will
 // return an identity with [Identity.BearerToken] set.
-func getIdentityForRequest(s *state, ref identRef, nodeIndex int) acpIdentity.Identity {
+func getIdentityForRequest(s *state, ref identityRef, nodeIndex int) acpIdentity.Identity {
 	identHolder := getIdentityHolder(s, ref)
 	ident := identHolder.Identity
 
@@ -128,17 +126,22 @@ func generateIdentity(s *state) acpIdentity.Identity {
 // getContextWithIdentity returns a context with the identity for the given reference and node index.
 // If the identity does not exist, it will be generated.
 // The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
-func getContextWithIdentity(ctx context.Context, s *state, ref identRef, nodeIndex int) context.Context {
-	if !ref.hasValue {
+func getContextWithIdentity(
+	ctx context.Context,
+	s *state,
+	ref immutable.Option[identityRef],
+	nodeIndex int,
+) context.Context {
+	if !ref.HasValue() {
 		return ctx
 	}
-	ident := getIdentityForRequest(s, ref, nodeIndex)
+	ident := getIdentityForRequest(s, ref.Value(), nodeIndex)
 	return acpIdentity.WithContext(ctx, immutable.Some(ident))
 }
 
-func getIdentityDID(s *state, ident identRef) string {
-	if ident.hasValue {
-		return getIdentity(s, ident).DID
+func getIdentityDID(s *state, ref immutable.Option[identityRef]) string {
+	if ref.HasValue() {
+		return getIdentity(s, ref).DID
 	}
 	return ""
 }

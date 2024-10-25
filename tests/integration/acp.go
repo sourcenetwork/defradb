@@ -88,7 +88,7 @@ type AddPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity identRef
+	Identity immutable.Option[identityRef]
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -158,14 +158,14 @@ type AddDocActorRelationship struct {
 
 	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
 	//
-	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	TargetIdentity identRef
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	TargetIdentity immutable.Option[identityRef]
 
 	// The requestor identity, i.e. identity of the actor creating the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
-	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	RequestorIdentity identRef
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	RequestorIdentity immutable.Option[identityRef]
 
 	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
 	ExpectedExistence bool
@@ -238,14 +238,14 @@ type DeleteDocActorRelationship struct {
 
 	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
 	//
-	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	TargetIdentity identRef
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	TargetIdentity immutable.Option[identityRef]
 
 	// The requestor identity, i.e. identity of the actor deleting the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
-	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
-	RequestorIdentity identRef
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	RequestorIdentity immutable.Option[identityRef]
 
 	// Result returns true if the relationship record was expected to be found and deleted,
 	// and returns false if no matching relationship record was found (no-op).

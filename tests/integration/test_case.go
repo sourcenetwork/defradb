@@ -296,7 +296,7 @@ type CreateDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity identRef
+	Identity immutable.Option[identityRef]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -368,7 +368,7 @@ type DeleteDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity identRef
+	Identity immutable.Option[identityRef]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -401,7 +401,7 @@ type UpdateDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity identRef
+	Identity immutable.Option[identityRef]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -444,7 +444,7 @@ type UpdateWithFilter struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity identRef
+	Identity immutable.Option[identityRef]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -601,7 +601,7 @@ type Request struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity identRef
+	Identity immutable.Option[identityRef]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -804,5 +804,5 @@ type GetNodeIdentity struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity identRef
+	ExpectedIdentity immutable.Option[identityRef]
 }
