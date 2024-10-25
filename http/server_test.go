@@ -183,6 +183,8 @@ func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
 	req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:30001", nil)
 	require.NoError(t, err)
 	req.Header.Add("origin", "localhost")
+	req.Header.Add("Access-Control-Request-Method", "POST")
+	req.Header.Add("Access-Control-Request-Headers", "Authorization, Content-Type")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
