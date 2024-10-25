@@ -27,7 +27,7 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -91,7 +91,7 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -104,9 +104,9 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -132,7 +132,7 @@ func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -196,7 +196,7 @@ func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -209,9 +209,9 @@ func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: -1,
 
@@ -237,7 +237,7 @@ func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -301,7 +301,7 @@ func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -314,9 +314,9 @@ func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -342,7 +342,7 @@ func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -406,7 +406,7 @@ func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -419,7 +419,7 @@ func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.NoIdentity(),
 
@@ -447,7 +447,7 @@ func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -511,7 +511,7 @@ func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testin
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -526,7 +526,7 @@ func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testin
 			testUtils.AddDocActorRelationship{
 				RequestorIdentity: testUtils.NoIdentity(),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 

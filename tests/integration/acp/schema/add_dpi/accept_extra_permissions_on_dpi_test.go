@@ -29,7 +29,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -129,7 +129,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -229,7 +229,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

@@ -56,7 +56,7 @@ resources:
 func getSetupEmployeeCompanyActions() []any {
 	return []any{
 		testUtils.AddPolicy{
-			Identity:         testUtils.UserIdentity(1),
+			Identity:         testUtils.ClientIdentity(1),
 			Policy:           employeeCompanyPolicy,
 			ExpectedPolicyID: "9d6c19007a894746c3f45f7fe45513a88a20ad77637948228869546197bb1b05",
 		},
@@ -94,7 +94,7 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 1,
-			Identity:     testUtils.UserIdentity(1),
+			Identity:     testUtils.ClientIdentity(1),
 			Doc: `
 					{
 						"name": "Private Company",
@@ -120,7 +120,7 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			Identity:     testUtils.UserIdentity(1),
+			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{
 				"name":    "PrivateEmp in PubCompany",
 				"salary":  30000,
@@ -129,7 +129,7 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			Identity:     testUtils.UserIdentity(1),
+			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{
 				"name":    "PrivateEmp in PrivateCompany",
 				"salary":  40000,

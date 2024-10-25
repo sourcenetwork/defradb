@@ -23,7 +23,7 @@ func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: a policy
@@ -61,7 +61,7 @@ func TestACP_AddPolicy_DuplicateOwnerRelation_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: a policy

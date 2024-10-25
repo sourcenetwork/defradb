@@ -23,7 +23,7 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -78,7 +78,7 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -130,7 +130,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

@@ -34,7 +34,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -98,7 +98,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -111,7 +111,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -131,7 +131,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can not update yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
 
 				DocID: 0,
 
@@ -145,9 +145,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -161,7 +161,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can now update.
+				Identity: testUtils.ClientIdentity(2), // This identity can now update.
 
 				DocID: 0,
 
@@ -173,7 +173,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can now also read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `
 					query {
@@ -211,7 +211,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -275,7 +275,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -288,7 +288,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -308,7 +308,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can not delete yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not delete yet.
 
 				DocID: 0,
 
@@ -316,9 +316,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -330,7 +330,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can now read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now read.
 
 				Request: `
 					query {
@@ -356,13 +356,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can now delete.
+				Identity: testUtils.ClientIdentity(2), // This identity can now delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // Check if actually deleted.
+				Identity: testUtils.ClientIdentity(2), // Check if actually deleted.
 
 				Request: `
 					query {

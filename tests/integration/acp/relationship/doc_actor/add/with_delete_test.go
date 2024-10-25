@@ -27,7 +27,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -91,7 +91,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -104,7 +104,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -124,7 +124,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can not delete yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not delete yet.
 
 				DocID: 0,
 
@@ -132,9 +132,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -146,9 +146,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -174,7 +174,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -238,7 +238,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -251,7 +251,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -271,7 +271,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can not delete yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not delete yet.
 
 				DocID: 0,
 
@@ -279,9 +279,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -293,7 +293,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can now read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now read.
 
 				Request: `
 					query {
@@ -319,13 +319,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can now delete.
+				Identity: testUtils.ClientIdentity(2), // This identity can now delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // Check if actually deleted.
+				Identity: testUtils.ClientIdentity(2), // Check if actually deleted.
 
 				Request: `
 					query {
@@ -357,7 +357,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -421,7 +421,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -434,9 +434,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -448,7 +448,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1), // Owner can still also delete (ownership not transferred)
+				Identity: testUtils.ClientIdentity(1), // Owner can still also delete (ownership not transferred)
 
 				Request: `
 					query {
@@ -474,13 +474,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(1), // Owner can still also delete.
+				Identity: testUtils.ClientIdentity(1), // Owner can still also delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1), // Check if actually deleted.
+				Identity: testUtils.ClientIdentity(1), // Check if actually deleted.
 
 				Request: `
 					query {

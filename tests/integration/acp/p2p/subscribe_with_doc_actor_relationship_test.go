@@ -39,7 +39,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -115,7 +115,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),
 
@@ -130,7 +130,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.Request{
 				// Ensure that the document is hidden on all nodes to an unauthorized actor
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
 					query {
@@ -148,9 +148,9 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.AddDocActorRelationship{
 				NodeID: immutable.Some(0),
 
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -164,9 +164,9 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.AddDocActorRelationship{
 				NodeID: immutable.Some(1), // Note: Different node than the previous
 
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -179,7 +179,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.Request{
 				// Ensure that the document is now accessible on all nodes to the newly authorized actor.
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
 					query {
@@ -200,7 +200,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {
@@ -222,9 +222,9 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.DeleteDocActorRelationship{
 				NodeID: immutable.Some(1),
 
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -238,9 +238,9 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.DeleteDocActorRelationship{
 				NodeID: immutable.Some(0), // Note: Different node than the previous
 
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -253,7 +253,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.Request{
 				// Ensure that the document is now inaccessible on all nodes to the actor we revoked access from.
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
 					query {
@@ -270,7 +270,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {

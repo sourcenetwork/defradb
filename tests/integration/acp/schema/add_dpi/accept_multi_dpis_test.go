@@ -54,7 +54,7 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: validDPIUsedByBoth,
 
@@ -63,7 +63,7 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				Policy: validDPIUsedByBoth,
 

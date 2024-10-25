@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_PartialValidDPIButUseInValidDPIResource_RejectSchema(t
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

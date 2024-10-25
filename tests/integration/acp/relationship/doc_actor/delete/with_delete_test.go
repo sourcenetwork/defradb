@@ -27,7 +27,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -92,7 +92,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Creating two documents because need one to do the test on after one is deleted.
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -104,7 +104,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -118,9 +118,9 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Give access to the other actor to delete and read both documents.
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -131,9 +131,9 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 				ExpectedExistence: false,
 			},
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -146,7 +146,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Now the other identity can read both and delete both of those documents
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can read.
+				Identity: testUtils.ClientIdentity(2), // This identity can read.
 
 				Request: `
 					query {
@@ -174,15 +174,15 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // This identity can also delete.
+				Identity: testUtils.ClientIdentity(2), // This identity can also delete.
 
 				DocID: 1,
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to delete (and read) the document.
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -195,7 +195,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// The other identity can neither delete nor read the other document anymore.
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
 					query {
@@ -214,7 +214,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				DocID: 0,
 
@@ -223,7 +223,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 			// Ensure document was not accidentally deleted using owner identity.
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {

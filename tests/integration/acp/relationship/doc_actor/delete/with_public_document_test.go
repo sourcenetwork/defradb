@@ -27,7 +27,7 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -102,7 +102,7 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // Can read as it is a public document
+				Identity: testUtils.ClientIdentity(2), // Can read as it is a public document
 
 				Request: `
 					query {
@@ -126,9 +126,9 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 

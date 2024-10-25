@@ -30,7 +30,7 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

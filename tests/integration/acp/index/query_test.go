@@ -21,7 +21,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 		Description: "Test acp, querying private doc without identity should not fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         testUtils.UserIdentity(1),
+				Identity:         testUtils.ClientIdentity(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -44,7 +44,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Doc: `
 					{
 						"name": "Islam"
@@ -75,7 +75,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 		Description: "Test acp, querying private doc with identity should  fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         testUtils.UserIdentity(1),
+				Identity:         testUtils.ClientIdentity(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -98,7 +98,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Doc: `
 					{
 						"name": "Islam"
@@ -106,7 +106,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				`,
 			},
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query  {
 						Users {
@@ -135,7 +135,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 		Description: "Test acp, querying private doc with wrong identity should not fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         testUtils.UserIdentity(1),
+				Identity:         testUtils.ClientIdentity(1),
 				Policy:           userPolicy,
 				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
@@ -158,7 +158,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				`,
 			},
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Doc: `
 					{
 						"name": "Islam"
@@ -166,7 +166,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				`,
 			},
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query  {
 						Users {

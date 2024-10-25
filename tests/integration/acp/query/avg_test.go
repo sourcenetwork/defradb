@@ -48,7 +48,7 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						_avg(Employee: {field: salary})
@@ -73,7 +73,7 @@ func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
 						_avg(Employee: {field: salary})

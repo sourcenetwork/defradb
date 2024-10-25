@@ -77,7 +77,7 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						_count(Employee: {})
@@ -101,7 +101,7 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						Company {
@@ -134,7 +134,7 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
 						_count(Employee: {})
@@ -158,7 +158,7 @@ func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
 						Company {

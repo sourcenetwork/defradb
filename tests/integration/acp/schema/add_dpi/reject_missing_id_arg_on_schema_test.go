@@ -27,7 +27,7 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -102,7 +102,7 @@ func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

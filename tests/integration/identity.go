@@ -23,8 +23,8 @@ import (
 
 // identityRef is a type that refers to a specific identity of a certain type.
 type identityRef struct {
-	isUser bool
-	index  int
+	isClient bool
+	index    int
 }
 
 // NoIdentity returns an reference to an identity that represents no identity.
@@ -32,19 +32,19 @@ func NoIdentity() immutable.Option[identityRef] {
 	return immutable.None[identityRef]()
 }
 
-// UserIdentity returns a reference to a user identity with a given index.
-func UserIdentity(index int) immutable.Option[identityRef] {
+// ClientIdentity returns a reference to a user identity with a given index.
+func ClientIdentity(index int) immutable.Option[identityRef] {
 	return immutable.Some(identityRef{
-		isUser: true,
-		index:  index,
+		isClient: true,
+		index:    index,
 	})
 }
 
 // NodeIdentity returns a reference to a node identity with a given index.
 func NodeIdentity(index int) immutable.Option[identityRef] {
 	return immutable.Some(identityRef{
-		isUser: false,
-		index:  index,
+		isClient: false,
+		index:    index,
 	})
 }
 

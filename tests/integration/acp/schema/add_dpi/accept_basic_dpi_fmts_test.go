@@ -28,7 +28,7 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -123,7 +123,7 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
 					{

@@ -29,7 +29,7 @@ func TestACP_AddDPISchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
 
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

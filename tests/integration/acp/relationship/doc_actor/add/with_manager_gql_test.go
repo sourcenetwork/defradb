@@ -34,7 +34,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -99,7 +99,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -112,7 +112,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity (to be manager) can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
 					query {
@@ -132,7 +132,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // Manager can't update yet.
+				Identity: testUtils.ClientIdentity(2), // Manager can't update yet.
 
 				DocID: 0,
 
@@ -148,7 +148,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // Manager can't delete yet.
+				Identity: testUtils.ClientIdentity(2), // Manager can't delete yet.
 
 				DocID: 0,
 
@@ -156,9 +156,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -170,9 +170,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager makes itself a writer
-				RequestorIdentity: testUtils.UserIdentity(2),
+				RequestorIdentity: testUtils.ClientIdentity(2),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -185,9 +185,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 
 			// Note: It is not neccesary to make itself a reader, as becoming a writer allows reading.
 			testUtils.AddDocActorRelationship{ // Manager makes itself a reader
-				RequestorIdentity: testUtils.UserIdentity(2),
+				RequestorIdentity: testUtils.ClientIdentity(2),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -201,7 +201,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // Manager can now update.
+				Identity: testUtils.ClientIdentity(2), // Manager can now update.
 
 				DocID: 0,
 
@@ -213,7 +213,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // Manager can read now
+				Identity: testUtils.ClientIdentity(2), // Manager can read now
 
 				Request: `
 					query {
@@ -239,13 +239,13 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // Manager can now delete.
+				Identity: testUtils.ClientIdentity(2), // Manager can now delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // Make sure manager was able to delete the document.
+				Identity: testUtils.ClientIdentity(2), // Make sure manager was able to delete the document.
 
 				Request: `
 					query {
@@ -282,7 +282,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -346,7 +346,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -359,9 +359,9 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -373,7 +373,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // Manager can not read
+				Identity: testUtils.ClientIdentity(2), // Manager can not read
 
 				Request: `
 					query {
@@ -393,7 +393,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // Manager can not update.
+				Identity: testUtils.ClientIdentity(2), // Manager can not update.
 
 				DocID: 0,
 
@@ -409,7 +409,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(2), // Manager can not delete.
+				Identity: testUtils.ClientIdentity(2), // Manager can not delete.
 
 				DocID: 0,
 
@@ -417,9 +417,9 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 			},
 
 			testUtils.AddDocActorRelationship{ // Manager can manage only.
-				RequestorIdentity: testUtils.UserIdentity(2),
+				RequestorIdentity: testUtils.ClientIdentity(2),
 
-				TargetIdentity: testUtils.UserIdentity(3),
+				TargetIdentity: testUtils.ClientIdentity(3),
 
 				CollectionID: 0,
 
@@ -450,7 +450,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -514,7 +514,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -527,9 +527,9 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.AddDocActorRelationship{ // Make admin / manager
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -541,9 +541,9 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a writer
-				RequestorIdentity: testUtils.UserIdentity(2),
+				RequestorIdentity: testUtils.ClientIdentity(2),
 
-				TargetIdentity: testUtils.UserIdentity(3),
+				TargetIdentity: testUtils.ClientIdentity(3),
 
 				CollectionID: 0,
 
@@ -555,7 +555,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(3), // The other actor can't read
+				Identity: testUtils.ClientIdentity(3), // The other actor can't read
 
 				Request: `
 					query {
@@ -575,7 +575,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(3), // The other actor can not update
+				Identity: testUtils.ClientIdentity(3), // The other actor can not update
 
 				DocID: 0,
 
@@ -591,7 +591,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.UserIdentity(3), // The other actor can not delete
+				Identity: testUtils.ClientIdentity(3), // The other actor can not delete
 
 				DocID: 0,
 

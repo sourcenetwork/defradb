@@ -23,7 +23,7 @@ func TestACP_AddPolicy_ExtraRelations_ValidPolicyID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: a policy
@@ -67,7 +67,7 @@ func TestACP_AddPolicy_ExtraDuplicateRelations_Error(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: a policy

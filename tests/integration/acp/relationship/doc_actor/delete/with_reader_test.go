@@ -27,7 +27,7 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -91,7 +91,7 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -104,9 +104,9 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -118,9 +118,9 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -132,9 +132,9 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -160,7 +160,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -224,7 +224,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -237,9 +237,9 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -251,7 +251,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can read.
+				Identity: testUtils.ClientIdentity(2), // This identity can read.
 
 				Request: `
 					query {
@@ -275,9 +275,9 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: testUtils.UserIdentity(1),
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: testUtils.UserIdentity(2),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -289,7 +289,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 			},
 
 			testUtils.Request{
-				Identity: testUtils.UserIdentity(2), // This identity can not read anymore.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read anymore.
 
 				Request: `
 					query {

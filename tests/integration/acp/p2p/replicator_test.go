@@ -29,7 +29,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Policy: `
                     name: test
                     description: a test policy which marks a collection in a database as a resource
@@ -93,7 +93,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddPolicy{
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Policy: `
                     name: test
                     description: a test policy which marks a collection in a database as a resource
@@ -141,7 +141,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 			},
 			testUtils.CreateDoc{
 				NodeID:   immutable.Some(0),
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -149,7 +149,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 			testUtils.WaitForSync{},
 			testUtils.Request{
 				// Ensure that the document is accessible on all nodes to authorized actors
-				Identity: testUtils.UserIdentity(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						Users {
@@ -180,7 +180,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 			},
 			testUtils.Request{
 				// Ensure that the document is hidden on all nodes to unauthorized actors
-				Identity: testUtils.UserIdentity(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
 						Users {
