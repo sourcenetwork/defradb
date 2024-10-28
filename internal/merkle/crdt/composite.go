@@ -24,7 +24,7 @@ import (
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
-	clock MerkleClock
+	clock *clock.MerkleClock
 	// core.ReplicatedData
 	reg corecrdt.CompositeDAG
 }
@@ -53,7 +53,7 @@ func NewMerkleCompositeDAG(
 	}
 }
 
-func (m *MerkleCompositeDAG) Clock() MerkleClock {
+func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
 	return m.clock
 }
 

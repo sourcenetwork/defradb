@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 type Stores interface {
@@ -36,20 +36,8 @@ type Stores interface {
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	core.ReplicatedData
-	Clock() MerkleClock
+	Clock() *clock.MerkleClock
 	Save(ctx context.Context, data any) (cidlink.Link, []byte, error)
-}
-
-// MerkleClock is the logical clock implementation that manages writing to and from
-// the MerkleDAG structure, ensuring a causal ordering of events.
-type MerkleClock interface {
-	AddDelta(
-		ctx context.Context,
-		delta core.Delta,
-		links ...coreblock.DAGLink,
-	) (cidlink.Link, []byte, error)
-	// ProcessBlock processes a block and updates the CRDT state.
-	ProcessBlock(ctx context.Context, block *coreblock.Block, cid cidlink.Link) error
 }
 
 func InstanceWithStore(

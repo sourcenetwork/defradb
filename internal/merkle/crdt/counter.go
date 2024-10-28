@@ -23,7 +23,7 @@ import (
 
 // MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type MerkleCounter struct {
-	clock MerkleClock
+	clock *clock.MerkleClock
 	reg   crdt.Counter
 }
 
@@ -48,7 +48,7 @@ func NewMerkleCounter(
 	}
 }
 
-func (m *MerkleCounter) Clock() MerkleClock {
+func (m *MerkleCounter) Clock() *clock.MerkleClock {
 	return m.clock
 }
 

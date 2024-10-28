@@ -23,7 +23,7 @@ import (
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
-	clock MerkleClock
+	clock *clock.MerkleClock
 	reg   corecrdt.LWWRegister
 }
 
@@ -46,7 +46,7 @@ func NewMerkleLWWRegister(
 	}
 }
 
-func (m *MerkleLWWRegister) Clock() MerkleClock {
+func (m *MerkleLWWRegister) Clock() *clock.MerkleClock {
 	return m.clock
 }
 
