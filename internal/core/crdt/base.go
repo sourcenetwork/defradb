@@ -21,40 +21,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 )
 
-// baseCRDT is embedded as a base layer into all
-// the core CRDT implementations to reduce code
-// duplication, and better manage the overhead
-// tasks that all the CRDTs need to implement anyway
-type baseCRDT struct {
-	store datastore.DSReaderWriter
-	key   core.DataStoreKey
-
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey core.CollectionSchemaVersionKey
-
-	// fieldName holds the name of the field hosting this CRDT, if this is a field level
-	// commit.
-	fieldName string
-}
-
-func newBaseCRDT(
-	store datastore.DSReaderWriter,
-	key core.DataStoreKey,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	fieldName string,
-) baseCRDT {
-	return baseCRDT{
-		store:            store,
-		key:              key,
-		schemaVersionKey: schemaVersionKey,
-		fieldName:        fieldName,
-	}
-}
-
-func (base baseCRDT) setPriority(
+func setPriority(
 	ctx context.Context,
+	store datastore.DSReaderWriter,
 	key core.DataStoreKey,
 	priority uint64,
 ) error {
@@ -65,13 +34,17 @@ func (base baseCRDT) setPriority(
 		return ErrEncodingPriority
 	}
 
-	return base.store.Put(ctx, prioK.ToDS(), buf[0:n])
+	return store.Put(ctx, prioK.ToDS(), buf[0:n])
 }
 
 // get the current priority for given key
-func (base baseCRDT) getPriority(ctx context.Context, key core.DataStoreKey) (uint64, error) {
+func getPriority(
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key core.DataStoreKey,
+) (uint64, error) {
 	pKey := key.WithPriorityFlag()
-	pbuf, err := base.store.Get(ctx, pKey.ToDS())
+	pbuf, err := store.Get(ctx, pKey.ToDS())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
 			return 0, nil

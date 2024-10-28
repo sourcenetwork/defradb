@@ -77,7 +77,18 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 // Counter, is a simple CRDT type that allows increment/decrement
 // of an Int and Float data types that ensures convergence.
 type Counter struct {
-	baseCRDT
+	store datastore.DSReaderWriter
+	key   core.DataStoreKey
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
+
+	// fieldName holds the name of the field hosting this CRDT, if this is a field level
+	// commit.
+	fieldName string
+
 	AllowDecrement bool
 	Kind           client.ScalarKind
 }
@@ -93,7 +104,14 @@ func NewCounter(
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) Counter {
-	return Counter{newBaseCRDT(store, key, schemaVersionKey, fieldName), allowDecrement, kind}
+	return Counter{
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
+		fieldName:        fieldName,
+		AllowDecrement:   allowDecrement,
+		Kind:             kind,
+	}
 }
 
 // Set generates a new delta with the supplied value.
@@ -174,7 +192,7 @@ func (c Counter) incrementValue(
 		return NewErrFailedToStoreValue(err)
 	}
 
-	return c.setPriority(ctx, c.key, priority)
+	return setPriority(ctx, c.store, c.key, priority)
 }
 
 func (c Counter) CType() client.CType {
