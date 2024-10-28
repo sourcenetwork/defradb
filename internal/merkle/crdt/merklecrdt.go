@@ -69,10 +69,6 @@ func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta) error {
 	return base.crdt.Merge(ctx, other)
 }
 
-func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
-	return base.crdt.Value(ctx)
-}
-
 func InstanceWithStore(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,

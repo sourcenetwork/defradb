@@ -80,17 +80,6 @@ func NewLWWRegister(
 	return LWWRegister{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
 }
 
-// Value gets the current register value
-// RETURN STATE
-func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
-	valueK := reg.key.WithValueFlag()
-	buf, err := reg.store.Get(ctx, valueK.ToDS())
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
 // Set generates a new delta with the supplied value
 // RETURN DELTA
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {

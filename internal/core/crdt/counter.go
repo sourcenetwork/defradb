@@ -96,16 +96,6 @@ func NewCounter(
 	return Counter{newBaseCRDT(store, key, schemaVersionKey, fieldName), allowDecrement, kind}
 }
 
-// Value gets the current counter value
-func (c Counter) Value(ctx context.Context) ([]byte, error) {
-	valueK := c.key.WithValueFlag()
-	buf, err := c.store.Get(ctx, valueK.ToDS())
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
 // Set generates a new delta with the supplied value.
 //
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value

@@ -89,11 +89,6 @@ func NewCompositeDAG(
 	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, "")}
 }
 
-// Value is a no-op for a CompositeDAG.
-func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
-	return nil, nil
-}
-
 // Set returns a new composite DAG delta CRDT with the given status.
 func (c CompositeDAG) Set(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{

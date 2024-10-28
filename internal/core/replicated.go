@@ -18,5 +18,4 @@ import (
 // replicated data so as to converge on the same state.
 type ReplicatedData interface {
 	Merge(ctx context.Context, other Delta) error
-	Value(ctx context.Context) ([]byte, error)
 }
