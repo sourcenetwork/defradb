@@ -1,7 +1,6 @@
 module github.com/sourcenetwork/defradb
 
-go 1.22
-toolchain go1.22.5
+go 1.22.0
 
 require (
 	github.com/bits-and-blooms/bitset v1.14.3
@@ -30,7 +29,7 @@ require (
 	github.com/jbenet/goprocess v0.1.4
 	github.com/joho/godotenv v1.5.1
 	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
-	github.com/lestrrat-go/jwx/v2 v2.1.1
+	github.com/lestrrat-go/jwx/v2 v2.1.2
 	github.com/libp2p/go-libp2p v0.37.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.27.0
