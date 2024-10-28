@@ -182,6 +182,12 @@ func waitForUpdateEvents(
 				require.Fail(s.t, "timeout waiting for update event", "Node %d", i)
 			}
 
+			if evt.DocID == "" {
+				// Todo: This will almost certainly need to change once P2P for collection-level commits
+				// is enabled. See: https://github.com/sourcenetwork/defradb/issues/3212
+				continue
+			}
+
 			// make sure the event is expected
 			_, ok := expect[evt.DocID]
 			require.True(s.t, ok, "unexpected document update", "Node %d", i)

@@ -23,7 +23,7 @@ type HeadstoreDocKey struct {
 	Cid     cid.Cid
 }
 
-var _ Walkable = (*HeadstoreDocKey)(nil)
+var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
 
 // Creates a new HeadstoreDocKey from a string as best as it can,
 // splitting the input using '/' as a field deliminator.  It assumes
@@ -57,10 +57,14 @@ func (k HeadstoreDocKey) WithDocID(docID string) HeadstoreDocKey {
 	return newKey
 }
 
-func (k HeadstoreDocKey) WithCid(c cid.Cid) HeadstoreDocKey {
+func (k HeadstoreDocKey) WithCid(c cid.Cid) HeadstoreKey {
 	newKey := k
 	newKey.Cid = c
 	return newKey
+}
+
+func (k HeadstoreDocKey) GetCid() cid.Cid {
+	return k.Cid
 }
 
 func (k HeadstoreDocKey) WithFieldID(fieldID string) HeadstoreDocKey {

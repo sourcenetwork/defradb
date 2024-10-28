@@ -104,6 +104,7 @@ const (
 	errFailedToHandleEncKeysReceivedEvent       string = "failed to handle encryption-keys-received event"
 	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                       string = "non-materialized collections are not supported"
+	errColMutatingIsBranchable                  string = "mutating IsBranchable is not supported"
 	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 	errDocIDNotFound                            string = "docID not found"
@@ -156,6 +157,7 @@ var (
 	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
 	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
 	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
+	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -676,6 +678,13 @@ func NewErrSelfReferenceWithoutSelf(fieldName string) error {
 func NewErrColNotMaterialized(collection string) error {
 	return errors.New(
 		errColNotMaterialized,
+		errors.NewKV("Collection", collection),
+	)
+}
+
+func NewErrColMutatingIsBranchable(collection string) error {
+	return errors.New(
+		errColMutatingIsBranchable,
 		errors.NewKV("Collection", collection),
 	)
 }

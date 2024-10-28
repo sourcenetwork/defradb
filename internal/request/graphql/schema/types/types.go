@@ -54,6 +54,9 @@ const (
 	MaterializedDirectiveLabel  = "materialized"
 	MaterializedDirectivePropIf = "if"
 
+	BranchableDirectiveLabel  = "branchable"
+	BranchableDirectivePropIf = "if"
+
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
 )
@@ -228,6 +231,31 @@ func MaterializedDirective() *gql.Directive {
  with OR logic (if any are true, the collection will be cached).`,
 		Args: gql.FieldConfigArgument{
 			MaterializedDirectivePropIf: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationObject,
+		},
+	})
+}
+
+func BranchableDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name: BranchableDirectiveLabel,
+		Description: `@branchable is a directive that defines whether the history of this collection is tracked
+ as a single, verifiable entity or not. It will default to false if ommited.
+
+ If multiple @branchable directives are provided, they will aggregated with OR logic (if any are true, the
+ collection history will be tracked).
+
+ The history may be queried like a document history can be queried, for example via 'commits'
+ GQL queries.
+
+ Currently this property is immutable and can only be set on collection creation, however
+ that will change in the future.`,
+		Args: gql.FieldConfigArgument{
+			BranchableDirectivePropIf: &gql.ArgumentConfig{
 				Type: gql.Boolean,
 			},
 		},

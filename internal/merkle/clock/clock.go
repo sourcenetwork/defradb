@@ -48,7 +48,7 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
-	namespace keys.HeadstoreDocKey,
+	namespace keys.HeadstoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{
@@ -207,7 +207,7 @@ func encryptBlock(
 	block *coreblock.Block,
 	encBlock *coreblock.Encryption,
 ) (*coreblock.Block, error) {
-	if block.Delta.IsComposite() {
+	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		return block, nil
 	}
 

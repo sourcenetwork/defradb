@@ -31,13 +31,18 @@ type HeadFetcher struct {
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
-	prefix keys.HeadstoreDocKey,
+	prefix immutable.Option[keys.HeadstoreKey],
 	fieldId immutable.Option[string],
 ) error {
 	hf.fieldId = fieldId
 
+	var prefixString string
+	if prefix.HasValue() {
+		prefixString = prefix.Value().ToString()
+	}
+
 	q := dsq.Query{
-		Prefix: prefix.ToString(),
+		Prefix: prefixString,
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 
@@ -64,17 +69,32 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, nil
 	}
 
-	headStoreKey, err := keys.NewHeadstoreDocKey(res.Key)
+	headStoreKey, err := keys.NewHeadstoreKey(res.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	if hf.fieldId.HasValue() && hf.fieldId.Value() != headStoreKey.FieldID {
-		// FieldIds do not match, continue to next row
-		return hf.FetchNext()
+	if hf.fieldId.HasValue() {
+		switch typedHeadStoreKey := headStoreKey.(type) {
+		case keys.HeadstoreDocKey:
+			if hf.fieldId.Value() != typedHeadStoreKey.FieldID {
+				// FieldIds do not match, continue to next row
+				return hf.FetchNext()
+			}
+
+			return &typedHeadStoreKey.Cid, nil
+
+		case keys.HeadstoreColKey:
+			if hf.fieldId.Value() == "" {
+				return &typedHeadStoreKey.Cid, nil
+			} else {
+				return nil, nil
+			}
+		}
 	}
 
-	return &headStoreKey.Cid, nil
+	cid := headStoreKey.GetCid()
+	return &cid, nil
 }
 
 func (hf *HeadFetcher) Close() error {

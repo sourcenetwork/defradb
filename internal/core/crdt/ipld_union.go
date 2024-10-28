@@ -17,6 +17,7 @@ type CRDT struct {
 	LWWRegDelta       *LWWRegDelta
 	CompositeDAGDelta *CompositeDAGDelta
 	CounterDelta      *CounterDelta
+	CollectionDelta   *CollectionDelta
 }
 
 // NewCRDT returns a new CRDT.
@@ -28,6 +29,8 @@ func NewCRDT(delta core.Delta) CRDT {
 		return CRDT{CompositeDAGDelta: d}
 	case *CounterDelta:
 		return CRDT{CounterDelta: d}
+	case *CollectionDelta:
+		return CRDT{CollectionDelta: d}
 	}
 	return CRDT{}
 }
@@ -41,6 +44,7 @@ func (c CRDT) IPLDSchemaBytes() []byte {
 		| LWWRegDelta "lww"
 		| CompositeDAGDelta "composite"
 		| CounterDelta "counter"
+		| CollectionDelta "collection"
 	} representation keyed`)
 }
 
@@ -53,6 +57,8 @@ func (c CRDT) GetDelta() core.Delta {
 		return c.CompositeDAGDelta
 	case c.CounterDelta != nil:
 		return c.CounterDelta
+	case c.CollectionDelta != nil:
+		return c.CollectionDelta
 	}
 	return nil
 }
@@ -66,6 +72,8 @@ func (c CRDT) GetPriority() uint64 {
 		return c.CompositeDAGDelta.GetPriority()
 	case c.CounterDelta != nil:
 		return c.CounterDelta.GetPriority()
+	case c.CollectionDelta != nil:
+		return c.CollectionDelta.GetPriority()
 	}
 	return 0
 }
@@ -90,6 +98,8 @@ func (c CRDT) GetDocID() []byte {
 		return c.CompositeDAGDelta.DocID
 	case c.CounterDelta != nil:
 		return c.CounterDelta.DocID
+	case c.CollectionDelta != nil:
+		return nil
 	}
 	return nil
 }
@@ -103,6 +113,8 @@ func (c CRDT) GetSchemaVersionID() string {
 		return c.CompositeDAGDelta.SchemaVersionID
 	case c.CounterDelta != nil:
 		return c.CounterDelta.SchemaVersionID
+	case c.CollectionDelta != nil:
+		return c.CollectionDelta.SchemaVersionID
 	}
 	return ""
 }
@@ -134,6 +146,11 @@ func (c CRDT) Clone() CRDT {
 			SchemaVersionID: c.CounterDelta.SchemaVersionID,
 			Nonce:           c.CounterDelta.Nonce,
 			Data:            c.CounterDelta.Data,
+		}
+	case c.CollectionDelta != nil:
+		cloned.CollectionDelta = &CollectionDelta{
+			Priority:        c.CollectionDelta.Priority,
+			SchemaVersionID: c.CollectionDelta.SchemaVersionID,
 		}
 	}
 	return cloned
@@ -171,4 +188,9 @@ func (c CRDT) SetData(data []byte) {
 // IsComposite returns true if the CRDT is a composite CRDT.
 func (c CRDT) IsComposite() bool {
 	return c.CompositeDAGDelta != nil
+}
+
+// IsCollection returns true if the CRDT is a collection CRDT.
+func (c CRDT) IsCollection() bool {
+	return c.CollectionDelta != nil
 }

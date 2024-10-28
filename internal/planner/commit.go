@@ -36,7 +36,7 @@ type dagScanNode struct {
 	queuedCids []*cid.Cid
 
 	fetcher      fetcher.HeadFetcher
-	prefix       keys.HeadstoreDocKey
+	prefix       immutable.Option[keys.HeadstoreKey]
 	commitSelect *mapper.CommitSelect
 
 	execInfo dagScanExecInfo
@@ -67,8 +67,7 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	undefined := keys.HeadstoreDocKey{}
-	if n.prefix == undefined {
+	if !n.prefix.HasValue() {
 		if n.commitSelect.DocID.HasValue() {
 			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocID.Value())
 
@@ -77,7 +76,11 @@ func (n *dagScanNode) Init() error {
 				key = key.WithFieldID(field)
 			}
 
-			n.prefix = key
+			n.prefix = immutable.Some[keys.HeadstoreKey](key)
+		} else if n.commitSelect.FieldID.HasValue() && n.commitSelect.FieldID.Value() == "" {
+			// If the user has provided an explicit nil value as `FieldID`, then we are only
+			// returning collection commits.
+			n.prefix = immutable.Some[keys.HeadstoreKey](keys.HeadstoreColKey{})
 		}
 	}
 
@@ -114,7 +117,7 @@ func (n *dagScanNode) Spans(spans []core.Span) {
 			start = s
 		}
 
-		n.prefix = start.WithFieldID(fieldID)
+		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(fieldID))
 		return
 	}
 }
@@ -144,14 +147,13 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 
 	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
-	undefinedHsKey := keys.HeadstoreDocKey{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
-	if n.prefix != undefinedHsKey {
+	if n.prefix.HasValue() {
 		spansExplainer = append(
 			spansExplainer,
 			map[string]any{
-				"start": n.prefix.ToString(),
-				"end":   n.prefix.PrefixEnd().ToString(),
+				"start": n.prefix.Value().ToString(),
+				"end":   n.prefix.Value().PrefixEnd().ToString(),
 			},
 		)
 	}
@@ -305,10 +307,12 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
 
 	var fieldName any
-
-	var fieldID string
+	var fieldID any
 	if block.Delta.CompositeDAGDelta != nil {
 		fieldID = core.COMPOSITE_NAMESPACE
+		fieldName = nil
+	} else if block.Delta.CollectionDelta != nil {
+		fieldID = nil
 		fieldName = nil
 	} else {
 		fName := block.Delta.GetFieldName()
@@ -348,9 +352,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
 	docID := block.Delta.GetDocID()
-
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.DocIDArgName, string(docID))
+	if docID != nil {
+		n.commitSelect.DocumentMapping.SetFirstOfName(
+			&commit,
+			request.DocIDArgName,
+			string(docID),
+		)
+	}
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
@@ -391,7 +399,9 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 		for _, l := range block.Links {
 			link := linksMapping.NewDoc()
-			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
+			if l.Name != "" {
+				linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
+			}
 			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Link.Cid.String())
 
 			links[i] = link

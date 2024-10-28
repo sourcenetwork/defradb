@@ -50,7 +50,9 @@ func parseCommitSelect(
 			}
 
 		case request.FieldIDName:
-			if v, ok := value.(string); ok {
+			if value == nil {
+				commit.FieldID = immutable.Some("")
+			} else if v, ok := value.(string); ok {
 				commit.FieldID = immutable.Some(v)
 			}
 

@@ -44,6 +44,7 @@ func init() {
 		&crdt.LWWRegDelta{},
 		&crdt.CompositeDAGDelta{},
 		&crdt.CounterDelta{},
+		&crdt.CollectionDelta{},
 	)
 
 	EncryptionSchema, EncryptionSchemaPrototype = mustSetSchema(
