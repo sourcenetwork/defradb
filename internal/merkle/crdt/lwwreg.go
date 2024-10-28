@@ -50,10 +50,6 @@ func (m *MerkleLWWRegister) Clock() *clock.MerkleClock {
 	return m.clock
 }
 
-func (m *MerkleLWWRegister) Merge(ctx context.Context, other core.Delta) error {
-	return m.reg.Merge(ctx, other)
-}
-
 // Save the value of the register to the DAG.
 func (m *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
 	value, ok := data.(*DocField)

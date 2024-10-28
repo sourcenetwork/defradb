@@ -37,7 +37,6 @@ type Stores interface {
 // CRDT payload. It implements the ReplicatedData interface
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
-	core.ReplicatedData
 	Clock() *clock.MerkleClock
 	Save(ctx context.Context, data any) (cidlink.Link, []byte, error)
 }

@@ -57,10 +57,6 @@ func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
 	return m.clock
 }
 
-func (m *MerkleCompositeDAG) Merge(ctx context.Context, other core.Delta) error {
-	return m.reg.Merge(ctx, other)
-}
-
 // Delete sets the values of CompositeDAG for a delete.
 func (m *MerkleCompositeDAG) Delete(
 	ctx context.Context,

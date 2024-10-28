@@ -52,10 +52,6 @@ func (m *MerkleCounter) Clock() *clock.MerkleClock {
 	return m.clock
 }
 
-func (m *MerkleCounter) Merge(ctx context.Context, other core.Delta) error {
-	return m.reg.Merge(ctx, other)
-}
-
 // Save the value of the  Counter to the DAG.
 func (m *MerkleCounter) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
 	value, ok := data.(*DocField)
