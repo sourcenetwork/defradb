@@ -52,23 +52,6 @@ type MerkleClock interface {
 	ProcessBlock(ctx context.Context, block *coreblock.Block, cid cidlink.Link) error
 }
 
-// baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
-// retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
-type baseMerkleCRDT struct {
-	clock MerkleClock
-	crdt  core.ReplicatedData
-}
-
-var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
-
-func (base *baseMerkleCRDT) Clock() MerkleClock {
-	return base.clock
-}
-
-func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta) error {
-	return base.crdt.Merge(ctx, other)
-}
-
 func InstanceWithStore(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,

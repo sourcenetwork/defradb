@@ -23,10 +23,11 @@ import (
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
-	*baseMerkleCRDT
-
-	reg corecrdt.LWWRegister
+	clock MerkleClock
+	reg   corecrdt.LWWRegister
 }
+
+var _ MerkleCRDT = (*MerkleLWWRegister)(nil)
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
@@ -38,15 +39,23 @@ func NewMerkleLWWRegister(
 ) *MerkleLWWRegister {
 	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionKey, key, fieldName)
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(), register)
-	base := &baseMerkleCRDT{clock: clk, crdt: register}
+
 	return &MerkleLWWRegister{
-		baseMerkleCRDT: base,
-		reg:            register,
+		clock: clk,
+		reg:   register,
 	}
 }
 
+func (m *MerkleLWWRegister) Clock() MerkleClock {
+	return m.clock
+}
+
+func (m *MerkleLWWRegister) Merge(ctx context.Context, other core.Delta) error {
+	return m.reg.Merge(ctx, other)
+}
+
 // Save the value of the register to the DAG.
-func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
+func (m *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
 	value, ok := data.(*DocField)
 	if !ok {
 		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
@@ -58,6 +67,6 @@ func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.L
 
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
-	delta := mlwwreg.reg.Set(bytes)
-	return mlwwreg.clock.AddDelta(ctx, delta)
+	delta := m.reg.Set(bytes)
+	return m.clock.AddDelta(ctx, delta)
 }
