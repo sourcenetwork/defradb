@@ -40,8 +40,10 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 				Request: `
 					query {
 						commits(fieldId: "C") {
+							cid
 							fieldName
 							links {
+								cid
 								name
 							}
 						}
@@ -50,20 +52,25 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
+							"cid":       testUtils.NewUniqueCid("delete"),
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
+									"cid":  testUtils.NewUniqueCid("create composite"),
 									"name": "_head",
 								},
 							},
 						},
 						{
+							"cid":       testUtils.NewUniqueCid("create composite"),
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
+									"cid":  testUtils.NewUniqueCid("create age"),
 									"name": "age",
 								},
 								{
+									"cid":  testUtils.NewUniqueCid("create name"),
 									"name": "name",
 								},
 							},
