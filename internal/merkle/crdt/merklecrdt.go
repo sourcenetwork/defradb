@@ -24,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
+// Stores is a trimmed down [datastore.Multistore] that declares only the sub-stores
+// that should be accessed by this package and it's children.
 type Stores interface {
 	Datastore() datastore.DSReaderWriter
 	Blockstore() datastore.Blockstore
