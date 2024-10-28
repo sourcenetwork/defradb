@@ -29,6 +29,10 @@ import (
 // asserting direct equality.
 //
 // They may mutate test state.
+//
+// Todo: This does not currently support chaining/nesting of Validators,
+// although we would like that long term:
+// https://github.com/sourcenetwork/defradb/issues/3189
 type Validator interface {
 	Validate(s *state, actualValue any, msgAndArgs ...any)
 }
