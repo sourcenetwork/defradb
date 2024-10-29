@@ -156,13 +156,6 @@ func NewSpans(spans ...Span) Spans {
 	}
 }
 
-// HeadKeyValue is a KV store response containing the resulting core.HeadStoreKey
-// and byte array value.
-type HeadKeyValue struct {
-	Key   HeadStoreKey
-	Value []byte
-}
-
 // Merges an unordered, potentially overlapping and/or duplicated collection of Spans into
 // a unique set in ascending order, where overlapping spans are merged into a single span.
 // Will handle spans with keys of different lengths, where one might be a prefix of another.
