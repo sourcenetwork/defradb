@@ -19,7 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 const marker = byte(0xff)
@@ -64,7 +64,7 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
-		key := core.NewP2PCollectionKey(col.SchemaRoot())
+		key := keys.NewP2PCollectionKey(col.SchemaRoot())
 		err = txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
 		if err != nil {
 			return err
@@ -121,7 +121,7 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
-		key := core.NewP2PCollectionKey(col.SchemaRoot())
+		key := keys.NewP2PCollectionKey(col.SchemaRoot())
 		err = txn.Systemstore().Delete(ctx, key.ToDS())
 		if err != nil {
 			return err
@@ -154,7 +154,7 @@ func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	defer txn.Discard(ctx)
 
 	query := dsq.Query{
-		Prefix: core.NewP2PCollectionKey("").ToString(),
+		Prefix: keys.NewP2PCollectionKey("").ToString(),
 	}
 	results, err := txn.Systemstore().Query(ctx, query)
 	if err != nil {
@@ -163,7 +163,7 @@ func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 
 	collectionIDs := []string{}
 	for result := range results.Next() {
-		key, err := core.NewP2PCollectionKeyFromString(result.Key)
+		key, err := keys.NewP2PCollectionKeyFromString(result.Key)
 		if err != nil {
 			return nil, err
 		}

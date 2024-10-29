@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type Incrementable interface {
@@ -78,12 +79,12 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 // of an Int and Float data types that ensures convergence.
 type Counter struct {
 	store datastore.DSReaderWriter
-	key   core.DataStoreKey
+	key   keys.DataStoreKey
 
 	// schemaVersionKey is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey core.CollectionSchemaVersionKey
+	schemaVersionKey keys.CollectionSchemaVersionKey
 
 	// fieldName holds the name of the field hosting this CRDT, if this is a field level
 	// commit.
@@ -98,8 +99,8 @@ var _ core.ReplicatedData = (*Counter)(nil)
 // NewCounter returns a new instance of the Counter with the given ID.
 func NewCounter(
 	store datastore.DSReaderWriter,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
@@ -205,7 +206,7 @@ func (c Counter) CType() client.CType {
 func validateAndIncrement[T Incrementable](
 	ctx context.Context,
 	store datastore.DSReaderWriter,
-	key core.DataStoreKey,
+	key keys.DataStoreKey,
 	valueAsBytes []byte,
 	allowDecrement bool,
 ) ([]byte, error) {
@@ -230,7 +231,7 @@ func validateAndIncrement[T Incrementable](
 func getCurrentValue[T Incrementable](
 	ctx context.Context,
 	store datastore.DSReaderWriter,
-	key core.DataStoreKey,
+	key keys.DataStoreKey,
 ) (T, error) {
 	curValue, err := store.Get(ctx, key.ToDS())
 	if err != nil {

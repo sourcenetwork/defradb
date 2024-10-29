@@ -15,11 +15,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // MakeDataStoreKeyWithCollectionDescription returns the datastore key for the given collection description.
-func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription) core.DataStoreKey {
-	return core.DataStoreKey{
+func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription) keys.DataStoreKey {
+	return keys.DataStoreKey{
 		CollectionRootID: col.RootID,
 	}
 }
@@ -28,8 +29,8 @@ func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription)
 func MakeDataStoreKeyWithCollectionAndDocID(
 	col client.CollectionDescription,
 	docID string,
-) core.DataStoreKey {
-	return core.DataStoreKey{
+) keys.DataStoreKey {
+	return keys.DataStoreKey{
 		CollectionRootID: col.RootID,
 		DocID:            docID,
 	}
@@ -38,9 +39,9 @@ func MakeDataStoreKeyWithCollectionAndDocID(
 func MakePrimaryIndexKeyForCRDT(
 	c client.CollectionDefinition,
 	ctype client.CType,
-	key core.DataStoreKey,
+	key keys.DataStoreKey,
 	fieldName string,
-) (core.DataStoreKey, error) {
+) (keys.DataStoreKey, error) {
 	switch ctype {
 	case client.COMPOSITE:
 		return MakeDataStoreKeyWithCollectionDescription(c.Description).
@@ -50,7 +51,7 @@ func MakePrimaryIndexKeyForCRDT(
 	case client.LWW_REGISTER, client.PN_COUNTER, client.P_COUNTER:
 		field, ok := c.GetFieldByName(fieldName)
 		if !ok {
-			return core.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
+			return keys.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
 		}
 
 		return MakeDataStoreKeyWithCollectionDescription(c.Description).
@@ -58,5 +59,5 @@ func MakePrimaryIndexKeyForCRDT(
 				WithFieldID(fmt.Sprint(field.ID)),
 			nil
 	}
-	return core.DataStoreKey{}, ErrInvalidCrdtType
+	return keys.DataStoreKey{}, ErrInvalidCrdtType
 }

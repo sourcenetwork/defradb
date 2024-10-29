@@ -20,7 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
@@ -43,10 +43,10 @@ type MerkleCRDT interface {
 
 func InstanceWithStore(
 	store Stores,
-	schemaVersionKey core.CollectionSchemaVersionKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
 	cType client.CType,
 	kind client.FieldKind,
-	key core.DataStoreKey,
+	key keys.DataStoreKey,
 	fieldName string,
 ) (MerkleCRDT, error) {
 	switch cType {

@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -68,7 +69,7 @@ func (n *dagScanNode) Kind() string {
 func (n *dagScanNode) Init() error {
 	if len(n.spans.Value) == 0 {
 		if n.commitSelect.DocID.HasValue() {
-			dsKey := core.DataStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
+			dsKey := keys.DataStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
 
 			if n.commitSelect.FieldID.HasValue() {
 				field := n.commitSelect.FieldID.Value()
@@ -112,7 +113,7 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 
 	for i, span := range headSetSpans.Value {
 		if span.Start().FieldID != fieldID {
-			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldID(fieldID), core.DataStoreKey{})
+			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldID(fieldID), keys.DataStoreKey{})
 		}
 	}
 

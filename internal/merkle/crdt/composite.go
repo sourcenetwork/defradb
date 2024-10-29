@@ -16,9 +16,9 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
@@ -35,8 +35,8 @@ var _ MerkleCRDT = (*MerkleCompositeDAG)(nil)
 // backed by a CompositeDAG CRDT.
 func NewMerkleCompositeDAG(
 	store Stores,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
 		store.Datastore(),

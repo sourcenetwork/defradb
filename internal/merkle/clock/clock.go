@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 var (
@@ -47,7 +48,7 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
-	namespace core.HeadStoreKey,
+	namespace keys.HeadStoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{

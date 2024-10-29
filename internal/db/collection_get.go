@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (c *collection) Get(
@@ -55,7 +56,7 @@ func (c *collection) Get(
 
 func (c *collection) get(
 	ctx context.Context,
-	primaryKey core.PrimaryDataStoreKey,
+	primaryKey keys.PrimaryDataStoreKey,
 	fields []client.FieldDefinition,
 	showDeleted bool,
 ) (*client.Document, error) {

@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
@@ -244,7 +244,7 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 }
 
 func (f *indexTestFixture) countIndexPrefixes(indexName string) int {
-	prefix := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), indexName)
+	prefix := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), indexName)
 	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
 		Prefix: prefix.ToString(),
 	})
@@ -422,7 +422,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	_, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
 
-	key := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), name)
+	key := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), name)
 	data, err := f.txn.Systemstore().Get(f.ctx, key.ToDS())
 	assert.NoError(t, err)
 	var deserialized client.IndexDescription
@@ -474,7 +474,7 @@ func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCol
 		desc, err := f.createCollectionIndexFor(col.Name().Value(), makeIndex(fieldName))
 		require.NoError(t, err)
 		assert.Equal(t, expectedID, desc.ID)
-		seqKey := core.NewIndexIDSequenceKey(col.ID())
+		seqKey := keys.NewIndexIDSequenceKey(col.ID())
 		storedSeqKey, err := f.txn.Systemstore().Get(f.ctx, seqKey.ToDS())
 		assert.NoError(t, err)
 		storedSeqVal := binary.BigEndian.Uint64(storedSeqKey)
@@ -563,7 +563,7 @@ func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
+	indexKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
 	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
 	assert.NoError(t, err)
 
@@ -575,7 +575,7 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
+	indexKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
 	key := ds.NewKey(indexKey.ToString() + "/invalid")
 	desc := client.IndexDescription{
 		Name: "some_index_name",
@@ -741,7 +741,7 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
+	indexKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), "users_name_index")
 	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
 	assert.NoError(t, err)
 
@@ -998,7 +998,7 @@ func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	err := f.dropIndex(usersColName, desc.Name)
 	assert.NoError(t, err)
 
-	indexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), desc.Name)
+	indexKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), desc.Name)
 	_, err = f.txn.Systemstore().Get(f.ctx, indexKey.ToDS())
 	assert.Error(t, err)
 }

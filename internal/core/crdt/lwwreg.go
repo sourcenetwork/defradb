@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister
@@ -66,12 +67,12 @@ func (delta *LWWRegDelta) SetPriority(prio uint64) {
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
 	store datastore.DSReaderWriter
-	key   core.DataStoreKey
+	key   keys.DataStoreKey
 
 	// schemaVersionKey is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey core.CollectionSchemaVersionKey
+	schemaVersionKey keys.CollectionSchemaVersionKey
 
 	// fieldName holds the name of the field hosting this CRDT, if this is a field level
 	// commit.
@@ -83,8 +84,8 @@ var _ core.ReplicatedData = (*LWWRegister)(nil)
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
 func NewLWWRegister(
 	store datastore.DSReaderWriter,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 	fieldName string,
 ) LWWRegister {
 	return LWWRegister{

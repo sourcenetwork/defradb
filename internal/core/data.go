@@ -10,27 +10,31 @@
 
 package core
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/sourcenetwork/defradb/internal/keys"
+)
 
 // Span is a range of keys from [Start, End).
 type Span interface {
 	// Start returns the starting key of the Span.
-	Start() DataStoreKey
+	Start() keys.DataStoreKey
 	// End returns the ending key of the Span.
-	End() DataStoreKey
+	End() keys.DataStoreKey
 	// Compare returns -1 if the provided span is less, 0 if it is equal, and 1 if its greater.
 	Compare(Span) SpanComparisonResult
 }
 
 type span struct {
-	start DataStoreKey
-	end   DataStoreKey
+	start keys.DataStoreKey
+	end   keys.DataStoreKey
 }
 
 var _ Span = span{}
 
 // NewSpan creates a new Span from the provided start and end keys.
-func NewSpan(start, end DataStoreKey) Span {
+func NewSpan(start, end keys.DataStoreKey) Span {
 	return span{
 		start: start,
 		end:   end,
@@ -38,12 +42,12 @@ func NewSpan(start, end DataStoreKey) Span {
 }
 
 // Start returns the starting key of the Span.
-func (s span) Start() DataStoreKey {
+func (s span) Start() keys.DataStoreKey {
 	return s.start
 }
 
 // End returns the ending key of the Span.
-func (s span) End() DataStoreKey {
+func (s span) End() keys.DataStoreKey {
 	return s.end
 }
 
@@ -136,7 +140,7 @@ func (this span) Compare(other Span) SpanComparisonResult {
 	return After
 }
 
-func isAdjacent(this DataStoreKey, other DataStoreKey) bool {
+func isAdjacent(this keys.DataStoreKey, other keys.DataStoreKey) bool {
 	return len(this.ToString()) == len(other.ToString()) &&
 		(this.PrefixEnd().ToString() == other.ToString() ||
 			this.ToString() == other.PrefixEnd().ToString())

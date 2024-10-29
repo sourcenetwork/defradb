@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
@@ -78,7 +79,7 @@ type Fetcher interface {
 
 // keyValue is a KV store response containing the resulting core.Key and byte array value.
 type keyValue struct {
-	Key   core.DataStoreKey
+	Key   keys.DataStoreKey
 	Value []byte
 }
 
@@ -366,7 +367,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 		}
 	}
 
-	if df.kv != nil && (df.kv.Key.InstanceType != core.ValueKey && df.kv.Key.InstanceType != core.DeletedKey) {
+	if df.kv != nil && (df.kv.Key.InstanceType != keys.ValueKey && df.kv.Key.InstanceType != keys.DeletedKey) {
 		// We can only ready value values, if we escape the collection's value keys
 		// then we must be done and can stop reading
 		spanDone = true
@@ -450,19 +451,19 @@ func (df *DocumentFetcher) seekKV(key string) (bool, *keyValue, error) {
 // - It directly interacts with the KVIterator.
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
-func (df *DocumentFetcher) nextKVRaw() (bool, core.DataStoreKey, dsq.Result, error) {
+func (df *DocumentFetcher) nextKVRaw() (bool, keys.DataStoreKey, dsq.Result, error) {
 	res, available := df.kvResultsIter.NextSync()
 	if !available {
-		return true, core.DataStoreKey{}, res, nil
+		return true, keys.DataStoreKey{}, res, nil
 	}
 	err := res.Error
 	if err != nil {
-		return true, core.DataStoreKey{}, res, err
+		return true, keys.DataStoreKey{}, res, err
 	}
 
-	dsKey, err := core.NewDataStoreKey(res.Key)
+	dsKey, err := keys.NewDataStoreKey(res.Key)
 	if err != nil {
-		return true, core.DataStoreKey{}, res, err
+		return true, keys.DataStoreKey{}, res, err
 	}
 
 	return false, dsKey, res, nil
@@ -504,7 +505,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		}
 	}
 
-	if kv.Key.FieldID == core.DATASTORE_DOC_VERSION_FIELD_ID {
+	if kv.Key.FieldID == keys.DATASTORE_DOC_VERSION_FIELD_ID {
 		df.doc.schemaVersionID = string(kv.Value)
 		return nil
 	}

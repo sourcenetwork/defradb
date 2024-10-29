@@ -34,6 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -280,7 +281,7 @@ func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
 	txn := mustGetContextTxn(ctx)
-	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
+	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionRootID: c.Description().RootID,
 	}
 	q, err := txn.Datastore().Query(ctx, query.Query{
@@ -420,15 +421,15 @@ func (c *collection) CreateMany(
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	doc *client.Document,
-) (client.DocID, core.PrimaryDataStoreKey, error) {
+) (client.DocID, keys.PrimaryDataStoreKey, error) {
 	docID, err := doc.GenerateDocID()
 	if err != nil {
-		return client.DocID{}, core.PrimaryDataStoreKey{}, err
+		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
 	}
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 	if primaryKey.DocID != doc.ID().String() {
-		return client.DocID{}, core.PrimaryDataStoreKey{},
+		return client.DocID{}, keys.PrimaryDataStoreKey{},
 			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
 	}
 	return docID, primaryKey, nil
@@ -667,7 +668,7 @@ func (c *collection) save(
 
 			merkleCRDT, err := merklecrdt.InstanceWithStore(
 				txn,
-				core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+				keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 				val.Type(),
 				fieldDescription.Kind,
 				fieldKey,
@@ -860,7 +861,7 @@ func (c *collection) Exists(
 // check if a document exists with the given primary key
 func (c *collection) exists(
 	ctx context.Context,
-	primaryKey core.PrimaryDataStoreKey,
+	primaryKey keys.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
 	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
@@ -894,7 +895,7 @@ func (c *collection) exists(
 // Calling it elsewhere could cause the omission of acp checks.
 func (c *collection) saveCompositeToMerkleCRDT(
 	ctx context.Context,
-	dsKey core.DataStoreKey,
+	dsKey keys.DataStoreKey,
 	links []coreblock.DAGLink,
 	status client.DocumentStatus,
 ) (cidlink.Link, []byte, error) {
@@ -902,7 +903,7 @@ func (c *collection) saveCompositeToMerkleCRDT(
 	dsKey = dsKey.WithFieldID(core.COMPOSITE_NAMESPACE)
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,
-		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 		dsKey,
 	)
 
@@ -913,28 +914,28 @@ func (c *collection) saveCompositeToMerkleCRDT(
 	return merkleCRDT.Save(ctx, links)
 }
 
-func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) core.PrimaryDataStoreKey {
-	return core.PrimaryDataStoreKey{
+func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) keys.PrimaryDataStoreKey {
+	return keys.PrimaryDataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            docID.String(),
 	}
 }
 
-func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) core.DataStoreKey {
-	return core.DataStoreKey{
+func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) keys.DataStoreKey {
+	return keys.DataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            docID.String(),
-		InstanceType:     core.ValueKey,
+		InstanceType:     keys.ValueKey,
 	}
 }
 
-func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
+func (c *collection) tryGetFieldKey(primaryKey keys.PrimaryDataStoreKey, fieldName string) (keys.DataStoreKey, bool) {
 	fieldID, hasField := c.tryGetFieldID(fieldName)
 	if !hasField {
-		return core.DataStoreKey{}, false
+		return keys.DataStoreKey{}, false
 	}
 
-	return core.DataStoreKey{
+	return keys.DataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            primaryKey.DocID,
 		FieldID:          strconv.FormatUint(uint64(fieldID), 10),
