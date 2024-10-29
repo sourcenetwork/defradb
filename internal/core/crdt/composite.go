@@ -76,7 +76,13 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	baseCRDT
+	store datastore.DSReaderWriter
+	key   core.DataStoreKey
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
 }
 
 var _ core.ReplicatedData = (*CompositeDAG)(nil)
@@ -86,12 +92,11 @@ func NewCompositeDAG(
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 ) CompositeDAG {
-	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, "")}
-}
-
-// Value is a no-op for a CompositeDAG.
-func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
-	return nil, nil
+	return CompositeDAG{
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
+	}
 }
 
 // Set returns a new composite DAG delta CRDT with the given status.

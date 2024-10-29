@@ -24,10 +24,12 @@ import (
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
-	*baseMerkleCRDT
+	clock *clock.MerkleClock
 	// core.ReplicatedData
 	reg corecrdt.CompositeDAG
 }
+
+var _ MerkleCRDT = (*MerkleCompositeDAG)(nil)
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
@@ -44,12 +46,15 @@ func NewMerkleCompositeDAG(
 
 	clock := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(),
 		key.ToHeadStoreKey(), compositeDag)
-	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag}
 
 	return &MerkleCompositeDAG{
-		baseMerkleCRDT: base,
-		reg:            compositeDag,
+		clock: clock,
+		reg:   compositeDag,
 	}
+}
+
+func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
+	return m.clock
 }
 
 // Delete sets the values of CompositeDAG for a delete.

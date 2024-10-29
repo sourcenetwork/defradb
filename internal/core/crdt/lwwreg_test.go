@@ -11,12 +11,10 @@
 package crdt
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -32,80 +30,12 @@ func setupLWWRegister() LWWRegister {
 	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
 }
 
-func setupLoadedLWWRegister(t *testing.T, ctx context.Context) LWWRegister {
-	lww := setupLWWRegister()
-	addDelta := lww.Set([]byte("test"))
-	addDelta.SetPriority(1)
-	err := lww.Merge(ctx, addDelta)
-	require.NoError(t, err)
-	return lww
-}
-
 func TestLWWRegisterAddDelta(t *testing.T) {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
 
 	if !reflect.DeepEqual(addDelta.Data, []byte("test")) {
 		t.Errorf("Delta unexpected value, was %s want %s", addDelta.Data, []byte("test"))
-	}
-}
-
-func TestLWWRegisterInitialMerge(t *testing.T) {
-	ctx := context.Background()
-	lww := setupLWWRegister()
-	addDelta := lww.Set([]byte("test"))
-	addDelta.SetPriority(1)
-	err := lww.Merge(ctx, addDelta)
-	if err != nil {
-		t.Errorf("Unexpected error: %s\n", err)
-		return
-	}
-
-	val, err := lww.Value(ctx)
-	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
-		return
-	}
-
-	expectedVal := []byte("test")
-	if string(val) != string(expectedVal) {
-		t.Errorf("Mismatch value for LWWRegister, was %s want %s", val, expectedVal)
-	}
-}
-
-func TestLWWRegisterFollowupMerge(t *testing.T) {
-	ctx := context.Background()
-	lww := setupLoadedLWWRegister(t, ctx)
-	addDelta := lww.Set([]byte("test2"))
-	addDelta.SetPriority(2)
-	err := lww.Merge(ctx, addDelta)
-	require.NoError(t, err)
-
-	val, err := lww.Value(ctx)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if string(val) != string([]byte("test2")) {
-		t.Errorf("Incorrect merge state, want %s, have %s", []byte("test2"), val)
-	}
-}
-
-func TestLWWRegisterOldMerge(t *testing.T) {
-	ctx := context.Background()
-	lww := setupLoadedLWWRegister(t, ctx)
-	addDelta := lww.Set([]byte("test-1"))
-	addDelta.SetPriority(0)
-	err := lww.Merge(ctx, addDelta)
-	require.NoError(t, err)
-
-	val, err := lww.Value(ctx)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if string(val) != string([]byte("test")) {
-		t.Errorf("Incorrect merge state, want %s, have %s", []byte("test"), val)
 	}
 }
 

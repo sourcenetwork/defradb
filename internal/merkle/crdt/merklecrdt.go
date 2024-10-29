@@ -21,9 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
+// Stores is a trimmed down [datastore.Multistore] that declares only the sub-stores
+// that should be accessed by this package and it's children.
 type Stores interface {
 	Datastore() datastore.DSReaderWriter
 	Blockstore() datastore.Blockstore
@@ -35,42 +37,8 @@ type Stores interface {
 // CRDT payload. It implements the ReplicatedData interface
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
-	core.ReplicatedData
-	Clock() MerkleClock
+	Clock() *clock.MerkleClock
 	Save(ctx context.Context, data any) (cidlink.Link, []byte, error)
-}
-
-// MerkleClock is the logical clock implementation that manages writing to and from
-// the MerkleDAG structure, ensuring a causal ordering of events.
-type MerkleClock interface {
-	AddDelta(
-		ctx context.Context,
-		delta core.Delta,
-		links ...coreblock.DAGLink,
-	) (cidlink.Link, []byte, error)
-	// ProcessBlock processes a block and updates the CRDT state.
-	ProcessBlock(ctx context.Context, block *coreblock.Block, cid cidlink.Link) error
-}
-
-// baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
-// retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
-type baseMerkleCRDT struct {
-	clock MerkleClock
-	crdt  core.ReplicatedData
-}
-
-var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
-
-func (base *baseMerkleCRDT) Clock() MerkleClock {
-	return base.clock
-}
-
-func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta) error {
-	return base.crdt.Merge(ctx, other)
-}
-
-func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
-	return base.crdt.Value(ctx)
 }
 
 func InstanceWithStore(
