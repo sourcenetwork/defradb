@@ -24,13 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-var (
-	// KeyMin is a minimum key value which sorts before all other keys.
-	KeyMin = []byte{}
-	// KeyMax is a maximum key value which sorts after all other keys.
-	KeyMax = []byte{0xff, 0xff}
-)
-
 // InstanceType is a type that represents the type of instance.
 type InstanceType string
 
