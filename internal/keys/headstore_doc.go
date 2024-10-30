@@ -29,24 +29,24 @@ var _ Walkable = (*HeadStoreKey)(nil)
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
-// /[DocID]/[FieldId]/[Cid]
+// /d/[DocID]/[FieldId]/[Cid]
 //
 // Any properties before the above are ignored
 func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	elements := strings.Split(key, "/")
-	if len(elements) != 4 {
+	if len(elements) != 5 {
 		return HeadStoreKey{}, ErrInvalidKey
 	}
 
-	cid, err := cid.Decode(elements[3])
+	cid, err := cid.Decode(elements[4])
 	if err != nil {
 		return HeadStoreKey{}, err
 	}
 
 	return HeadStoreKey{
 		// elements[0] is empty (key has leading '/')
-		DocID:   elements[1],
-		FieldID: elements[2],
+		DocID:   elements[2],
+		FieldID: elements[3],
 		Cid:     cid,
 	}, nil
 }
@@ -70,7 +70,7 @@ func (k HeadStoreKey) WithFieldID(fieldID string) HeadStoreKey {
 }
 
 func (k HeadStoreKey) ToString() string {
-	var result string
+	result := HEADSTORE_DOC
 
 	if k.DocID != "" {
 		result = result + "/" + k.DocID
