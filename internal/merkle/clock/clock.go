@@ -48,7 +48,7 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
-	namespace keys.HeadStoreKey,
+	namespace keys.HeadstoreDocKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{

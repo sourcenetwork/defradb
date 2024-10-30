@@ -36,7 +36,7 @@ type dagScanNode struct {
 	queuedCids []*cid.Cid
 
 	fetcher      fetcher.HeadFetcher
-	prefix       keys.HeadStoreKey
+	prefix       keys.HeadstoreDocKey
 	commitSelect *mapper.CommitSelect
 
 	execInfo dagScanExecInfo
@@ -67,10 +67,10 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	undefined := keys.HeadStoreKey{}
+	undefined := keys.HeadstoreDocKey{}
 	if n.prefix == undefined {
 		if n.commitSelect.DocID.HasValue() {
-			key := keys.HeadStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
+			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocID.Value())
 
 			if n.commitSelect.FieldID.HasValue() {
 				field := n.commitSelect.FieldID.Value()
@@ -106,11 +106,11 @@ func (n *dagScanNode) Spans(spans []core.Span) {
 	}
 
 	for _, span := range spans {
-		var start keys.HeadStoreKey
+		var start keys.HeadstoreDocKey
 		switch s := span.Start.(type) {
 		case keys.DataStoreKey:
 			start = s.ToHeadStoreKey()
-		case keys.HeadStoreKey:
+		case keys.HeadstoreDocKey:
 			start = s
 		}
 
@@ -144,7 +144,7 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 
 	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
-	undefinedHsKey := keys.HeadStoreKey{}
+	undefinedHsKey := keys.HeadstoreDocKey{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.prefix != undefinedHsKey {
 		spansExplainer = append(

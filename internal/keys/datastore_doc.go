@@ -112,8 +112,8 @@ func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) ToHeadStoreKey() HeadStoreKey {
-	return HeadStoreKey{
+func (k DataStoreKey) ToHeadStoreKey() HeadstoreDocKey {
+	return HeadstoreDocKey{
 		DocID:   k.DocID,
 		FieldID: k.FieldID,
 	}

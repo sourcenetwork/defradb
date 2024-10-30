@@ -31,7 +31,7 @@ type HeadFetcher struct {
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
-	prefix keys.HeadStoreKey,
+	prefix keys.HeadstoreDocKey,
 	fieldId immutable.Option[string],
 ) error {
 	hf.fieldId = fieldId
@@ -64,7 +64,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, nil
 	}
 
-	headStoreKey, err := keys.NewHeadStoreKey(res.Key)
+	headStoreKey, err := keys.NewHeadstoreDocKey(res.Key)
 	if err != nil {
 		return nil, err
 	}

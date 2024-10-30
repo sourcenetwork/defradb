@@ -163,7 +163,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error
 
 	// VersionedFetcher only ever recieves a headstore key
 	//nolint:forcetypeassert
-	prefix := spans[0].Start.(keys.HeadStoreKey)
+	prefix := spans[0].Start.(keys.HeadstoreDocKey)
 	dk := prefix.DocID
 	cid := prefix.Cid
 	if dk == "" {
