@@ -18,13 +18,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func setPriority(
 	ctx context.Context,
 	store datastore.DSReaderWriter,
-	key core.DataStoreKey,
+	key keys.DataStoreKey,
 	priority uint64,
 ) error {
 	prioK := key.WithPriorityFlag()
@@ -41,7 +41,7 @@ func setPriority(
 func getPriority(
 	ctx context.Context,
 	store datastore.DSReaderWriter,
-	key core.DataStoreKey,
+	key keys.DataStoreKey,
 ) (uint64, error) {
 	pKey := key.WithPriorityFlag()
 	pbuf, err := store.Get(ctx, pKey.ToDS())

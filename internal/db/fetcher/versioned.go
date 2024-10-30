@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -89,7 +90,7 @@ type VersionedFetcher struct {
 	root  datastore.Rootstore
 	store datastore.Txn
 
-	dsKey   core.DataStoreKey
+	dsKey   keys.DataStoreKey
 	version cid.Cid
 
 	queuedCids *list.List
@@ -392,7 +393,7 @@ func (vf *VersionedFetcher) processBlock(
 		}
 		mcrdt, err = merklecrdt.InstanceWithStore(
 			vf.store,
-			core.CollectionSchemaVersionKey{},
+			keys.CollectionSchemaVersionKey{},
 			ctype,
 			kind,
 			dsKey,
@@ -427,7 +428,7 @@ func (vf *VersionedFetcher) Close() error {
 }
 
 // NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
-func NewVersionedSpan(dsKey core.DataStoreKey, version cid.Cid) core.Spans {
+func NewVersionedSpan(dsKey keys.DataStoreKey, version cid.Cid) core.Spans {
 	// Todo: Dont abuse DataStoreKey for version cid!
-	return core.NewSpans(core.NewSpan(dsKey, core.DataStoreKey{DocID: version.String()}))
+	return core.NewSpans(core.NewSpan(dsKey, keys.DataStoreKey{DocID: version.String()}))
 }

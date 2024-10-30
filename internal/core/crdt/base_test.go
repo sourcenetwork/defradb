@@ -17,7 +17,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func newDS() datastore.DSReaderWriter {
@@ -25,14 +25,14 @@ func newDS() datastore.DSReaderWriter {
 }
 
 func TestBaseCRDTvalueKey(t *testing.T) {
-	vk := core.DataStoreKey{}.WithDocID("mykey").WithValueFlag()
+	vk := keys.DataStoreKey{}.WithDocID("mykey").WithValueFlag()
 	if vk.ToString() != "/v/mykey" {
 		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), "/v/mykey")
 	}
 }
 
 func TestBaseCRDTprioryKey(t *testing.T) {
-	pk := core.DataStoreKey{}.WithDocID("mykey").WithPriorityFlag()
+	pk := keys.DataStoreKey{}.WithDocID("mykey").WithPriorityFlag()
 	if pk.ToString() != "/p/mykey" {
 		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), "/p/mykey")
 	}
@@ -42,13 +42,13 @@ func TestBaseCRDTSetGetPriority(t *testing.T) {
 	store := newDS()
 
 	ctx := context.Background()
-	err := setPriority(ctx, store, core.DataStoreKey{}.WithDocID("mykey"), 10)
+	err := setPriority(ctx, store, keys.DataStoreKey{}.WithDocID("mykey"), 10)
 	if err != nil {
 		t.Errorf("baseCRDT failed to set Priority. err: %v", err)
 		return
 	}
 
-	priority, err := getPriority(ctx, store, core.DataStoreKey{}.WithDocID("mykey"))
+	priority, err := getPriority(ctx, store, keys.DataStoreKey{}.WithDocID("mykey"))
 	if err != nil {
 		t.Errorf("baseCRDT failed to get priority. err: %v", err)
 		return

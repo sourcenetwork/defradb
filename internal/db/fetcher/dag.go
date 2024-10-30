@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
@@ -40,8 +41,8 @@ func (hf *HeadFetcher) Start(
 	if len(spans.Value) == 0 {
 		spans = core.NewSpans(
 			core.NewSpan(
-				core.DataStoreKey{},
-				core.DataStoreKey{}.PrefixEnd(),
+				keys.DataStoreKey{},
+				keys.DataStoreKey{}.PrefixEnd(),
 			),
 		)
 	}
@@ -87,7 +88,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, nil
 	}
 
-	headStoreKey, err := core.NewHeadStoreKey(res.Key)
+	headStoreKey, err := keys.NewHeadStoreKey(res.Key)
 	if err != nil {
 		return nil, err
 	}

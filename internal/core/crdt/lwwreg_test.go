@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func newMockStore() datastore.DSReaderWriter {
@@ -26,8 +27,8 @@ func newMockStore() datastore.DSReaderWriter {
 
 func setupLWWRegister() LWWRegister {
 	store := newMockStore()
-	key := core.DataStoreKey{DocID: "AAAA-BBBB"}
-	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
+	key := keys.DataStoreKey{DocID: "AAAA-BBBB"}
+	return NewLWWRegister(store, keys.CollectionSchemaVersionKey{}, key, "")
 }
 
 func TestLWWRegisterAddDelta(t *testing.T) {

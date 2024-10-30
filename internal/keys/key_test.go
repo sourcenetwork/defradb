@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package core
+package keys
 
 import (
 	"fmt"
@@ -95,7 +95,7 @@ func encodeKey(colID, indexID uint32, fieldParts ...any) []byte {
 	}
 	for i := 0; i < len(fieldParts)/partSize; i++ {
 		b = append(b, '/')
-		isDescending := fieldParts[i*partSize+1].(bool)
+		isDescending, _ := fieldParts[i*partSize+1].(bool)
 		if fieldParts[i*partSize] == nil {
 			if isDescending {
 				b = encoding.EncodeNullDescending(b)
@@ -103,10 +103,11 @@ func encodeKey(colID, indexID uint32, fieldParts ...any) []byte {
 				b = encoding.EncodeNullAscending(b)
 			}
 		} else {
+			v, _ := fieldParts[i*partSize].(int)
 			if isDescending {
-				b = encoding.EncodeUvarintDescending(b, uint64(fieldParts[i*partSize].(int)))
+				b = encoding.EncodeUvarintDescending(b, uint64(v))
 			} else {
-				b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*partSize].(int)))
+				b = encoding.EncodeUvarintAscending(b, uint64(v))
 			}
 		}
 	}

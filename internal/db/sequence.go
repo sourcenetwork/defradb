@@ -17,15 +17,15 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type sequence struct {
-	key core.Key
+	key keys.Key
 	val uint64
 }
 
-func (db *db) getSequence(ctx context.Context, key core.Key) (*sequence, error) {
+func (db *db) getSequence(ctx context.Context, key keys.Key) (*sequence, error) {
 	seq := &sequence{
 		key: key,
 		val: uint64(0),

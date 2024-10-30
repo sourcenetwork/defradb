@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -294,10 +295,10 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		return core.ErrInvalidKey
 	}
 
-	datastoreKeyBase := core.DataStoreKey{
+	datastoreKeyBase := keys.DataStoreKey{
 		CollectionRootID: f.col.Description().RootID,
 		DocID:            docID,
-		InstanceType:     core.ValueKey,
+		InstanceType:     keys.ValueKey,
 	}
 
 	for fieldName, value := range modifiedFieldValuesByName {
@@ -320,7 +321,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 	}
 
-	versionKey := datastoreKeyBase.WithFieldID(core.DATASTORE_DOC_VERSION_FIELD_ID)
+	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
 	if err != nil {
 		return err

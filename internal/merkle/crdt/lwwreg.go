@@ -16,8 +16,8 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
@@ -33,8 +33,8 @@ var _ MerkleCRDT = (*MerkleLWWRegister)(nil)
 // backed by a LWWRegister CRDT.
 func NewMerkleLWWRegister(
 	store Stores,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 	fieldName string,
 ) *MerkleLWWRegister {
 	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionKey, key, fieldName)

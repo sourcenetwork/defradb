@@ -34,6 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
@@ -354,7 +355,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, core.CollectionIDSequenceKey{})
+	_, err = db.getSequence(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}

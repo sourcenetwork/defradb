@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
@@ -61,9 +62,9 @@ func (db *db) getAllIndexDescriptions(
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewCollectionIndexKey(immutable.None[uint32](), "")
+	prefix := keys.NewCollectionIndexKey(immutable.None[uint32](), "")
 
-	keys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
+	indexKeys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
 
 	if err != nil {
@@ -72,8 +73,8 @@ func (db *db) getAllIndexDescriptions(
 
 	indexes := make(map[client.CollectionName][]client.IndexDescription)
 
-	for i := range keys {
-		indexKey, err := core.NewCollectionIndexKeyFromString(keys[i])
+	for i := range indexKeys {
+		indexKey, err := keys.NewCollectionIndexKeyFromString(indexKeys[i])
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
@@ -98,7 +99,7 @@ func (db *db) fetchCollectionIndexDescriptions(
 ) ([]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewCollectionIndexKey(immutable.Some(colID), "")
+	prefix := keys.NewCollectionIndexKey(immutable.Some(colID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
 		ctx,
 		prefix.ToString(),
@@ -257,7 +258,7 @@ func (c *collection) createIndex(
 
 	colSeq, err := c.db.getSequence(
 		ctx,
-		core.NewIndexIDSequenceKey(c.ID()),
+		keys.NewIndexIDSequenceKey(c.ID()),
 	)
 	if err != nil {
 		return nil, err
@@ -411,7 +412,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 			break
 		}
 	}
-	key := core.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
+	key := keys.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -423,7 +424,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 func (c *collection) dropAllIndexes(ctx context.Context) error {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewCollectionIndexKey(immutable.Some(c.ID()), "")
+	prefix := keys.NewCollectionIndexKey(immutable.Some(c.ID()), "")
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
@@ -494,19 +495,19 @@ func (c *collection) checkExistingFieldsAndAdjustRelFieldNames(
 func (c *collection) generateIndexNameIfNeededAndCreateKey(
 	ctx context.Context,
 	desc *client.IndexDescription,
-) (core.CollectionIndexKey, error) {
+) (keys.CollectionIndexKey, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
 
-	var indexKey core.CollectionIndexKey
+	var indexKey keys.CollectionIndexKey
 	if desc.Name == "" {
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 			if err != nil {
-				return core.CollectionIndexKey{}, err
+				return keys.CollectionIndexKey{}, err
 			}
 			if !exists {
 				break
@@ -514,13 +515,13 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 		if err != nil {
-			return core.CollectionIndexKey{}, err
+			return keys.CollectionIndexKey{}, err
 		}
 		if exists {
-			return core.CollectionIndexKey{}, NewErrIndexWithNameAlreadyExists(desc.Name)
+			return keys.CollectionIndexKey{}, NewErrIndexWithNameAlreadyExists(desc.Name)
 		}
 	}
 	return indexKey, nil

@@ -18,7 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // CreateSchemaVersion creates and saves to the store a new schema version.
@@ -34,7 +34,7 @@ func CreateSchemaVersion(
 		return client.SchemaDescription{}, err
 	}
 
-	key := core.NewSchemaVersionKey(desc.VersionID)
+	key := keys.NewSchemaVersionKey(desc.VersionID)
 	err = txn.Systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return client.SchemaDescription{}, err
@@ -43,7 +43,7 @@ func CreateSchemaVersion(
 	isNew := desc.Root == desc.VersionID
 	if !isNew {
 		// We don't need to add a root key if this is the first version
-		schemaVersionHistoryKey := core.NewSchemaRootKey(desc.Root, desc.VersionID)
+		schemaVersionHistoryKey := keys.NewSchemaRootKey(desc.Root, desc.VersionID)
 		err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte{})
 		if err != nil {
 			return client.SchemaDescription{}, err
@@ -62,7 +62,7 @@ func GetSchemaVersion(
 	txn datastore.Txn,
 	versionID string,
 ) (client.SchemaDescription, error) {
-	key := core.NewSchemaVersionKey(versionID)
+	key := keys.NewSchemaVersionKey(versionID)
 
 	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
 	if err != nil {
@@ -135,7 +135,7 @@ func GetSchemas(
 		versionIDs = append(versionIDs, col.SchemaVersionID)
 	}
 
-	schemaVersionPrefix := core.NewSchemaVersionKey("")
+	schemaVersionPrefix := keys.NewSchemaVersionKey("")
 	schemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: schemaVersionPrefix.ToString(),
 	})
@@ -181,7 +181,7 @@ func GetAllSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	prefix := core.NewSchemaVersionKey("")
+	prefix := keys.NewSchemaVersionKey("")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),
 	})
@@ -226,7 +226,7 @@ func GetSchemaVersionIDs(
 	// It is not present in the history prefix.
 	schemaVersions := []string{schemaRoot}
 
-	prefix := core.NewSchemaRootKey(schemaRoot, "")
+	prefix := keys.NewSchemaRootKey(schemaRoot, "")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
@@ -243,7 +243,7 @@ func GetSchemaVersionIDs(
 			return nil, err
 		}
 
-		key, err := core.NewSchemaRootKeyFromString(res.Key)
+		key, err := keys.NewSchemaRootKeyFromString(res.Key)
 		if err != nil {
 			return nil, err
 		}

@@ -19,10 +19,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func newDS() ds.Datastore {
@@ -33,12 +33,12 @@ func newTestMerkleClock() *MerkleClock {
 	s := newDS()
 
 	multistore := datastore.MultiStoreFrom(s)
-	reg := crdt.NewLWWRegister(multistore.Rootstore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
+	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
 	return NewMerkleClock(
 		multistore.Headstore(),
 		multistore.Blockstore(),
 		multistore.Encstore(),
-		core.HeadStoreKey{DocID: request.DocIDArgName, FieldID: "1"},
+		keys.HeadStoreKey{DocID: request.DocIDArgName, FieldID: "1"},
 		reg,
 	)
 }
@@ -46,8 +46,8 @@ func newTestMerkleClock() *MerkleClock {
 func TestNewMerkleClock(t *testing.T) {
 	s := newDS()
 	multistore := datastore.MultiStoreFrom(s)
-	reg := crdt.NewLWWRegister(multistore.Rootstore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
-	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), multistore.Encstore(), core.HeadStoreKey{}, reg)
+	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
+	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), multistore.Encstore(), keys.HeadStoreKey{}, reg)
 
 	if clk.headstore != multistore.Headstore() {
 		t.Error("MerkleClock store not correctly set")

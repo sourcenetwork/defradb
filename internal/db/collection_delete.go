@@ -16,8 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -87,7 +87,7 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		primaryKey := core.PrimaryDataStoreKey{
+		primaryKey := keys.PrimaryDataStoreKey{
 			CollectionRootID: c.Description().RootID,
 			DocID:            docID,
 		}
@@ -109,7 +109,7 @@ func (c *collection) deleteWithFilter(
 
 func (c *collection) applyDelete(
 	ctx context.Context,
-	primaryKey core.PrimaryDataStoreKey,
+	primaryKey keys.PrimaryDataStoreKey,
 ) error {
 	// Must also have read permission to delete, inorder to check if document exists.
 	found, isDeleted, err := c.exists(ctx, primaryKey)
