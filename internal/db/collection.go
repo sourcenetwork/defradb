@@ -19,7 +19,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -686,12 +685,13 @@ func (c *collection) save(
 		}
 	}
 
-	link, headNode, err := c.saveCompositeToMerkleCRDT(
-		ctx,
-		primaryKey.ToDataStoreKey(),
-		links,
-		client.Active,
+	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
+		txn,
+		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
+
+	link, headNode, err := merkleCRDT.Save(ctx, links)
 	if err != nil {
 		return err
 	}
@@ -885,32 +885,6 @@ func (c *collection) exists(
 	}
 
 	return true, false, nil
-}
-
-// saveCompositeToMerkleCRDT saves the composite to the merkle CRDT.
-// It returns the CID of the block and the encoded block.
-// saveCompositeToMerkleCRDT MUST not be called outside the `c.save`
-// and `c.applyDelete` methods as we wrap the acp logic around those methods.
-// Calling it elsewhere could cause the omission of acp checks.
-func (c *collection) saveCompositeToMerkleCRDT(
-	ctx context.Context,
-	dsKey keys.DataStoreKey,
-	links []coreblock.DAGLink,
-	status client.DocumentStatus,
-) (cidlink.Link, []byte, error) {
-	txn := mustGetContextTxn(ctx)
-	dsKey = dsKey.WithFieldID(core.COMPOSITE_NAMESPACE)
-	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
-		txn,
-		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
-		dsKey,
-	)
-
-	if status.IsDeleted() {
-		return merkleCRDT.Delete(ctx, links)
-	}
-
-	return merkleCRDT.Save(ctx, links)
 }
 
 func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) keys.PrimaryDataStoreKey {
