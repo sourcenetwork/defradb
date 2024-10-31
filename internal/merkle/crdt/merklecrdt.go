@@ -66,12 +66,6 @@ func InstanceWithStore(
 			cType == client.PN_COUNTER,
 			kind.(client.ScalarKind),
 		), nil
-	case client.COMPOSITE:
-		return NewMerkleCompositeDAG(
-			store,
-			schemaVersionKey,
-			key,
-		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)
 }
