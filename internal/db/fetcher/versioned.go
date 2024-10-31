@@ -394,7 +394,7 @@ func (vf *VersionedFetcher) processBlock(
 ) (err error) {
 	mcrdt, exists := vf.mCRDTs[field.ID]
 	if !exists {
-		mcrdt, err = merklecrdt.InstanceWithStore(
+		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
 			vf.store,
 			keys.CollectionSchemaVersionKey{},
 			field.Typ,

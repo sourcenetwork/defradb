@@ -664,7 +664,7 @@ func (c *collection) save(
 				return err
 			}
 
-			merkleCRDT, err := merklecrdt.InstanceWithStore(
+			merkleCRDT, err := merklecrdt.FieldLevelCRDTWithStore(
 				txn,
 				keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 				val.Type(),

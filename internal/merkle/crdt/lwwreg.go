@@ -15,7 +15,6 @@ import (
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -27,7 +26,7 @@ type MerkleLWWRegister struct {
 	reg   corecrdt.LWWRegister
 }
 
-var _ MerkleCRDT = (*MerkleLWWRegister)(nil)
+var _ FieldLevelMerkleCRDT = (*MerkleLWWRegister)(nil)
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
@@ -51,12 +50,8 @@ func (m *MerkleLWWRegister) Clock() *clock.MerkleClock {
 }
 
 // Save the value of the register to the DAG.
-func (m *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*DocField)
-	if !ok {
-		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
-	}
-	bytes, err := value.FieldValue.Bytes()
+func (m *MerkleLWWRegister) Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error) {
+	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}

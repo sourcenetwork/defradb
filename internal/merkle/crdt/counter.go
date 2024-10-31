@@ -27,7 +27,7 @@ type MerkleCounter struct {
 	reg   crdt.Counter
 }
 
-var _ MerkleCRDT = (*MerkleCounter)(nil)
+var _ FieldLevelMerkleCRDT = (*MerkleCounter)(nil)
 
 // NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
@@ -53,12 +53,8 @@ func (m *MerkleCounter) Clock() *clock.MerkleClock {
 }
 
 // Save the value of the  Counter to the DAG.
-func (m *MerkleCounter) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*DocField)
-	if !ok {
-		return cidlink.Link{}, nil, NewErrUnexpectedValueType(m.reg.CType(), &client.FieldValue{}, data)
-	}
-	bytes, err := value.FieldValue.Bytes()
+func (m *MerkleCounter) Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error) {
+	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
