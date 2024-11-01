@@ -992,6 +992,12 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key, value := range source {
+		// alias fields are guarenteed to be resolved
+		// because they refer to existing fields
+		if key == request.FilterOpAlias {
+			continue
+		}
+
 		if key == request.FilterOpAnd || key == request.FilterOpOr {
 			if value == nil {
 				continue
@@ -1335,8 +1341,27 @@ func toFilterKeyValue(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
+	var propIndex = -1
+	if mapping != nil {
+		// if we have a mapping available check if the
+		// source key is a field or alias (render key)
+		if indexes, ok := mapping.IndexesByName[sourceKey]; ok {
+			// If there are multiple properties of the same name we can just take the first as
+			// we have no other reasonable way of identifying which property they mean if multiple
+			// consumer specified requestables are available.  Aggregate dependencies should not
+			// impact this as they are added after selects.
+			propIndex = indexes[0]
+		} else if index, ok := mapping.TryToFindIndexFromRenderKey(sourceKey); ok {
+			propIndex = index
+		}
+	}
+
 	var returnKey connor.FilterKey
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
+	if propIndex >= 0 {
+		returnKey = &PropertyIndex{
+			Index: propIndex,
+		}
+	} else if strings.HasPrefix(sourceKey, "_") {
 		returnKey = &Operator{
 			Operation: sourceKey,
 		}
@@ -1344,14 +1369,6 @@ func toFilterKeyValue(
 		// it does not require further expansion
 		if connor.IsOpSimple(sourceKey) {
 			return returnKey, sourceClause
-		}
-	} else if mapping != nil && len(mapping.IndexesByName[sourceKey]) > 0 {
-		// If there are multiple properties of the same name we can just take the first as
-		// we have no other reasonable way of identifying which property they mean if multiple
-		// consumer specified requestables are available.  Aggregate dependencies should not
-		// impact this as they are added after selects.
-		returnKey = &PropertyIndex{
-			Index: mapping.FirstIndexOfName(sourceKey),
 		}
 	} else {
 		returnKey = &ObjectProperty{

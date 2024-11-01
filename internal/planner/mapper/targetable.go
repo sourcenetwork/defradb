@@ -85,6 +85,9 @@ func (k *ObjectProperty) GetProp(data any) any {
 	if data == nil {
 		return nil
 	}
+	if _, ok := data.(core.Doc); ok {
+		return nil // this can happen when an alias target does not exist
+	}
 	object := data.(map[string]any)
 	return object[k.Name]
 }
@@ -165,7 +168,7 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 					logicMapEntries[i] = filterObjectToMap(mapping, itemMap)
 				}
 				outmap[keyType.Operation] = logicMapEntries
-			case request.FilterOpNot:
+			case request.FilterOpNot, request.FilterOpAlias:
 				itemMap, ok := v.(map[connor.FilterKey]any)
 				if ok {
 					outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)

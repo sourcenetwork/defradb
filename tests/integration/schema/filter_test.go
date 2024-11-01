@@ -67,6 +67,13 @@ func TestFilterForSimpleSchema(t *testing.T) {
 												"name": "UsersFilterArg",
 												"inputFields": []any{
 													map[string]any{
+														"name": "_alias",
+														"type": map[string]any{
+															"name":   "JSON",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
 														"name": "_and",
 														"type": map[string]any{
 															"name": nil,
@@ -198,6 +205,13 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 											"type": map[string]any{
 												"name": "BookFilterArg",
 												"inputFields": []any{
+													map[string]any{
+														"name": "_alias",
+														"type": map[string]any{
+															"name":   "JSON",
+															"ofType": nil,
+														},
+													},
 													map[string]any{
 														"name": "_and",
 														"type": map[string]any{
@@ -356,6 +370,13 @@ func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 											"type": map[string]any{
 												"name": "UsersFilterArg",
 												"inputFields": []any{
+													map[string]any{
+														"name": "_alias",
+														"type": map[string]any{
+															"name":   "JSON",
+															"ofType": nil,
+														},
+													},
 													map[string]any{
 														"name": "_and",
 														"type": map[string]any{
