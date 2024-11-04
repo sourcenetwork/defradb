@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
@@ -646,31 +645,29 @@ func (db *db) retryDoc(ctx context.Context, docID string) error {
 		return err
 	}
 	defer txn.Discard(ctx)
-	headStoreKey := keys.HeadStoreKey{
-		DocID:   docID,
-		FieldID: core.COMPOSITE_NAMESPACE,
-	}
-	headset := clock.NewHeadSet(txn.Headstore(), headStoreKey)
-	cids, _, err := headset.List(ctx)
+
+	headsIterator, err := NewHeadBlocksIteratorFromTxn(ctx, txn, docID)
 	if err != nil {
 		return err
 	}
+	defer headsIterator.Close()
 
-	for _, c := range cids {
+	for {
 		select {
 		case <-ctx.Done():
 			return ErrContextDone
 		default:
 		}
-		rawblk, err := txn.Blockstore().Get(ctx, c)
+
+		hasValue, err := headsIterator.Next()
 		if err != nil {
 			return err
 		}
-		blk, err := coreblock.GetFromBytes(rawblk.RawData())
-		if err != nil {
-			return err
+		if !hasValue {
+			break
 		}
-		schema, err := db.getSchemaByVersionID(ctx, blk.Delta.GetSchemaVersionID())
+
+		schema, err := db.getSchemaByVersionID(ctx, headsIterator.CurrentBlock().Delta.GetSchemaVersionID())
 		if err != nil {
 			return err
 		}
@@ -678,9 +675,9 @@ func (db *db) retryDoc(ctx context.Context, docID string) error {
 		defer close(successChan)
 		updateEvent := event.Update{
 			DocID:      docID,
-			Cid:        c,
+			Cid:        headsIterator.CurrentCid(),
 			SchemaRoot: schema.Root,
-			Block:      rawblk.RawData(),
+			Block:      headsIterator.CurrentRawBlock(),
 			IsRetry:    true,
 			// Because the retry is done in a separate goroutine but the retry handling process should be synchronous,
 			// we use a channel to block while waiting for the success status of the retry.

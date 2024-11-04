@@ -158,6 +158,12 @@ func (n *Node) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		ident, err := n.DB.GetNodeIdentity(ctx)
+		if err != nil {
+			return err
+		}
+
 		if n.options.kmsType.HasValue() {
 			switch n.options.kmsType.Value() {
 			case kms.PubSubServiceType:
@@ -167,6 +173,9 @@ func (n *Node) Start(ctx context.Context) error {
 					n.Peer.Server(),
 					n.DB.Events(),
 					n.DB.Encstore(),
+					acp,
+					db.NewCollectionRetriever(n.DB),
+					ident.Value().DID,
 				)
 			}
 			if err != nil {

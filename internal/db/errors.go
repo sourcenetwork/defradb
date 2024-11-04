@@ -106,6 +106,7 @@ const (
 	errColNotMaterialized                       string = "non-materialized collections are not supported"
 	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
+	errDocIDNotFound                            string = "docID not found"
 )
 
 var (
@@ -152,6 +153,7 @@ var (
 	ErrContextDone                              = errors.New("context done")
 	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
 	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
+	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -689,4 +691,8 @@ func NewErrDefaultFieldValueInvalid(collection string, inner error) error {
 		errors.NewKV("Collection", collection),
 		errors.NewKV("Inner", inner),
 	)
+}
+
+func NewErrDocIDNotFound(docID string) error {
+	return errors.New(errDocIDNotFound, errors.NewKV("DocID", docID))
 }

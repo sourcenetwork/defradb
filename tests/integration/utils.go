@@ -400,7 +400,10 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForSync(s)
+		waitForSync(s, action)
+
+	case Wait:
+		<-time.After(action.Duration)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)

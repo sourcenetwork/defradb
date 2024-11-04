@@ -74,7 +74,7 @@ func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
 
 	// all previous documents should be merged on the subscriber node
 	for key, val := range s.nodeP2P[cfg.SourceNodeID].actualDocHeads {
-		s.nodeP2P[cfg.TargetNodeID].expectedDocHeads[key] = val
+		s.nodeP2P[cfg.TargetNodeID].expectedDocHeads[key] = val.cid
 	}
 
 	// update node connections and replicators
@@ -196,15 +196,27 @@ func waitForUpdateEvents(
 //
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
-func waitForMergeEvents(s *state) {
+func waitForMergeEvents(s *state, action WaitForSync) {
 	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
 		expect := s.nodeP2P[nodeID].expectedDocHeads
 
 		// remove any docs that are already merged
 		// up to the expected document head
 		for key, val := range s.nodeP2P[nodeID].actualDocHeads {
-			if head, ok := expect[key]; ok && head.String() == val.String() {
+			if head, ok := expect[key]; ok && head.String() == val.cid.String() {
 				delete(expect, key)
+			}
+		}
+
+		expectDecrypted := make(map[string]struct{}, len(action.Decrypted))
+		for _, docIndex := range action.Decrypted {
+			if len(s.docIDs[0]) <= docIndex {
+				require.Fail(s.t, "doc index %d out of range", docIndex)
+			}
+			docID := s.docIDs[0][docIndex].String()
+			actual, hasActual := s.nodeP2P[nodeID].actualDocHeads[docID]
+			if !hasActual || !actual.decrypted {
+				expectDecrypted[docID] = struct{}{}
 			}
 		}
 
@@ -214,23 +226,29 @@ func waitForMergeEvents(s *state) {
 		// expect the latest head to eventually be merged
 		//
 		// unexpected merge events are ignored
-		for len(expect) > 0 {
-			var evt event.Merge
+		for len(expect) > 0 || len(expectDecrypted) > 0 {
+			var evt event.MergeComplete
 			select {
 			case msg, ok := <-s.nodeEvents[nodeID].merge.Message():
 				if !ok {
 					require.Fail(s.t, "subscription closed waiting for merge complete event")
 				}
-				evt = msg.Data.(event.Merge)
+				evt = msg.Data.(event.MergeComplete)
 
 			case <-time.After(30 * eventTimeout):
 				require.Fail(s.t, "timeout waiting for merge complete event")
 			}
 
-			head, ok := expect[evt.DocID]
-			if ok && head.String() == evt.Cid.String() {
-				delete(expect, evt.DocID)
+			_, ok := expectDecrypted[evt.Merge.DocID]
+			if ok && evt.Decrypted {
+				delete(expectDecrypted, evt.Merge.DocID)
 			}
+
+			head, ok := expect[evt.Merge.DocID]
+			if ok && head.String() == evt.Merge.Cid.String() {
+				delete(expect, evt.Merge.DocID)
+			}
+			s.nodeP2P[nodeID].actualDocHeads[evt.Merge.DocID] = docHeadState{cid: evt.Merge.Cid, decrypted: evt.Decrypted}
 		}
 	}
 }
@@ -247,7 +265,8 @@ func updateNetworkState(s *state, nodeID int, evt event.Update) {
 	}
 
 	// update the actual document head on the node that updated it
-	s.nodeP2P[nodeID].actualDocHeads[evt.DocID] = evt.Cid
+	// as the node created the document, it is already decrypted
+	s.nodeP2P[nodeID].actualDocHeads[evt.DocID] = docHeadState{cid: evt.Cid, decrypted: true}
 
 	// update the expected document heads of replicator targets
 	for id := range s.nodeP2P[nodeID].replicators {
@@ -309,8 +328,8 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	return expect
 }
 
-func waitForSync(s *state) {
-	waitForMergeEvents(s)
+func waitForSync(s *state, action WaitForSync) {
+	waitForMergeEvents(s, action)
 }
 
 // getEventsForUpdateWithFilter returns a map of docIDs that should be

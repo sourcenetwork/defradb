@@ -181,11 +181,14 @@ func addDocActorRelationshipACP(
 	s *state,
 	action AddDocActorRelationship,
 ) {
+	var docID string
+	actionNodeID := action.NodeID
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
+		var collectionName string
+		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		exists, err := node.AddDocActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
@@ -206,8 +209,13 @@ func addDocActorRelationshipACP(
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
 		if acpType == SourceHubACPType {
+			actionNodeID = immutable.Some(0)
 			break
 		}
+	}
+
+	if action.ExpectedError == "" {
+		waitForUpdateEvents(s, actionNodeID, map[string]struct{}{docID: {}})
 	}
 }
 
@@ -356,7 +364,9 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	out, err := exec.Command("sourcehubd", "init", moniker, "--chain-id", chainID, "--home", directory).CombinedOutput()
+	args := []string{"init", moniker, "--chain-id", chainID, "--home", directory}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err := exec.Command("sourcehubd", args...).CombinedOutput()
 	s.t.Log(string(out))
 	if err != nil {
 		return nil, err
@@ -389,22 +399,27 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	out, err = exec.Command(
-		"sourcehubd", "keys", "import-hex", validatorName, acpKeyHex,
+	args = []string{
+		"keys", "import-hex", validatorName, acpKeyHex,
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
-	).CombinedOutput()
+	}
+
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
 	s.t.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
 
-	out, err = exec.Command(
-		"sourcehubd", "keys", "show", validatorName,
+	args = []string{
+		"keys", "show", validatorName,
 		"--address",
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
-	).CombinedOutput()
+	}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
 	s.t.Log(string(out))
 	if err != nil {
 		return nil, err
@@ -414,28 +429,31 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	validatorAddress := strings.TrimSpace(string(out))
 	s.sourcehubAddress = validatorAddress
 
-	out, err = exec.Command(
-		"sourcehubd", "genesis", "add-genesis-account", validatorAddress, "900000000stake",
+	args = []string{"genesis", "add-genesis-account", validatorAddress, "900000000stake",
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
-	).CombinedOutput()
+	}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
 	s.t.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
 
-	out, err = exec.Command(
-		"sourcehubd", "genesis", "gentx", validatorName, "10000000stake",
+	args = []string{"genesis", "gentx", validatorName, "10000000stake",
 		"--chain-id", chainID,
 		"--keyring-backend", keyringBackend,
-		"--home", directory,
-	).CombinedOutput()
+		"--home", directory}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
 	s.t.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
 
-	out, err = exec.Command("sourcehubd", "genesis", "collect-gentxs", "--home", directory).CombinedOutput()
+	args = []string{"genesis", "collect-gentxs", "--home", directory}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
 	s.t.Log(string(out))
 	if err != nil {
 		return nil, err
@@ -485,8 +503,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	releaseP2pPort()
 	releasePprofPort()
 
-	sourceHubCmd := exec.Command(
-		"sourcehubd",
+	args = []string{
 		"start",
 		"--minimum-gas-prices", "0stake",
 		"--home", directory,
@@ -494,7 +511,9 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		"--rpc.laddr", rpcAddress,
 		"--p2p.laddr", p2pAddress,
 		"--rpc.pprof_laddr", pprofAddress,
-	)
+	}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	sourceHubCmd := exec.Command("sourcehubd", args...)
 	var bf testBuffer
 	bf.Lines = make(chan string, 100)
 	sourceHubCmd.Stdout = &bf
@@ -566,23 +585,32 @@ func getFreePort() (int, func(), error) {
 
 // crossLock forms a cross process lock by attempting to listen to the given port.
 //
-// This function will only return once the port is free. A function to unbind from the
-// port is returned - this unlock function may be called multiple times without issue.
+// This function will only return once the port is free or the timeout is reached.
+// A function to unbind from the port is returned - this unlock function may be called
+// multiple times without issue.
 func crossLock(port uint16) (func(), error) {
-	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%v", port))
-	if err != nil {
-		if strings.Contains(err.Error(), "address already in use") {
-			time.Sleep(5 * time.Millisecond)
-			return crossLock(port)
-		}
-		return nil, err
-	}
+	timeout := time.After(20 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			return nil, fmt.Errorf("timeout reached while trying to acquire cross process lock on port %v", port)
+		default:
+			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%v", port))
+			if err != nil {
+				if strings.Contains(err.Error(), "address already in use") {
+					time.Sleep(5 * time.Millisecond)
+					continue
+				}
+				return nil, err
+			}
 
-	return func() {
-			// there are no errors that this returns that we actually care about
-			_ = l.Close()
-		},
-		nil
+			return func() {
+					// there are no errors that this returns that we actually care about
+					_ = l.Close()
+				},
+				nil
+		}
+	}
 }
 
 func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {

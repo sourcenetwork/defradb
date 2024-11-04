@@ -12,6 +12,7 @@ package tests
 
 import (
 	"testing"
+	"time"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
@@ -805,4 +806,10 @@ type GetNodeIdentity struct {
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[identityRef]
+}
+
+// Wait is an action that will wait for the given duration.
+type Wait struct {
+	// Duration is the duration to wait.
+	Duration time.Duration
 }

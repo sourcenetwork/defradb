@@ -45,12 +45,21 @@ type p2pState struct {
 	// actualDocHeads contains all document heads that exist on a node.
 	//
 	// The map key is the doc id. The map value is the doc head.
-	actualDocHeads map[string]cid.Cid
+	actualDocHeads map[string]docHeadState
 
 	// expectedDocHeads contains all document heads that are expected to exist on a node.
 	//
 	// The map key is the doc id. The map value is the doc head.
 	expectedDocHeads map[string]cid.Cid
+}
+
+// docHeadState contains the state of a document head.
+// It is used to track if a document at a certain head has been decrypted.
+type docHeadState struct {
+	// The actual document head.
+	cid cid.Cid
+	// Indicates if the document at the given head has been decrypted.
+	decrypted bool
 }
 
 // newP2PState returns a new empty p2p state.
@@ -59,7 +68,7 @@ func newP2PState() *p2pState {
 		connections:      make(map[int]struct{}),
 		replicators:      make(map[int]struct{}),
 		peerCollections:  make(map[int]struct{}),
-		actualDocHeads:   make(map[string]cid.Cid),
+		actualDocHeads:   make(map[string]docHeadState),
 		expectedDocHeads: make(map[string]cid.Cid),
 	}
 }
