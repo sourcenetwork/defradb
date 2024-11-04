@@ -455,7 +455,7 @@ func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, 
 		return nil, nil
 	}
 
-	mcrdt, err := merklecrdt.InstanceWithStore(
+	mcrdt, err := merklecrdt.FieldLevelCRDTWithStore(
 		mp.txn,
 		schemaVersionKey,
 		fd.Typ,

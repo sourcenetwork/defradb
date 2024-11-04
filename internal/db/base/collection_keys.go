@@ -11,10 +11,7 @@
 package base
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -34,30 +31,4 @@ func MakeDataStoreKeyWithCollectionAndDocID(
 		CollectionRootID: col.RootID,
 		DocID:            docID,
 	}
-}
-
-func MakePrimaryIndexKeyForCRDT(
-	c client.CollectionDefinition,
-	ctype client.CType,
-	key keys.DataStoreKey,
-	fieldName string,
-) (keys.DataStoreKey, error) {
-	switch ctype {
-	case client.COMPOSITE:
-		return MakeDataStoreKeyWithCollectionDescription(c.Description).
-				WithInstanceInfo(key).
-				WithFieldID(core.COMPOSITE_NAMESPACE),
-			nil
-	case client.LWW_REGISTER, client.PN_COUNTER, client.P_COUNTER:
-		field, ok := c.GetFieldByName(fieldName)
-		if !ok {
-			return keys.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
-		}
-
-		return MakeDataStoreKeyWithCollectionDescription(c.Description).
-				WithInstanceInfo(key).
-				WithFieldID(fmt.Sprint(field.ID)),
-			nil
-	}
-	return keys.DataStoreKey{}, ErrInvalidCrdtType
 }

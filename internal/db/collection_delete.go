@@ -16,8 +16,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -138,14 +139,14 @@ func (c *collection) applyDelete(
 	}
 
 	txn := mustGetContextTxn(ctx)
-	dsKey := primaryKey.ToDataStoreKey()
 
-	link, b, err := c.saveCompositeToMerkleCRDT(
-		ctx,
-		dsKey,
-		[]coreblock.DAGLink{},
-		client.Deleted,
+	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
+		txn,
+		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
+
+	link, b, err := merkleCRDT.Delete(ctx)
 	if err != nil {
 		return err
 	}

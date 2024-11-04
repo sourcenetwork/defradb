@@ -38,17 +38,21 @@ type Stores interface {
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	Clock() *clock.MerkleClock
-	Save(ctx context.Context, data any) (cidlink.Link, []byte, error)
 }
 
-func InstanceWithStore(
+type FieldLevelMerkleCRDT interface {
+	MerkleCRDT
+	Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error)
+}
+
+func FieldLevelCRDTWithStore(
 	store Stores,
 	schemaVersionKey keys.CollectionSchemaVersionKey,
 	cType client.CType,
 	kind client.FieldKind,
 	key keys.DataStoreKey,
 	fieldName string,
-) (MerkleCRDT, error) {
+) (FieldLevelMerkleCRDT, error) {
 	switch cType {
 	case client.LWW_REGISTER:
 		return NewMerkleLWWRegister(
@@ -65,12 +69,6 @@ func InstanceWithStore(
 			fieldName,
 			cType == client.PN_COUNTER,
 			kind.(client.ScalarKind),
-		), nil
-	case client.COMPOSITE:
-		return NewMerkleCompositeDAG(
-			store,
-			schemaVersionKey,
-			key,
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)

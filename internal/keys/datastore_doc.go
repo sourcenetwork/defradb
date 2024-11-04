@@ -86,6 +86,12 @@ func (k DataStoreKey) WithDeletedFlag() DataStoreKey {
 	return newKey
 }
 
+func (k DataStoreKey) WithCollectionRoot(colRoot uint32) DataStoreKey {
+	newKey := k
+	newKey.CollectionRootID = colRoot
+	return newKey
+}
+
 func (k DataStoreKey) WithDocID(docID string) DataStoreKey {
 	newKey := k
 	newKey.DocID = docID

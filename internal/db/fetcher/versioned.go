@@ -13,10 +13,10 @@ package fetcher
 import (
 	"container/list"
 	"context"
+	"fmt"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -99,7 +98,7 @@ type VersionedFetcher struct {
 
 	col client.Collection
 	// @todo index  *client.IndexDescription
-	mCRDTs map[uint32]merklecrdt.MerkleCRDT
+	mCRDTs map[client.FieldID]merklecrdt.MerkleCRDT
 }
 
 // Init initializes the VersionedFetcher.
@@ -118,7 +117,7 @@ func (vf *VersionedFetcher) Init(
 	vf.acp = acp
 	vf.col = col
 	vf.queuedCids = list.New()
-	vf.mCRDTs = make(map[uint32]merklecrdt.MerkleCRDT)
+	vf.mCRDTs = make(map[client.FieldID]merklecrdt.MerkleCRDT)
 	vf.txn = txn
 
 	// create store
@@ -182,7 +181,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
 	}
 
 	vf.ctx = ctx
-	vf.dsKey = dk
+	vf.dsKey = dk.WithCollectionRoot(vf.col.Description().RootID)
 	vf.version = c
 
 	if err := vf.seekTo(vf.version); err != nil {
@@ -352,7 +351,17 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	}
 
 	// first arg 0 is the index for the composite DAG in the mCRDTs cache
-	if err := vf.processBlock(0, block, link, client.COMPOSITE, client.FieldKind_None, ""); err != nil {
+	mcrdt, exists := vf.mCRDTs[0]
+	if !exists {
+		mcrdt = merklecrdt.NewMerkleCompositeDAG(
+			vf.store,
+			keys.CollectionSchemaVersionKey{},
+			vf.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
+		)
+		vf.mCRDTs[0] = mcrdt
+	}
+	err = mcrdt.Clock().ProcessBlock(vf.ctx, block, link)
+	if err != nil {
 		return err
 	}
 
@@ -368,44 +377,30 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
-		if err := vf.processBlock(uint32(field.ID), subBlock, l.Link, field.Typ, field.Kind, l.Name); err != nil {
+
+		mcrdt, exists := vf.mCRDTs[field.ID]
+		if !exists {
+			mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
+				vf.store,
+				keys.CollectionSchemaVersionKey{},
+				field.Typ,
+				field.Kind,
+				vf.dsKey.WithFieldID(fmt.Sprint(field.ID)),
+				field.Name,
+			)
+			if err != nil {
+				return err
+			}
+			vf.mCRDTs[field.ID] = mcrdt
+		}
+
+		err = mcrdt.Clock().ProcessBlock(vf.ctx, subBlock, l.Link)
+		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (vf *VersionedFetcher) processBlock(
-	crdtIndex uint32,
-	block *coreblock.Block,
-	blockLink cidlink.Link,
-	ctype client.CType,
-	kind client.FieldKind,
-	fieldName string,
-) (err error) {
-	// handle CompositeDAG
-	mcrdt, exists := vf.mCRDTs[crdtIndex]
-	if !exists {
-		dsKey, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Definition(), ctype, vf.dsKey, fieldName)
-		if err != nil {
-			return err
-		}
-		mcrdt, err = merklecrdt.InstanceWithStore(
-			vf.store,
-			keys.CollectionSchemaVersionKey{},
-			ctype,
-			kind,
-			dsKey,
-			fieldName,
-		)
-		if err != nil {
-			return err
-		}
-		vf.mCRDTs[crdtIndex] = mcrdt
-	}
-
-	return mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink)
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {

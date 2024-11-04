@@ -60,25 +60,13 @@ func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
 // Delete sets the values of CompositeDAG for a delete.
 func (m *MerkleCompositeDAG) Delete(
 	ctx context.Context,
-	links []coreblock.DAGLink,
 ) (cidlink.Link, []byte, error) {
 	delta := m.reg.Set(client.Deleted)
-	link, b, err := m.clock.AddDelta(ctx, delta, links...)
-	if err != nil {
-		return cidlink.Link{}, nil, err
-	}
-
-	return link, b, nil
+	return m.clock.AddDelta(ctx, delta)
 }
 
 // Save the value of the composite CRDT to DAG.
-func (m *MerkleCompositeDAG) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	links, ok := data.([]coreblock.DAGLink)
-	if !ok {
-		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.COMPOSITE, []coreblock.DAGLink{}, data)
-	}
-
+func (m *MerkleCompositeDAG) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
 	delta := m.reg.Set(client.Active)
-
 	return m.clock.AddDelta(ctx, delta, links...)
 }
