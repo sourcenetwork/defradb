@@ -639,7 +639,7 @@ func (db *db) retryReplicator(ctx context.Context, peerID string) {
 	}
 }
 
-func (db *db) retryDoc(ctx context.Context, docID string) error {
+func (db *db) retryDoc(ctx context.Context, docID string) (resErr error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -650,7 +650,7 @@ func (db *db) retryDoc(ctx context.Context, docID string) error {
 	if err != nil {
 		return err
 	}
-	defer headsIterator.Close()
+	defer func() { resErr = headsIterator.Close() }()
 
 	for {
 		select {

@@ -16,6 +16,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -30,7 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
+	defraErrors "github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
@@ -275,12 +276,11 @@ func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	if err != nil {
 		return err
 	}
-	defer headsIterator.Close()
 
 	for {
 		hasValue, err := headsIterator.Next()
 		if err != nil {
-			return err
+			return errors.Join(err, headsIterator.Close())
 		}
 		if !hasValue {
 			break
@@ -294,7 +294,7 @@ func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		}
 		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	}
-	return nil
+	return headsIterator.Close()
 }
 
 func (db *db) DeleteDocActorRelationship(
@@ -363,7 +363,7 @@ func (db *db) initialize(ctx context.Context) error {
 	}
 
 	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	if err != nil && !defraErrors.Is(err, ds.ErrNotFound) {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
