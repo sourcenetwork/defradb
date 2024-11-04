@@ -17,7 +17,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -378,37 +377,30 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
-		if err := vf.processBlock(subBlock, l.Link, field, l.Name); err != nil {
+
+		mcrdt, exists := vf.mCRDTs[field.ID]
+		if !exists {
+			mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
+				vf.store,
+				keys.CollectionSchemaVersionKey{},
+				field.Typ,
+				field.Kind,
+				vf.dsKey.WithFieldID(fmt.Sprint(field.ID)),
+				field.Name,
+			)
+			if err != nil {
+				return err
+			}
+			vf.mCRDTs[field.ID] = mcrdt
+		}
+
+		err = mcrdt.Clock().ProcessBlock(vf.ctx, subBlock, l.Link)
+		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (vf *VersionedFetcher) processBlock(
-	block *coreblock.Block,
-	blockLink cidlink.Link,
-	field client.FieldDefinition,
-	fieldName string,
-) (err error) {
-	mcrdt, exists := vf.mCRDTs[field.ID]
-	if !exists {
-		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
-			vf.store,
-			keys.CollectionSchemaVersionKey{},
-			field.Typ,
-			field.Kind,
-			vf.dsKey.WithFieldID(fmt.Sprint(field.ID)),
-			fieldName,
-		)
-		if err != nil {
-			return err
-		}
-		vf.mCRDTs[field.ID] = mcrdt
-	}
-
-	return mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink)
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
