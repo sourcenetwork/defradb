@@ -74,7 +74,6 @@ func init() {
 	if acpType == "" {
 		acpType = LocalACPType
 	}
-	acpType = SourceHubACPType
 }
 
 // AddPolicy will attempt to add the given policy using DefraDB's ACP system.
@@ -468,7 +467,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	//
 	// We need to lock before getting the ports, otherwise they may try and use the port we use for locking.
 	// We can only unlock after the source hub node has started and begun listening on the assigned ports.
-	unlock, err := crossLock(55559)
+	unlock, err := crossLock(55555)
 	if err != nil {
 		return nil, err
 	}
