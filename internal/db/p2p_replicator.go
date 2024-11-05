@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -640,7 +639,7 @@ func (db *db) retryReplicator(ctx context.Context, peerID string) {
 	}
 }
 
-func (db *db) retryDoc(ctx context.Context, docID string) (resErr error) {
+func (db *db) retryDoc(ctx context.Context, docID string) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -651,7 +650,6 @@ func (db *db) retryDoc(ctx context.Context, docID string) (resErr error) {
 	if err != nil {
 		return err
 	}
-	defer func() { resErr = errors.Join(resErr, headsIterator.Close()) }()
 
 	for {
 		select {

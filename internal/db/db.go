@@ -236,7 +236,7 @@ func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	for {
 		hasValue, err := headsIterator.Next()
 		if err != nil {
-			return errors.Join(err, headsIterator.Close())
+			return err
 		}
 		if !hasValue {
 			break
@@ -250,7 +250,7 @@ func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		}
 		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	}
-	return headsIterator.Close()
+	return nil
 }
 
 func (db *db) AddDocActorRelationship(

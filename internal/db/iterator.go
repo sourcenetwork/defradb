@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"io"
 
 	"github.com/ipfs/go-cid"
 
@@ -32,13 +31,6 @@ type DocHeadBlocksIterator struct {
 	currentCid      cid.Cid
 	currentBlock    *coreblock.Block
 	currentRawBlock []byte
-}
-
-var _ io.Closer = (*DocHeadBlocksIterator)(nil)
-
-func (h *DocHeadBlocksIterator) Close() error {
-	h.cids = nil
-	return nil
 }
 
 // NewHeadBlocksIterator creates a new DocHeadBlocksIterator.
