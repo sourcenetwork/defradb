@@ -16,7 +16,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -31,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	defraErrors "github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
@@ -365,7 +364,7 @@ func (db *db) initialize(ctx context.Context) error {
 	}
 
 	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
-	if err != nil && !defraErrors.Is(err, ds.ErrNotFound) {
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
