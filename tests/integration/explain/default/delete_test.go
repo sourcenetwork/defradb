@@ -292,7 +292,12 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans":          []dataMap{},
+							"spans": []dataMap{
+								{
+									"end":   "/4",
+									"start": "/3",
+								},
+							},
 						},
 					},
 				},

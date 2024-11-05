@@ -99,8 +99,7 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 
 	// copy the input spans so that we may mutate freely
 	headSetSpans := core.Spans{
-		HasValue: spans.HasValue,
-		Value:    make([]core.Span, len(spans.Value)),
+		Value: make([]core.Span, len(spans.Value)),
 	}
 	copy(headSetSpans.Value, spans.Value)
 
@@ -146,16 +145,14 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
-	if n.spans.HasValue {
-		for _, span := range n.spans.Value {
-			spansExplainer = append(
-				spansExplainer,
-				map[string]any{
-					"start": span.Start().ToString(),
-					"end":   span.End().ToString(),
-				},
-			)
-		}
+	for _, span := range n.spans.Value {
+		spansExplainer = append(
+			spansExplainer,
+			map[string]any{
+				"start": span.Start().ToString(),
+				"end":   span.End().ToString(),
+			},
+		)
 	}
 	// Add the built spans attribute, if it was valid.
 	simpleExplainMap[spansLabel] = spansExplainer
