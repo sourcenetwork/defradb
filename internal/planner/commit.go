@@ -67,7 +67,7 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	if len(n.spans.Value) == 0 {
+	if len(n.spans) == 0 {
 		if n.commitSelect.DocID.HasValue() {
 			dsKey := keys.DataStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
 
@@ -93,15 +93,13 @@ func (n *dagScanNode) Start() error {
 // If its a CID, set the node CID val
 // if its a DocID, set the node Key val (headset)
 func (n *dagScanNode) Spans(spans core.Spans) {
-	if len(spans.Value) == 0 {
+	if len(spans) == 0 {
 		return
 	}
 
 	// copy the input spans so that we may mutate freely
-	headSetSpans := core.Spans{
-		Value: make([]core.Span, len(spans.Value)),
-	}
-	copy(headSetSpans.Value, spans.Value)
+	headSetSpans := make([]core.Span, len(spans))
+	copy(headSetSpans, spans)
 
 	var fieldID string
 	if n.commitSelect.FieldID.HasValue() {
@@ -110,9 +108,9 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 		fieldID = core.COMPOSITE_NAMESPACE
 	}
 
-	for i, span := range headSetSpans.Value {
+	for i, span := range headSetSpans {
 		if span.Start().FieldID != fieldID {
-			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldID(fieldID), keys.DataStoreKey{})
+			headSetSpans[i] = core.NewSpan(span.Start().WithFieldID(fieldID), keys.DataStoreKey{})
 		}
 	}
 
@@ -145,7 +143,7 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
-	for _, span := range n.spans.Value {
+	for _, span := range n.spans {
 		spansExplainer = append(
 			spansExplainer,
 			map[string]any{

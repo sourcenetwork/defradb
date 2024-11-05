@@ -38,7 +38,7 @@ func (hf *HeadFetcher) Start(
 	spans core.Spans,
 	fieldId immutable.Option[string],
 ) error {
-	if len(spans.Value) == 0 {
+	if len(spans) == 0 {
 		spans = core.NewSpans(
 			core.NewSpan(
 				keys.DataStoreKey{},
@@ -47,21 +47,21 @@ func (hf *HeadFetcher) Start(
 		)
 	}
 
-	if len(spans.Value) > 1 {
+	if len(spans) > 1 {
 		// if we have multiple spans, we need to sort them by their start position
 		// so we can do a single iterative sweep
-		sort.Slice(spans.Value, func(i, j int) bool {
+		sort.Slice(spans, func(i, j int) bool {
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans.Value[i].Start().ToString(), spans.Value[j].Start().ToString()) < 0)
+			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0)
 		})
 	}
 	hf.spans = spans
 	hf.fieldId = fieldId
 
 	q := dsq.Query{
-		Prefix: hf.spans.Value[0].Start().ToString(),
+		Prefix: hf.spans[0].Start().ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 

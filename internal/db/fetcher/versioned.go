@@ -158,14 +158,14 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
 		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
 	}
 
-	if len(spans.Value) != 1 {
+	if len(spans) != 1 {
 		return ErrSingleSpanOnly
 	}
 
 	// For the VersionedFetcher, the spans needs to be in the format
 	// Span{Start: DocID, End: CID}
-	dk := spans.Value[0].Start()
-	cidRaw := spans.Value[0].End()
+	dk := spans[0].Start()
+	cidRaw := spans[0].End()
 	if dk.DocID == "" {
 		return client.NewErrUninitializeProperty("Spans", "DocID")
 	} else if cidRaw.DocID == "" { // todo: dont abuse DataStoreKey/Span like this!

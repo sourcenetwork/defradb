@@ -147,15 +147,11 @@ func isAdjacent(this keys.DataStoreKey, other keys.DataStoreKey) bool {
 }
 
 // Spans is a collection of individual spans.
-type Spans struct {
-	Value []Span
-}
+type Spans = []Span
 
 // NewSpans creates a new Spans from the provided spans.
 func NewSpans(spans ...Span) Spans {
-	return Spans{
-		Value: spans,
-	}
+	return spans
 }
 
 // Merges an unordered, potentially overlapping and/or duplicated collection of Spans into

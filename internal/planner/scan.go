@@ -201,7 +201,7 @@ func (n *scanNode) Start() error {
 }
 
 func (n *scanNode) initScan() error {
-	if len(n.spans.Value) == 0 {
+	if len(n.spans) == 0 {
 		start := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
 		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	}
@@ -220,7 +220,7 @@ func (n *scanNode) initScan() error {
 func (n *scanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if len(n.spans.Value) == 0 {
+	if len(n.spans) == 0 {
 		return false, nil
 	}
 
@@ -261,7 +261,7 @@ func (n *scanNode) Source() planNode { return nil }
 // explainSpans explains the spans attribute.
 func (n *scanNode) explainSpans() []map[string]any {
 	spansExplainer := []map[string]any{}
-	for _, span := range n.spans.Value {
+	for _, span := range n.spans {
 		spanExplainer := map[string]any{
 			// These must be pretty printed as the explain results need to be returnable
 			// as json via some clients (e.g. http and cli)
