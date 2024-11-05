@@ -54,14 +54,14 @@ func (hf *HeadFetcher) Start(
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0)
+			return (strings.Compare(spans[i].Start.ToString(), spans[j].Start.ToString()) < 0)
 		})
 	}
 	hf.spans = spans
 	hf.fieldId = fieldId
 
 	q := dsq.Query{
-		Prefix: hf.spans[0].Start().ToString(),
+		Prefix: hf.spans[0].Start.ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 

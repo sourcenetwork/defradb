@@ -109,8 +109,8 @@ func (n *dagScanNode) Spans(spans []core.Span) {
 	}
 
 	for i, span := range headSetSpans {
-		if span.Start().FieldID != fieldID {
-			headSetSpans[i] = core.NewSpan(span.Start().WithFieldID(fieldID), keys.DataStoreKey{})
+		if span.Start.FieldID != fieldID {
+			headSetSpans[i] = core.NewSpan(span.Start.WithFieldID(fieldID), keys.DataStoreKey{})
 		}
 	}
 
@@ -147,8 +147,8 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 		spansExplainer = append(
 			spansExplainer,
 			map[string]any{
-				"start": span.Start().ToString(),
-				"end":   span.End().ToString(),
+				"start": span.Start.ToString(),
+				"end":   span.End.ToString(),
 			},
 		)
 	}

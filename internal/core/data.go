@@ -17,38 +17,20 @@ import (
 )
 
 // Span is a range of keys from [Start, End).
-type Span interface {
-	// Start returns the starting key of the Span.
-	Start() keys.DataStoreKey
-	// End returns the ending key of the Span.
-	End() keys.DataStoreKey
-	// Compare returns -1 if the provided span is less, 0 if it is equal, and 1 if its greater.
-	Compare(Span) SpanComparisonResult
-}
+type Span struct {
+	// Start represents the starting key of the Span.
+	Start keys.DataStoreKey
 
-type span struct {
-	start keys.DataStoreKey
-	end   keys.DataStoreKey
+	// End represents the ending key of the Span.
+	End keys.DataStoreKey
 }
-
-var _ Span = span{}
 
 // NewSpan creates a new Span from the provided start and end keys.
 func NewSpan(start, end keys.DataStoreKey) Span {
-	return span{
-		start: start,
-		end:   end,
+	return Span{
+		Start: start,
+		End:   end,
 	}
-}
-
-// Start returns the starting key of the Span.
-func (s span) Start() keys.DataStoreKey {
-	return s.start
-}
-
-// End returns the ending key of the Span.
-func (s span) End() keys.DataStoreKey {
-	return s.end
 }
 
 // SpanComparisonResult is the result of comparing two spans.
@@ -73,18 +55,18 @@ const (
 // Compares two spans returning how the compare to each other.
 // If the end of one span is adjacent to the other (with no gap possible)
 // then those ends are considered equal.
-func (this span) Compare(other Span) SpanComparisonResult {
+func (this Span) Compare(other Span) SpanComparisonResult {
 	if this == other {
 		return Equal
 	}
 
-	thisStart := this.start.ToString()
-	thisEnd := this.end.ToString()
-	otherStart := other.Start().ToString()
-	otherEnd := other.End().ToString()
+	thisStart := this.Start.ToString()
+	thisEnd := this.End.ToString()
+	otherStart := other.Start.ToString()
+	otherEnd := other.End.ToString()
 
 	if thisStart < otherStart {
-		if thisEnd == otherStart || isAdjacent(this.end, other.Start()) {
+		if thisEnd == otherStart || isAdjacent(this.End, other.Start) {
 			return StartBeforeEndEqualToStart
 		}
 
@@ -133,7 +115,7 @@ func (this span) Compare(other Span) SpanComparisonResult {
 		}
 	}
 
-	if thisStart == otherEnd || isAdjacent(this.start, other.End()) {
+	if thisStart == otherEnd || isAdjacent(this.Start, other.End) {
 		return StartEqualToEndEndAfter
 	}
 
@@ -172,7 +154,7 @@ func MergeAscending(spans []Span) []Span {
 				}
 
 				// Then we insert
-				newArray[i] = NewSpan(span.Start(), span.End())
+				newArray[i] = NewSpan(span.Start, span.End)
 
 				// Move the values prior to the new one across
 				for j := 0; j < i; j++ {
@@ -183,12 +165,12 @@ func MergeAscending(spans []Span) []Span {
 				// Exit the unique-span loop, this span has been handled
 				i = len(uniqueSpans)
 			case StartBeforeEndEqualToStart, StartBeforeEndWithin, StartBeforeEndEqual:
-				uniqueSpans[i] = NewSpan(span.Start(), uniqueSpan.End())
+				uniqueSpans[i] = NewSpan(span.Start, uniqueSpan.End)
 				uniqueSpanFound = true
 				i++
 			case StartBeforeEndAfter:
-				uniqueSpans = removeBefore(uniqueSpans, i, span.End().ToString())
-				uniqueSpans[i] = NewSpan(span.Start(), span.End())
+				uniqueSpans = removeBefore(uniqueSpans, i, span.End.ToString())
+				uniqueSpans[i] = NewSpan(span.Start, span.End)
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
 				i = len(uniqueSpans)
@@ -197,8 +179,8 @@ func MergeAscending(spans []Span) []Span {
 				// Do nothing, span is contained within an existing unique-span
 				i = len(uniqueSpans)
 			case StartEqualEndAfter, StartWithinEndAfter, StartEqualToEndEndAfter:
-				uniqueSpans = removeBefore(uniqueSpans, i, span.End().ToString())
-				uniqueSpans[i] = NewSpan(uniqueSpan.Start(), span.End())
+				uniqueSpans = removeBefore(uniqueSpans, i, span.End.ToString())
+				uniqueSpans[i] = NewSpan(uniqueSpan.Start, span.End)
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
 				i = len(uniqueSpans)
@@ -220,7 +202,7 @@ func MergeAscending(spans []Span) []Span {
 func removeBefore(spans []Span, startIndex int, end string) []Span {
 	indexOfLastMatchingItem := -1
 	for i := startIndex; i < len(spans); i++ {
-		if spans[i].End().ToString() <= end {
+		if spans[i].End.ToString() <= end {
 			indexOfLastMatchingItem = i
 		}
 	}

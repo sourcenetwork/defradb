@@ -34,8 +34,8 @@ func TestMergeAscending_ReturnsSingle_GivenSingle(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSecondBeforeFirst_GivenKeysInReverseOrder(t *testing.T) {
@@ -52,10 +52,10 @@ func TestMergeAscending_ReturnsSecondBeforeFirst_GivenKeysInReverseOrder(t *test
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 2)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
-	assert.Equal(t, start1, result[1].Start())
-	assert.Equal(t, end1, result[1].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
+	assert.Equal(t, start1, result[1].Start)
+	assert.Equal(t, end1, result[1].End)
 }
 
 func TestMergeAscending_ReturnsItemsInOrder_GivenKeysInMixedOrder(t *testing.T) {
@@ -75,13 +75,13 @@ func TestMergeAscending_ReturnsItemsInOrder_GivenKeysInMixedOrder(t *testing.T) 
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 	// Span 3 should be returned between one and two
-	assert.Equal(t, start3, result[1].Start())
-	assert.Equal(t, end3, result[1].End())
-	assert.Equal(t, start2, result[2].Start())
-	assert.Equal(t, end2, result[2].End())
+	assert.Equal(t, start3, result[1].Start)
+	assert.Equal(t, end3, result[1].End)
+	assert.Equal(t, start2, result[2].Start)
+	assert.Equal(t, end2, result[2].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqualToStart(t *testing.T) {
@@ -97,8 +97,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqualToStart(t *testing
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentToStart(t *testing.T) {
@@ -114,8 +114,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentToStart(t *test
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithin(t *testing.T) {
@@ -131,8 +131,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithin(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithin(t *testing.T) {
@@ -148,8 +148,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithin(t *testing.T) 
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithinEndPrefix(t *testing.T) {
@@ -165,8 +165,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithinEndPrefix(t *test
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithinEndPrefix(t *testing.T) {
@@ -182,8 +182,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithinEndPrefix(t *te
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqual(t *testing.T) {
@@ -199,8 +199,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqual(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndBefore(t *testing.T) {
@@ -216,8 +216,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndBefore(t *te
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndGreater(t *testing.T) {
@@ -233,8 +233,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndGreater(t *t
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndEqual(t *testing.T) {
@@ -250,8 +250,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndEqual(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndBefore(t *testing.T) {
@@ -267,8 +267,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndBefore(t *
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndAfter(t *testing.T) {
@@ -284,8 +284,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndAfter(t *t
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start2, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start2, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenSpanCoveringMiddleSpans(t *testing.T) {
@@ -310,13 +310,13 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenSpanCoveringMiddleSpans(t 
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 	// Spans 2 and 3 are within span 5
-	assert.Equal(t, start5, result[1].Start())
-	assert.Equal(t, end5, result[1].End())
-	assert.Equal(t, start4, result[2].Start())
-	assert.Equal(t, end4, result[2].End())
+	assert.Equal(t, start5, result[1].Start)
+	assert.Equal(t, end5, result[1].End)
+	assert.Equal(t, start4, result[2].Start)
+	assert.Equal(t, end4, result[2].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithin(t *testing.T) {
@@ -332,8 +332,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithin(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithinEndPrefix(t *testing.T) {
@@ -349,8 +349,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithinEndPrefix(t *testi
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenDuplicates(t *testing.T) {
@@ -364,8 +364,8 @@ func TestMergeAscending_ReturnsSingle_GivenDuplicates(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithin(t *testing.T) {
@@ -381,8 +381,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithin(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithinEndPrefix(t *testing.T) {
@@ -398,8 +398,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithinEndPrefix(t *test
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndEqual(t *testing.T) {
@@ -415,8 +415,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndEqual(t *testing.T) {
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndBefore(t *testing.T) {
@@ -432,8 +432,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndBefore(t *te
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndAfter(t *testing.T) {
@@ -449,8 +449,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndAfter(t *tes
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCoveringMiddleSpans(
@@ -477,13 +477,13 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCove
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
 	// Spans 2 and 3 are within span 5
-	assert.Equal(t, start5, result[1].Start())
-	assert.Equal(t, end5, result[1].End())
-	assert.Equal(t, start4, result[2].Start())
-	assert.Equal(t, end4, result[2].End())
+	assert.Equal(t, start5, result[1].Start)
+	assert.Equal(t, end5, result[1].End)
+	assert.Equal(t, start4, result[2].Start)
+	assert.Equal(t, end4, result[2].End)
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCoveringMiddleSpans(
@@ -510,12 +510,12 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCov
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
-	assert.Equal(t, start2, result[1].Start())
-	assert.Equal(t, end5, result[1].End())
-	assert.Equal(t, start4, result[2].Start())
-	assert.Equal(t, end4, result[2].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
+	assert.Equal(t, start2, result[1].Start)
+	assert.Equal(t, end5, result[1].End)
+	assert.Equal(t, start4, result[2].Start)
+	assert.Equal(t, end4, result[2].End)
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpanCoveringMiddleSpans(
@@ -542,12 +542,12 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpa
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
-	assert.Equal(t, start2, result[1].Start())
-	assert.Equal(t, end5, result[1].End())
-	assert.Equal(t, start4, result[2].Start())
-	assert.Equal(t, end4, result[2].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
+	assert.Equal(t, start2, result[1].Start)
+	assert.Equal(t, end5, result[1].End)
+	assert.Equal(t, start4, result[2].Start)
+	assert.Equal(t, end4, result[2].End)
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndEndAfterSpanCoveringMiddleSpans(
@@ -574,12 +574,12 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndE
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
-	assert.Equal(t, start2, result[1].Start())
-	assert.Equal(t, end5, result[1].End())
-	assert.Equal(t, start4, result[2].Start())
-	assert.Equal(t, end4, result[2].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
+	assert.Equal(t, start2, result[1].Start)
+	assert.Equal(t, end5, result[1].End)
+	assert.Equal(t, start4, result[2].Start)
+	assert.Equal(t, end4, result[2].End)
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEndAfterSpanCoveringMiddleSpans(
@@ -606,12 +606,12 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEn
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 3)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
-	assert.Equal(t, start2, result[1].Start())
-	assert.Equal(t, end5, result[1].End())
-	assert.Equal(t, start4, result[2].Start())
-	assert.Equal(t, end4, result[2].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
+	assert.Equal(t, start2, result[1].Start)
+	assert.Equal(t, end5, result[1].End)
+	assert.Equal(t, start4, result[2].Start)
+	assert.Equal(t, end4, result[2].End)
 }
 
 func TestMergeAscending_ReturnsTwoItems_GivenSecondItemAfterFirst(t *testing.T) {
@@ -627,10 +627,10 @@ func TestMergeAscending_ReturnsTwoItems_GivenSecondItemAfterFirst(t *testing.T) 
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 2)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end1, result[0].End())
-	assert.Equal(t, start2, result[1].Start())
-	assert.Equal(t, end2, result[1].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end1, result[0].End)
+	assert.Equal(t, start2, result[1].Start)
+	assert.Equal(t, end2, result[1].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndEqual(t *testing.T) {
@@ -646,8 +646,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndEqual(t *
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentAndAfter(
@@ -665,8 +665,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentA
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAfter(t *testing.T) {
@@ -682,8 +682,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAfter(t *
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndAfterEndEndAfter(t *testing.T) {
@@ -699,6 +699,6 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndAfterEndEndAfter(t *t
 	result := MergeAscending(input)
 
 	assert.Len(t, result, 1)
-	assert.Equal(t, start1, result[0].Start())
-	assert.Equal(t, end2, result[0].End())
+	assert.Equal(t, start1, result[0].Start)
+	assert.Equal(t, end2, result[0].End)
 }

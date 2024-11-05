@@ -280,9 +280,9 @@ func (df *DocumentFetcher) start(ctx context.Context, spans []core.Span, withDel
 		for i, span := range spans {
 			// We can only handle value keys, so here we ensure we only read value keys
 			if withDeleted {
-				valueSpans[i] = core.NewSpan(span.Start().WithDeletedFlag(), span.End().WithDeletedFlag())
+				valueSpans[i] = core.NewSpan(span.Start.WithDeletedFlag(), span.End.WithDeletedFlag())
 			} else {
-				valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+				valueSpans[i] = core.NewSpan(span.Start.WithValueFlag(), span.End.WithValueFlag())
 			}
 		}
 
@@ -331,7 +331,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	}
 
 	span := df.spans[nextSpanIndex]
-	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
+	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start.ToDS(), span.End.ToDS())
 	if err != nil {
 		return false, err
 	}
