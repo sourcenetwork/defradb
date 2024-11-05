@@ -19,20 +19,20 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-// CollectionRetriever is a helper struct that retrieves a collection from a document ID.
-type CollectionRetriever struct {
+// collectionRetriever is a helper struct that retrieves a collection from a document ID.
+type collectionRetriever struct {
 	db client.DB
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
-func NewCollectionRetriever(db client.DB) *CollectionRetriever {
-	return &CollectionRetriever{
+func NewCollectionRetriever(db client.DB) *collectionRetriever {
+	return &collectionRetriever{
 		db: db,
 	}
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
-func (r *CollectionRetriever) RetrieveCollectionFromDocID(
+func (r *collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
 ) (client.Collection, error) {
