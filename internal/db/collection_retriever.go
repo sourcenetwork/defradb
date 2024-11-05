@@ -15,21 +15,18 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/immutable"
 )
 
 // CollectionRetriever is a helper struct that retrieves a collection from a document ID.
 type CollectionRetriever struct {
-	db *db
+	db client.DB
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
-func NewCollectionRetriever(database client.DB) *CollectionRetriever {
-	internalDB, ok := database.(*db)
-	if !ok {
-		return nil
-	}
+func NewCollectionRetriever(db client.DB) *CollectionRetriever {
 	return &CollectionRetriever{
-		db: internalDB,
+		db: db,
 	}
 }
 
@@ -63,10 +60,20 @@ func (r *CollectionRetriever) RetrieveCollectionFromDocID(
 		return nil, err
 	}
 
-	col, err := getCollectionFromRootSchema(ctx, r.db, schema.Root)
+	cols, err := r.db.GetCollections(
+		ctx,
+		client.CollectionFetchOptions{
+			SchemaRoot: immutable.Some(schema.Root),
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return col, nil
+	if len(cols) == 0 {
+		return nil, NewErrCollectionWithSchemaRootNotFound(schema.Root)
+	}
+
+	return cols[0], nil
 }

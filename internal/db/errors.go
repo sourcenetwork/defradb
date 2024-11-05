@@ -107,6 +107,7 @@ const (
 	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 	errDocIDNotFound                            string = "docID not found"
+	errCollectionWithSchemaRootNotFound         string = "collection with schema root not found"
 )
 
 var (
@@ -154,6 +155,7 @@ var (
 	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
 	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
 	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
+	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -695,4 +697,8 @@ func NewErrDefaultFieldValueInvalid(collection string, inner error) error {
 
 func NewErrDocIDNotFound(docID string) error {
 	return errors.New(errDocIDNotFound, errors.NewKV("DocID", docID))
+}
+
+func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
+	return errors.New(errCollectionWithSchemaRootNotFound, errors.NewKV("SchemaRoot", schemaRoot))
 }
