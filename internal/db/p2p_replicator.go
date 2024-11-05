@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -23,7 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
+	dbErrors "github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -162,7 +163,7 @@ func (db *db) getDocsHeads(
 				log.ErrorContextE(
 					ctx,
 					"Failed to get all docIDs",
-					NewErrReplicatorDocID(err, errors.NewKV("Collection", col.Name().Value())),
+					NewErrReplicatorDocID(err, dbErrors.NewKV("Collection", col.Name().Value())),
 				)
 				continue
 			}
@@ -650,7 +651,7 @@ func (db *db) retryDoc(ctx context.Context, docID string) (resErr error) {
 	if err != nil {
 		return err
 	}
-	defer func() { resErr = headsIterator.Close() }()
+	defer func() { resErr = errors.Join(resErr, headsIterator.Close()) }()
 
 	for {
 		select {
