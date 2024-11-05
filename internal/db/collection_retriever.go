@@ -13,9 +13,10 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/immutable"
 )
 
 // CollectionRetriever is a helper struct that retrieves a collection from a document ID.
