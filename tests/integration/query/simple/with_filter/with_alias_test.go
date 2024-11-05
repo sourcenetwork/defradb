@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithAliasEqualsFilterBlock_Succeeds(t *testing.T) {
+func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with alias filter(age)",
 		Actions: []any{
@@ -54,7 +54,7 @@ func TestQuerySimple_WithAliasEqualsFilterBlock_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithEmptyAlias_Succeeds(t *testing.T) {
+func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with empty alias filter",
 		Actions: []any{
@@ -96,7 +96,7 @@ func TestQuerySimple_WithEmptyAlias_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNullAlias_Succeeds(t *testing.T) {
+func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with null alias filter",
 		Actions: []any{
@@ -129,7 +129,7 @@ func TestQuerySimple_WithNullAlias_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNonObjectAlias_Succeeds(t *testing.T) {
+func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with non object alias filter",
 		Actions: []any{
@@ -162,7 +162,7 @@ func TestQuerySimple_WithNonObjectAlias_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNonExistantAlias_Succeeds(t *testing.T) {
+func TestQuerySimple_WithNonExistantAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with non existant alias filter",
 		Actions: []any{
@@ -195,7 +195,7 @@ func TestQuerySimple_WithNonExistantAlias_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNonAliasedField_Succeeds(t *testing.T) {
+func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with non aliased filter",
 		Actions: []any{
@@ -233,7 +233,7 @@ func TestQuerySimple_WithNonAliasedField_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithCompoundAlias_Succeeds(t *testing.T) {
+func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with compound alias filter",
 		Actions: []any{
@@ -276,7 +276,7 @@ func TestQuerySimple_WithCompoundAlias_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithAliasWithCompound_Succeeds(t *testing.T) {
+func TestQuerySimple_WithAliasWithCompound_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with alias with compound filter",
 		Actions: []any{

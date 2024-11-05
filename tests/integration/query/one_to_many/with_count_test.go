@@ -121,34 +121,10 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 
 // This test documents the behavior of aggregate alias targeting which is not yet implemented.
 // https://github.com/sourcenetwork/defradb/issues/3195
-func TestQueryOneToMany_WithCountAliasFilter_Succeeds(t *testing.T) {
+func TestQueryOneToMany_WithCountAliasFilter_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with count",
 		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "A Time for Mercy",
-					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Theif Lord",
-					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
-				}`,
-			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
@@ -164,6 +140,30 @@ func TestQueryOneToMany_WithCountAliasFilter_Succeeds(t *testing.T) {
 					"age": 62,
 					"verified": false
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
 			},
 			testUtils.Request{
 				Request: `query {

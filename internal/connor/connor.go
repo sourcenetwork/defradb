@@ -8,14 +8,11 @@
 // such as JSON can be filtered as expected.
 package connor
 
-import (
-	"github.com/sourcenetwork/defradb/client/request"
-)
-
 const (
-	AndOp = "_and"
-	OrOp  = "_or"
-	NotOp = "_not"
+	AliasOp = "_alias"
+	AndOp   = "_and"
+	OrOp    = "_or"
+	NotOp   = "_not"
 
 	AnyOp  = "_any"
 	AllOp  = "_all"
@@ -66,7 +63,7 @@ func matchWith(op string, conditions, data any) (bool, error) {
 		return anyOp(conditions, data)
 	case AllOp:
 		return all(conditions, data)
-	case EqualOp, request.FilterOpAlias:
+	case EqualOp, AliasOp:
 		return eq(conditions, data)
 	case GreaterOrEqualOp:
 		return ge(conditions, data)

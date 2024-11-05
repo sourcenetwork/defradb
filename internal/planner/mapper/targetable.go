@@ -82,13 +82,10 @@ type ObjectProperty struct {
 }
 
 func (k *ObjectProperty) GetProp(data any) any {
-	if data == nil {
-		return nil
+	object, ok := data.(map[string]any)
+	if !ok {
+		return nil // this can happen when an alias target or property does not exist
 	}
-	if _, ok := data.(core.Doc); ok {
-		return nil // this can happen when an alias target does not exist
-	}
-	object := data.(map[string]any)
 	return object[k.Name]
 }
 
