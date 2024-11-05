@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -264,11 +263,17 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			if err != nil {
 				return nil, err
 			}
-			span := fetcher.NewVersionedSpan(
-				keys.DataStoreKey{DocID: n.selectReq.DocIDs.Value()[0]},
-				c,
-			) // @todo check len
-			origScan.Spans([]core.Span{span})
+			origScan.Spans(
+				[]core.Span{
+					core.NewSpan(
+						keys.HeadStoreKey{
+							DocID: n.selectReq.DocIDs.Value()[0],
+							Cid:   c,
+						},
+						keys.HeadStoreKey{},
+					),
+				},
+			)
 		} else if n.selectReq.DocIDs.HasValue() {
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
 			// if we have a FindByDocID filter, create a span for it

@@ -278,11 +278,20 @@ func (df *DocumentFetcher) start(ctx context.Context, spans []core.Span, withDel
 	} else {
 		valueSpans := make([]core.Span, len(spans))
 		for i, span := range spans {
-			// We can only handle value keys, so here we ensure we only read value keys
 			if withDeleted {
-				valueSpans[i] = core.NewSpan(span.Start.WithDeletedFlag(), span.End.WithDeletedFlag())
+				// DocumentFetcher only ever recieves document keys
+				//nolint:forcetypeassert
+				valueSpans[i] = core.NewSpan(
+					span.Start.(keys.DataStoreKey).WithDeletedFlag(),
+					span.End.(keys.DataStoreKey).WithDeletedFlag(),
+				)
 			} else {
-				valueSpans[i] = core.NewSpan(span.Start.WithValueFlag(), span.End.WithValueFlag())
+				// DocumentFetcher only ever recieves document keys
+				//nolint:forcetypeassert
+				valueSpans[i] = core.NewSpan(
+					span.Start.(keys.DataStoreKey).WithValueFlag(),
+					span.End.(keys.DataStoreKey).WithValueFlag(),
+				)
 			}
 		}
 

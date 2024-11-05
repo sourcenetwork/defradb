@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -263,10 +264,8 @@ func (n *scanNode) explainSpans() []map[string]any {
 	spansExplainer := []map[string]any{}
 	for _, span := range n.spans {
 		spanExplainer := map[string]any{
-			// These must be pretty printed as the explain results need to be returnable
-			// as json via some clients (e.g. http and cli)
-			"start": span.Start.PrettyPrint(),
-			"end":   span.End.PrettyPrint(),
+			"start": keys.PrettyPrint(span.Start),
+			"end":   keys.PrettyPrint(span.End),
 		}
 
 		spansExplainer = append(spansExplainer, spanExplainer)

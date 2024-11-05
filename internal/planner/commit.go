@@ -36,7 +36,7 @@ type dagScanNode struct {
 	queuedCids []*cid.Cid
 
 	fetcher      fetcher.HeadFetcher
-	spans        []core.Span
+	prefix       keys.HeadStoreKey
 	commitSelect *mapper.CommitSelect
 
 	execInfo dagScanExecInfo
@@ -67,20 +67,21 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	if len(n.spans) == 0 {
+	undefined := keys.HeadStoreKey{}
+	if n.prefix == undefined {
 		if n.commitSelect.DocID.HasValue() {
-			dsKey := keys.DataStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
+			key := keys.HeadStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
 
 			if n.commitSelect.FieldID.HasValue() {
 				field := n.commitSelect.FieldID.Value()
-				dsKey = dsKey.WithFieldID(field)
+				key = key.WithFieldID(field)
 			}
 
-			n.spans = []core.Span{core.NewSpan(dsKey, dsKey.PrefixEnd())}
+			n.prefix = key
 		}
 	}
 
-	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.spans, n.commitSelect.FieldID)
+	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
 }
 
 func (n *dagScanNode) Start() error {
@@ -97,10 +98,6 @@ func (n *dagScanNode) Spans(spans []core.Span) {
 		return
 	}
 
-	// copy the input spans so that we may mutate freely
-	headSetSpans := make([]core.Span, len(spans))
-	copy(headSetSpans, spans)
-
 	var fieldID string
 	if n.commitSelect.FieldID.HasValue() {
 		fieldID = n.commitSelect.FieldID.Value()
@@ -108,13 +105,18 @@ func (n *dagScanNode) Spans(spans []core.Span) {
 		fieldID = core.COMPOSITE_NAMESPACE
 	}
 
-	for i, span := range headSetSpans {
-		if span.Start.FieldID != fieldID {
-			headSetSpans[i] = core.NewSpan(span.Start.WithFieldID(fieldID), keys.DataStoreKey{})
+	for _, span := range spans {
+		var start keys.HeadStoreKey
+		switch s := span.Start.(type) {
+		case keys.DataStoreKey:
+			start = s.ToHeadStoreKey()
+		case keys.HeadStoreKey:
+			start = s
 		}
-	}
 
-	n.spans = headSetSpans
+		n.prefix = start.WithFieldID(fieldID)
+		return
+	}
 }
 
 func (n *dagScanNode) Close() error {
@@ -142,13 +144,14 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 
 	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
+	undefinedHsKey := keys.HeadStoreKey{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
-	for _, span := range n.spans {
+	if n.prefix != undefinedHsKey {
 		spansExplainer = append(
 			spansExplainer,
 			map[string]any{
-				"start": span.Start.ToString(),
-				"end":   span.End.ToString(),
+				"start": n.prefix.ToString(),
+				"end":   n.prefix.PrefixEnd().ToString(),
 			},
 		)
 	}

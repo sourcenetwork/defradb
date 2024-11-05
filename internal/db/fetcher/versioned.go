@@ -89,8 +89,7 @@ type VersionedFetcher struct {
 	root  datastore.Rootstore
 	store datastore.Txn
 
-	dsKey   keys.DataStoreKey
-	version cid.Cid
+	dsKey keys.DataStoreKey
 
 	queuedCids *list.List
 
@@ -162,30 +161,25 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error
 		return ErrSingleSpanOnly
 	}
 
-	// For the VersionedFetcher, the spans needs to be in the format
-	// Span{Start: DocID, End: CID}
-	dk := spans[0].Start
-	cidRaw := spans[0].End
-	if dk.DocID == "" {
+	// VersionedFetcher only ever recieves a headstore key
+	//nolint:forcetypeassert
+	prefix := spans[0].Start.(keys.HeadStoreKey)
+	dk := prefix.DocID
+	cid := prefix.Cid
+	if dk == "" {
 		return client.NewErrUninitializeProperty("Spans", "DocID")
-	} else if cidRaw.DocID == "" { // todo: dont abuse DataStoreKey/Span like this!
+	} else if !cid.Defined() {
 		return client.NewErrUninitializeProperty("Spans", "CID")
 	}
 
-	// decode cidRaw from core.Key to cid.Cid
-	// need to remove '/' prefix from the core.Key
-
-	c, err := cid.Decode(cidRaw.DocID)
-	if err != nil {
-		return NewErrFailedToDecodeCIDForVFetcher(err)
+	vf.ctx = ctx
+	vf.dsKey = keys.DataStoreKey{
+		CollectionRootID: vf.col.Description().RootID,
+		DocID:            dk,
 	}
 
-	vf.ctx = ctx
-	vf.dsKey = dk.WithCollectionRoot(vf.col.Description().RootID)
-	vf.version = c
-
-	if err := vf.seekTo(vf.version); err != nil {
-		return NewErrFailedToSeek(c, err)
+	if err := vf.seekTo(cid); err != nil {
+		return NewErrFailedToSeek(cid, err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx)
@@ -420,10 +414,4 @@ func (vf *VersionedFetcher) Close() error {
 	}
 
 	return vf.DocumentFetcher.Close()
-}
-
-// NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
-func NewVersionedSpan(dsKey keys.DataStoreKey, version cid.Cid) core.Span {
-	// Todo: Dont abuse DataStoreKey for version cid!
-	return core.NewSpan(dsKey, keys.DataStoreKey{DocID: version.String()})
 }

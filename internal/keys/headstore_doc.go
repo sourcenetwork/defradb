@@ -23,7 +23,7 @@ type HeadStoreKey struct {
 	Cid     cid.Cid
 }
 
-var _ Key = (*HeadStoreKey)(nil)
+var _ Walkable = (*HeadStoreKey)(nil)
 
 // Creates a new HeadStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminator.  It assumes
@@ -91,4 +91,23 @@ func (k HeadStoreKey) Bytes() []byte {
 
 func (k HeadStoreKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
+}
+
+func (k HeadStoreKey) PrefixEnd() Walkable {
+	newKey := k
+
+	if k.FieldID != "" {
+		newKey.FieldID = string(bytesPrefixEnd([]byte(k.FieldID)))
+		return newKey
+	}
+	if k.DocID != "" {
+		newKey.DocID = string(bytesPrefixEnd([]byte(k.DocID)))
+		return newKey
+	}
+	if k.Cid.Defined() {
+		newKey.Cid = cid.MustParse(bytesPrefixEnd(k.Cid.Bytes()))
+		return newKey
+	}
+
+	return newKey
 }

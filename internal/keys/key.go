@@ -20,3 +20,20 @@ type Key interface {
 	Bytes() []byte
 	ToDS() ds.Key
 }
+
+// Walkable represents a key in the database that can be 'walked along'
+// by prefixing the end of the key.
+type Walkable interface {
+	Key
+	PrefixEnd() Walkable
+}
+
+// PrettyPrint returns the human readable version of the given key.
+func PrettyPrint(k Key) string {
+	switch typed := k.(type) {
+	case DataStoreKey:
+		return typed.PrettyPrint()
+	default:
+		return typed.ToString()
+	}
+}

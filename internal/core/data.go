@@ -19,14 +19,14 @@ import (
 // Span is a range of keys from [Start, End).
 type Span struct {
 	// Start represents the starting key of the Span.
-	Start keys.DataStoreKey
+	Start keys.Walkable
 
 	// End represents the ending key of the Span.
-	End keys.DataStoreKey
+	End keys.Walkable
 }
 
 // NewSpan creates a new Span from the provided start and end keys.
-func NewSpan(start, end keys.DataStoreKey) Span {
+func NewSpan(start, end keys.Walkable) Span {
 	return Span{
 		Start: start,
 		End:   end,
@@ -122,7 +122,7 @@ func (this Span) Compare(other Span) SpanComparisonResult {
 	return After
 }
 
-func isAdjacent(this keys.DataStoreKey, other keys.DataStoreKey) bool {
+func isAdjacent(this keys.Walkable, other keys.Walkable) bool {
 	return len(this.ToString()) == len(other.ToString()) &&
 		(this.PrefixEnd().ToString() == other.ToString() ||
 			this.ToString() == other.PrefixEnd().ToString())

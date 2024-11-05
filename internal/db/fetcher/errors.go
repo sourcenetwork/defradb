@@ -18,49 +18,42 @@ import (
 )
 
 const (
-	errFieldIdNotFound              string = "unable to find SchemaFieldDescription for given FieldId"
-	errFailedToDecodeCIDForVFetcher string = "failed to decode CID for VersionedFetcher"
-	errFailedToSeek                 string = "seek failed"
-	errFailedToMergeState           string = "failed merging state"
-	errVFetcherFailedToFindBlock    string = "(version fetcher) failed to find block in blockstore"
-	errVFetcherFailedToGetBlock     string = "(version fetcher) failed to get block in blockstore"
-	errVFetcherFailedToWriteBlock   string = "(version fetcher) failed to write block to blockstore"
-	errVFetcherFailedToDecodeNode   string = "(version fetcher) failed to decode protobuf"
-	errVFetcherFailedToGetDagLink   string = "(version fetcher) failed to get node link from DAG"
-	errFailedToGetDagNode           string = "failed to get DAG Node"
-	errMissingMapper                string = "missing document mapper"
-	errInvalidInOperatorValue       string = "invalid _in/_nin value"
-	errInvalidFilterOperator        string = "invalid filter operator is provided"
-	errNotSupportedKindByIndex      string = "kind is not supported by index"
-	errUnexpectedTypeValue          string = "unexpected type value"
+	errFieldIdNotFound            string = "unable to find SchemaFieldDescription for given FieldId"
+	errFailedToSeek               string = "seek failed"
+	errFailedToMergeState         string = "failed merging state"
+	errVFetcherFailedToFindBlock  string = "(version fetcher) failed to find block in blockstore"
+	errVFetcherFailedToGetBlock   string = "(version fetcher) failed to get block in blockstore"
+	errVFetcherFailedToWriteBlock string = "(version fetcher) failed to write block to blockstore"
+	errVFetcherFailedToDecodeNode string = "(version fetcher) failed to decode protobuf"
+	errVFetcherFailedToGetDagLink string = "(version fetcher) failed to get node link from DAG"
+	errFailedToGetDagNode         string = "failed to get DAG Node"
+	errMissingMapper              string = "missing document mapper"
+	errInvalidInOperatorValue     string = "invalid _in/_nin value"
+	errInvalidFilterOperator      string = "invalid filter operator is provided"
+	errNotSupportedKindByIndex    string = "kind is not supported by index"
+	errUnexpectedTypeValue        string = "unexpected type value"
 )
 
 var (
-	ErrFieldIdNotFound              = errors.New(errFieldIdNotFound)
-	ErrFailedToDecodeCIDForVFetcher = errors.New(errFailedToDecodeCIDForVFetcher)
-	ErrFailedToSeek                 = errors.New(errFailedToSeek)
-	ErrFailedToMergeState           = errors.New(errFailedToMergeState)
-	ErrVFetcherFailedToFindBlock    = errors.New(errVFetcherFailedToFindBlock)
-	ErrVFetcherFailedToGetBlock     = errors.New(errVFetcherFailedToGetBlock)
-	ErrVFetcherFailedToWriteBlock   = errors.New(errVFetcherFailedToWriteBlock)
-	ErrVFetcherFailedToDecodeNode   = errors.New(errVFetcherFailedToDecodeNode)
-	ErrVFetcherFailedToGetDagLink   = errors.New(errVFetcherFailedToGetDagLink)
-	ErrFailedToGetDagNode           = errors.New(errFailedToGetDagNode)
-	ErrMissingMapper                = errors.New(errMissingMapper)
-	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
-	ErrInvalidInOperatorValue       = errors.New(errInvalidInOperatorValue)
-	ErrInvalidFilterOperator        = errors.New(errInvalidFilterOperator)
-	ErrUnexpectedTypeValue          = errors.New(errUnexpectedTypeValue)
+	ErrFieldIdNotFound            = errors.New(errFieldIdNotFound)
+	ErrFailedToSeek               = errors.New(errFailedToSeek)
+	ErrFailedToMergeState         = errors.New(errFailedToMergeState)
+	ErrVFetcherFailedToFindBlock  = errors.New(errVFetcherFailedToFindBlock)
+	ErrVFetcherFailedToGetBlock   = errors.New(errVFetcherFailedToGetBlock)
+	ErrVFetcherFailedToWriteBlock = errors.New(errVFetcherFailedToWriteBlock)
+	ErrVFetcherFailedToDecodeNode = errors.New(errVFetcherFailedToDecodeNode)
+	ErrVFetcherFailedToGetDagLink = errors.New(errVFetcherFailedToGetDagLink)
+	ErrFailedToGetDagNode         = errors.New(errFailedToGetDagNode)
+	ErrMissingMapper              = errors.New(errMissingMapper)
+	ErrSingleSpanOnly             = errors.New("spans must contain only a single entry")
+	ErrInvalidInOperatorValue     = errors.New(errInvalidInOperatorValue)
+	ErrInvalidFilterOperator      = errors.New(errInvalidFilterOperator)
+	ErrUnexpectedTypeValue        = errors.New(errUnexpectedTypeValue)
 )
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
 func NewErrFieldIdNotFound(fieldId uint32) error {
 	return errors.New(errFieldIdNotFound, errors.NewKV("FieldId", fieldId))
-}
-
-// NewErrFailedToDecodeCIDForVFetcher returns an error indicating that the given CID could not be decoded.
-func NewErrFailedToDecodeCIDForVFetcher(inner error) error {
-	return errors.Wrap(errFailedToDecodeCIDForVFetcher, inner)
 }
 
 // NewErrFailedToSeek returns an error indicating that the given target could not be seeked to.
