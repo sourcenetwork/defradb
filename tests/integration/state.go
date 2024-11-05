@@ -165,6 +165,9 @@ type state struct {
 	// The nodes active in this test.
 	nodes []clients.Client
 
+	// closedNodes contains the indexes of nodes that have been closed.
+	closedNodes map[int]struct{}
+
 	// nodeP2P contains p2p states for all nodes
 	nodeP2P []*p2pState
 
@@ -232,6 +235,7 @@ func newState(
 		nodeConfigs:              [][]net.NodeOpt{},
 		nodeP2P:                  []*p2pState{},
 		nodes:                    []clients.Client{},
+		closedNodes:              map[int]struct{}{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,

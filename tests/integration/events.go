@@ -160,6 +160,10 @@ func waitForUpdateEvents(
 			continue // node is not selected
 		}
 
+		if _, ok := s.closedNodes[i]; ok {
+			continue // node is closed
+		}
+
 		expect := make(map[string]struct{}, len(docIDs))
 		for k := range docIDs {
 			expect[k] = struct{}{}
@@ -170,17 +174,17 @@ func waitForUpdateEvents(
 			select {
 			case msg, ok := <-s.nodeEvents[i].update.Message():
 				if !ok {
-					require.Fail(s.t, "subscription closed waiting for update event")
+					require.Fail(s.t, "subscription closed waiting for update event", "Node %d", i)
 				}
 				evt = msg.Data.(event.Update)
 
 			case <-time.After(eventTimeout):
-				require.Fail(s.t, "timeout waiting for update event")
+				require.Fail(s.t, "timeout waiting for update event", "Node %d", i)
 			}
 
 			// make sure the event is expected
 			_, ok := expect[evt.DocID]
-			require.True(s.t, ok, "unexpected document update")
+			require.True(s.t, ok, "unexpected document update", "Node %d", i)
 			delete(expect, evt.DocID)
 
 			// we only need to update the network state if the nodes
@@ -198,6 +202,10 @@ func waitForUpdateEvents(
 // from running forever.
 func waitForMergeEvents(s *state, action WaitForSync) {
 	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
+		if _, ok := s.closedNodes[nodeID]; ok {
+			continue // node is closed
+		}
+
 		expect := s.nodeP2P[nodeID].expectedDocHeads
 
 		// remove any docs that are already merged

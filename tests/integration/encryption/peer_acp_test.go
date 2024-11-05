@@ -373,3 +373,96 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailable_ShouldNotFetch(t *testing.T) {
+	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+
+	test := testUtils.TestCase{
+		KMS: testUtils.KMS{Activated: true},
+		SupportedACPTypes: immutable.Some(
+			[]testUtils.ACPType{
+				testUtils.SourceHubACPType,
+			},
+		),
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.AddPolicy{
+				Identity:         testUtils.NodeIdentity(0),
+				Policy:           policy,
+				ExpectedPolicyID: expectedPolicyID,
+			},
+			testUtils.SchemaUpdate{
+				Schema: fmt.Sprintf(`
+						type Users @policy(
+							id: "%s",
+							resource: "users"
+						) {
+							name: String
+							age: Int
+						}
+					`,
+					expectedPolicyID,
+				),
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        2,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID:   immutable.Some(0),
+				Identity: testUtils.NodeIdentity(0),
+				Doc: `
+					{
+						"name": "Fred",
+						"age": 33
+					}
+				`,
+				IsDocEncrypted: true,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Close{
+				NodeID: immutable.Some(0),
+			},
+			testUtils.AddDocActorRelationship{
+				NodeID:            immutable.Some(1),
+				RequestorIdentity: testUtils.NodeIdentity(0),
+				TargetIdentity:    testUtils.NodeIdentity(1),
+				DocID:             0,
+				Relation:          "reader",
+			},
+			testUtils.Wait{
+				Duration: 100 * time.Millisecond,
+			},
+			testUtils.Request{
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.NodeIdentity(1),
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
