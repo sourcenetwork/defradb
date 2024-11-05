@@ -37,6 +37,7 @@ type DocHeadBlocksIterator struct {
 var _ io.Closer = (*DocHeadBlocksIterator)(nil)
 
 func (h *DocHeadBlocksIterator) Close() error {
+	h.cids = nil
 	return nil
 }
 

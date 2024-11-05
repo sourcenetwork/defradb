@@ -228,6 +228,32 @@ func (db *db) AddPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
+func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
+	if err != nil {
+		return err
+	}
+
+	for {
+		hasValue, err := headsIterator.Next()
+		if err != nil {
+			return errors.Join(err, headsIterator.Close())
+		}
+		if !hasValue {
+			break
+		}
+
+		updateEvent := event.Update{
+			DocID:      docID,
+			Cid:        headsIterator.CurrentCid(),
+			SchemaRoot: collection.Schema().Root,
+			Block:      headsIterator.CurrentRawBlock(),
+		}
+		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+	}
+	return headsIterator.Close()
+}
+
 func (db *db) AddDocActorRelationship(
 	ctx context.Context,
 	collectionName string,
@@ -263,38 +289,14 @@ func (db *db) AddDocActorRelationship(
 		return client.AddDocActorRelationshipResult{}, err
 	}
 
-	err = db.publishDocUpdateEvent(ctx, docID, collection)
-	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+	if !exists {
+		err = db.publishDocUpdateEvent(ctx, docID, collection)
+		if err != nil {
+			return client.AddDocActorRelationshipResult{}, err
+		}
 	}
 
 	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
-}
-
-func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
-	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
-	if err != nil {
-		return err
-	}
-
-	for {
-		hasValue, err := headsIterator.Next()
-		if err != nil {
-			return errors.Join(err, headsIterator.Close())
-		}
-		if !hasValue {
-			break
-		}
-
-		updateEvent := event.Update{
-			DocID:      docID,
-			Cid:        headsIterator.CurrentCid(),
-			SchemaRoot: collection.Schema().Root,
-			Block:      headsIterator.CurrentRawBlock(),
-		}
-		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
-	}
-	return headsIterator.Close()
 }
 
 func (db *db) DeleteDocActorRelationship(

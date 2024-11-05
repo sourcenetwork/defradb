@@ -75,5 +75,5 @@ func (r *CollectionRetriever) RetrieveCollectionFromDocID(
 		return nil, NewErrCollectionWithSchemaRootNotFound(schema.Root)
 	}
 
-	return cols[0], nil
+	return cols[0], headIterator.Close()
 }

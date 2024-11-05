@@ -24,12 +24,14 @@ import (
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -372,26 +374,14 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	policy := collection.Definition().Description.Policy
-	if !policy.HasValue() || policy.Value().ID == "" || policy.Value().ResourceName == "" {
-		return true, nil
-	}
-
-	policyID, resourceName := policy.Value().ID, policy.Value().ResourceName
-
-	isRegistered, err := s.acp.Value().IsDocRegistered(ctx, policyID, resourceName, docID)
-	if err != nil {
-		return false, err
-	}
-
-	if !isRegistered {
-		// Unrestricted access as it is a public document.
-		return true, nil
-	}
-
-	hasPerm, err := s.acp.Value().CheckDocAccess(ctx, acp.ReadPermission, actorIdentity, policyID, resourceName, docID)
-
-	return hasPerm, err
+	return permission.CheckAccessOfDocOnCollectionWithACP(
+		ctx,
+		immutable.Some(identity.Identity{DID: actorIdentity}),
+		s.acp.Value(),
+		collection,
+		acp.ReadPermission,
+		docID,
+	)
 }
 
 func encodeToBase64(data []byte) []byte {
