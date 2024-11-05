@@ -146,14 +146,6 @@ func isAdjacent(this keys.DataStoreKey, other keys.DataStoreKey) bool {
 			this.ToString() == other.PrefixEnd().ToString())
 }
 
-// Spans is a collection of individual spans.
-type Spans = []Span
-
-// NewSpans creates a new Spans from the provided spans.
-func NewSpans(spans ...Span) Spans {
-	return spans
-}
-
 // Merges an unordered, potentially overlapping and/or duplicated collection of Spans into
 // a unique set in ascending order, where overlapping spans are merged into a single span.
 // Will handle spans with keys of different lengths, where one might be a prefix of another.

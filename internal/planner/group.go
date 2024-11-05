@@ -127,7 +127,7 @@ func (n *groupNode) Start() error {
 	return nil
 }
 
-func (n *groupNode) Spans(spans core.Spans) {
+func (n *groupNode) Spans(spans []core.Span) {
 	for _, dataSource := range n.dataSources {
 		dataSource.Spans(spans)
 	}

@@ -35,7 +35,7 @@ type topLevelNode struct {
 	isInRecurse bool
 }
 
-func (n *topLevelNode) Spans(spans core.Spans) {
+func (n *topLevelNode) Spans(spans []core.Span) {
 	if n.isInRecurse {
 		return
 	}

@@ -36,7 +36,7 @@ type dagScanNode struct {
 	queuedCids []*cid.Cid
 
 	fetcher      fetcher.HeadFetcher
-	spans        core.Spans
+	spans        []core.Span
 	commitSelect *mapper.CommitSelect
 
 	execInfo dagScanExecInfo
@@ -76,7 +76,7 @@ func (n *dagScanNode) Init() error {
 				dsKey = dsKey.WithFieldID(field)
 			}
 
-			n.spans = core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
+			n.spans = []core.Span{core.NewSpan(dsKey, dsKey.PrefixEnd())}
 		}
 	}
 
@@ -92,7 +92,7 @@ func (n *dagScanNode) Start() error {
 // either a CID or a DocID.
 // If its a CID, set the node CID val
 // if its a DocID, set the node Key val (headset)
-func (n *dagScanNode) Spans(spans core.Spans) {
+func (n *dagScanNode) Spans(spans []core.Span) {
 	if len(spans) == 0 {
 		return
 	}

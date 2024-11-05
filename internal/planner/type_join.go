@@ -114,7 +114,7 @@ func (n *typeIndexJoin) Start() error {
 	return n.joinPlan.Start()
 }
 
-func (n *typeIndexJoin) Spans(spans core.Spans) {
+func (n *typeIndexJoin) Spans(spans []core.Span) {
 	n.joinPlan.Spans(spans)
 }
 
@@ -444,7 +444,7 @@ func fetchDocWithID(node planNode, docID string) (bool, error) {
 	}
 	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docID)
 
-	spans := core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
+	spans := []core.Span{core.NewSpan(dsKey, dsKey.PrefixEnd())}
 
 	node.Spans(spans)
 
@@ -502,7 +502,7 @@ func (join *invertibleTypeJoin) Close() error {
 	return join.childSide.plan.Close()
 }
 
-func (join *invertibleTypeJoin) Spans(spans core.Spans) {
+func (join *invertibleTypeJoin) Spans(spans []core.Span) {
 	join.parentSide.plan.Spans(spans)
 }
 

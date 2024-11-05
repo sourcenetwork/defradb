@@ -79,7 +79,7 @@ func (n *dataSource) Start() error {
 	return nil
 }
 
-func (n *dataSource) Spans(spans core.Spans) {
+func (n *dataSource) Spans(spans []core.Span) {
 	if n.parentSource != nil {
 		n.parentSource.Spans(spans)
 	}

@@ -149,7 +149,7 @@ func (n *sumNode) Init() error {
 
 func (n *sumNode) Start() error { return n.plan.Start() }
 
-func (n *sumNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *sumNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
 
 func (n *sumNode) Close() error { return n.plan.Close() }
 

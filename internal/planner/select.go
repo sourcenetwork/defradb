@@ -70,7 +70,7 @@ func (n *selectTopNode) Start() error { return n.planNode.Start() }
 
 func (n *selectTopNode) Next() (bool, error) { return n.planNode.Next() }
 
-func (n *selectTopNode) Spans(spans core.Spans) { n.planNode.Spans(spans) }
+func (n *selectTopNode) Spans(spans []core.Span) { n.planNode.Spans(spans) }
 
 func (n *selectTopNode) Value() core.Doc { return n.planNode.Value() }
 
@@ -182,7 +182,7 @@ func (n *selectNode) Next() (bool, error) {
 	}
 }
 
-func (n *selectNode) Spans(spans core.Spans) {
+func (n *selectNode) Spans(spans []core.Span) {
 	n.source.Spans(spans)
 }
 
@@ -264,11 +264,11 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			if err != nil {
 				return nil, err
 			}
-			spans := fetcher.NewVersionedSpan(
+			span := fetcher.NewVersionedSpan(
 				keys.DataStoreKey{DocID: n.selectReq.DocIDs.Value()[0]},
 				c,
 			) // @todo check len
-			origScan.Spans(spans)
+			origScan.Spans([]core.Span{span})
 		} else if n.selectReq.DocIDs.HasValue() {
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
 			// if we have a FindByDocID filter, create a span for it
@@ -281,7 +281,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 				docIDIndexKey := base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
 				spans[i] = core.NewSpan(docIDIndexKey, docIDIndexKey.PrefixEnd())
 			}
-			origScan.Spans(core.NewSpans(spans...))
+			origScan.Spans(spans)
 		}
 	}
 

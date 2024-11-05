@@ -74,7 +74,7 @@ func (n *viewNode) Start() error {
 	return n.source.Start()
 }
 
-func (n *viewNode) Spans(spans core.Spans) {
+func (n *viewNode) Spans(spans []core.Span) {
 	n.source.Spans(spans)
 }
 
@@ -217,7 +217,7 @@ func (n *cachedViewFetcher) Start() error {
 	return nil
 }
 
-func (n *cachedViewFetcher) Spans(spans core.Spans) {
+func (n *cachedViewFetcher) Spans(spans []core.Span) {
 	// no-op
 }
 

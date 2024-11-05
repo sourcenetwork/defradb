@@ -153,7 +153,7 @@ func (vf *VersionedFetcher) Init(
 }
 
 // Start serializes the correct state according to the Key and CID.
-func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error {
 	if vf.col == nil {
 		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
 	}
@@ -188,7 +188,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
 		return NewErrFailedToSeek(c, err)
 	}
 
-	return vf.DocumentFetcher.Start(ctx, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx)
 }
 
 // Rootstore returns the rootstore of the VersionedFetcher.
@@ -217,7 +217,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx)
 }
 
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
@@ -423,7 +423,7 @@ func (vf *VersionedFetcher) Close() error {
 }
 
 // NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
-func NewVersionedSpan(dsKey keys.DataStoreKey, version cid.Cid) core.Spans {
+func NewVersionedSpan(dsKey keys.DataStoreKey, version cid.Cid) core.Span {
 	// Todo: Dont abuse DataStoreKey for version cid!
-	return core.NewSpans(core.NewSpan(dsKey, keys.DataStoreKey{DocID: version.String()}))
+	return core.NewSpan(dsKey, keys.DataStoreKey{DocID: version.String()})
 }

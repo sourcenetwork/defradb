@@ -72,7 +72,7 @@ type Fetcher interface {
 		reverse bool,
 		showDeleted bool,
 	) error
-	Start(ctx context.Context, spans core.Spans) error
+	Start(ctx context.Context, spans ...core.Span) error
 	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
 	Close() error
 }
@@ -98,7 +98,7 @@ type DocumentFetcher struct {
 	deletedDocs bool
 
 	txn          datastore.Txn
-	spans        core.Spans
+	spans        []core.Span
 	order        []dsq.Order
 	curSpanIndex int
 
@@ -243,7 +243,7 @@ func (df *DocumentFetcher) init(
 	return nil
 }
 
-func (df *DocumentFetcher) Start(ctx context.Context, spans core.Spans) error {
+func (df *DocumentFetcher) Start(ctx context.Context, spans ...core.Span) error {
 	err := df.start(ctx, spans, false)
 	if err != nil {
 		return err
@@ -257,7 +257,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 // Start implements DocumentFetcher.
-func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDeleted bool) error {
+func (df *DocumentFetcher) start(ctx context.Context, spans []core.Span, withDeleted bool) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
 	}
@@ -274,7 +274,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 		} else {
 			start = start.WithValueFlag()
 		}
-		df.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
+		df.spans = []core.Span{core.NewSpan(start, start.PrefixEnd())}
 	} else {
 		valueSpans := make([]core.Span, len(spans))
 		for i, span := range spans {
@@ -292,7 +292,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 				spans[i], spans[j] = spans[j], spans[i]
 			}
 		}
-		df.spans = core.NewSpans(spans...)
+		df.spans = spans
 	}
 
 	df.curSpanIndex = -1

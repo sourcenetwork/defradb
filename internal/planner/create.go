@@ -56,13 +56,13 @@ func (n *createNode) Kind() string { return "createNode" }
 
 func (n *createNode) Init() error { return nil }
 
-func docIDsToSpans(ids []string, desc client.CollectionDescription) core.Spans {
+func docIDsToSpans(ids []string, desc client.CollectionDescription) []core.Span {
 	spans := make([]core.Span, len(ids))
 	for i, id := range ids {
 		docID := base.MakeDataStoreKeyWithCollectionAndDocID(desc, id)
 		spans[i] = core.NewSpan(docID, docID.PrefixEnd())
 	}
-	return core.NewSpans(spans...)
+	return spans
 }
 
 func documentsToDocIDs(docs ...*client.Document) []string {
@@ -115,7 +115,7 @@ func (n *createNode) Next() (bool, error) {
 	return next, err
 }
 
-func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
+func (n *createNode) Spans(spans []core.Span) { /* no-op */ }
 
 func (n *createNode) Close() error {
 	return n.results.Close()

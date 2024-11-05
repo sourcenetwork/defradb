@@ -51,10 +51,10 @@ func (n *pipeNode) Init() error {
 	return n.source.Init()
 }
 
-func (n *pipeNode) Start() error           { return n.source.Start() }
-func (n *pipeNode) Spans(spans core.Spans) { n.source.Spans(spans) }
-func (n *pipeNode) Close() error           { return n.source.Close() }
-func (n *pipeNode) Source() planNode       { return n.source }
+func (n *pipeNode) Start() error            { return n.source.Start() }
+func (n *pipeNode) Spans(spans []core.Span) { n.source.Spans(spans) }
+func (n *pipeNode) Close() error            { return n.source.Close() }
+func (n *pipeNode) Source() planNode        { return n.source }
 
 func (n *pipeNode) Next() (bool, error) {
 	// we need to load all docs up until the requested point - this allows us to

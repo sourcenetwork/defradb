@@ -45,7 +45,7 @@ type scanNode struct {
 
 	showDeleted bool
 
-	spans   core.Spans
+	spans   []core.Span
 	reverse bool
 
 	filter *mapper.Filter
@@ -203,10 +203,10 @@ func (n *scanNode) Start() error {
 func (n *scanNode) initScan() error {
 	if len(n.spans) == 0 {
 		start := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
-		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
+		n.spans = []core.Span{core.NewSpan(start, start.PrefixEnd())}
 	}
 
-	err := n.fetcher.Start(n.p.ctx, n.spans)
+	err := n.fetcher.Start(n.p.ctx, n.spans...)
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func (n *scanNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *scanNode) Spans(spans core.Spans) {
+func (n *scanNode) Spans(spans []core.Span) {
 	n.spans = spans
 }
 
@@ -419,7 +419,7 @@ func (n *multiScanNode) Value() core.Doc {
 	return n.scanNode.documentIterator.Value()
 }
 
-func (n *multiScanNode) Spans(spans core.Spans) {
+func (n *multiScanNode) Spans(spans []core.Span) {
 	n.scanNode.Spans(spans)
 }
 
