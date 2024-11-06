@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -32,7 +30,7 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

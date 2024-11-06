@@ -207,7 +207,7 @@ verify:
 
 .PHONY: tidy
 tidy:
-	go mod tidy -go=1.22
+	go mod tidy
 
 .PHONY: clean
 clean:

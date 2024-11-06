@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister
@@ -65,7 +66,17 @@ func (delta *LWWRegDelta) SetPriority(prio uint64) {
 // LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
-	baseCRDT
+	store datastore.DSReaderWriter
+	key   keys.DataStoreKey
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
+	schemaVersionKey keys.CollectionSchemaVersionKey
+
+	// fieldName holds the name of the field hosting this CRDT, if this is a field level
+	// commit.
+	fieldName string
 }
 
 var _ core.ReplicatedData = (*LWWRegister)(nil)
@@ -73,22 +84,16 @@ var _ core.ReplicatedData = (*LWWRegister)(nil)
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
 func NewLWWRegister(
 	store datastore.DSReaderWriter,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 	fieldName string,
 ) LWWRegister {
-	return LWWRegister{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
-}
-
-// Value gets the current register value
-// RETURN STATE
-func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
-	valueK := reg.key.WithValueFlag()
-	buf, err := reg.store.Get(ctx, valueK.ToDS())
-	if err != nil {
-		return nil, err
+	return LWWRegister{
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
+		fieldName:        fieldName,
 	}
-	return buf, nil
 }
 
 // Set generates a new delta with the supplied value
@@ -116,7 +121,7 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
 }
 
 func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(ctx, reg.key)
+	curPrio, err := getPriority(ctx, reg.store, reg.key)
 	if err != nil {
 		return NewErrFailedToGetPriority(err)
 	}
@@ -161,5 +166,5 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		}
 	}
 
-	return reg.setPriority(ctx, reg.key, priority)
+	return setPriority(ctx, reg.store, reg.key, priority)
 }

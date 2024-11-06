@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 const (
@@ -58,19 +57,19 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		identity, err := acpIdentity.FromToken([]byte(token))
+		ident, err := acpIdentity.FromToken([]byte(token))
 		if err != nil {
 			http.Error(rw, "forbidden", http.StatusForbidden)
 			return
 		}
 
-		err = verifyAuthToken(identity, strings.ToLower(req.Host))
+		err = verifyAuthToken(ident, strings.ToLower(req.Host))
 		if err != nil {
 			http.Error(rw, "forbidden", http.StatusForbidden)
 			return
 		}
 
-		ctx := db.SetContextIdentity(req.Context(), immutable.Some(identity))
+		ctx := acpIdentity.WithContext(req.Context(), immutable.Some(ident))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

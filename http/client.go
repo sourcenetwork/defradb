@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -507,4 +508,18 @@ func (c *Client) Events() *event.Bus {
 
 func (c *Client) MaxTxnRetries() int {
 	panic("client side database")
+}
+
+func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	methodURL := c.http.baseURL.JoinPath("node", "identity")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return immutable.None[identity.PublicRawIdentity](), err
+	}
+	var ident immutable.Option[identity.PublicRawIdentity]
+	if err := c.http.requestJson(req, &ident); err != nil {
+		return immutable.None[identity.PublicRawIdentity](), err
+	}
+	return ident, err
 }

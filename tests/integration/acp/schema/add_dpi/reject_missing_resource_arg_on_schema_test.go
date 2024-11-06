@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -30,7 +28,7 @@ func TestACP_AddDPISchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testi
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -107,7 +105,7 @@ func TestACP_AddDPISchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *
 
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test

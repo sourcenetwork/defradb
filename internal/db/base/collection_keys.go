@@ -11,15 +11,13 @@
 package base
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // MakeDataStoreKeyWithCollectionDescription returns the datastore key for the given collection description.
-func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription) core.DataStoreKey {
-	return core.DataStoreKey{
+func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription) keys.DataStoreKey {
+	return keys.DataStoreKey{
 		CollectionRootID: col.RootID,
 	}
 }
@@ -28,35 +26,9 @@ func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription)
 func MakeDataStoreKeyWithCollectionAndDocID(
 	col client.CollectionDescription,
 	docID string,
-) core.DataStoreKey {
-	return core.DataStoreKey{
+) keys.DataStoreKey {
+	return keys.DataStoreKey{
 		CollectionRootID: col.RootID,
 		DocID:            docID,
 	}
-}
-
-func MakePrimaryIndexKeyForCRDT(
-	c client.CollectionDefinition,
-	ctype client.CType,
-	key core.DataStoreKey,
-	fieldName string,
-) (core.DataStoreKey, error) {
-	switch ctype {
-	case client.COMPOSITE:
-		return MakeDataStoreKeyWithCollectionDescription(c.Description).
-				WithInstanceInfo(key).
-				WithFieldID(core.COMPOSITE_NAMESPACE),
-			nil
-	case client.LWW_REGISTER, client.PN_COUNTER, client.P_COUNTER:
-		field, ok := c.GetFieldByName(fieldName)
-		if !ok {
-			return core.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
-		}
-
-		return MakeDataStoreKeyWithCollectionDescription(c.Description).
-				WithInstanceInfo(key).
-				WithFieldID(fmt.Sprint(field.ID)),
-			nil
-	}
-	return core.DataStoreKey{}, ErrInvalidCrdtType
 }

@@ -17,7 +17,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/keys"
+	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -87,7 +88,7 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		primaryKey := core.PrimaryDataStoreKey{
+		primaryKey := keys.PrimaryDataStoreKey{
 			CollectionRootID: c.Description().RootID,
 			DocID:            docID,
 		}
@@ -109,7 +110,7 @@ func (c *collection) deleteWithFilter(
 
 func (c *collection) applyDelete(
 	ctx context.Context,
-	primaryKey core.PrimaryDataStoreKey,
+	primaryKey keys.PrimaryDataStoreKey,
 ) error {
 	// Must also have read permission to delete, inorder to check if document exists.
 	found, isDeleted, err := c.exists(ctx, primaryKey)
@@ -138,14 +139,14 @@ func (c *collection) applyDelete(
 	}
 
 	txn := mustGetContextTxn(ctx)
-	dsKey := primaryKey.ToDataStoreKey()
 
-	link, b, err := c.saveCompositeToMerkleCRDT(
-		ctx,
-		dsKey,
-		[]coreblock.DAGLink{},
-		client.Deleted,
+	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
+		txn,
+		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
+
+	link, b, err := merkleCRDT.Delete(ctx)
 	if err != nil {
 		return err
 	}

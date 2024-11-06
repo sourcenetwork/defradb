@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -199,7 +200,7 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	prefix := core.NewViewCacheColPrefix(n.def.Description.RootID)
+	prefix := keys.NewViewCacheColPrefix(n.def.Description.RootID)
 
 	var err error
 	n.queryResults, err = n.p.txn.Datastore().Query(n.p.ctx, query.Query{

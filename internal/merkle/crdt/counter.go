@@ -16,50 +16,51 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type MerkleCounter struct {
-	*baseMerkleCRDT
-
-	reg crdt.Counter
+	clock *clock.MerkleClock
+	reg   crdt.Counter
 }
+
+var _ FieldLevelMerkleCRDT = (*MerkleCounter)(nil)
 
 // NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
 func NewMerkleCounter(
 	store Stores,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *MerkleCounter {
 	register := crdt.NewCounter(store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement, kind)
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(), register)
-	base := &baseMerkleCRDT{clock: clk, crdt: register}
+
 	return &MerkleCounter{
-		baseMerkleCRDT: base,
-		reg:            register,
+		clock: clk,
+		reg:   register,
 	}
 }
 
+func (m *MerkleCounter) Clock() *clock.MerkleClock {
+	return m.clock
+}
+
 // Save the value of the  Counter to the DAG.
-func (mc *MerkleCounter) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*DocField)
-	if !ok {
-		return cidlink.Link{}, nil, NewErrUnexpectedValueType(mc.reg.CType(), &client.FieldValue{}, data)
-	}
-	bytes, err := value.FieldValue.Bytes()
+func (m *MerkleCounter) Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error) {
+	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
-	delta, err := mc.reg.Increment(ctx, bytes)
+	delta, err := m.reg.Increment(ctx, bytes)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
-	return mc.clock.AddDelta(ctx, delta)
+	return m.clock.AddDelta(ctx, delta)
 }

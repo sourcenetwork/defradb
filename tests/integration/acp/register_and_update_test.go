@@ -30,7 +30,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -138,7 +138,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -198,7 +198,7 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				DocID: 0,
 
@@ -243,7 +243,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -292,7 +292,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Doc: `
 					{
@@ -305,7 +305,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				DocID: 0,
 
@@ -317,7 +317,7 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {
@@ -358,7 +358,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -407,7 +407,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Doc: `
 					{
@@ -432,7 +432,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {
@@ -473,7 +473,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -522,7 +522,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Doc: `
 					{
@@ -535,7 +535,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				DocID: 0,
 
@@ -549,7 +549,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {
@@ -591,7 +591,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -640,7 +640,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Doc: `
 					{
@@ -665,7 +665,7 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {
@@ -707,7 +707,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -756,7 +756,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 			testUtils.CreateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Doc: `
 					{
@@ -769,7 +769,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				DocID: 0,
 
@@ -783,7 +783,7 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
 					query {

@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
@@ -76,22 +77,27 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	baseCRDT
+	store datastore.DSReaderWriter
+	key   keys.DataStoreKey
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
+	schemaVersionKey keys.CollectionSchemaVersionKey
 }
 
 var _ core.ReplicatedData = (*CompositeDAG)(nil)
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 ) CompositeDAG {
-	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, "")}
-}
-
-// Value is a no-op for a CompositeDAG.
-func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
-	return nil, nil
+	return CompositeDAG{
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
+	}
 }
 
 // Set returns a new composite DAG delta CRDT with the given status.
@@ -120,7 +126,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
-	versionKey := c.key.WithValueFlag().WithFieldID(core.DATASTORE_DOC_VERSION_FIELD_ID)
+	versionKey := c.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	hasObjectMarker := !errors.Is(err, ds.ErrNotFound)
 	if err != nil && hasObjectMarker {
@@ -154,7 +160,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	return nil
 }
 
-func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKey) error {
+func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
 	q := query.Query{
 		Prefix: key.ToString(),
 	}
@@ -163,12 +169,12 @@ func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKe
 		if e.Error != nil {
 			return err
 		}
-		dsKey, err := core.NewDataStoreKey(e.Key)
+		dsKey, err := keys.NewDataStoreKey(e.Key)
 		if err != nil {
 			return err
 		}
 
-		if dsKey.InstanceType == core.ValueKey {
+		if dsKey.InstanceType == keys.ValueKey {
 			err = c.store.Put(ctx, dsKey.WithDeletedFlag().ToDS(), e.Value)
 			if err != nil {
 				return err

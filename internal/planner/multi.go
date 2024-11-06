@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 /*
@@ -156,7 +157,7 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	}
 
 	// pass the doc key as a reference through the spans interface
-	spans := core.NewSpans(core.NewSpan(core.DataStoreKey{DocID: key}, core.DataStoreKey{}))
+	spans := core.NewSpans(core.NewSpan(keys.DataStoreKey{DocID: key}, keys.DataStoreKey{}))
 	plan.Spans(spans)
 	err := plan.Init()
 	if err != nil {

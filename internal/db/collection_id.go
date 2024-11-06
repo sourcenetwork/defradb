@@ -17,7 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // setCollectionIDs sets the IDs on a collection description, including field IDs, mutating the input set.
@@ -33,7 +33,7 @@ func (db *db) setCollectionIDs(ctx context.Context, newCollections []client.Coll
 // setCollectionID sets the IDs directly on a collection description, excluding stuff like field IDs,
 // mutating the input set.
 func (db *db) setCollectionID(ctx context.Context, newCollections []client.CollectionDefinition) error {
-	colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
+	colSeq, err := db.getSequence(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (db *db) setFieldIDs(ctx context.Context, definitions []client.CollectionDe
 	}
 
 	for i := range definitions {
-		fieldSeq, err := db.getSequence(ctx, core.NewFieldIDSequenceKey(definitions[i].Description.RootID))
+		fieldSeq, err := db.getSequence(ctx, keys.NewFieldIDSequenceKey(definitions[i].Description.RootID))
 		if err != nil {
 			return err
 		}

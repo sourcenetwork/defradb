@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -93,7 +91,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -106,7 +104,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -124,9 +122,9 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -138,7 +136,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
+				Identity: testUtils.ClientIdentity(2), // This identity can still not read.
 
 				Request: `
 					query {
@@ -170,7 +168,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -234,7 +232,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -247,7 +245,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -265,9 +263,9 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -279,7 +277,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can still not read.
+				Identity: testUtils.ClientIdentity(2), // This identity can still not read.
 
 				Request: `
 					query {

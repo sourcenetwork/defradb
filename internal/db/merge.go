@@ -30,6 +30,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -133,7 +134,7 @@ type mergeProcessor struct {
 	encBlockLS linking.LinkSystem
 	mCRDTs     map[string]merklecrdt.MerkleCRDT
 	col        *collection
-	dsKey      core.DataStoreKey
+	dsKey      keys.DataStoreKey
 	// composites is a list of composites that need to be merged.
 	composites *list.List
 	// missingEncryptionBlocks is a list of blocks that we failed to fetch
@@ -145,7 +146,7 @@ type mergeProcessor struct {
 func (db *db) newMergeProcessor(
 	txn datastore.Txn,
 	col *collection,
-	dsKey core.DataStoreKey,
+	dsKey keys.DataStoreKey,
 ) (*mergeProcessor, error) {
 	blockLS := cidlink.DefaultLinkSystem()
 	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
@@ -433,7 +434,7 @@ func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, 
 		return mcrdt, nil
 	}
 
-	schemaVersionKey := core.CollectionSchemaVersionKey{
+	schemaVersionKey := keys.CollectionSchemaVersionKey{
 		SchemaVersionID: mp.col.Schema().VersionID,
 		CollectionID:    mp.col.ID(),
 	}
@@ -454,7 +455,7 @@ func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, 
 		return nil, nil
 	}
 
-	mcrdt, err := merklecrdt.InstanceWithStore(
+	mcrdt, err := merklecrdt.FieldLevelCRDTWithStore(
 		mp.txn,
 		schemaVersionKey,
 		fd.Typ,
@@ -490,7 +491,7 @@ func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string)
 
 // getHeadsAsMergeTarget retrieves the heads of the composite DAG for the given document
 // and returns them as a merge target.
-func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.DataStoreKey) (mergeTarget, error) {
+func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey keys.DataStoreKey) (mergeTarget, error) {
 	cids, err := getHeads(ctx, txn, dsKey)
 
 	if err != nil {
@@ -512,7 +513,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey core.Da
 }
 
 // getHeads retrieves the heads associated with the given datastore key.
-func getHeads(ctx context.Context, txn datastore.Txn, dsKey core.DataStoreKey) ([]cid.Cid, error) {
+func getHeads(ctx context.Context, txn datastore.Txn, dsKey keys.DataStoreKey) ([]cid.Cid, error) {
 	headset := clock.NewHeadSet(txn.Headstore(), dsKey.ToHeadStoreKey())
 
 	cids, _, err := headset.List(ctx)

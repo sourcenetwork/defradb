@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -264,7 +265,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 				return nil, err
 			}
 			spans := fetcher.NewVersionedSpan(
-				core.DataStoreKey{DocID: n.selectReq.DocIDs.Value()[0]},
+				keys.DataStoreKey{DocID: n.selectReq.DocIDs.Value()[0]},
 				c,
 			) // @todo check len
 			origScan.Spans(spans)

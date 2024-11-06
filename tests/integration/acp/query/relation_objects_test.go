@@ -13,8 +13,6 @@ package test_acp
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -98,7 +96,7 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						Employee {
@@ -144,7 +142,7 @@ func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						Company {
@@ -188,7 +186,7 @@ func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: immutable.Some(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
 						Employee {
@@ -226,7 +224,7 @@ func TestACP_QueryOneToManyRelationObjectsWithWrongIdentity(t *testing.T) {
 			getSetupEmployeeCompanyActions(),
 
 			testUtils.Request{
-				Identity: immutable.Some(2),
+				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
 						Company {
