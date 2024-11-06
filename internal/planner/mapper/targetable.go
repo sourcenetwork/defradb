@@ -76,11 +76,11 @@ func (k *ObjectProperty) PropertyAndOperator(data any, defaultOp string) (any, s
 	if data == nil {
 		return nil, defaultOp, nil
 	}
-	_, ok := data.(core.Doc)
-	if ok {
+	docMap, ok := data.(map[string]any)
+	if !ok {
 		return nil, defaultOp, NewErrFieldOrAliasNotFound(k.Name)
 	}
-	return data.(map[string]any)[k.Name], defaultOp, nil
+	return docMap[k.Name], defaultOp, nil
 }
 
 func (k *ObjectProperty) Equal(other connor.FilterKey) bool {
