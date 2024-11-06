@@ -91,7 +91,7 @@ func (p *parallelNode) Start() error {
 	})
 }
 
-func (p *parallelNode) Spans(spans core.Spans) {
+func (p *parallelNode) Spans(spans []core.Span) {
 	_ = p.applyToPlans(func(n planNode) error {
 		n.Spans(spans)
 		return nil
@@ -157,7 +157,7 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	}
 
 	// pass the doc key as a reference through the spans interface
-	spans := core.NewSpans(core.NewSpan(keys.DataStoreKey{DocID: key}, keys.DataStoreKey{}))
+	spans := []core.Span{core.NewSpan(keys.DataStoreKey{DocID: key}, keys.DataStoreKey{})}
 	plan.Spans(spans)
 	err := plan.Init()
 	if err != nil {

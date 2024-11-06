@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -45,7 +46,7 @@ type scanNode struct {
 
 	showDeleted bool
 
-	spans   core.Spans
+	spans   []core.Span
 	reverse bool
 
 	filter *mapper.Filter
@@ -201,12 +202,12 @@ func (n *scanNode) Start() error {
 }
 
 func (n *scanNode) initScan() error {
-	if !n.spans.HasValue {
+	if len(n.spans) == 0 {
 		start := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
-		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
+		n.spans = []core.Span{core.NewSpan(start, start.PrefixEnd())}
 	}
 
-	err := n.fetcher.Start(n.p.ctx, n.spans)
+	err := n.fetcher.Start(n.p.ctx, n.spans...)
 	if err != nil {
 		return err
 	}
@@ -220,7 +221,7 @@ func (n *scanNode) initScan() error {
 func (n *scanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if n.spans.HasValue && len(n.spans.Value) == 0 {
+	if len(n.spans) == 0 {
 		return false, nil
 	}
 
@@ -248,7 +249,7 @@ func (n *scanNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *scanNode) Spans(spans core.Spans) {
+func (n *scanNode) Spans(spans []core.Span) {
 	n.spans = spans
 }
 
@@ -261,12 +262,10 @@ func (n *scanNode) Source() planNode { return nil }
 // explainSpans explains the spans attribute.
 func (n *scanNode) explainSpans() []map[string]any {
 	spansExplainer := []map[string]any{}
-	for _, span := range n.spans.Value {
+	for _, span := range n.spans {
 		spanExplainer := map[string]any{
-			// These must be pretty printed as the explain results need to be returnable
-			// as json via some clients (e.g. http and cli)
-			"start": span.Start().PrettyPrint(),
-			"end":   span.End().PrettyPrint(),
+			"start": keys.PrettyPrint(span.Start),
+			"end":   keys.PrettyPrint(span.End),
 		}
 
 		spansExplainer = append(spansExplainer, spanExplainer)
@@ -419,7 +418,7 @@ func (n *multiScanNode) Value() core.Doc {
 	return n.scanNode.documentIterator.Value()
 }
 
-func (n *multiScanNode) Spans(spans core.Spans) {
+func (n *multiScanNode) Spans(spans []core.Span) {
 	n.scanNode.Spans(spans)
 }
 

@@ -96,7 +96,7 @@ func (n *upsertNode) Kind() string {
 	return "upsertNode"
 }
 
-func (n *upsertNode) Spans(spans core.Spans) {
+func (n *upsertNode) Spans(spans []core.Span) {
 	n.source.Spans(spans)
 }
 

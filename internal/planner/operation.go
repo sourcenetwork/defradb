@@ -28,7 +28,7 @@ type operationNode struct {
 	isDone   bool
 }
 
-func (n *operationNode) Spans(spans core.Spans) {
+func (n *operationNode) Spans(spans []core.Span) {
 	for _, child := range n.children {
 		child.Spans(spans)
 	}

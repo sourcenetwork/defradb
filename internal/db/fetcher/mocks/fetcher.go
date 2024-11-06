@@ -202,16 +202,23 @@ func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Op
 }
 
 // Start provides a mock function with given fields: ctx, spans
-func (_m *Fetcher) Start(ctx context.Context, spans core.Spans) error {
-	ret := _m.Called(ctx, spans)
+func (_m *Fetcher) Start(ctx context.Context, spans ...core.Span) error {
+	_va := make([]interface{}, len(spans))
+	for _i := range spans {
+		_va[_i] = spans[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Start")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, core.Spans) error); ok {
-		r0 = rf(ctx, spans)
+	if rf, ok := ret.Get(0).(func(context.Context, ...core.Span) error); ok {
+		r0 = rf(ctx, spans...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -226,14 +233,21 @@ type Fetcher_Start_Call struct {
 
 // Start is a helper method to define mock.On call
 //   - ctx context.Context
-//   - spans core.Spans
-func (_e *Fetcher_Expecter) Start(ctx interface{}, spans interface{}) *Fetcher_Start_Call {
-	return &Fetcher_Start_Call{Call: _e.mock.On("Start", ctx, spans)}
+//   - spans ...core.Span
+func (_e *Fetcher_Expecter) Start(ctx interface{}, spans ...interface{}) *Fetcher_Start_Call {
+	return &Fetcher_Start_Call{Call: _e.mock.On("Start",
+		append([]interface{}{ctx}, spans...)...)}
 }
 
-func (_c *Fetcher_Start_Call) Run(run func(ctx context.Context, spans core.Spans)) *Fetcher_Start_Call {
+func (_c *Fetcher_Start_Call) Run(run func(ctx context.Context, spans ...core.Span)) *Fetcher_Start_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(core.Spans))
+		variadicArgs := make([]core.Span, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(core.Span)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
 }
@@ -243,7 +257,7 @@ func (_c *Fetcher_Start_Call) Return(_a0 error) *Fetcher_Start_Call {
 	return _c
 }
 
-func (_c *Fetcher_Start_Call) RunAndReturn(run func(context.Context, core.Spans) error) *Fetcher_Start_Call {
+func (_c *Fetcher_Start_Call) RunAndReturn(run func(context.Context, ...core.Span) error) *Fetcher_Start_Call {
 	_c.Call.Return(run)
 	return _c
 }

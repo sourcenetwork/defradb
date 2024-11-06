@@ -72,7 +72,7 @@ type Fetcher interface {
 		reverse bool,
 		showDeleted bool,
 	) error
-	Start(ctx context.Context, spans core.Spans) error
+	Start(ctx context.Context, spans ...core.Span) error
 	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
 	Close() error
 }
@@ -98,7 +98,7 @@ type DocumentFetcher struct {
 	deletedDocs bool
 
 	txn          datastore.Txn
-	spans        core.Spans
+	spans        []core.Span
 	order        []dsq.Order
 	curSpanIndex int
 
@@ -243,7 +243,7 @@ func (df *DocumentFetcher) init(
 	return nil
 }
 
-func (df *DocumentFetcher) Start(ctx context.Context, spans core.Spans) error {
+func (df *DocumentFetcher) Start(ctx context.Context, spans ...core.Span) error {
 	err := df.start(ctx, spans, false)
 	if err != nil {
 		return err
@@ -257,7 +257,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 // Start implements DocumentFetcher.
-func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDeleted bool) error {
+func (df *DocumentFetcher) start(ctx context.Context, spans []core.Span, withDeleted bool) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
 	}
@@ -267,22 +267,31 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 
 	df.deletedDocs = withDeleted
 
-	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
+	if len(spans) == 0 { // no specified spans so create a prefix scan key for the entire collection
 		start := base.MakeDataStoreKeyWithCollectionDescription(df.col.Description())
 		if withDeleted {
 			start = start.WithDeletedFlag()
 		} else {
 			start = start.WithValueFlag()
 		}
-		df.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
+		df.spans = []core.Span{core.NewSpan(start, start.PrefixEnd())}
 	} else {
-		valueSpans := make([]core.Span, len(spans.Value))
-		for i, span := range spans.Value {
-			// We can only handle value keys, so here we ensure we only read value keys
+		valueSpans := make([]core.Span, len(spans))
+		for i, span := range spans {
 			if withDeleted {
-				valueSpans[i] = core.NewSpan(span.Start().WithDeletedFlag(), span.End().WithDeletedFlag())
+				// DocumentFetcher only ever recieves document keys
+				//nolint:forcetypeassert
+				valueSpans[i] = core.NewSpan(
+					span.Start.(keys.DataStoreKey).WithDeletedFlag(),
+					span.End.(keys.DataStoreKey).WithDeletedFlag(),
+				)
 			} else {
-				valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+				// DocumentFetcher only ever recieves document keys
+				//nolint:forcetypeassert
+				valueSpans[i] = core.NewSpan(
+					span.Start.(keys.DataStoreKey).WithValueFlag(),
+					span.End.(keys.DataStoreKey).WithValueFlag(),
+				)
 			}
 		}
 
@@ -292,7 +301,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 				spans[i], spans[j] = spans[j], spans[i]
 			}
 		}
-		df.spans = core.NewSpans(spans...)
+		df.spans = spans
 	}
 
 	df.curSpanIndex = -1
@@ -309,7 +318,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 
 func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	nextSpanIndex := df.curSpanIndex + 1
-	if nextSpanIndex >= len(df.spans.Value) {
+	if nextSpanIndex >= len(df.spans) {
 		return false, nil
 	}
 
@@ -330,8 +339,8 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 		}
 	}
 
-	span := df.spans.Value[nextSpanIndex]
-	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
+	span := df.spans[nextSpanIndex]
+	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start.ToDS(), span.End.ToDS())
 	if err != nil {
 		return false, err
 	}

@@ -124,9 +124,9 @@ outer:
 	return err
 }
 
-func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
+func (f *IndexFetcher) Start(ctx context.Context, spans ...core.Span) error {
 	if f.indexIter == nil {
-		return f.docFetcher.Start(ctx, spans)
+		return f.docFetcher.Start(ctx, spans...)
 	}
 	return f.indexIter.Init(ctx, f.txn.Datastore())
 }
@@ -192,8 +192,8 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 
 		if len(f.docFields) > 0 {
 			targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), string(f.doc.id))
-			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-			err := f.docFetcher.Start(ctx, spans)
+			span := core.NewSpan(targetKey, targetKey.PrefixEnd())
+			err := f.docFetcher.Start(ctx, span)
 			if err != nil {
 				return nil, ExecInfo{}, err
 			}

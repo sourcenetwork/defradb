@@ -89,8 +89,7 @@ type VersionedFetcher struct {
 	root  datastore.Rootstore
 	store datastore.Txn
 
-	dsKey   keys.DataStoreKey
-	version cid.Cid
+	dsKey keys.DataStoreKey
 
 	queuedCids *list.List
 
@@ -153,42 +152,37 @@ func (vf *VersionedFetcher) Init(
 }
 
 // Start serializes the correct state according to the Key and CID.
-func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error {
 	if vf.col == nil {
 		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
 	}
 
-	if len(spans.Value) != 1 {
+	if len(spans) != 1 {
 		return ErrSingleSpanOnly
 	}
 
-	// For the VersionedFetcher, the spans needs to be in the format
-	// Span{Start: DocID, End: CID}
-	dk := spans.Value[0].Start()
-	cidRaw := spans.Value[0].End()
-	if dk.DocID == "" {
+	// VersionedFetcher only ever recieves a headstore key
+	//nolint:forcetypeassert
+	prefix := spans[0].Start.(keys.HeadStoreKey)
+	dk := prefix.DocID
+	cid := prefix.Cid
+	if dk == "" {
 		return client.NewErrUninitializeProperty("Spans", "DocID")
-	} else if cidRaw.DocID == "" { // todo: dont abuse DataStoreKey/Span like this!
+	} else if !cid.Defined() {
 		return client.NewErrUninitializeProperty("Spans", "CID")
 	}
 
-	// decode cidRaw from core.Key to cid.Cid
-	// need to remove '/' prefix from the core.Key
-
-	c, err := cid.Decode(cidRaw.DocID)
-	if err != nil {
-		return NewErrFailedToDecodeCIDForVFetcher(err)
-	}
-
 	vf.ctx = ctx
-	vf.dsKey = dk.WithCollectionRoot(vf.col.Description().RootID)
-	vf.version = c
-
-	if err := vf.seekTo(vf.version); err != nil {
-		return NewErrFailedToSeek(c, err)
+	vf.dsKey = keys.DataStoreKey{
+		CollectionRootID: vf.col.Description().RootID,
+		DocID:            dk,
 	}
 
-	return vf.DocumentFetcher.Start(ctx, core.Spans{})
+	if err := vf.seekTo(cid); err != nil {
+		return NewErrFailedToSeek(cid, err)
+	}
+
+	return vf.DocumentFetcher.Start(ctx)
 }
 
 // Rootstore returns the rootstore of the VersionedFetcher.
@@ -217,7 +211,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx)
 }
 
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
@@ -420,10 +414,4 @@ func (vf *VersionedFetcher) Close() error {
 	}
 
 	return vf.DocumentFetcher.Close()
-}
-
-// NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
-func NewVersionedSpan(dsKey keys.DataStoreKey, version cid.Cid) core.Spans {
-	// Todo: Dont abuse DataStoreKey for version cid!
-	return core.NewSpans(core.NewSpan(dsKey, keys.DataStoreKey{DocID: version.String()}))
 }

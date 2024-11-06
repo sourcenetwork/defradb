@@ -16,13 +16,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 )
 
 func TestFetcherStartWithoutInit(t *testing.T) {
 	ctx := context.Background()
 	df := new(fetcher.DocumentFetcher)
-	err := df.Start(ctx, core.Spans{})
+	err := df.Start(ctx)
 	assert.Error(t, err)
 }

@@ -73,7 +73,7 @@ func (c *collection) get(
 	// construct target DS key from DocID.
 	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
 	// run the doc fetcher
-	err = df.Start(ctx, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
+	err = df.Start(ctx, core.NewSpan(targetKey, targetKey.PrefixEnd()))
 	if err != nil {
 		_ = df.Close()
 		return nil, err

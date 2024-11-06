@@ -36,7 +36,7 @@ type planNode interface {
 
 	// Spans sets the planNodes target spans. This is primarily only used for a scanNode,
 	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
-	Spans(core.Spans)
+	Spans([]core.Span)
 
 	// Next processes the next result doc from the request. Can only be called *after* Start().
 	// Can't be called again if any previous call returns false.

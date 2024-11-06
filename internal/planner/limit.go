@@ -59,10 +59,10 @@ func (n *limitNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *limitNode) Start() error           { return n.plan.Start() }
-func (n *limitNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *limitNode) Close() error           { return n.plan.Close() }
-func (n *limitNode) Value() core.Doc        { return n.plan.Value() }
+func (n *limitNode) Start() error            { return n.plan.Start() }
+func (n *limitNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
+func (n *limitNode) Close() error            { return n.plan.Close() }
+func (n *limitNode) Value() core.Doc         { return n.plan.Value() }
 
 func (n *limitNode) Next() (bool, error) {
 	n.execInfo.iterations++

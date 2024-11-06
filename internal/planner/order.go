@@ -98,7 +98,7 @@ func (n *orderNode) Init() error {
 }
 func (n *orderNode) Start() error { return n.plan.Start() }
 
-func (n *orderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *orderNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
 
 func (n *orderNode) Value() core.Doc {
 	return n.valueIter.Value()

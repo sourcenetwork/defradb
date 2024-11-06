@@ -41,7 +41,7 @@ type DataStoreKey struct {
 	FieldID          string
 }
 
-var _ Key = (*DataStoreKey)(nil)
+var _ Walkable = (*DataStoreKey)(nil)
 
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminator.  It assumes
@@ -167,7 +167,7 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 // PrefixEnd determines the end key given key as a prefix, that is the key that sorts precisely
 // behind all keys starting with prefix: "1" is added to the final byte and the carry propagated.
 // The special cases of nil and KeyMin always returns KeyMax.
-func (k DataStoreKey) PrefixEnd() DataStoreKey {
+func (k DataStoreKey) PrefixEnd() Walkable {
 	newKey := k
 
 	if k.FieldID != "" {

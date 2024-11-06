@@ -67,7 +67,7 @@ func (n *deleteNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *deleteNode) Spans(spans core.Spans) {
+func (n *deleteNode) Spans(spans []core.Span) {
 	n.source.Spans(spans)
 }
 

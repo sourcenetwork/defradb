@@ -12,21 +12,17 @@ package fetcher
 
 import (
 	"context"
-	"sort"
-	"strings"
 
 	"github.com/ipfs/go-cid"
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
-	spans   core.Spans
 	fieldId immutable.Option[string]
 
 	kvIter dsq.Results
@@ -35,33 +31,13 @@ type HeadFetcher struct {
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
-	spans core.Spans,
+	prefix keys.HeadStoreKey,
 	fieldId immutable.Option[string],
 ) error {
-	if len(spans.Value) == 0 {
-		spans = core.NewSpans(
-			core.NewSpan(
-				keys.DataStoreKey{},
-				keys.DataStoreKey{}.PrefixEnd(),
-			),
-		)
-	}
-
-	if len(spans.Value) > 1 {
-		// if we have multiple spans, we need to sort them by their start position
-		// so we can do a single iterative sweep
-		sort.Slice(spans.Value, func(i, j int) bool {
-			// compare by strings if i < j.
-			// apply the '!= df.reverse' to reverse the sort
-			// if we need to
-			return (strings.Compare(spans.Value[i].Start().ToString(), spans.Value[j].Start().ToString()) < 0)
-		})
-	}
-	hf.spans = spans
 	hf.fieldId = fieldId
 
 	q := dsq.Query{
-		Prefix: hf.spans.Value[0].Start().ToString(),
+		Prefix: prefix.ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 

@@ -46,9 +46,9 @@ func (p *Planner) newContainerValuesNode(ordering []mapper.OrderCondition) *valu
 	}
 }
 
-func (n *valuesNode) Init() error            { return nil }
-func (n *valuesNode) Start() error           { return nil }
-func (n *valuesNode) Spans(spans core.Spans) {}
+func (n *valuesNode) Init() error             { return nil }
+func (n *valuesNode) Start() error            { return nil }
+func (n *valuesNode) Spans(spans []core.Span) {}
 
 func (n *valuesNode) Kind() string {
 	return "valuesNode"

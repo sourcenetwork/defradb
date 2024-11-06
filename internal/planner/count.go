@@ -62,7 +62,7 @@ func (n *countNode) Init() error {
 
 func (n *countNode) Start() error { return n.plan.Start() }
 
-func (n *countNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *countNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
 
 func (n *countNode) Close() error { return n.plan.Close() }
 

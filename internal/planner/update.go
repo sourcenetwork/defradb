@@ -107,7 +107,7 @@ func (n *updateNode) Next() (bool, error) {
 
 func (n *updateNode) Kind() string { return "updateNode" }
 
-func (n *updateNode) Spans(spans core.Spans) { n.results.Spans(spans) }
+func (n *updateNode) Spans(spans []core.Span) { n.results.Spans(spans) }
 
 func (n *updateNode) Init() error { return n.results.Init() }
 

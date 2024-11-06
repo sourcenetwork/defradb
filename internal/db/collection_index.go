@@ -317,7 +317,7 @@ func (c *collection) iterateAllDocs(
 		return errors.Join(err, df.Close())
 	}
 	start := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
-	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
+	spans := core.NewSpan(start, start.PrefixEnd())
 
 	err = df.Start(ctx, spans)
 	if err != nil {

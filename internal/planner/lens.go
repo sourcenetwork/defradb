@@ -61,7 +61,7 @@ func (n *lensNode) Start() error {
 	return n.source.Start()
 }
 
-func (n *lensNode) Spans(spans core.Spans) {
+func (n *lensNode) Spans(spans []core.Span) {
 	n.source.Spans(spans)
 }
 
