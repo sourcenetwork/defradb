@@ -228,6 +228,7 @@ func buildFilterArg(objectName string, fields []argDef) Field {
 	filterArgName := objectName + "FilterArg"
 
 	inputFields := []any{
+		makeInputObject("_alias", "JSON", nil),
 		makeInputObject("_and", nil, map[string]any{
 			"kind": "NON_NULL",
 			"name": nil,

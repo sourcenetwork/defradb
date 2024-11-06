@@ -47,6 +47,16 @@ func TestCopyField(t *testing.T) {
 			),
 		},
 		{
+			name: "within _not",
+			inputFilter: m("_not",
+				m("age", m("_gt", 55)),
+			),
+			inputField: []mapper.Field{{Index: authorAgeInd}},
+			expectedFilter: m("_not",
+				m("age", m("_gt", 55)),
+			),
+		},
+		{
 			name: "within _or and _and",
 			inputFilter: r("_and",
 				r("_or",

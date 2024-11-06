@@ -406,6 +406,12 @@ func aggregateGroupArg(fieldType string) map[string]any {
 								},
 							},
 							map[string]any{
+								"name": "_alias",
+								"type": map[string]any{
+									"name": "JSON",
+								},
+							},
+							map[string]any{
 								"name": "_and",
 								"type": map[string]any{
 									"name": nil,

@@ -34,10 +34,15 @@ func eq(condition, data any) (bool, error) {
 	switch cn := condition.(type) {
 	case map[FilterKey]any:
 		for prop, cond := range cn {
-			m, err := matchWith(prop.GetOperatorOrDefault(EqualOp), cond, prop.GetProp(data))
+			d, op, err := prop.PropertyAndOperator(data, EqualOp)
 			if err != nil {
 				return false, err
-			} else if !m {
+			}
+			m, err := matchWith(op, cond, d)
+			if err != nil {
+				return false, err
+			}
+			if !m {
 				return false, nil
 			}
 		}

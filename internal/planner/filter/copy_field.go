@@ -62,10 +62,10 @@ func traverseFilterByProperty(
 				}
 			}
 		} else if opKey, isOpKey := targetKey.(*mapper.Operator); isOpKey {
-			clauseArr, isArr := clause.([]any)
-			if isArr {
+			switch t := clause.(type) {
+			case []any:
 				resultArr := make([]any, 0)
-				for _, elementClause := range clauseArr {
+				for _, elementClause := range t {
 					elementMap, ok := elementClause.(map[connor.FilterKey]any)
 					if !ok {
 						continue
@@ -77,6 +77,14 @@ func traverseFilterByProperty(
 				}
 				if len(resultArr) > 0 {
 					result[opKey] = resultArr
+				} else if shouldDelete {
+					delete(result, opKey)
+				}
+
+			case map[connor.FilterKey]any:
+				resultMap := traverseFilterByProperty(keys, t, shouldDelete)
+				if len(resultMap) > 0 {
+					result[opKey] = resultMap
 				} else if shouldDelete {
 					delete(result, opKey)
 				}

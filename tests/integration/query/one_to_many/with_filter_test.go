@@ -562,3 +562,89 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from the many side, alias filter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "A Time for Mercy",
+					"rating": 4.5,
+					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Theif Lord",
+					"rating": 4.8,
+					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-72e8c691-9f20-55e7-9228-8af1cf54cace
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_alias: {books: {rating: {_gt: 4.8}}}}) {
+						name
+						age
+						books: published {
+							name
+							rating
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"books": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

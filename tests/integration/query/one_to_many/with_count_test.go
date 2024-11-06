@@ -118,3 +118,66 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+// This test documents the behavior of aggregate alias targeting which is not yet implemented.
+// https://github.com/sourcenetwork/defradb/issues/3195
+func TestQueryOneToMany_WithCountAliasFilter_ShouldFilterAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from many side with count",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_alias: {publishedCount: {_gt: 0}}}) {
+						name
+						publishedCount: _count(published: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
