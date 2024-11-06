@@ -162,7 +162,7 @@ func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNonExistantAlias_ShouldFilterAll(t *testing.T) {
+func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with non existant alias filter",
 		Actions: []any{
@@ -185,9 +185,7 @@ func TestQuerySimple_WithNonExistantAlias_ShouldFilterAll(t *testing.T) {
 						Age
 					}
 				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
+				ExpectedError: `field or alias not found. Name: UserAge`,
 			},
 		},
 	}

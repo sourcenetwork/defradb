@@ -34,12 +34,8 @@ type operator struct {
 	Operation string
 }
 
-func (k *operator) GetProp(data any) any {
-	return data
-}
-
-func (k *operator) GetOperatorOrDefault(defaultOp string) string {
-	return k.Operation
+func (k *operator) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
+	return data, k.Operation, nil
 }
 
 func (k *operator) Equal(other FilterKey) bool {

@@ -30,16 +30,11 @@ type PropertyIndex struct {
 	Index int
 }
 
-func (k *PropertyIndex) GetProp(data any) any {
+func (k *PropertyIndex) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
 	if data == nil {
-		return nil
+		return nil, defaultOp, nil
 	}
-
-	return data.(core.Doc).Fields[k.Index]
-}
-
-func (k *PropertyIndex) GetOperatorOrDefault(defaultOp string) string {
-	return defaultOp
+	return data.(core.Doc).Fields[k.Index], defaultOp, nil
 }
 
 func (k *PropertyIndex) Equal(other connor.FilterKey) bool {
@@ -57,12 +52,8 @@ type Operator struct {
 	Operation string
 }
 
-func (k *Operator) GetProp(data any) any {
-	return data
-}
-
-func (k *Operator) GetOperatorOrDefault(defaultOp string) string {
-	return k.Operation
+func (k *Operator) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
+	return data, k.Operation, nil
 }
 
 func (k *Operator) Equal(other connor.FilterKey) bool {
@@ -81,16 +72,15 @@ type ObjectProperty struct {
 	Name string
 }
 
-func (k *ObjectProperty) GetProp(data any) any {
-	object, ok := data.(map[string]any)
-	if !ok {
-		return nil // this can happen when an alias target or property does not exist
+func (k *ObjectProperty) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
+	if data == nil {
+		return nil, defaultOp, nil
 	}
-	return object[k.Name]
-}
-
-func (k *ObjectProperty) GetOperatorOrDefault(defaultOp string) string {
-	return defaultOp
+	_, ok := data.(core.Doc)
+	if ok {
+		return nil, defaultOp, NewErrFieldOrAliasNotFound(k.Name)
+	}
+	return data.(map[string]any)[k.Name], defaultOp, nil
 }
 
 func (k *ObjectProperty) Equal(other connor.FilterKey) bool {
