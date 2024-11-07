@@ -25,14 +25,14 @@ type collectionRetriever struct {
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
-func NewCollectionRetriever(db client.DB) *collectionRetriever {
-	return &collectionRetriever{
+func NewCollectionRetriever(db client.DB) collectionRetriever {
+	return collectionRetriever{
 		db: db,
 	}
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
-func (r *collectionRetriever) RetrieveCollectionFromDocID(
+func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
 ) (client.Collection, error) {
