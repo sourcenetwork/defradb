@@ -20,12 +20,18 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	grpcpeer "google.golang.org/grpc/peer"
 
+	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -36,6 +42,10 @@ type PubSubServer interface {
 	SendPubSubMessage(context.Context, string, []byte) (<-chan rpc.Response, error)
 }
 
+type CollectionRetriever interface {
+	RetrieveCollectionFromDocID(context.Context, string) (client.Collection, error)
+}
+
 type pubSubService struct {
 	ctx             context.Context
 	peerID          libpeer.ID
@@ -43,6 +53,9 @@ type pubSubService struct {
 	keyRequestedSub *event.Subscription
 	eventBus        *event.Bus
 	encStore        *ipldEncStorage
+	acp             immutable.Option[acp.ACP]
+	colRetriever    CollectionRetriever
+	nodeDID         string
 }
 
 var _ Service = (*pubSubService)(nil)
@@ -69,13 +82,19 @@ func NewPubSubService(
 	pubsub PubSubServer,
 	eventBus *event.Bus,
 	encstore datastore.Blockstore,
+	acp immutable.Option[acp.ACP],
+	colRetriever CollectionRetriever,
+	nodeDID string,
 ) (*pubSubService, error) {
 	s := &pubSubService{
-		ctx:      ctx,
-		peerID:   peerID,
-		pubsub:   pubsub,
-		eventBus: eventBus,
-		encStore: newIPLDEncryptionStorage(encstore),
+		ctx:          ctx,
+		peerID:       peerID,
+		pubsub:       pubsub,
+		eventBus:     eventBus,
+		encStore:     newIPLDEncryptionStorage(encstore),
+		acp:          acp,
+		colRetriever: colRetriever,
+		nodeDID:      nodeDID,
 	}
 	err := pubsub.AddPubSubTopic(pubsubTopic, s.handleRequestFromPeer)
 	if err != nil {
@@ -127,6 +146,7 @@ func (s *pubSubService) handleKeyRequestedEvent() {
 }
 
 type fetchEncryptionKeyRequest struct {
+	Identity           []byte
 	Links              [][]byte
 	EphemeralPublicKey []byte
 }
@@ -153,6 +173,7 @@ func (s *pubSubService) prepareFetchEncryptionKeyRequest(
 	ephemeralPublicKey []byte,
 ) (*fetchEncryptionKeyRequest, error) {
 	req := &fetchEncryptionKeyRequest{
+		Identity:           []byte(s.nodeDID),
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
@@ -260,8 +281,11 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 	req *fetchEncryptionKeyRequest,
 ) (*fetchEncryptionKeyReply, error) {
 	blocks, err := s.getEncryptionKeysLocally(ctx, req)
-	if err != nil || len(blocks) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(blocks) == 0 {
+		return &fetchEncryptionKeyReply{}, nil
 	}
 
 	reqEphPubKey, err := crypto.X25519PublicKeyFromBytes(req.EphemeralPublicKey)
@@ -317,6 +341,14 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
+		hasPerm, err := s.doesIdentityHaveDocPermission(ctx, string(req.Identity), encBlock)
+		if err != nil {
+			return nil, err
+		}
+		if !hasPerm {
+			continue
+		}
+
 		encBlockBytes, err := encBlock.Marshal()
 		if err != nil {
 			return nil, err
@@ -325,6 +357,31 @@ func (s *pubSubService) getEncryptionKeysLocally(
 		blocks = append(blocks, encBlockBytes)
 	}
 	return blocks, nil
+}
+
+func (s *pubSubService) doesIdentityHaveDocPermission(
+	ctx context.Context,
+	actorIdentity string,
+	entBlock *coreblock.Encryption,
+) (bool, error) {
+	if !s.acp.HasValue() {
+		return true, nil
+	}
+
+	docID := string(entBlock.DocID)
+	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID)
+	if err != nil {
+		return false, err
+	}
+
+	return permission.CheckAccessOfDocOnCollectionWithACP(
+		ctx,
+		immutable.Some(identity.Identity{DID: actorIdentity}),
+		s.acp.Value(),
+		collection,
+		acp.ReadPermission,
+		docID,
+	)
 }
 
 func encodeToBase64(data []byte) []byte {

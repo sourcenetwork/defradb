@@ -227,6 +227,35 @@ func (db *db) AddPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
+// publishDocUpdateEvent publishes an update event for a document.
+// It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
+// using a transaction.
+func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
+	if err != nil {
+		return err
+	}
+
+	for {
+		hasValue, err := headsIterator.Next()
+		if err != nil {
+			return err
+		}
+		if !hasValue {
+			break
+		}
+
+		updateEvent := event.Update{
+			DocID:      docID,
+			Cid:        headsIterator.CurrentCid(),
+			SchemaRoot: collection.Schema().Root,
+			Block:      headsIterator.CurrentRawBlock(),
+		}
+		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+	}
+	return nil
+}
+
 func (db *db) AddDocActorRelationship(
 	ctx context.Context,
 	collectionName string,
@@ -260,6 +289,13 @@ func (db *db) AddDocActorRelationship(
 
 	if err != nil {
 		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	if !exists {
+		err = db.publishDocUpdateEvent(ctx, docID, collection)
+		if err != nil {
+			return client.AddDocActorRelationshipResult{}, err
+		}
 	}
 
 	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
