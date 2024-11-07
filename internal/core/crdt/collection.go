@@ -19,7 +19,8 @@ import (
 )
 
 // Collection is a simple CRDT type that tracks changes to the contents of a
-// collection in a similar way to a document composite commit.
+// collection in a similar way to a document composite commit, only simpler,
+// without the need to track status and a simpler [Merge] function.
 type Collection struct {
 	store datastore.DSReaderWriter
 
