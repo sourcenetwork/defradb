@@ -287,3 +287,145 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 
 	executeTestCase(t, test)
 }
+
+func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Relation query with ascending order by aliased child's int field.",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Theif Lord",
+					"rating": 4.8
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Cornelia Funke",
+					"age":          62,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(order: {_alias: {writer: {age: ASC}}}) {
+						name
+						rating
+						writer: author {
+							age
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"writer": map[string]any{
+								"age": int64(62),
+							},
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"writer": map[string]any{
+								"age": int64(65),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Relation query with ascending order by child's aliased int field.",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Theif Lord",
+					"rating": 4.8
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"age":          65,
+					"verified":     true,
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Cornelia Funke",
+					"age":          62,
+					"verified":     false,
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(order: {author: {_alias: {authorAge: ASC}}}) {
+						name
+						rating
+						author {
+							authorAge: age
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+							"author": map[string]any{
+								"authorAge": int64(62),
+							},
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"authorAge": int64(65),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
