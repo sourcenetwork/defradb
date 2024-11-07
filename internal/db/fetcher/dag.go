@@ -28,6 +28,12 @@ type HeadFetcher struct {
 	kvIter dsq.Results
 }
 
+// Start starts/initializes the fetcher, performing all the work it can do outside
+// of the main iteration loop/funcs.
+//
+// prefix - Optional. The headstore prefix to scan across.  If None, the entire
+// headstore will be scanned - for example, in order to fetch document and collection
+// heads.
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
