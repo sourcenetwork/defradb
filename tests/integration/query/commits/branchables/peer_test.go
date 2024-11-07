@@ -20,7 +20,7 @@ import (
 
 // TODO: This test documents an unimplemented feature. Tracked by:
 // https://github.com/sourcenetwork/defradb/issues/3212
-func TestQueryCommitsBranchables_AcrossPeerConnection(t *testing.T) {
+func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
