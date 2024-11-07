@@ -195,6 +195,9 @@
                         },
                         "type": "array"
                     },
+                    "IsBranchable": {
+                        "type": "boolean"
+                    },
                     "IsMaterialized": {
                         "type": "boolean"
                     },
@@ -275,6 +278,9 @@
                                     "type": "object"
                                 },
                                 "type": "array"
+                            },
+                            "IsBranchable": {
+                                "type": "boolean"
                             },
                             "IsMaterialized": {
                                 "type": "boolean"
