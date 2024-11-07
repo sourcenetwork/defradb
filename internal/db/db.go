@@ -227,6 +227,9 @@ func (db *db) AddPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
+// publishDocUpdateEvent publishes an update event for a document.
+// It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
+// using a transaction.
 func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
 	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
 	if err != nil {
