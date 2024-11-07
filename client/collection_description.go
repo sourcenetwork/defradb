@@ -89,7 +89,7 @@ type CollectionDescription struct {
 	// another collection/query (is a View).
 	IsMaterialized bool
 
-	// IsMaterialized defines whether the history of this collection is tracked as a single,
+	// IsBranchable defines whether the history of this collection is tracked as a single,
 	// verifiable entity.
 	//
 	// If set to `true` any change to the contents of this set will be linked to a collection
