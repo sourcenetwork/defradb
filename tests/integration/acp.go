@@ -88,7 +88,7 @@ type AddPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity immutable.Option[identityRef]
+	Identity identity
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -159,13 +159,13 @@ type AddDocActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[identityRef]
+	TargetIdentity identity
 
 	// The requestor identity, i.e. identity of the actor creating the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[identityRef]
+	RequestorIdentity identity
 
 	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
 	ExpectedExistence bool
@@ -195,7 +195,7 @@ func addDocActorRelationshipACP(
 			collectionName,
 			docID,
 			action.Relation,
-			getIdentityDID(s, action.TargetIdentity),
+			action.TargetIdentity.get(s).DID,
 		)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -247,13 +247,13 @@ type DeleteDocActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[identityRef]
+	TargetIdentity identity
 
 	// The requestor identity, i.e. identity of the actor deleting the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[identityRef]
+	RequestorIdentity identity
 
 	// Result returns true if the relationship record was expected to be found and deleted,
 	// and returns false if no matching relationship record was found (no-op).
@@ -281,7 +281,7 @@ func deleteDocActorRelationshipACP(
 			collectionName,
 			docID,
 			action.Relation,
-			getIdentityDID(s, action.TargetIdentity),
+			action.TargetIdentity.get(s).DID,
 		)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

@@ -137,12 +137,17 @@ type state struct {
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
 
-	// identities contains all identities created in this test.
-	// The map key is the identity reference that uniquely identifies identities of different
-	// types. See [identRef].
+	// clientIdentities contains all client identities created in this test.
+	// The map key is the identity reference number that uniquely identifies identities.
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[identityRef]*identityHolder
+	clientIdentities map[int]*identityHolder
+
+	// nodeIdentities contains all node identities created in this test.
+	// The map key is the identity reference number that uniquely identifies identities.
+	// The map value is the identity holder that contains the identity itself and token
+	// generated for different target nodes. See [identityHolder].
+	nodeIdentities map[int]*identityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
@@ -228,7 +233,8 @@ func newState(
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
-		identities:               map[identityRef]*identityHolder{},
+		clientIdentities:         map[int]*identityHolder{},
+		nodeIdentities:           map[int]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
 		nodeEvents:               []*eventState{},
 		nodeAddresses:            []peer.AddrInfo{},

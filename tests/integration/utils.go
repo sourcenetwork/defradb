@@ -747,7 +747,7 @@ func startNodes(s *state, action Start) {
 		}
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))))
+		node, _, err := setupNode(s, db.WithNodeIdentity(NodeIdentity(nodeIndex).get(s)))
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 
@@ -868,7 +868,7 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(NodeIdentity(len(s.nodes)).get(s)))
 
 	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
@@ -2443,7 +2443,7 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
 	require.NoError(s.t, err, s.testCase.Description)
 
-	expectedIdent := getIdentity(s, action.ExpectedIdentity)
+	expectedIdent := action.ExpectedIdentity.get(s)
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
 	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
