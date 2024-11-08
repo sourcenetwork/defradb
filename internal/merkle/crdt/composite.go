@@ -61,12 +61,12 @@ func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
 func (m *MerkleCompositeDAG) Delete(
 	ctx context.Context,
 ) (cidlink.Link, []byte, error) {
-	delta := m.reg.Set(client.Deleted)
+	delta := m.reg.Append(client.Deleted)
 	return m.clock.AddDelta(ctx, delta)
 }
 
 // Save the value of the composite CRDT to DAG.
 func (m *MerkleCompositeDAG) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
-	delta := m.reg.Set(client.Active)
+	delta := m.reg.Append(client.Active)
 	return m.clock.AddDelta(ctx, delta, links...)
 }
