@@ -146,6 +146,7 @@ var collectionUpdateValidators = append(
 		validateIDExists,
 		validateSchemaVersionIDNotMutated,
 		validateCollectionNotRemoved,
+		validateCollectionIsBranchableNotMutated,
 	),
 	globalValidators...,
 )
@@ -1031,6 +1032,26 @@ func validateCollectionFieldDefaultValue(
 		_, err := client.NewDocFromMap(map[string]any{}, col)
 		if err != nil {
 			return NewErrDefaultFieldValueInvalid(name, err)
+		}
+	}
+
+	return nil
+}
+
+// validateCollectionIsBranchableNotMutated is a temporary restriction that prevents users from toggling
+// whether or not a collection is branchable.
+// https://github.com/sourcenetwork/defradb/issues/3219
+func validateCollectionIsBranchableNotMutated(
+	ctx context.Context,
+	db *db,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, newCol := range newState.collections {
+		oldCol := oldState.collectionsByID[newCol.ID]
+
+		if newCol.IsBranchable != oldCol.IsBranchable {
+			return NewErrColMutatingIsBranchable(newCol.Name.Value())
 		}
 	}
 

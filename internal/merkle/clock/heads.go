@@ -27,17 +27,17 @@ import (
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
 	store     datastore.DSReaderWriter
-	namespace keys.HeadStoreKey
+	namespace keys.HeadstoreKey
 }
 
-func NewHeadSet(store datastore.DSReaderWriter, namespace keys.HeadStoreKey) *heads {
+func NewHeadSet(store datastore.DSReaderWriter, namespace keys.HeadstoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
 	}
 }
 
-func (hh *heads) key(c cid.Cid) keys.HeadStoreKey {
+func (hh *heads) key(c cid.Cid) keys.HeadstoreKey {
 	return hh.namespace.WithCid(c)
 }
 
@@ -102,7 +102,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 			return nil, 0, NewErrFailedToGetNextQResult(r.Error)
 		}
 
-		headKey, err := keys.NewHeadStoreKey(r.Key)
+		headKey, err := keys.NewHeadstoreKey(r.Key)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -111,7 +111,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		if n <= 0 {
 			return nil, 0, ErrDecodingHeight
 		}
-		heads = append(heads, headKey.Cid)
+		heads = append(heads, headKey.GetCid())
 		if height > maxHeight {
 			maxHeight = height
 		}

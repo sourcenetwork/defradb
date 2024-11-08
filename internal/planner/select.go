@@ -266,11 +266,11 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			origScan.Spans(
 				[]core.Span{
 					core.NewSpan(
-						keys.HeadStoreKey{
+						keys.HeadstoreDocKey{
 							DocID: n.selectReq.DocIDs.Value()[0],
 							Cid:   c,
 						},
-						keys.HeadStoreKey{},
+						keys.HeadstoreDocKey{},
 					),
 				},
 			)

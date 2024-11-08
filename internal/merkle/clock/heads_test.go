@@ -45,7 +45,7 @@ func newHeadSet() *heads {
 
 	return NewHeadSet(
 		datastore.AsDSReaderWriter(s),
-		keys.HeadStoreKey{}.WithDocID("myDocID").WithFieldID("1"),
+		keys.HeadstoreDocKey{}.WithDocID("myDocID").WithFieldID("1"),
 	)
 }
 

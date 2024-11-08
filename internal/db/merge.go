@@ -418,7 +418,7 @@ func decryptBlock(
 ) (*coreblock.Block, error) {
 	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
 
-	if block.Delta.IsComposite() {
+	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		// for composite blocks there is nothing to decrypt
 		return block, nil
 	}

@@ -88,6 +88,21 @@ type CollectionDescription struct {
 	// At the moment this can only be set to `false` if this collection sources its data from
 	// another collection/query (is a View).
 	IsMaterialized bool
+
+	// IsBranchable defines whether the history of this collection is tracked as a single,
+	// verifiable entity.
+	//
+	// If set to `true` any change to the contents of this set will be linked to a collection
+	// level commit via the document(s) composite commit.
+	//
+	// This enables multiple nodes to verify that they have the same state/history.
+	//
+	// The history may be queried like a document history can be queried, for example via 'commits'
+	// GQL queries.
+	//
+	// Currently this property is immutable and can only be set on collection creation, however
+	// that will change in the future.
+	IsBranchable bool
 }
 
 // QuerySource represents a collection data source from a query.
@@ -189,6 +204,7 @@ type collectionDescription struct {
 	RootID          uint32
 	SchemaVersionID string
 	IsMaterialized  bool
+	IsBranchable    bool
 	Policy          immutable.Option[PolicyDescription]
 	Indexes         []IndexDescription
 	Fields          []CollectionFieldDescription
@@ -209,6 +225,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.RootID = descMap.RootID
 	c.SchemaVersionID = descMap.SchemaVersionID
 	c.IsMaterialized = descMap.IsMaterialized
+	c.IsBranchable = descMap.IsBranchable
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))

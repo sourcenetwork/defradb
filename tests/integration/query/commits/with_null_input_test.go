@@ -111,17 +111,7 @@ func TestQueryCommitsWithNullFieldID(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
-						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
-						},
-						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
-						},
-						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
-						},
-					},
+					"commits": []map[string]any{},
 				},
 			},
 		},

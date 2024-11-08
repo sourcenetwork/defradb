@@ -13,6 +13,9 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -38,4 +41,51 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	}
 
 	executeTestCase(t, test)
+}
+
+// This test documents a bug:
+// https://github.com/sourcenetwork/defradb/issues/3214
+func TestQuerySimpleWithCid(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// The CLI/Http clients don't panic in this context
+				testUtils.GoClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe"
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	require.Panics(t, func() {
+		testUtils.ExecuteTestCase(t, test)
+	})
 }

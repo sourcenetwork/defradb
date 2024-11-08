@@ -86,7 +86,7 @@ func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, er
 	}
 
 	if len(entries) > 0 {
-		hsKey, err := keys.NewHeadStoreKey(entries[0].Key)
+		hsKey, err := keys.NewHeadstoreDocKey(entries[0].Key)
 		if err != nil {
 			return cid.Undef, err
 		}

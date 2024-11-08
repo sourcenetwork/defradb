@@ -40,7 +40,7 @@ func NewHeadBlocksIterator(
 	blockstore datastore.Blockstore,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
-	headStoreKey := keys.HeadStoreKey{
+	headStoreKey := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
 	}

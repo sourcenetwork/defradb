@@ -17,60 +17,64 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
-type HeadStoreKey struct {
+type HeadstoreDocKey struct {
 	DocID   string
 	FieldID string //can be 'C'
 	Cid     cid.Cid
 }
 
-var _ Walkable = (*HeadStoreKey)(nil)
+var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
 
-// Creates a new HeadStoreKey from a string as best as it can,
+// Creates a new HeadstoreDocKey from a string as best as it can,
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
-// /[DocID]/[FieldId]/[Cid]
+// /d/[DocID]/[FieldId]/[Cid]
 //
 // Any properties before the above are ignored
-func NewHeadStoreKey(key string) (HeadStoreKey, error) {
+func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
 	elements := strings.Split(key, "/")
-	if len(elements) != 4 {
-		return HeadStoreKey{}, ErrInvalidKey
+	if len(elements) != 5 {
+		return HeadstoreDocKey{}, ErrInvalidKey
 	}
 
-	cid, err := cid.Decode(elements[3])
+	cid, err := cid.Decode(elements[4])
 	if err != nil {
-		return HeadStoreKey{}, err
+		return HeadstoreDocKey{}, err
 	}
 
-	return HeadStoreKey{
+	return HeadstoreDocKey{
 		// elements[0] is empty (key has leading '/')
-		DocID:   elements[1],
-		FieldID: elements[2],
+		DocID:   elements[2],
+		FieldID: elements[3],
 		Cid:     cid,
 	}, nil
 }
 
-func (k HeadStoreKey) WithDocID(docID string) HeadStoreKey {
+func (k HeadstoreDocKey) WithDocID(docID string) HeadstoreDocKey {
 	newKey := k
 	newKey.DocID = docID
 	return newKey
 }
 
-func (k HeadStoreKey) WithCid(c cid.Cid) HeadStoreKey {
+func (k HeadstoreDocKey) WithCid(c cid.Cid) HeadstoreKey {
 	newKey := k
 	newKey.Cid = c
 	return newKey
 }
 
-func (k HeadStoreKey) WithFieldID(fieldID string) HeadStoreKey {
+func (k HeadstoreDocKey) GetCid() cid.Cid {
+	return k.Cid
+}
+
+func (k HeadstoreDocKey) WithFieldID(fieldID string) HeadstoreDocKey {
 	newKey := k
 	newKey.FieldID = fieldID
 	return newKey
 }
 
-func (k HeadStoreKey) ToString() string {
-	var result string
+func (k HeadstoreDocKey) ToString() string {
+	result := HEADSTORE_DOC
 
 	if k.DocID != "" {
 		result = result + "/" + k.DocID
@@ -85,15 +89,15 @@ func (k HeadStoreKey) ToString() string {
 	return result
 }
 
-func (k HeadStoreKey) Bytes() []byte {
+func (k HeadstoreDocKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k HeadStoreKey) ToDS() ds.Key {
+func (k HeadstoreDocKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k HeadStoreKey) PrefixEnd() Walkable {
+func (k HeadstoreDocKey) PrefixEnd() Walkable {
 	newKey := k
 
 	if k.FieldID != "" {

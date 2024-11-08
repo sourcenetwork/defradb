@@ -163,6 +163,7 @@ func collectionFromAstDefinition(
 	})
 
 	isMaterialized := immutable.None[bool]()
+	var isBranchable bool
 	for _, directive := range def.Directives {
 		switch directive.Name.Value {
 		case types.IndexDirectiveLabel:
@@ -197,6 +198,22 @@ func collectionFromAstDefinition(
 			} else {
 				isMaterialized = immutable.Some(true)
 			}
+
+		case types.BranchableDirectiveLabel:
+			if isBranchable {
+				continue
+			}
+
+			explicitIsBranchable := immutable.None[bool]()
+
+			for _, arg := range directive.Arguments {
+				if arg.Name.Value == types.BranchableDirectivePropIf {
+					explicitIsBranchable = immutable.Some(arg.Value.GetValue().(bool))
+					break
+				}
+			}
+
+			isBranchable = !explicitIsBranchable.HasValue() || explicitIsBranchable.Value()
 		}
 	}
 
@@ -207,6 +224,7 @@ func collectionFromAstDefinition(
 			Policy:         policyDescription,
 			Fields:         collectionFieldDescriptions,
 			IsMaterialized: !isMaterialized.HasValue() || isMaterialized.Value(),
+			IsBranchable:   isBranchable,
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
