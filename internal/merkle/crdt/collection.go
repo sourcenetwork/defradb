@@ -48,6 +48,6 @@ func (m *MerkleCollection) Clock() *clock.MerkleClock {
 }
 
 func (m *MerkleCollection) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
-	delta := m.reg.Append()
+	delta := m.reg.NewDelta()
 	return m.clock.AddDelta(ctx, delta, links...)
 }

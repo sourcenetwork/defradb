@@ -101,7 +101,7 @@ func NewCompositeDAG(
 }
 
 // Set returns a new composite DAG delta CRDT with the given status.
-func (c CompositeDAG) Append(status client.DocumentStatus) *CompositeDAGDelta {
+func (c CompositeDAG) NewDelta(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{
 		DocID:           []byte(c.key.DocID),
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,

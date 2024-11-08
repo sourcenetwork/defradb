@@ -41,7 +41,7 @@ func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
 	return nil
 }
 
-func (c *Collection) Append() *CollectionDelta {
+func (c *Collection) NewDelta() *CollectionDelta {
 	return &CollectionDelta{
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
 	}
