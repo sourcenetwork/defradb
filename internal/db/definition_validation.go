@@ -1040,6 +1040,7 @@ func validateCollectionFieldDefaultValue(
 
 // validateCollectionIsBranchableNotMutated is a temporary restriction that prevents users from toggling
 // whether or not a collection is branchable.
+// https://github.com/sourcenetwork/defradb/issues/3219
 func validateCollectionIsBranchableNotMutated(
 	ctx context.Context,
 	db *db,

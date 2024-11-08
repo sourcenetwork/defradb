@@ -243,6 +243,8 @@ func MaterializedDirective() *gql.Directive {
 func BranchableDirective() *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name: BranchableDirectiveLabel,
+		// Todo: This description will need to be changed with:
+		// https://github.com/sourcenetwork/defradb/issues/3219
 		Description: `@branchable is a directive that defines whether the history of this collection is tracked
  as a single, verifiable entity or not. It will default to false if ommited.
 
