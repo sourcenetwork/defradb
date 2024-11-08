@@ -13,7 +13,6 @@ package crdt
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -22,8 +21,6 @@ import (
 // collection in a similar way to a document composite commit, only simpler,
 // without the need to track status and a simpler [Merge] function.
 type Collection struct {
-	store datastore.DSReaderWriter
-
 	// schemaVersionKey is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
@@ -32,9 +29,8 @@ type Collection struct {
 
 var _ core.ReplicatedData = (*Collection)(nil)
 
-func NewCollection(store datastore.DSReaderWriter, schemaVersionKey keys.CollectionSchemaVersionKey) *Collection {
+func NewCollection(schemaVersionKey keys.CollectionSchemaVersionKey) *Collection {
 	return &Collection{
-		store:            store,
 		schemaVersionKey: schemaVersionKey,
 	}
 }
