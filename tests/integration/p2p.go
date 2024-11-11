@@ -150,10 +150,10 @@ func connectPeers(
 	targetNode := s.nodes[cfg.TargetNodeID]
 
 	log.InfoContext(s.ctx, "Connect peers",
-		corelog.Any("Source", sourceNode.client.PeerInfo()),
-		corelog.Any("Target", targetNode.client.PeerInfo()))
+		corelog.Any("Source", sourceNode.DB.PeerInfo()),
+		corelog.Any("Target", targetNode.DB.PeerInfo()))
 
-	err := sourceNode.client.Connect(s.ctx, targetNode.client.PeerInfo())
+	err := sourceNode.Peer.Connect(s.ctx, targetNode.DB.PeerInfo())
 	require.NoError(s.t, err)
 
 	s.nodes[cfg.SourceNodeID].p2p.connections[cfg.TargetNodeID] = struct{}{}
@@ -177,8 +177,8 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.client.SetReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.client.PeerInfo(),
+	err := sourceNode.DB.SetReplicator(s.ctx, client.ReplicatorParams{
+		Info: targetNode.DB.PeerInfo(),
 	})
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
@@ -196,8 +196,8 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.client.DeleteReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.client.PeerInfo(),
+	err := sourceNode.DB.DeleteReplicator(s.ctx, client.ReplicatorParams{
+		Info: targetNode.DB.PeerInfo(),
 	})
 	require.NoError(s.t, err)
 	waitForReplicatorDeleteEvent(s, cfg)
@@ -223,7 +223,7 @@ func subscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.client.AddP2PCollections(s.ctx, schemaRoots)
+	err := n.DB.AddP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -257,7 +257,7 @@ func unsubscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.client.RemoveP2PCollections(s.ctx, schemaRoots)
+	err := n.DB.RemoveP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
@@ -286,7 +286,7 @@ func getAllP2PCollections(
 	}
 
 	n := s.nodes[action.NodeID]
-	cols, err := n.client.GetAllP2PCollections(s.ctx)
+	cols, err := n.DB.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
 	assert.Equal(s.t, expectedCollections, cols)
@@ -300,10 +300,10 @@ func reconnectPeers(s *state) {
 			targetNode := s.nodes[j]
 
 			log.InfoContext(s.ctx, "Connect peers",
-				corelog.Any("Source", sourceNode.client.PeerInfo()),
-				corelog.Any("Target", targetNode.client.PeerInfo()))
+				corelog.Any("Source", sourceNode.DB.PeerInfo()),
+				corelog.Any("Target", targetNode.DB.PeerInfo()))
 
-			err := sourceNode.client.Connect(s.ctx, targetNode.client.PeerInfo())
+			err := sourceNode.Peer.Connect(s.ctx, targetNode.DB.PeerInfo())
 			require.NoError(s.t, err)
 		}
 	}

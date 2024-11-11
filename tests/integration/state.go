@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
 // p2pState contains all p2p related testing state.
@@ -116,9 +115,7 @@ func newEventState(bus *event.Bus) (*eventState, error) {
 // nodeState contains all testing state for a node.
 type nodeState struct {
 	// The node active in this test.
-	node *node.Node
-	// The node's client active in this test.
-	client clients.Client
+	*node.Node
 	// event contains all event node subscriptions.
 	event *eventState
 	// p2p contains p2p states for the node.

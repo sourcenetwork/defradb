@@ -207,7 +207,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	if s.isNetworkEnabled {
 		var addresses []string
 		for _, node := range s.nodes {
-			addresses = append(addresses, node.node.Peer.PeerInfo().String())
+			addresses = append(addresses, node.Peer.PeerInfo().String())
 		}
 		netOpts = append(netOpts, net.WithListenAddresses(addresses...))
 		opts = append(opts, node.WithDisableP2P(false))
@@ -230,8 +230,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	require.NoError(s.t, err)
 
 	st := &nodeState{
-		client:  c,
-		node:    node,
+		Node:    node,
 		event:   eventState,
 		p2p:     newP2PState(),
 		dbPath:  path,

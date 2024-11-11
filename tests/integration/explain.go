@@ -135,7 +135,7 @@ func executeExplainRequest(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		result := node.client.ExecRequest(
+		result := node.DB.ExecRequest(
 			s.ctx,
 			action.Request,
 		)
