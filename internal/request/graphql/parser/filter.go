@@ -100,7 +100,7 @@ func parseFilterFieldsForDescriptionMap(
 				return nil, err
 			}
 			fields = append(fields, parsedFields...)
-		case request.FilterOpNot, request.FilterOpAlias:
+		case request.FilterOpNot, request.AliasFieldName:
 			conds := v.(map[string]any)
 			parsedFields, err := parseFilterFieldsForDescriptionMap(conds, col)
 			if err != nil {

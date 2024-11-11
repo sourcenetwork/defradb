@@ -48,6 +48,7 @@ const (
 	VersionFieldName = "_version"
 	MaxFieldName     = "_max"
 	MinFieldName     = "_min"
+	AliasFieldName   = "_alias"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.

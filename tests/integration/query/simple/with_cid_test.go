@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/tests/change_detector"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -46,6 +47,10 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 // This test documents a bug:
 // https://github.com/sourcenetwork/defradb/issues/3214
 func TestQuerySimpleWithCid(t *testing.T) {
+	if change_detector.Enabled {
+		t.Skipf("Change detector does not support requiring panics")
+	}
+
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]testUtils.ClientType{
