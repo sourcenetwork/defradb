@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/kms"
+	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
@@ -140,7 +141,7 @@ func getDefaultNodeOpts() []node.Option {
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *state, opts ...node.Option) (*node.Node, string, error) {
+func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	opts = append(getDefaultNodeOpts(), opts...)
 
 	switch acpType {
@@ -189,20 +190,53 @@ func setupNode(s *state, opts ...node.Option) (*node.Node, string, error) {
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:
-		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
+		return nil, fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
 	if s.kms == PubSubKMSType {
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
+	netOpts := make([]net.NodeOpt, 0)
+	for _, opt := range opts {
+		if opt, ok := opt.(net.NodeOpt); ok {
+			netOpts = append(netOpts, opt)
+		}
+	}
+
+	if s.isNetworkEnabled {
+		var addresses []string
+		for _, node := range s.nodes {
+			addresses = append(addresses, node.node.Peer.PeerInfo().String())
+		}
+		netOpts = append(netOpts, net.WithListenAddresses(addresses...))
+		opts = append(opts, node.WithDisableP2P(false))
+	}
+
 	node, err := node.New(s.ctx, opts...)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
+
 	err = node.Start(s.ctx)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	return node, path, nil
+
+	c, err := setupClient(s, node)
+	require.Nil(s.t, err)
+
+	eventState, err := newEventState(c.Events())
+	require.NoError(s.t, err)
+
+	st := &nodeState{
+		client:  c,
+		node:    node,
+		event:   eventState,
+		p2p:     newP2PState(),
+		dbPath:  path,
+		netOpts: netOpts,
+	}
+
+	return st, nil
 }

@@ -150,14 +150,14 @@ func connectPeers(
 	targetNode := s.nodes[cfg.TargetNodeID]
 
 	log.InfoContext(s.ctx, "Connect peers",
-		corelog.Any("Source", sourceNode.PeerInfo()),
-		corelog.Any("Target", targetNode.PeerInfo()))
+		corelog.Any("Source", sourceNode.client.PeerInfo()),
+		corelog.Any("Target", targetNode.client.PeerInfo()))
 
-	err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
+	err := sourceNode.client.Connect(s.ctx, targetNode.client.PeerInfo())
 	require.NoError(s.t, err)
 
-	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
-	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
+	s.nodes[cfg.SourceNodeID].p2p.connections[cfg.TargetNodeID] = struct{}{}
+	s.nodes[cfg.TargetNodeID].p2p.connections[cfg.SourceNodeID] = struct{}{}
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
@@ -177,8 +177,8 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.PeerInfo(),
+	err := sourceNode.client.SetReplicator(s.ctx, client.ReplicatorParams{
+		Info: targetNode.client.PeerInfo(),
 	})
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
@@ -196,8 +196,8 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.PeerInfo(),
+	err := sourceNode.client.DeleteReplicator(s.ctx, client.ReplicatorParams{
+		Info: targetNode.client.PeerInfo(),
 	})
 	require.NoError(s.t, err)
 	waitForReplicatorDeleteEvent(s, cfg)
@@ -219,11 +219,11 @@ func subscribeToCollection(
 			continue
 		}
 
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	err := n.client.AddP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -253,11 +253,11 @@ func unsubscribeToCollection(
 			continue
 		}
 
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	err := n.client.RemoveP2PCollections(s.ctx, schemaRoots)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
@@ -281,12 +281,12 @@ func getAllP2PCollections(
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		expectedCollections = append(expectedCollections, col.SchemaRoot())
 	}
 
 	n := s.nodes[action.NodeID]
-	cols, err := n.GetAllP2PCollections(s.ctx)
+	cols, err := n.client.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
 	assert.Equal(s.t, expectedCollections, cols)
@@ -294,16 +294,16 @@ func getAllP2PCollections(
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
 func reconnectPeers(s *state) {
-	for i, n := range s.nodeP2P {
-		for j := range n.connections {
+	for i, n := range s.nodes {
+		for j := range n.p2p.connections {
 			sourceNode := s.nodes[i]
 			targetNode := s.nodes[j]
 
 			log.InfoContext(s.ctx, "Connect peers",
-				corelog.Any("Source", sourceNode.PeerInfo()),
-				corelog.Any("Target", targetNode.PeerInfo()))
+				corelog.Any("Source", sourceNode.client.PeerInfo()),
+				corelog.Any("Target", targetNode.client.PeerInfo()))
 
-			err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
+			err := sourceNode.client.Connect(s.ctx, targetNode.client.PeerInfo())
 			require.NoError(s.t, err)
 		}
 	}

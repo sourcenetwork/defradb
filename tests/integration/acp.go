@@ -113,7 +113,7 @@ func addPolicyACP(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIDs[index])
-		policyResult, err := node.AddPolicy(ctx, action.Policy)
+		policyResult, err := node.client.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -190,7 +190,7 @@ func addDocActorRelationshipACP(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		exists, err := node.AddDocActorRelationship(
+		exists, err := node.client.AddDocActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
@@ -276,7 +276,7 @@ func deleteDocActorRelationshipACP(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+		deleteDocActorRelationshipResult, err := node.client.DeleteDocActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
@@ -304,7 +304,7 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	collectionName := ""
 	docID := ""
 	if collectionID != -1 {
-		collection := s.collections[nodeID][collectionID]
+		collection := s.nodes[nodeID].collections[collectionID]
 		if !collection.Description().Name.HasValue() {
 			require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
 		}
@@ -617,7 +617,7 @@ func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
 	if nodeIndex >= len(s.nodes) {
 		return immutable.None[string]()
 	}
-	switch client := s.nodes[nodeIndex].(type) {
+	switch client := s.nodes[nodeIndex].client.(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	case *cli.Wrapper:
