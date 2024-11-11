@@ -400,7 +400,10 @@ func performAction(
 		assertClientIntrospectionResults(s, action)
 
 	case WaitForSync:
-		waitForSync(s)
+		waitForSync(s, action)
+
+	case Wait:
+		<-time.After(action.Duration)
 
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
@@ -574,9 +577,10 @@ func closeNodes(
 	s *state,
 	action Close,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for i, node := range nodes {
 		node.Close()
+		s.closedNodes[nodeIDs[i]] = struct{}{}
 	}
 }
 
@@ -780,6 +784,8 @@ func startNodes(s *state, action Start) {
 		eventState, err := newEventState(c.Events())
 		require.NoError(s.t, err)
 		s.nodeEvents[nodeIndex] = eventState
+
+		delete(s.closedNodes, nodeIndex)
 
 		waitForNetworkSetupEvents(s, i)
 	}

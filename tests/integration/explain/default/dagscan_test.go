@@ -60,8 +60,8 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 							"fieldId": "1",
 							"spans": []dataMap{
 								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
+									"start": "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+									"end":   "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
 								},
 							},
 						},
@@ -103,8 +103,8 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 							"fieldId": nil,
 							"spans": []dataMap{
 								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e85",
+									"start": "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+									"end":   "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e85",
 								},
 							},
 						},
@@ -147,8 +147,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 							"fieldId": "1",
 							"spans": []dataMap{
 								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
+									"start": "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+									"end":   "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
 								},
 							},
 						},
@@ -191,8 +191,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 							"fieldId": "C",
 							"spans": []dataMap{
 								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/D",
+									"start": "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
+									"end":   "/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/D",
 								},
 							},
 						},

@@ -105,6 +105,7 @@ func defaultDirectivesType(
 		types.PrimaryDirective(),
 		types.RelationDirective(),
 		types.MaterializedDirective(),
+		types.BranchableDirective(),
 	}
 }
 

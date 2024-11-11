@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -161,6 +162,29 @@ func (c *collection) applyDelete(
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	})
+
+	if c.def.Description.IsBranchable {
+		collectionCRDT := merklecrdt.NewMerkleCollection(
+			txn,
+			keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+			keys.NewHeadstoreColKey(c.def.Description.RootID),
+		)
+
+		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})
+		if err != nil {
+			return err
+		}
+
+		updateEvent := event.Update{
+			Cid:        link.Cid,
+			SchemaRoot: c.Schema().Root,
+			Block:      headNode,
+		}
+
+		txn.OnSuccess(func() {
+			c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		})
+	}
 
 	return nil
 }

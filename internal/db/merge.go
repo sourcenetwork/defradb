@@ -84,7 +84,10 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 	}
 
 	// send a complete event so we can track merges in the integration tests
-	db.events.Publish(event.NewMessage(event.MergeCompleteName, dagMerge))
+	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{
+		Merge:     dagMerge,
+		Decrypted: len(mp.missingEncryptionBlocks) == 0,
+	}))
 	return nil
 }
 
@@ -264,7 +267,9 @@ func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) err
 			return res.Error
 		}
 
-		clear(mp.missingEncryptionBlocks)
+		if len(res.Items) == 0 {
+			return nil
+		}
 
 		for i := range res.Items {
 			_, link, err := cid.CidFromBytes(res.Items[i].Link)
@@ -279,6 +284,8 @@ func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) err
 
 			mp.availableEncryptionBlocks[cidlink.Link{Cid: link}] = &encBlock
 		}
+
+		clear(mp.missingEncryptionBlocks)
 
 		err := mp.mergeComposites(ctx)
 		if err != nil {
@@ -411,7 +418,7 @@ func decryptBlock(
 ) (*coreblock.Block, error) {
 	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
 
-	if block.Delta.IsComposite() {
+	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		// for composite blocks there is nothing to decrypt
 		return block, nil
 	}

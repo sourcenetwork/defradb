@@ -274,6 +274,7 @@ func assertCollectionDescriptions(
 
 		require.Equal(s.t, expected.Name, actual.Name)
 		require.Equal(s.t, expected.IsMaterialized, actual.IsMaterialized)
+		require.Equal(s.t, expected.IsBranchable, actual.IsBranchable)
 
 		if expected.Indexes != nil || len(actual.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.

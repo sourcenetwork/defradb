@@ -133,7 +133,10 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// Decrypted is a list of document indexes that are expected to be merged and synced decrypted.
+	Decrypted []int
+}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
