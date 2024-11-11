@@ -828,3 +828,74 @@ func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithCompoundAliasOrder_ShouldOrderResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with compound alias order",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: [{_alias: {userAge: DESC}}, {_alias: {isVerified: ASC}}]) {
+						Name
+						userAge: Age
+						isVerified: Verified
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":       "Carlo",
+							"userAge":    int64(55),
+							"isVerified": true,
+						},
+						{
+							"Name":       "Bob",
+							"userAge":    int64(21),
+							"isVerified": false,
+						},
+						{
+							"Name":       "John",
+							"userAge":    int64(21),
+							"isVerified": true,
+						},
+						{
+							"Name":       "Alice",
+							"userAge":    int64(19),
+							"isVerified": false,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
