@@ -18,8 +18,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TODO: This test documents an unimplemented feature. Tracked by:
-// https://github.com/sourcenetwork/defradb/issues/3212
 func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -50,76 +48,153 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				NodeID: immutable.Some(0),
 				Request: `query {
-					commits {
-						cid
-						links {
+						commits {
 							cid
+							links {
+								cid
+							}
 						}
-					}
-				}`,
+					}`,
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
+							"cid": testUtils.NewUniqueCid(0),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("composite"),
+									"cid": testUtils.NewUniqueCid(1),
 								},
 							},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("age"),
+							"cid":   testUtils.NewUniqueCid(2),
 							"links": []map[string]any{},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("name"),
+							"cid":   testUtils.NewUniqueCid(3),
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("composite"),
+							"cid": testUtils.NewUniqueCid(1),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("age"),
+									"cid": testUtils.NewUniqueCid(2),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name"),
+									"cid": testUtils.NewUniqueCid(3),
 								},
 							},
 						},
 					},
 				},
 			},
-			testUtils.Request{
-				NodeID: immutable.Some(1),
-				Request: `query {
-					commits {
-						cid
-						links {
-							cid
-						}
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users @branchable {
+						name: String
+						age: Int
 					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name":	"John",
+					"age":	21
 				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name":	"Fred",
+					"age":	25
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+						commits {
+							cid
+							links {
+								cid
+							}
+						}
+					}`,
 				Results: map[string]any{
 					"commits": []map[string]any{
-						// Note: The collection commit has not synced.
 						{
-							"cid":   testUtils.NewUniqueCid("age"),
-							"links": []map[string]any{},
-						},
-						{
-							"cid":   testUtils.NewUniqueCid("name"),
-							"links": []map[string]any{},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("composite"),
+							"cid": testUtils.NewUniqueCid("collection, doc2 create"),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("age"),
+									"cid": testUtils.NewUniqueCid("collection, doc1 create"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name"),
+									"cid": testUtils.NewUniqueCid("doc2 create"),
+								},
+							},
+						},
+						{
+							"cid": testUtils.NewUniqueCid("collection, doc1 create"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("doc1 create"),
+								},
+							},
+						},
+						{
+							"cid":   testUtils.NewUniqueCid("doc1 name"),
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   testUtils.NewUniqueCid("doc1 age"),
+							"links": []map[string]any{},
+						},
+						{
+							"cid": testUtils.NewUniqueCid("doc1 create"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("doc1 name"),
+								},
+								{
+									"cid": testUtils.NewUniqueCid("doc1 age"),
+								},
+							},
+						},
+						{
+							"cid":   testUtils.NewUniqueCid("doc2 name"),
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   testUtils.NewUniqueCid("doc2 age"),
+							"links": []map[string]any{},
+						},
+						{
+							"cid": testUtils.NewUniqueCid("doc2 create"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("doc2 name"),
+								},
+								{
+									"cid": testUtils.NewUniqueCid("doc2 age"),
 								},
 							},
 						},

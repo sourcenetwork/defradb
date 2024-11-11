@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -35,30 +36,30 @@ import (
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
-func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
+func (db *db) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	col, err := getCollectionFromRootSchema(ctx, db, dagMerge.SchemaRoot)
-	if err != nil {
-		return err
+	var mt mergeTarget
+	if dagMerge.DocID != "" {
+		mt, err = getHeadsAsMergeTarget(ctx, txn, keys.HeadstoreDocKey{
+			DocID:   dagMerge.DocID,
+			FieldID: core.COMPOSITE_NAMESPACE,
+		})
+		if err != nil {
+			return err
+		}
+	} else {
+		mt, err = getHeadsAsMergeTarget(ctx, txn, keys.NewHeadstoreColKey(col.Description().RootID))
+		if err != nil {
+			return err
+		}
 	}
 
-	docID, err := client.NewDocIDFromString(dagMerge.DocID)
-	if err != nil {
-		return err
-	}
-	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(col.Description(), docID.String())
-
-	mp, err := db.newMergeProcessor(txn, col, dsKey)
-	if err != nil {
-		return err
-	}
-
-	mt, err := getHeadsAsMergeTarget(ctx, txn, dsKey.WithFieldID(core.COMPOSITE_NAMESPACE))
+	mp, err := db.newMergeProcessor(txn, col)
 	if err != nil {
 		return err
 	}
@@ -73,9 +74,15 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 		return err
 	}
 
-	err = syncIndexedDoc(ctx, docID, col)
-	if err != nil {
-		return err
+	for docID := range mp.docIDs {
+		docID, err := client.NewDocIDFromString(docID)
+		if err != nil {
+			return err
+		}
+		err = syncIndexedDoc(ctx, docID, col)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = txn.Commit(ctx)
@@ -94,39 +101,39 @@ func (db *db) executeMerge(ctx context.Context, dagMerge event.Merge) error {
 // mergeQueue is synchronization source to ensure that concurrent
 // document merges do not cause transaction conflicts.
 type mergeQueue struct {
-	docs  map[string]chan struct{}
+	keys  map[string]chan struct{}
 	mutex sync.Mutex
 }
 
 func newMergeQueue() *mergeQueue {
 	return &mergeQueue{
-		docs: make(map[string]chan struct{}),
+		keys: make(map[string]chan struct{}),
 	}
 }
 
-// add adds a docID to the queue. If the docID is already in the queue, it will
-// wait for the docID to be removed from the queue. For every add call, done must
-// be called to remove the docID from the queue. Otherwise, subsequent add calls will
+// add adds a key to the queue. If the key is already in the queue, it will
+// wait for the key to be removed from the queue. For every add call, done must
+// be called to remove the key from the queue. Otherwise, subsequent add calls will
 // block forever.
-func (m *mergeQueue) add(docID string) {
+func (m *mergeQueue) add(key string) {
 	m.mutex.Lock()
-	done, ok := m.docs[docID]
+	done, ok := m.keys[key]
 	if !ok {
-		m.docs[docID] = make(chan struct{})
+		m.keys[key] = make(chan struct{})
 	}
 	m.mutex.Unlock()
 	if ok {
 		<-done
-		m.add(docID)
+		m.add(key)
 	}
 }
 
-func (m *mergeQueue) done(docID string) {
+func (m *mergeQueue) done(key string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	done, ok := m.docs[docID]
+	done, ok := m.keys[key]
 	if ok {
-		delete(m.docs, docID)
+		delete(m.keys, key)
 		close(done)
 	}
 }
@@ -135,9 +142,11 @@ type mergeProcessor struct {
 	txn        datastore.Txn
 	blockLS    linking.LinkSystem
 	encBlockLS linking.LinkSystem
-	mCRDTs     map[string]merklecrdt.MerkleCRDT
 	col        *collection
-	dsKey      keys.DataStoreKey
+
+	// docIDs contains all docIDs that have been merged so far by the mergeProcessor
+	docIDs map[string]struct{}
+
 	// composites is a list of composites that need to be merged.
 	composites *list.List
 	// missingEncryptionBlocks is a list of blocks that we failed to fetch
@@ -149,7 +158,6 @@ type mergeProcessor struct {
 func (db *db) newMergeProcessor(
 	txn datastore.Txn,
 	col *collection,
-	dsKey keys.DataStoreKey,
 ) (*mergeProcessor, error) {
 	blockLS := cidlink.DefaultLinkSystem()
 	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
@@ -161,9 +169,8 @@ func (db *db) newMergeProcessor(
 		txn:                       txn,
 		blockLS:                   blockLS,
 		encBlockLS:                encBlockLS,
-		mCRDTs:                    make(map[string]merklecrdt.MerkleCRDT),
 		col:                       col,
-		dsKey:                     dsKey,
+		docIDs:                    make(map[string]struct{}),
 		composites:                list.New(),
 		missingEncryptionBlocks:   make(map[cidlink.Link]struct{}),
 		availableEncryptionBlocks: make(map[cidlink.Link]*coreblock.Encryption),
@@ -375,7 +382,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(dagBlock.Delta.GetFieldName())
+		crdt, err := mp.initCRDTForType(dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -435,50 +442,59 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(field string) (merklecrdt.MerkleCRDT, error) {
-	mcrdt, exists := mp.mCRDTs[field]
-	if exists {
-		return mcrdt, nil
-	}
-
+func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
 	schemaVersionKey := keys.CollectionSchemaVersionKey{
 		SchemaVersionID: mp.col.Schema().VersionID,
 		CollectionID:    mp.col.ID(),
 	}
 
-	if field == "" {
-		mcrdt = merklecrdt.NewMerkleCompositeDAG(
+	switch {
+	case crdt.IsComposite():
+		docID := string(crdt.GetDocID())
+		mp.docIDs[docID] = struct{}{}
+
+		return merklecrdt.NewMerkleCompositeDAG(
 			mp.txn,
 			schemaVersionKey,
-			mp.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
+			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(core.COMPOSITE_NAMESPACE),
+		), nil
+
+	case crdt.IsCollection():
+		return merklecrdt.NewMerkleCollection(
+			mp.txn,
+			schemaVersionKey,
+			keys.NewHeadstoreColKey(mp.col.Description().RootID),
+		), nil
+
+	default:
+		docID := string(crdt.GetDocID())
+		mp.docIDs[docID] = struct{}{}
+
+		field := crdt.GetFieldName()
+		fd, ok := mp.col.Definition().GetFieldByName(field)
+		if !ok {
+			// If the field is not part of the schema, we can safely ignore it.
+			return nil, nil
+		}
+
+		return merklecrdt.FieldLevelCRDTWithStore(
+			mp.txn,
+			schemaVersionKey,
+			fd.Typ,
+			fd.Kind,
+			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(fd.ID.String()),
+			field,
 		)
-		mp.mCRDTs[field] = mcrdt
-		return mcrdt, nil
 	}
-
-	fd, ok := mp.col.Definition().GetFieldByName(field)
-	if !ok {
-		// If the field is not part of the schema, we can safely ignore it.
-		return nil, nil
-	}
-
-	mcrdt, err := merklecrdt.FieldLevelCRDTWithStore(
-		mp.txn,
-		schemaVersionKey,
-		fd.Typ,
-		fd.Kind,
-		mp.dsKey.WithFieldID(fd.ID.String()),
-		field,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	mp.mCRDTs[field] = mcrdt
-	return mcrdt, nil
 }
 
 func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string) (*collection, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
 	cols, err := db.getCollections(
 		ctx,
 		client.CollectionFetchOptions{
@@ -498,8 +514,8 @@ func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string)
 
 // getHeadsAsMergeTarget retrieves the heads of the composite DAG for the given document
 // and returns them as a merge target.
-func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey keys.DataStoreKey) (mergeTarget, error) {
-	cids, err := getHeads(ctx, txn, dsKey)
+func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) (mergeTarget, error) {
+	cids, err := getHeads(ctx, txn, key)
 
 	if err != nil {
 		return mergeTarget{}, err
@@ -520,8 +536,8 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, dsKey keys.Da
 }
 
 // getHeads retrieves the heads associated with the given datastore key.
-func getHeads(ctx context.Context, txn datastore.Txn, dsKey keys.DataStoreKey) ([]cid.Cid, error) {
-	headset := clock.NewHeadSet(txn.Headstore(), dsKey.ToHeadStoreKey())
+func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
+	headset := clock.NewHeadSet(txn.Headstore(), key)
 
 	cids, _, err := headset.List(ctx)
 	if err != nil {

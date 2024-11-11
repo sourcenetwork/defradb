@@ -58,7 +58,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, event.Merge{
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
@@ -103,7 +103,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, event.Merge{
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
@@ -113,7 +113,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"age": 30}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, event.Merge{
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:      docID.String(),
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
@@ -161,7 +161,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, event.Merge{
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:      docID.String(),
 		Cid:        compInfo2.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
@@ -180,7 +180,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfoUnkown)
 	require.NoError(t, err)
 
-	err = db.executeMerge(ctx, event.Merge{
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:      docID.String(),
 		Cid:        compInfo3.link.Cid,
 		SchemaRoot: col.SchemaRoot(),
@@ -304,15 +304,15 @@ func TestMergeQueue(t *testing.T) {
 	go q.add(testDocID)
 	// give time for the goroutine to block
 	time.Sleep(10 * time.Millisecond)
-	require.Len(t, q.docs, 1)
+	require.Len(t, q.keys, 1)
 	q.done(testDocID)
 	// give time for the goroutine to add the docID
 	time.Sleep(10 * time.Millisecond)
 	q.mutex.Lock()
-	require.Len(t, q.docs, 1)
+	require.Len(t, q.keys, 1)
 	q.mutex.Unlock()
 	q.done(testDocID)
 	q.mutex.Lock()
-	require.Len(t, q.docs, 0)
+	require.Len(t, q.keys, 0)
 	q.mutex.Unlock()
 }

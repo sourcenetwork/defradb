@@ -22,7 +22,9 @@ import (
 )
 
 func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
-	queue := newMergeQueue()
+	docIdQueue := newMergeQueue()
+	schemaRootQueue := newMergeQueue()
+
 	// This is used to ensure we only trigger loadAndPublishP2PCollections and loadAndPublishReplicators
 	// once per db instanciation.
 	loadOnce := sync.Once{}
@@ -37,17 +39,34 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 			switch evt := msg.Data.(type) {
 			case event.Merge:
 				go func() {
-					// ensure only one merge per docID
-					queue.add(evt.DocID)
-					defer queue.done(evt.DocID)
+					col, err := getCollectionFromRootSchema(ctx, db, evt.SchemaRoot)
+					if err != nil {
+						log.ErrorContextE(
+							ctx,
+							"Failed to execute merge",
+							err,
+							corelog.Any("Event", evt))
+						return
+					}
+
+					if col.Description().IsBranchable {
+						// As collection commits link to document composite commits, all events
+						// recieved for branchable collections must be processed serially else
+						// they may otherwise cause a transaction conflict.
+						schemaRootQueue.add(evt.SchemaRoot)
+						defer schemaRootQueue.done(evt.SchemaRoot)
+					} else {
+						// ensure only one merge per docID
+						docIdQueue.add(evt.DocID)
+						defer docIdQueue.done(evt.DocID)
+					}
 
 					// retry the merge process if a conflict occurs
 					//
 					// conficts occur when a user updates a document
 					// while a merge is in progress.
-					var err error
 					for i := 0; i < db.MaxTxnRetries(); i++ {
-						err = db.executeMerge(ctx, evt)
+						err = db.executeMerge(ctx, col, evt)
 						if errors.Is(err, datastore.ErrTxnConflict) {
 							continue // retry merge
 						}
