@@ -13,10 +13,9 @@ package request
 import "github.com/sourcenetwork/immutable"
 
 const (
-	FilterOpOr    = "_or"
-	FilterOpAnd   = "_and"
-	FilterOpNot   = "_not"
-	FilterOpAlias = "_alias"
+	FilterOpOr  = "_or"
+	FilterOpAnd = "_and"
+	FilterOpNot = "_not"
 )
 
 // Filter contains the parsed condition map to be
