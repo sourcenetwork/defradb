@@ -90,7 +90,6 @@ Example: create a named index for 'Users' collection on 'name' field:
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
 	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index")
 	cmd.Flags().BoolVarP(&uniqueArg, "unique", "u", false, "Make the index unique")
-	cmd.Flags().BoolVarP(&descendingArg, "descending", "d", false, "Make the index descending")
 
 	return cmd
 }
