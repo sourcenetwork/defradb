@@ -24,7 +24,6 @@ func MakeIndexCreateCommand() *cobra.Command {
 	var nameArg string
 	var fieldsArg []string
 	var uniqueArg bool
-	var descendingArg bool
 	var cmd = &cobra.Command{
 		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique]",
 		Short: "Creates a secondary index on a collection's field(s)",
