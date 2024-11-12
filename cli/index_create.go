@@ -26,13 +26,12 @@ func MakeIndexCreateCommand() *cobra.Command {
 	var uniqueArg bool
 	var descendingArg bool
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique] [--descending]",
+		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique]",
 		Short: "Creates a secondary index on a collection's field(s)",
 		Long: `Creates a secondary index on a collection's field(s).
 		
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
-The --descending flag is optional. If provided, the index will be descending.
 
 Example: create an index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name
