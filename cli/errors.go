@@ -20,7 +20,7 @@ const (
 	errInvalidLensConfig        string = "invalid lens configuration"
 	errSchemaVersionNotOfSchema string = "the given schema version is from a different schema"
 	errRequiredFlag             string = "the required flag [--%s|-%s] is %s"
-	errInvalidAscensionOrder	string = "invalid order for field %s: expected ASC or DESC"
+	errInvalidAscensionOrder    string = "invalid order for field %s: expected ASC or DESC"
 )
 
 var (
@@ -57,8 +57,6 @@ func NewErrSchemaVersionNotOfSchema(schemaRoot string, schemaVersionID string) e
 	)
 }
 
-
 func NewErrInvalidAscensionOrder(fieldName string) error {
 	return errors.New(fmt.Sprintf(errInvalidAscensionOrder, fieldName))
 }
-

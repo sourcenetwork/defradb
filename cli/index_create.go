@@ -14,9 +14,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	
+
 	"strings"
-	
 )
 
 func MakeIndexCreateCommand() *cobra.Command {
@@ -42,29 +41,30 @@ Example: create a named index for 'Users' collection on 'name' field:
 			store := mustGetContextStore(cmd)
 
 			var fields []client.IndexedFieldDescription
-			
+
 			for _, field := range fieldsArg {
 				var fieldName string
 				var order string
-
 				// For each field, parse it into a field name and ascension order, separated by a colon
 				// If there is no colon, assume the ascension order is ASC by default
+				const asc = "ASC"
+				const desc = "DESC"
 				parts := strings.Split(field, ":")
 				if len(parts) == 1 {
 					fieldName = parts[0]
-					order = "ASC"
+					order = asc
 				} else if len(parts) > 2 {
 					return NewErrInvalidAscensionOrder(field)
 				} else {
 					fieldName = parts[0]
 					order = strings.ToUpper(parts[1])
-					if order != "ASC" && order != "DESC" {
+					if order != asc && order != desc {
 						return NewErrInvalidAscensionOrder(field)
 					}
 				}
 				fields = append(fields, client.IndexedFieldDescription{
 					Name:       fieldName,
-					Descending: order == "DESC",
+					Descending: order == desc,
 				})
 			}
 
@@ -77,7 +77,7 @@ Example: create a named index for 'Users' collection on 'name' field:
 			if err != nil {
 				return err
 			}
-			
+
 			desc, err = col.CreateIndex(cmd.Context(), desc)
 			if err != nil {
 				return err
