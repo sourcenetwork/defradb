@@ -58,6 +58,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 }
 
 func (c *httpClient) request(req *http.Request) ([]byte, error) {
+
 	err := c.setDefaultHeaders(req)
 	if err != nil {
 		return nil, err

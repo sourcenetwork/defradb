@@ -18,7 +18,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
+	
 	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
@@ -62,6 +62,7 @@ func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -147,6 +148,7 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -188,6 +190,7 @@ func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+
 	if !c.Description().Name.HasValue() {
 		return false, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -381,6 +384,7 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescription,
 ) (client.IndexDescription, error) {
+
 	if !c.Description().Name.HasValue() {
 		return client.IndexDescription{}, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -388,6 +392,7 @@ func (c *Collection) CreateIndex(
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes")
 
 	body, err := json.Marshal(&indexDesc)
+	
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
