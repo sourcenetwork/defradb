@@ -38,7 +38,7 @@ Example: create an index for 'Users' collection on 'name' field:
 Example: create a named index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name --name UsersByName
  
-Example: create a unique index for 'Users' collection on 'name' field in ascending order, and 'age' field in descending order:
+Example: create a unique index for 'Users' collection on 'name' in ascending order, and 'age' in descending order:
   defradb client index create --collection Users --fields name:ASC,age:DESC --unique
 `,
 		ValidArgs: []string{"collection", "fields", "name"},
