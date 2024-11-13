@@ -348,10 +348,24 @@ func (c *Collection) CreateIndex(
 	}
 
 	fields := make([]string, len(indexDesc.Fields))
+	orders := make([]bool, len(indexDesc.Fields))
+
 	for i := range indexDesc.Fields {
 		fields[i] = indexDesc.Fields[i].Name
+		orders[i] = indexDesc.Fields[i].Descending
 	}
-	args = append(args, "--fields", strings.Join(fields, ","))
+
+	orderedFields := make([]string, len(fields))
+
+	for i := range fields {
+		if orders[i] {
+			orderedFields[i] = fields[i] + ":DESC"
+		} else {
+			orderedFields[i] = fields[i] + ":ASC"
+		}
+	}
+
+	args = append(args, "--fields", strings.Join(orderedFields, ","))
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
