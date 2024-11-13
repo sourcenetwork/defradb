@@ -11,11 +11,11 @@
 package cli
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-
-	"strings"
 )
 
 func MakeIndexCreateCommand() *cobra.Command {
