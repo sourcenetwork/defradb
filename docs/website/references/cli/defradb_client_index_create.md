@@ -14,9 +14,13 @@ Example: create an index for 'Users' collection on 'name' field:
 
 Example: create a named index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name --name UsersByName
+ 
+Example: create a unique index for 'Users' collection on 'name' field in ascending order, and 'age' field in descending order:
+  defradb client index create --collection Users --fields name:ASC,age:DESC --unique
+
 
 ```
-defradb client index create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique] [flags]
+defradb client index create -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique] [flags]
 ```
 
 ### Options

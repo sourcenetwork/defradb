@@ -24,7 +24,7 @@ func MakeIndexCreateCommand() *cobra.Command {
 	var fieldsArg []string
 	var uniqueArg bool
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique]",
+		Use:   "create -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique]",
 		Short: "Creates a secondary index on a collection's field(s)",
 		Long: `Creates a secondary index on a collection's field(s).
 		
@@ -35,7 +35,11 @@ Example: create an index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name
 
 Example: create a named index for 'Users' collection on 'name' field:
-  defradb client index create --collection Users --fields name --name UsersByName`,
+  defradb client index create --collection Users --fields name --name UsersByName
+ 
+Example: create a unique index for 'Users' collection on 'name' field in ascending order, and 'age' field in descending order:
+  defradb client index create --collection Users --fields name:ASC,age:DESC --unique
+`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
