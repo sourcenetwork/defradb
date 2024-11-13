@@ -8,6 +8,7 @@ Creates a secondary index on a collection's field(s).
 		
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
+If no order is specified for the field, the default value will be "ASC"
 
 Example: create an index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name
