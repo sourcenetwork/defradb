@@ -28,10 +28,10 @@ const eventTimeout = 1 * time.Second
 // waitForNetworkSetupEvents waits for p2p topic completed and
 // replicator completed events to be published on the local node event bus.
 func waitForNetworkSetupEvents(s *state, nodeID int) {
-	cols, err := s.nodes[nodeID].DB.GetAllP2PCollections(s.ctx)
+	cols, err := s.nodes[nodeID].GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
-	reps, err := s.nodes[nodeID].DB.GetAllReplicators(s.ctx)
+	reps, err := s.nodes[nodeID].GetAllReplicators(s.ctx)
 	require.NoError(s.t, err)
 
 	replicatorEvents := len(reps)

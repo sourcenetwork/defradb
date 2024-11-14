@@ -15,12 +15,14 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
 // p2pState contains all p2p related testing state.
@@ -114,8 +116,8 @@ func newEventState(bus *event.Bus) (*eventState, error) {
 
 // nodeState contains all testing state for a node.
 type nodeState struct {
-	// The node active in this test.
-	*node.Node
+	// The node's client active in this test.
+	clients.Client
 	// event contains all event node subscriptions.
 	event *eventState
 	// p2p contains p2p states for the node.
@@ -131,6 +133,8 @@ type nodeState struct {
 	indexes [][]client.IndexDescription
 	// indicates if the node is closed.
 	closed bool
+	// peerInfo contains the peer information for the node.
+	peerInfo peer.AddrInfo
 }
 
 // state contains all testing state.

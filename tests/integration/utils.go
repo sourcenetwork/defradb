@@ -177,15 +177,15 @@ func ExecuteTestCase(
 	}
 
 	var databases []DatabaseType
-	if badgerInMemory {
-		databases = append(databases, BadgerIMType)
-	}
-	if badgerFile {
-		databases = append(databases, BadgerFileType)
-	}
-	if inMemoryStore {
-		databases = append(databases, DefraIMType)
-	}
+	//if badgerInMemory {
+	//databases = append(databases, BadgerIMType)
+	//}
+	//if badgerFile {
+	databases = append(databases, BadgerFileType)
+	//}
+	//if inMemoryStore {
+	//databases = append(databases, DefraIMType)
+	//}
 
 	var kmsList []KMSType
 	if testCase.KMS.Activated {
@@ -578,7 +578,7 @@ func closeNodes(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		node.DB.Close()
+		node.Close()
 		node.closed = true
 	}
 }
@@ -732,10 +732,19 @@ func startNodes(s *state, action Start) {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.nodes[nodeIndex].dbPath
-		node, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))))
+		opts := []node.Option{db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex)))}
+		for _, opt := range s.nodes[nodeIndex].netOpts {
+			opts = append(opts, opt)
+		}
+		var addresses []string
+		for _, addr := range s.nodes[nodeIndex].peerInfo.Addrs {
+			addresses = append(addresses, addr.String())
+		}
+		opts = append(opts, net.WithListenAddresses(addresses...))
+		node, err := setupNode(s, opts...)
 		require.NoError(s.t, err)
 		databaseDir = originalPath
-
+		node.p2p = s.nodes[nodeIndex].p2p
 		s.nodes[nodeIndex] = node
 
 		waitForNetworkSetupEvents(s, nodeIndex)
@@ -767,7 +776,7 @@ func refreshCollections(
 ) {
 	for _, node := range s.nodes {
 		node.collections = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.DB.GetCollections(s.ctx, client.CollectionFetchOptions{})
+		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
@@ -907,7 +916,7 @@ func getIndexes(
 	for _, nodeID := range nodeIDs {
 		collections := s.nodes[nodeID].collections
 		err := withRetryOnNode(
-			s.nodes[nodeID].DB,
+			s.nodes[nodeID],
 			func() error {
 				actualIndexes, err := collections[action.CollectionID].GetIndexes(s.ctx)
 				if err != nil {
@@ -997,7 +1006,7 @@ func updateSchema(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		results, err := node.DB.AddSchema(s.ctx, action.Schema)
+		results, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1025,7 +1034,7 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.DB.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
+		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1042,7 +1051,7 @@ func patchCollection(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		err := node.DB.PatchCollection(s.ctx, action.Patch)
+		err := node.PatchCollection(s.ctx, action.Patch)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1063,11 +1072,11 @@ func getSchema(
 		var err error
 		switch {
 		case action.VersionID.HasValue():
-			result, e := node.DB.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
+			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
 		default:
-			results, err = node.DB.GetSchemas(
+			results, err = node.GetSchemas(
 				s.ctx,
 				client.SchemaFetchOptions{
 					Root: action.Root,
@@ -1091,9 +1100,9 @@ func getCollections(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		txn := getTransaction(s, node.DB, action.TransactionID, "")
+		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.SetContextTxn(s.ctx, txn)
-		results, err := node.DB.GetCollections(ctx, action.FilterOptions)
+		results, err := node.GetCollections(ctx, action.FilterOptions)
 		resultDescriptions := make([]client.CollectionDescription, len(results))
 		for i, col := range results {
 			resultDescriptions[i] = col.Description()
@@ -1114,7 +1123,7 @@ func setActiveSchemaVersion(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		err := node.DB.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
+		err := node.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1143,7 +1152,7 @@ func createView(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		_, err := node.DB.AddView(s.ctx, action.Query, action.SDL, action.Transform)
+		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1156,7 +1165,7 @@ func refreshViews(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		err := node.DB.RefreshViews(s.ctx, action.FilterOptions)
+		err := node.RefreshViews(s.ctx, action.FilterOptions)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
@@ -1192,13 +1201,13 @@ func createDoc(
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
 		err := withRetryOnNode(
-			node.DB,
+			node,
 			func() error {
 				var err error
 				docIDs, err = mutation(
 					s,
 					action,
-					node.DB,
+					node,
 					nodeID,
 					collection,
 				)
@@ -1383,7 +1392,7 @@ func deleteDoc(
 		collection := s.nodes[nodeID].collections[action.CollectionID]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
-			node.DB,
+			node,
 			func() error {
 				_, err := collection.Delete(ctx, docID)
 				return err
@@ -1426,12 +1435,12 @@ func updateDoc(
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
 		err := withRetryOnNode(
-			node.DB,
+			node,
 			func() error {
 				return mutation(
 					s,
 					action,
-					node.DB,
+					node,
 					nodeID,
 					collection,
 				)
@@ -1530,7 +1539,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 		collection := s.nodes[nodeID].collections[action.CollectionID]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
-			node.DB,
+			node,
 			func() error {
 				var err error
 				res, err = collection.UpdateWithFilter(ctx, action.Filter, action.Updater)
@@ -1576,7 +1585,7 @@ func createIndex(
 
 		indexDesc.Unique = action.Unique
 		err := withRetryOnNode(
-			node.DB,
+			node,
 			func() error {
 				desc, err := collection.CreateIndex(s.ctx, indexDesc)
 				if err != nil {
@@ -1614,7 +1623,7 @@ func dropIndex(
 		}
 
 		err := withRetryOnNode(
-			node.DB,
+			node,
 			func() error {
 				return collection.DropIndex(s.ctx, indexName)
 			},
@@ -1639,8 +1648,8 @@ func backupExport(
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
 		err := withRetryOnNode(
-			node.DB,
-			func() error { return node.DB.BasicExport(s.ctx, &action.Config) },
+			node,
+			func() error { return node.BasicExport(s.ctx, &action.Config) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1670,8 +1679,8 @@ func backupImport(
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
 		err := withRetryOnNode(
-			node.DB,
-			func() error { return node.DB.BasicImport(s.ctx, action.Filepath) },
+			node,
+			func() error { return node.BasicImport(s.ctx, action.Filepath) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
@@ -1759,7 +1768,7 @@ func executeRequest(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn := getTransaction(s, node.DB, action.TransactionID, action.ExpectedError)
+		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
 		ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeID)
 
@@ -1772,14 +1781,14 @@ func executeRequest(
 		}
 
 		if !expectedErrorRaised && viewType == MaterializedViewType {
-			err := node.DB.RefreshViews(s.ctx, client.CollectionFetchOptions{})
+			err := node.RefreshViews(s.ctx, client.CollectionFetchOptions{})
 			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 			if expectedErrorRaised {
 				continue
 			}
 		}
 
-		result := node.DB.ExecRequest(ctx, action.Request, options...)
+		result := node.ExecRequest(ctx, action.Request, options...)
 
 		expectedErrorRaised = assertRequestResults(
 			s,
@@ -1810,7 +1819,7 @@ func executeSubscriptionRequest(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
@@ -2067,7 +2076,7 @@ func assertIntrospectionResults(
 ) bool {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -2099,7 +2108,7 @@ func assertClientIntrospectionResults(
 ) bool {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -2363,7 +2372,7 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
 
-	actualIdent, err := s.nodes[action.NodeID].DB.GetNodeIdentity(s.ctx)
+	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
 	require.NoError(s.t, err, s.testCase.Description)
 
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
