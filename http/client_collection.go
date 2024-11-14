@@ -388,7 +388,6 @@ func (c *Collection) CreateIndex(
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes")
 
 	body, err := json.Marshal(&indexDesc)
-
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
