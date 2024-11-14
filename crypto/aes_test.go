@@ -149,9 +149,10 @@ func TestDecryptAES(t *testing.T) {
 			errorContains:  "message authentication failed",
 		},
 		{
-			name:           "Tampered ciphertext",
-			nonce:          validNonce,
-			cipherText:     append([]byte{0}, validCiphertext[AESNonceSize+1:]...),
+			name:  "Tampered ciphertext",
+			nonce: validNonce,
+			// Flip a byte in the ciphertext to corrupt it.
+			cipherText:     append([]byte{^validCiphertext[AESNonceSize]}, validCiphertext[AESNonceSize+1:]...),
 			key:            validKey,
 			additionalData: validAAD,
 			expectError:    true,
