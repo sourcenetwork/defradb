@@ -41,7 +41,6 @@ import (
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
-	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
@@ -442,7 +441,7 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 func generateDocs(s *state, action GenerateDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
 	firstNodesID := nodeIDs[0]
-	collections := s.collections[firstNodesID]
+	collections := s.nodes[firstNodesID].collections
 	defs := make([]client.CollectionDefinition, 0, len(collections))
 	for _, collection := range collections {
 		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name().Value()) {
@@ -459,7 +458,7 @@ func generateDocs(s *state, action GenerateDocs) {
 func generatePredefinedDocs(s *state, action CreatePredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
 	firstNodesID := nodeIDs[0]
-	collections := s.collections[firstNodesID]
+	collections := s.nodes[firstNodesID].collections
 	defs := make([]client.CollectionDefinition, 0, len(collections))
 	for _, col := range collections {
 		defs = append(defs, col.Definition())
@@ -577,10 +576,10 @@ func closeNodes(
 	s *state,
 	action Close,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for i, node := range nodes {
+	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, node := range nodes {
 		node.Close()
-		s.closedNodes[nodeIDs[i]] = struct{}{}
+		node.closed = true
 	}
 }
 
@@ -594,7 +593,7 @@ func closeNodes(
 // greater than 0. For example if requesting a node with nodeID=2 then the resulting output will contain only
 // one element (at index 0) caller might accidentally assume that this node belongs to node 0. Therefore, the
 // caller should always use the returned IDs, instead of guessing the IDs based on node indexes.
-func getNodesWithIDs(nodeID immutable.Option[int], nodes []clients.Client) ([]int, []clients.Client) {
+func getNodesWithIDs(nodeID immutable.Option[int], nodes []*nodeState) ([]int, []*nodeState) {
 	if !nodeID.HasValue() {
 		indexes := make([]int, len(nodes))
 		for i := range nodes {
@@ -603,7 +602,7 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []clients.Client) ([]in
 		return indexes, nodes
 	}
 
-	return []int{nodeID.Value()}, []clients.Client{nodes[nodeID.Value()]}
+	return []int{nodeID.Value()}, []*nodeState{nodes[nodeID.Value()]}
 }
 
 func calculateLenForFlattenedActions(testCase *TestCase) int {
@@ -711,83 +710,44 @@ ActionLoop:
 func setStartingNodes(
 	s *state,
 ) {
-	hasExplicitNode := false
 	for _, action := range s.testCase.Actions {
 		switch action.(type) {
 		case ConfigureNode:
-			hasExplicitNode = true
+			s.isNetworkEnabled = true
 		}
 	}
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
-	if !hasExplicitNode {
-		node, path, err := setupNode(s)
+	if !s.isNetworkEnabled {
+		st, err := setupNode(s)
 		require.Nil(s.t, err)
-
-		c, err := setupClient(s, node)
-		require.Nil(s.t, err)
-
-		eventState, err := newEventState(c.Events())
-		require.NoError(s.t, err)
-
-		s.nodes = append(s.nodes, c)
-		s.nodeEvents = append(s.nodeEvents, eventState)
-		s.nodeP2P = append(s.nodeP2P, newP2PState())
-		s.dbPaths = append(s.dbPaths, path)
+		s.nodes = append(s.nodes, st)
 	}
 }
 
 func startNodes(s *state, action Start) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(nodes) - 1; i >= 0; i-- {
-		nodeIndex := i
-		if action.NodeID.HasValue() {
-			nodeIndex = action.NodeID.Value()
-		}
+		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
-		databaseDir = s.dbPaths[nodeIndex]
-		node, _, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))))
-		require.NoError(s.t, err)
-		databaseDir = originalPath
-
-		if len(s.nodeConfigs) == 0 {
-			// If there are no explicit node configuration actions the node will be
-			// basic (i.e. no P2P stuff) and can be yielded now.
-			c, err := setupClient(s, node)
-			require.NoError(s.t, err)
-			s.nodes[nodeIndex] = c
-
-			eventState, err := newEventState(c.Events())
-			require.NoError(s.t, err)
-			s.nodeEvents[nodeIndex] = eventState
-			continue
+		databaseDir = s.nodes[nodeIndex].dbPath
+		opts := []node.Option{db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex)))}
+		for _, opt := range s.nodes[nodeIndex].netOpts {
+			opts = append(opts, opt)
 		}
-
-		// We need to make sure the node is configured with its old address, otherwise
-		// a new one may be selected and reconnection to it will fail.
 		var addresses []string
-		for _, addr := range s.nodeAddresses[nodeIndex].Addrs {
+		for _, addr := range s.nodes[nodeIndex].peerInfo.Addrs {
 			addresses = append(addresses, addr.String())
 		}
-
-		nodeOpts := s.nodeConfigs[nodeIndex]
-		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
-
-		node.Peer, err = net.NewPeer(s.ctx, node.DB.Blockstore(), node.DB.Encstore(), node.DB.Events(), nodeOpts...)
+		opts = append(opts, net.WithListenAddresses(addresses...))
+		node, err := setupNode(s, opts...)
 		require.NoError(s.t, err)
+		databaseDir = originalPath
+		node.p2p = s.nodes[nodeIndex].p2p
+		s.nodes[nodeIndex] = node
 
-		c, err := setupClient(s, node)
-		require.NoError(s.t, err)
-		s.nodes[nodeIndex] = c
-
-		eventState, err := newEventState(c.Events())
-		require.NoError(s.t, err)
-		s.nodeEvents[nodeIndex] = eventState
-
-		delete(s.closedNodes, nodeIndex)
-
-		waitForNetworkSetupEvents(s, i)
+		waitForNetworkSetupEvents(s, nodeIndex)
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -814,10 +774,8 @@ func restartNodes(
 func refreshCollections(
 	s *state,
 ) {
-	s.collections = make([][]client.Collection, len(s.nodes))
-
-	for nodeID, node := range s.nodes {
-		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
+	for _, node := range s.nodes {
+		node.collections = make([]client.Collection, len(s.collectionNames))
 		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
 		require.Nil(s.t, err)
 
@@ -838,7 +796,7 @@ func refreshCollections(
 
 		for _, collection := range allCollections {
 			if index, ok := s.collectionIndexesByRoot[collection.Description().RootID]; ok {
-				s.collections[nodeID][index] = collection
+				node.collections[index] = collection
 			}
 		}
 	}
@@ -864,35 +822,23 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{node.WithDisableP2P(false), db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
+	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
 
-	node, path, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
 
-	s.nodeAddresses = append(s.nodeAddresses, node.Peer.PeerInfo())
-	s.nodeConfigs = append(s.nodeConfigs, netNodeOpts)
-
-	c, err := setupClient(s, node)
-	require.NoError(s.t, err)
-
-	eventState, err := newEventState(c.Events())
-	require.NoError(s.t, err)
-
-	s.nodes = append(s.nodes, c)
-	s.nodeEvents = append(s.nodeEvents, eventState)
-	s.nodeP2P = append(s.nodeP2P, newP2PState())
-	s.dbPaths = append(s.dbPaths, path)
+	s.nodes = append(s.nodes, node)
 }
 
 func refreshDocuments(
 	s *state,
 	startActionIndex int,
 ) {
-	if len(s.collections) == 0 {
+	if len(s.nodes) == 0 {
 		// This should only be possible at the moment for P2P testing, for which the
 		// change detector is currently disabled.  We'll likely need some fancier logic
 		// here if/when we wish to enable it.
@@ -902,9 +848,9 @@ func refreshDocuments(
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
-	s.docIDs = make([][]client.DocID, len(s.collections[0]))
+	s.docIDs = make([][]client.DocID, len(s.nodes[0].collections))
 
-	for i := range s.collections[0] {
+	for i := range s.nodes[0].collections {
 		s.docIDs[i] = []client.DocID{}
 	}
 
@@ -917,7 +863,7 @@ func refreshDocuments(
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			firstNodesID := nodeIDs[0]
-			collection := s.collections[firstNodesID][action.CollectionID]
+			collection := s.nodes[firstNodesID].collections[action.CollectionID]
 
 			if action.DocMap != nil {
 				substituteRelations(s, action)
@@ -939,16 +885,10 @@ func refreshDocuments(
 func refreshIndexes(
 	s *state,
 ) {
-	if len(s.collections) == 0 {
-		return
-	}
+	for _, node := range s.nodes {
+		node.indexes = make([][]client.IndexDescription, len(node.collections))
 
-	s.indexes = make([][][]client.IndexDescription, len(s.collections))
-
-	for i, nodeCols := range s.collections {
-		s.indexes[i] = make([][]client.IndexDescription, len(nodeCols))
-
-		for j, col := range nodeCols {
+		for i, col := range node.collections {
 			if col == nil {
 				continue
 			}
@@ -957,7 +897,7 @@ func refreshIndexes(
 				continue
 			}
 
-			s.indexes[i][j] = colIndexes
+			node.indexes[i] = colIndexes
 		}
 	}
 }
@@ -966,7 +906,7 @@ func getIndexes(
 	s *state,
 	action GetIndexes,
 ) {
-	if len(s.collections) == 0 {
+	if len(s.nodes) == 0 {
 		return
 	}
 
@@ -974,7 +914,7 @@ func getIndexes(
 
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, nodeID := range nodeIDs {
-		collections := s.collections[nodeID]
+		collections := s.nodes[nodeID].collections
 		err := withRetryOnNode(
 			s.nodes[nodeID],
 			func() error {
@@ -1259,7 +1199,7 @@ func createDoc(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.collections[nodeID][action.CollectionID]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1449,7 +1389,7 @@ func deleteDoc(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.collections[nodeID][action.CollectionID]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
@@ -1493,7 +1433,7 @@ func updateDoc(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.collections[nodeID][action.CollectionID]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1596,7 +1536,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.collections[nodeID][action.CollectionID]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
@@ -1621,18 +1561,10 @@ func createIndex(
 	s *state,
 	action CreateIndex,
 ) {
-	if action.CollectionID >= len(s.indexes) {
-		// Expand the slice if required, so that the index can be accessed by collection index
-		s.indexes = append(
-			s.indexes,
-			make([][][]client.IndexDescription, action.CollectionID-len(s.indexes)+1)...,
-		)
-	}
-
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.collections[nodeID][action.CollectionID]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
 		indexDesc := client.IndexDescription{
 			Name: action.IndexName,
 		}
@@ -1659,8 +1591,8 @@ func createIndex(
 				if err != nil {
 					return err
 				}
-				s.indexes[nodeID][action.CollectionID] = append(
-					s.indexes[nodeID][action.CollectionID],
+				s.nodes[nodeID].indexes[action.CollectionID] = append(
+					s.nodes[nodeID].indexes[action.CollectionID],
 					desc,
 				)
 				return nil
@@ -1684,10 +1616,10 @@ func dropIndex(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.collections[nodeID][action.CollectionID]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
 		indexName := action.IndexName
 		if indexName == "" {
-			indexName = s.indexes[nodeID][action.CollectionID][action.IndexID].Name
+			indexName = s.nodes[nodeID].indexes[action.CollectionID][action.IndexID].Name
 		}
 
 		err := withRetryOnNode(
@@ -1764,7 +1696,7 @@ func backupImport(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetryOnNode(
-	node clients.Client,
+	node client.DB,
 	action func() error,
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
