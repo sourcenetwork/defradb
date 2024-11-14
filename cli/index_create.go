@@ -61,7 +61,7 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 						return NewErrInvalidAscensionOrder(field)
 					}
 				} else if len(parts) > 2 {
-					return NewErrInvalidAscensionOrder(field)
+					return NewErrInvalidInxedFieldDescription(field)
 				}
 				fields = append(fields, client.IndexedFieldDescription{
 					Name:       fieldName,
