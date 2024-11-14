@@ -48,24 +48,20 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 			var fields []client.IndexedFieldDescription
 
 			for _, field := range fieldsArg {
-				var fieldName string
-				var order string
 				// For each field, parse it into a field name and ascension order, separated by a colon
 				// If there is no colon, assume the ascension order is ASC by default
 				const asc = "ASC"
 				const desc = "DESC"
 				parts := strings.Split(field, ":")
-				if len(parts) == 1 {
-					fieldName = parts[0]
-					order = asc
-				} else if len(parts) > 2 {
-					return NewErrInvalidAscensionOrder(field)
-				} else {
-					fieldName = parts[0]
+				fieldName := parts[0]
+				order := asc
+				if len(parts) == 2 {
 					order = strings.ToUpper(parts[1])
 					if order != asc && order != desc {
 						return NewErrInvalidAscensionOrder(field)
 					}
+				} else if len(parts) > 2 {
+					return NewErrInvalidAscensionOrder(field)
 				}
 				fields = append(fields, client.IndexedFieldDescription{
 					Name:       fieldName,
