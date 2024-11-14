@@ -177,15 +177,15 @@ func ExecuteTestCase(
 	}
 
 	var databases []DatabaseType
-	//if badgerInMemory {
-	//databases = append(databases, BadgerIMType)
-	//}
-	//if badgerFile {
-	databases = append(databases, BadgerFileType)
-	//}
-	//if inMemoryStore {
-	//databases = append(databases, DefraIMType)
-	//}
+	if badgerInMemory {
+		databases = append(databases, BadgerIMType)
+	}
+	if badgerFile {
+		databases = append(databases, BadgerFileType)
+	}
+	if inMemoryStore {
+		databases = append(databases, DefraIMType)
+	}
 
 	var kmsList []KMSType
 	if testCase.KMS.Activated {
