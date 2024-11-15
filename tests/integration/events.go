@@ -153,7 +153,8 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 func waitForUpdateEvents(
 	s *state,
 	nodeID immutable.Option[int],
-	docIDs []map[string]struct{},
+	collectionIndex int,
+	docIDs map[string]struct{},
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -166,15 +167,13 @@ func waitForUpdateEvents(
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
-		for collectionIndex, collectionDocIDs := range docIDs {
-			for k := range collectionDocIDs {
-				expect[k] = struct{}{}
 
-				col := node.collections[collectionIndex]
-				if col.Description().IsBranchable {
-					expect[col.SchemaRoot()] = struct{}{}
-				}
-			}
+		col := node.collections[collectionIndex]
+		if col.Description().IsBranchable {
+			expect[col.SchemaRoot()] = struct{}{}
+		}
+		for k := range docIDs {
+			expect[k] = struct{}{}
 		}
 
 		for len(expect) > 0 {
@@ -313,24 +312,21 @@ func updateNetworkState(s *state, nodeID int, evt event.Update) {
 
 // getEventsForUpdateDoc returns a map of docIDs that should be
 // published to the local event bus after an UpdateDoc action.
-func getEventsForUpdateDoc(s *state, action UpdateDoc) []map[string]struct{} {
+func getEventsForUpdateDoc(s *state, action UpdateDoc) map[string]struct{} {
 	docID := s.docIDs[action.CollectionID][action.DocID]
 
 	docMap := make(map[string]any)
 	err := json.Unmarshal([]byte(action.Doc), &docMap)
 	require.NoError(s.t, err)
 
-	expect := make([]map[string]struct{}, action.CollectionID+1)
-	expect[action.CollectionID] = map[string]struct{}{
+	return map[string]struct{}{
 		docID.String(): {},
 	}
-
-	return expect
 }
 
 // getEventsForCreateDoc returns a map of docIDs that should be
 // published to the local event bus after a CreateDoc action.
-func getEventsForCreateDoc(s *state, action CreateDoc) []map[string]struct{} {
+func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	var collection client.Collection
 	if action.NodeID.HasValue() {
 		collection = s.nodes[action.NodeID.Value()].collections[action.CollectionID]
@@ -341,11 +337,10 @@ func getEventsForCreateDoc(s *state, action CreateDoc) []map[string]struct{} {
 	docs, err := parseCreateDocs(action, collection)
 	require.NoError(s.t, err)
 
-	expect := make([]map[string]struct{}, action.CollectionID+1)
-	expect[action.CollectionID] = map[string]struct{}{}
+	expect := make(map[string]struct{}, action.CollectionID+1)
 
 	for _, doc := range docs {
-		expect[action.CollectionID][doc.ID().String()] = struct{}{}
+		expect[doc.ID().String()] = struct{}{}
 	}
 
 	return expect
@@ -361,16 +356,15 @@ func getEventsForUpdateWithFilter(
 	s *state,
 	action UpdateWithFilter,
 	result *client.UpdateResult,
-) []map[string]struct{} {
+) map[string]struct{} {
 	var docPatch map[string]any
 	err := json.Unmarshal([]byte(action.Updater), &docPatch)
 	require.NoError(s.t, err)
 
-	expect := make([]map[string]struct{}, action.CollectionID+1)
-	expect[action.CollectionID] = map[string]struct{}{}
+	expect := make(map[string]struct{}, len(result.DocIDs))
 
 	for _, docID := range result.DocIDs {
-		expect[action.CollectionID][docID] = struct{}{}
+		expect[docID] = struct{}{}
 	}
 
 	return expect
