@@ -22,7 +22,7 @@ import (
 )
 
 func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
-	docIdQueue := newMergeQueue()
+	docIDQueue := newMergeQueue()
 	schemaRootQueue := newMergeQueue()
 
 	// This is used to ensure we only trigger loadAndPublishP2PCollections and loadAndPublishReplicators
@@ -57,8 +57,8 @@ func (db *db) handleMessages(ctx context.Context, sub *event.Subscription) {
 						defer schemaRootQueue.done(evt.SchemaRoot)
 					} else {
 						// ensure only one merge per docID
-						docIdQueue.add(evt.DocID)
-						defer docIdQueue.done(evt.DocID)
+						docIDQueue.add(evt.DocID)
+						defer docIDQueue.done(evt.DocID)
 					}
 
 					// retry the merge process if a conflict occurs
