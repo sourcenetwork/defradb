@@ -215,7 +215,12 @@ func addDocActorRelationshipACP(
 	}
 
 	if action.ExpectedError == "" && !action.ExpectedExistence {
-		waitForUpdateEvents(s, actionNodeID, map[string]struct{}{docID: {}})
+		expect := make([]map[string]struct{}, action.CollectionID+1)
+		expect[action.CollectionID] = map[string]struct{}{
+			docID: {},
+		}
+
+		waitForUpdateEvents(s, actionNodeID, expect)
 	}
 }
 

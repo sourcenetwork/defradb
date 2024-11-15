@@ -1404,10 +1404,12 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" {
-		docIDs := map[string]struct{}{
+		expect := make([]map[string]struct{}, action.CollectionID+1)
+		expect[action.CollectionID] = map[string]struct{}{
 			docID.String(): {},
 		}
-		waitForUpdateEvents(s, action.NodeID, docIDs)
+
+		waitForUpdateEvents(s, action.NodeID, expect)
 	}
 }
 
