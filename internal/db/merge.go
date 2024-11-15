@@ -43,20 +43,19 @@ func (db *db) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	}
 	defer txn.Discard(ctx)
 
-	var mt mergeTarget
+	var key keys.HeadstoreKey
 	if dagMerge.DocID != "" {
-		mt, err = getHeadsAsMergeTarget(ctx, txn, keys.HeadstoreDocKey{
+		key = keys.HeadstoreDocKey{
 			DocID:   dagMerge.DocID,
 			FieldID: core.COMPOSITE_NAMESPACE,
-		})
-		if err != nil {
-			return err
 		}
 	} else {
-		mt, err = getHeadsAsMergeTarget(ctx, txn, keys.NewHeadstoreColKey(col.Description().RootID))
-		if err != nil {
-			return err
-		}
+		key = keys.NewHeadstoreColKey(col.Description().RootID)
+	}
+
+	mt, err := getHeadsAsMergeTarget(ctx, txn, key)
+	if err != nil {
+		return err
 	}
 
 	mp, err := db.newMergeProcessor(txn, col)
