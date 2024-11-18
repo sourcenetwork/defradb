@@ -34,7 +34,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.1.2
 	github.com/libp2p/go-libp2p v0.37.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
-	github.com/libp2p/go-libp2p-kad-dht v0.27.0
+	github.com/libp2p/go-libp2p-kad-dht v0.28.1
 	github.com/libp2p/go-libp2p-pubsub v0.12.0
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/mr-tron/base58 v1.2.0
