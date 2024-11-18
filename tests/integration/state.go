@@ -42,15 +42,21 @@ type p2pState struct {
 	// The map key is the node id of the subscriber.
 	peerCollections map[int]struct{}
 
-	// actualDocHeads contains all document heads that exist on a node.
+	// actualDAGHeads contains all DAG heads that exist on a node.
 	//
 	// The map key is the doc id. The map value is the doc head.
-	actualDocHeads map[string]docHeadState
+	//
+	// This tracks composite commits for documents, and collection commits for
+	// branchable collections
+	actualDAGHeads map[string]docHeadState
 
-	// expectedDocHeads contains all document heads that are expected to exist on a node.
+	// expectedDAGHeads contains all DAG heads that are expected to exist on a node.
 	//
-	// The map key is the doc id. The map value is the doc head.
-	expectedDocHeads map[string]cid.Cid
+	// The map key is the doc id. The map value is the DAG head.
+	//
+	// This tracks composite commits for documents, and collection commits for
+	// branchable collections
+	expectedDAGHeads map[string]cid.Cid
 }
 
 // docHeadState contains the state of a document head.
@@ -68,8 +74,8 @@ func newP2PState() *p2pState {
 		connections:      make(map[int]struct{}),
 		replicators:      make(map[int]struct{}),
 		peerCollections:  make(map[int]struct{}),
-		actualDocHeads:   make(map[string]docHeadState),
-		expectedDocHeads: make(map[string]cid.Cid),
+		actualDAGHeads:   make(map[string]docHeadState),
+		expectedDAGHeads: make(map[string]cid.Cid),
 	}
 }
 

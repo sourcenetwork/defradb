@@ -1226,7 +1226,7 @@ func createDoc(
 	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
 
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, getEventsForCreateDoc(s, action))
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, getEventsForCreateDoc(s, action))
 	}
 }
 
@@ -1404,10 +1404,11 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" {
-		docIDs := map[string]struct{}{
+		expect := map[string]struct{}{
 			docID.String(): {},
 		}
-		waitForUpdateEvents(s, action.NodeID, docIDs)
+
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect)
 	}
 }
 
@@ -1452,7 +1453,7 @@ func updateDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateDoc(s, action))
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, getEventsForUpdateDoc(s, action))
 	}
 }
 
@@ -1552,7 +1553,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, getEventsForUpdateWithFilter(s, action, res))
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, getEventsForUpdateWithFilter(s, action, res))
 	}
 }
 

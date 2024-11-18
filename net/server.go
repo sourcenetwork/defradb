@@ -110,9 +110,12 @@ func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogRepl
 	if err != nil {
 		return nil, err
 	}
-	docID, err := client.NewDocIDFromString(req.DocID)
-	if err != nil {
-		return nil, err
+
+	if req.DocID != "" {
+		_, err := client.NewDocIDFromString(req.DocID)
+		if err != nil {
+			return nil, err
+		}
 	}
 	byPeer, err := libpeer.Decode(req.Creator)
 	if err != nil {
@@ -126,11 +129,11 @@ func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogRepl
 	log.InfoContext(ctx, "Received pushlog",
 		corelog.Any("PeerID", pid.String()),
 		corelog.Any("Creator", byPeer.String()),
-		corelog.Any("DocID", docID.String()))
+		corelog.Any("DocID", req.DocID))
 
 	log.InfoContext(ctx, "Starting DAG sync",
 		corelog.Any("PeerID", pid.String()),
-		corelog.Any("DocID", docID.String()))
+		corelog.Any("DocID", req.DocID))
 
 	err = syncDAG(ctx, s.peer.bserv, block)
 	if err != nil {
@@ -139,19 +142,19 @@ func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogRepl
 
 	log.InfoContext(ctx, "DAG sync complete",
 		corelog.Any("PeerID", pid.String()),
-		corelog.Any("DocID", docID.String()))
+		corelog.Any("DocID", req.DocID))
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// subscribed to the collection.
-	if !s.hasPubSubTopicAndSubscribed(req.SchemaRoot) {
-		err = s.addPubSubTopic(docID.String(), true, nil)
+	if !s.hasPubSubTopicAndSubscribed(req.SchemaRoot) && req.DocID != "" {
+		_, err = s.addPubSubTopic(req.DocID, true, nil)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
-		DocID:      docID.String(),
+		DocID:      req.DocID,
 		ByPeer:     byPeer,
 		FromPeer:   pid,
 		Cid:        headCID,
@@ -172,9 +175,9 @@ func (s *server) GetHeadLog(
 // addPubSubTopic subscribes to a topic on the pubsub network
 // A custom message handler can be provided to handle incoming messages. If not provided,
 // the default message handler will be used.
-func (s *server) addPubSubTopic(topic string, subscribe bool, handler rpc.MessageHandler) error {
+func (s *server) addPubSubTopic(topic string, subscribe bool, handler rpc.MessageHandler) (pubsubTopic, error) {
 	if s.peer.ps == nil {
-		return nil
+		return pubsubTopic{}, nil
 	}
 
 	log.InfoContext(s.peer.ctx, "Adding pubsub topic",
@@ -188,16 +191,16 @@ func (s *server) addPubSubTopic(topic string, subscribe bool, handler rpc.Messag
 		// we need to close the existing topic and create a new one.
 		if !t.subscribed && subscribe {
 			if err := t.Close(); err != nil {
-				return err
+				return pubsubTopic{}, err
 			}
 		} else {
-			return nil
+			return t, nil
 		}
 	}
 
 	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topic, subscribe)
 	if err != nil {
-		return err
+		return pubsubTopic{}, err
 	}
 
 	if handler == nil {
@@ -206,15 +209,17 @@ func (s *server) addPubSubTopic(topic string, subscribe bool, handler rpc.Messag
 
 	t.SetEventHandler(s.pubSubEventHandler)
 	t.SetMessageHandler(handler)
-	s.topics[topic] = pubsubTopic{
+	pst := pubsubTopic{
 		Topic:      t,
 		subscribed: subscribe,
 	}
-	return nil
+	s.topics[topic] = pst
+	return pst, nil
 }
 
 func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) error {
-	return s.addPubSubTopic(topicName, true, handler)
+	_, err := s.addPubSubTopic(topicName, true, handler)
+	return err
 }
 
 // hasPubSubTopicAndSubscribed checks if we are subscribed to a topic.
@@ -274,11 +279,21 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	s.mu.Unlock()
 	if !ok {
 		subscribe := topic != req.SchemaRoot && !s.hasPubSubTopicAndSubscribed(req.SchemaRoot)
-		err := s.addPubSubTopic(topic, subscribe, nil)
+		_, err := s.addPubSubTopic(topic, subscribe, nil)
 		if err != nil {
 			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
 		}
 		return s.publishLog(ctx, topic, req)
+	}
+
+	if topic == req.SchemaRoot && req.DocID == "" && !t.subscribed {
+		// If the push log request is scoped to the schema and not to a document, subscribe to the
+		// schema.
+		var err error
+		t, err = s.addPubSubTopic(topic, true, nil)
+		if err != nil {
+			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
+		}
 	}
 
 	log.InfoContext(ctx, "Publish log",
@@ -356,7 +371,7 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 
 func (s *server) updatePubSubTopics(evt event.P2PTopic) {
 	for _, topic := range evt.ToAdd {
-		err := s.addPubSubTopic(topic, true, nil)
+		_, err := s.addPubSubTopic(topic, true, nil)
 		if err != nil {
 			log.ErrorE("Failed to add pubsub topic.", err)
 		}

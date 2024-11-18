@@ -73,8 +73,8 @@ func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
 	}
 
 	// all previous documents should be merged on the subscriber node
-	for key, val := range s.nodes[cfg.SourceNodeID].p2p.actualDocHeads {
-		s.nodes[cfg.TargetNodeID].p2p.expectedDocHeads[key] = val.cid
+	for key, val := range s.nodes[cfg.SourceNodeID].p2p.actualDAGHeads {
+		s.nodes[cfg.TargetNodeID].p2p.expectedDAGHeads[key] = val.cid
 	}
 
 	// update node connections and replicators
@@ -153,6 +153,7 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 func waitForUpdateEvents(
 	s *state,
 	nodeID immutable.Option[int],
+	collectionIndex int,
 	docIDs map[string]struct{},
 ) {
 	for i := 0; i < len(s.nodes); i++ {
@@ -166,6 +167,11 @@ func waitForUpdateEvents(
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
+
+		col := node.collections[collectionIndex]
+		if col.Description().IsBranchable {
+			expect[col.SchemaRoot()] = struct{}{}
+		}
 		for k := range docIDs {
 			expect[k] = struct{}{}
 		}
@@ -183,16 +189,10 @@ func waitForUpdateEvents(
 				require.Fail(s.t, "timeout waiting for update event", "Node %d", i)
 			}
 
-			if evt.DocID == "" {
-				// Todo: This will almost certainly need to change once P2P for collection-level commits
-				// is enabled. See: https://github.com/sourcenetwork/defradb/issues/3212
-				continue
-			}
-
 			// make sure the event is expected
-			_, ok := expect[evt.DocID]
-			require.True(s.t, ok, "unexpected document update", "Node %d", i)
-			delete(expect, evt.DocID)
+			_, ok := expect[getUpdateEventKey(evt)]
+			require.True(s.t, ok, "unexpected document update", getUpdateEventKey(evt))
+			delete(expect, getUpdateEventKey(evt))
 
 			// we only need to update the network state if the nodes
 			// are configured for networking
@@ -203,7 +203,7 @@ func waitForUpdateEvents(
 	}
 }
 
-// waitForMergeEvents waits for all expected document heads to be merged to all nodes.
+// waitForMergeEvents waits for all expected heads to be merged to all nodes.
 //
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
@@ -214,11 +214,11 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 			continue // node is closed
 		}
 
-		expect := node.p2p.expectedDocHeads
+		expect := node.p2p.expectedDAGHeads
 
-		// remove any docs that are already merged
-		// up to the expected document head
-		for key, val := range node.p2p.actualDocHeads {
+		// remove any heads that are already merged
+		// up to the expected head
+		for key, val := range node.p2p.actualDAGHeads {
 			if head, ok := expect[key]; ok && head.String() == val.cid.String() {
 				delete(expect, key)
 			}
@@ -230,13 +230,13 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 				require.Fail(s.t, "doc index %d out of range", docIndex)
 			}
 			docID := s.docIDs[0][docIndex].String()
-			actual, hasActual := node.p2p.actualDocHeads[docID]
+			actual, hasActual := node.p2p.actualDAGHeads[docID]
 			if !hasActual || !actual.decrypted {
 				expectDecrypted[docID] = struct{}{}
 			}
 		}
 
-		// wait for all expected doc heads to be merged
+		// wait for all expected heads to be merged
 		//
 		// the order of merges does not matter as we only
 		// expect the latest head to eventually be merged
@@ -260,11 +260,11 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 				delete(expectDecrypted, evt.Merge.DocID)
 			}
 
-			head, ok := expect[evt.Merge.DocID]
+			head, ok := expect[getMergeEventKey(evt.Merge)]
 			if ok && head.String() == evt.Merge.Cid.String() {
-				delete(expect, evt.Merge.DocID)
+				delete(expect, getMergeEventKey(evt.Merge))
 			}
-			node.p2p.actualDocHeads[evt.Merge.DocID] = docHeadState{cid: evt.Merge.Cid, decrypted: evt.Decrypted}
+			node.p2p.actualDAGHeads[getMergeEventKey(evt.Merge)] = docHeadState{cid: evt.Merge.Cid, decrypted: evt.Decrypted}
 		}
 	}
 }
@@ -284,23 +284,23 @@ func updateNetworkState(s *state, nodeID int, evt event.Update) {
 
 	// update the actual document head on the node that updated it
 	// as the node created the document, it is already decrypted
-	node.p2p.actualDocHeads[evt.DocID] = docHeadState{cid: evt.Cid, decrypted: true}
+	node.p2p.actualDAGHeads[getUpdateEventKey(evt)] = docHeadState{cid: evt.Cid, decrypted: true}
 
 	// update the expected document heads of replicator targets
 	for id := range node.p2p.replicators {
 		// replicator target nodes push updates to source nodes
-		s.nodes[id].p2p.expectedDocHeads[evt.DocID] = evt.Cid
+		s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 	}
 
 	// update the expected document heads of connected nodes
 	for id := range node.p2p.connections {
 		// connected nodes share updates of documents they have in common
-		if _, ok := s.nodes[id].p2p.actualDocHeads[evt.DocID]; ok {
-			s.nodes[id].p2p.expectedDocHeads[evt.DocID] = evt.Cid
+		if _, ok := s.nodes[id].p2p.actualDAGHeads[getUpdateEventKey(evt)]; ok {
+			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.nodes[id].p2p.peerCollections[collectionID]; ok {
-			s.nodes[id].p2p.expectedDocHeads[evt.DocID] = evt.Cid
+			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}
 
@@ -337,7 +337,7 @@ func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
 	docs, err := parseCreateDocs(action, collection)
 	require.NoError(s.t, err)
 
-	expect := make(map[string]struct{})
+	expect := make(map[string]struct{}, action.CollectionID+1)
 
 	for _, doc := range docs {
 		expect[doc.ID().String()] = struct{}{}
@@ -361,11 +361,35 @@ func getEventsForUpdateWithFilter(
 	err := json.Unmarshal([]byte(action.Updater), &docPatch)
 	require.NoError(s.t, err)
 
-	expect := make(map[string]struct{})
+	expect := make(map[string]struct{}, len(result.DocIDs))
 
 	for _, docID := range result.DocIDs {
 		expect[docID] = struct{}{}
 	}
 
 	return expect
+}
+
+// getUpdateEventKey gets the identifier to which this event is scoped to.
+//
+// For example, if this is scoped to a document, the document ID will be
+// returned.  If it is scoped to a schema, the schema root will be returned.
+func getUpdateEventKey(evt event.Update) string {
+	if evt.DocID == "" {
+		return evt.SchemaRoot
+	}
+
+	return evt.DocID
+}
+
+// getMergeEventKey gets the identifier to which this event is scoped to.
+//
+// For example, if this is scoped to a document, the document ID will be
+// returned.  If it is scoped to a schema, the schema root will be returned.
+func getMergeEventKey(evt event.Merge) string {
+	if evt.DocID == "" {
+		return evt.SchemaRoot
+	}
+
+	return evt.DocID
 }
