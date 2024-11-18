@@ -59,29 +59,29 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid(0),
+							"cid": testUtils.NewUniqueCid("collection"),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid(1),
+									"cid": testUtils.NewUniqueCid("composite"),
 								},
 							},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid(2),
+							"cid":   testUtils.NewUniqueCid("age"),
 							"links": []map[string]any{},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid(3),
+							"cid":   testUtils.NewUniqueCid("name"),
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid(1),
+							"cid": testUtils.NewUniqueCid("composite"),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid(2),
+									"cid": testUtils.NewUniqueCid("age"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid(3),
+									"cid": testUtils.NewUniqueCid("name"),
 								},
 							},
 						},
