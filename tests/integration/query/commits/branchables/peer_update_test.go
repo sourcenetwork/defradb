@@ -53,17 +53,30 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 			},
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{
+				// Update node 1 after the peer connection has been established, this will cause the `Shahzad` commit
+				// to be synced to node 0, as well as the related collection commits.
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			// Note: node 1 does not recieve the first update from node 0 as it occured before the nodes were connected
-			// node 0 has it as it recieved it when recieving the second update from node 1.  The cids and blocks remain
-			// consistent across both nodes (minus the missing commits).
-			testUtils.Request{
+			testUtils.UpdateDoc{
+				// Update node 0 after `Chris` and `Shahzad` have synced to node 0.  As this update happens after the peer
+				// connection has been established, this will cause the `Fred` and `Addo` doc commits, and their corresponding
+				// collection-level commits to sync to node 1.
+				//
+				// Now, all nodes should have a full history, including the 'offline' changes made before establishing the
+				// peer connection.
 				NodeID: immutable.Some(0),
+				Doc: `{
+				  "name": "Addo"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Strong eventual consistency must now have been established across both nodes, the result of this query
+				// *must* exactly match across both nodes.
 				Request: `query {
 						commits {
 							cid
@@ -75,13 +88,16 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection, update2"),
+							"cid": testUtils.NewUniqueCid("collection, update3"),
 							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("collection, update2"),
+								},
 								{
 									"cid": testUtils.NewUniqueCid("collection, node1 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, update2"),
+									"cid": testUtils.NewUniqueCid("doc, update3"),
 								},
 							},
 						},
@@ -105,6 +121,17 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
+							"cid": testUtils.NewUniqueCid("collection, update2"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("collection, node0 update1"),
+								},
+								{
+									"cid": testUtils.NewUniqueCid("doc, update2"),
+								},
+							},
+						},
+						{
 							"cid": testUtils.NewUniqueCid("collection, node0 update1"),
 							"links": []map[string]any{
 								{
@@ -112,6 +139,25 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 								},
 								{
 									"cid": testUtils.NewUniqueCid("doc, node0 update1"),
+								},
+							},
+						},
+						{
+							"cid": testUtils.NewUniqueCid("name, update3"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("name, node1 update1"),
+								},
+								{
+									"cid": testUtils.NewUniqueCid("name, update2"),
+								},
+							},
+						},
+						{
+							"cid": testUtils.NewUniqueCid("name, update2"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("name, node0 update1"),
 								},
 							},
 						},
@@ -128,14 +174,6 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, update2"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("name, node1 update1"),
-								},
-							},
-						},
-						{
 							"cid": testUtils.NewUniqueCid("name, node1 update1"),
 							"links": []map[string]any{
 								{
@@ -144,13 +182,16 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, update2"),
+							"cid": testUtils.NewUniqueCid("doc, update3"),
 							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("doc, update2"),
+								},
 								{
 									"cid": testUtils.NewUniqueCid("doc, node1 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, update2"),
+									"cid": testUtils.NewUniqueCid("name, update3"),
 								},
 							},
 						},
@@ -170,6 +211,17 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"links": []map[string]any{
 								{
 									"cid": testUtils.NewUniqueCid("name, create"),
+								},
+							},
+						},
+						{
+							"cid": testUtils.NewUniqueCid("doc, update2"),
+							"links": []map[string]any{
+								{
+									"cid": testUtils.NewUniqueCid("doc, node0 update1"),
+								},
+								{
+									"cid": testUtils.NewUniqueCid("name, update2"),
 								},
 							},
 						},
@@ -188,101 +240,6 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				},
 			},
 			testUtils.Request{
-				NodeID: immutable.Some(1),
-				Request: `query {
-						commits {
-							cid
-							links {
-								cid
-							}
-						}
-					}`,
-				Results: map[string]any{
-					"commits": []map[string]any{
-						{
-							"cid": testUtils.NewUniqueCid("collection, update2"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("collection, node1 update1"),
-								},
-								{
-									"cid": testUtils.NewUniqueCid("doc, update2"),
-								},
-							},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("collection, node1 update1"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("collection, create"),
-								},
-								{
-									"cid": testUtils.NewUniqueCid("doc, node1 update1"),
-								},
-							},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("collection, create"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("doc, create"),
-								},
-							},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("name, update2"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("name, node1 update1"),
-								},
-							},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("name, node1 update1"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("name, create"),
-								},
-							},
-						},
-						{
-							"cid":   testUtils.NewUniqueCid("name, create"),
-							"links": []map[string]any{},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("doc, update2"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("doc, node1 update1"),
-								},
-								{
-									"cid": testUtils.NewUniqueCid("name, update2"),
-								},
-							},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("doc, node1 update1"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("doc, create"),
-								},
-								{
-									"cid": testUtils.NewUniqueCid("name, node1 update1"),
-								},
-							},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("doc, create"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("name, create"),
-								},
-							},
-						},
-					},
-				},
-			},
-			testUtils.Request{
 				Request: `query {
 					Users {
 						name
@@ -291,7 +248,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Chris",
+							"name": "Addo",
 						},
 					},
 				},
