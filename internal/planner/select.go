@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -345,18 +346,21 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 		case *mapper.Aggregate:
 			var plan aggregateNode
 			var aggregateError error
+			var aggregateFilter *mapper.Filter
 
+			// extract aggregate filters from the select
+			selectReq.Filter, aggregateFilter = filter.SplitByFields(selectReq.Filter, f.Field)
 			switch f.Name {
 			case request.CountFieldName:
-				plan, aggregateError = n.planner.Count(f, selectReq)
+				plan, aggregateError = n.planner.Count(f, selectReq, aggregateFilter)
 			case request.SumFieldName:
-				plan, aggregateError = n.planner.Sum(f, selectReq)
+				plan, aggregateError = n.planner.Sum(f, selectReq, aggregateFilter)
 			case request.AverageFieldName:
-				plan, aggregateError = n.planner.Average(f)
+				plan, aggregateError = n.planner.Average(f, aggregateFilter)
 			case request.MaxFieldName:
-				plan, aggregateError = n.planner.Max(f, selectReq)
+				plan, aggregateError = n.planner.Max(f, selectReq, aggregateFilter)
 			case request.MinFieldName:
-				plan, aggregateError = n.planner.Min(f, selectReq)
+				plan, aggregateError = n.planner.Min(f, selectReq, aggregateFilter)
 			}
 
 			if aggregateError != nil {

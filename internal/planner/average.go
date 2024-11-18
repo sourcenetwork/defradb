@@ -28,6 +28,8 @@ type averageNode struct {
 	virtualFieldIndex int
 
 	execInfo averageExecInfo
+
+	aggregateFilter *mapper.Filter
 }
 
 type averageExecInfo struct {
@@ -37,6 +39,7 @@ type averageExecInfo struct {
 
 func (p *Planner) Average(
 	field *mapper.Aggregate,
+	filter *mapper.Filter,
 ) (*averageNode, error) {
 	var sumField *mapper.Aggregate
 	var countField *mapper.Aggregate
@@ -57,6 +60,7 @@ func (p *Planner) Average(
 		countFieldIndex:   countField.Index,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
+		aggregateFilter:   filter,
 	}, nil
 }
 
@@ -102,7 +106,7 @@ func (n *averageNode) Next() (bool, error) {
 		return false, client.NewErrUnhandledType("sum", sumProp)
 	}
 
-	return true, nil
+	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
 
 func (n *averageNode) SetPlan(p planNode) { n.plan = p }

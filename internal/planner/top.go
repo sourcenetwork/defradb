@@ -198,15 +198,15 @@ func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 			var err error
 			switch field.GetName() {
 			case request.CountFieldName:
-				child, err = p.Count(f, m)
+				child, err = p.Count(f, m, nil)
 			case request.SumFieldName:
-				child, err = p.Sum(f, m)
+				child, err = p.Sum(f, m, nil)
 			case request.AverageFieldName:
-				child, err = p.Average(f)
+				child, err = p.Average(f, nil)
 			case request.MaxFieldName:
-				child, err = p.Max(f, m)
+				child, err = p.Max(f, m, nil)
 			case request.MinFieldName:
-				child, err = p.Min(f, m)
+				child, err = p.Min(f, m, nil)
 			}
 			if err != nil {
 				return nil, err

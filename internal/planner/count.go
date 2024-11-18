@@ -34,6 +34,7 @@ type countNode struct {
 
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+	aggregateFilter   *mapper.Filter
 
 	execInfo countExecInfo
 }
@@ -43,11 +44,12 @@ type countExecInfo struct {
 	iterations uint64
 }
 
-func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNode, error) {
+func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select, filter *mapper.Filter) (*countNode, error) {
 	return &countNode{
 		p:                 p,
 		virtualFieldIndex: field.Index,
 		aggregateMapping:  field.AggregateTargets,
+		aggregateFilter:   filter,
 		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
 }
@@ -180,7 +182,7 @@ func (n *countNode) Next() (bool, error) {
 	}
 
 	n.currentValue.Fields[n.virtualFieldIndex] = count
-	return true, nil
+	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
 
 // countDocs counts the number of documents in a slice, skipping over hidden items
