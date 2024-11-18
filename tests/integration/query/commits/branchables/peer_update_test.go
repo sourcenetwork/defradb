@@ -88,16 +88,16 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection, update3"),
+							"cid": testUtils.NewUniqueCid("collection, node0 update3"),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, update2"),
+									"cid": testUtils.NewUniqueCid("collection, node1 update2"),
 								},
 								{
 									"cid": testUtils.NewUniqueCid("collection, node1 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, update3"),
+									"cid": testUtils.NewUniqueCid("doc, node0 update3"),
 								},
 							},
 						},
@@ -121,13 +121,13 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, update2"),
+							"cid": testUtils.NewUniqueCid("collection, node1 update2"),
 							"links": []map[string]any{
 								{
 									"cid": testUtils.NewUniqueCid("collection, node0 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, update2"),
+									"cid": testUtils.NewUniqueCid("doc, node1 update2"),
 								},
 							},
 						},
@@ -143,18 +143,18 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, update3"),
+							"cid": testUtils.NewUniqueCid("name, node0 update3"),
 							"links": []map[string]any{
 								{
 									"cid": testUtils.NewUniqueCid("name, node1 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, update2"),
+									"cid": testUtils.NewUniqueCid("name, node1 update2"),
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, update2"),
+							"cid": testUtils.NewUniqueCid("name, node1 update2"),
 							"links": []map[string]any{
 								{
 									"cid": testUtils.NewUniqueCid("name, node0 update1"),
@@ -182,16 +182,16 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, update3"),
+							"cid": testUtils.NewUniqueCid("doc, node0 update3"),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc, update2"),
+									"cid": testUtils.NewUniqueCid("doc, node1 update2"),
 								},
 								{
 									"cid": testUtils.NewUniqueCid("doc, node1 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, update3"),
+									"cid": testUtils.NewUniqueCid("name, node0 update3"),
 								},
 							},
 						},
@@ -215,13 +215,13 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, update2"),
+							"cid": testUtils.NewUniqueCid("doc, node1 update2"),
 							"links": []map[string]any{
 								{
 									"cid": testUtils.NewUniqueCid("doc, node0 update1"),
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, update2"),
+									"cid": testUtils.NewUniqueCid("name, node1 update2"),
 								},
 							},
 						},
