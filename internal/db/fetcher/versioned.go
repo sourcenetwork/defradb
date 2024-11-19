@@ -312,6 +312,13 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 	var mcrdt merklecrdt.MerkleCRDT
 	switch {
+	case block.Delta.IsCollection():
+		mcrdt = merklecrdt.NewMerkleCollection(
+			vf.store,
+			keys.NewCollectionSchemaVersionKey(vf.col.Description().SchemaVersionID, vf.col.Description().ID),
+			keys.NewHeadstoreColKey(vf.col.Description().RootID),
+		)
+
 	case block.Delta.IsComposite():
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			vf.store,

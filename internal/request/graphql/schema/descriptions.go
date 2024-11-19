@@ -73,11 +73,10 @@ An optional set of docIDs for this field. Only documents with a docID
  be ignored.
 `
 	cidArgDescription string = `
-An optional value that specifies the commit ID of a document to return.
- This CID does not need to be the most recent for a document, if it
- corresponds to an older version of a document the document will be returned
- at the state it was in at the time of that commit. If a matching commit is
- not found then an empty set will be returned.
+An optional value that specifies the commit ID of a document or a branchable collection.
+ This CID does not need to be the most recent. If it corresponds to an older version
+ the document(s) will be returned at the state they were in at the time of that commit.
+ If a matching commit is not found then an empty set will be returned.
 `
 	singleFieldFilterArgDescription string = `
 An optional filter for this join, if the related record does
