@@ -255,19 +255,24 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		origScan.filter = n.filter
 		n.filter = nil
 
-		// If we have both a DocID and a CID, then we need to run
-		// a TimeTravel (History-Traversing Versioned) query, which means
-		// we need to propagate the values to the underlying VersionedFetcher
+		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
+		// query, which means we need to propagate the values to the underlying VersionedFetcher
 		if n.selectReq.Cid.HasValue() {
 			c, err := cid.Decode(n.selectReq.Cid.Value())
 			if err != nil {
 				return nil, err
 			}
+
+			var docID string
+			if len(n.selectReq.DocIDs.Value()) > 0 {
+				docID = n.selectReq.DocIDs.Value()[0]
+			}
+
 			origScan.Spans(
 				[]core.Span{
 					core.NewSpan(
 						keys.HeadstoreDocKey{
-							DocID: n.selectReq.DocIDs.Value()[0],
+							DocID: docID,
 							Cid:   c,
 						},
 						keys.HeadstoreDocKey{},

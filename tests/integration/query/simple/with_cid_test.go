@@ -13,10 +13,6 @@ package simple
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/tests/change_detector"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -44,20 +40,8 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test documents a bug:
-// https://github.com/sourcenetwork/defradb/issues/3214
 func TestQuerySimpleWithCid(t *testing.T) {
-	if change_detector.Enabled {
-		t.Skipf("Change detector does not support requiring panics")
-	}
-
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
-				// The CLI/Http clients don't panic in this context
-				testUtils.GoClientType,
-			},
-		),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -90,7 +74,47 @@ func TestQuerySimpleWithCid(t *testing.T) {
 		},
 	}
 
-	require.Panics(t, func() {
-		testUtils.ExecuteTestCase(t, test)
-	})
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe"
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }
