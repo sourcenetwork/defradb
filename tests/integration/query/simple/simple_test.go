@@ -215,7 +215,8 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test documents the bug as described in issue #3242
+// This test is to ensure that deleted docs from the next collection ID are not returned in the query results.
+// It documents the fixing of the bug described in #3242.
 func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deleted docs in collection 2 should not yield deleted docs on collection 1 query",
@@ -282,10 +283,6 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 						{
 							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
-						},
-						// Deleted doc should not be returned
-						{
-							"_docID": "bae-559d6316-bb45-5644-997c-f48e2e208bbd",
 						},
 					},
 				},

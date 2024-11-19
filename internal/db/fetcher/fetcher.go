@@ -281,17 +281,17 @@ func (df *DocumentFetcher) start(ctx context.Context, spans []core.Span, withDel
 			if withDeleted {
 				// DocumentFetcher only ever recieves document keys
 				//nolint:forcetypeassert
-				valueSpans[i] = core.NewSpan(
-					span.Start.(keys.DataStoreKey).WithDeletedFlag(),
-					span.End.(keys.DataStoreKey).WithDeletedFlag(),
-				)
+				span.Start = span.Start.(keys.DataStoreKey).WithDeletedFlag()
+				// The end key should always be the prefix end of the start key
+				span.End = span.Start.PrefixEnd()
+				valueSpans[i] = span
 			} else {
 				// DocumentFetcher only ever recieves document keys
 				//nolint:forcetypeassert
-				valueSpans[i] = core.NewSpan(
-					span.Start.(keys.DataStoreKey).WithValueFlag(),
-					span.End.(keys.DataStoreKey).WithValueFlag(),
-				)
+				span.Start = span.Start.(keys.DataStoreKey).WithValueFlag()
+				// The end key should always be the prefix end of the start key
+				span.End = span.Start.PrefixEnd()
+				valueSpans[i] = span
 			}
 		}
 
