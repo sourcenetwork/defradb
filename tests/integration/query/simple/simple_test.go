@@ -214,3 +214,84 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+// This test documents the bug as described in issue #3242
+func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Deleted docs in collection 2 should not yield deleted docs on collection 1 query",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+                    type User {
+                        name: String
+                    }
+                    type Friend {
+                        name: String
+                    }
+                `,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Shahzad",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Andy",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+                    User {
+                        _docID
+                    }
+                }`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+						},
+						{
+							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+						},
+					},
+				},
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 1,
+				DocID:        0,
+			},
+			testUtils.Request{
+				Request: `query {
+                    User {
+                        _docID
+                    }
+                }`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+						},
+						{
+							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+						},
+						// Deleted doc should not be returned
+						{
+							"_docID": "bae-559d6316-bb45-5644-997c-f48e2e208bbd",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
