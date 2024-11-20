@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -54,13 +55,13 @@ func (p *Planner) Min(
 	}, nil
 }
 
-func (n *minNode) Kind() string            { return "minNode" }
-func (n *minNode) Init() error             { return n.plan.Init() }
-func (n *minNode) Start() error            { return n.plan.Start() }
-func (n *minNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
-func (n *minNode) Close() error            { return n.plan.Close() }
-func (n *minNode) Source() planNode        { return n.plan }
-func (n *minNode) SetPlan(p planNode)      { n.plan = p }
+func (n *minNode) Kind() string                      { return "minNode" }
+func (n *minNode) Init() error                       { return n.plan.Init() }
+func (n *minNode) Start() error                      { return n.plan.Start() }
+func (n *minNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
+func (n *minNode) Close() error                      { return n.plan.Close() }
+func (n *minNode) Source() planNode                  { return n.plan }
+func (n *minNode) SetPlan(p planNode)                { n.plan = p }
 
 func (n *minNode) simpleExplain() (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))

@@ -88,11 +88,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -104,11 +101,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 							"collectionID":   "2",
 							"collectionName": "Book",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},
@@ -183,11 +177,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -203,11 +194,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 									"_eq": "To my dear readers",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/1",
-									"end":   "/2",
-								},
+							"prefixes": []string{
+								"/1",
 							},
 						},
 					},
@@ -300,11 +288,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -316,11 +301,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 							"collectionID":   "2",
 							"collectionName": "Book",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},
@@ -342,11 +324,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -358,11 +337,8 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 							"collectionID":   "1",
 							"collectionName": "Article",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/1",
-									"end":   "/2",
-								},
+							"prefixes": []string{
+								"/1",
 							},
 						},
 					},

@@ -69,7 +69,7 @@ func (n *selectTopNode) Start() error { return n.planNode.Start() }
 
 func (n *selectTopNode) Next() (bool, error) { return n.planNode.Next() }
 
-func (n *selectTopNode) Spans(spans []core.Span) { n.planNode.Spans(spans) }
+func (n *selectTopNode) Prefixes(prefixes []keys.Walkable) { n.planNode.Prefixes(prefixes) }
 
 func (n *selectTopNode) Value() core.Doc { return n.planNode.Value() }
 
@@ -181,8 +181,8 @@ func (n *selectNode) Next() (bool, error) {
 	}
 }
 
-func (n *selectNode) Spans(spans []core.Span) {
-	n.source.Spans(spans)
+func (n *selectNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
 }
 
 func (n *selectNode) Close() error {
@@ -263,33 +263,29 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 				return nil, err
 			}
 
-			// This exists because the fetcher interface demands a []Span, yet the versioned
-			// fetcher type (that will be the only one consuming this []Span) does not use it
-			// as either a span, or even a prefix. And with this design limitation this is
+			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
+			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
+			// as a prefix. And with this design limitation this is
 			// currently the least bad way of passing the cid in to the fetcher.
-			origScan.Spans(
-				[]core.Span{
-					core.NewSpan(
-						keys.HeadstoreDocKey{
-							Cid: c,
-						},
-						keys.HeadstoreDocKey{},
-					),
+			origScan.Prefixes(
+				[]keys.Walkable{
+					keys.HeadstoreDocKey{
+						Cid: c,
+					},
 				},
 			)
 		} else if n.selectReq.DocIDs.HasValue() {
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
-			// if we have a FindByDocID filter, create a span for it
+			// if we have a FindByDocID filter, create a prefix for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			spans := make([]core.Span, len(n.selectReq.DocIDs.Value()))
+			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
 			for i, docID := range n.selectReq.DocIDs.Value() {
-				docIDIndexKey := base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
-				spans[i] = core.NewSpan(docIDIndexKey, docIDIndexKey.PrefixEnd())
+				prefixes[i] = base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
 			}
-			origScan.Spans(spans)
+			origScan.Prefixes(prefixes)
 		}
 	}
 

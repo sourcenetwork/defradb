@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -149,7 +150,7 @@ func (n *sumNode) Init() error {
 
 func (n *sumNode) Start() error { return n.plan.Start() }
 
-func (n *sumNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
+func (n *sumNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
 
 func (n *sumNode) Close() error { return n.plan.Close() }
 

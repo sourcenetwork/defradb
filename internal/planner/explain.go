@@ -66,7 +66,7 @@ const (
 	limitLabel          = "limit"
 	offsetLabel         = "offset"
 	sourcesLabel        = "sources"
-	spansLabel          = "spans"
+	prefixesLabel       = "prefixes"
 )
 
 // buildDebugExplainGraph dumps the entire plan graph as is, with all the plan nodes.

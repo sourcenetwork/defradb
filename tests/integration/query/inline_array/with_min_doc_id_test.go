@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is meant to provide coverage of the planNode.Spans
+// This test is meant to provide coverage of the planNode.Prefixes
 // func by targeting a specific docID in the parent select.
 func TestQueryInlineNillableFloatArray_WithDocIDAndMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{

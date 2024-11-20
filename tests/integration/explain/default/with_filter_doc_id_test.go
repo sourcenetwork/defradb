@@ -53,11 +53,8 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
 					},
@@ -105,11 +102,8 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
 					},
@@ -163,15 +157,9 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
 					},
@@ -225,15 +213,9 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
-								{
-									"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-									"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
 						},
 					},
@@ -289,11 +271,8 @@ func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 									"_eq": "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
