@@ -127,8 +127,8 @@ historyLoop:
 	)
 }
 
-func (f *lensedFetcher) Start(ctx context.Context, spans ...core.Span) error {
-	return f.source.Start(ctx, spans...)
+func (f *lensedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
+	return f.source.Start(ctx, prefixes...)
 }
 
 func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error) {

@@ -78,11 +78,8 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 									"_eq": "John Grisham",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -168,11 +165,8 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 									"_eq": "Cornelia Funke",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},

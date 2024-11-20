@@ -59,11 +59,8 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-									"end":   "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2255",
-								},
+							"prefixes": []string{
+								"/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
 							},
 						},
 					},
@@ -125,15 +122,9 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 									"_eq": int32(20),
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-									"end":   "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2255",
-								},
-								{
-									"start": "/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed",
-									"end":   "/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeee",
-								},
+							"prefixes": []string{
+								"/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
+								"/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed",
 							},
 						},
 					},

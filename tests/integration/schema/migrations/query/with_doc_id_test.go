@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// This test asserts that spans are being passed correctly through the new Lens fetcher.
+// This test asserts that prefixes are being passed correctly through the new Lens fetcher.
 func TestSchemaMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema migration, query by docID",

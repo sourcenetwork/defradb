@@ -46,8 +46,8 @@ type scanNode struct {
 
 	showDeleted bool
 
-	spans   []core.Span
-	reverse bool
+	prefixes []keys.Walkable
+	reverse  bool
 
 	filter *mapper.Filter
 	slct   *mapper.Select
@@ -202,12 +202,12 @@ func (n *scanNode) Start() error {
 }
 
 func (n *scanNode) initScan() error {
-	if len(n.spans) == 0 {
-		start := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
-		n.spans = []core.Span{core.NewSpan(start, start.PrefixEnd())}
+	if len(n.prefixes) == 0 {
+		prefix := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
+		n.prefixes = []keys.Walkable{prefix}
 	}
 
-	err := n.fetcher.Start(n.p.ctx, n.spans...)
+	err := n.fetcher.Start(n.p.ctx, n.prefixes...)
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func (n *scanNode) initScan() error {
 func (n *scanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if len(n.spans) == 0 {
+	if len(n.prefixes) == 0 {
 		return false, nil
 	}
 
@@ -249,8 +249,8 @@ func (n *scanNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *scanNode) Spans(spans []core.Span) {
-	n.spans = spans
+func (n *scanNode) Prefixes(prefixes []keys.Walkable) {
+	n.prefixes = prefixes
 }
 
 func (n *scanNode) Close() error {
@@ -259,19 +259,13 @@ func (n *scanNode) Close() error {
 
 func (n *scanNode) Source() planNode { return nil }
 
-// explainSpans explains the spans attribute.
-func (n *scanNode) explainSpans() []map[string]any {
-	spansExplainer := []map[string]any{}
-	for _, span := range n.spans {
-		spanExplainer := map[string]any{
-			"start": keys.PrettyPrint(span.Start),
-			"end":   keys.PrettyPrint(span.End),
-		}
-
-		spansExplainer = append(spansExplainer, spanExplainer)
+// explainPrefixes explains the prefixes attribute.
+func (n *scanNode) explainPrefixes() []string {
+	prefixes := make([]string, len(n.prefixes))
+	for i, prefix := range n.prefixes {
+		prefixes[i] = keys.PrettyPrint(prefix)
 	}
-
-	return spansExplainer
+	return prefixes
 }
 
 func (n *scanNode) simpleExplain() (map[string]any, error) {
@@ -288,8 +282,8 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap[collectionNameLabel] = n.col.Name().Value()
 	simpleExplainMap[collectionIDLabel] = n.col.Description().IDString()
 
-	// Add the spans attribute.
-	simpleExplainMap[spansLabel] = n.explainSpans()
+	// Add the prefixes attribute.
+	simpleExplainMap[prefixesLabel] = n.explainPrefixes()
 
 	return simpleExplainMap, nil
 }
@@ -418,8 +412,8 @@ func (n *multiScanNode) Value() core.Doc {
 	return n.scanNode.documentIterator.Value()
 }
 
-func (n *multiScanNode) Spans(spans []core.Span) {
-	n.scanNode.Spans(spans)
+func (n *multiScanNode) Prefixes(prefixes []keys.Walkable) {
+	n.scanNode.Prefixes(prefixes)
 }
 
 func (n *multiScanNode) Source() planNode {

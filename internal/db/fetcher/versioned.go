@@ -147,10 +147,10 @@ func (vf *VersionedFetcher) Init(
 }
 
 // Start serializes the correct state according to the Key and CID.
-func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
 	// VersionedFetcher only ever recieves a headstore key
 	//nolint:forcetypeassert
-	prefix := spans[0].Start.(keys.HeadstoreDocKey)
+	prefix := prefixes[0].(keys.HeadstoreDocKey)
 
 	vf.ctx = ctx
 
@@ -161,16 +161,16 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error
 	return vf.DocumentFetcher.Start(ctx)
 }
 
-// Start a fetcher with the needed info (cid embedded in a span)
+// Start a fetcher with the needed info (cid embedded in a prefix)
 
 /*
 1. Init with DocID (VersionedFetched is scoped to a single doc)
 2. - Create transient stores (head, data, block)
-3. Start with a given Txn and CID span set (length 1 for now)
+3. Start with a given Txn and CID prefix set (length 1 for now)
 4. call traverse with the target cid
 5.
 
-err := VersionFetcher.Start(txn, spans) {
+err := VersionFetcher.Start(txn, prefixes) {
 	vf.traverse(cid)
 }
 */

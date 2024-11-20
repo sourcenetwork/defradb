@@ -85,15 +85,9 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 									"_eq": "John Grisham",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8f",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
 							},
 						},
 					},
@@ -182,11 +176,8 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 									"_eq": "Cornelia Funke",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
 					},

@@ -47,11 +47,8 @@ func TestSimpleExplainRequest(t *testing.T) {
 											"filter":         nil,
 											"collectionID":   "3",
 											"collectionName": "Author",
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
+											"prefixes": []string{
+												"/3",
 											},
 										},
 									},

@@ -76,11 +76,8 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 									"_ne": nil,
 								},
 							},
-							"spans": []dataMap{
-								{
-									"end":   "/4",
-									"start": "/3",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -168,11 +165,8 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 									"_ne": nil,
 								},
 							},
-							"spans": []dataMap{
-								{
-									"end":   "/4",
-									"start": "/3",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},

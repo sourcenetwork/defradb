@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -114,8 +115,8 @@ func (n *typeIndexJoin) Start() error {
 	return n.joinPlan.Start()
 }
 
-func (n *typeIndexJoin) Spans(spans []core.Span) {
-	n.joinPlan.Spans(spans)
+func (n *typeIndexJoin) Prefixes(prefixes []keys.Walkable) {
+	n.joinPlan.Prefixes(prefixes)
 }
 
 func (n *typeIndexJoin) Next() (bool, error) {
@@ -444,9 +445,9 @@ func fetchDocWithID(node planNode, docID string) (bool, error) {
 	}
 	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docID)
 
-	spans := []core.Span{core.NewSpan(dsKey, dsKey.PrefixEnd())}
+	prefixes := []keys.Walkable{dsKey}
 
-	node.Spans(spans)
+	node.Prefixes(prefixes)
 
 	if err := node.Init(); err != nil {
 		return false, NewErrSubTypeInit(err)
@@ -502,8 +503,8 @@ func (join *invertibleTypeJoin) Close() error {
 	return join.childSide.plan.Close()
 }
 
-func (join *invertibleTypeJoin) Spans(spans []core.Span) {
-	join.parentSide.plan.Spans(spans)
+func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
+	join.parentSide.plan.Prefixes(prefixes)
 }
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }

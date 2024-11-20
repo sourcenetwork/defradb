@@ -91,13 +91,13 @@ func (n *dagScanNode) Start() error {
 	return nil
 }
 
-// Spans needs to parse the given span set. dagScanNode only
-// cares about the first value in the span set. The value is
+// Prefixes needs to parse the given prefix set. dagScanNode only
+// cares about the first value in the prefix set. The value is
 // either a CID or a DocID.
 // If its a CID, set the node CID val
 // if its a DocID, set the node Key val (headset)
-func (n *dagScanNode) Spans(spans []core.Span) {
-	if len(spans) == 0 {
+func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
+	if len(prefixes) == 0 {
 		return
 	}
 
@@ -108,9 +108,9 @@ func (n *dagScanNode) Spans(spans []core.Span) {
 		fieldID = core.COMPOSITE_NAMESPACE
 	}
 
-	for _, span := range spans {
+	for _, prefix := range prefixes {
 		var start keys.HeadstoreDocKey
-		switch s := span.Start.(type) {
+		switch s := prefix.(type) {
 		case keys.DataStoreKey:
 			start = s.ToHeadStoreKey()
 		case keys.HeadstoreDocKey:
@@ -145,20 +145,14 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 		simpleExplainMap["cid"] = nil
 	}
 
-	// Build the explanation of the spans attribute.
-	spansExplainer := []map[string]any{}
+	// Build the explanation of the prefixes attribute.
+	prefixesExplainer := []string{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.prefix.HasValue() {
-		spansExplainer = append(
-			spansExplainer,
-			map[string]any{
-				"start": n.prefix.Value().ToString(),
-				"end":   n.prefix.Value().PrefixEnd().ToString(),
-			},
-		)
+		prefixesExplainer = append(prefixesExplainer, keys.PrettyPrint(n.prefix.Value()))
 	}
-	// Add the built spans attribute, if it was valid.
-	simpleExplainMap[spansLabel] = spansExplainer
+	// Add the built prefixes attribute, if it was valid.
+	simpleExplainMap[prefixesLabel] = prefixesExplainer
 
 	return simpleExplainMap, nil
 }

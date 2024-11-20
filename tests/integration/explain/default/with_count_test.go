@@ -72,11 +72,8 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 							"filter":         nil,
 							"collectionID":   "2",
 							"collectionName": "Book",
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},

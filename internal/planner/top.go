@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -35,7 +36,7 @@ type topLevelNode struct {
 	isInRecurse bool
 }
 
-func (n *topLevelNode) Spans(spans []core.Span) {
+func (n *topLevelNode) Prefixes(prefixes []keys.Walkable) {
 	if n.isInRecurse {
 		return
 	}
@@ -45,7 +46,7 @@ func (n *topLevelNode) Spans(spans []core.Span) {
 	}()
 
 	for _, child := range n.children {
-		child.Spans(spans)
+		child.Prefixes(prefixes)
 	}
 }
 
