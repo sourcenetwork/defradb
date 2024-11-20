@@ -263,17 +263,15 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 				return nil, err
 			}
 
-			var docID string
-			if len(n.selectReq.DocIDs.Value()) > 0 {
-				docID = n.selectReq.DocIDs.Value()[0]
-			}
-
+			// This exists because the fetcher interface demands a []Span, yet the versioned
+			// fetcher type (that will be the only one consuming this []Span) does not use it
+			// as either a span, or even a prefix. And with this design limitation this is
+			// currently the least bad way of passing the cid in to the fetcher.
 			origScan.Spans(
 				[]core.Span{
 					core.NewSpan(
 						keys.HeadstoreDocKey{
-							DocID: docID,
-							Cid:   c,
+							Cid: c,
 						},
 						keys.HeadstoreDocKey{},
 					),
