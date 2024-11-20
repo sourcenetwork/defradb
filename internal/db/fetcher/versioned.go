@@ -328,7 +328,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	if !exists {
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			vf.store,
-			keys.CollectionSchemaVersionKey{},
+			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
 			vf.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
 		)
 		vf.mCRDTs[0] = mcrdt
@@ -355,7 +355,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if !exists {
 			mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
 				vf.store,
-				keys.CollectionSchemaVersionKey{},
+				keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
 				field.Typ,
 				field.Kind,
 				vf.dsKey.WithFieldID(fmt.Sprint(field.ID)),
