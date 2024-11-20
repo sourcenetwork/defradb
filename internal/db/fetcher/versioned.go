@@ -16,7 +16,6 @@ import (
 	"fmt"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -168,11 +167,6 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error
 	}
 
 	return vf.DocumentFetcher.Start(ctx)
-}
-
-// Rootstore returns the rootstore of the VersionedFetcher.
-func (vf *VersionedFetcher) Rootstore() ds.Datastore {
-	return vf.root
 }
 
 // Start a fetcher with the needed info (cid embedded in a span)
