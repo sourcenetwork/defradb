@@ -258,10 +258,10 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+							"_docID": testUtils.NewDocIndex(0, 1),
 						},
 						{
-							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+							"_docID": testUtils.NewDocIndex(0, 0),
 						},
 					},
 				},
@@ -279,10 +279,10 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+							"_docID": testUtils.NewDocIndex(0, 1),
 						},
 						{
-							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+							"_docID": testUtils.NewDocIndex(0, 0),
 						},
 					},
 				},
