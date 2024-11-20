@@ -153,33 +153,18 @@ func (vf *VersionedFetcher) Init(
 
 // Start serializes the correct state according to the Key and CID.
 func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error {
-	if vf.col == nil {
-		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
-	}
-
-	if len(spans) != 1 {
-		return ErrSingleSpanOnly
-	}
-
 	// VersionedFetcher only ever recieves a headstore key
 	//nolint:forcetypeassert
 	prefix := spans[0].Start.(keys.HeadstoreDocKey)
-	dk := prefix.DocID
-	cid := prefix.Cid
-	if dk == "" {
-		return client.NewErrUninitializeProperty("Spans", "DocID")
-	} else if !cid.Defined() {
-		return client.NewErrUninitializeProperty("Spans", "CID")
-	}
 
 	vf.ctx = ctx
 	vf.dsKey = keys.DataStoreKey{
 		CollectionRootID: vf.col.Description().RootID,
-		DocID:            dk,
+		DocID:            prefix.DocID,
 	}
 
-	if err := vf.seekTo(cid); err != nil {
-		return NewErrFailedToSeek(cid, err)
+	if err := vf.seekTo(prefix.Cid); err != nil {
+		return NewErrFailedToSeek(prefix.Cid, err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx)
