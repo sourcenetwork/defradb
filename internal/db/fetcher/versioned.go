@@ -88,8 +88,6 @@ type VersionedFetcher struct {
 	root  datastore.Rootstore
 	store datastore.Txn
 
-	dsKey keys.DataStoreKey
-
 	queuedCids *list.List
 
 	acp immutable.Option[acp.ACP]
@@ -157,10 +155,6 @@ func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error
 	prefix := spans[0].Start.(keys.HeadstoreDocKey)
 
 	vf.ctx = ctx
-	vf.dsKey = keys.DataStoreKey{
-		CollectionRootID: vf.col.Description().RootID,
-		DocID:            prefix.DocID,
-	}
 
 	if err := vf.seekTo(prefix.Cid); err != nil {
 		return NewErrFailedToSeek(prefix.Cid, err)
@@ -329,7 +323,11 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			vf.store,
 			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
-			vf.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
+			keys.DataStoreKey{
+				CollectionRootID: vf.col.Description().RootID,
+				DocID:            string(block.Delta.GetDocID()),
+				FieldID:          fmt.Sprint(core.COMPOSITE_NAMESPACE),
+			},
 		)
 		vf.mCRDTs[0] = mcrdt
 	}
@@ -358,7 +356,11 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 				keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
 				field.Typ,
 				field.Kind,
-				vf.dsKey.WithFieldID(fmt.Sprint(field.ID)),
+				keys.DataStoreKey{
+					CollectionRootID: vf.col.Description().RootID,
+					DocID:            string(block.Delta.GetDocID()),
+					FieldID:          fmt.Sprint(field.ID),
+				},
 				field.Name,
 			)
 			if err != nil {

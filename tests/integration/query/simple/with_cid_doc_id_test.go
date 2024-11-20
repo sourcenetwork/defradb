@@ -335,7 +335,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 				Request: `query {
 					Users (
 						cid: "bafyreihsqayh6zvmjrvmma3sjmrb4bkeiyy6l56nt6y2t2tm4xajkif3gu",
-						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
+						docID: "bae-bc5464e4-26a6-5307-b516-aada0abeb089"
 					) {
 						name
 						points
@@ -389,7 +389,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 				Request: `query {
 					Users (
 						cid: "bafyreigkdjnvkpqfjoqoke3aqc3b6ibb45xjuxx5djpk7c6tart2lw3dcm",
-						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
+						docID: "bae-2c7c40a7-92c1-5ed4-8a00-9e8595514945"
 					) {
 						name
 						points
