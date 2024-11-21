@@ -178,7 +178,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(
 						{
 							"Name": "Bob",
 							"Custom": map[string]any{
-								"age": uint64(19),
+								"age": float64(19),
 							},
 						},
 					},

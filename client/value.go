@@ -29,6 +29,10 @@ func NewFieldValue(t CType, val NormalValue) *FieldValue {
 }
 
 func (val FieldValue) Value() any {
+	jsonVal, ok := val.value.JSON()
+	if ok {
+		return jsonVal.Unwrap()
+	}
 	return val.value.Unwrap()
 }
 

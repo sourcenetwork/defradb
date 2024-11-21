@@ -15,6 +15,7 @@ import (
 	"io"
 
 	"github.com/valyala/fastjson"
+	"golang.org/x/exp/constraints"
 )
 
 type JSON interface {
@@ -25,6 +26,7 @@ type JSON interface {
 	Bool() (bool, bool)
 	IsNull() bool
 	Value() any
+	Unwrap() any
 	Marshal(w io.Writer) error
 	MarshalJSON() ([]byte, error)
 }
@@ -64,6 +66,10 @@ func (v jsonBase[T]) Value() any {
 	return v.val
 }
 
+func (v jsonBase[T]) Unwrap() any {
+	return v.val
+}
+
 func (v jsonBase[T]) Marshal(w io.Writer) error {
 	return json.NewEncoder(w).Encode(v.val)
 }
@@ -78,12 +84,20 @@ type jsonObject struct {
 
 var _ JSON = jsonObject{}
 
-func (v jsonObject) Object() (map[string]JSON, bool) {
-	return v.val, true
+func (obj jsonObject) Object() (map[string]JSON, bool) {
+	return obj.val, true
 }
 
-func (v jsonObject) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.val)
+func (obj jsonObject) MarshalJSON() ([]byte, error) {
+	return json.Marshal(obj.val)
+}
+
+func (obj jsonObject) Unwrap() any {
+	result := make(map[string]any, len(obj.jsonBase.val))
+	for k, v := range obj.val {
+		result[k] = v.Unwrap()
+	}
+	return result
 }
 
 type jsonArray struct {
@@ -92,12 +106,20 @@ type jsonArray struct {
 
 var _ JSON = jsonArray{}
 
-func (v jsonArray) Array() ([]JSON, bool) {
-	return v.val, true
+func (arr jsonArray) Array() ([]JSON, bool) {
+	return arr.val, true
 }
 
-func (v jsonArray) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.val)
+func (arr jsonArray) MarshalJSON() ([]byte, error) {
+	return json.Marshal(arr.val)
+}
+
+func (arr jsonArray) Unwrap() any {
+	result := make([]any, len(arr.jsonBase.val))
+	for i := range arr.val {
+		result[i] = arr.val[i].Unwrap()
+	}
+	return result
 }
 
 type jsonNumber struct {
@@ -106,12 +128,12 @@ type jsonNumber struct {
 
 var _ JSON = jsonNumber{}
 
-func (v jsonNumber) Number() (float64, bool) {
-	return v.val, true
+func (n jsonNumber) Number() (float64, bool) {
+	return n.val, true
 }
 
-func (v jsonNumber) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.val)
+func (n jsonNumber) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n.val)
 }
 
 type jsonString struct {
@@ -120,12 +142,12 @@ type jsonString struct {
 
 var _ JSON = jsonString{}
 
-func (v jsonString) String() (string, bool) {
-	return v.val, true
+func (s jsonString) String() (string, bool) {
+	return s.val, true
 }
 
-func (v jsonString) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.val)
+func (s jsonString) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.val)
 }
 
 type jsonBool struct {
@@ -134,16 +156,16 @@ type jsonBool struct {
 
 var _ JSON = jsonBool{}
 
-func (v jsonBool) Bool() (bool, bool) {
-	return v.val, true
+func (b jsonBool) Bool() (bool, bool) {
+	return b.val, true
 }
 
-func (v jsonBool) Marshal(w io.Writer) error {
-	return json.NewEncoder(w).Encode(v.val)
+func (b jsonBool) Marshal(w io.Writer) error {
+	return json.NewEncoder(w).Encode(b.val)
 }
 
-func (v jsonBool) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.val)
+func (b jsonBool) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.val)
 }
 
 type jsonNull struct {
@@ -152,19 +174,23 @@ type jsonNull struct {
 
 var _ JSON = jsonNull{}
 
-func (v jsonNull) IsNull() bool {
+func (n jsonNull) IsNull() bool {
 	return true
 }
 
-func (v jsonNull) Value() any {
+func (n jsonNull) Value() any {
 	return nil
 }
 
-func (v jsonNull) Marshal(w io.Writer) error {
+func (n jsonNull) Unwrap() any {
+	return nil
+}
+
+func (n jsonNull) Marshal(w io.Writer) error {
 	return json.NewEncoder(w).Encode(nil)
 }
 
-func (v jsonNull) MarshalJSON() ([]byte, error) {
+func (n jsonNull) MarshalJSON() ([]byte, error) {
 	return json.Marshal(nil)
 }
 
@@ -192,7 +218,7 @@ func newJSONNull() JSON {
 	return jsonNull{}
 }
 
-func NewJSONFromBytes(data []byte) (JSON, error) {
+func ParseJSONBytes(data []byte) (JSON, error) {
 	var p fastjson.Parser
 	v, err := p.ParseBytes(data)
 	if err != nil {
@@ -201,7 +227,7 @@ func NewJSONFromBytes(data []byte) (JSON, error) {
 	return NewJSONFromFastJSON(v)
 }
 
-func NewJSONFromString(data string) (JSON, error) {
+func ParseJSONString(data string) (JSON, error) {
 	var p fastjson.Parser
 	v, err := p.Parse(data)
 	if err != nil {
@@ -210,12 +236,121 @@ func NewJSONFromString(data string) (JSON, error) {
 	return NewJSONFromFastJSON(v)
 }
 
+func NewJSON(v any) (JSON, error) {
+	if v == nil {
+		return newJSONNull(), nil
+	}
+	switch val := v.(type) {
+	case *fastjson.Value:
+		return NewJSONFromFastJSON(val)
+	case string:
+		return newJSONString(val), nil
+	case map[string]any:
+		return NewJSONFromMap(val)
+	case bool:
+		return newJSONBool(val), nil
+	case int8:
+		return newJSONNumber(float64(val)), nil
+	case int16:
+		return newJSONNumber(float64(val)), nil
+	case int32:
+		return newJSONNumber(float64(val)), nil
+	case int64:
+		return newJSONNumber(float64(val)), nil
+	case int:
+		return newJSONNumber(float64(val)), nil
+	case uint8:
+		return newJSONNumber(float64(val)), nil
+	case uint16:
+		return newJSONNumber(float64(val)), nil
+	case uint32:
+		return newJSONNumber(float64(val)), nil
+	case uint64:
+		return newJSONNumber(float64(val)), nil
+	case uint:
+		return newJSONNumber(float64(val)), nil
+	case float32:
+		return newJSONNumber(float64(val)), nil
+	case float64:
+		return newJSONNumber(val), nil
+
+	case []bool:
+		return newJSONBoolArray(val), nil
+	case []int8:
+		return newJSONNumberArray(val), nil
+	case []int16:
+		return newJSONNumberArray(val), nil
+	case []int32:
+		return newJSONNumberArray(val), nil
+	case []int64:
+		return newJSONNumberArray(val), nil
+	case []int:
+		return newJSONNumberArray(val), nil
+	case []uint8:
+		return newJSONNumberArray(val), nil
+	case []uint16:
+		return newJSONNumberArray(val), nil
+	case []uint32:
+		return newJSONNumberArray(val), nil
+	case []uint64:
+		return newJSONNumberArray(val), nil
+	case []uint:
+		return newJSONNumberArray(val), nil
+	case []float32:
+		return newJSONNumberArray(val), nil
+	case []float64:
+		return newJSONNumberArray(val), nil
+	case []string:
+		return newJSONStringArray(val), nil
+
+	case []any:
+		arr := make([]JSON, 0)
+		for _, item := range val {
+			el, err := NewJSON(item)
+			if err != nil {
+				return nil, err
+			}
+			arr = append(arr, el)
+		}
+		return newJSONArray(arr), nil
+	}
+
+	return nil, NewErrInvalidJSONPayload(v)
+}
+
+func newJSONBoolArray(v any) JSON {
+	arr := make([]JSON, 0)
+	for _, item := range v.([]bool) {
+		arr = append(arr, newJSONBool(item))
+	}
+	return newJSONArray(arr)
+}
+
+func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T) JSON {
+	arr := make([]JSON, 0)
+	for _, item := range v {
+		arr = append(arr, newJSONNumber(float64(item)))
+	}
+	return newJSONArray(arr)
+}
+
+func newJSONStringArray(v []string) JSON {
+	arr := make([]JSON, 0)
+	for _, item := range v {
+		arr = append(arr, newJSONString(item))
+	}
+	return newJSONArray(arr)
+}
+
 func NewJSONFromFastJSON(v *fastjson.Value) (JSON, error) {
 	switch v.Type() {
 	case fastjson.TypeObject:
 		obj := make(map[string]JSON)
 		var err error
 		v.GetObject().Visit(func(k []byte, v *fastjson.Value) {
+			if err != nil {
+				return
+			}
 			val, newErr := NewJSONFromFastJSON(v)
 			if newErr != nil {
 				err = newErr
@@ -250,4 +385,16 @@ func NewJSONFromFastJSON(v *fastjson.Value) (JSON, error) {
 	default:
 		return nil, NewErrInvalidJSONPayload(v)
 	}
+}
+
+func NewJSONFromMap(data map[string]any) (JSON, error) {
+	obj := make(map[string]JSON)
+	for k, v := range data {
+		jsonVal, err := NewJSON(v)
+		if err != nil {
+			return nil, err
+		}
+		obj[k] = jsonVal
+	}
+	return newJSONObject(obj), nil
 }

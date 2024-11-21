@@ -358,11 +358,11 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		return NewNormalNillableIntArray(v), nil
 
 	case FieldKind_NILLABLE_JSON:
-		v, err := getJSON(val)
+		v, err := NewJSON(val)
 		if err != nil {
 			return nil, err
 		}
-		return NewNormalJSON(&JSON{v}), nil
+		return NewNormalJSON(v), nil
 	}
 
 	return nil, NewErrUnhandledType("FieldKind", field.Kind)
@@ -436,72 +436,6 @@ func getDateTime(v any) (time.Time, error) {
 		s = val.(string)
 	}
 	return time.Parse(time.RFC3339, s)
-}
-
-// getJSON converts the given value to a valid JSON value.
-//
-// If the value is of type *fastjson.Value it needs to be
-// manually parsed. All other values are valid JSON.
-func getJSON(v any) (any, error) {
-	val, ok := v.(*fastjson.Value)
-	if !ok {
-		return v, nil
-	}
-	switch val.Type() {
-	case fastjson.TypeArray:
-		arr, err := val.Array()
-		if err != nil {
-			return nil, err
-		}
-		out := make([]any, len(arr))
-		for i, v := range arr {
-			c, err := getJSON(v)
-			if err != nil {
-				return nil, err
-			}
-			out[i] = c
-		}
-		return out, nil
-
-	case fastjson.TypeObject:
-		obj, err := val.Object()
-		if err != nil {
-			return nil, err
-		}
-		out := make(map[string]any)
-		obj.Visit(func(key []byte, v *fastjson.Value) {
-			c, e := getJSON(v)
-			out[string(key)] = c
-			err = errors.Join(err, e)
-		})
-		return out, err
-
-	case fastjson.TypeFalse:
-		return false, nil
-
-	case fastjson.TypeTrue:
-		return true, nil
-
-	case fastjson.TypeNumber:
-		out, err := val.Int64()
-		if err == nil {
-			return out, nil
-		}
-		return val.Float64()
-
-	case fastjson.TypeString:
-		out, err := val.StringBytes()
-		if err != nil {
-			return nil, err
-		}
-		return string(out), nil
-
-	case fastjson.TypeNull:
-		return nil, nil
-
-	default:
-		return nil, NewErrInvalidJSONPayload(v)
-	}
 }
 
 func getArray[T any](

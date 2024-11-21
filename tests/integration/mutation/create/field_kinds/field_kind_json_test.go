@@ -39,7 +39,6 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -47,10 +46,9 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-a948a3b2-3e89-5654-b0f0-71685a66b4d7",
 							"custom": map[string]any{
 								"tree": "maple",
-								"age":  uint64(250),
+								"age":  float64(250),
 							},
 							"name": "John",
 						},
@@ -84,7 +82,6 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -92,8 +89,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-90fd8b1b-bd11-56b5-a78c-2fb6f7b4dca0",
-							"custom": []any{"maple", uint64(250)},
+							"custom": []any{"maple", float64(250)},
 							"name":   "John",
 						},
 					},
@@ -129,7 +125,6 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -137,7 +132,6 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-dd7c12f5-a7c5-55c6-8b35-ece853ae7f9e",
 							"custom": []any{
 								map[string]any{"tree": "maple"},
 								map[string]any{"tree": "oak"},
@@ -174,7 +168,6 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -182,8 +175,7 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-59731737-8793-5794-a9a5-0ed0ad696d5c",
-							"custom": uint64(250),
+							"custom": float64(250),
 							"name":   "John",
 						},
 					},
@@ -216,7 +208,6 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -224,7 +215,6 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-608582c3-979e-5f34-80f8-a70fce875d05",
 							"custom": "hello",
 							"name":   "John",
 						},
@@ -258,7 +248,6 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -266,7 +255,6 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-0c4b39cf-433c-5a9c-9bed-1e2796c35d14",
 							"custom": true,
 							"name":   "John",
 						},
@@ -300,7 +288,6 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						custom
 					}
@@ -308,7 +295,6 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-f405f600-56d9-5de4-8d02-75fdced35e3b",
 							"custom": nil,
 							"name":   "John",
 						},

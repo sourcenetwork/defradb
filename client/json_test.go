@@ -12,6 +12,7 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -19,18 +20,18 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-func TestNewJSONAndMarshal_WithValidInput_ShouldMarshal(t *testing.T) {
+func TestParseJSONAndMarshal_WithValidInput_ShouldMarshal(t *testing.T) {
 	tests := []struct {
 		name     string
 		fromFunc func(string) (JSON, error)
 	}{
 		{
 			name:     "FromBytes",
-			fromFunc: func(data string) (JSON, error) { return NewJSONFromBytes([]byte(data)) },
+			fromFunc: func(data string) (JSON, error) { return ParseJSONBytes([]byte(data)) },
 		},
 		{
 			name:     "FromString",
-			fromFunc: NewJSONFromString,
+			fromFunc: ParseJSONString,
 		},
 		{
 			name: "FromFastJSON",
@@ -41,6 +42,16 @@ func TestNewJSONAndMarshal_WithValidInput_ShouldMarshal(t *testing.T) {
 					return nil, err
 				}
 				return NewJSONFromFastJSON(v)
+			},
+		},
+		{
+			name: "FromMap",
+			fromFunc: func(data string) (JSON, error) {
+				var result map[string]any
+				if err := json.Unmarshal([]byte(data), &result); err != nil {
+					return nil, err
+				}
+				return NewJSONFromMap(result)
 			},
 		},
 	}
@@ -63,156 +74,392 @@ func TestNewJSONAndMarshal_WithValidInput_ShouldMarshal(t *testing.T) {
 	}
 }
 
-func TestJSONCastMethods_ShouldCastCorrespondingAndRejectOthers(t *testing.T) {
+func TestNewJSONAndMarshal_WithInvalidInput_ShouldFail(t *testing.T) {
 	tests := []struct {
 		name     string
-		jsonObj  JSON
-		expected any
+		fromFunc func(string) (JSON, error)
 	}{
 		{
-			name:     "Object",
-			jsonObj:  newJSONObject(map[string]JSON{"key": newJSONString("value")}),
-			expected: map[string]JSON{"key": newJSONString("value")},
+			name:     "FromBytes",
+			fromFunc: func(data string) (JSON, error) { return ParseJSONBytes([]byte(data)) },
 		},
 		{
-			name:     "Array",
-			jsonObj:  newJSONArray([]JSON{newJSONString("item1"), newJSONNumber(2)}),
-			expected: []JSON{newJSONString("item1"), newJSONNumber(2)},
+			name:     "FromString",
+			fromFunc: ParseJSONString,
 		},
 		{
-			name:     "Number",
-			jsonObj:  newJSONNumber(2.5),
-			expected: 2.5,
+			name: "FromFastJSON",
+			fromFunc: func(data string) (JSON, error) {
+				var p fastjson.Parser
+				v, err := p.Parse(data)
+				if err != nil {
+					return nil, err
+				}
+				return NewJSONFromFastJSON(v)
+			},
 		},
 		{
-			name:     "String",
-			jsonObj:  newJSONString("value"),
-			expected: "value",
-		},
-		{
-			name:     "Bool",
-			jsonObj:  newJSONBool(true),
-			expected: true,
-		},
-		{
-			name:     "Null",
-			jsonObj:  newJSONNull(),
-			expected: nil,
+			name: "FromMap",
+			fromFunc: func(data string) (JSON, error) {
+				var result map[string]any
+				if err := json.Unmarshal([]byte(data), &result); err != nil {
+					return nil, err
+				}
+				return NewJSONFromMap(result)
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			switch v := tt.expected.(type) {
-			case map[string]JSON:
-				obj, ok := tt.jsonObj.Object()
-				require.True(t, ok, "Expected JSON object, but got something else")
-				require.True(t, equalMaps(obj, v), "Expected %v, got %v", v, obj)
-				_, ok = tt.jsonObj.Array()
-				require.False(t, ok, "Expected false for Array method")
-				_, ok = tt.jsonObj.Number()
-				require.False(t, ok, "Expected false for Number method")
-				_, ok = tt.jsonObj.String()
-				require.False(t, ok, "Expected false for String method")
-				_, ok = tt.jsonObj.Bool()
-				require.False(t, ok, "Expected false for Bool method")
-				require.False(t, tt.jsonObj.IsNull(), "Expected false for IsNull method")
-			case []JSON:
-				arr, ok := tt.jsonObj.Array()
-				require.True(t, ok, "Expected JSON array, but got something else")
-				require.True(t, equalSlices(arr, v), "Expected %v, got %v", v, arr)
-				_, ok = tt.jsonObj.Object()
-				require.False(t, ok, "Expected false for Object method")
-				_, ok = tt.jsonObj.Number()
-				require.False(t, ok, "Expected false for Number method")
-				_, ok = tt.jsonObj.String()
-				require.False(t, ok, "Expected false for String method")
-				_, ok = tt.jsonObj.Bool()
-				require.False(t, ok, "Expected false for Bool method")
-				require.False(t, tt.jsonObj.IsNull(), "Expected false for IsNull method")
-			case float64:
-				num, ok := tt.jsonObj.Number()
-				require.True(t, ok, "Expected JSON number, but got something else")
-				require.Equal(t, v, num, "Expected %v, got %v", v, num)
-				_, ok = tt.jsonObj.Object()
-				require.False(t, ok, "Expected false for Object method")
-				_, ok = tt.jsonObj.Array()
-				require.False(t, ok, "Expected false for Array method")
-				_, ok = tt.jsonObj.String()
-				require.False(t, ok, "Expected false for String method")
-				_, ok = tt.jsonObj.Bool()
-				require.False(t, ok, "Expected false for Bool method")
-				require.False(t, tt.jsonObj.IsNull(), "Expected false for IsNull method")
-			case string:
-				str, ok := tt.jsonObj.String()
-				require.True(t, ok, "Expected JSON string, but got something else")
-				require.Equal(t, v, str, "Expected %v, got %v", v, str)
-				_, ok = tt.jsonObj.Object()
-				require.False(t, ok, "Expected false for Object method")
-				_, ok = tt.jsonObj.Array()
-				require.False(t, ok, "Expected false for Array method")
-				_, ok = tt.jsonObj.Number()
-				require.False(t, ok, "Expected false for Number method")
-				_, ok = tt.jsonObj.Bool()
-				require.False(t, ok, "Expected false for Bool method")
-				require.False(t, tt.jsonObj.IsNull(), "Expected false for IsNull method")
-			case bool:
-				b, ok := tt.jsonObj.Bool()
-				require.True(t, ok, "Expected JSON boolean, but got something else")
-				require.Equal(t, v, b, "Expected %v, got %v", v, b)
-				_, ok = tt.jsonObj.Object()
-				require.False(t, ok, "Expected false for Object method")
-				_, ok = tt.jsonObj.Array()
-				require.False(t, ok, "Expected false for Array method")
-				_, ok = tt.jsonObj.Number()
-				require.False(t, ok, "Expected false for Number method")
-				_, ok = tt.jsonObj.String()
-				require.False(t, ok, "Expected false for String method")
-				require.False(t, tt.jsonObj.IsNull(), "Expected false for IsNull method")
-			default: // nil
-				require.True(t, tt.jsonObj.IsNull(), "Expected JSON null, but got something else")
-				_, ok := tt.jsonObj.Object()
-				require.False(t, ok, "Expected false for Object method")
-				_, ok = tt.jsonObj.Array()
-				require.False(t, ok, "Expected false for Array method")
-				_, ok = tt.jsonObj.Number()
-				require.False(t, ok, "Expected false for Number method")
-				_, ok = tt.jsonObj.String()
-				require.False(t, ok, "Expected false for String method")
-				_, ok = tt.jsonObj.Bool()
-				require.False(t, ok, "Expected false for Bool method")
-			}
+			_, err := tt.fromFunc(`{"key1": "value1}`)
+			require.Error(t, err, "Expected error, but got nil")
 		})
 	}
 }
 
-func equalMaps(a, b map[string]JSON) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		if !equalJSON(v, b[k]) {
-			return false
-		}
-	}
-	return true
+func TestNewJSONFomString_WithInvalidInput_Error(t *testing.T) {
+	_, err := ParseJSONString("str")
+	require.Error(t, err, "Expected error, but got nil")
 }
 
-func equalSlices(a, b []JSON) bool {
-	if len(a) != len(b) {
-		return false
+func TestJSONObject_Methods_ShouldWorkAsExpected(t *testing.T) {
+	m := map[string]JSON{
+		"key": newJSONString("value"),
+		"nested": newJSONObject(map[string]JSON{
+			"inner": newJSONNumber(42),
+			"array": newJSONArray([]JSON{newJSONString("test"), newJSONBool(true)}),
+		}),
 	}
-	for i := range a {
-		if !equalJSON(a[i], b[i]) {
-			return false
-		}
+	obj := newJSONObject(m)
+	expectedUnwrapped := map[string]any{
+		"key": "value",
+		"nested": map[string]any{
+			"inner": float64(42),
+			"array": []any{"test", true},
+		},
 	}
-	return true
+
+	// Positive tests
+	val, ok := obj.Object()
+	require.True(t, ok)
+	require.Equal(t, m, val)
+	require.Equal(t, m, obj.Value())
+	require.Equal(t, expectedUnwrapped, obj.Unwrap())
+
+	// Negative tests
+	_, ok = obj.Array()
+	require.False(t, ok)
+	_, ok = obj.Number()
+	require.False(t, ok)
+	_, ok = obj.String()
+	require.False(t, ok)
+	_, ok = obj.Bool()
+	require.False(t, ok)
+	require.False(t, obj.IsNull())
 }
 
-func equalJSON(a, b JSON) bool {
-	var bufA, bufB bytes.Buffer
-	a.Marshal(&bufA)
-	b.Marshal(&bufB)
-	return bufA.String() == bufB.String()
+func TestJSONArray_Methods_ShouldWorkAsExpected(t *testing.T) {
+	arr := []JSON{
+		newJSONString("item1"),
+		newJSONObject(map[string]JSON{
+			"key": newJSONString("value"),
+			"num": newJSONNumber(42),
+		}),
+		newJSONNumber(2),
+	}
+	jsonArr := newJSONArray(arr)
+	expectedUnwrapped := []any{
+		"item1",
+		map[string]any{
+			"key": "value",
+			"num": float64(42),
+		},
+		float64(2),
+	}
+
+	// Positive tests
+	val, ok := jsonArr.Array()
+	require.True(t, ok)
+	require.Equal(t, arr, val)
+	require.Equal(t, arr, jsonArr.Value())
+	require.Equal(t, expectedUnwrapped, jsonArr.Unwrap())
+
+	// Negative tests
+	_, ok = jsonArr.Object()
+	require.False(t, ok)
+	_, ok = jsonArr.Number()
+	require.False(t, ok)
+	_, ok = jsonArr.String()
+	require.False(t, ok)
+	_, ok = jsonArr.Bool()
+	require.False(t, ok)
+	require.False(t, jsonArr.IsNull())
+}
+
+func TestJSONNumber_Methods_ShouldWorkAsExpected(t *testing.T) {
+	num := newJSONNumber(2.5)
+	expected := 2.5
+
+	// Positive tests
+	val, ok := num.Number()
+	require.True(t, ok)
+	require.Equal(t, expected, val)
+	require.Equal(t, expected, num.Value())
+	require.Equal(t, expected, num.Unwrap())
+
+	// Negative tests
+	_, ok = num.Object()
+	require.False(t, ok)
+	_, ok = num.Array()
+	require.False(t, ok)
+	_, ok = num.String()
+	require.False(t, ok)
+	_, ok = num.Bool()
+	require.False(t, ok)
+	require.False(t, num.IsNull())
+}
+
+func TestJSONString_Methods_ShouldWorkAsExpected(t *testing.T) {
+	str := newJSONString("value")
+	expected := "value"
+
+	// Positive tests
+	val, ok := str.String()
+	require.True(t, ok)
+	require.Equal(t, expected, val)
+	require.Equal(t, expected, str.Value())
+	require.Equal(t, expected, str.Unwrap())
+
+	// Negative tests
+	_, ok = str.Object()
+	require.False(t, ok)
+	_, ok = str.Array()
+	require.False(t, ok)
+	_, ok = str.Number()
+	require.False(t, ok)
+	_, ok = str.Bool()
+	require.False(t, ok)
+	require.False(t, str.IsNull())
+}
+
+func TestJSONBool_Methods_ShouldWorkAsExpected(t *testing.T) {
+	b := newJSONBool(true)
+	expected := true
+
+	// Positive tests
+	val, ok := b.Bool()
+	require.True(t, ok)
+	require.Equal(t, expected, val)
+	require.Equal(t, expected, b.Value())
+	require.Equal(t, expected, b.Unwrap())
+
+	// Negative tests
+	_, ok = b.Object()
+	require.False(t, ok)
+	_, ok = b.Array()
+	require.False(t, ok)
+	_, ok = b.Number()
+	require.False(t, ok)
+	_, ok = b.String()
+	require.False(t, ok)
+	require.False(t, b.IsNull())
+}
+
+func TestJSONNull_Methods_ShouldWorkAsExpected(t *testing.T) {
+	null := newJSONNull()
+
+	// Positive tests
+	require.True(t, null.IsNull())
+	require.Nil(t, null.Value())
+	require.Nil(t, null.Unwrap())
+
+	// Negative tests
+	_, ok := null.Object()
+	require.False(t, ok)
+	_, ok = null.Array()
+	require.False(t, ok)
+	_, ok = null.Number()
+	require.False(t, ok)
+	_, ok = null.String()
+	require.False(t, ok)
+	_, ok = null.Bool()
+	require.False(t, ok)
+}
+
+func TestNewJSON(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    any
+		expected JSON
+	}{
+		{
+			name:     "Nil",
+			input:    nil,
+			expected: newJSONNull(),
+		},
+		{
+			name:     "FastJSON",
+			input:    fastjson.MustParse(`{"key": "value"}`),
+			expected: newJSONObject(map[string]JSON{"key": newJSONString("value")}),
+		},
+		{
+			name:     "Map",
+			input:    map[string]any{"key": "value"},
+			expected: newJSONObject(map[string]JSON{"key": newJSONString("value")}),
+		},
+		{
+			name:     "Bool",
+			input:    true,
+			expected: newJSONBool(true),
+		},
+		{
+			name:     "String",
+			input:    "str",
+			expected: newJSONString("str"),
+		},
+		{
+			name:     "Int8",
+			input:    int8(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Int16",
+			input:    int16(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Int32",
+			input:    int32(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Int64",
+			input:    int64(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Int",
+			input:    42,
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Uint8",
+			input:    uint8(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Uint16",
+			input:    uint16(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Uint32",
+			input:    uint32(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Uint64",
+			input:    uint64(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Uint",
+			input:    uint(42),
+			expected: newJSONNumber(42),
+		},
+		{
+			name:     "Float32",
+			input:    float32(2.5),
+			expected: newJSONNumber(2.5),
+		},
+		{
+			name:     "Float64",
+			input:    float64(2.5),
+			expected: newJSONNumber(2.5),
+		},
+		{
+			name:     "BoolArray",
+			input:    []bool{true, false},
+			expected: newJSONArray([]JSON{newJSONBool(true), newJSONBool(false)}),
+		},
+		{
+			name:     "StringArray",
+			input:    []string{"a", "b", "c"},
+			expected: newJSONArray([]JSON{newJSONString("a"), newJSONString("b"), newJSONString("c")}),
+		},
+		{
+			name:     "AnyArray",
+			input:    []any{"a", 1, true},
+			expected: newJSONArray([]JSON{newJSONString("a"), newJSONNumber(1), newJSONBool(true)}),
+		},
+		{
+			name:     "Int8Array",
+			input:    []int8{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Int16Array",
+			input:    []int16{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Int32Array",
+			input:    []int32{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Int64Array",
+			input:    []int64{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "IntArray",
+			input:    []int{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Uint8Array",
+			input:    []uint8{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Uint16Array",
+			input:    []uint16{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Uint32Array",
+			input:    []uint32{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Uint64Array",
+			input:    []uint64{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "UintArray",
+			input:    []uint{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+		},
+		{
+			name:     "Float32Array",
+			input:    []float32{1.0, 2.25, 3.5},
+			expected: newJSONArray([]JSON{newJSONNumber(1.0), newJSONNumber(2.25), newJSONNumber(3.5)}),
+		},
+		{
+			name:     "Float64Array",
+			input:    []float64{1.0, 2.25, 3.5},
+			expected: newJSONArray([]JSON{newJSONNumber(1.0), newJSONNumber(2.25), newJSONNumber(3.5)}),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := NewJSON(tt.input)
+			require.NoError(t, err)
+			require.Equal(t, result, tt.expected)
+		})
+	}
 }
