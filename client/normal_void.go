@@ -65,7 +65,7 @@ func (NormalVoid) Document() (*Document, bool) {
 	return nil, false
 }
 
-func (NormalVoid) JSON() (*JSON, bool) {
+func (NormalVoid) JSON() (JSON, bool) {
 	return nil, false
 }
 

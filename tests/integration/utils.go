@@ -114,7 +114,6 @@ func init() {
 		// mutation type.
 		mutationType = CollectionSaveMutationType
 	}
-	mutationType = GQLRequestMutationType
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
 		viewType = ViewType(value)
@@ -1987,7 +1986,7 @@ func assertRequestResultDocs(
 ) bool {
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(actualResults),
-		s.testCase.Description+" \n(number of results don't match)")
+		s.testCase.Description+" \n(number of results don't match for %s)", stack)
 
 	for actualDocIndex, actualDoc := range actualResults {
 		stack.pushArray(actualDocIndex)
@@ -1998,9 +1997,9 @@ func assertRequestResultDocs(
 			len(expectedDoc),
 			len(actualDoc),
 			fmt.Sprintf(
-				"%s \n(number of properties for item at index %v don't match)",
+				"%s \n(number of properties don't match for %s)",
 				s.testCase.Description,
-				actualDocIndex,
+				stack,
 			),
 		)
 
