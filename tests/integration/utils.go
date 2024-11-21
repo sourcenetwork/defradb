@@ -2251,7 +2251,7 @@ func skipIfClientTypeUnsupported(
 	}
 
 	if len(filteredClients) == 0 {
-		t.Skipf("test does not support any given client type. Type: %v", supportedClientTypes)
+		t.Skipf("test does not support any given client type. Supported Type: %v", supportedClientTypes.Value())
 	}
 
 	return filteredClients
@@ -2292,7 +2292,7 @@ func skipIfDatabaseTypeUnsupported(
 	}
 
 	if len(filteredDatabases) == 0 {
-		t.Skipf("test does not support any given database type. Type: %v", filteredDatabases)
+		t.Skipf("test does not support any given database type. Supported Type: %v", supportedDatabaseTypes.Value())
 	}
 
 	return filteredDatabases
