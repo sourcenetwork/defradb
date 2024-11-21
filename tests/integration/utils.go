@@ -114,7 +114,6 @@ func init() {
 		// mutation type.
 		mutationType = CollectionSaveMutationType
 	}
-	mutationType = GQLRequestMutationType
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
 		viewType = ViewType(value)
