@@ -254,9 +254,25 @@ func (l *ACPLocal) AddActorRelationship(
 
 	ctx = auth.InjectPrincipal(ctx, principal)
 
+	var newActorRelationship *types.Relationship
+	if targetActor == "*" {
+		newActorRelationship = types.NewAllActorsRelationship(
+			resourceName,
+			objectID,
+			relation,
+		)
+	} else {
+		newActorRelationship = types.NewActorRelationship(
+			resourceName,
+			objectID,
+			relation,
+			targetActor,
+		)
+	}
+
 	setRelationshipRequest := types.SetRelationshipRequest{
 		PolicyId:     policyID,
-		Relationship: types.NewActorRelationship(resourceName, objectID, relation, targetActor),
+		Relationship: newActorRelationship,
 		CreationTime: creationTime,
 	}
 
