@@ -363,9 +363,9 @@ func NewJSON(v any) (JSON, error) {
 	return nil, NewErrInvalidJSONPayload(v)
 }
 
-func newJSONBoolArray(v any) JSON {
+func newJSONBoolArray(v []bool) JSON {
 	arr := make([]JSON, 0)
-	for _, item := range v.([]bool) {
+	for _, item := range v {
 		arr = append(arr, newJSONBool(item))
 	}
 	return newJSONArray(arr)
