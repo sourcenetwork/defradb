@@ -351,37 +351,37 @@ func NewJSON(v any) (JSON, error) {
 }
 
 func newJsonArrayFromAnyArray(arr []any) (JSON, error) {
-	result := make([]JSON, 0, len(arr))
-	for _, v := range arr {
-		jsonVal, err := NewJSON(v)
+	result := make([]JSON, len(arr))
+	for i := range arr {
+		jsonVal, err := NewJSON(arr[i])
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, jsonVal)
+		result[i] = jsonVal
 	}
 	return newJSONArray(result), nil
 }
 
 func newJSONBoolArray(v []bool) JSON {
-	arr := make([]JSON, 0, len(v))
-	for _, item := range v {
-		arr = append(arr, newJSONBool(item))
+	arr := make([]JSON, len(v))
+	for i := range v {
+		arr[i] = newJSONBool(v[i])
 	}
 	return newJSONArray(arr)
 }
 
 func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T) JSON {
-	arr := make([]JSON, 0, len(v))
-	for _, item := range v {
-		arr = append(arr, newJSONNumber(float64(item)))
+	arr := make([]JSON, len(v))
+	for i := range v {
+		arr[i] = newJSONNumber(float64(v[i]))
 	}
 	return newJSONArray(arr)
 }
 
 func newJSONStringArray(v []string) JSON {
-	arr := make([]JSON, 0, len(v))
-	for _, item := range v {
-		arr = append(arr, newJSONString(item))
+	arr := make([]JSON, len(v))
+	for i := range v {
+		arr[i] = newJSONString(v[i])
 	}
 	return newJSONArray(arr)
 }
@@ -398,9 +398,9 @@ func NewJSONFromFastJSON(v *fastjson.Value) JSON {
 		return newJSONObject(obj)
 	case fastjson.TypeArray:
 		fastArr := v.GetArray()
-		arr := make([]JSON, 0, len(fastArr))
-		for _, item := range fastArr {
-			arr = append(arr, NewJSONFromFastJSON(item))
+		arr := make([]JSON, len(fastArr))
+		for i := range fastArr {
+			arr[i] = NewJSONFromFastJSON(fastArr[i])
 		}
 		return newJSONArray(arr)
 	case fastjson.TypeNumber:
