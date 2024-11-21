@@ -18,16 +18,46 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+// JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
+// It provides type-safe access to the underlying value through various accessor methods.
 type JSON interface {
+	// Array returns the value as a JSON array along with a boolean indicating if the value is an array.
+	// Returns nil and false if the value is not an array.
 	Array() ([]JSON, bool)
+
+	// Object returns the value as a JSON object along with a boolean indicating if the value is an object.
+	// Returns nil and false if the value is not an object.
 	Object() (map[string]JSON, bool)
+
+	// Number returns the value as a number along with a boolean indicating if the value is a number.
+	// Returns 0 and false if the value is not a number.
 	Number() (float64, bool)
+
+	// String returns the value as a string along with a boolean indicating if the value is a string.
+	// Returns empty string and false if the value is not a string.
 	String() (string, bool)
+
+	// Bool returns the value as a boolean along with a boolean indicating if the value is a boolean.
+	// Returns false and false if the value is not a boolean.
 	Bool() (bool, bool)
+
+	// IsNull returns true if the value is null, false otherwise.
 	IsNull() bool
+
+	// Value returns the value that JSON represents.
+	// The type will be one of: map[string]JSON, []JSON, float64, string, bool, or nil.
 	Value() any
+
+	// Unwrap returns the underlying value with all nested JSON values unwrapped.
+	// For objects and arrays, this recursively unwraps all nested JSON values.
 	Unwrap() any
+
+	// Marshal writes the JSON value to the writer.
+	// Returns an error if marshaling fails.
 	Marshal(w io.Writer) error
+
+	// MarshalJSON implements json.Marshaler interface.
+	// Returns the JSON encoding of the value.
 	MarshalJSON() ([]byte, error)
 }
 
@@ -218,6 +248,8 @@ func newJSONNull() JSON {
 	return jsonNull{}
 }
 
+// ParseJSONBytes parses the given JSON bytes into a JSON value.
+// Returns error if the input is not valid JSON.
 func ParseJSONBytes(data []byte) (JSON, error) {
 	var p fastjson.Parser
 	v, err := p.ParseBytes(data)
@@ -227,6 +259,8 @@ func ParseJSONBytes(data []byte) (JSON, error) {
 	return NewJSONFromFastJSON(v)
 }
 
+// ParseJSONString parses the given JSON string into a JSON value.
+// Returns error if the input is not valid JSON.
 func ParseJSONString(data string) (JSON, error) {
 	var p fastjson.Parser
 	v, err := p.Parse(data)
@@ -236,6 +270,17 @@ func ParseJSONString(data string) (JSON, error) {
 	return NewJSONFromFastJSON(v)
 }
 
+// NewJSON creates a JSON value from a Go value.
+// The Go value must be one of:
+// - nil (becomes JSON null)
+// - *fastjson.Value
+// - string
+// - map[string]any
+// - bool
+// - numeric types (int8 through int64, uint8 through uint64, float32, float64)
+// - slice of any above type
+// - []any
+// Returns error if the input cannot be converted to JSON.
 func NewJSON(v any) (JSON, error) {
 	if v == nil {
 		return newJSONNull(), nil
@@ -342,6 +387,8 @@ func newJSONStringArray(v []string) JSON {
 	return newJSONArray(arr)
 }
 
+// NewJSONFromFastJSON creates a JSON value from a fastjson.Value.
+// Returns error if the fastjson.Value contains invalid JSON types.
 func NewJSONFromFastJSON(v *fastjson.Value) (JSON, error) {
 	switch v.Type() {
 	case fastjson.TypeObject:
@@ -387,6 +434,9 @@ func NewJSONFromFastJSON(v *fastjson.Value) (JSON, error) {
 	}
 }
 
+// NewJSONFromMap creates a JSON object from a map[string]any.
+// The map values must be valid Go values that can be converted to JSON.
+// Returns error if any map value cannot be converted to JSON.
 func NewJSONFromMap(data map[string]any) (JSON, error) {
 	obj := make(map[string]JSON)
 	for k, v := range data {
