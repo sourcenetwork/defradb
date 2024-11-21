@@ -31,6 +31,8 @@ func NewFieldValue(t CType, val NormalValue) *FieldValue {
 func (val FieldValue) Value() any {
 	jsonVal, ok := val.value.JSON()
 	if ok {
+		// Unwrap on NormalJSONValue will return an object of type JSON (interface)
+		// which is not meant for direct encoding. That's why we need to get it's underlying value.
 		return jsonVal.Unwrap()
 	}
 	return val.value.Unwrap()

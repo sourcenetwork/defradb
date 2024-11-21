@@ -21,6 +21,7 @@ import (
 // JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
 // It provides type-safe access to the underlying value through various accessor methods.
 type JSON interface {
+	json.Marshaler
 	// Array returns the value as a JSON array along with a boolean indicating if the value is an array.
 	// Returns nil and false if the value is not an array.
 	Array() ([]JSON, bool)
@@ -55,10 +56,6 @@ type JSON interface {
 	// Marshal writes the JSON value to the writer.
 	// Returns an error if marshaling fails.
 	Marshal(w io.Writer) error
-
-	// MarshalJSON implements json.Marshaler interface.
-	// Returns the JSON encoding of the value.
-	MarshalJSON() ([]byte, error)
 }
 
 type jsonVoid struct{}
@@ -258,6 +255,8 @@ func ParseJSONBytes(data []byte) (JSON, error) {
 // ParseJSONString parses the given JSON string into a JSON value.
 // Returns error if the input is not valid JSON.
 func ParseJSONString(data string) (JSON, error) {
+	// we could have called ParseJSONBytes([]byte(data), but this would copy the string to a byte slice.
+	// fastjson.Parser.ParseBytes casts the bytes slice to a string internally, so we can avoid the extra copy.
 	var p fastjson.Parser
 	v, err := p.Parse(data)
 	if err != nil {
@@ -345,22 +344,26 @@ func NewJSON(v any) (JSON, error) {
 		return newJSONStringArray(val), nil
 
 	case []any:
-		arr := make([]JSON, 0)
-		for _, item := range val {
-			el, err := NewJSON(item)
-			if err != nil {
-				return nil, err
-			}
-			arr = append(arr, el)
-		}
-		return newJSONArray(arr), nil
+		return newJsonArrayFromAnyArray(val)
 	}
 
 	return nil, NewErrInvalidJSONPayload(v)
 }
 
+func newJsonArrayFromAnyArray(arr []any) (JSON, error) {
+	result := make([]JSON, 0, len(arr))
+	for _, v := range arr {
+		jsonVal, err := NewJSON(v)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, jsonVal)
+	}
+	return newJSONArray(result), nil
+}
+
 func newJSONBoolArray(v []bool) JSON {
-	arr := make([]JSON, 0)
+	arr := make([]JSON, 0, len(v))
 	for _, item := range v {
 		arr = append(arr, newJSONBool(item))
 	}
@@ -368,7 +371,7 @@ func newJSONBoolArray(v []bool) JSON {
 }
 
 func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T) JSON {
-	arr := make([]JSON, 0)
+	arr := make([]JSON, 0, len(v))
 	for _, item := range v {
 		arr = append(arr, newJSONNumber(float64(item)))
 	}
@@ -376,7 +379,7 @@ func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T) JSON {
 }
 
 func newJSONStringArray(v []string) JSON {
-	arr := make([]JSON, 0)
+	arr := make([]JSON, 0, len(v))
 	for _, item := range v {
 		arr = append(arr, newJSONString(item))
 	}
@@ -387,14 +390,16 @@ func newJSONStringArray(v []string) JSON {
 func NewJSONFromFastJSON(v *fastjson.Value) JSON {
 	switch v.Type() {
 	case fastjson.TypeObject:
-		obj := make(map[string]JSON)
-		v.GetObject().Visit(func(k []byte, v *fastjson.Value) {
+		fastObj := v.GetObject()
+		obj := make(map[string]JSON, fastObj.Len())
+		fastObj.Visit(func(k []byte, v *fastjson.Value) {
 			obj[string(k)] = NewJSONFromFastJSON(v)
 		})
 		return newJSONObject(obj)
 	case fastjson.TypeArray:
-		arr := make([]JSON, 0)
-		for _, item := range v.GetArray() {
+		fastArr := v.GetArray()
+		arr := make([]JSON, 0, len(fastArr))
+		for _, item := range fastArr {
 			arr = append(arr, NewJSONFromFastJSON(item))
 		}
 		return newJSONArray(arr)
@@ -416,7 +421,7 @@ func NewJSONFromFastJSON(v *fastjson.Value) JSON {
 // The map values must be valid Go values that can be converted to JSON.
 // Returns error if any map value cannot be converted to JSON.
 func NewJSONFromMap(data map[string]any) (JSON, error) {
-	obj := make(map[string]JSON)
+	obj := make(map[string]JSON, len(data))
 	for k, v := range data {
 		jsonVal, err := NewJSON(v)
 		if err != nil {
