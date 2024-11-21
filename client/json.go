@@ -190,10 +190,6 @@ func (b jsonBool) Bool() (bool, bool) {
 	return b.val, true
 }
 
-func (b jsonBool) Marshal(w io.Writer) error {
-	return json.NewEncoder(w).Encode(b.val)
-}
-
 func (b jsonBool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.val)
 }
