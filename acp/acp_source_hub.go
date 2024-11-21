@@ -333,18 +333,28 @@ func (a *acpSourceHub) DeleteActorRelationship(
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
 	msgSet := sourcehub.MsgSet{}
+
+	var newActorRelationship *acptypes.Relationship
+	if targetActor == "*" {
+		newActorRelationship = acptypes.NewAllActorsRelationship(
+			resourceName,
+			objectID,
+			relation,
+		)
+	} else {
+		newActorRelationship = acptypes.NewActorRelationship(
+			resourceName,
+			objectID,
+			relation,
+			targetActor,
+		)
+	}
+
 	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
-		Creator:     a.signer.GetAccAddress(),
-		BearerToken: requester.BearerToken,
-		PolicyId:    policyID,
-		Cmd: acptypes.NewDeleteRelationshipCmd(
-			acptypes.NewActorRelationship(
-				resourceName,
-				objectID,
-				relation,
-				targetActor,
-			),
-		),
+		Creator:      a.signer.GetAccAddress(),
+		BearerToken:  requester.BearerToken,
+		PolicyId:     policyID,
+		Cmd:          acptypes.NewDeleteRelationshipCmd(newActorRelationship),
 		CreationTime: creationTime,
 	})
 
