@@ -256,7 +256,7 @@ func ParseJSONBytes(data []byte) (JSON, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewJSONFromFastJSON(v)
+	return NewJSONFromFastJSON(v), nil
 }
 
 // ParseJSONString parses the given JSON string into a JSON value.
@@ -267,7 +267,7 @@ func ParseJSONString(data string) (JSON, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewJSONFromFastJSON(v)
+	return NewJSONFromFastJSON(v), nil
 }
 
 // NewJSON creates a JSON value from a Go value.
@@ -287,7 +287,7 @@ func NewJSON(v any) (JSON, error) {
 	}
 	switch val := v.(type) {
 	case *fastjson.Value:
-		return NewJSONFromFastJSON(val)
+		return NewJSONFromFastJSON(val), nil
 	case string:
 		return newJSONString(val), nil
 	case map[string]any:
@@ -388,50 +388,32 @@ func newJSONStringArray(v []string) JSON {
 }
 
 // NewJSONFromFastJSON creates a JSON value from a fastjson.Value.
-// Returns error if the fastjson.Value contains invalid JSON types.
-func NewJSONFromFastJSON(v *fastjson.Value) (JSON, error) {
+func NewJSONFromFastJSON(v *fastjson.Value) JSON {
 	switch v.Type() {
 	case fastjson.TypeObject:
 		obj := make(map[string]JSON)
-		var err error
 		v.GetObject().Visit(func(k []byte, v *fastjson.Value) {
-			if err != nil {
-				return
-			}
-			val, newErr := NewJSONFromFastJSON(v)
-			if newErr != nil {
-				err = newErr
-				return
-			}
-			obj[string(k)] = val
+			obj[string(k)] = NewJSONFromFastJSON(v)
 		})
-		if err != nil {
-			return nil, err
-		}
-		return newJSONObject(obj), nil
+		return newJSONObject(obj)
 	case fastjson.TypeArray:
 		arr := make([]JSON, 0)
 		for _, item := range v.GetArray() {
-			el, err := NewJSONFromFastJSON(item)
-			if err != nil {
-				return nil, err
-			}
-			arr = append(arr, el)
+			arr = append(arr, NewJSONFromFastJSON(item))
 		}
-		return newJSONArray(arr), nil
+		return newJSONArray(arr)
 	case fastjson.TypeNumber:
-		return newJSONNumber(v.GetFloat64()), nil
+		return newJSONNumber(v.GetFloat64())
 	case fastjson.TypeString:
-		return newJSONString(string(v.GetStringBytes())), nil
+		return newJSONString(string(v.GetStringBytes()))
 	case fastjson.TypeTrue:
-		return newJSONBool(true), nil
+		return newJSONBool(true)
 	case fastjson.TypeFalse:
-		return newJSONBool(false), nil
+		return newJSONBool(false)
 	case fastjson.TypeNull:
-		return newJSONNull(), nil
-	default:
-		return nil, NewErrInvalidJSONPayload(v)
+		return newJSONNull()
 	}
+	return nil
 }
 
 // NewJSONFromMap creates a JSON object from a map[string]any.

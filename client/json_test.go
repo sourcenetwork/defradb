@@ -41,7 +41,7 @@ func TestParseJSONAndMarshal_WithValidInput_ShouldMarshal(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
-				return NewJSONFromFastJSON(v)
+				return NewJSONFromFastJSON(v), nil
 			},
 		},
 		{
@@ -70,6 +70,11 @@ func TestParseJSONAndMarshal_WithValidInput_ShouldMarshal(t *testing.T) {
 			actualStr := strings.ReplaceAll(buf.String(), "\n", "")
 			expectedStr := strings.ReplaceAll(data, " ", "")
 			require.Equal(t, actualStr, expectedStr, "Expected %s, got %s", expectedStr, actualStr)
+
+			rawJSON, err := jsonObj.MarshalJSON()
+			require.NoError(t, err, "jsonObj.MarshalJSON() failed with error %v", err)
+			actualStr = strings.ReplaceAll(string(rawJSON), "\n", "")
+			require.Equal(t, actualStr, expectedStr, "Expected %s, got %s", expectedStr, actualStr)
 		})
 	}
 }
@@ -86,17 +91,6 @@ func TestNewJSONAndMarshal_WithInvalidInput_ShouldFail(t *testing.T) {
 		{
 			name:     "FromString",
 			fromFunc: ParseJSONString,
-		},
-		{
-			name: "FromFastJSON",
-			fromFunc: func(data string) (JSON, error) {
-				var p fastjson.Parser
-				v, err := p.Parse(data)
-				if err != nil {
-					return nil, err
-				}
-				return NewJSONFromFastJSON(v)
-			},
 		},
 		{
 			name: "FromMap",
@@ -289,9 +283,10 @@ func TestJSONNull_Methods_ShouldWorkAsExpected(t *testing.T) {
 
 func TestNewJSON(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    any
-		expected JSON
+		name        string
+		input       any
+		expected    JSON
+		expectError bool
 	}{
 		{
 			name:     "Nil",
@@ -453,13 +448,33 @@ func TestNewJSON(t *testing.T) {
 			input:    []float64{1.0, 2.25, 3.5},
 			expected: newJSONArray([]JSON{newJSONNumber(1.0), newJSONNumber(2.25), newJSONNumber(3.5)}),
 		},
+		{
+			name:        "AnyArrayWithInvalidElement",
+			input:       []any{"valid", make(chan int)}, // channels can't be converted to JSON
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := NewJSON(tt.input)
-			require.NoError(t, err)
+			if tt.expectError {
+				require.Error(t, err, "Expected error, but got nil")
+				return
+			}
+			require.NoError(t, err, "NewJSON failed with error %v", err)
 			require.Equal(t, result, tt.expected)
 		})
 	}
+}
+
+func TestNewJSONFromMap_WithInvalidValue_ShouldFail(t *testing.T) {
+	// Map with an invalid value (channel cannot be converted to JSON)
+	input := map[string]any{
+		"valid":   "value",
+		"invalid": make(chan int),
+	}
+
+	_, err := NewJSONFromMap(input)
+	require.Error(t, err)
 }
