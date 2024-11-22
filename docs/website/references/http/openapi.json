@@ -2363,7 +2363,7 @@
     "servers": [
         {
             "description": "Local DefraDB instance",
-            "url": "http://localhost:9181/api/v0"
+            "url": "/api/v0"
         }
     ],
     "tags": [
