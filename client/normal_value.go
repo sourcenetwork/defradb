@@ -64,7 +64,7 @@ type NormalValue interface {
 	Document() (*Document, bool)
 	// JSON returns the value as JSON. The second return flag is true if the value is JSON.
 	// Otherwise it will return nil and false.
-	JSON() (*JSON, bool)
+	JSON() (JSON, bool)
 
 	// NillableBool returns the value as a nillable bool.
 	// The second return flag is true if the value is [immutable.Option[bool]].

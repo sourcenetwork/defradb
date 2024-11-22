@@ -73,11 +73,8 @@ func TestDefaultExplainRequest_WithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t
 							"collectionID":   "2",
 							"collectionName": "Book",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},

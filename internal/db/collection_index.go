@@ -24,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -316,10 +315,8 @@ func (c *collection) iterateAllDocs(
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}
-	start := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
-	spans := core.NewSpan(start, start.PrefixEnd())
-
-	err = df.Start(ctx, spans)
+	prefix := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
+	err = df.Start(ctx, prefix)
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}

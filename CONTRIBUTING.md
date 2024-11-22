@@ -5,7 +5,7 @@ This document will guide you through the process of contributing to the project.
 
 All contributions are appreciated, whether it's identifying problems, highlighting missing features, or contributing to the codebase in simple or complex ways.
 
-You are encouraged to join the [Source Network Discord](discord.gg/w7jYQVJ) to discuss ideas, ask questions, and find inspiration for future developments.
+You are encouraged to join the [Source Network Discord](https://discord.gg/w7jYQVJ) to discuss ideas, ask questions, and find inspiration for future developments.
 
 ## Getting started
 To get started, clone the repository, build, and run it:

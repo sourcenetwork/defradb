@@ -13,7 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -107,7 +107,7 @@ func (n *updateNode) Next() (bool, error) {
 
 func (n *updateNode) Kind() string { return "updateNode" }
 
-func (n *updateNode) Spans(spans []core.Span) { n.results.Spans(spans) }
+func (n *updateNode) Prefixes(prefixes []keys.Walkable) { n.results.Prefixes(prefixes) }
 
 func (n *updateNode) Init() error { return n.results.Init() }
 

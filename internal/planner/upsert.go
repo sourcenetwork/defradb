@@ -13,7 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -73,7 +73,7 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			n.source.Spans(docIDsToSpans(documentsToDocIDs(doc), n.collection.Description()))
+			n.source.Prefixes(docIDsToPrefixes(documentsToDocIDs(doc), n.collection.Description()))
 		}
 		err = n.source.Init()
 		if err != nil {
@@ -96,8 +96,8 @@ func (n *upsertNode) Kind() string {
 	return "upsertNode"
 }
 
-func (n *upsertNode) Spans(spans []core.Span) {
-	n.source.Spans(spans)
+func (n *upsertNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
 }
 
 func (n *upsertNode) Init() error {

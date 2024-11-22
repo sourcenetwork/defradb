@@ -215,7 +215,11 @@ func addDocActorRelationshipACP(
 	}
 
 	if action.ExpectedError == "" && !action.ExpectedExistence {
-		waitForUpdateEvents(s, actionNodeID, map[string]struct{}{docID: {}})
+		expect := map[string]struct{}{
+			docID: {},
+		}
+
+		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect)
 	}
 }
 
@@ -304,7 +308,7 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	collectionName := ""
 	docID := ""
 	if collectionID != -1 {
-		collection := s.collections[nodeID][collectionID]
+		collection := s.nodes[nodeID].collections[collectionID]
 		if !collection.Description().Name.HasValue() {
 			require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
 		}
@@ -617,7 +621,7 @@ func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
 	if nodeIndex >= len(s.nodes) {
 		return immutable.None[string]()
 	}
-	switch client := s.nodes[nodeIndex].(type) {
+	switch client := s.nodes[nodeIndex].Client.(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	case *cli.Wrapper:

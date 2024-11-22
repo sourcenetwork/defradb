@@ -114,11 +114,8 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -134,11 +131,8 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 									"_ne": nil,
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},
@@ -273,11 +267,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -293,11 +284,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"_ne": nil,
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},
@@ -319,11 +307,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -340,11 +325,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"_ne": nil,
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/1",
-									"end":   "/2",
-								},
+							"prefixes": []string{
+								"/1",
 							},
 						},
 					},

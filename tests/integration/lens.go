@@ -59,7 +59,7 @@ func configureMigration(
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
+		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
 		ctx := db.SetContextTxn(s.ctx, txn)
 
 		err := node.SetMigration(ctx, action.LensConfig)

@@ -78,8 +78,8 @@ const (
 // Otherwise, it returns the input itself.
 func extractValue(input any) any {
 	// unwrap JSON inner values
-	if v, ok := input.(*JSON); ok {
-		return v.inner
+	if v, ok := input.(JSON); ok {
+		return v.Unwrap()
 	}
 
 	inputVal := reflect.ValueOf(input)
@@ -171,7 +171,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		BytesType:    func(v any) NormalValue { return NewNormalBytes(v.([]byte)) },
 		TimeType:     func(v any) NormalValue { return NewNormalTime(v.(time.Time)) },
 		DocumentType: func(v any) NormalValue { return NewNormalDocument(v.(*Document)) },
-		JSONType:     func(v any) NormalValue { return NewNormalJSON(v.(*JSON)) },
+		JSONType:     func(v any) NormalValue { return NewNormalJSON(v.(JSON)) },
 
 		NillableBoolType:     func(v any) NormalValue { return NewNormalNillableBool(v.(immutable.Option[bool])) },
 		NillableIntType:      func(v any) NormalValue { return NewNormalNillableInt(v.(immutable.Option[int64])) },
@@ -293,7 +293,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		},
 		{
 			nType: JSONType,
-			input: &JSON{nil},
+			input: newJSONNumber(2),
 		},
 		{
 			nType:      NillableBoolType,
@@ -840,53 +840,6 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
-}
-
-func TestNormalValue_NewNormalJSON(t *testing.T) {
-	var expect *JSON
-	var actual *JSON
-
-	expect = &JSON{nil}
-	normal := NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
-
-	expect = &JSON{"hello"}
-	normal = NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
-
-	expect = &JSON{true}
-	normal = NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
-
-	expect = &JSON{int64(10)}
-	normal = NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
-
-	expect = &JSON{float64(3.14)}
-	normal = NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
-
-	expect = &JSON{map[string]any{"one": 1}}
-	normal = NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
-
-	expect = &JSON{[]any{1, "two"}}
-	normal = NewNormalJSON(expect)
-
-	actual, _ = normal.JSON()
-	assert.Equal(t, expect, actual)
 }
 
 func TestNormalValue_NewNormalInt(t *testing.T) {

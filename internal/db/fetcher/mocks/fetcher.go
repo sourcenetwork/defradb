@@ -18,6 +18,8 @@ import (
 
 	immutable "github.com/sourcenetwork/immutable"
 
+	keys "github.com/sourcenetwork/defradb/internal/keys"
+
 	mapper "github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	mock "github.com/stretchr/testify/mock"
@@ -201,11 +203,11 @@ func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Op
 	return _c
 }
 
-// Start provides a mock function with given fields: ctx, spans
-func (_m *Fetcher) Start(ctx context.Context, spans ...core.Span) error {
-	_va := make([]interface{}, len(spans))
-	for _i := range spans {
-		_va[_i] = spans[_i]
+// Start provides a mock function with given fields: ctx, prefixes
+func (_m *Fetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
+	_va := make([]interface{}, len(prefixes))
+	for _i := range prefixes {
+		_va[_i] = prefixes[_i]
 	}
 	var _ca []interface{}
 	_ca = append(_ca, ctx)
@@ -217,8 +219,8 @@ func (_m *Fetcher) Start(ctx context.Context, spans ...core.Span) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, ...core.Span) error); ok {
-		r0 = rf(ctx, spans...)
+	if rf, ok := ret.Get(0).(func(context.Context, ...keys.Walkable) error); ok {
+		r0 = rf(ctx, prefixes...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -233,18 +235,18 @@ type Fetcher_Start_Call struct {
 
 // Start is a helper method to define mock.On call
 //   - ctx context.Context
-//   - spans ...core.Span
-func (_e *Fetcher_Expecter) Start(ctx interface{}, spans ...interface{}) *Fetcher_Start_Call {
+//   - prefixes ...keys.Walkable
+func (_e *Fetcher_Expecter) Start(ctx interface{}, prefixes ...interface{}) *Fetcher_Start_Call {
 	return &Fetcher_Start_Call{Call: _e.mock.On("Start",
-		append([]interface{}{ctx}, spans...)...)}
+		append([]interface{}{ctx}, prefixes...)...)}
 }
 
-func (_c *Fetcher_Start_Call) Run(run func(ctx context.Context, spans ...core.Span)) *Fetcher_Start_Call {
+func (_c *Fetcher_Start_Call) Run(run func(ctx context.Context, prefixes ...keys.Walkable)) *Fetcher_Start_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]core.Span, len(args)-1)
+		variadicArgs := make([]keys.Walkable, len(args)-1)
 		for i, a := range args[1:] {
 			if a != nil {
-				variadicArgs[i] = a.(core.Span)
+				variadicArgs[i] = a.(keys.Walkable)
 			}
 		}
 		run(args[0].(context.Context), variadicArgs...)
@@ -257,7 +259,7 @@ func (_c *Fetcher_Start_Call) Return(_a0 error) *Fetcher_Start_Call {
 	return _c
 }
 
-func (_c *Fetcher_Start_Call) RunAndReturn(run func(context.Context, ...core.Span) error) *Fetcher_Start_Call {
+func (_c *Fetcher_Start_Call) RunAndReturn(run func(context.Context, ...keys.Walkable) error) *Fetcher_Start_Call {
 	_c.Call.Return(run)
 	return _c
 }

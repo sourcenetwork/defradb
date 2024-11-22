@@ -91,9 +91,9 @@ func (p *parallelNode) Start() error {
 	})
 }
 
-func (p *parallelNode) Spans(spans []core.Span) {
+func (p *parallelNode) Prefixes(prefixes []keys.Walkable) {
 	_ = p.applyToPlans(func(n planNode) error {
-		n.Spans(spans)
+		n.Prefixes(prefixes)
 		return nil
 	})
 }
@@ -156,9 +156,9 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 		return false, nil
 	}
 
-	// pass the doc key as a reference through the spans interface
-	spans := []core.Span{core.NewSpan(keys.DataStoreKey{DocID: key}, keys.DataStoreKey{})}
-	plan.Spans(spans)
+	// pass the doc key as a reference through the prefixes interface
+	prefixes := []keys.Walkable{keys.DataStoreKey{DocID: key}}
+	plan.Prefixes(prefixes)
 	err := plan.Init()
 	if err != nil {
 		return false, err

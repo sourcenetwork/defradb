@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -127,9 +128,9 @@ func (n *groupNode) Start() error {
 	return nil
 }
 
-func (n *groupNode) Spans(spans []core.Span) {
+func (n *groupNode) Prefixes(prefixes []keys.Walkable) {
 	for _, dataSource := range n.dataSources {
-		dataSource.Spans(spans)
+		dataSource.Prefixes(prefixes)
 	}
 }
 

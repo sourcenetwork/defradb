@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package inline_array
+package simple
 
 import (
 	"testing"
@@ -16,30 +16,46 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is meant to provide coverage of the planNode.Prefixes
-// func by targeting a specific docID in the parent select.
-func TestQueryInlineNillableFloatArray_WithDocIDAndMin_Succeeds(t *testing.T) {
+func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with doc id, min of nillable float array",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users @branchable {
+						name: String
+					}
+				`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Shahzad",
-					"pageRatings": [3.1425, 0.00000000001, 10, null]
+					"name": "Fred"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Freddddd"
 				}`,
 			},
 			testUtils.Request{
+				// This is the cid of the collection-commit when the second doc (John) is created.
+				// Without the docID param both John and Fred should be returned.
 				Request: `query {
-					Users(docID: "bae-3f7e0f22-e253-53dd-b31b-df8b081292d9") {
+					Users (
+							cid: "bafyreiboen2mw2unu4fty2pyyd5nicqi57vcdahrrag6bjm54md5myj54u",
+							docID: "bae-3a7df128-bfa9-559a-a9c5-96f2bf6d1038"
+						) {
 						name
-						_min(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Shahzad",
-							"_min": float64(0.00000000001),
+							"name": "Fred",
 						},
 					},
 				},
@@ -47,5 +63,5 @@ func TestQueryInlineNillableFloatArray_WithDocIDAndMin_Succeeds(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

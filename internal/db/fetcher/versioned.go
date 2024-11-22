@@ -16,7 +16,7 @@ import (
 	"fmt"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -89,15 +89,11 @@ type VersionedFetcher struct {
 	root  datastore.Rootstore
 	store datastore.Txn
 
-	dsKey keys.DataStoreKey
-
 	queuedCids *list.List
 
 	acp immutable.Option[acp.ACP]
 
 	col client.Collection
-	// @todo index  *client.IndexDescription
-	mCRDTs map[client.FieldID]merklecrdt.MerkleCRDT
 }
 
 // Init initializes the VersionedFetcher.
@@ -116,7 +112,6 @@ func (vf *VersionedFetcher) Init(
 	vf.acp = acp
 	vf.col = col
 	vf.queuedCids = list.New()
-	vf.mCRDTs = make(map[client.FieldID]merklecrdt.MerkleCRDT)
 	vf.txn = txn
 
 	// create store
@@ -152,54 +147,30 @@ func (vf *VersionedFetcher) Init(
 }
 
 // Start serializes the correct state according to the Key and CID.
-func (vf *VersionedFetcher) Start(ctx context.Context, spans ...core.Span) error {
-	if vf.col == nil {
-		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
-	}
-
-	if len(spans) != 1 {
-		return ErrSingleSpanOnly
-	}
-
+func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
 	// VersionedFetcher only ever recieves a headstore key
 	//nolint:forcetypeassert
-	prefix := spans[0].Start.(keys.HeadstoreDocKey)
-	dk := prefix.DocID
-	cid := prefix.Cid
-	if dk == "" {
-		return client.NewErrUninitializeProperty("Spans", "DocID")
-	} else if !cid.Defined() {
-		return client.NewErrUninitializeProperty("Spans", "CID")
-	}
+	prefix := prefixes[0].(keys.HeadstoreDocKey)
 
 	vf.ctx = ctx
-	vf.dsKey = keys.DataStoreKey{
-		CollectionRootID: vf.col.Description().RootID,
-		DocID:            dk,
-	}
 
-	if err := vf.seekTo(cid); err != nil {
-		return NewErrFailedToSeek(cid, err)
+	if err := vf.seekTo(prefix.Cid); err != nil {
+		return NewErrFailedToSeek(prefix.Cid, err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx)
 }
 
-// Rootstore returns the rootstore of the VersionedFetcher.
-func (vf *VersionedFetcher) Rootstore() ds.Datastore {
-	return vf.root
-}
-
-// Start a fetcher with the needed info (cid embedded in a span)
+// Start a fetcher with the needed info (cid embedded in a prefix)
 
 /*
 1. Init with DocID (VersionedFetched is scoped to a single doc)
 2. - Create transient stores (head, data, block)
-3. Start with a given Txn and CID span set (length 1 for now)
+3. Start with a given Txn and CID prefix set (length 1 for now)
 4. call traverse with the target cid
 5.
 
-err := VersionFetcher.Start(txn, spans) {
+err := VersionFetcher.Start(txn, prefixes) {
 	vf.traverse(cid)
 }
 */
@@ -339,56 +310,63 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	link, err := block.GenerateLink()
-	if err != nil {
-		return err
-	}
+	var mcrdt merklecrdt.MerkleCRDT
+	switch {
+	case block.Delta.IsCollection():
+		mcrdt = merklecrdt.NewMerkleCollection(
+			vf.store,
+			keys.NewCollectionSchemaVersionKey(vf.col.Description().SchemaVersionID, vf.col.Description().ID),
+			keys.NewHeadstoreColKey(vf.col.Description().RootID),
+		)
 
-	// first arg 0 is the index for the composite DAG in the mCRDTs cache
-	mcrdt, exists := vf.mCRDTs[0]
-	if !exists {
+	case block.Delta.IsComposite():
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			vf.store,
-			keys.CollectionSchemaVersionKey{},
-			vf.dsKey.WithFieldID(core.COMPOSITE_NAMESPACE),
+			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			keys.DataStoreKey{
+				CollectionRootID: vf.col.Description().RootID,
+				DocID:            string(block.Delta.GetDocID()),
+				FieldID:          fmt.Sprint(core.COMPOSITE_NAMESPACE),
+			},
 		)
-		vf.mCRDTs[0] = mcrdt
+
+	default:
+		field, ok := vf.col.Definition().GetFieldByName(block.Delta.GetFieldName())
+		if !ok {
+			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
+		}
+
+		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
+			vf.store,
+			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			field.Typ,
+			field.Kind,
+			keys.DataStoreKey{
+				CollectionRootID: vf.col.Description().RootID,
+				DocID:            string(block.Delta.GetDocID()),
+				FieldID:          fmt.Sprint(field.ID),
+			},
+			field.Name,
+		)
+		if err != nil {
+			return err
+		}
 	}
-	err = mcrdt.Clock().ProcessBlock(vf.ctx, block, link)
+
+	err = mcrdt.Clock().ProcessBlock(
+		vf.ctx,
+		block,
+		cidlink.Link{
+			Cid: c,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
 	// handle subgraphs
-	for _, l := range block.Links {
-		// get node
-		subBlock, err := vf.getDAGBlock(l.Link.Cid)
-		if err != nil {
-			return err
-		}
-
-		field, ok := vf.col.Definition().GetFieldByName(l.Name)
-		if !ok {
-			return client.NewErrFieldNotExist(l.Name)
-		}
-
-		mcrdt, exists := vf.mCRDTs[field.ID]
-		if !exists {
-			mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
-				vf.store,
-				keys.CollectionSchemaVersionKey{},
-				field.Typ,
-				field.Kind,
-				vf.dsKey.WithFieldID(fmt.Sprint(field.ID)),
-				field.Name,
-			)
-			if err != nil {
-				return err
-			}
-			vf.mCRDTs[field.ID] = mcrdt
-		}
-
-		err = mcrdt.Clock().ProcessBlock(vf.ctx, subBlock, l.Link)
+	for _, l := range block.AllLinks() {
+		err = vf.merge(l.Cid)
 		if err != nil {
 			return err
 		}

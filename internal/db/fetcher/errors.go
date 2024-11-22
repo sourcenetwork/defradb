@@ -45,7 +45,6 @@ var (
 	ErrVFetcherFailedToGetDagLink = errors.New(errVFetcherFailedToGetDagLink)
 	ErrFailedToGetDagNode         = errors.New(errFailedToGetDagNode)
 	ErrMissingMapper              = errors.New(errMissingMapper)
-	ErrSingleSpanOnly             = errors.New("spans must contain only a single entry")
 	ErrInvalidInOperatorValue     = errors.New(errInvalidInOperatorValue)
 	ErrInvalidFilterOperator      = errors.New(errInvalidFilterOperator)
 	ErrUnexpectedTypeValue        = errors.New(errUnexpectedTypeValue)

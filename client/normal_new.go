@@ -64,7 +64,7 @@ func NewNormalValue(val any) (NormalValue, error) {
 		return NewNormalTime(v), nil
 	case *Document:
 		return NewNormalDocument(v), nil
-	case *JSON:
+	case JSON:
 		return NewNormalJSON(v), nil
 
 	case immutable.Option[bool]:

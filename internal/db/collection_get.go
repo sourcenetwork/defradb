@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -73,7 +72,7 @@ func (c *collection) get(
 	// construct target DS key from DocID.
 	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
 	// run the doc fetcher
-	err = df.Start(ctx, core.NewSpan(targetKey, targetKey.PrefixEnd()))
+	err = df.Start(ctx, targetKey)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

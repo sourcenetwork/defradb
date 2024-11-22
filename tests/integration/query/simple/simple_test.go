@@ -214,3 +214,81 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+// This test is to ensure that deleted docs from the next collection ID are not returned in the query results.
+// It documents the fixing of the bug described in #3242.
+func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Deleted docs in collection 2 should not yield deleted docs on collection 1 query",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+                    type User {
+                        name: String
+                    }
+                    type Friend {
+                        name: String
+                    }
+                `,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Shahzad",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Andy",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+                    User {
+                        _docID
+                    }
+                }`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_docID": testUtils.NewDocIndex(0, 1),
+						},
+						{
+							"_docID": testUtils.NewDocIndex(0, 0),
+						},
+					},
+				},
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 1,
+				DocID:        0,
+			},
+			testUtils.Request{
+				Request: `query {
+                    User {
+                        _docID
+                    }
+                }`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_docID": testUtils.NewDocIndex(0, 1),
+						},
+						{
+							"_docID": testUtils.NewDocIndex(0, 0),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

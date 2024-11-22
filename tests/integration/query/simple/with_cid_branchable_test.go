@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,39 +16,25 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithInvalidCid(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple query with cid",
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users (cid: "any non-nil string value - this will be ignored") {
-						Name
-					}
-				}`,
-				ExpectedError: "invalid cid: selected encoding not supported",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithCid(t *testing.T) {
+func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type Users @branchable {
 						name: String
 					}
 				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Freddddd"
+				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
@@ -58,7 +44,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe"
+							cid: "bafyreiewwsnu2ld5qlntamdm77ayb7xtmxz3p5difvaaakaome7zbtpo4u"
 						) {
 						name
 					}
@@ -66,7 +52,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "John",
+							"name": "Fred",
 						},
 					},
 				},
@@ -77,36 +63,91 @@ func TestQuerySimpleWithCid(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
+func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type Users @branchable {
 						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "John"
+					"name": "Fred"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Freddddd"
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Fred"
+					"name": "John"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe"
+							cid: "bafyreifpamlyhcbriztgbhds5ctgi5rm6w5wcar2py7246lo6j5v7iusxm"
 						) {
 						name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
+						{
+							"name": "Freddddd",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users @branchable {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Freddddd"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+							cid: "bafyreigmt6ytph32jjxts2bij7fkne5ntionldsnklp35vcamvvl2x3a5i"
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Freddddd",
+						},
 						{
 							"name": "John",
 						},
