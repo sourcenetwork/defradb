@@ -111,7 +111,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Servers: openapi3.Servers{
 			&openapi3.Server{
 				Description: "Local DefraDB instance",
-				URL:         "http://127.0.0.1:9181/api/v0",
+				URL:         "/api/v0",
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{
