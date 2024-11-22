@@ -32,6 +32,7 @@ var openApiSchemas = map[string]any{
 	"schema":                          &client.SchemaDescription{},
 	"collection_definition":           &client.CollectionDefinition{},
 	"index":                           &client.IndexDescription{},
+	"index_create_request":            &client.IndexCreateRequestDescription{},
 	"delete_result":                   &client.DeleteResult{},
 	"update_result":                   &client.UpdateResult{},
 	"lens_config":                     &client.LensConfig{},

@@ -318,6 +318,9 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	indexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/index",
 	}
+	indexCreateRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index_create_request",
+	}
 
 	collectionNamePathParam := openapi3.NewPathParameter("name").
 		WithDescription("Collection name").
@@ -389,7 +392,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	createIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(indexSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(indexCreateRequestSchema))
 	createIndexResponse := openapi3.NewResponse().
 		WithDescription("Index description").
 		WithJSONSchemaRef(indexSchema)
