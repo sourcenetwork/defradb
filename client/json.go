@@ -13,6 +13,7 @@ package client
 import (
 	"encoding/json"
 	"io"
+	"strconv"
 
 	"github.com/valyala/fastjson"
 	"golang.org/x/exp/constraints"
@@ -56,6 +57,64 @@ type JSON interface {
 	// Marshal writes the JSON value to the writer.
 	// Returns an error if marshaling fails.
 	Marshal(w io.Writer) error
+
+	// accept calls the visitor function for the JSON value at the given path.
+	accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error
+}
+
+// TraverseJSON traverses a JSON value and calls the visitor function for each node.
+// opts controls how the traversal is performed.
+func TraverseJSON(j JSON, visitor JSONVisitor, opts ...traverseJSONOption) error {
+	var options traverseJSONOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+	if shouldVisitPath(options.PathPrefix, nil) {
+		return j.accept(visitor, []string{}, options)
+	}
+	return nil
+}
+
+type traverseJSONOption func(*traverseJSONOptions)
+
+// TraverseJSONWithPrefix returns a traverseJSONOption that sets the path prefix for the traversal.
+// Only nodes with paths that start with the prefix will be visited.
+func TraverseJSONWithPrefix(prefix []string) traverseJSONOption {
+	return func(opts *traverseJSONOptions) {
+		opts.PathPrefix = prefix
+	}
+}
+
+// TraverseJSONOnlyLeaves returns a traverseJSONOption that sets the traversal to visit only leaf nodes.
+// Leaf nodes are nodes that do not have any children. This means that visitor function will not
+// be called for objects or arrays and proceed with theirs children.
+func TraverseJSONOnlyLeaves() traverseJSONOption {
+	return func(opts *traverseJSONOptions) {
+		opts.OnlyLeaves = true
+	}
+}
+
+// TraverseJSONVisitArrayElements returns a traverseJSONOption that sets the traversal to visit array elements.
+// When this option is set, the visitor function will be called for each element of an array.
+func TraverseJSONVisitArrayElements() traverseJSONOption {
+	return func(opts *traverseJSONOptions) {
+		opts.VisitArrayElements = true
+	}
+}
+
+// JSONVisitor is a function that processes a JSON value at a given path.
+// path represents the location of the value in the JSON tree.
+// Returns an error if the processing fails.
+type JSONVisitor func(path []string, value JSON) error
+
+// traverseJSONOptions configures how the JSON tree is traversed.
+type traverseJSONOptions struct {
+	// OnlyLeaves when true visits only leaf nodes (not objects or arrays)
+	OnlyLeaves bool
+	// PathPrefix when set visits only paths that start with this prefix
+	PathPrefix []string
+	// VisitArrayElements when true visits array elements
+	VisitArrayElements bool
 }
 
 type jsonVoid struct{}
@@ -105,6 +164,13 @@ func (v jsonBase[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.val)
 }
 
+func (n jsonBase[T]) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	if shouldVisitPath(opts.PathPrefix, path) {
+		return visitor(path, n)
+	}
+	return nil
+}
+
 type jsonObject struct {
 	jsonBase[map[string]JSON]
 }
@@ -125,6 +191,26 @@ func (obj jsonObject) Unwrap() any {
 		result[k] = v.Unwrap()
 	}
 	return result
+}
+
+func (obj jsonObject) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	if !opts.OnlyLeaves && len(path) >= len(opts.PathPrefix) {
+		if err := visitor(path, obj); err != nil {
+			return err
+		}
+	}
+
+	for k, v := range obj.val {
+		newPath := append(path, k)
+		if !shouldVisitPath(opts.PathPrefix, newPath) {
+			continue
+		}
+
+		if err := v.accept(visitor, newPath, opts); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type jsonArray struct {
@@ -149,6 +235,28 @@ func (arr jsonArray) Unwrap() any {
 	return result
 }
 
+func (arr jsonArray) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	if !opts.OnlyLeaves {
+		if err := visitor(path, arr); err != nil {
+			return err
+		}
+	}
+
+	if opts.VisitArrayElements {
+		for i := range arr.val {
+			newPath := append(path, strconv.Itoa(i))
+			if !shouldVisitPath(opts.PathPrefix, newPath) {
+				continue
+			}
+
+			if err := arr.val[i].accept(visitor, newPath, opts); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type jsonNumber struct {
 	jsonBase[float64]
 }
@@ -157,10 +265,6 @@ var _ JSON = jsonNumber{}
 
 func (n jsonNumber) Number() (float64, bool) {
 	return n.val, true
-}
-
-func (n jsonNumber) MarshalJSON() ([]byte, error) {
-	return json.Marshal(n.val)
 }
 
 type jsonString struct {
@@ -173,10 +277,6 @@ func (s jsonString) String() (string, bool) {
 	return s.val, true
 }
 
-func (s jsonString) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.val)
-}
-
 type jsonBool struct {
 	jsonBase[bool]
 }
@@ -185,10 +285,6 @@ var _ JSON = jsonBool{}
 
 func (b jsonBool) Bool() (bool, bool) {
 	return b.val, true
-}
-
-func (b jsonBool) MarshalJSON() ([]byte, error) {
-	return json.Marshal(b.val)
 }
 
 type jsonNull struct {
@@ -215,6 +311,10 @@ func (n jsonNull) Marshal(w io.Writer) error {
 
 func (n jsonNull) MarshalJSON() ([]byte, error) {
 	return json.Marshal(nil)
+}
+
+func (n jsonNull) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	return visitor(path, n)
 }
 
 func newJSONObject(val map[string]JSON) JSON {
@@ -430,4 +530,19 @@ func NewJSONFromMap(data map[string]any) (JSON, error) {
 		obj[k] = jsonVal
 	}
 	return newJSONObject(obj), nil
+}
+
+func shouldVisitPath(prefix, path []string) bool {
+	if len(prefix) == 0 {
+		return true
+	}
+	for i := range prefix {
+		if len(path) <= i {
+			return true
+		}
+		if prefix[i] != path[i] {
+			return false
+		}
+	}
+	return true
 }
