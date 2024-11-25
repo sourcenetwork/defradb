@@ -96,6 +96,10 @@ func getIdentity(s *state, identity immutable.Option[identity]) acpIdentity.Iden
 	if !identity.HasValue() {
 		return acpIdentity.Identity{}
 	}
+
+	// The selector must never be "*" here because this function returns a specific identity from the
+	// stored identities, if "*" string needs to be signaled to the acp module then it should be handled
+	// a call before this function.
 	if identity.Value().selector == "*" {
 		require.Fail(s.t, "Used the \"*\" selector for identity incorrectly.", s.testCase.Description)
 	}
