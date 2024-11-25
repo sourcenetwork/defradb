@@ -105,6 +105,13 @@ func TraverseJSONVisitArrayElements() traverseJSONOption {
 	}
 }
 
+// TraverseJSONWithArrayIndexInPath returns a traverseJSONOption that includes array indices in the path.
+func TraverseJSONWithArrayIndexInPath() traverseJSONOption {
+	return func(opts *traverseJSONOptions) {
+		opts.IncludeArrayIndexInPath = true
+	}
+}
+
 // JSONVisitor is a function that processes a JSON value at a given path.
 // path represents the location of the value in the JSON tree.
 // Returns an error if the processing fails.
@@ -118,6 +125,8 @@ type traverseJSONOptions struct {
 	PathPrefix []string
 	// VisitArrayElements when true visits array elements
 	VisitArrayElements bool
+	// IncludeArrayIndexInPath when true includes array indices in the path
+	IncludeArrayIndexInPath bool
 }
 
 type jsonVoid struct{}
@@ -252,7 +261,12 @@ func (arr jsonArray) accept(visitor JSONVisitor, path []string, opts traverseJSO
 
 	if opts.VisitArrayElements {
 		for i := range arr.val {
-			newPath := append(path, strconv.Itoa(i))
+			var newPath []string
+			if opts.IncludeArrayIndexInPath {
+				newPath = append(path, strconv.Itoa(i))
+			} else {
+				newPath = path
+			}
 			if !shouldVisitPath(opts.PathPrefix, newPath) {
 				continue
 			}

@@ -12,12 +12,16 @@ package client
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+type traverseNode struct {
+	value JSON
+	path  string
+}
 
 func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 	// Create a complex JSON structure for testing
@@ -48,22 +52,22 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 	tests := []struct {
 		name     string
 		options  []traverseJSONOption
-		expected map[string]JSON // path -> value
+		expected []traverseNode // path -> value
 	}{
 		{
 			name:    "VisitAll",
 			options: nil,
-			expected: map[string]JSON{
-				"":                  json,
-				"string":            newJSONString("value"),
-				"number":            newJSONNumber(42),
-				"bool":              newJSONBool(true),
-				"null":              newJSONNull(),
-				"object":            json.Value().(map[string]JSON)["object"],
-				"object/nested":     newJSONString("inside"),
-				"object/deep":       json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"],
-				"object/deep/level": newJSONNumber(3),
-				"array":             json.Value().(map[string]JSON)["array"],
+			expected: []traverseNode{
+				{path: "", value: json},
+				{path: "string", value: newJSONString("value")},
+				{path: "number", value: newJSONNumber(42)},
+				{path: "bool", value: newJSONBool(true)},
+				{path: "null", value: newJSONNull()},
+				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "array", value: json.Value().(map[string]JSON)["array"]},
 			},
 		},
 		{
@@ -71,13 +75,13 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			options: []traverseJSONOption{
 				TraverseJSONOnlyLeaves(),
 			},
-			expected: map[string]JSON{
-				"string":            newJSONString("value"),
-				"number":            newJSONNumber(42),
-				"bool":              newJSONBool(true),
-				"null":              newJSONNull(),
-				"object/nested":     newJSONString("inside"),
-				"object/deep/level": newJSONNumber(3),
+			expected: []traverseNode{
+				{path: "string", value: newJSONString("value")},
+				{path: "number", value: newJSONNumber(42)},
+				{path: "bool", value: newJSONBool(true)},
+				{path: "null", value: newJSONNull()},
+				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/deep/level", value: newJSONNumber(3)},
 			},
 		},
 		{
@@ -85,11 +89,11 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			options: []traverseJSONOption{
 				TraverseJSONWithPrefix([]string{"object"}),
 			},
-			expected: map[string]JSON{
-				"object":            json.Value().(map[string]JSON)["object"],
-				"object/nested":     newJSONString("inside"),
-				"object/deep":       json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"],
-				"object/deep/level": newJSONNumber(3),
+			expected: []traverseNode{
+				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep/level", value: newJSONNumber(3)},
 			},
 		},
 		{
@@ -97,9 +101,9 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			options: []traverseJSONOption{
 				TraverseJSONWithPrefix([]string{"object", "deep"}),
 			},
-			expected: map[string]JSON{
-				"object/deep":       json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"],
-				"object/deep/level": newJSONNumber(3),
+			expected: []traverseNode{
+				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep/level", value: newJSONNumber(3)},
 			},
 		},
 		{
@@ -107,24 +111,50 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			options: []traverseJSONOption{
 				TraverseJSONVisitArrayElements(),
 			},
-			expected: map[string]JSON{
-				"":                  json,
-				"string":            newJSONString("value"),
-				"number":            newJSONNumber(42),
-				"bool":              newJSONBool(true),
-				"null":              newJSONNull(),
-				"object":            json.Value().(map[string]JSON)["object"],
-				"object/nested":     newJSONString("inside"),
-				"object/deep":       json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"],
-				"object/deep/level": newJSONNumber(3),
-				"array":             json.Value().(map[string]JSON)["array"],
-				"array/0":           newJSONNumber(1),
-				"array/1":           newJSONString("two"),
-				"array/2":           json.Value().(map[string]JSON)["array"].Value().([]JSON)[2],
-				"array/2/key":       newJSONString("value"),
-				"array/3":           json.Value().(map[string]JSON)["array"].Value().([]JSON)[3],
-				"array/3/0":         newJSONNumber(4),
-				"array/3/1":         newJSONNumber(5),
+			expected: []traverseNode{
+				{path: "", value: json},
+				{path: "string", value: newJSONString("value")},
+				{path: "number", value: newJSONNumber(42)},
+				{path: "bool", value: newJSONBool(true)},
+				{path: "null", value: newJSONNull()},
+				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array", value: newJSONNumber(1)},
+				{path: "array", value: newJSONString("two")},
+				{path: "array", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[2]},
+				{path: "array/key", value: newJSONString("value")},
+				{path: "array", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[3]},
+				{path: "array", value: newJSONNumber(4)},
+				{path: "array", value: newJSONNumber(5)},
+			},
+		},
+		{
+			name: "VisitArrayElementsWithIndex",
+			options: []traverseJSONOption{
+				TraverseJSONVisitArrayElements(),
+				TraverseJSONWithArrayIndexInPath(),
+			},
+			expected: []traverseNode{
+				{path: "", value: json},
+				{path: "string", value: newJSONString("value")},
+				{path: "number", value: newJSONNumber(42)},
+				{path: "bool", value: newJSONBool(true)},
+				{path: "null", value: newJSONNull()},
+				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array/0", value: newJSONNumber(1)},
+				{path: "array/1", value: newJSONString("two")},
+				{path: "array/2", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[2]},
+				{path: "array/2/key", value: newJSONString("value")},
+				{path: "array/3", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[3]},
+				{path: "array/3/0", value: newJSONNumber(4)},
+				{path: "array/3/1", value: newJSONNumber(5)},
 			},
 		},
 		{
@@ -133,73 +163,82 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				TraverseJSONOnlyLeaves(),
 				TraverseJSONVisitArrayElements(),
 				TraverseJSONWithPrefix([]string{"array"}),
+				TraverseJSONWithArrayIndexInPath(),
 			},
-			expected: map[string]JSON{
-				"array/0":     newJSONNumber(1),
-				"array/1":     newJSONString("two"),
-				"array/2/key": newJSONString("value"),
-				"array/3/0":   newJSONNumber(4),
-				"array/3/1":   newJSONNumber(5),
+			expected: []traverseNode{
+				{path: "array/0", value: newJSONNumber(1)},
+				{path: "array/1", value: newJSONString("two")},
+				{path: "array/2/key", value: newJSONString("value")},
+				{path: "array/3/0", value: newJSONNumber(4)},
+				{path: "array/3/1", value: newJSONNumber(5)},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			visited := make(map[string]JSON)
+			visited := []traverseNode{}
 			err := TraverseJSON(json, func(value JSON) error {
 				key := joinPath(value.GetPath())
-				visited[key] = value
+				visited = append(visited, traverseNode{path: key, value: value})
 				return nil
 			}, tt.options...)
 
 			require.NoError(t, err)
-			if diff := compareJSONMaps(tt.expected, visited); diff != "" {
-				t.Errorf("Maps are different:\n%s", diff)
+			if diff := compareTraverseNodes(tt.expected, visited); diff != "" {
+				t.Errorf("Slices are different:\n%s", diff)
 			}
 		})
 	}
 }
 
-// compareJSONMaps compares two maps of JSON values and returns a detailed difference report.
-func compareJSONMaps(expected, actual map[string]JSON) string {
+// compareTraverseNodes compares two slices of traverseNode without relying on the order.
+// It matches nodes based on their paths and compares their values.
+// Handles multiple nodes with the same path and removes processed items.
+func compareTraverseNodes(expected, actual []traverseNode) string {
 	var diffs []string
 
-	// Check for missing keys in actual
-	var expectedKeys []string
-	for k := range expected {
-		expectedKeys = append(expectedKeys, k)
-	}
-	sort.Strings(expectedKeys)
+	// Group expected and actual nodes by path
+	expectedMap := groupNodesByPath(expected)
+	actualMap := groupNodesByPath(actual)
 
-	var actualKeys []string
-	for k := range actual {
-		actualKeys = append(actualKeys, k)
-	}
-	sort.Strings(actualKeys)
-
-	// Find missing keys
-	for _, k := range expectedKeys {
-		if _, ok := actual[k]; !ok {
-			diffs = append(diffs, fmt.Sprintf("- Missing key %q", k))
+	// Compare nodes with matching paths
+	for path, expNodes := range expectedMap {
+		actNodes, exists := actualMap[path]
+		if !exists {
+			diffs = append(diffs, fmt.Sprintf("Missing path %q in actual nodes", path))
+			continue
 		}
-	}
 
-	// Find extra keys
-	for _, k := range actualKeys {
-		if _, ok := expected[k]; !ok {
-			diffs = append(diffs, fmt.Sprintf("+ Extra key %q", k))
-		}
-	}
-
-	// Compare values for common keys
-	for _, k := range expectedKeys {
-		if actualVal, ok := actual[k]; ok {
-			expectedVal := expected[k]
-			if !compareJSON(expectedVal, actualVal) {
-				diffs = append(diffs, fmt.Sprintf("! Value mismatch for key %q:\n\tExpected: %s\n\tActual:   %s",
-					k, formatJSON(expectedVal), formatJSON(actualVal)))
+		// Compare each expected node with actual nodes
+		for _, expNode := range expNodes {
+			matchFound := false
+			for i, actNode := range actNodes {
+				if compareJSON(expNode.value, actNode.value) {
+					// Remove matched node to prevent duplicate matching
+					actNodes = append(actNodes[:i], actNodes[i+1:]...)
+					actualMap[path] = actNodes
+					matchFound = true
+					break
+				}
 			}
+			if !matchFound {
+				diffs = append(diffs, fmt.Sprintf("No matching value found for path %q", path))
+			}
+		}
+
+		// Remove path from actualMap if all nodes have been matched
+		if len(actNodes) == 0 {
+			delete(actualMap, path)
+		} else {
+			actualMap[path] = actNodes
+		}
+	}
+
+	// Any remaining actual nodes are extra
+	for path, actNodes := range actualMap {
+		for range actNodes {
+			diffs = append(diffs, fmt.Sprintf("Extra node found at path %q", path))
 		}
 	}
 
@@ -208,6 +247,16 @@ func compareJSONMaps(expected, actual map[string]JSON) string {
 	}
 
 	return fmt.Sprintf("Found %d differences:\n%s", len(diffs), strings.Join(diffs, "\n"))
+}
+
+// groupNodesByPath groups traverseNodes by their paths.
+// It returns a map from path to a slice of nodes with that path.
+func groupNodesByPath(nodes []traverseNode) map[string][]traverseNode {
+	nodeMap := make(map[string][]traverseNode)
+	for _, node := range nodes {
+		nodeMap[node.path] = append(nodeMap[node.path], node)
+	}
+	return nodeMap
 }
 
 // compareJSON compares two JSON values for equality
@@ -264,32 +313,6 @@ func compareJSONArrays(expected, actual JSON) bool {
 		}
 	}
 	return true
-}
-
-// formatJSON returns a human-readable string representation of a JSON value
-func formatJSON(j JSON) string {
-	switch {
-	case j.IsNull():
-		return "null"
-	case isObject(j):
-		obj, _ := j.Object()
-		pairs := make([]string, 0, len(obj))
-		for k, v := range obj {
-			pairs = append(pairs, fmt.Sprintf("%q: %s", k, formatJSON(v)))
-		}
-		sort.Strings(pairs)
-		return "{" + strings.Join(pairs, ", ") + "}"
-	case isArray(j):
-		arr, _ := j.Array()
-		items := make([]string, len(arr))
-		for i, v := range arr {
-			items[i] = formatJSON(v)
-		}
-		return "[" + strings.Join(items, ", ") + "]"
-	default:
-		bytes, _ := j.MarshalJSON()
-		return string(bytes)
-	}
 }
 
 func isObject(j JSON) bool {
