@@ -58,6 +58,9 @@ type JSON interface {
 	// Returns an error if marshaling fails.
 	Marshal(w io.Writer) error
 
+	// GetPath returns the path of the JSON value in the JSON tree.
+	GetPath() []string
+
 	// accept calls the visitor function for the JSON value at the given path.
 	accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error
 }
@@ -105,7 +108,7 @@ func TraverseJSONVisitArrayElements() traverseJSONOption {
 // JSONVisitor is a function that processes a JSON value at a given path.
 // path represents the location of the value in the JSON tree.
 // Returns an error if the processing fails.
-type JSONVisitor func(path []string, value JSON) error
+type JSONVisitor func(value JSON) error
 
 // traverseJSONOptions configures how the JSON tree is traversed.
 type traverseJSONOptions struct {
@@ -145,7 +148,8 @@ func (v jsonVoid) IsNull() bool {
 
 type jsonBase[T any] struct {
 	jsonVoid
-	val T
+	val  T
+	path []string
 }
 
 func (v jsonBase[T]) Value() any {
@@ -165,10 +169,12 @@ func (v jsonBase[T]) MarshalJSON() ([]byte, error) {
 }
 
 func (n jsonBase[T]) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
-	if shouldVisitPath(opts.PathPrefix, path) {
-		return visitor(path, n)
-	}
-	return nil
+	n.path = path
+	return visitor(n)
+}
+
+func (v jsonBase[T]) GetPath() []string {
+	return v.path
 }
 
 type jsonObject struct {
@@ -194,8 +200,9 @@ func (obj jsonObject) Unwrap() any {
 }
 
 func (obj jsonObject) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	obj.path = path
 	if !opts.OnlyLeaves && len(path) >= len(opts.PathPrefix) {
-		if err := visitor(path, obj); err != nil {
+		if err := visitor(obj); err != nil {
 			return err
 		}
 	}
@@ -236,8 +243,9 @@ func (arr jsonArray) Unwrap() any {
 }
 
 func (arr jsonArray) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	arr.path = path
 	if !opts.OnlyLeaves {
-		if err := visitor(path, arr); err != nil {
+		if err := visitor(arr); err != nil {
 			return err
 		}
 	}
@@ -288,7 +296,7 @@ func (b jsonBool) Bool() (bool, bool) {
 }
 
 type jsonNull struct {
-	jsonVoid
+	jsonBase[any]
 }
 
 var _ JSON = jsonNull{}
@@ -297,48 +305,33 @@ func (n jsonNull) IsNull() bool {
 	return true
 }
 
-func (n jsonNull) Value() any {
-	return nil
-}
-
-func (n jsonNull) Unwrap() any {
-	return nil
-}
-
-func (n jsonNull) Marshal(w io.Writer) error {
-	return json.NewEncoder(w).Encode(nil)
-}
-
-func (n jsonNull) MarshalJSON() ([]byte, error) {
-	return json.Marshal(nil)
-}
-
 func (n jsonNull) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
-	return visitor(path, n)
+	n.path = path
+	return visitor(n)
 }
 
-func newJSONObject(val map[string]JSON) JSON {
+func newJSONObject(val map[string]JSON) jsonObject {
 	return jsonObject{jsonBase[map[string]JSON]{val: val}}
 }
 
-func newJSONArray(val []JSON) JSON {
+func newJSONArray(val []JSON) jsonArray {
 	return jsonArray{jsonBase[[]JSON]{val: val}}
 }
 
-func newJSONNumber(val float64) JSON {
+func newJSONNumber(val float64) jsonNumber {
 	return jsonNumber{jsonBase[float64]{val: val}}
 }
 
-func newJSONString(val string) JSON {
+func newJSONString(val string) jsonString {
 	return jsonString{jsonBase[string]{val: val}}
 }
 
-func newJSONBool(val bool) JSON {
+func newJSONBool(val bool) jsonBool {
 	return jsonBool{jsonBase[bool]{val: val}}
 }
 
-func newJSONNull() JSON {
-	return jsonNull{}
+func newJSONNull() jsonNull {
+	return jsonNull{jsonBase[any]{}}
 }
 
 // ParseJSONBytes parses the given JSON bytes into a JSON value.
@@ -377,16 +370,21 @@ func ParseJSONString(data string) (JSON, error) {
 // - []any
 // Returns error if the input cannot be converted to JSON.
 func NewJSON(v any) (JSON, error) {
+	return newJSON(v)
+}
+
+// newJSON is an internal function that creates a new JSON value with parent and property name
+func newJSON(v any) (JSON, error) {
 	if v == nil {
 		return newJSONNull(), nil
 	}
 	switch val := v.(type) {
 	case *fastjson.Value:
-		return NewJSONFromFastJSON(val), nil
+		return newJSONFromFastJSON(val), nil
 	case string:
 		return newJSONString(val), nil
 	case map[string]any:
-		return NewJSONFromMap(val)
+		return newJSONFromMap(val)
 	case bool:
 		return newJSONBool(val), nil
 	case int8:
@@ -453,7 +451,7 @@ func NewJSON(v any) (JSON, error) {
 func newJsonArrayFromAnyArray(arr []any) (JSON, error) {
 	result := make([]JSON, len(arr))
 	for i := range arr {
-		jsonVal, err := NewJSON(arr[i])
+		jsonVal, err := newJSON(arr[i])
 		if err != nil {
 			return nil, err
 		}
@@ -486,14 +484,15 @@ func newJSONStringArray(v []string) JSON {
 	return newJSONArray(arr)
 }
 
-// NewJSONFromFastJSON creates a JSON value from a fastjson.Value.
-func NewJSONFromFastJSON(v *fastjson.Value) JSON {
+// newJSONFromFastJSON is an internal function that creates a new JSON value with parent and property name
+func newJSONFromFastJSON(v *fastjson.Value) JSON {
 	switch v.Type() {
 	case fastjson.TypeObject:
 		fastObj := v.GetObject()
 		obj := make(map[string]JSON, fastObj.Len())
 		fastObj.Visit(func(k []byte, v *fastjson.Value) {
-			obj[string(k)] = NewJSONFromFastJSON(v)
+			key := string(k)
+			obj[key] = newJSONFromFastJSON(v)
 		})
 		return newJSONObject(obj)
 	case fastjson.TypeArray:
@@ -517,13 +516,22 @@ func NewJSONFromFastJSON(v *fastjson.Value) JSON {
 	return nil
 }
 
+// NewJSONFromFastJSON creates a JSON value from a fastjson.Value.
+func NewJSONFromFastJSON(v *fastjson.Value) JSON {
+	return newJSONFromFastJSON(v)
+}
+
 // NewJSONFromMap creates a JSON object from a map[string]any.
 // The map values must be valid Go values that can be converted to JSON.
 // Returns error if any map value cannot be converted to JSON.
 func NewJSONFromMap(data map[string]any) (JSON, error) {
+	return newJSONFromMap(data)
+}
+
+func newJSONFromMap(data map[string]any) (JSON, error) {
 	obj := make(map[string]JSON, len(data))
 	for k, v := range data {
-		jsonVal, err := NewJSON(v)
+		jsonVal, err := newJSON(v)
 		if err != nil {
 			return nil, err
 		}

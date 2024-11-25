@@ -147,8 +147,8 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			visited := make(map[string]JSON)
-			err := TraverseJSON(json, func(path []string, value JSON) error {
-				key := joinPath(path)
+			err := TraverseJSON(json, func(value JSON) error {
+				key := joinPath(value.GetPath())
 				visited[key] = value
 				return nil
 			}, tt.options...)
@@ -308,7 +308,7 @@ func TestTraverseJSON_WithError(t *testing.T) {
 	})
 
 	expectedErr := fmt.Errorf("test error")
-	err := TraverseJSON(json, func(path []string, value JSON) error {
+	err := TraverseJSON(json, func(value JSON) error {
 		return expectedErr
 	})
 
