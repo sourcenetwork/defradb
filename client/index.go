@@ -36,10 +36,10 @@ type IndexDescription struct {
 	Unique bool
 }
 
-// IndexCreateRequestDescription describes an index creation request.
+// IndexDescriptionCreateRequest describes an index creation request.
 // It does not contain the ID, as it is not a valid field for the request body.
 // Instead it should be automatically generated.
-type IndexCreateRequestDescription struct {
+type IndexDescriptionCreateRequest struct {
 	// Name contains the name of the index.
 	Name string
 	// Fields contains the fields that are being indexed.

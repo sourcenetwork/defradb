@@ -259,7 +259,12 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	index, err := col.CreateIndex(req.Context(), indexDesc)
+	descWithoutID := client.IndexDescriptionCreateRequest{
+		Name:   indexDesc.Name,
+		Fields: indexDesc.Fields,
+		Unique: indexDesc.Unique,
+	}
+	index, err := col.CreateIndex(req.Context(), descWithoutID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
