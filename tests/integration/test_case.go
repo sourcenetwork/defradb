@@ -297,7 +297,7 @@ type CreateDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identityRef]
+	Identity immutable.Option[identity]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -369,7 +369,7 @@ type DeleteDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identityRef]
+	Identity immutable.Option[identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -402,7 +402,7 @@ type UpdateDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identityRef]
+	Identity immutable.Option[identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -445,7 +445,7 @@ type UpdateWithFilter struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identityRef]
+	Identity immutable.Option[identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -602,7 +602,7 @@ type Request struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identityRef]
+	Identity immutable.Option[identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -805,7 +805,7 @@ type GetNodeIdentity struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity immutable.Option[identityRef]
+	ExpectedIdentity immutable.Option[identity]
 }
 
 // Wait is an action that will wait for the given duration.

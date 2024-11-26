@@ -631,6 +631,26 @@ Result:
 Error: document not found or not authorized to access
 ```
 
+Sometimes we might want to give a specific access (form a relationship) not just to one identity, but any identity.
+In that case we can specify "*" instead of specifying an explicit `actor`:
+```sh
+defradb client acp relationship add \
+--collection Users \
+--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+--relation reader \
+--actor "*" \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "ExistedAlready": false
+}
+```
+
+**Note: specifying `*` does not overwrite any previous formed relationships, they will remain as is **
+
 ### Revoking Access To Private Documents
 
 To revoke access to a document for an actor, we must delete the relationship between the
@@ -694,6 +714,26 @@ defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d994
 ```
 
 **Result is empty from the above command**
+
+We can also revoke the previously granted implicit relationship which gave all actors access using the "*" actor.
+Similarly we can just specify "*" to revoke all access given to actors implicitly through this relationship:
+```sh
+defradb client acp relationship delete \
+--collection Users \
+--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+--relation reader \
+--actor "*" \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Result:
+```json
+{
+  "RecordFound": true
+}
+```
+
+**Note: Deleting with`*` does not remove any explicitly formed relationships, they will remain as they were **
 
 ## DAC Usage HTTP:
 
