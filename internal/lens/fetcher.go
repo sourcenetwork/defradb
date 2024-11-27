@@ -70,7 +70,6 @@ func (f *lensedFetcher) Init(
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
-	reverse bool,
 	showDeleted bool,
 ) error {
 	f.col = col
@@ -122,7 +121,6 @@ historyLoop:
 		innerFetcherFields,
 		filter,
 		docmapper,
-		reverse,
 		showDeleted,
 	)
 }

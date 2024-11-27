@@ -611,10 +611,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
-					mock.Anything,
 				).Unset()
 				f.EXPECT().Init(
-					mock.Anything,
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
@@ -844,10 +842,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
-					mock.Anything,
 				).Unset()
 				f.EXPECT().Init(
-					mock.Anything,
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
@@ -965,10 +961,8 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
-			mock.Anything,
 		).Unset()
 		f.EXPECT().Init(
-			mock.Anything,
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
@@ -988,7 +982,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 				fields []client.FieldDefinition,
 				filter *mapper.Filter,
 				mapping *core.DocumentMapping,
-				reverse, showDeleted bool,
+				showDeleted bool,
 			) error {
 				require.Equal(t, 2, len(fields))
 				require.ElementsMatch(t,

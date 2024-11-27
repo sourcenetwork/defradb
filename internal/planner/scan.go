@@ -47,7 +47,6 @@ type scanNode struct {
 	showDeleted bool
 
 	prefixes []keys.Walkable
-	reverse  bool
 
 	filter *mapper.Filter
 	slct   *mapper.Select
@@ -72,7 +71,6 @@ func (n *scanNode) Init() error {
 		n.fields,
 		n.filter,
 		n.slct.DocumentMapping,
-		n.reverse,
 		n.showDeleted,
 	); err != nil {
 		return err

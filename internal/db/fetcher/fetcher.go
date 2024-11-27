@@ -70,7 +70,6 @@ type Fetcher interface {
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,
 		docmapper *core.DocumentMapping,
-		reverse bool,
 		showDeleted bool,
 	) error
 	Start(ctx context.Context, prefixes ...keys.Walkable) error
@@ -95,7 +94,6 @@ type DocumentFetcher struct {
 	passedPermissionCheck bool // have valid permission to access
 
 	col         client.Collection
-	reverse     bool
 	deletedDocs bool
 
 	txn            datastore.Txn
@@ -156,12 +154,11 @@ func (df *DocumentFetcher) Init(
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
-	reverse bool,
 	showDeleted bool,
 ) error {
 	df.txn = txn
 
-	err := df.init(identity, acp, col, fields, filter, docmapper, reverse)
+	err := df.init(identity, acp, col, fields, filter, docmapper)
 	if err != nil {
 		return err
 	}
@@ -171,7 +168,7 @@ func (df *DocumentFetcher) Init(
 			df.deletedDocFetcher = new(DocumentFetcher)
 			df.deletedDocFetcher.txn = txn
 		}
-		return df.deletedDocFetcher.init(identity, acp, col, fields, filter, docmapper, reverse)
+		return df.deletedDocFetcher.init(identity, acp, col, fields, filter, docmapper)
 	}
 
 	return nil
@@ -184,12 +181,10 @@ func (df *DocumentFetcher) init(
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
-	reverse bool,
 ) error {
 	df.identity = identity
 	df.acp = acp
 	df.col = col
-	df.reverse = reverse
 	df.initialized = true
 	df.filter = filter
 	df.isReadingDocument = false
@@ -300,20 +295,10 @@ func (df *DocumentFetcher) start(ctx context.Context, prefixes []keys.Walkable, 
 			return strings.Compare(a.ToString(), b.ToString())
 		})
 
-		if df.reverse {
-			for i, j := 0, len(valuePrefixes)-1; i < j; i, j = i+1, j-1 {
-				valuePrefixes[i], valuePrefixes[j] = valuePrefixes[j], valuePrefixes[i]
-			}
-		}
 		df.prefixes = valuePrefixes
 	}
 	df.curPrefixIndex = -1
-
-	if df.reverse {
-		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
-	} else {
-		df.order = []dsq.Order{dsq.OrderByKey{}}
-	}
+	df.order = []dsq.Order{dsq.OrderByKey{}}
 
 	_, err := df.startNextPrefix(ctx)
 	return err
@@ -571,9 +556,7 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 	if ddf != nil {
 		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
 		if !ddf.kvEnd {
-			if df.kvEnd ||
-				(df.reverse && ddf.kv.Key.DocID > df.kv.Key.DocID) ||
-				(!df.reverse && ddf.kv.Key.DocID < df.kv.Key.DocID) {
+			if df.kvEnd || ddf.kv.Key.DocID < df.kv.Key.DocID {
 				encdoc, execInfo, err := ddf.FetchNext(ctx)
 
 				if err != nil {

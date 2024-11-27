@@ -106,7 +106,6 @@ func (vf *VersionedFetcher) Init(
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
-	reverse bool,
 	showDeleted bool,
 ) error {
 	vf.acp = acp
@@ -141,7 +140,6 @@ func (vf *VersionedFetcher) Init(
 		fields,
 		filter,
 		docmapper,
-		reverse,
 		showDeleted,
 	)
 }
