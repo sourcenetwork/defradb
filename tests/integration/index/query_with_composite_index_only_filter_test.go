@@ -705,7 +705,7 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 							name
 						}
 					}`,
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(20).WithIndexFetches(0),
 			},
 		},
 	}

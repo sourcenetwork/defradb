@@ -857,7 +857,7 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 							name
 						}
 					}`,
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(20).WithIndexFetches(0),
 			},
 		},
 	}

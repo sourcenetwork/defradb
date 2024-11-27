@@ -160,7 +160,7 @@ func (scan *scanNode) initFetcher(
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
-		f = new(fetcher.DocumentFetcher)
+		f = fetcher.NewDocumentFetcher()
 
 		if index.HasValue() {
 			fieldsToMove := make([]mapper.Field, 0, len(index.Value().Fields))
