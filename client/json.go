@@ -177,11 +177,6 @@ func (v jsonBase[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.val)
 }
 
-func (n jsonBase[T]) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
-	n.path = path
-	return visitor(n)
-}
-
 func (v jsonBase[T]) GetPath() []string {
 	return v.path
 }
@@ -289,6 +284,11 @@ func (n jsonNumber) Number() (float64, bool) {
 	return n.val, true
 }
 
+func (n jsonNumber) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	n.path = path
+	return visitor(n)
+}
+
 type jsonString struct {
 	jsonBase[string]
 }
@@ -299,6 +299,11 @@ func (s jsonString) String() (string, bool) {
 	return s.val, true
 }
 
+func (n jsonString) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	n.path = path
+	return visitor(n)
+}
+
 type jsonBool struct {
 	jsonBase[bool]
 }
@@ -307,6 +312,11 @@ var _ JSON = jsonBool{}
 
 func (b jsonBool) Bool() (bool, bool) {
 	return b.val, true
+}
+
+func (n jsonBool) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	n.path = path
+	return visitor(n)
 }
 
 type jsonNull struct {

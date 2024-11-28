@@ -184,6 +184,29 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				return nil
 			}, tt.options...)
 
+			for _, node := range visited {
+				if _, ok := node.value.Bool(); ok {
+					break
+				}
+				if _, ok := node.value.Number(); ok {
+					break
+				}
+				if _, ok := node.value.String(); ok {
+					break
+				}
+				if _, ok := node.value.Object(); ok {
+					break
+				}
+				if _, ok := node.value.Array(); ok {
+					break
+				}
+				if node.value.IsNull() {
+					break
+				}
+
+				t.Errorf("Unexpected JSON value type: %T, for path: %s", node.value, node.path)
+			}
+
 			require.NoError(t, err)
 			if diff := compareTraverseNodes(tt.expected, visited); diff != "" {
 				t.Errorf("Slices are different:\n%s", diff)
