@@ -27,24 +27,16 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 	}
 	if v, ok := val.Bool(); ok {
-		var boolInt int64 = 0
-		if v {
-			boolInt = 1
-		}
 		if descending {
-			return EncodeVarintDescending(b, boolInt)
+			return EncodeBoolDescending(b, v)
 		}
-		return EncodeVarintAscending(b, boolInt)
+		return EncodeBoolAscending(b, v)
 	}
 	if v, ok := val.NillableBool(); ok {
-		var boolInt int64 = 0
-		if v.Value() {
-			boolInt = 1
-		}
 		if descending {
-			return EncodeVarintDescending(b, boolInt)
+			return EncodeBoolDescending(b, v.Value())
 		}
-		return EncodeVarintAscending(b, boolInt)
+		return EncodeBoolAscending(b, v.Value())
 	}
 	if v, ok := val.Int(); ok {
 		if descending {
@@ -94,6 +86,12 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 		return EncodeTimeAscending(b, v.Value())
 	}
+	if v, ok := val.JSON(); ok {
+		if descending {
+			return EncodeJSONDescending(b, v)
+		}
+		return EncodeJSONAscending(b, v)
+	}
 
 	return b
 }
@@ -107,6 +105,18 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 		b, _ = DecodeIfNull(b)
 		nilVal, err := client.NewNormalNil(kind)
 		return b, nilVal, err
+	case Bool:
+		var v bool
+		var err error
+		if descending {
+			b, v, err = DecodeBoolDescending(b)
+		} else {
+			b, v, err = DecodeBoolAscending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalBool(v), nil
 	case Int:
 		var v int64
 		var err error
