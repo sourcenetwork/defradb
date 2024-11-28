@@ -41,16 +41,16 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 		{
 			name:               "bool true",
 			inputVal:           client.NewNormalBool(true),
-			expectedBytes:      EncodeVarintAscending(nil, 1),
-			expectedBytesDesc:  EncodeVarintDescending(nil, 1),
-			expectedDecodedVal: client.NewNormalInt(1),
+			expectedBytes:      EncodeBoolAscending(nil, true),
+			expectedBytesDesc:  EncodeBoolDescending(nil, true),
+			expectedDecodedVal: client.NewNormalBool(true),
 		},
 		{
 			name:               "bool false",
 			inputVal:           client.NewNormalBool(false),
-			expectedBytes:      EncodeVarintAscending(nil, 0),
-			expectedBytesDesc:  EncodeVarintDescending(nil, 0),
-			expectedDecodedVal: client.NewNormalInt(0),
+			expectedBytes:      EncodeBoolAscending(nil, false),
+			expectedBytesDesc:  EncodeBoolDescending(nil, false),
+			expectedDecodedVal: client.NewNormalBool(false),
 		},
 		{
 			name:               "int",
