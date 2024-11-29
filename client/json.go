@@ -334,28 +334,28 @@ func (n jsonNull) accept(visitor JSONVisitor, path []string, opts traverseJSONOp
 	return visitor(n)
 }
 
-func newJSONObject(val map[string]JSON) jsonObject {
-	return jsonObject{jsonBase[map[string]JSON]{val: val}}
+func newJSONObject(val map[string]JSON, path []string) jsonObject {
+	return jsonObject{jsonBase[map[string]JSON]{val: val, path: path}}
 }
 
-func newJSONArray(val []JSON) jsonArray {
-	return jsonArray{jsonBase[[]JSON]{val: val}}
+func newJSONArray(val []JSON, path []string) jsonArray {
+	return jsonArray{jsonBase[[]JSON]{val: val, path: path}}
 }
 
-func newJSONNumber(val float64) jsonNumber {
-	return jsonNumber{jsonBase[float64]{val: val}}
+func newJSONNumber(val float64, path []string) jsonNumber {
+	return jsonNumber{jsonBase[float64]{val: val, path: path}}
 }
 
-func newJSONString(val string) jsonString {
-	return jsonString{jsonBase[string]{val: val}}
+func newJSONString(val string, path []string) jsonString {
+	return jsonString{jsonBase[string]{val: val, path: path}}
 }
 
-func newJSONBool(val bool) jsonBool {
-	return jsonBool{jsonBase[bool]{val: val}}
+func newJSONBool(val bool, path []string) jsonBool {
+	return jsonBool{jsonBase[bool]{val: val, path: path}}
 }
 
-func newJSONNull() jsonNull {
-	return jsonNull{jsonBase[any]{}}
+func newJSONNull(path []string) jsonNull {
+	return jsonNull{jsonBase[any]{path: path}}
 }
 
 // ParseJSONBytes parses the given JSON bytes into a JSON value.
@@ -394,174 +394,189 @@ func ParseJSONString(data string) (JSON, error) {
 // - []any
 // Returns error if the input cannot be converted to JSON.
 func NewJSON(v any) (JSON, error) {
-	return newJSON(v)
+	return newJSON(v, nil)
+}
+
+// NewJSONWithPath creates a JSON value from a Go value with stored path to the value.
+// The Go value must be one of:
+// - nil (becomes JSON null)
+// - *fastjson.Value
+// - string
+// - map[string]any
+// - bool
+// - numeric types (int8 through int64, uint8 through uint64, float32, float64)
+// - slice of any above type
+// - []any
+// Returns error if the input cannot be converted to JSON.
+func NewJSONWithPath(v any, path []string) (JSON, error) {
+	return newJSON(v, path)
 }
 
 // newJSON is an internal function that creates a new JSON value with parent and property name
-func newJSON(v any) (JSON, error) {
+func newJSON(v any, path []string) (JSON, error) {
 	if v == nil {
-		return newJSONNull(), nil
-	}
-	switch val := v.(type) {
-	case *fastjson.Value:
-		return newJSONFromFastJSON(val), nil
-	case string:
-		return newJSONString(val), nil
-	case map[string]any:
-		return newJSONFromMap(val)
-	case bool:
-		return newJSONBool(val), nil
-	case int8:
-		return newJSONNumber(float64(val)), nil
-	case int16:
-		return newJSONNumber(float64(val)), nil
-	case int32:
-		return newJSONNumber(float64(val)), nil
-	case int64:
-		return newJSONNumber(float64(val)), nil
-	case int:
-		return newJSONNumber(float64(val)), nil
-	case uint8:
-		return newJSONNumber(float64(val)), nil
-	case uint16:
-		return newJSONNumber(float64(val)), nil
-	case uint32:
-		return newJSONNumber(float64(val)), nil
-	case uint64:
-		return newJSONNumber(float64(val)), nil
-	case uint:
-		return newJSONNumber(float64(val)), nil
-	case float32:
-		return newJSONNumber(float64(val)), nil
-	case float64:
-		return newJSONNumber(val), nil
+		return newJSONNull(path), nil
+	} else {
+		switch val := v.(type) {
+		case *fastjson.Value:
+			return newJSONFromFastJSON(val, path), nil
+		case string:
+			return newJSONString(val, path), nil
+		case map[string]any:
+			return newJSONFromMap(val, path)
+		case bool:
+			return newJSONBool(val, path), nil
+		case int8:
+			return newJSONNumber(float64(val), path), nil
+		case int16:
+			return newJSONNumber(float64(val), path), nil
+		case int32:
+			return newJSONNumber(float64(val), path), nil
+		case int64:
+			return newJSONNumber(float64(val), path), nil
+		case int:
+			return newJSONNumber(float64(val), path), nil
+		case uint8:
+			return newJSONNumber(float64(val), path), nil
+		case uint16:
+			return newJSONNumber(float64(val), path), nil
+		case uint32:
+			return newJSONNumber(float64(val), path), nil
+		case uint64:
+			return newJSONNumber(float64(val), path), nil
+		case uint:
+			return newJSONNumber(float64(val), path), nil
+		case float32:
+			return newJSONNumber(float64(val), path), nil
+		case float64:
+			return newJSONNumber(val, path), nil
 
-	case []bool:
-		return newJSONBoolArray(val), nil
-	case []int8:
-		return newJSONNumberArray(val), nil
-	case []int16:
-		return newJSONNumberArray(val), nil
-	case []int32:
-		return newJSONNumberArray(val), nil
-	case []int64:
-		return newJSONNumberArray(val), nil
-	case []int:
-		return newJSONNumberArray(val), nil
-	case []uint8:
-		return newJSONNumberArray(val), nil
-	case []uint16:
-		return newJSONNumberArray(val), nil
-	case []uint32:
-		return newJSONNumberArray(val), nil
-	case []uint64:
-		return newJSONNumberArray(val), nil
-	case []uint:
-		return newJSONNumberArray(val), nil
-	case []float32:
-		return newJSONNumberArray(val), nil
-	case []float64:
-		return newJSONNumberArray(val), nil
-	case []string:
-		return newJSONStringArray(val), nil
-
-	case []any:
-		return newJsonArrayFromAnyArray(val)
+		case []bool:
+			return newJSONBoolArray(val, path), nil
+		case []int8:
+			return newJSONNumberArray(val, path), nil
+		case []int16:
+			return newJSONNumberArray(val, path), nil
+		case []int32:
+			return newJSONNumberArray(val, path), nil
+		case []int64:
+			return newJSONNumberArray(val, path), nil
+		case []int:
+			return newJSONNumberArray(val, path), nil
+		case []uint8:
+			return newJSONNumberArray(val, path), nil
+		case []uint16:
+			return newJSONNumberArray(val, path), nil
+		case []uint32:
+			return newJSONNumberArray(val, path), nil
+		case []uint64:
+			return newJSONNumberArray(val, path), nil
+		case []uint:
+			return newJSONNumberArray(val, path), nil
+		case []float32:
+			return newJSONNumberArray(val, path), nil
+		case []float64:
+			return newJSONNumberArray(val, path), nil
+		case []string:
+			return newJSONStringArray(val, path), nil
+		case []any:
+			return newJsonArrayFromAnyArray(val, path)
+		}
 	}
 
 	return nil, NewErrInvalidJSONPayload(v)
 }
 
-func newJsonArrayFromAnyArray(arr []any) (JSON, error) {
+func newJsonArrayFromAnyArray(arr []any, path []string) (JSON, error) {
 	result := make([]JSON, len(arr))
 	for i := range arr {
-		jsonVal, err := newJSON(arr[i])
+		jsonVal, err := newJSON(arr[i], path)
 		if err != nil {
 			return nil, err
 		}
 		result[i] = jsonVal
 	}
-	return newJSONArray(result), nil
+	return newJSONArray(result, path), nil
 }
 
-func newJSONBoolArray(v []bool) JSON {
+func newJSONBoolArray(v []bool, path []string) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
-		arr[i] = newJSONBool(v[i])
+		arr[i] = newJSONBool(v[i], path)
 	}
-	return newJSONArray(arr)
+	return newJSONArray(arr, path)
 }
 
-func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T) JSON {
+func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path []string) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
-		arr[i] = newJSONNumber(float64(v[i]))
+		arr[i] = newJSONNumber(float64(v[i]), path)
 	}
-	return newJSONArray(arr)
+	return newJSONArray(arr, path)
 }
 
-func newJSONStringArray(v []string) JSON {
+func newJSONStringArray(v []string, path []string) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
-		arr[i] = newJSONString(v[i])
+		arr[i] = newJSONString(v[i], path)
 	}
-	return newJSONArray(arr)
+	return newJSONArray(arr, path)
 }
 
 // newJSONFromFastJSON is an internal function that creates a new JSON value with parent and property name
-func newJSONFromFastJSON(v *fastjson.Value) JSON {
+func newJSONFromFastJSON(v *fastjson.Value, path []string) JSON {
 	switch v.Type() {
 	case fastjson.TypeObject:
 		fastObj := v.GetObject()
 		obj := make(map[string]JSON, fastObj.Len())
 		fastObj.Visit(func(k []byte, v *fastjson.Value) {
 			key := string(k)
-			obj[key] = newJSONFromFastJSON(v)
+			obj[key] = newJSONFromFastJSON(v, append(path, key))
 		})
-		return newJSONObject(obj)
+		return newJSONObject(obj, path)
 	case fastjson.TypeArray:
 		fastArr := v.GetArray()
 		arr := make([]JSON, len(fastArr))
 		for i := range fastArr {
 			arr[i] = NewJSONFromFastJSON(fastArr[i])
 		}
-		return newJSONArray(arr)
+		return newJSONArray(arr, path)
 	case fastjson.TypeNumber:
-		return newJSONNumber(v.GetFloat64())
+		return newJSONNumber(v.GetFloat64(), path)
 	case fastjson.TypeString:
-		return newJSONString(string(v.GetStringBytes()))
+		return newJSONString(string(v.GetStringBytes()), path)
 	case fastjson.TypeTrue:
-		return newJSONBool(true)
+		return newJSONBool(true, path)
 	case fastjson.TypeFalse:
-		return newJSONBool(false)
+		return newJSONBool(false, path)
 	case fastjson.TypeNull:
-		return newJSONNull()
+		return newJSONNull(path)
 	}
 	return nil
 }
 
 // NewJSONFromFastJSON creates a JSON value from a fastjson.Value.
 func NewJSONFromFastJSON(v *fastjson.Value) JSON {
-	return newJSONFromFastJSON(v)
+	return newJSONFromFastJSON(v, nil)
 }
 
 // NewJSONFromMap creates a JSON object from a map[string]any.
 // The map values must be valid Go values that can be converted to JSON.
 // Returns error if any map value cannot be converted to JSON.
 func NewJSONFromMap(data map[string]any) (JSON, error) {
-	return newJSONFromMap(data)
+	return newJSONFromMap(data, nil)
 }
 
-func newJSONFromMap(data map[string]any) (JSON, error) {
+func newJSONFromMap(data map[string]any, path []string) (JSON, error) {
 	obj := make(map[string]JSON, len(data))
 	for k, v := range data {
-		jsonVal, err := newJSON(v)
+		jsonVal, err := newJSON(v, append(path, k))
 		if err != nil {
 			return nil, err
 		}
 		obj[k] = jsonVal
 	}
-	return newJSONObject(obj), nil
+	return newJSONObject(obj, path), nil
 }
 
 func shouldVisitPath(prefix, path []string) bool {
