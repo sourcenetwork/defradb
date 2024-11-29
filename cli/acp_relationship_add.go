@@ -64,6 +64,14 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 
+Example: Let all actors read a private document:
+  defradb client acp relationship add \
+	--collection Users \
+	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+	--relation reader \
+	--actor "*" \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+
 Example: Creating a dummy relationship does nothing (from database perspective):
   defradb client acp relationship add \
 	-c Users \
