@@ -293,7 +293,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		},
 		{
 			nType: JSONType,
-			input: newJSONNumber(2),
+			input: newJSONNumber(2, nil),
 		},
 		{
 			nType:      NillableBoolType,

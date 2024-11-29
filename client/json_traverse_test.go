@@ -26,28 +26,28 @@ type traverseNode struct {
 func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 	// Create a complex JSON structure for testing
 	json := newJSONObject(map[string]JSON{
-		"string": newJSONString("value"),
-		"number": newJSONNumber(42),
-		"bool":   newJSONBool(true),
-		"null":   newJSONNull(),
+		"string": newJSONString("value", nil),
+		"number": newJSONNumber(42, nil),
+		"bool":   newJSONBool(true, nil),
+		"null":   newJSONNull(nil),
 		"object": newJSONObject(map[string]JSON{
-			"nested": newJSONString("inside"),
+			"nested": newJSONString("inside", nil),
 			"deep": newJSONObject(map[string]JSON{
-				"level": newJSONNumber(3),
-			}),
-		}),
+				"level": newJSONNumber(3, nil),
+			}, nil),
+		}, nil),
 		"array": newJSONArray([]JSON{
-			newJSONNumber(1),
-			newJSONString("two"),
+			newJSONNumber(1, nil),
+			newJSONString("two", nil),
 			newJSONObject(map[string]JSON{
-				"key": newJSONString("value"),
-			}),
+				"key": newJSONString("value", nil),
+			}, nil),
 			newJSONArray([]JSON{
-				newJSONNumber(4),
-				newJSONNumber(5),
-			}),
-		}),
-	})
+				newJSONNumber(4, nil),
+				newJSONNumber(5, nil),
+			}, nil),
+		}, nil),
+	}, nil)
 
 	tests := []struct {
 		name     string
@@ -59,14 +59,14 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			options: nil,
 			expected: []traverseNode{
 				{path: "", value: json},
-				{path: "string", value: newJSONString("value")},
-				{path: "number", value: newJSONNumber(42)},
-				{path: "bool", value: newJSONBool(true)},
-				{path: "null", value: newJSONNull()},
+				{path: "string", value: newJSONString("value", nil)},
+				{path: "number", value: newJSONNumber(42, nil)},
+				{path: "bool", value: newJSONBool(true, nil)},
+				{path: "null", value: newJSONNull(nil)},
 				{path: "object", value: json.Value().(map[string]JSON)["object"]},
-				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/nested", value: newJSONString("inside", nil)},
 				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
-				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 				{path: "array", value: json.Value().(map[string]JSON)["array"]},
 			},
 		},
@@ -76,12 +76,12 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				TraverseJSONOnlyLeaves(),
 			},
 			expected: []traverseNode{
-				{path: "string", value: newJSONString("value")},
-				{path: "number", value: newJSONNumber(42)},
-				{path: "bool", value: newJSONBool(true)},
-				{path: "null", value: newJSONNull()},
-				{path: "object/nested", value: newJSONString("inside")},
-				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "string", value: newJSONString("value", nil)},
+				{path: "number", value: newJSONNumber(42, nil)},
+				{path: "bool", value: newJSONBool(true, nil)},
+				{path: "null", value: newJSONNull(nil)},
+				{path: "object/nested", value: newJSONString("inside", nil)},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 			},
 		},
 		{
@@ -91,9 +91,9 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			},
 			expected: []traverseNode{
 				{path: "object", value: json.Value().(map[string]JSON)["object"]},
-				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/nested", value: newJSONString("inside", nil)},
 				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
-				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 			},
 		},
 		{
@@ -103,7 +103,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			},
 			expected: []traverseNode{
 				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
-				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 			},
 		},
 		{
@@ -113,22 +113,22 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			},
 			expected: []traverseNode{
 				{path: "", value: json},
-				{path: "string", value: newJSONString("value")},
-				{path: "number", value: newJSONNumber(42)},
-				{path: "bool", value: newJSONBool(true)},
-				{path: "null", value: newJSONNull()},
+				{path: "string", value: newJSONString("value", nil)},
+				{path: "number", value: newJSONNumber(42, nil)},
+				{path: "bool", value: newJSONBool(true, nil)},
+				{path: "null", value: newJSONNull(nil)},
 				{path: "object", value: json.Value().(map[string]JSON)["object"]},
-				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/nested", value: newJSONString("inside", nil)},
 				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
-				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 				{path: "array", value: json.Value().(map[string]JSON)["array"]},
-				{path: "array", value: newJSONNumber(1)},
-				{path: "array", value: newJSONString("two")},
+				{path: "array", value: newJSONNumber(1, nil)},
+				{path: "array", value: newJSONString("two", nil)},
 				{path: "array", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[2]},
-				{path: "array/key", value: newJSONString("value")},
+				{path: "array/key", value: newJSONString("value", nil)},
 				{path: "array", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[3]},
-				{path: "array", value: newJSONNumber(4)},
-				{path: "array", value: newJSONNumber(5)},
+				{path: "array", value: newJSONNumber(4, nil)},
+				{path: "array", value: newJSONNumber(5, nil)},
 			},
 		},
 		{
@@ -139,22 +139,22 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			},
 			expected: []traverseNode{
 				{path: "", value: json},
-				{path: "string", value: newJSONString("value")},
-				{path: "number", value: newJSONNumber(42)},
-				{path: "bool", value: newJSONBool(true)},
-				{path: "null", value: newJSONNull()},
+				{path: "string", value: newJSONString("value", nil)},
+				{path: "number", value: newJSONNumber(42, nil)},
+				{path: "bool", value: newJSONBool(true, nil)},
+				{path: "null", value: newJSONNull(nil)},
 				{path: "object", value: json.Value().(map[string]JSON)["object"]},
-				{path: "object/nested", value: newJSONString("inside")},
+				{path: "object/nested", value: newJSONString("inside", nil)},
 				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
-				{path: "object/deep/level", value: newJSONNumber(3)},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 				{path: "array", value: json.Value().(map[string]JSON)["array"]},
-				{path: "array/0", value: newJSONNumber(1)},
-				{path: "array/1", value: newJSONString("two")},
+				{path: "array/0", value: newJSONNumber(1, nil)},
+				{path: "array/1", value: newJSONString("two", nil)},
 				{path: "array/2", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[2]},
-				{path: "array/2/key", value: newJSONString("value")},
+				{path: "array/2/key", value: newJSONString("value", nil)},
 				{path: "array/3", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[3]},
-				{path: "array/3/0", value: newJSONNumber(4)},
-				{path: "array/3/1", value: newJSONNumber(5)},
+				{path: "array/3/0", value: newJSONNumber(4, nil)},
+				{path: "array/3/1", value: newJSONNumber(5, nil)},
 			},
 		},
 		{
@@ -166,11 +166,11 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				TraverseJSONWithArrayIndexInPath(),
 			},
 			expected: []traverseNode{
-				{path: "array/0", value: newJSONNumber(1)},
-				{path: "array/1", value: newJSONString("two")},
-				{path: "array/2/key", value: newJSONString("value")},
-				{path: "array/3/0", value: newJSONNumber(4)},
-				{path: "array/3/1", value: newJSONNumber(5)},
+				{path: "array/0", value: newJSONNumber(1, nil)},
+				{path: "array/1", value: newJSONString("two", nil)},
+				{path: "array/2/key", value: newJSONString("value", nil)},
+				{path: "array/3/0", value: newJSONNumber(4, nil)},
+				{path: "array/3/1", value: newJSONNumber(5, nil)},
 			},
 		},
 	}
@@ -350,8 +350,8 @@ func isArray(j JSON) bool {
 
 func TestTraverseJSON_WithError(t *testing.T) {
 	json := newJSONObject(map[string]JSON{
-		"key": newJSONString("value"),
-	})
+		"key": newJSONString("value", nil),
+	}, nil)
 
 	expectedErr := fmt.Errorf("test error")
 	err := TraverseJSON(json, func(value JSON) error {
