@@ -24,6 +24,23 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 	normalNil, err := client.NewNormalNil(client.FieldKind_NILLABLE_INT)
 	require.NoError(t, err)
 
+	// Create test JSON values
+	simpleJSON, err := client.NewJSON("simple string")
+	require.NoError(t, err)
+	normalSimpleJSON := client.NewNormalJSON(simpleJSON)
+
+	numberJSON, err := client.NewJSON(42.5)
+	require.NoError(t, err)
+	normalNumberJSON := client.NewNormalJSON(numberJSON)
+
+	boolJSON, err := client.NewJSON(true)
+	require.NoError(t, err)
+	normalBoolJSON := client.NewNormalJSON(boolJSON)
+
+	nullJSON, err := client.NewJSON(nil)
+	require.NoError(t, err)
+	normalNullJSON := client.NewNormalJSON(nullJSON)
+
 	tests := []struct {
 		name               string
 		inputVal           client.NormalValue
@@ -72,6 +89,34 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 			expectedBytes:      EncodeBytesAscending(nil, []byte("str")),
 			expectedBytesDesc:  EncodeBytesDescending(nil, []byte("str")),
 			expectedDecodedVal: client.NewNormalString("str"),
+		},
+		{
+			name:               "json string",
+			inputVal:           normalSimpleJSON,
+			expectedBytes:      EncodeJSONAscending(nil, simpleJSON),
+			expectedBytesDesc:  EncodeJSONDescending(nil, simpleJSON),
+			expectedDecodedVal: normalSimpleJSON,
+		},
+		{
+			name:               "json number",
+			inputVal:           normalNumberJSON,
+			expectedBytes:      EncodeJSONAscending(nil, numberJSON),
+			expectedBytesDesc:  EncodeJSONDescending(nil, numberJSON),
+			expectedDecodedVal: normalNumberJSON,
+		},
+		{
+			name:               "json bool",
+			inputVal:           normalBoolJSON,
+			expectedBytes:      EncodeJSONAscending(nil, boolJSON),
+			expectedBytesDesc:  EncodeJSONDescending(nil, boolJSON),
+			expectedDecodedVal: normalBoolJSON,
+		},
+		{
+			name:               "json null",
+			inputVal:           normalNullJSON,
+			expectedBytes:      EncodeJSONAscending(nil, nullJSON),
+			expectedBytesDesc:  EncodeJSONDescending(nil, nullJSON),
+			expectedDecodedVal: normalNullJSON,
 		},
 	}
 
@@ -126,6 +171,11 @@ func TestDecodeInvalidFieldValue(t *testing.T) {
 			name:           "invalid data",
 			inputBytes:     []byte{IntMin - 1, 2},
 			inputBytesDesc: []byte{^byte(IntMin - 1), 2},
+		},
+		{
+			name:           "invalid json value",
+			inputBytes:     []byte{jsonMarker, 0xFF},
+			inputBytesDesc: []byte{jsonMarker, 0xFF},
 		},
 	}
 

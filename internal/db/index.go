@@ -41,6 +41,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_INT_ARRAY,
 		client.FieldKind_BOOL_ARRAY,
 		client.FieldKind_FLOAT_ARRAY,
+		client.FieldKind_NILLABLE_JSON,
 		client.FieldKind_NILLABLE_STRING,
 		client.FieldKind_NILLABLE_INT,
 		client.FieldKind_NILLABLE_FLOAT,
@@ -68,6 +69,7 @@ func NewCollectionIndex(
 	base := collectionBaseIndex{collection: collection, desc: desc}
 	base.fieldsDescs = make([]client.SchemaFieldDescription, len(desc.Fields))
 	isArray := false
+	isJSON := false
 	for i := range desc.Fields {
 		field, foundField := collection.Schema().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
@@ -78,6 +80,7 @@ func NewCollectionIndex(
 			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
 		isArray = isArray || field.Kind.IsArray()
+		isJSON = isJSON || field.Kind == client.FieldKind_NILLABLE_JSON
 	}
 	if isArray {
 		if desc.Unique {
@@ -85,6 +88,8 @@ func NewCollectionIndex(
 		} else {
 			return newCollectionArrayIndex(base), nil
 		}
+	} else if isJSON {
+		return newCollectionJSONIndex(base), nil
 	} else if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	} else {
@@ -93,11 +98,14 @@ func NewCollectionIndex(
 }
 
 type collectionBaseIndex struct {
-	collection  client.Collection
-	desc        client.IndexDescription
+	collection client.Collection
+	desc       client.IndexDescription
+	// fieldsDescs is a slice of field descriptions for the fields that are indexed by the index
+	// If there is more than 1 field, the index is composite
 	fieldsDescs []client.SchemaFieldDescription
 }
 
+// getDocFieldValues retrieves the values of the indexed fields from the given document.
 func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]client.NormalValue, error) {
 	result := make([]client.NormalValue, 0, len(index.fieldsDescs))
 	for iter := range index.fieldsDescs {
@@ -741,5 +749,119 @@ func (index *collectionArrayUniqueIndex) Delete(
 			return err
 		}
 	}
+	return nil
+}
+
+type collectionJSONBaseIndex struct {
+	collectionBaseIndex
+	jsonFieldsIndexes []int
+}
+
+func newCollectionJSONBaseIndex(base collectionBaseIndex) collectionJSONBaseIndex {
+	ind := collectionJSONBaseIndex{collectionBaseIndex: base}
+	for i := range base.fieldsDescs {
+		if base.fieldsDescs[i].Kind == client.FieldKind_NILLABLE_JSON {
+			ind.jsonFieldsIndexes = append(ind.jsonFieldsIndexes, i)
+		}
+	}
+	if len(ind.jsonFieldsIndexes) == 0 {
+		return collectionJSONBaseIndex{}
+	}
+	return ind
+}
+
+type collectionJSONIndex struct {
+	collectionJSONBaseIndex
+}
+
+var _ CollectionIndex = (*collectionJSONIndex)(nil)
+
+func newCollectionJSONIndex(base collectionBaseIndex) *collectionJSONIndex {
+	return &collectionJSONIndex{collectionJSONBaseIndex: newCollectionJSONBaseIndex(base)}
+}
+
+// Save indexes a document by storing the indexed field value.
+func (index *collectionJSONIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := index.getDocumentsIndexKey(doc, true)
+	if err != nil {
+		return err
+	}
+
+	for _, jsonFieldIndex := range index.jsonFieldsIndexes {
+		json, _ := key.Fields[jsonFieldIndex].Value.JSON()
+
+		err = client.TraverseJSON(json, func(value client.JSON) error {
+			val, err := client.NewNormalValue(value)
+			if err != nil {
+				return err
+			}
+
+			leafKey := key
+			copy(leafKey.Fields, key.Fields)
+			leafKey.Fields[jsonFieldIndex].Value = val
+
+			dsKey := leafKey.ToDS()
+			err = txn.Datastore().Put(ctx, dsKey, []byte{})
+			if err != nil {
+				return NewErrFailedToStoreIndexedField(key.ToString(), err)
+			}
+
+			return nil
+		}, client.TraverseJSONOnlyLeaves())
+
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func (index *collectionJSONIndex) Update(
+	ctx context.Context,
+	txn datastore.Txn,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	/*newKeys, err := index.deleteRetiredKeysAndReturnNew(ctx, txn, oldDoc, newDoc, true)
+	if err != nil {
+		return err
+	}
+
+	for _, key := range newKeys {
+		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+		if err != nil {
+			return NewErrFailedToStoreIndexedField(key.ToString(), err)
+		}
+	}*/
+
+	return nil
+}
+
+func (index *collectionJSONIndex) Delete(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	/*getNextKey, err := index.newIndexKeyGenerator(doc, true)
+	if err != nil {
+		return err
+	}
+
+	for {
+		key, ok := getNextKey()
+		if !ok {
+			break
+		}
+		err = index.deleteIndexKey(ctx, txn, key)
+		if err != nil {
+			return err
+		}
+	}*/
 	return nil
 }

@@ -165,6 +165,18 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalTime(v), nil
+	case JSON:
+		var v client.JSON
+		var err error
+		if descending {
+			b, v, err = DecodeJSONDescending(b)
+		} else {
+			b, v, err = DecodeJSONAscending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalJSON(v), nil
 	}
 
 	return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
+	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -305,6 +306,57 @@ func (iter *arrayIndexIterator) Close() error {
 	return iter.inner.Close()
 }
 
+type jsonIndexIterator struct {
+	inner indexIterator
+
+	fetchedDocs map[string]struct{}
+	jsonPath    []string
+
+	ctx   context.Context
+	store datastore.DSReaderWriter
+}
+
+var _ indexIterator = (*jsonIndexIterator)(nil)
+
+func (iter *jsonIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter.ctx = ctx
+	iter.store = store
+	iter.fetchedDocs = make(map[string]struct{})
+	return iter.inner.Init(ctx, store)
+}
+
+func (iter *jsonIndexIterator) Next() (indexIterResult, error) {
+	for {
+		res, err := iter.inner.Next()
+		if err != nil {
+			return indexIterResult{}, err
+		}
+		if !res.foundKey {
+			return res, nil
+		}
+		var docID string
+		if len(res.value) > 0 {
+			docID = string(res.value)
+		} else {
+			lastField := &res.key.Fields[len(res.key.Fields)-1]
+			var ok bool
+			docID, ok = lastField.Value.String()
+			if !ok {
+				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
+			}
+		}
+		if _, ok := iter.fetchedDocs[docID]; ok {
+			continue
+		}
+		iter.fetchedDocs[docID] = struct{}{}
+		return res, nil
+	}
+}
+
+func (iter *jsonIndexIterator) Close() error {
+	return iter.inner.Close()
+}
+
 func executeValueMatchers(matchers []valueMatcher, fields []keys.IndexedField) (bool, error) {
 	for i := range matchers {
 		res, err := matchers[i].Match(fields[i].Value)
@@ -546,6 +598,20 @@ func (m *invertedMatcher) Match(val client.NormalValue) (bool, error) {
 	return !res, nil
 }
 
+type jsonMatcher struct {
+	value    float64
+	evalFunc func(float64, float64) bool
+}
+
+func (m *jsonMatcher) Match(value client.NormalValue) (bool, error) {
+	if jsonVal, ok := value.JSON(); ok {
+		if floatVal, ok := jsonVal.Number(); ok {
+			return m.evalFunc(floatVal, m.value), nil
+		}
+	}
+	return false, NewErrUnexpectedTypeValue[float64](value)
+}
+
 // newPrefixIteratorFromConditions creates a new eqPrefixIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
 func (f *IndexFetcher) newPrefixIteratorFromConditions(
@@ -674,6 +740,14 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		}
 	}
 
+	hasJSON := false
+	for i := range fieldConditions {
+		if fieldConditions[i].kind == client.FieldKind_NILLABLE_JSON {
+			hasJSON = true
+			break
+		}
+	}
+
 	var iter indexIterator
 
 	if fieldConditions[0].op == opEq {
@@ -702,6 +776,10 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 	}
 
+	if hasJSON {
+		iter = &jsonIndexIterator{inner: iter, jsonPath: fieldConditions[0].jsonPath}
+	}
+
 	if hasArray {
 		iter = &arrayIndexIterator{inner: iter}
 	}
@@ -714,6 +792,7 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		return &anyMatcher{}, nil
 	}
 
+	// TODO: test json null
 	if condition.val.IsNil() {
 		return &nilMatcher{matchNil: condition.op == opEq}, nil
 	}
@@ -734,6 +813,11 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		}
 		if v, ok := condition.val.Bool(); ok {
 			return &boolMatcher{value: v, isEq: condition.op == opEq}, nil
+		}
+		if v, ok := condition.val.JSON(); ok {
+			if jsonVal, ok := v.Number(); ok {
+				return &jsonMatcher{value: jsonVal, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
+			}
 		}
 	case opIn, opNin:
 		inVals, err := client.ToArrayOfNormalValues(condition.val)
@@ -773,10 +857,11 @@ func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
 }
 
 type fieldFilterCond struct {
-	op    string
-	arrOp string
-	val   client.NormalValue
-	kind  client.FieldKind
+	op       string
+	arrOp    string
+	jsonPath []string
+	val      client.NormalValue
+	kind     client.FieldKind
 }
 
 // determineFieldFilterConditions determines the conditions and their corresponding operation
@@ -796,15 +881,42 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 			found = true
 
+			fieldDef := f.indexedFields[slices.IndexFunc(f.indexedFields, func(f client.FieldDefinition) bool {
+				return int(f.ID) == fieldInd
+			})]
+
 			condMap := indexFilterCond.(map[connor.FilterKey]any)
+
+			jsonPath := []string{}
+			if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
+
+			jsonPathLoop:
+				for {
+					for key, filterVal := range condMap {
+						prop, ok := key.(*mapper.ObjectProperty)
+						if !ok {
+							break jsonPathLoop
+						}
+						jsonPath = append(jsonPath, prop.Name)
+						condMap = filterVal.(map[connor.FilterKey]any)
+					}
+				}
+			}
+
 			for key, filterVal := range condMap {
 				cond := fieldFilterCond{
-					op:   key.(*mapper.Operator).Operation,
-					kind: f.indexedFields[i].Kind,
+					op:       key.(*mapper.Operator).Operation,
+					jsonPath: jsonPath,
+					kind:     f.indexedFields[i].Kind,
 				}
 
 				var err error
-				if filterVal == nil {
+				if len(jsonPath) > 0 {
+					jsonVal, err := client.NewJSONWithPath(filterVal, jsonPath)
+					if err == nil {
+						cond.val = client.NewNormalJSON(jsonVal)
+					}
+				} else if filterVal == nil {
 					cond.val, err = client.NewNormalNil(cond.kind)
 				} else if !f.indexedFields[i].Kind.IsArray() {
 					cond.val, err = client.NewNormalValue(filterVal)
