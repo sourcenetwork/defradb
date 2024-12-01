@@ -446,8 +446,7 @@ func (f *IndexFetcher) newInIndexIterator(
 }
 
 func (f *IndexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
-	key := keys.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
-	return key
+	return keys.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
 }
 
 func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {

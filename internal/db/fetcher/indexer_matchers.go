@@ -269,9 +269,10 @@ type jsonComparableMatcher[T comparable] struct {
 
 func (m *jsonComparableMatcher[T]) Match(value client.NormalValue) (bool, error) {
 	if jsonVal, ok := value.JSON(); ok {
-		if floatVal, ok := m.getValueFunc(jsonVal); ok {
-			return m.evalFunc(floatVal, m.value), nil
+		if val, ok := m.getValueFunc(jsonVal); ok {
+			return m.evalFunc(val, m.value), nil
 		}
+		return false, nil
 	}
 	return false, NewErrUnexpectedTypeValue[float64](value)
 }
@@ -287,11 +288,21 @@ func (m *jsonBoolMatcher) Match(value client.NormalValue) (bool, error) {
 		if ok {
 			return boolVal == m.value == m.isEq, nil
 		}
-		// TODO: test json null, or other types
-		//return false, nil
-		return true, nil
+		return false, nil
 	}
 	return false, NewErrUnexpectedTypeValue[bool](value)
+}
+
+type jsonNullMatcher struct {
+	// TODO: _ne null is not handled yet
+	matchNull bool
+}
+
+func (m *jsonNullMatcher) Match(value client.NormalValue) (bool, error) {
+	if jsonVal, ok := value.JSON(); ok {
+		return jsonVal.IsNull() == m.matchNull, nil
+	}
+	return false, NewErrUnexpectedTypeValue[any](value)
 }
 
 func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
@@ -339,6 +350,9 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 			if jsonVal, ok := v.Bool(); ok {
 				// TODO: test bool not equal
 				return &jsonBoolMatcher{value: jsonVal, isEq: condition.op == opEq}, nil
+			}
+			if v.IsNull() {
+				return &jsonNullMatcher{matchNull: condition.op == opEq}, nil
 			}
 		}
 	case opIn, opNin:
