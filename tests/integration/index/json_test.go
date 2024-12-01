@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestJSONIndex_WithFilterOnIndexedJSON_ShouldUseIndex(t *testing.T) {
+func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {height: {_eq: 168}}}) {
 			name
@@ -39,6 +39,12 @@ func TestJSONIndex_WithFilterOnIndexedJSON_ShouldUseIndex(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
+					"name": "Islam",
+					"custom": {"height": 168}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
@@ -53,15 +59,14 @@ func TestJSONIndex_WithFilterOnIndexedJSON_ShouldUseIndex(t *testing.T) {
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{
-							"name": "John",
-						},
+						{"name": "John"},
+						{"name": "Islam"},
 					},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
 			},
 		},
 	}
