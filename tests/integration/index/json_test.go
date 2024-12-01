@@ -73,3 +73,119 @@ func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestJSONIndex_WithFilterOnStringField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {title: {_eq: "Mr"}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"title": "Mr", "weight": 70}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"title": "Mr"}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"weight": 80, "BMI": 25}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"title": "Dr"}
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Islam"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithFilterOnBoolField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {isStudent: {_eq: true}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"isStudent": true, "weight": 70}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"isStudent": true}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"weight": 80, "BMI": 25}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"isStudent": false}
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -133,6 +133,7 @@ func (m *boolMatcher) Match(value client.NormalValue) (bool, error) {
 		if boolOptVal, ok := value.NillableBool(); ok {
 			boolVal = boolOptVal.Value()
 		} else {
+			// TODO: check is this is still needed after encoding of bool changed
 			intVal, ok := value.Int()
 			if !ok {
 				if intOptVal, ok := value.NillableInt(); ok {
@@ -260,18 +261,37 @@ func (m *invertedMatcher) Match(val client.NormalValue) (bool, error) {
 	return !res, nil
 }
 
-type jsonMatcher struct {
-	value    float64
-	evalFunc func(float64, float64) bool
+type jsonComparableMatcher[T comparable] struct {
+	value        T
+	getValueFunc func(client.JSON) (T, bool)
+	evalFunc     func(T, T) bool
 }
 
-func (m *jsonMatcher) Match(value client.NormalValue) (bool, error) {
+func (m *jsonComparableMatcher[T]) Match(value client.NormalValue) (bool, error) {
 	if jsonVal, ok := value.JSON(); ok {
-		if floatVal, ok := jsonVal.Number(); ok {
+		if floatVal, ok := m.getValueFunc(jsonVal); ok {
 			return m.evalFunc(floatVal, m.value), nil
 		}
 	}
 	return false, NewErrUnexpectedTypeValue[float64](value)
+}
+
+type jsonBoolMatcher struct {
+	value bool
+	isEq  bool
+}
+
+func (m *jsonBoolMatcher) Match(value client.NormalValue) (bool, error) {
+	if jsonVal, ok := value.JSON(); ok {
+		boolVal, ok := jsonVal.Bool()
+		if ok {
+			return boolVal == m.value == m.isEq, nil
+		}
+		// TODO: test json null, or other types
+		//return false, nil
+		return true, nil
+	}
+	return false, NewErrUnexpectedTypeValue[bool](value)
 }
 
 func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
@@ -303,7 +323,22 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		}
 		if v, ok := condition.val.JSON(); ok {
 			if jsonVal, ok := v.Number(); ok {
-				return &jsonMatcher{value: jsonVal, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
+				return &jsonComparableMatcher[float64]{
+					value:        jsonVal,
+					getValueFunc: func(j client.JSON) (float64, bool) { return j.Number() },
+					evalFunc:     getCompareValsFunc[float64](condition.op),
+				}, nil
+			}
+			if jsonVal, ok := v.String(); ok {
+				return &jsonComparableMatcher[string]{
+					value:        jsonVal,
+					getValueFunc: func(j client.JSON) (string, bool) { return j.String() },
+					evalFunc:     getCompareValsFunc[string](condition.op),
+				}, nil
+			}
+			if jsonVal, ok := v.Bool(); ok {
+				// TODO: test bool not equal
+				return &jsonBoolMatcher{value: jsonVal, isEq: condition.op == opEq}, nil
 			}
 		}
 	case opIn, opNin:
