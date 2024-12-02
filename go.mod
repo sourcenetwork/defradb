@@ -1,9 +1,6 @@
 module github.com/sourcenetwork/defradb
 
 go 1.22.0
-
-toolchain go1.22.7
-
 require (
 	github.com/bits-and-blooms/bitset v1.17.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -64,7 +61,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.29.0
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
-	google.golang.org/grpc v1.67.1
+	google.golang.org/grpc v1.68.0
 )
 
 require (
