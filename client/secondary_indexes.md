@@ -41,9 +41,13 @@ type CollectionIndex interface {
 ### Key Structure
 
 Index keys in DefraDB follow a carefully designed format that enables efficient lookups and range scans. For regular indexes, the key format is:
-`<collection_id>/<index_id>/<field_value_1>/..<field_value_n>/<doc_id>` -> empty value. 
+```
+<collection_id>/<index_id>(/<field_value>)+/<doc_id> -> empty value
+``` 
 Unique indexes follow a similar pattern but store the document ID as the value instead: 
-`<collection_id>/<index_id>/<field_value_1>/..<field_value_n>` -> `<doc_id>`.
+```
+<collection_id>/<index_id>(/<field_value>)+ -> <doc_id>
+```
 
 ### Value Encoding
 
@@ -123,3 +127,65 @@ type Address {
 ```
 
 The unique index constraint ensures that no two Users can reference the same Address document. Without the unique constraint, the relationship would be one-to-many by default, allowing multiple Users to reference the same Address.
+
+## JSON Field Indexing
+
+DefraDB implements a specialized indexing system for JSON fields that differs from how other field types are handled. While a document in DefraDB can contain various field types (Int, String, Bool, JSON, etc.), JSON fields require special treatment due to their hierarchical nature.
+
+#### The JSON Interface
+
+The indexing system relies on the `JSON` interface defined in `client/json.go`. This interface is crucial for handling JSON fields as it enables traversal of all leaf nodes within a JSON document. A `JSON` value in DefraDB can represent either an entire JSON document or a single node within it. Each `JSON` value maintains its path information, which is essential for indexing.
+
+For example, given this JSON document:
+```json
+{
+    "user": {
+        "device": {
+            "model": "iPhone"
+        }
+    }
+}
+```
+
+The system can represent the "iPhone" value as a `JSON` type with its complete path `[]string{"user", "device", "model"}`. This path-aware representation is fundamental to how the indexing system works.
+
+#### Inverted Indexes for JSON
+
+For JSON fields, DefraDB uses inverted indexes with the following key format:
+```
+<collection_id>/<index_id>(/<json_path><json_value>)+/<doc_id>
+```
+
+The term "inverted" comes from how these indexes reverse the typical document-to-value relationship. Instead of starting with a document and finding its values, we start with a value and can quickly find all documents containing that value at any path.
+
+This approach differs from traditional secondary indexes in DefraDB. While regular fields map to single index entries, a JSON field generates multiple index entries - one for each leaf node in its structure. The system traverses the entire JSON structure during indexing, creating entries that combine the path and value information.
+
+#### Value Normalization and JSON
+
+The indexing system integrates with DefraDB's value normalization through `client.NormalValue`. While the encoding/decoding package handles scalar types directly, JSON values maintain additional path information. Each JSON node is encoded with both its normalized value and its path information, allowing the system to reconstruct the exact location of any value within the JSON structure.
+
+Similar to how other field types are normalized (e.g., integers to int64), JSON leaf values are normalized based on their type before being included in the index. This ensures consistent ordering and comparison operations.
+
+#### Integration with Index Infrastructure
+
+When a document with a JSON field is indexed, the system:
+1. Uses the JSON interface to traverse the document structure
+2. Creates index entries for each leaf node, combining path information with normalized values
+3. Maintains all entries in a way that enables efficient querying at any depth
+
+This implementation enables efficient queries like:
+```graphql
+query {
+    Collection(filter: {
+        jsonField: {
+            user: {
+                device: {
+                    model: {_eq: "iPhone"}
+                }
+            }
+        }
+    })
+}
+```
+
+The system can directly look up matching documents using the index entries, avoiding the need to scan and parse JSON content during query execution.
