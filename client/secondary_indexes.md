@@ -68,3 +68,58 @@ Note: the index fetcher can not benefit at the moment from ordered indexes, as t
 When working with indexes, it's important to understand their impact on system performance. Each index increases write amplification as every document modification must update all relevant indexes. However, this cost is often outweighed by the dramatic improvement in read performance for indexed queries.
 
 Index selection should be driven by your query patterns and data distribution. Indexing fields that are frequently used in query filters can significantly improve performance, but indexing rarely-queried fields only adds overhead. For unique indexes, the additional validation requirements make this trade-off even more important to consider.
+
+## Indexing Related Objects
+
+DefraDB's indexing system provides powerful capabilities for handling relationships between documents. Let's explore how this works with a practical example.
+
+Consider a schema defining a relationship between Users and Addresses:
+
+```graphql
+type User {
+    name: String 
+    age: Int
+    address: Address @primary @index
+} 
+
+type Address {
+    user: User
+    city: String @index
+    street: String 
+}
+```
+
+In this schema, we've defined two important indexes. First, we have an index on the `Address`'s city field, and second, we have an index on the relationship between `User` and `Address`. This setup enables extremely efficient querying across the relationship. For example:
+
+```graphql
+query {
+    User(filter: {
+        address: {city: {_eq: "Montreal"}}
+    }) {
+        name
+    }
+}
+```
+
+For requests on not indexed relations, the normal approach is from top to bottom, meaning that first all `User` documents are fetched and then for each `User` document the corresponding `Address` document is fetched. This can be very inefficient for large collections.
+With indexing, we use so called inverted fetching, meaning that we first fetch the `Address` documents with the matching `city` value and then for each `Address` document the corresponding `User` document is fetched. This is much more efficient as we can use the index to directly fetch the `User` document.
+
+### Relationship Cardinality Through Indexes
+
+The indexing system also plays a crucial role in enforcing relationship cardinality. By marking an index as unique, you can enforce one-to-one relationships between documents. Here's how you would modify the schema to ensure each User has exactly one Address:
+
+```graphql
+type User {
+    name: String 
+    age: Int
+    address: Address @primary @index(unique: true)
+} 
+
+type Address {
+    user: User
+    city: String @index
+    street: String 
+}
+```
+
+The unique index constraint ensures that no two Users can reference the same Address document. Without the unique constraint, the relationship would be one-to-many by default, allowing multiple Users to reference the same Address.
