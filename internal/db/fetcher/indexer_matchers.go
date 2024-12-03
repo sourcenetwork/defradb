@@ -208,17 +208,19 @@ func newLikeIndexCmp(filterValue string, isLike bool, isCaseInsensitive bool) (*
 	return matcher, nil
 }
 
-func (m *indexLikeMatcher) Match(value client.NormalValue) (bool, error) {
-	strVal, ok := value.String()
+func (m *indexLikeMatcher) Match(val client.NormalValue) (bool, error) {
+	strVal, ok := val.String()
 	if !ok {
-		strOptVal, ok := value.NillableString()
-		if !ok {
-			return false, NewErrUnexpectedTypeValue[string](value)
+		if strOptVal, ok := val.NillableString(); ok {
+			strVal = strOptVal.Value()
+		} else if jsonVal, ok := val.JSON(); ok {
+			strVal, ok = jsonVal.String()
+			if !ok {
+				return false, nil
+			}
+		} else {
+			return false, NewErrUnexpectedTypeValue[string](val)
 		}
-		if !strOptVal.HasValue() {
-			return false, nil
-		}
-		strVal = strOptVal.Value()
 	}
 	if m.isCaseInsensitive {
 		strVal = strings.ToLower(strVal)
@@ -362,13 +364,9 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 		}
 		return &indexInArrayMatcher{inValues: inVals, isIn: condition.op == opIn}, nil
 	case opLike, opNlike, opILike, opNILike:
-		strVal, ok := condition.val.String()
-		if !ok {
-			strOptVal, ok := condition.val.NillableString()
-			if !ok {
-				return nil, NewErrUnexpectedTypeValue[string](condition.val)
-			}
-			strVal = strOptVal.Value()
+		strVal, err := extractStringFromNormalValue(condition.val)
+		if err != nil {
+			return nil, err
 		}
 		isLike := condition.op == opLike || condition.op == opILike
 		isCaseInsensitive := condition.op == opILike || condition.op == opNILike
@@ -378,6 +376,23 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 	}
 
 	return nil, NewErrInvalidFilterOperator(condition.op)
+}
+
+func extractStringFromNormalValue(val client.NormalValue) (string, error) {
+	strVal, ok := val.String()
+	if !ok {
+		if strOptVal, ok := val.NillableString(); ok {
+			strVal = strOptVal.Value()
+		} else if jsonVal, ok := val.JSON(); ok {
+			strVal, ok = jsonVal.String()
+			if !ok {
+				return "", NewErrUnexpectedTypeValue[string](jsonVal)
+			}
+		} else {
+			return "", NewErrUnexpectedTypeValue[string](val)
+		}
+	}
+	return strVal, nil
 }
 
 func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {

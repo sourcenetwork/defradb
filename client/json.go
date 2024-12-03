@@ -65,6 +65,14 @@ type JSON interface {
 	accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error
 }
 
+// MakeVoidJSON creates a JSON value that represents a void value with just a path.
+// This is necessary purely for creating a json path prefix for storage queries.
+// All other json values will be encoded with some value after the path which makes
+// them unsuitable to build a path prefix.
+func MakeVoidJSON(path []string) JSON {
+	return jsonBase[any]{path: path}
+}
+
 // TraverseJSON traverses a JSON value and calls the visitor function for each node.
 // opts controls how the traversal is performed.
 func TraverseJSON(j JSON, visitor JSONVisitor, opts ...traverseJSONOption) error {
@@ -153,6 +161,10 @@ func (v jsonVoid) Bool() (bool, bool) {
 
 func (v jsonVoid) IsNull() bool {
 	return false
+}
+
+func (v jsonVoid) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+	return nil
 }
 
 type jsonBase[T any] struct {
