@@ -409,7 +409,7 @@ func (db *db) Events() *event.Bus {
 	return db.events
 }
 
-// MaxRetries returns the maximum number of retries per transaction.
+// MaxTxnRetries returns the maximum number of retries per transaction.
 // Defaults to `defaultMaxTxnRetries` if not explicitely set
 func (db *db) MaxTxnRetries() int {
 	if db.maxTxnRetries.HasValue() {

@@ -252,7 +252,7 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 	}
 }
 
-// GetFromBytes returns a block from encoded bytes.
+// GetEncryptionBlockFromBytes returns a block from encoded bytes.
 func GetEncryptionBlockFromBytes(b []byte) (*Encryption, error) {
 	enc := &Encryption{}
 	err := enc.Unmarshal(b)

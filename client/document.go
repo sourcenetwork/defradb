@@ -165,7 +165,7 @@ func IsJSONArray(obj []byte) bool {
 	return jsonArrayPattern.Match(obj)
 }
 
-// NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
+// NewDocFromJSON creates a new instance of a Document from a raw JSON object byte array.
 func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Document, error) {
 	doc, err := newEmptyDoc(collectionDefinition)
 	if err != nil {

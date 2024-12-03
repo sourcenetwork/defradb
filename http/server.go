@@ -53,7 +53,7 @@ type ServerOptions struct {
 	IdleTimeout time.Duration
 }
 
-// DefaultOpts returns the default options for the server.
+// DefaultServerOptions returns the default options for the server.
 func DefaultServerOptions() *ServerOptions {
 	return &ServerOptions{
 		Address: "127.0.0.1:9181",
