@@ -92,7 +92,24 @@ func TestJSONEncodingAndDecoding_ShouldEncodeAndDecodeBack(t *testing.T) {
 	}
 }
 
+func TestJSONEncodingDecoding_WithVoidValue_ShouldEncodeAndDecodeOnlyPath(t *testing.T) {
+	void := client.MakeVoidJSON([]string{"path", "to", "void"})
+	encoded := EncodeJSONAscending(nil, void)
+
+	remaining, decodedPath, err := decodeJSONPath(encoded[1:]) // skip the marker
+	require.NoError(t, err)
+	assert.Len(t, remaining, 1) // The path is followed by a separator
+	assert.Equal(t, void.GetPath(), decodedPath)
+
+	remaining, decoded, err := DecodeJSONAscending(encoded)
+	require.Error(t, err)
+	assert.Empty(t, remaining)
+	assert.Nil(t, decoded)
+}
+
 func TestJSONDecoding_MalformedData(t *testing.T) {
+	term := ascendingBytesEscapes.escapedTerm
+
 	tests := []struct {
 		name        string
 		input       []byte
@@ -106,27 +123,27 @@ func TestJSONDecoding_MalformedData(t *testing.T) {
 		},
 		{
 			name:      "malformed json num",
-			input:     []byte{jsonMarker, ascendingBytesEscapes.escapedTerm, floatPos, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, floatPos, 0xFF, 0xFF, 0xFF},
 			ascending: true,
 		},
 		{
 			name:      "malformed json num",
-			input:     []byte{jsonMarker, ascendingBytesEscapes.escapedTerm, floatPos, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, floatPos, 0xFF, 0xFF, 0xFF},
 			ascending: false,
 		},
 		{
 			name:      "malformed json num",
-			input:     []byte{jsonMarker, ascendingBytesEscapes.escapedTerm, bytesMarker, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, bytesMarker, 0xFF, 0xFF, 0xFF},
 			ascending: true,
 		},
 		{
 			name:      "malformed json num",
-			input:     []byte{jsonMarker, ascendingBytesEscapes.escapedTerm, bytesDescMarker, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, bytesDescMarker, 0xFF, 0xFF, 0xFF},
 			ascending: false,
 		},
 		{
 			name:      "wrong type marker",
-			input:     []byte{jsonMarker, ascendingBytesEscapes.escapedTerm, timeMarker, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, timeMarker, 0xFF, 0xFF, 0xFF},
 			ascending: true,
 		},
 	}

@@ -12,9 +12,13 @@ package encoding
 
 import "github.com/sourcenetwork/defradb/client"
 
+const jsonPathEnd = '/'
+
 // EncodeJSONAscending encodes a JSON value in ascending order.
 func EncodeJSONAscending(b []byte, v client.JSON) []byte {
 	b = encodeJSONPath(b, v)
+
+	b = append(b, jsonPathEnd)
 
 	if str, ok := v.String(); ok {
 		b = EncodeStringAscending(b, str)
@@ -24,8 +28,6 @@ func EncodeJSONAscending(b []byte, v client.JSON) []byte {
 		b = EncodeBoolAscending(b, boolVal)
 	} else if v.IsNull() {
 		b = EncodeNullAscending(b)
-	} else {
-		return nil
 	}
 
 	return b
@@ -35,6 +37,8 @@ func EncodeJSONAscending(b []byte, v client.JSON) []byte {
 func EncodeJSONDescending(b []byte, v client.JSON) []byte {
 	b = encodeJSONPath(b, v)
 
+	b = append(b, jsonPathEnd)
+
 	if str, ok := v.String(); ok {
 		b = EncodeStringDescending(b, str)
 	} else if num, ok := v.Number(); ok {
@@ -43,8 +47,6 @@ func EncodeJSONDescending(b []byte, v client.JSON) []byte {
 		b = EncodeBoolDescending(b, boolVal)
 	} else if v.IsNull() {
 		b = EncodeNullDescending(b)
-	} else {
-		return nil
 	}
 
 	return b
@@ -70,6 +72,8 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 	if err != nil {
 		return b, nil, err
 	}
+
+	b = b[1:] // Skip the path end marker
 
 	var jsonValue any
 

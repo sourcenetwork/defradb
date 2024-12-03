@@ -509,7 +509,15 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
 	} else {
-		iter, err = f.newPrefixIterator(f.newIndexDataStoreKey(), matchers, &f.execInfo), nil
+		key := f.newIndexDataStoreKey()
+		// TODO: can we test fieldConditions[not 0]?
+		if fieldConditions[0].kind == client.FieldKind_NILLABLE_JSON {
+			key.Fields = []keys.IndexedField{{
+				Descending: f.indexDesc.Fields[0].Descending,
+				Value:      client.NewNormalJSON(client.MakeVoidJSON(fieldConditions[0].jsonPath)),
+			}}
+		}
+		iter, err = f.newPrefixIterator(key, matchers, &f.execInfo), nil
 	}
 
 	if err != nil {
