@@ -98,7 +98,7 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 func TestExecRequest_WithValidQuery_HttpGet_WithOperationName_OmitsErrors(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	query := `query {
+	query := `query UserQuery {
 		User {
 			name
 		}
@@ -122,6 +122,8 @@ func TestExecRequest_WithValidQuery_HttpGet_WithOperationName_OmitsErrors(t *tes
 
 	resData, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
+
+	t.Log(string(resData))
 
 	var gqlResponse map[string]any
 	err = json.Unmarshal(resData, &gqlResponse)
