@@ -95,7 +95,7 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 	}})
 }
 
-func TestExecRequest_WithValidQuery_HttpGet_WithOperationName_OmitsErrors(t *testing.T) {
+func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	cdb := setupDatabase(t)
 
 	query := `query UserQuery {
@@ -134,7 +134,7 @@ func TestExecRequest_WithValidQuery_HttpGet_WithOperationName_OmitsErrors(t *tes
 	assert.False(t, ok)
 }
 
-func TestExecRequest_HttpGet_WithVariables_OmitsErrors(t *testing.T) {
+func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
 	cdb := setupDatabase(t)
 
 	query := `query getUser($filter: UserFilterArg) {
