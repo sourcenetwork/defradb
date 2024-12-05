@@ -145,7 +145,6 @@ func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 		}
 	}`
 	assert.JSONEq(t, expectedJSON, string(resData))
-
 }
 
 func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
