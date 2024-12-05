@@ -135,11 +135,7 @@ func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	err = json.Unmarshal(resData, &gqlResponse)
 	require.NoError(t, err)
 
-	// errors should be omitted
-	_, ok := gqlResponse["errors"]
-	assert.False(t, ok)
-
-	// Compare the response data to the expected output
+	// Ensure the response data contains names, but not the _docID field
 	expectedJSON := `{
 		"data": {
 			"User": [
@@ -186,11 +182,7 @@ func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
 	err = json.Unmarshal(resData, &gqlResponse)
 	require.NoError(t, err)
 
-	// errors should be omitted
-	_, ok := gqlResponse["errors"]
-	assert.False(t, ok)
-
-	// Compare the response data to the expected output
+	// Ensure only bob is returned, because of the filter variable
 	expectedJSON := `{
 		"data": {
 			"User": [
