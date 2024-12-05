@@ -602,6 +602,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 		Description: "Test acp, owner makes a manager that gives itself read and write access",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
 			testUtils.CollectionNamedMutationType,
 			testUtils.CollectionSaveMutationType,
 		}),
@@ -850,6 +851,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 		Description: "Test acp, manager adds relationship with relation it does not manage according to policy, error",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
 			testUtils.CollectionNamedMutationType,
 			testUtils.CollectionSaveMutationType,
 		}),
@@ -1018,6 +1020,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 		Description: "Test acp, owner makes a manager, manager can't read or write",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
 			testUtils.CollectionNamedMutationType,
 			testUtils.CollectionSaveMutationType,
 		}),

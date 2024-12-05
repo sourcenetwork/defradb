@@ -28,6 +28,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_AllActorsCanReadButNotUpdateOrD
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
 				testUtils.CollectionNamedMutationType,
 				testUtils.CollectionSaveMutationType,
 			},
@@ -258,6 +259,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_CanReadEvenWithoutIdentityButNo
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
 				testUtils.CollectionNamedMutationType,
 				testUtils.CollectionSaveMutationType,
 			},
