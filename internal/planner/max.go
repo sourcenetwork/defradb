@@ -33,6 +33,7 @@ type maxNode struct {
 	// that contains the result of the aggregate.
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+	aggregateFilter   *mapper.Filter
 
 	execInfo maxExecInfo
 }
@@ -45,11 +46,13 @@ type maxExecInfo struct {
 func (p *Planner) Max(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
+	filter *mapper.Filter,
 ) (*maxNode, error) {
 	return &maxNode{
 		p:                 p,
 		parent:            parent,
 		aggregateMapping:  field.AggregateTargets,
+		aggregateFilter:   filter,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
@@ -252,5 +255,5 @@ func (n *maxNode) Next() (bool, error) {
 		res, _ := max.Int64()
 		n.currentValue.Fields[n.virtualFieldIndex] = res
 	}
-	return true, nil
+	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
