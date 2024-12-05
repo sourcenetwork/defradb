@@ -286,10 +286,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	case req.URL.Query().Get("query") != "":
 		request.Query = req.URL.Query().Get("query")
 
-		operationNameFromQuery := req.URL.Query().Get("operationName")
-		if operationNameFromQuery != "" {
-			request.OperationName = operationNameFromQuery
-		}
+		req.URL.Query().Get("operationName")
 
 		variablesFromQuery := req.URL.Query().Get("variables")
 		if variablesFromQuery != "" {
