@@ -13,7 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -68,11 +68,11 @@ func (n *averageNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *averageNode) Kind() string            { return "averageNode" }
-func (n *averageNode) Start() error            { return n.plan.Start() }
-func (n *averageNode) Spans(spans []core.Span) { n.plan.Spans(spans) }
-func (n *averageNode) Close() error            { return n.plan.Close() }
-func (n *averageNode) Source() planNode        { return n.plan }
+func (n *averageNode) Kind() string                      { return "averageNode" }
+func (n *averageNode) Start() error                      { return n.plan.Start() }
+func (n *averageNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
+func (n *averageNode) Close() error                      { return n.plan.Close() }
+func (n *averageNode) Source() planNode                  { return n.plan }
 
 func (n *averageNode) Next() (bool, error) {
 	n.execInfo.iterations++

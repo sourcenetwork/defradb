@@ -88,7 +88,7 @@ type AddPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity immutable.Option[identityRef]
+	Identity immutable.Option[identity]
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -159,13 +159,13 @@ type AddDocActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[identityRef]
+	TargetIdentity immutable.Option[identity]
 
 	// The requestor identity, i.e. identity of the actor creating the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[identityRef]
+	RequestorIdentity immutable.Option[identity]
 
 	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
 	ExpectedExistence bool
@@ -215,7 +215,11 @@ func addDocActorRelationshipACP(
 	}
 
 	if action.ExpectedError == "" && !action.ExpectedExistence {
-		waitForUpdateEvents(s, actionNodeID, map[string]struct{}{docID: {}})
+		expect := map[string]struct{}{
+			docID: {},
+		}
+
+		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect)
 	}
 }
 
@@ -247,13 +251,13 @@ type DeleteDocActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[identityRef]
+	TargetIdentity immutable.Option[identity]
 
 	// The requestor identity, i.e. identity of the actor deleting the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[identityRef]
+	RequestorIdentity immutable.Option[identity]
 
 	// Result returns true if the relationship record was expected to be found and deleted,
 	// and returns false if no matching relationship record was found (no-op).
@@ -304,7 +308,7 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	collectionName := ""
 	docID := ""
 	if collectionID != -1 {
-		collection := s.collections[nodeID][collectionID]
+		collection := s.nodes[nodeID].collections[collectionID]
 		if !collection.Description().Name.HasValue() {
 			require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
 		}
@@ -617,7 +621,7 @@ func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
 	if nodeIndex >= len(s.nodes) {
 		return immutable.None[string]()
 	}
-	switch client := s.nodes[nodeIndex].(type) {
+	switch client := s.nodes[nodeIndex].Client.(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	case *cli.Wrapper:

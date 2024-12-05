@@ -34,7 +34,7 @@ func Compare(a, b any) int {
 	case bool:
 		return compareBool(v, b.(bool))
 	case int:
-		return compareInt(int64(v), b.(int64))
+		return compareInt(int64(v), int64(b.(int)))
 	case int64:
 		return compareInt(v, b.(int64))
 	case uint64:

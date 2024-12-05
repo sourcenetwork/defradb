@@ -113,7 +113,9 @@ type DB interface {
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
 	//
-	// Note: The request actor must either be the owner or manager of the document.
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
 	AddDocActorRelationship(
 		ctx context.Context,
 		collectionName string,
@@ -128,7 +130,10 @@ type DB interface {
 	// be true if the relationship record was found and deleted. Upon success the boolean value
 	// will be false if the relationship record was not found (no-op).
 	//
-	// Note: The request actor must either be the owner or manager of the document.
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
+	//   removed, however this does not revoke access from actors that had explicit relationships.
 	DeleteDocActorRelationship(
 		ctx context.Context,
 		collectionName string,

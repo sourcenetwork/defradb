@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -22,26 +24,51 @@ func MakeIndexCreateCommand() *cobra.Command {
 	var fieldsArg []string
 	var uniqueArg bool
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique]",
+		Use:   "create -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique]",
 		Short: "Creates a secondary index on a collection's field(s)",
 		Long: `Creates a secondary index on a collection's field(s).
 		
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
+If no order is specified for the field, the default value will be "ASC"
 
 Example: create an index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name
 
 Example: create a named index for 'Users' collection on 'name' field:
-  defradb client index create --collection Users --fields name --name UsersByName`,
+  defradb client index create --collection Users --fields name --name UsersByName
+ 
+Example: create a unique index for 'Users' collection on 'name' in ascending order, and 'age' in descending order:
+  defradb client index create --collection Users --fields name:ASC,age:DESC --unique
+`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
 			var fields []client.IndexedFieldDescription
-			for _, name := range fieldsArg {
-				fields = append(fields, client.IndexedFieldDescription{Name: name})
+
+			for _, field := range fieldsArg {
+				// For each field, parse it into a field name and ascension order, separated by a colon
+				// If there is no colon, assume the ascension order is ASC by default
+				const asc = "ASC"
+				const desc = "DESC"
+				parts := strings.Split(field, ":")
+				fieldName := parts[0]
+				order := asc
+				if len(parts) == 2 {
+					order = strings.ToUpper(parts[1])
+					if order != asc && order != desc {
+						return NewErrInvalidAscensionOrder(field)
+					}
+				} else if len(parts) > 2 {
+					return NewErrInvalidInxedFieldDescription(field)
+				}
+				fields = append(fields, client.IndexedFieldDescription{
+					Name:       fieldName,
+					Descending: order == desc,
+				})
 			}
+
 			desc := client.IndexDescription{
 				Name:   nameArg,
 				Fields: fields,
@@ -51,6 +78,7 @@ Example: create a named index for 'Users' collection on 'name' field:
 			if err != nil {
 				return err
 			}
+
 			desc, err = col.CreateIndex(cmd.Context(), desc)
 			if err != nil {
 				return err

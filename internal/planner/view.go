@@ -74,8 +74,8 @@ func (n *viewNode) Start() error {
 	return n.source.Start()
 }
 
-func (n *viewNode) Spans(spans []core.Span) {
-	n.source.Spans(spans)
+func (n *viewNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
 }
 
 func (n *viewNode) Next() (bool, error) {
@@ -217,7 +217,7 @@ func (n *cachedViewFetcher) Start() error {
 	return nil
 }
 
-func (n *cachedViewFetcher) Spans(spans []core.Span) {
+func (n *cachedViewFetcher) Prefixes(prefixes []keys.Walkable) {
 	// no-op
 }
 

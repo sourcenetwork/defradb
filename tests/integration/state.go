@@ -42,15 +42,21 @@ type p2pState struct {
 	// The map key is the node id of the subscriber.
 	peerCollections map[int]struct{}
 
-	// actualDocHeads contains all document heads that exist on a node.
+	// actualDAGHeads contains all DAG heads that exist on a node.
 	//
 	// The map key is the doc id. The map value is the doc head.
-	actualDocHeads map[string]docHeadState
+	//
+	// This tracks composite commits for documents, and collection commits for
+	// branchable collections
+	actualDAGHeads map[string]docHeadState
 
-	// expectedDocHeads contains all document heads that are expected to exist on a node.
+	// expectedDAGHeads contains all DAG heads that are expected to exist on a node.
 	//
-	// The map key is the doc id. The map value is the doc head.
-	expectedDocHeads map[string]cid.Cid
+	// The map key is the doc id. The map value is the DAG head.
+	//
+	// This tracks composite commits for documents, and collection commits for
+	// branchable collections
+	expectedDAGHeads map[string]cid.Cid
 }
 
 // docHeadState contains the state of a document head.
@@ -68,8 +74,8 @@ func newP2PState() *p2pState {
 		connections:      make(map[int]struct{}),
 		replicators:      make(map[int]struct{}),
 		peerCollections:  make(map[int]struct{}),
-		actualDocHeads:   make(map[string]docHeadState),
-		expectedDocHeads: make(map[string]cid.Cid),
+		actualDAGHeads:   make(map[string]docHeadState),
+		expectedDAGHeads: make(map[string]cid.Cid),
 	}
 }
 
@@ -114,6 +120,30 @@ func newEventState(bus *event.Bus) (*eventState, error) {
 	}, nil
 }
 
+// nodeState contains all testing state for a node.
+type nodeState struct {
+	// The node's client active in this test.
+	clients.Client
+	// event contains all event node subscriptions.
+	event *eventState
+	// p2p contains p2p states for the node.
+	p2p *p2pState
+	// The network configurations for the nodes
+	netOpts []net.NodeOpt
+	// The path to any file-based databases active in this test.
+	dbPath string
+	// Collections by index present in the test.
+	// Indexes matches that of collectionNames.
+	collections []client.Collection
+	// Indexes, by index, by collection index.
+	indexes [][]client.IndexDescription
+	// indicates if the node is closed.
+	closed bool
+	// peerInfo contains the peer information for the node.
+	peerInfo peer.AddrInfo
+}
+
+// state contains all testing state.
 type state struct {
 	// The test context.
 	ctx context.Context
@@ -124,6 +154,7 @@ type state struct {
 	// The TestCase currently being executed.
 	testCase TestCase
 
+	// The type of KMS currently being tested.
 	kms KMSType
 
 	// The type of database currently being tested.
@@ -142,7 +173,7 @@ type state struct {
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[identityRef]*identityHolder
+	identities map[identity]*identityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
@@ -153,30 +184,11 @@ type state struct {
 	// These channels will receive a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
 
-	// nodeEvents contains all event node subscriptions.
-	nodeEvents []*eventState
-
-	// The addresses of any nodes configured.
-	nodeAddresses []peer.AddrInfo
-
-	// The configurations for any nodes
-	nodeConfigs [][]net.NodeOpt
-
 	// The nodes active in this test.
-	nodes []clients.Client
+	nodes []*nodeState
 
-	// closedNodes contains the indexes of nodes that have been closed.
-	closedNodes map[int]struct{}
-
-	// nodeP2P contains p2p states for all nodes
-	nodeP2P []*p2pState
-
-	// The paths to any file-based databases active in this test.
-	dbPaths []string
-
-	// Collections by index, by nodeID present in the test.
-	// Indexes matches that of collectionNames.
-	collections [][]client.Collection
+	// The ACP options to share between each node.
+	acpOptions []node.ACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
@@ -196,17 +208,14 @@ type state struct {
 	// Valid Cid string values by [UniqueCid] ID.
 	cids map[any]string
 
-	// Indexes, by index, by collection index, by node index.
-	indexes [][][]client.IndexDescription
-
 	// isBench indicates wether the test is currently being benchmarked.
 	isBench bool
 
 	// The SourceHub address used to pay for SourceHub transactions.
 	sourcehubAddress string
 
-	// The ACP options to share between each node.
-	acpOptions []node.ACPOpt
+	// isNetworkEnabled indicates whether the network is enabled.
+	isNetworkEnabled bool
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -228,21 +237,12 @@ func newState(
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
-		identities:               map[identityRef]*identityHolder{},
+		identities:               map[identity]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
-		nodeEvents:               []*eventState{},
-		nodeAddresses:            []peer.AddrInfo{},
-		nodeConfigs:              [][]net.NodeOpt{},
-		nodeP2P:                  []*p2pState{},
-		nodes:                    []clients.Client{},
-		closedNodes:              map[int]struct{}{},
-		dbPaths:                  []string{},
-		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
 		cids:                     map[any]string{},
-		indexes:                  [][][]client.IndexDescription{},
 		isBench:                  false,
 	}
 }

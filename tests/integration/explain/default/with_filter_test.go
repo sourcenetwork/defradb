@@ -48,11 +48,8 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 									"_eq": "Lone",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -95,11 +92,8 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 									"_eq": int32(26),
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -142,11 +136,8 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 									"_gt": int32(20),
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -198,11 +189,8 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 									},
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -254,11 +242,8 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 									},
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -305,11 +290,8 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 									},
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -354,11 +336,8 @@ func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 									},
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/1",
-									"end":   "/2",
-								},
+							"prefixes": []string{
+								"/1",
 							},
 						},
 					},

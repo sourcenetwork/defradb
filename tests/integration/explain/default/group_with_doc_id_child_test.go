@@ -65,11 +65,8 @@ func TestDefaultExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},

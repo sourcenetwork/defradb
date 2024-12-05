@@ -63,11 +63,8 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 									"_gt": int32(63),
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},

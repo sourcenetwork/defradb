@@ -156,8 +156,8 @@ func connectPeers(
 	err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
 	require.NoError(s.t, err)
 
-	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
-	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
+	s.nodes[cfg.SourceNodeID].p2p.connections[cfg.TargetNodeID] = struct{}{}
+	s.nodes[cfg.TargetNodeID].p2p.connections[cfg.SourceNodeID] = struct{}{}
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
@@ -219,7 +219,7 @@ func subscribeToCollection(
 			continue
 		}
 
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
@@ -253,7 +253,7 @@ func unsubscribeToCollection(
 			continue
 		}
 
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
@@ -281,7 +281,7 @@ func getAllP2PCollections(
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		expectedCollections = append(expectedCollections, col.SchemaRoot())
 	}
 
@@ -294,8 +294,8 @@ func getAllP2PCollections(
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
 func reconnectPeers(s *state) {
-	for i, n := range s.nodeP2P {
-		for j := range n.connections {
+	for i, n := range s.nodes {
+		for j := range n.p2p.connections {
 			sourceNode := s.nodes[i]
 			targetNode := s.nodes[j]
 

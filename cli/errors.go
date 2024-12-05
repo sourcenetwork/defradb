@@ -17,9 +17,11 @@ import (
 )
 
 const (
-	errInvalidLensConfig        string = "invalid lens configuration"
-	errSchemaVersionNotOfSchema string = "the given schema version is from a different schema"
-	errRequiredFlag             string = "the required flag [--%s|-%s] is %s"
+	errInvalidLensConfig            string = "invalid lens configuration"
+	errSchemaVersionNotOfSchema     string = "the given schema version is from a different schema"
+	errRequiredFlag                 string = "the required flag [--%s|-%s] is %s"
+	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
+	errInvalidInxedFieldDescription string = "invalid or malformed field description"
 )
 
 var (
@@ -54,4 +56,12 @@ func NewErrSchemaVersionNotOfSchema(schemaRoot string, schemaVersionID string) e
 		errors.NewKV("SchemaRoot", schemaRoot),
 		errors.NewKV("SchemaVersionID", schemaVersionID),
 	)
+}
+
+func NewErrInvalidAscensionOrder(fieldName string) error {
+	return errors.New(errInvalidAscensionOrder, errors.NewKV("Field", fieldName))
+}
+
+func NewErrInvalidInxedFieldDescription(fieldName string) error {
+	return errors.New(errInvalidInxedFieldDescription, errors.NewKV("Field", fieldName))
 }

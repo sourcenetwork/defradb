@@ -255,9 +255,11 @@ func (p *Peer) handleMessageLoop() {
 }
 
 func (p *Peer) handleLog(evt event.Update) error {
-	_, err := client.NewDocIDFromString(evt.DocID)
-	if err != nil {
-		return NewErrFailedToGetDocID(err)
+	if evt.DocID != "" {
+		_, err := client.NewDocIDFromString(evt.DocID)
+		if err != nil {
+			return NewErrFailedToGetDocID(err)
+		}
 	}
 
 	// push to each peer (replicator)
@@ -273,8 +275,10 @@ func (p *Peer) handleLog(evt event.Update) error {
 			Block:      evt.Block,
 		}
 
-		if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
-			return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+		if evt.DocID != "" {
+			if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
+				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+			}
 		}
 
 		if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {

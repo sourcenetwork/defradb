@@ -194,13 +194,13 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Custom"]].Value(), map[string]any{
 		"string": "maple",
-		"int":    int64(260),
+		"int":    float64(260),
 		"float":  float64(3.14),
 		"false":  false,
 		"true":   true,
 		"null":   nil,
-		"array":  []any{"one", int64(1)},
-		"object": map[string]any{"one": int64(1)},
+		"array":  []any{"one", float64(1)},
+		"object": map[string]any{"one": float64(1)},
 	})
 	assert.Equal(t, doc.values[doc.fields["Custom"]].IsDocument(), false)
 }
