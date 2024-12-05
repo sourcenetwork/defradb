@@ -98,11 +98,19 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	query := `query UserQuery {
+	query := `
+	query UserQuery {
 		User {
 			name
 		}
-	}`
+	}
+	query UserQueryWithDocID {
+		User {
+			_docID
+			name
+		}
+	}
+	`
 	operationName := "UserQuery"
 
 	encodedQuery := url.QueryEscape(query)
@@ -123,8 +131,6 @@ func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	resData, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 
-	t.Log(string(resData))
-
 	var gqlResponse map[string]any
 	err = json.Unmarshal(resData, &gqlResponse)
 	require.NoError(t, err)
@@ -132,6 +138,18 @@ func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	// errors should be omitted
 	_, ok := gqlResponse["errors"]
 	assert.False(t, ok)
+
+	// Compare the response data to the expected output
+	expectedJSON := `{
+		"data": {
+			"User": [
+				{"name": "bob"},
+				{"name": "adam"}
+			]
+		}
+	}`
+	assert.JSONEq(t, expectedJSON, string(resData))
+
 }
 
 func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
@@ -171,4 +189,14 @@ func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
 	// errors should be omitted
 	_, ok := gqlResponse["errors"]
 	assert.False(t, ok)
+
+	// Compare the response data to the expected output
+	expectedJSON := `{
+		"data": {
+			"User": [
+				{"name": "bob"}
+			]
+		}
+	}`
+	assert.JSONEq(t, expectedJSON, string(resData))
 }
