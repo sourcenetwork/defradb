@@ -284,7 +284,21 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
+
 		request.Query = req.URL.Query().Get("query")
+
+		request.OperationName = req.URL.Query().Get("operationName")
+
+		variablesFromQuery := req.URL.Query().Get("variables")
+		if variablesFromQuery != "" {
+			var variables map[string]any
+			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+				return
+			}
+			request.Variables = variables
+		}
+
 	case req.Body != nil:
 		if err := requestJSON(req, &request); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -294,7 +308,6 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
 		return
 	}
-
 	var options []client.RequestOption
 	if request.OperationName != "" {
 		options = append(options, client.WithOperationName(request.OperationName))

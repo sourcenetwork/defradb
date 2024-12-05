@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,4 +93,101 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 	assert.ElementsMatch(t, errList, []any{map[string]any{
 		"message": "Cannot query field \"invalid\" on type \"User\".",
 	}})
+}
+
+func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	query := `
+	query UserQuery {
+		User {
+			name
+		}
+	}
+	query UserQueryWithDocID {
+		User {
+			_docID
+			name
+		}
+	}
+	`
+	operationName := "UserQuery"
+
+	encodedQuery := url.QueryEscape(query)
+	encodedOperationName := url.QueryEscape(operationName)
+
+	endpointURL := "http://localhost:9181/api/v0/graphql?query=" + encodedQuery + "&operationName=" + encodedOperationName
+
+	req := httptest.NewRequest(http.MethodGet, endpointURL, nil)
+	rec := httptest.NewRecorder()
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	require.NotNil(t, res.Body)
+
+	resData, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	var gqlResponse map[string]any
+	err = json.Unmarshal(resData, &gqlResponse)
+	require.NoError(t, err)
+
+	// Ensure the response data contains names, but not the _docID field
+	expectedJSON := `{
+		"data": {
+			"User": [
+				{"name": "bob"},
+				{"name": "adam"}
+			]
+		}
+	}`
+	assert.JSONEq(t, expectedJSON, string(resData))
+}
+
+func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	query := `query getUser($filter: UserFilterArg) {
+		User(filter: $filter) {
+			name
+		}
+	}`
+	operationName := "getUser"
+	variables := `{"filter":{"name":{"_eq":"bob"}}}`
+
+	encodedQuery := url.QueryEscape(query)
+	encodedOperationName := url.QueryEscape(operationName)
+	encodedVariables := url.QueryEscape(variables)
+
+	endpointURL := "http://localhost:9181/api/v0/graphql?query=" + encodedQuery + "&operationName=" + encodedOperationName + "&variables=" + encodedVariables
+
+	req := httptest.NewRequest(http.MethodGet, endpointURL, nil)
+	rec := httptest.NewRecorder()
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	require.NotNil(t, res.Body)
+
+	resData, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	var gqlResponse map[string]any
+	err = json.Unmarshal(resData, &gqlResponse)
+	require.NoError(t, err)
+
+	// Ensure only bob is returned, because of the filter variable
+	expectedJSON := `{
+		"data": {
+			"User": [
+				{"name": "bob"}
+			]
+		}
+	}`
+	assert.JSONEq(t, expectedJSON, string(resData))
 }
