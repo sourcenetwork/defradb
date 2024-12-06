@@ -23,7 +23,6 @@ import (
 
 // Global variable for the development mode flag
 // This is checked by the http/handler_extras.go/Purge function to determine which response to send
-// to the client.
 var IsDevMode bool = false
 
 // Version is the identifier for the current API version.
