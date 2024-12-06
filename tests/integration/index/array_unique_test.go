@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestArrayUniqueIndex_UponDocCreationWithArrayElementThatExists_Error(t *testing.T) {
+func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T) {
 	req := `query {
 		User(filter: {nfts: {_any: {_eq: 30}}}) {
 			name

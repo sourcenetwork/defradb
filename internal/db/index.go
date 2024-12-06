@@ -89,7 +89,11 @@ func NewCollectionIndex(
 			return newCollectionArrayIndex(base), nil
 		}
 	} else if isJSON {
-		return newCollectionJSONIndex(base), nil
+		if desc.Unique {
+			return newCollectionJSONUniqueIndex(base), nil
+		} else {
+			return newCollectionJSONIndex(base), nil
+		}
 	} else if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	} else {
@@ -368,6 +372,28 @@ func validateUniqueKeyValue(
 		if exists {
 			return newUniqueIndexError(doc, fieldsDescs)
 		}
+	}
+	return nil
+}
+
+func addNewUniqueKey(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+	key keys.IndexDataStoreKey,
+	fieldsDescs []client.SchemaFieldDescription,
+) error {
+	key, val, err := makeUniqueKeyValueRecord(key, doc)
+	if err != nil {
+		return err
+	}
+	err = validateUniqueKeyValue(ctx, txn, key, val, doc, fieldsDescs)
+	if err != nil {
+		return err
+	}
+	err = txn.Datastore().Put(ctx, key.ToDS(), val)
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToString(), err)
 	}
 	return nil
 }
@@ -679,31 +705,10 @@ func (index *collectionArrayUniqueIndex) Save(
 		if !ok {
 			break
 		}
-		err := index.addNewUniqueKey(ctx, txn, doc, key)
+		err := addNewUniqueKey(ctx, txn, doc, key, index.fieldsDescs)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (index *collectionArrayUniqueIndex) addNewUniqueKey(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-	key keys.IndexDataStoreKey,
-) error {
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
-	if err != nil {
-		return err
-	}
-	err = validateUniqueKeyValue(ctx, txn, key, val, doc, index.fieldsDescs)
-	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), val)
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToString(), err)
 	}
 	return nil
 }
@@ -720,7 +725,7 @@ func (index *collectionArrayUniqueIndex) Update(
 	}
 
 	for _, key := range newKeys {
-		err := index.addNewUniqueKey(ctx, txn, newDoc, key)
+		err := addNewUniqueKey(ctx, txn, newDoc, key, index.fieldsDescs)
 		if err != nil {
 			return err
 		}
@@ -770,23 +775,12 @@ func newCollectionJSONBaseIndex(base collectionBaseIndex) collectionJSONBaseInde
 	return ind
 }
 
-type collectionJSONIndex struct {
-	collectionJSONBaseIndex
-}
-
-var _ CollectionIndex = (*collectionJSONIndex)(nil)
-
-func newCollectionJSONIndex(base collectionBaseIndex) *collectionJSONIndex {
-	return &collectionJSONIndex{collectionJSONBaseIndex: newCollectionJSONBaseIndex(base)}
-}
-
-// Save indexes a document by storing the indexed field value.
-func (index *collectionJSONIndex) Save(
-	ctx context.Context,
-	txn datastore.Txn,
+func (index *collectionJSONBaseIndex) traverseJSONNodes(
 	doc *client.Document,
+	appendDocID bool,
+	f func(keys.IndexDataStoreKey) error,
 ) error {
-	key, err := index.getDocumentsIndexKey(doc, true)
+	key, err := index.getDocumentsIndexKey(doc, appendDocID)
 	if err != nil {
 		return err
 	}
@@ -804,22 +798,41 @@ func (index *collectionJSONIndex) Save(
 			copy(leafKey.Fields, key.Fields)
 			leafKey.Fields[jsonFieldIndex].Value = val
 
-			dsKey := leafKey.ToDS()
-			err = txn.Datastore().Put(ctx, dsKey, []byte{})
-			if err != nil {
-				return NewErrFailedToStoreIndexedField(key.ToString(), err)
-			}
-
-			return nil
+			return f(leafKey)
 		}, client.TraverseJSONOnlyLeaves())
 
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil
+}
+
+type collectionJSONIndex struct {
+	collectionJSONBaseIndex
+}
+
+var _ CollectionIndex = (*collectionJSONIndex)(nil)
+
+func newCollectionJSONIndex(base collectionBaseIndex) *collectionJSONIndex {
+	return &collectionJSONIndex{collectionJSONBaseIndex: newCollectionJSONBaseIndex(base)}
+}
+
+// Save indexes a document by storing the indexed field value.
+func (index *collectionJSONIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	return index.traverseJSONNodes(doc, true, func(key keys.IndexDataStoreKey) error {
+		err := txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+		if err != nil {
+			return NewErrFailedToStoreIndexedField(key.ToString(), err)
+		}
+
+		return nil
+	})
 }
 
 func (index *collectionJSONIndex) Update(
@@ -828,19 +841,11 @@ func (index *collectionJSONIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	/*newKeys, err := index.deleteRetiredKeysAndReturnNew(ctx, txn, oldDoc, newDoc, true)
+	err := index.Delete(ctx, txn, oldDoc)
 	if err != nil {
 		return err
 	}
-
-	for _, key := range newKeys {
-		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
-		if err != nil {
-			return NewErrFailedToStoreIndexedField(key.ToString(), err)
-		}
-	}*/
-
-	return nil
+	return index.Save(ctx, txn, newDoc)
 }
 
 func (index *collectionJSONIndex) Delete(
@@ -848,20 +853,51 @@ func (index *collectionJSONIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	/*getNextKey, err := index.newIndexKeyGenerator(doc, true)
+	return index.traverseJSONNodes(doc, true, func(key keys.IndexDataStoreKey) error {
+		return index.deleteIndexKey(ctx, txn, key)
+	})
+}
+
+type collectionJSONUniqueIndex struct {
+	collectionJSONBaseIndex
+}
+
+var _ CollectionIndex = (*collectionJSONUniqueIndex)(nil)
+
+func newCollectionJSONUniqueIndex(base collectionBaseIndex) *collectionJSONUniqueIndex {
+	return &collectionJSONUniqueIndex{collectionJSONBaseIndex: newCollectionJSONBaseIndex(base)}
+}
+
+// Save indexes a document by storing the indexed field value.
+func (index *collectionJSONUniqueIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	return index.traverseJSONNodes(doc, false, func(key keys.IndexDataStoreKey) error {
+		return addNewUniqueKey(ctx, txn, doc, key, index.fieldsDescs)
+	})
+}
+
+func (index *collectionJSONUniqueIndex) Update(
+	ctx context.Context,
+	txn datastore.Txn,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	err := index.Delete(ctx, txn, oldDoc)
 	if err != nil {
 		return err
 	}
+	return index.Save(ctx, txn, newDoc)
+}
 
-	for {
-		key, ok := getNextKey()
-		if !ok {
-			break
-		}
-		err = index.deleteIndexKey(ctx, txn, key)
-		if err != nil {
-			return err
-		}
-	}*/
-	return nil
+func (index *collectionJSONUniqueIndex) Delete(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	return index.traverseJSONNodes(doc, false, func(key keys.IndexDataStoreKey) error {
+		return index.deleteIndexKey(ctx, txn, key)
+	})
 }
