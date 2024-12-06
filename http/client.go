@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -471,30 +470,11 @@ func (c *Client) PrintDump(ctx context.Context) error {
 func (c *Client) Purge(ctx context.Context) error {
 	methodURL := c.http.baseURL.JoinPath("purge")
 
-	// The devmode flag can be obtained by querying the /devmode/ endpoint
-	suffixURL := "/api/" + Version
-	devModeURL := strings.TrimSuffix(c.http.baseURL.String(), suffixURL) + "/devmode/"
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, devModeURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
-	var isDevMode bool
-	if err := c.http.requestJson(req, &isDevMode); err != nil {
-		return err
-	}
 
-	if !isDevMode {
-		// The following is not an error and does not return, because the command still
-		// needs to run, such that the node receives the request and catches the error on that
-		// side of things.
-		fmt.Println("Error:this command can only be run in development mode")
-	}
-
-	req, err = http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
-	if err != nil {
-		return err
-	}
 	_, err = c.http.request(req)
 	return err
 }

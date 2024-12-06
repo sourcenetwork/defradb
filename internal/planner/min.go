@@ -33,6 +33,7 @@ type minNode struct {
 	// that contains the result of the aggregate.
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+	aggregateFilter   *mapper.Filter
 
 	execInfo minExecInfo
 }
@@ -45,11 +46,13 @@ type minExecInfo struct {
 func (p *Planner) Min(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
+	filter *mapper.Filter,
 ) (*minNode, error) {
 	return &minNode{
 		p:                 p,
 		parent:            parent,
 		aggregateMapping:  field.AggregateTargets,
+		aggregateFilter:   filter,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
@@ -252,5 +255,5 @@ func (n *minNode) Next() (bool, error) {
 		res, _ := min.Int64()
 		n.currentValue.Fields[n.virtualFieldIndex] = res
 	}
-	return true, nil
+	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }

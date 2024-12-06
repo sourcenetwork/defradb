@@ -26,10 +26,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 
 		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used so test that separately.
+				testUtils.GQLRequestMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -184,10 +185,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t
 
 		Description: "Test acp, owner gives write(update) access to another actor",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used so test that separately.
+				testUtils.GQLRequestMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
