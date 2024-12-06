@@ -474,7 +474,6 @@ func (c *Client) Purge(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	_, err = c.http.request(req)
 	return err
 }

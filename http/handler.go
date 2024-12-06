@@ -22,7 +22,8 @@ import (
 )
 
 // Global variable for the development mode flag
-// This is used to expose the development mode flag to the frontend at url:port/devmode/
+// This is checked by the http/handler_extras.go/Purge function to determine which response to send
+// to the client.
 var IsDevMode bool = false
 
 // Version is the identifier for the current API version.
@@ -92,7 +93,6 @@ func NewHandler(db client.DB) (*Handler, error) {
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
-
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
 		db:  db,
