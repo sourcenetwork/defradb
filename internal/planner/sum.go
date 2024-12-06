@@ -30,6 +30,7 @@ type sumNode struct {
 	isFloat           bool
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+	aggregateFilter   *mapper.Filter
 
 	execInfo sumExecInfo
 }
@@ -42,6 +43,7 @@ type sumExecInfo struct {
 func (p *Planner) Sum(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
+	filter *mapper.Filter,
 ) (*sumNode, error) {
 	isFloat := false
 	for _, target := range field.AggregateTargets {
@@ -60,6 +62,7 @@ func (p *Planner) Sum(
 		p:                 p,
 		isFloat:           isFloat,
 		aggregateMapping:  field.AggregateTargets,
+		aggregateFilter:   filter,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
@@ -310,8 +313,7 @@ func (n *sumNode) Next() (bool, error) {
 		typedSum = int64(sum)
 	}
 	n.currentValue.Fields[n.virtualFieldIndex] = typedSum
-
-	return true, nil
+	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
 
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
