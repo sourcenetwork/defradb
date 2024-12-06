@@ -465,10 +465,11 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 
 		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
