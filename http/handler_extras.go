@@ -22,7 +22,6 @@ import (
 type extrasHandler struct{}
 
 func (s *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
-
 	db := mustGetContextClientDB(req)
 
 	// Send either 200 or 400 response based on whether the server is in dev mode
