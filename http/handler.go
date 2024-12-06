@@ -12,6 +12,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -20,6 +21,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 )
+
+// Global variable for the development mode flag
+var IsDevMode bool = false
 
 // Version is the identifier for the current API version.
 var Version string = "v0"
@@ -70,6 +74,13 @@ type Handler struct {
 	txs *sync.Map
 }
 
+// Helper function for exposing the development mode flag
+func responseHTML(w http.ResponseWriter, status int, html string) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	w.Write([]byte(html))
+}
+
 func NewHandler(db client.DB) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
@@ -88,6 +99,12 @@ func NewHandler(db client.DB) (*Handler, error) {
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
+
+	// Expose whether or not the server is running in development mode
+	mux.Get("/devmode/", func(rw http.ResponseWriter, req *http.Request) {
+		responseHTML(rw, http.StatusOK, fmt.Sprintf("%v", IsDevMode))
+	})
+
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
 		db:  db,
