@@ -26,10 +26,13 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 
 		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used (only for update requests),
+				// so test that separately.
+				testUtils.GQLRequestMutationType,
+			},
+		),
 
 		Actions: []any{
 			testUtils.AddPolicy{

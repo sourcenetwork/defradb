@@ -26,10 +26,12 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 
 		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{

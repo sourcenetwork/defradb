@@ -119,11 +119,9 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 	}
 }
 
-// This test documents the behavior of aggregate alias targeting which is not yet implemented.
-// https://github.com/sourcenetwork/defradb/issues/3195
-func TestQueryOneToMany_WithCountAliasFilter_ShouldFilterAll(t *testing.T) {
+func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count",
+		Description: "One-to-many relation query from many side with count alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -173,7 +171,16 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldFilterAll(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"Author": []map[string]any{},
+					"Author": []map[string]any{
+						{
+							"name":           "Cornelia Funke",
+							"publishedCount": 1,
+						},
+						{
+							"name":           "John Grisham",
+							"publishedCount": 2,
+						},
+					},
 				},
 			},
 		},
