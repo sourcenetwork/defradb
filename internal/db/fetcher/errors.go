@@ -96,6 +96,11 @@ func NewErrFailedToGetDagNode(inner error) error {
 	return errors.Wrap(errFailedToGetDagNode, inner)
 }
 
+// NewErrInvalidInOperatorValue returns an error indicating that the given value is invalid for the _in/_nin operator.
+func NewErrInvalidInOperatorValue(inner error) error {
+	return errors.Wrap(errInvalidInOperatorValue, inner)
+}
+
 // NewErrInvalidFilterOperator returns an error indicating that the given filter operator is invalid.
 func NewErrInvalidFilterOperator(operator string) error {
 	return errors.New(errInvalidFilterOperator, errors.NewKV("Operator", operator))

@@ -888,7 +888,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestJSONIndex_WithNotNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
+func TestJSONIndex_WithNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {title: {_ne: null}}}) {
 			name
@@ -1008,6 +1008,242 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithInFilter_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {height: {_in: [168, 180]}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"height": 168, "weight": 70}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"height": 180, "weight": 80}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"height": 172, "weight": 75}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Keenan",
+					"custom": {"height": 190, "weight": 85}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"custom": {"height": 180, "weight": 70}
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Islam"},
+						{"name": "Fred"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithInFilterOfDifferentTypes_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {height: {_in: [168, 180, "172 cm"]}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"height": 180, "weight": 80}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"height": 172, "weight": 75}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Keenan",
+					"custom": {"height": 190, "weight": 85}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"custom": {"height": "172 cm", "weight": 70}
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Fred"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithNinFilter_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {height: {_nin: [168, 180]}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"height": 168, "weight": 70}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"height": 180, "weight": 80}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"height": 172, "weight": 75}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Keenan",
+					"custom": {"height": 190, "weight": 85}
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Keenan"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithNotAndInFilter_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {_not: {custom: {height: {_in: [168, 180]}}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"height": 168, "weight": 70}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"height": 180, "weight": 80}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"height": 172, "weight": 75}
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Keenan",
+					"custom": {"height": 190, "weight": 85}
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "Keenan"},
+					},
+				},
+			},
+			// we don't assert index usage here because the query is not using the index
 		},
 	}
 

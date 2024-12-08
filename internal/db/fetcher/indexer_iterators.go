@@ -406,12 +406,9 @@ func (f *IndexFetcher) newInIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*inIndexIterator, error) {
-	if !fieldConditions[0].val.IsArray() {
-		return nil, ErrInvalidInOperatorValue
-	}
 	inValues, err := client.ToArrayOfNormalValues(fieldConditions[0].val)
 	if err != nil {
-		return nil, err
+		return nil, NewErrInvalidInOperatorValue(err)
 	}
 
 	// iterators for _in filter already iterate over keys with first field value
