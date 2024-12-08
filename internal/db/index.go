@@ -799,7 +799,7 @@ func (index *collectionJSONBaseIndex) traverseJSONNodes(
 			leafKey.Fields[jsonFieldIndex].Value = val
 
 			return f(leafKey)
-		}, client.TraverseJSONOnlyLeaves())
+		}, client.TraverseJSONOnlyLeaves(), client.TraverseJSONVisitArrayElements())
 
 		if err != nil {
 			return err

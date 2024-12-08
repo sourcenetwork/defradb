@@ -530,9 +530,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 
 	if hasJSON {
 		iter = &jsonIndexIterator{inner: iter, jsonPath: fieldConditions[0].jsonPath}
-	}
-
-	if hasArray {
+	} else if hasArray {
 		iter = &arrayIndexIterator{inner: iter}
 	}
 
@@ -595,7 +593,20 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 				var err error
 				if len(jsonPath) > 0 {
-					jsonVal, err := client.NewJSONWithPath(filterVal, jsonPath)
+					var jsonVal client.JSON
+					if cond.op == compOpAny || cond.op == compOpAll || cond.op == compOpNone {
+						subCondMap := filterVal.(map[connor.FilterKey]any)
+						for subKey, subVal := range subCondMap {
+							// TODO: check what happens with _any: {_eq: [1, 2]}
+							cond.arrOp = cond.op
+							cond.op = subKey.(*mapper.Operator).Operation
+							jsonVal, err = client.NewJSONWithPath(subVal, jsonPath)
+							// the sub condition is supposed to have only 1 record
+							break
+						}
+					} else {
+						jsonVal, err = client.NewJSONWithPath(filterVal, jsonPath)
+					}
 					if err == nil {
 						cond.val = client.NewNormalJSON(jsonVal)
 					}
@@ -606,8 +617,8 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 				} else {
 					subCondMap := filterVal.(map[connor.FilterKey]any)
 					for subKey, subVal := range subCondMap {
-						arrKind := cond.kind.(client.ScalarArrayKind)
 						if subVal == nil {
+							arrKind := cond.kind.(client.ScalarArrayKind)
 							cond.val, err = client.NewNormalNil(arrKind.SubKind())
 						} else {
 							cond.val, err = client.NewNormalValue(subVal)
