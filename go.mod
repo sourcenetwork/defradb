@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.7
 
 require (
-	github.com/bits-and-blooms/bitset v1.17.0
+	github.com/bits-and-blooms/bitset v1.18.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/cosmos/cosmos-sdk v0.50.10
 	github.com/cosmos/gogoproto v1.7.0
