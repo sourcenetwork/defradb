@@ -21,6 +21,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// Global variable for the development mode flag
+// This is checked by the http/handler_extras.go/Purge function to determine which response to send
+var IsDevMode bool = false
+
 // Version is the identifier for the current API version.
 var Version string = "v0"
 

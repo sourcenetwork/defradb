@@ -135,6 +135,7 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			isDevMode := cfg.GetBool("development")
+			http.IsDevMode = isDevMode
 			if isDevMode {
 				cmd.Printf(devModeBanner)
 				if cfg.GetBool("keyring.disabled") {
