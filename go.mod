@@ -44,7 +44,7 @@ require (
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/errors v0.9.1
-	github.com/sourcenetwork/acp_core v0.0.0-20240607160510-47a5306b2ad2
+	github.com/sourcenetwork/acp_core v0.3.0
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
@@ -329,8 +329,8 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234 // indirect
-	github.com/sourcenetwork/zanzi v0.3.1-0.20240606201400-df5f801d0bd4 // indirect
+	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
+	github.com/sourcenetwork/zanzi v0.3.1-0.20240814180502-4f29069b6164 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
