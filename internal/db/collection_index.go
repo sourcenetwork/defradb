@@ -35,7 +35,7 @@ import (
 func (db *db) createCollectionIndex(
 	ctx context.Context,
 	collectionName string,
-	desc client.IndexDescription,
+	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
 	col, err := db.getCollectionByName(ctx, collectionName)
 	if err != nil {
@@ -218,7 +218,7 @@ func (c *collection) deleteIndexedDocWithID(
 // the documents will be indexed by the new index.
 func (c *collection) CreateIndex(
 	ctx context.Context,
-	desc client.IndexDescription,
+	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -235,7 +235,7 @@ func (c *collection) CreateIndex(
 
 func (c *collection) createIndex(
 	ctx context.Context,
-	desc client.IndexDescription,
+	desc client.IndexDescriptionCreateRequest,
 ) (CollectionIndex, error) {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return nil, schema.NewErrIndexWithInvalidName("!")
@@ -266,9 +266,15 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	desc.ID = uint32(colID)
 
-	buf, err := json.Marshal(desc)
+	descWithID := client.IndexDescription{
+		Name:   desc.Name,
+		ID:     uint32(colID),
+		Fields: desc.Fields,
+		Unique: desc.Unique,
+	}
+
+	buf, err := json.Marshal(descWithID)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +284,7 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	colIndex, err := NewCollectionIndex(c, desc)
+	colIndex, err := NewCollectionIndex(c, descWithID)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +497,7 @@ func (c *collection) checkExistingFieldsAndAdjustRelFieldNames(
 
 func (c *collection) generateIndexNameIfNeededAndCreateKey(
 	ctx context.Context,
-	desc *client.IndexDescription,
+	desc *client.IndexDescriptionCreateRequest,
 ) (keys.CollectionIndexKey, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
@@ -524,10 +530,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 	return indexKey, nil
 }
 
-func validateIndexDescription(desc client.IndexDescription) error {
-	if desc.ID != 0 {
-		return NewErrNonZeroIndexIDProvided(desc.ID)
-	}
+func validateIndexDescription(desc client.IndexDescriptionCreateRequest) error {
 	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields
 	}

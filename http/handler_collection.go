@@ -259,7 +259,12 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	index, err := col.CreateIndex(req.Context(), indexDesc)
+	descWithoutID := client.IndexDescriptionCreateRequest{
+		Name:   indexDesc.Name,
+		Fields: indexDesc.Fields,
+		Unique: indexDesc.Unique,
+	}
+	index, err := col.CreateIndex(req.Context(), descWithoutID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -317,6 +322,9 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	}
 	indexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/index",
+	}
+	indexCreateRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index_create_request",
 	}
 
 	collectionNamePathParam := openapi3.NewPathParameter("name").
@@ -389,7 +397,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	createIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(indexSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(indexCreateRequestSchema))
 	createIndexResponse := openapi3.NewResponse().
 		WithDescription("Index description").
 		WithJSONSchemaRef(indexSchema)

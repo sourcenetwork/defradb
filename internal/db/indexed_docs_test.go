@@ -284,8 +284,13 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 		f.users = f.addUsersCollection()
 	}
 	desc := getUsersIndexDescOnName()
-	desc.ID = 1
-	indexOnNameDescData, err := json.Marshal(desc)
+	descWithID := client.IndexDescription{
+		Name:   desc.Name,
+		ID:     1,
+		Fields: desc.Fields,
+		Unique: desc.Unique,
+	}
+	indexOnNameDescData, err := json.Marshal(descWithID)
 	require.NoError(f.t, err)
 
 	colIndexKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), "")
@@ -1513,13 +1518,12 @@ func TestArrayIndex_With2ArrayFieldsIfDocIsDeleted_ShouldRemoveIndex(t *testing.
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexDesc := client.IndexDescription{
+	indexDesc := client.IndexDescriptionCreateRequest{
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},
 			{Name: usersHobbiesFieldName},
 		},
 	}
-
 	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
 	require.NoError(f.t, err)
 
@@ -1541,7 +1545,7 @@ func TestArrayIndex_With2ArrayFieldsIfDocIsDeletedButOneArrayElementHasNoIndexRe
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexDesc := client.IndexDescription{
+	indexDesc := client.IndexDescriptionCreateRequest{
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},
 			{Name: usersHobbiesFieldName},
@@ -1572,7 +1576,7 @@ func TestArrayIndex_WithUniqueIndexIfDocIsDeleted_ShouldRemoveIndex(t *testing.T
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexDesc := client.IndexDescription{
+	indexDesc := client.IndexDescriptionCreateRequest{
 		Unique: true,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},
