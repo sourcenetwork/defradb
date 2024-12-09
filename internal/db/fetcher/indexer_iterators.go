@@ -254,9 +254,9 @@ func (iter *inIndexIterator) Close() error {
 	return nil
 }
 
-// arrayIndexIterator is an iterator indexed array elements.
+// memorizingIndexIterator is an iterator for set of indexes that belong to the same document
 // It keeps track of the already fetched documents to avoid duplicates.
-type arrayIndexIterator struct {
+type memorizingIndexIterator struct {
 	inner indexIterator
 
 	fetchedDocs map[string]struct{}
@@ -265,16 +265,16 @@ type arrayIndexIterator struct {
 	store datastore.DSReaderWriter
 }
 
-var _ indexIterator = (*arrayIndexIterator)(nil)
+var _ indexIterator = (*memorizingIndexIterator)(nil)
 
-func (iter *arrayIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	iter.fetchedDocs = make(map[string]struct{})
 	return iter.inner.Init(ctx, store)
 }
 
-func (iter *arrayIndexIterator) Next() (indexIterResult, error) {
+func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 	for {
 		res, err := iter.inner.Next()
 		if err != nil {
@@ -302,58 +302,7 @@ func (iter *arrayIndexIterator) Next() (indexIterResult, error) {
 	}
 }
 
-func (iter *arrayIndexIterator) Close() error {
-	return iter.inner.Close()
-}
-
-type jsonIndexIterator struct {
-	inner indexIterator
-
-	fetchedDocs map[string]struct{}
-	jsonPath    []string
-
-	ctx   context.Context
-	store datastore.DSReaderWriter
-}
-
-var _ indexIterator = (*jsonIndexIterator)(nil)
-
-func (iter *jsonIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	iter.ctx = ctx
-	iter.store = store
-	iter.fetchedDocs = make(map[string]struct{})
-	return iter.inner.Init(ctx, store)
-}
-
-func (iter *jsonIndexIterator) Next() (indexIterResult, error) {
-	for {
-		res, err := iter.inner.Next()
-		if err != nil {
-			return indexIterResult{}, err
-		}
-		if !res.foundKey {
-			return res, nil
-		}
-		var docID string
-		if len(res.value) > 0 {
-			docID = string(res.value)
-		} else {
-			lastField := &res.key.Fields[len(res.key.Fields)-1]
-			var ok bool
-			docID, ok = lastField.Value.String()
-			if !ok {
-				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
-			}
-		}
-		if _, ok := iter.fetchedDocs[docID]; ok {
-			continue
-		}
-		iter.fetchedDocs[docID] = struct{}{}
-		return res, nil
-	}
-}
-
-func (iter *jsonIndexIterator) Close() error {
+func (iter *memorizingIndexIterator) Close() error {
 	return iter.inner.Close()
 }
 
@@ -366,9 +315,16 @@ func (f *IndexFetcher) newPrefixIteratorFromConditions(
 	keyFieldValues := make([]client.NormalValue, 0, len(fieldConditions))
 	for i := range fieldConditions {
 		c := &fieldConditions[i]
+		// prefix can be created only for subsequent _eq conditions. So we build the longest possible
+		// prefix until we hit a condition that is not _eq.
+		// The exception is when _eq is nested in _none.
 		if c.op != opEq || c.arrOp == compOpNone {
-			// prefix can be created only for subsequent _eq conditions
-			// if we encounter any other condition, we built the longest prefix we could
+			// if the field where we interrupt building of prefix is JSON, we still want to make sure
+			// that the JSON path is included in the key
+			if len(c.jsonPath) > 0 {
+				jsonVal, _ := fieldConditions[i].val.JSON()
+				keyFieldValues = append(keyFieldValues, client.NewNormalJSON(client.MakeVoidJSON(jsonVal.GetPath())))
+			}
 			break
 		}
 
@@ -525,10 +481,8 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 	}
 
-	if hasJSON {
-		iter = &jsonIndexIterator{inner: iter, jsonPath: fieldConditions[0].jsonPath}
-	} else if hasArray {
-		iter = &arrayIndexIterator{inner: iter}
+	if hasJSON || hasArray {
+		iter = &memorizingIndexIterator{inner: iter}
 	}
 
 	return iter, nil

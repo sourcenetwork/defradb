@@ -172,7 +172,10 @@ func (scan *scanNode) initFetcher(
 				fd, _ := scan.col.Definition().Schema.GetFieldByName(fieldName)
 				// if the field is an array, we need to copy it instead of moving so that the
 				// top select node can do final filter check on the whole array of the document
-				if fd.Kind.IsArray() {
+				// because indexes can not assert conditions like _any, _all, _none
+				// TODO: we don't have to do this for all json fields, only for those that filter
+				// on it's array fields. We should be able to optimize this.
+				if fd.Kind.IsArray() || fd.Kind == client.FieldKind_NILLABLE_JSON {
 					fieldsToCopy = append(fieldsToCopy, indexField)
 				} else {
 					fieldsToMove = append(fieldsToMove, indexField)
