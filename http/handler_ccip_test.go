@@ -67,7 +67,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	resHex, err := hex.DecodeString(strings.TrimPrefix(ccipRes.Data, "0x"))
 	require.NoError(t, err)
 
-	assert.JSONEq(t, `{"data": {"User": [{"name": "bob"}]}}`, string(resHex))
+	assert.JSONEq(t, `{"data": {"User": [{"name": "bob"}, {"name": "adam"}]}}`, string(resHex))
 }
 
 func TestCCIPGet_WithSubscription(t *testing.T) {
@@ -153,7 +153,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	resHex, err := hex.DecodeString(strings.TrimPrefix(ccipRes.Data, "0x"))
 	require.NoError(t, err)
 
-	assert.JSONEq(t, `{"data": {"User": [{"name": "bob"}]}}`, string(resHex))
+	assert.JSONEq(t, `{"data": {"User": [{"name": "bob"}, {"name": "adam"}]}}`, string(resHex))
 }
 
 func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {
@@ -208,6 +208,12 @@ func setupDatabase(t *testing.T) client.DB {
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
+	require.NoError(t, err)
+
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "adam"}`), col.Definition())
+	require.NoError(t, err)
+
+	err = col.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	return cdb

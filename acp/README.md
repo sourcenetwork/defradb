@@ -631,7 +631,8 @@ Result:
 Error: document not found or not authorized to access
 ```
 
-Sometimes we might want to give a specific access (form a relationship) not just to one identity, but any identity.
+Sometimes we might want to give a specific access (i.e. form a relationship) not just with one identity, but with
+any identity (includes even requests with no-identity).
 In that case we can specify "*" instead of specifying an explicit `actor`:
 ```sh
 defradb client acp relationship add \
