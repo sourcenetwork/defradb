@@ -57,3 +57,62 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple JSON array, filtered none of string array",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					name: String
+					custom: JSON
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": [1, false, "second", {"one": 1}, [1, 2]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"custom": [null, false, "second", {"one": 1}, [1, 2]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": [false, "second", {"one": 1}, [1, [2, null]]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": null
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_none: {_eq: null}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

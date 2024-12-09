@@ -37,13 +37,15 @@ func all(condition, data any) (bool, error) {
 		return allSlice(condition, t)
 
 	default:
-		return false, nil
+		// if none of the above array types match, we check the scalar value itself
+		return eq(condition, data)
 	}
 }
 
 func allSlice[T any](condition any, data []T) (bool, error) {
 	for _, c := range data {
-		m, err := eq(condition, c)
+		// recurse further in case of nested arrays
+		m, err := all(condition, c)
 		if err != nil {
 			return false, err
 		} else if !m {

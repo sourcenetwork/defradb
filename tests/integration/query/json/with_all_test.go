@@ -40,6 +40,12 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
+					"name": "Fred",
+					"custom": [false, "second", {"one": 1}, [1, [2, null]]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"name": "Islam",
 					"custom": null
 				}`,
@@ -70,9 +76,70 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name": "Shahzad",
-						},
+						{"name": "John"},
+						{"name": "Shahzad"},
+						{"name": "Keenan"},
+						{"name": "Andy"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryJSON_WithAllFilterAndNestedArray_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple JSON array, filtered all of all types array",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					name: String
+					custom: JSON
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": [1]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"custom": [1, 2, 1] 
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": [1, [1, [1]]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Keenan",
+					"custom": 1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": [1, "1"]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_all: {_eq: 1}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Shahzad"},
+						{"name": "Keenan"},
 					},
 				},
 			},

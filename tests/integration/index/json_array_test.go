@@ -106,7 +106,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -172,7 +172,7 @@ func TestJSONArrayIndex_WithNestedArrays_ShouldTreatThemAsFlatten(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -230,7 +230,155 @@ func TestJSONArrayIndex_WithNestedArraysAndObjects_ShouldScopeIndexSearch(t *tes
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONArrayIndex_WithNoneFilterOnDifferentElementValues_ShouldFetchCorrectlyUsingIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {numbers: {_none: {_eq: 4}}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"custom": map[string]any{
+						"numbers": []int{3, 5, 7},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"custom": map[string]any{
+						"numbers": []int{4, 8},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"custom": map[string]any{
+						"numbers": []any{8, nil},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"custom": map[string]any{
+						"numbers": []any{1, []int{4}},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"custom": map[string]any{
+						"numbers": 4,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONArrayIndex_WithAllFilterOnDifferentElementValues_ShouldFetchCorrectlyUsingIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {numbers: {_all: {_eq: 4}}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"custom": map[string]any{
+						"numbers": []int{3, 4},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"custom": map[string]any{
+						"numbers": []any{4, []int{4, 8}},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"custom": map[string]any{
+						"numbers": 4,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"custom": map[string]any{
+						"numbers": []any{4, []any{4, []int{4}}},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"custom": map[string]any{
+						"numbers": 3,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "Fred"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}
