@@ -91,7 +91,12 @@ func (db *db) createCollections(
 		col := db.newCollection(desc, def.Schema)
 
 		for _, index := range desc.Indexes {
-			if _, err := col.createIndex(ctx, index); err != nil {
+			descWithoutID := client.IndexDescriptionCreateRequest{
+				Name:   index.Name,
+				Fields: index.Fields,
+				Unique: index.Unique,
+			}
+			if _, err := col.createIndex(ctx, descWithoutID); err != nil {
 				return nil, err
 			}
 		}
