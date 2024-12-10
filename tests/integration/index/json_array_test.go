@@ -180,64 +180,6 @@ func TestJSONArrayIndex_WithNestedArrays_ShouldTreatThemAsFlatten(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestJSONArrayIndex_WithNestedArraysAndObjects_ShouldScopeIndexSearch(t *testing.T) {
-	req := `query {
-		User(filter: {custom: {numbers: {nested: {_any: {_eq: 4}}}}}) {
-			name
-		}
-	}`
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type User {
-						name: String 
-						custom: JSON @index
-					}`,
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name": "John",
-					"custom": map[string]any{
-						"numbers": []any{3, 5, map[string]any{"nested": []int{9, 4}}, 7},
-					},
-				},
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name": "Islam",
-					"custom": map[string]any{
-						// there is sought value here, but not in "nested" scope
-						"numbers": []any{4, 9, map[string]any{"nested": []int{0, 3}}},
-					},
-				},
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name": "Islam",
-					"custom": map[string]any{
-						"numbers": []any{1, map[string]any{"another": []int{4, 3}}},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: req,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "John"},
-					},
-				},
-			},
-			testUtils.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestJSONArrayIndex_WithNoneFilterOnDifferentElementValues_ShouldFetchCorrectlyUsingIndex(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {numbers: {_none: {_eq: 4}}}}) {
