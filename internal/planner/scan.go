@@ -175,6 +175,7 @@ func (scan *scanNode) initFetcher(
 				// because indexes can not assert conditions like _any, _all, _none
 				// TODO: we don't have to do this for all json fields, only for those that filter
 				// on it's array fields. We should be able to optimize this.
+				// https://github.com/sourcenetwork/defradb/issues/3306
 				if fd.Kind.IsArray() || fd.Kind == client.FieldKind_NILLABLE_JSON {
 					fieldsToCopy = append(fieldsToCopy, indexField)
 				} else {

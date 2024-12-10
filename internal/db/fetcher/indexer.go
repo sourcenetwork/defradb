@@ -12,6 +12,7 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -197,7 +198,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			}
 			encDoc, execInfo, err := f.docFetcher.FetchNext(ctx)
 			if err != nil {
-				return nil, ExecInfo{}, err
+				return nil, ExecInfo{}, errors.Join(err, f.docFetcher.Close())
 			}
 			err = f.docFetcher.Close()
 			if err != nil {
