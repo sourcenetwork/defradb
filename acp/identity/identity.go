@@ -65,19 +65,6 @@ func FromPrivateKey(privateKey *secp256k1.PrivateKey) (Identity, error) {
 	}, nil
 }
 
-// FromPublicRawIdentity returns a new raw identity using the given public raw identity.
-func FromPublicRawIdentity(rawIdentity PublicRawIdentity) (Identity, error) {
-	publicKey, err := secp256k1.ParsePubKey([]byte(rawIdentity.PublicKey))
-	if err != nil {
-		return Identity{}, err
-	}
-
-	return Identity{
-		DID:       rawIdentity.DID,
-		PublicKey: publicKey,
-	}, nil
-}
-
 // FromToken constructs a new `Identity` from a bearer token.
 func FromToken(data []byte) (Identity, error) {
 	token, err := jwt.Parse(data, jwt.WithVerify(false))
