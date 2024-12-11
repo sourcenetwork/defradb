@@ -217,7 +217,7 @@ func encodedDocToLensDoc(doc fetcher.EncodedDocument) (LensDoc, error) {
 func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDocument, error) {
 	var key string
 	status := client.Active
-	properties := map[client.FieldDefinition]any{}
+	properties := map[client.FieldDefinitionKey]any{}
 
 	for fieldName, fieldByteValue := range docAsMap {
 		if fieldName == request.DocIDFieldName {
@@ -246,7 +246,7 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 			return nil, err
 		}
 
-		properties[fieldDesc] = fieldValue
+		properties[fieldDesc.Key()] = fieldValue
 	}
 
 	return &lensEncodedDocument{
@@ -334,7 +334,7 @@ type lensEncodedDocument struct {
 	key             []byte
 	schemaVersionID string
 	status          client.DocumentStatus
-	properties      map[client.FieldDefinition]any
+	properties      map[client.FieldDefinitionKey]any
 }
 
 var _ fetcher.EncodedDocument = (*lensEncodedDocument)(nil)
@@ -351,7 +351,7 @@ func (encdoc *lensEncodedDocument) Status() client.DocumentStatus {
 	return encdoc.status
 }
 
-func (encdoc *lensEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
+func (encdoc *lensEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinitionKey]any, error) {
 	return encdoc.properties, nil
 }
 
@@ -359,5 +359,5 @@ func (encdoc *lensEncodedDocument) Reset() {
 	encdoc.key = nil
 	encdoc.schemaVersionID = ""
 	encdoc.status = 0
-	encdoc.properties = map[client.FieldDefinition]any{}
+	encdoc.properties = map[client.FieldDefinitionKey]any{}
 }

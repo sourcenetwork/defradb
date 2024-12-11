@@ -175,7 +175,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			}
 			property.Raw = fieldBytes
 
-			f.doc.properties[indexedField] = property
+			f.doc.properties[indexedField.Key()] = property
 		}
 
 		if f.indexDesc.Unique && !hasNilField {

@@ -554,7 +554,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 
 	df.execInfo.FieldsFetched++
 
-	df.doc.properties[fieldDesc] = property
+	df.doc.properties[fieldDesc.Key()] = property
 
 	return nil
 }
