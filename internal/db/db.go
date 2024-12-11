@@ -104,7 +104,7 @@ func NewDB(
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
-) (client.DB, error) {
+) (*db, error) {
 	return newDB(ctx, rootstore, acp, lens, options...)
 }
 
@@ -339,11 +339,18 @@ func (db *db) DeleteDocActorRelationship(
 	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
-func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (db *db) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
 		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
 	}
 	return immutable.None[identity.PublicRawIdentity](), nil
+}
+
+func (db *db) GetIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
+	if db.nodeIdentity.HasValue() {
+		return db.nodeIdentity.Value().NewToken(time.Hour*24, audience, immutable.None[string]())
+	}
+	return nil, nil
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
