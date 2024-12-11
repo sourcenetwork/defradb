@@ -124,136 +124,146 @@ func (n *minNode) Explain(explainType request.ExplainType) (map[string]any, erro
 }
 
 func (n *minNode) Next() (bool, error) {
-	n.execInfo.iterations++
+	for {
+		n.execInfo.iterations++
 
-	hasNext, err := n.plan.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
-	}
-	n.currentValue = n.plan.Value()
-
-	var min *big.Float
-	isFloat := false
-
-	for _, source := range n.aggregateMapping {
-		child := n.currentValue.Fields[source.Index]
-		var collectionMin *big.Float
-		var err error
-		switch childCollection := child.(type) {
-		case []core.Doc:
-			collectionMin = reduceDocs(
-				childCollection,
-				nil,
-				func(childItem core.Doc, value *big.Float) *big.Float {
-					childProperty := childItem.Fields[source.ChildTarget.Index]
-					res := &big.Float{}
-					switch v := childProperty.(type) {
-					case int:
-						res = res.SetInt64(int64(v))
-					case int64:
-						res = res.SetInt64(v)
-					case uint64:
-						res = res.SetUint64(v)
-					case float64:
-						res = res.SetFloat64(v)
-					default:
-						return nil
-					}
-					if value == nil || res.Cmp(value) < 0 {
-						return res
-					}
-					return value
-				},
-			)
-
-		case []int64:
-			collectionMin, err = reduceItems(
-				childCollection,
-				&source,
-				lessN[int64],
-				nil,
-				func(childItem int64, value *big.Float) *big.Float {
-					res := (&big.Float{}).SetInt64(childItem)
-					if value == nil || res.Cmp(value) < 0 {
-						return res
-					}
-					return value
-				},
-			)
-
-		case []immutable.Option[int64]:
-			collectionMin, err = reduceItems(
-				childCollection,
-				&source,
-				lessO[int64],
-				nil,
-				func(childItem immutable.Option[int64], value *big.Float) *big.Float {
-					if !childItem.HasValue() {
-						return value
-					}
-					res := (&big.Float{}).SetInt64(childItem.Value())
-					if value == nil || res.Cmp(value) < 0 {
-						return res
-					}
-					return value
-				},
-			)
-
-		case []float64:
-			collectionMin, err = reduceItems(
-				childCollection,
-				&source,
-				lessN[float64],
-				nil,
-				func(childItem float64, value *big.Float) *big.Float {
-					res := big.NewFloat(childItem)
-					if value == nil || res.Cmp(value) < 0 {
-						return res
-					}
-					return value
-				},
-			)
-
-		case []immutable.Option[float64]:
-			collectionMin, err = reduceItems(
-				childCollection,
-				&source,
-				lessO[float64],
-				nil,
-				func(childItem immutable.Option[float64], value *big.Float) *big.Float {
-					if !childItem.HasValue() {
-						return value
-					}
-					res := big.NewFloat(childItem.Value())
-					if value == nil || res.Cmp(value) < 0 {
-						return res
-					}
-					return value
-				},
-			)
+		hasNext, err := n.plan.Next()
+		if err != nil || !hasNext {
+			return hasNext, err
 		}
+		n.currentValue = n.plan.Value()
+
+		var min *big.Float
+		isFloat := false
+
+		for _, source := range n.aggregateMapping {
+			child := n.currentValue.Fields[source.Index]
+			var collectionMin *big.Float
+			var err error
+			switch childCollection := child.(type) {
+			case []core.Doc:
+				collectionMin = reduceDocs(
+					childCollection,
+					nil,
+					func(childItem core.Doc, value *big.Float) *big.Float {
+						childProperty := childItem.Fields[source.ChildTarget.Index]
+						res := &big.Float{}
+						switch v := childProperty.(type) {
+						case int:
+							res = res.SetInt64(int64(v))
+						case int64:
+							res = res.SetInt64(v)
+						case uint64:
+							res = res.SetUint64(v)
+						case float64:
+							res = res.SetFloat64(v)
+						default:
+							return nil
+						}
+						if value == nil || res.Cmp(value) < 0 {
+							return res
+						}
+						return value
+					},
+				)
+
+			case []int64:
+				collectionMin, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[int64],
+					nil,
+					func(childItem int64, value *big.Float) *big.Float {
+						res := (&big.Float{}).SetInt64(childItem)
+						if value == nil || res.Cmp(value) < 0 {
+							return res
+						}
+						return value
+					},
+				)
+
+			case []immutable.Option[int64]:
+				collectionMin, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[int64],
+					nil,
+					func(childItem immutable.Option[int64], value *big.Float) *big.Float {
+						if !childItem.HasValue() {
+							return value
+						}
+						res := (&big.Float{}).SetInt64(childItem.Value())
+						if value == nil || res.Cmp(value) < 0 {
+							return res
+						}
+						return value
+					},
+				)
+
+			case []float64:
+				collectionMin, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[float64],
+					nil,
+					func(childItem float64, value *big.Float) *big.Float {
+						res := big.NewFloat(childItem)
+						if value == nil || res.Cmp(value) < 0 {
+							return res
+						}
+						return value
+					},
+				)
+
+			case []immutable.Option[float64]:
+				collectionMin, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[float64],
+					nil,
+					func(childItem immutable.Option[float64], value *big.Float) *big.Float {
+						if !childItem.HasValue() {
+							return value
+						}
+						res := big.NewFloat(childItem.Value())
+						if value == nil || res.Cmp(value) < 0 {
+							return res
+						}
+						return value
+					},
+				)
+			}
+			if err != nil {
+				return false, err
+			}
+			if collectionMin == nil || (min != nil && collectionMin.Cmp(min) >= 0) {
+				continue
+			}
+			isTargetFloat, err := n.p.isValueFloat(n.parent, &source)
+			if err != nil {
+				return false, err
+			}
+			isFloat = isTargetFloat
+			min = collectionMin
+		}
+
+		if min == nil {
+			n.currentValue.Fields[n.virtualFieldIndex] = nil
+		} else if isFloat {
+			res, _ := min.Float64()
+			n.currentValue.Fields[n.virtualFieldIndex] = res
+		} else {
+			res, _ := min.Int64()
+			n.currentValue.Fields[n.virtualFieldIndex] = res
+		}
+
+		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)
 		if err != nil {
 			return false, err
 		}
-		if collectionMin == nil || (min != nil && collectionMin.Cmp(min) >= 0) {
+		if !passes {
 			continue
 		}
-		isTargetFloat, err := n.p.isValueFloat(n.parent, &source)
-		if err != nil {
-			return false, err
-		}
-		isFloat = isTargetFloat
-		min = collectionMin
+		return true, nil
 	}
-
-	if min == nil {
-		n.currentValue.Fields[n.virtualFieldIndex] = nil
-	} else if isFloat {
-		res, _ := min.Float64()
-		n.currentValue.Fields[n.virtualFieldIndex] = res
-	} else {
-		res, _ := min.Int64()
-		n.currentValue.Fields[n.virtualFieldIndex] = res
-	}
-	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
