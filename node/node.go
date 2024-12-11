@@ -149,19 +149,27 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, n.acp, lens, n.dbOpts...)
+	coreDB, err := db.NewDB(ctx, rootstore, n.acp, lens, n.dbOpts...)
 	if err != nil {
 		return err
 	}
+	n.DB = coreDB
 
 	if !n.options.disableP2P {
 		// setup net node
-		n.Peer, err = net.NewPeer(ctx, n.DB.Blockstore(), n.DB.Encstore(), n.DB.Events(), n.netOpts...)
+		n.Peer, err = net.NewPeer(
+			ctx,
+			coreDB.Blockstore(),
+			coreDB.Encstore(),
+			coreDB.Events(),
+			NewNetACP(n.acp, coreDB),
+			n.netOpts...,
+		)
 		if err != nil {
 			return err
 		}
 
-		ident, err := n.DB.GetNodeIdentity(ctx)
+		ident, err := coreDB.GetNodeIdentity(ctx)
 		if err != nil {
 			return err
 		}
@@ -173,10 +181,10 @@ func (n *Node) Start(ctx context.Context) error {
 					ctx,
 					n.Peer.PeerID(),
 					n.Peer.Server(),
-					n.DB.Events(),
-					n.DB.Encstore(),
+					coreDB.Events(),
+					coreDB.Encstore(),
 					n.acp,
-					db.NewCollectionRetriever(n.DB),
+					db.NewCollectionRetriever(coreDB),
 					ident.Value().DID,
 				)
 			}
@@ -188,7 +196,7 @@ func (n *Node) Start(ctx context.Context) error {
 
 	if !n.options.disableAPI {
 		// setup http server
-		handler, err := http.NewHandler(n.DB)
+		handler, err := http.NewHandler(coreDB)
 		if err != nil {
 			return err
 		}

@@ -24,6 +24,7 @@ const (
 	serviceGetLogName       = "/" + grpcServiceName + "/GetLog"
 	servicePushLogName      = "/" + grpcServiceName + "/PushLog"
 	serviceGetHeadLogName   = "/" + grpcServiceName + "/GetHeadLog"
+	serviceGetIdentityName  = "/" + grpcServiceName + "/GetIdentity"
 )
 
 type getDocGraphRequest struct{}
@@ -52,6 +53,17 @@ type pushLogRequest struct {
 
 type pushLogReply struct{}
 
+type getIdentityRequest struct {
+	// PeerID is the ID of the requesting peer.
+	// It will be used as the audience for the identity token.
+	PeerID string
+}
+
+type getIdentityReply struct {
+	// IdentityToken is the token that can be used to authenticate the peer.
+	IdentityToken []byte
+}
+
 type serviceServer interface {
 	// GetDocGraph from this peer.
 	GetDocGraph(context.Context, *getDocGraphRequest) (*getDocGraphReply, error)
@@ -63,6 +75,30 @@ type serviceServer interface {
 	PushLog(context.Context, *pushLogRequest) (*pushLogReply, error)
 	// GetHeadLog from this peer
 	GetHeadLog(context.Context, *getHeadLogRequest) (*getHeadLogReply, error)
+	GetIdentity(context.Context, *getIdentityRequest) (*getIdentityReply, error)
+}
+
+func getIdentityHandler(
+	srv any,
+	ctx context.Context,
+	dec func(any) error,
+	interceptor grpc.UnaryServerInterceptor,
+) (any, error) {
+	in := new(getIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(serviceServer).GetIdentity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: serviceGetIdentityName,
+	}
+	handler := func(ctx context.Context, req any) (any, error) {
+		return srv.(serviceServer).GetIdentity(ctx, req.(*getIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func pushLogHandler(
@@ -96,6 +132,10 @@ func registerServiceServer(s grpc.ServiceRegistrar, srv serviceServer) {
 			{
 				MethodName: "PushLog",
 				Handler:    pushLogHandler,
+			},
+			{
+				MethodName: "GetIdentity",
+				Handler:    getIdentityHandler,
 			},
 		},
 		Streams:  []grpc.StreamDesc{},

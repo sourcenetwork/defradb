@@ -104,26 +104,31 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
-
 				TargetNodeID: 0,
 			},
 
 			testUtils.SubscribeToCollection{
-				NodeID: 1,
-
+				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			testUtils.CreateDoc{
-				Identity: testUtils.ClientIdentity(1),
-
-				NodeID: immutable.Some(0),
-
+				Identity:     testUtils.ClientIdentity(1),
+				NodeID:       immutable.Some(0),
 				CollectionID: 0,
-
 				DocMap: map[string]any{
 					"name": "Shahzad",
 				},
+			},
+
+			testUtils.AddDocActorRelationship{
+				NodeID:            immutable.Some(0),
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.NodeIdentity(1),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
+				ExpectedExistence: false,
 			},
 
 			testUtils.WaitForSync{},
@@ -131,7 +136,6 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.Request{
 				// Ensure that the document is hidden on all nodes to an unauthorized actor
 				Identity: testUtils.ClientIdentity(2),
-
 				Request: `
 					query {
 						Users {
@@ -139,48 +143,34 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 						}
 					}
 				`,
-
 				Results: map[string]any{
 					"Users": []map[string]any{},
 				},
 			},
 
 			testUtils.AddDocActorRelationship{
-				NodeID: immutable.Some(0),
-
+				NodeID:            immutable.Some(0),
 				RequestorIdentity: testUtils.ClientIdentity(1),
-
-				TargetIdentity: testUtils.ClientIdentity(2),
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
 				ExpectedExistence: false,
 			},
 
 			testUtils.AddDocActorRelationship{
-				NodeID: immutable.Some(1), // Note: Different node than the previous
-
+				NodeID:            immutable.Some(1), // Note: Different node than the previous
 				RequestorIdentity: testUtils.ClientIdentity(1),
-
-				TargetIdentity: testUtils.ClientIdentity(2),
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
 				ExpectedExistence: true, // Making the same relation through any node should be a no-op
 			},
 
 			testUtils.Request{
 				// Ensure that the document is now accessible on all nodes to the newly authorized actor.
 				Identity: testUtils.ClientIdentity(2),
-
 				Request: `
 					query {
 						Users {
@@ -188,7 +178,6 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 						}
 					}
 				`,
-
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
@@ -201,7 +190,6 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
 				Identity: testUtils.ClientIdentity(1),
-
 				Request: `
 					query {
 						Users {
@@ -209,7 +197,6 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 						}
 					}
 				`,
-
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
@@ -220,41 +207,28 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				NodeID: immutable.Some(1),
-
-				RequestorIdentity: testUtils.ClientIdentity(1),
-
-				TargetIdentity: testUtils.ClientIdentity(2),
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
+				NodeID:              immutable.Some(1),
+				RequestorIdentity:   testUtils.ClientIdentity(1),
+				TargetIdentity:      testUtils.ClientIdentity(2),
+				CollectionID:        0,
+				DocID:               0,
+				Relation:            "reader",
 				ExpectedRecordFound: true,
 			},
 
 			testUtils.DeleteDocActorRelationship{
-				NodeID: immutable.Some(0), // Note: Different node than the previous
-
-				RequestorIdentity: testUtils.ClientIdentity(1),
-
-				TargetIdentity: testUtils.ClientIdentity(2),
-
-				CollectionID: 0,
-
-				DocID: 0,
-
-				Relation: "reader",
-
+				NodeID:              immutable.Some(0), // Note: Different node than the previous
+				RequestorIdentity:   testUtils.ClientIdentity(1),
+				TargetIdentity:      testUtils.ClientIdentity(2),
+				CollectionID:        0,
+				DocID:               0,
+				Relation:            "reader",
 				ExpectedRecordFound: false, // Making the same relation through any node should be a no-op
 			},
 
 			testUtils.Request{
 				// Ensure that the document is now inaccessible on all nodes to the actor we revoked access from.
 				Identity: testUtils.ClientIdentity(2),
-
 				Request: `
 					query {
 						Users {
@@ -271,7 +245,6 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 			testUtils.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
 				Identity: testUtils.ClientIdentity(1),
-
 				Request: `
 					query {
 						Users {
@@ -279,7 +252,6 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 						}
 					}
 				`,
-
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{

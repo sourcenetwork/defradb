@@ -65,6 +65,19 @@ func FromPrivateKey(privateKey *secp256k1.PrivateKey) (Identity, error) {
 	}, nil
 }
 
+// FromPublicRawIdentity returns a new raw identity using the given public raw identity.
+func FromPublicRawIdentity(rawIdentity PublicRawIdentity) (Identity, error) {
+	publicKey, err := secp256k1.ParsePubKey([]byte(rawIdentity.PublicKey))
+	if err != nil {
+		return Identity{}, err
+	}
+
+	return Identity{
+		DID:       rawIdentity.DID,
+		PublicKey: publicKey,
+	}, nil
+}
+
 // FromToken constructs a new `Identity` from a bearer token.
 func FromToken(data []byte) (Identity, error) {
 	token, err := jwt.Parse(data, jwt.WithVerify(false))
@@ -127,6 +140,28 @@ func (identity *Identity) UpdateToken(
 	audience immutable.Option[string],
 	authorizedAccount immutable.Option[string],
 ) error {
+	signedToken, err := identity.NewToken(duration, audience, authorizedAccount)
+	if err != nil {
+		return err
+	}
+
+	identity.BearerToken = string(signedToken)
+	return nil
+}
+
+// NewToken creates and returns a new `BearerToken`.
+//
+//   - duration: The [time.Duration] that this identity is valid for.
+//   - audience: The audience that this identity is valid for.  This is required
+//     by the Defra http client.  For example `github.com/sourcenetwork/defradb`
+//   - authorizedAccount: An account that this identity is authorizing to make
+//     SourceHub calls on behalf of this actor.  This is currently required when
+//     using SourceHub ACP.
+func (identity Identity) NewToken(
+	duration time.Duration,
+	audience immutable.Option[string],
+	authorizedAccount immutable.Option[string],
+) ([]byte, error) {
 	var signedToken []byte
 	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
 	now := time.Now()
@@ -144,21 +179,20 @@ func (identity *Identity) UpdateToken(
 
 	token, err := jwtBuilder.Build()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if authorizedAccount.HasValue() {
 		err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, identity.PrivateKey.ToECDSA()))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	identity.BearerToken = string(signedToken)
-	return nil
+	return signedToken, nil
 }
