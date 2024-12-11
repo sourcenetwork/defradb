@@ -22,8 +22,10 @@ import (
 )
 
 func MakeViewAddCommand() *cobra.Command {
+	var queryFile string
+	var sdlFile string
 	var lensFile string
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "add [query] [sdl] [transform]",
 		Short: "Add new view",
 		Long: `Add new database view.
@@ -36,25 +38,26 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
-			query := args[0]
-			sdl := args[1]
+			fileOrArg := newFileOrArgData(args, os.ReadFile)
+			query, err := fileOrArg.next(queryFile)
+			if err != nil {
+				return err
+			}
+			sdl, err := fileOrArg.next(sdlFile)
+			if err != nil {
+				return err
+			}
+			lensCfgJson, err := fileOrArg.next(lensFile)
+			if err != nil {
+				return err
+			}
 
-			var lensCfgJson string
-			switch {
-			case lensFile != "":
-				data, err := os.ReadFile(lensFile)
-				if err != nil {
-					return err
-				}
-				lensCfgJson = string(data)
-			case len(args) == 3 && args[2] == "-":
+			if lensCfgJson == "-" {
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
 					return err
 				}
 				lensCfgJson = string(data)
-			case len(args) == 3:
-				lensCfgJson = args[2]
 			}
 
 			var transform immutable.Option[model.Lens]
@@ -77,5 +80,38 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		},
 	}
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
+	cmd.Flags().StringVarP(&queryFile, "query-file", "", "", "Query file")
+	cmd.Flags().StringVarP(&sdlFile, "sdl-file", "", "", "SDL file")
 	return cmd
+}
+
+type readFileFn func(string) ([]byte, error)
+
+// FileOrArgData tracks a serie of args.
+type FileOrArgData struct {
+	args         []string
+	currentIndex int
+	readFile     readFileFn
+}
+
+func newFileOrArgData(args []string, readFile readFileFn) FileOrArgData {
+	return FileOrArgData{
+		args:         args,
+		currentIndex: 0,
+		readFile:     readFile,
+	}
+}
+
+// next gets the data primarily from a file when filePath is set, or from expected arg index.
+func (x *FileOrArgData) next(filePath string) (string, error) {
+	if filePath == "" {
+		data := x.args[x.currentIndex]
+		x.currentIndex += 1
+		return data, nil
+	}
+	data, err := x.readFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
