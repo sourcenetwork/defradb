@@ -19,9 +19,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
-	"github.com/lestrrat-go/jwx/v2/jws"
-	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
@@ -90,34 +87,13 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	return s, nil
 }
 
-// GetDocGraph receives a get graph request
-func (s *server) GetDocGraph(
-	ctx context.Context,
-	req *getDocGraphRequest,
-) (*getDocGraphReply, error) {
-	return nil, nil
+// pushLogHandler receives a push log request from the grpc server (replicator)
+func (s *server) pushLogHandler(ctx context.Context, req *pushLogRequest) (*pushLogReply, error) {
+	return s.processPushlog(ctx, req, true)
 }
 
-// PushDocGraph receives a push graph request
-func (s *server) PushDocGraph(
-	ctx context.Context,
-	req *pushDocGraphRequest,
-) (*pushDocGraphReply, error) {
-	return nil, nil
-}
-
-// GetLog receives a get log request
-func (s *server) GetLog(ctx context.Context, req *getLogRequest) (*getLogReply, error) {
-	return nil, nil
-}
-
-// PushLog receives a push log request from the grpc server (replicator)
-func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogReply, error) {
-	return s.handlePushLog(ctx, req, true)
-}
-
-// handlePushLog handles a push log request
-func (s *server) handlePushLog(
+// processPushlog processes a push log request
+func (s *server) processPushlog(
 	ctx context.Context,
 	req *pushLogRequest,
 	isReplicator bool,
@@ -194,24 +170,16 @@ func (s *server) handlePushLog(
 	return &pushLogReply{}, nil
 }
 
-// GetHeadLog receives a get head log request
-func (s *server) GetHeadLog(
-	ctx context.Context,
-	req *getHeadLogRequest,
-) (*getHeadLogReply, error) {
-	return nil, nil
-}
-
-// GetIdentity receives a get identity request and returns the identity token
+// getIdentityHandler receives a get identity request and returns the identity token
 // with the requesting peer as the audience.
-func (s *server) GetIdentity(
+func (s *server) getIdentityHandler(
 	ctx context.Context,
 	req *getIdentityRequest,
 ) (*getIdentityReply, error) {
 	if !s.peer.acp.HasValue() {
 		return &getIdentityReply{}, nil
 	}
-	token, err := s.peer.acp.Value().GetIdentityToken(ctx, immutable.Some(req.PeerID))
+	token, err := s.peer.db.GetNodeIdentityToken(ctx, immutable.Some(req.PeerID))
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +341,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
 		Addr: addr{from},
 	})
-	if _, err := s.handlePushLog(ctx, req, false); err != nil {
+	if _, err := s.processPushlog(ctx, req, false); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
@@ -494,8 +462,10 @@ func (s *server) SendPubSubMessage(
 	return t.Publish(ctx, data)
 }
 
-// hasAccess checks if the requesting peer has access to the given cid.
-func (s *server) hasAccess(p peer.ID, c cid.Cid) bool {
+// hasAccess checks if the requesting peer has access to the given ci.
+//
+// This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
+func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 	if !s.peer.acp.HasValue() {
 		return true
 	}
@@ -511,7 +481,7 @@ func (s *server) hasAccess(p peer.ID, c cid.Cid) bool {
 		return false
 	}
 
-	cols, err := s.peer.acp.Value().GetCollections(
+	cols, err := s.peer.db.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
 			SchemaVersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
@@ -549,7 +519,7 @@ func (s *server) hasAccess(p peer.ID, c cid.Cid) bool {
 				log.ErrorE("Failed to parse identity token", err)
 				return immutable.None[identity.Identity]()
 			}
-			err = verifyAuthToken(ident, s.peer.PeerID().String())
+			err = identity.VerifyAuthToken(ident, s.peer.PeerID().String())
 			if err != nil {
 				log.ErrorE("Failed to verify auth token", err)
 				return immutable.None[identity.Identity]()
@@ -585,7 +555,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
 		return true
 	}
 
-	cols, err := s.peer.acp.Value().GetCollections(
+	cols, err := s.peer.db.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
 			SchemaVersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
@@ -599,7 +569,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
 		log.Info("No collections found", corelog.Any("Schema Version ID", block.Delta.GetSchemaVersionID()))
 		return true
 	}
-	ident, err := s.peer.acp.Value().GetNodeIdentity(s.peer.ctx)
+	ident, err := s.peer.db.GetNodeIdentity(s.peer.ctx)
 	if err != nil {
 		log.ErrorE("Failed to get node identity", err)
 		return true
@@ -609,7 +579,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
 		return true
 	}
 
-	peerHasAccess, err := permission.CheckAccessDocAccessWithDID(
+	peerHasAccess, err := permission.CheckDocAccessWithDID(
 		s.peer.ctx,
 		ident.Value().DID,
 		s.peer.acp.Value(),
@@ -623,23 +593,4 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
 	}
 
 	return peerHasAccess
-}
-
-// verifyAuthToken verifies that the jwt auth token is valid and that the signature
-// matches the identity of the subject.
-func verifyAuthToken(ident identity.Identity, audience string) error {
-	_, err := jwt.Parse([]byte(ident.BearerToken), jwt.WithVerify(false), jwt.WithAudience(audience))
-	if err != nil {
-		return err
-	}
-
-	_, err = jws.Verify(
-		[]byte(ident.BearerToken),
-		jws.WithKey(identity.BearerTokenSignatureScheme, ident.PublicKey.ToECDSA()),
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

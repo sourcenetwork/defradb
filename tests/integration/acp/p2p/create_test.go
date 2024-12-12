@@ -131,11 +131,11 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP1(t *testing.T) {
+func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
 	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
 
 	test := testUtils.TestCase{
-		Description: "Test acp, p2p create private documents on different nodes, with source-hub",
+		Description: "Test acp, p2p create a private documents and sync after adding actor relationship, with source-hub",
 		SupportedACPTypes: immutable.Some(
 			[]testUtils.ACPType{
 				testUtils.SourceHubACPType,

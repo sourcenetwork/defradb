@@ -34,7 +34,7 @@ func TestVerifyAuthToken(t *testing.T) {
 	err = identity.UpdateToken(time.Hour, immutable.Some(audience), immutable.None[string]())
 	require.NoError(t, err)
 
-	err = verifyAuthToken(identity, audience)
+	err = acpIdentity.VerifyAuthToken(identity, audience)
 	require.NoError(t, err)
 }
 
@@ -48,7 +48,7 @@ func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
 	err = identity.UpdateToken(time.Hour, immutable.Some("valid"), immutable.None[string]())
 	require.NoError(t, err)
 
-	err = verifyAuthToken(identity, "invalid")
+	err = acpIdentity.VerifyAuthToken(identity, "invalid")
 	assert.Error(t, err)
 }
 
@@ -65,6 +65,6 @@ func TestVerifyAuthTokenErrorsWithExpired(t *testing.T) {
 	err = identity.UpdateToken(-time.Hour, immutable.Some(audience), immutable.None[string]())
 	require.NoError(t, err)
 
-	err = verifyAuthToken(identity, "123abc")
+	err = acpIdentity.VerifyAuthToken(identity, "123abc")
 	assert.Error(t, err)
 }

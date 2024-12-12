@@ -162,7 +162,8 @@ func (n *Node) Start(ctx context.Context) error {
 			coreDB.Blockstore(),
 			coreDB.Encstore(),
 			coreDB.Events(),
-			NewNetACP(n.acp, coreDB),
+			n.acp,
+			coreDB,
 			n.netOpts...,
 		)
 		if err != nil {

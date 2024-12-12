@@ -346,7 +346,7 @@ func (db *db) GetNodeIdentity(_ context.Context) (immutable.Option[identity.Publ
 	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
-func (db *db) GetIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
+func (db *db) GetNodeIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
 	if db.nodeIdentity.HasValue() {
 		return db.nodeIdentity.Value().NewToken(time.Hour*24, audience, immutable.None[string]())
 	}

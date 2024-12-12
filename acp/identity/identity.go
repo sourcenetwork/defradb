@@ -18,6 +18,7 @@ import (
 	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
 	acptypes "github.com/sourcenetwork/sourcehub/x/acp/bearer_token"
@@ -182,4 +183,23 @@ func (identity Identity) NewToken(
 	}
 
 	return signedToken, nil
+}
+
+// VerifyAuthToken verifies that the jwt auth token is valid and that the signature
+// matches the identity of the subject.
+func VerifyAuthToken(ident Identity, audience string) error {
+	_, err := jwt.Parse([]byte(ident.BearerToken), jwt.WithVerify(false), jwt.WithAudience(audience))
+	if err != nil {
+		return err
+	}
+
+	_, err = jws.Verify(
+		[]byte(ident.BearerToken),
+		jws.WithKey(BearerTokenSignatureScheme, ident.PublicKey.ToECDSA()),
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
