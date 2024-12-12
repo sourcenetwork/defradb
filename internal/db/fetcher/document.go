@@ -106,11 +106,13 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 			return immutable.None[string](), err
 		}
 
-		if dsKey.DocID != f.currentKV.Key.DocID {
-			f.currentKV = keyValue{
-				Key:   dsKey,
-				Value: res.Value,
-			}
+		previousKV := f.currentKV
+		f.currentKV = keyValue{
+			Key:   dsKey,
+			Value: res.Value,
+		}
+
+		if dsKey.DocID != previousKV.Key.DocID {
 			break
 		}
 	}
