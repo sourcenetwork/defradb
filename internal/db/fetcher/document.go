@@ -128,7 +128,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	doc.status = f.status
 	doc.properties = map[client.FieldDefinition]*encProperty{}
 
-	err := f.appendKv(&doc, f.currentKV)
+	err := f.appendKV(&doc, f.currentKV)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}
@@ -154,7 +154,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 			break
 		}
 
-		err = f.appendKv(&doc, kv)
+		err = f.appendKV(&doc, kv)
 		if err != nil {
 			return immutable.None[EncodedDocument](), err
 		}
@@ -163,7 +163,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	return immutable.Some[EncodedDocument](&doc), nil
 }
 
-func (f *documentFetcher) appendKv(doc *encodedDocument, kv keyValue) error {
+func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 	if kv.Key.FieldID == keys.DATASTORE_DOC_VERSION_FIELD_ID {
 		doc.schemaVersionID = string(kv.Value)
 		return nil
