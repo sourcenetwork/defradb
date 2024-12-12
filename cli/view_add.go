@@ -22,32 +22,34 @@ import (
 )
 
 func MakeViewAddCommand() *cobra.Command {
-	var queryFile string
-	var sdlFile string
-	var lensFile string
+	var query, sdl, lens string
+	var queryFile, sdlFile, lensFile string
 	cmd := &cobra.Command{
-		Use:   "add [query] [sdl] [transform]",
+		Use:   "add",
 		Short: "Add new view",
 		Long: `Add new database view.
 
-Example: add from an argument string:
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'
+Example: add from string flags:
+  defradb client view add --query 'Foo { name, ...}' --sdl 'type Foo { ... }' --lens '{"lenses": [...'
+Example: add from file flags:
+  defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-file /path/to/lens
+
+Flag pairs <key>/<key>-file are mutually exclusive.
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		Args: cobra.RangeArgs(2, 4),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
-			fileOrArg := newFileOrArgData(args, os.ReadFile)
-			query, err := fileOrArg.next(queryFile)
+			query, err := pickDataOrReadFile(query, queryFile)
 			if err != nil {
 				return err
 			}
-			sdl, err := fileOrArg.next(sdlFile)
+			sdl, err := pickDataOrReadFile(sdl, sdlFile)
 			if err != nil {
 				return err
 			}
-			lensCfgJson, err := fileOrArg.next(lensFile)
+			lensCfgJson, err := pickDataOrReadFile(lens, lensFile)
 			if err != nil {
 				return err
 			}
@@ -79,39 +81,27 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			return writeJSON(cmd, defs)
 		},
 	}
-	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
+	cmd.Flags().StringVarP(&query, "query", "", "", "Query")
 	cmd.Flags().StringVarP(&queryFile, "query-file", "", "", "Query file")
+	cmd.Flags().StringVarP(&sdl, "sdl", "", "", "SDL")
 	cmd.Flags().StringVarP(&sdlFile, "sdl-file", "", "", "SDL file")
+	cmd.Flags().StringVarP(&lens, "lens", "", "", "Lens configuration")
+	cmd.Flags().StringVarP(&lensFile, "lens-file", "", "", "Lens configuration file")
+
+	cmd.MarkFlagsMutuallyExclusive("query", "query-file")
+	cmd.MarkFlagsMutuallyExclusive("sdl", "sdl-file")
+	cmd.MarkFlagsMutuallyExclusive("lens", "lens-file")
 	return cmd
 }
 
-type readFileFn func(string) ([]byte, error)
-
-// FileOrArgData tracks a serie of args.
-type FileOrArgData struct {
-	args         []string
-	currentIndex int
-	readFile     readFileFn
-}
-
-func newFileOrArgData(args []string, readFile readFileFn) FileOrArgData {
-	return FileOrArgData{
-		args:         args,
-		currentIndex: 0,
-		readFile:     readFile,
-	}
-}
-
-// next gets the data primarily from a file when filePath is set, or from expected arg index.
-func (x *FileOrArgData) next(filePath string) (string, error) {
-	if filePath == "" {
-		data := x.args[x.currentIndex]
-		x.currentIndex += 1
+// pickDataOrReadFile gets the result from file path when provided, or from data.
+func pickDataOrReadFile(data string, dataPath string) (string, error) {
+	if dataPath == "" {
 		return data, nil
 	}
-	data, err := x.readFile(filePath)
+	b, err := os.ReadFile(dataPath)
 	if err != nil {
 		return "", err
 	}
-	return string(data), nil
+	return string(b), nil
 }
