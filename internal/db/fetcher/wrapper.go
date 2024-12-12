@@ -120,8 +120,8 @@ func (f *wrapper) Start(ctx context.Context, prefixes ...keys.Walkable) error {
 	var execInfo ExecInfo
 	f.execInfo = &execInfo
 
-	var fetcher fetcher
-	fetcher, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &execInfo)
+	var top fetcher
+	top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &execInfo)
 	if err != nil {
 		return nil
 	}
@@ -132,18 +132,18 @@ func (f *wrapper) Start(ctx context.Context, prefixes ...keys.Walkable) error {
 			return nil
 		}
 
-		fetcher = newDeletedFetcher(fetcher, deletedFetcher)
+		top = newMultiFetcher(top, deletedFetcher)
 	}
 
 	if f.acp.HasValue() {
-		fetcher = newPermissionedFetcher(ctx, f.identity, f.acp.Value(), f.col, fetcher)
+		top = newPermissionedFetcher(ctx, f.identity, f.acp.Value(), f.col, top)
 	}
 
 	if f.filter != nil {
-		fetcher = newFilteredFetcher(f.filter, f.docMapper, fetcher)
+		top = newFilteredFetcher(f.filter, f.docMapper, top)
 	}
 
-	f.fetcher = fetcher
+	f.fetcher = top
 	return nil
 }
 
