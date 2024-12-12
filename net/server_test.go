@@ -34,46 +34,6 @@ func TestNewServerSimple(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestGetDocGraph(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.GetDocGraph(ctx, &getDocGraphRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
-func TestPushDocGraph(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.PushDocGraph(ctx, &pushDocGraphRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
-func TestGetLog(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.GetLog(ctx, &getLogRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
-func TestGetHeadLog(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.GetHeadLog(ctx, &getHeadLogRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
 func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
 	prefix := keys.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToString()
 	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
@@ -126,7 +86,7 @@ func TestPushLog(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	_, err = p.server.PushLog(ctx, &pushLogRequest{
+	_, err = p.server.pushLogHandler(ctx, &pushLogRequest{
 		DocID:      doc.ID().String(),
 		CID:        headCID.Bytes(),
 		SchemaRoot: col.SchemaRoot(),

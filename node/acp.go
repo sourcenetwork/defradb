@@ -17,9 +17,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
 )
 
 type ACPType string
@@ -151,41 +148,4 @@ func NewACP(ctx context.Context, opts ...ACPOpt) (immutable.Option[acp.ACP], err
 		acpLocal.Init(ctx, options.path)
 		return immutable.Some[acp.ACP](acpLocal), nil
 	}
-}
-
-// acpDB is an interface for ACP related DB operations.
-type acpDB interface {
-	GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)
-	GetIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
-	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
-}
-
-type netACP struct {
-	acp.ACP
-	db acpDB
-}
-
-var _ net.ACP = (*netACP)(nil)
-
-// NewNetACP returns a new net.ACP instance.
-func NewNetACP(a immutable.Option[acp.ACP], db acpDB) immutable.Option[net.ACP] {
-	if !a.HasValue() {
-		return immutable.None[net.ACP]()
-	}
-	return immutable.Some[net.ACP](&netACP{a.Value(), db})
-}
-
-func (n *netACP) GetCollections(
-	ctx context.Context,
-	options client.CollectionFetchOptions,
-) ([]client.Collection, error) {
-	return n.db.GetCollections(ctx, options)
-}
-
-func (n *netACP) GetIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error) {
-	return n.db.GetIdentityToken(ctx, audience)
-}
-
-func (n *netACP) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	return n.db.GetNodeIdentity(ctx)
 }

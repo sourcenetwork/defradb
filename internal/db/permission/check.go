@@ -69,7 +69,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 // Unrestricted Access to document if:
 // - (2) is false.
 // - Document is public (unregistered), whether signatured request or not doesn't matter.
-func CheckAccessDocAccessWithDID(
+func CheckDocAccessWithDID(
 	ctx context.Context,
 	did string,
 	acpSystem acp.ACP,
