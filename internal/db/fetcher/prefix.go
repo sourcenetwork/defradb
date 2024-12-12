@@ -24,10 +24,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// prefix is a fetcher type responsible for iterating through multiple prefixes.
+// prefixFetcher is a fetcher type responsible for iterating through multiple prefixes.
 //
 // It manages the document fetcher instances that will do the actual scanning.
-type prefix struct {
+type prefixFetcher struct {
 	// The prefixes that this prefix fetcher must fetch from.
 	prefixes []keys.DataStoreKey
 	// The Iterator this prefix fetcher will use to scan.
@@ -36,7 +36,7 @@ type prefix struct {
 	// The index of the current prefix being fetched.
 	currentPrefix int
 	// The child document fetcher, specific to the current prefix.
-	fetcher *document
+	fetcher *documentFetcher
 
 	// The below properties are only held here in order to pass them on to the next
 	// child fetcher instance.
@@ -46,7 +46,7 @@ type prefix struct {
 	execInfo   *ExecInfo
 }
 
-var _ fetcher = (*prefix)(nil)
+var _ fetcher = (*prefixFetcher)(nil)
 
 func newPrefixFetcher(
 	ctx context.Context,
@@ -56,7 +56,7 @@ func newPrefixFetcher(
 	fieldsByID map[uint32]client.FieldDefinition,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
-) (*prefix, error) {
+) (*prefixFetcher, error) {
 	kvIter, err := txn.Datastore().GetIterator(dsq.Query{})
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func newPrefixFetcher(
 		return nil, err
 	}
 
-	return &prefix{
+	return &prefixFetcher{
 		kvIter:     kvIter,
 		prefixes:   prefixes,
 		ctx:        ctx,
@@ -103,7 +103,7 @@ func newPrefixFetcher(
 	}, nil
 }
 
-func (f *prefix) NextDoc() (immutable.Option[string], error) {
+func (f *prefixFetcher) NextDoc() (immutable.Option[string], error) {
 	docID, err := f.fetcher.NextDoc()
 	if err != nil {
 		return immutable.None[string](), err
@@ -133,10 +133,10 @@ func (f *prefix) NextDoc() (immutable.Option[string], error) {
 	return docID, nil
 }
 
-func (f *prefix) GetFields() (immutable.Option[EncodedDocument], error) {
+func (f *prefixFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	return f.fetcher.GetFields()
 }
 
-func (f *prefix) Close() error {
+func (f *prefixFetcher) Close() error {
 	return f.kvIter.Close()
 }

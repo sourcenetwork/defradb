@@ -17,34 +17,34 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// filtered fetcher is responsible for the filtering documents based on the provided
+// filteredFetcher fetcher is responsible for the filtering documents based on the provided
 // conditions.
-type filtered struct {
+type filteredFetcher struct {
 	filter  *mapper.Filter
 	mapping *core.DocumentMapping
 
 	fetcher fetcher
 }
 
-var _ fetcher = (*filtered)(nil)
+var _ fetcher = (*filteredFetcher)(nil)
 
 func newFilteredFetcher(
 	filter *mapper.Filter,
 	mapping *core.DocumentMapping,
 	fetcher fetcher,
-) *filtered {
-	return &filtered{
+) *filteredFetcher {
+	return &filteredFetcher{
 		filter:  filter,
 		mapping: mapping,
 		fetcher: fetcher,
 	}
 }
 
-func (f *filtered) NextDoc() (immutable.Option[string], error) {
+func (f *filteredFetcher) NextDoc() (immutable.Option[string], error) {
 	return f.fetcher.NextDoc()
 }
 
-func (f *filtered) GetFields() (immutable.Option[EncodedDocument], error) {
+func (f *filteredFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	doc, err := f.fetcher.GetFields()
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
@@ -71,6 +71,6 @@ func (f *filtered) GetFields() (immutable.Option[EncodedDocument], error) {
 	return doc, nil
 }
 
-func (f *filtered) Close() error {
+func (f *filteredFetcher) Close() error {
 	return f.fetcher.Close()
 }

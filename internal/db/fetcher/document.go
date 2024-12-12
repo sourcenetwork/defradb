@@ -23,10 +23,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// document is the type responsible for fetching documents from the datastore.
+// documentFetcher is the type responsible for fetching documents from the datastore.
 //
 // It does not filter the data in any way.
-type document struct {
+type documentFetcher struct {
 	// The set of fields to fetch, mapped by field ID.
 	fieldsByID map[uint32]client.FieldDefinition
 	// The status to assign fetched documents.
@@ -46,7 +46,7 @@ type document struct {
 	nextKV immutable.Option[keyValue]
 }
 
-var _ fetcher = (*document)(nil)
+var _ fetcher = (*documentFetcher)(nil)
 
 func newDocumentFetcher(
 	ctx context.Context,
@@ -55,7 +55,7 @@ func newDocumentFetcher(
 	prefix keys.DataStoreKey,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
-) (*document, error) {
+) (*documentFetcher, error) {
 	if status == client.Active {
 		prefix = prefix.WithValueFlag()
 	} else if status == client.Deleted {
@@ -67,7 +67,7 @@ func newDocumentFetcher(
 		return nil, err
 	}
 
-	return &document{
+	return &documentFetcher{
 		fieldsByID:    fieldsByID,
 		kvResultsIter: kvResultsIter,
 		status:        status,
@@ -81,7 +81,7 @@ type keyValue struct {
 	Value []byte
 }
 
-func (f *document) NextDoc() (immutable.Option[string], error) {
+func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 	if f.nextKV.HasValue() {
 		docID := f.nextKV.Value().Key.DocID
 		f.currentKV = f.nextKV.Value()
@@ -120,7 +120,7 @@ func (f *document) NextDoc() (immutable.Option[string], error) {
 	return immutable.Some(f.currentKV.Key.DocID), nil
 }
 
-func (f *document) GetFields() (immutable.Option[EncodedDocument], error) {
+func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	doc := encodedDocument{}
 	doc.id = []byte(f.currentKV.Key.DocID)
 	doc.status = f.status
@@ -161,7 +161,7 @@ func (f *document) GetFields() (immutable.Option[EncodedDocument], error) {
 	return immutable.Some[EncodedDocument](&doc), nil
 }
 
-func (f *document) appendKv(doc *encodedDocument, kv keyValue) error {
+func (f *documentFetcher) appendKv(doc *encodedDocument, kv keyValue) error {
 	if kv.Key.FieldID == keys.DATASTORE_DOC_VERSION_FIELD_ID {
 		doc.schemaVersionID = string(kv.Value)
 		return nil
@@ -192,6 +192,6 @@ func (f *document) appendKv(doc *encodedDocument, kv keyValue) error {
 	return nil
 }
 
-func (f *document) Close() error {
+func (f *documentFetcher) Close() error {
 	return f.kvResultsIter.Close()
 }

@@ -21,8 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
-// permissioned fetcher applies access control based filtering to documents fetched.
-type permissioned struct {
+// permissionedFetcher fetcher applies access control based filtering to documents fetched.
+type permissionedFetcher struct {
 	ctx context.Context
 
 	identity immutable.Option[acpIdentity.Identity]
@@ -32,7 +32,7 @@ type permissioned struct {
 	fetcher fetcher
 }
 
-var _ fetcher = (*permissioned)(nil)
+var _ fetcher = (*permissionedFetcher)(nil)
 
 func newPermissionedFetcher(
 	ctx context.Context,
@@ -40,8 +40,8 @@ func newPermissionedFetcher(
 	acp acp.ACP,
 	col client.Collection,
 	fetcher fetcher,
-) *permissioned {
-	return &permissioned{
+) *permissionedFetcher {
+	return &permissionedFetcher{
 		ctx:      ctx,
 		identity: identity,
 		acp:      acp,
@@ -50,7 +50,7 @@ func newPermissionedFetcher(
 	}
 }
 
-func (f *permissioned) NextDoc() (immutable.Option[string], error) {
+func (f *permissionedFetcher) NextDoc() (immutable.Option[string], error) {
 	docID, err := f.fetcher.NextDoc()
 	if err != nil {
 		return immutable.None[string](), err
@@ -79,10 +79,10 @@ func (f *permissioned) NextDoc() (immutable.Option[string], error) {
 	return docID, nil
 }
 
-func (f *permissioned) GetFields() (immutable.Option[EncodedDocument], error) {
+func (f *permissionedFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	return f.fetcher.GetFields()
 }
 
-func (f *permissioned) Close() error {
+func (f *permissionedFetcher) Close() error {
 	return f.fetcher.Close()
 }

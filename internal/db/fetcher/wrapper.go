@@ -25,9 +25,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
 
-// wrapper is a fetcher type that bridges between the existing [Fetcher] interface
+// wrappingFetcher is a fetcher type that bridges between the existing [Fetcher] interface
 // and the newer [fetcher] interface.
-type wrapper struct {
+type wrappingFetcher struct {
 	fetcher  fetcher
 	execInfo *ExecInfo
 
@@ -43,13 +43,13 @@ type wrapper struct {
 	showDeleted bool
 }
 
-var _ Fetcher = (*wrapper)(nil)
+var _ Fetcher = (*wrappingFetcher)(nil)
 
 func NewDocumentFetcher() Fetcher {
-	return &wrapper{}
+	return &wrappingFetcher{}
 }
 
-func (f *wrapper) Init(
+func (f *wrappingFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
@@ -72,7 +72,7 @@ func (f *wrapper) Init(
 	return nil
 }
 
-func (f *wrapper) Start(ctx context.Context, prefixes ...keys.Walkable) error {
+func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
 	err := f.Close()
 	if err != nil {
 		return err
@@ -147,7 +147,7 @@ func (f *wrapper) Start(ctx context.Context, prefixes ...keys.Walkable) error {
 	return nil
 }
 
-func (f *wrapper) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
+func (f *wrappingFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
 	docID, err := f.fetcher.NextDoc()
 	if err != nil {
 		return nil, ExecInfo{}, err
@@ -175,7 +175,7 @@ func (f *wrapper) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, err
 	return doc.Value(), execInfo, nil
 }
 
-func (f *wrapper) Close() error {
+func (f *wrappingFetcher) Close() error {
 	if f.fetcher != nil {
 		return f.fetcher.Close()
 	}

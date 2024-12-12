@@ -16,10 +16,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// multi is a fetcher that orchastrates the fetching of documents via multiple child fetchers.
+// multiFetcher is a fetcher that orchastrates the fetching of documents via multiple child fetchers.
 //
 // The documents are yielded ordered by docID independently of which child fetcher they are sourced from.
-type multi struct {
+type multiFetcher struct {
 	children []fetcherDocID
 
 	// The index of the fetcher that last returned an item from `NextDoc`.
@@ -28,11 +28,11 @@ type multi struct {
 	currentFetcherIndex int
 }
 
-var _ fetcher = (*multi)(nil)
+var _ fetcher = (*multiFetcher)(nil)
 
 func newMultiFetcher(
 	children ...fetcher,
-) *multi {
+) *multiFetcher {
 	fetcherDocIDs := make([]fetcherDocID, len(children))
 
 	for i, fetcher := range children {
@@ -41,7 +41,7 @@ func newMultiFetcher(
 		}
 	}
 
-	return &multi{
+	return &multiFetcher{
 		children: fetcherDocIDs,
 	}
 }
@@ -54,7 +54,7 @@ type fetcherDocID struct {
 	docID immutable.Option[string]
 }
 
-func (f *multi) NextDoc() (immutable.Option[string], error) {
+func (f *multiFetcher) NextDoc() (immutable.Option[string], error) {
 	selectedFetcherIndex := -1
 	var selectedDocID immutable.Option[string]
 
@@ -93,7 +93,7 @@ func (f *multi) NextDoc() (immutable.Option[string], error) {
 	return selectedDocID, nil
 }
 
-func (f *multi) GetFields() (immutable.Option[EncodedDocument], error) {
+func (f *multiFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	doc, err := f.children[f.currentFetcherIndex].fetcher.GetFields()
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
@@ -104,7 +104,7 @@ func (f *multi) GetFields() (immutable.Option[EncodedDocument], error) {
 	return doc, nil
 }
 
-func (f *multi) Close() error {
+func (f *multiFetcher) Close() error {
 	errs := []error{}
 	for _, child := range f.children {
 		err := child.fetcher.Close()
