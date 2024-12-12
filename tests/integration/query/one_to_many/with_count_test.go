@@ -188,3 +188,69 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from many side with count alias",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_alias: {publishedCount: {_gt: 1}}}) {
+						name
+						publishedCount: _count(published: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":           "John Grisham",
+							"publishedCount": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

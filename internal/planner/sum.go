@@ -217,103 +217,112 @@ func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, erro
 }
 
 func (n *sumNode) Next() (bool, error) {
-	n.execInfo.iterations++
+	for {
+		n.execInfo.iterations++
 
-	hasNext, err := n.plan.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
-	}
-
-	n.currentValue = n.plan.Value()
-
-	sum := float64(0)
-
-	for _, source := range n.aggregateMapping {
-		child := n.currentValue.Fields[source.Index]
-		var collectionSum float64
-		var err error
-		switch childCollection := child.(type) {
-		case []core.Doc:
-			collectionSum = reduceDocs(childCollection, 0, func(childItem core.Doc, value float64) float64 {
-				childProperty := childItem.Fields[source.ChildTarget.Index]
-				switch v := childProperty.(type) {
-				case int:
-					return value + float64(v)
-				case int64:
-					return value + float64(v)
-				case uint64:
-					return value + float64(v)
-				case float64:
-					return value + v
-				default:
-					// return nothing, cannot be summed
-					return value + 0
-				}
-			})
-		case []int64:
-			collectionSum, err = reduceItems(
-				childCollection,
-				&source,
-				lessN[int64],
-				0,
-				func(childItem int64, value float64) float64 {
-					return value + float64(childItem)
-				},
-			)
-
-		case []immutable.Option[int64]:
-			collectionSum, err = reduceItems(
-				childCollection,
-				&source,
-				lessO[int64],
-				0,
-				func(childItem immutable.Option[int64], value float64) float64 {
-					if !childItem.HasValue() {
-						return value + 0
-					}
-					return value + float64(childItem.Value())
-				},
-			)
-
-		case []float64:
-			collectionSum, err = reduceItems(
-				childCollection,
-				&source,
-				lessN[float64],
-				0,
-				func(childItem float64, value float64) float64 {
-					return value + childItem
-				},
-			)
-
-		case []immutable.Option[float64]:
-			collectionSum, err = reduceItems(
-				childCollection,
-				&source,
-				lessO[float64],
-				0,
-				func(childItem immutable.Option[float64], value float64) float64 {
-					if !childItem.HasValue() {
-						return value + 0
-					}
-					return value + childItem.Value()
-				},
-			)
+		hasNext, err := n.plan.Next()
+		if err != nil || !hasNext {
+			return hasNext, err
 		}
+
+		n.currentValue = n.plan.Value()
+
+		sum := float64(0)
+
+		for _, source := range n.aggregateMapping {
+			child := n.currentValue.Fields[source.Index]
+			var collectionSum float64
+			var err error
+			switch childCollection := child.(type) {
+			case []core.Doc:
+				collectionSum = reduceDocs(childCollection, 0, func(childItem core.Doc, value float64) float64 {
+					childProperty := childItem.Fields[source.ChildTarget.Index]
+					switch v := childProperty.(type) {
+					case int:
+						return value + float64(v)
+					case int64:
+						return value + float64(v)
+					case uint64:
+						return value + float64(v)
+					case float64:
+						return value + v
+					default:
+						// return nothing, cannot be summed
+						return value + 0
+					}
+				})
+			case []int64:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[int64],
+					0,
+					func(childItem int64, value float64) float64 {
+						return value + float64(childItem)
+					},
+				)
+
+			case []immutable.Option[int64]:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[int64],
+					0,
+					func(childItem immutable.Option[int64], value float64) float64 {
+						if !childItem.HasValue() {
+							return value + 0
+						}
+						return value + float64(childItem.Value())
+					},
+				)
+
+			case []float64:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[float64],
+					0,
+					func(childItem float64, value float64) float64 {
+						return value + childItem
+					},
+				)
+
+			case []immutable.Option[float64]:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[float64],
+					0,
+					func(childItem immutable.Option[float64], value float64) float64 {
+						if !childItem.HasValue() {
+							return value + 0
+						}
+						return value + childItem.Value()
+					},
+				)
+			}
+			if err != nil {
+				return false, err
+			}
+			sum += collectionSum
+		}
+
+		var typedSum any
+		if n.isFloat {
+			typedSum = sum
+		} else {
+			typedSum = int64(sum)
+		}
+		n.currentValue.Fields[n.virtualFieldIndex] = typedSum
+		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)
 		if err != nil {
 			return false, err
 		}
-		sum += collectionSum
+		if !passes {
+			continue
+		}
+		return true, nil
 	}
-
-	var typedSum any
-	if n.isFloat {
-		typedSum = sum
-	} else {
-		typedSum = int64(sum)
-	}
-	n.currentValue.Fields[n.virtualFieldIndex] = typedSum
-	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
 
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
