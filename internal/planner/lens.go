@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // viewNode applies a lens transform to data yielded from the source node.
@@ -61,8 +62,8 @@ func (n *lensNode) Start() error {
 	return n.source.Start()
 }
 
-func (n *lensNode) Spans(spans core.Spans) {
-	n.source.Spans(spans)
+func (n *lensNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
 }
 
 func (n *lensNode) Next() (bool, error) {

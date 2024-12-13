@@ -13,6 +13,8 @@ import (
 
 	go_datastore "github.com/ipfs/go-datastore"
 
+	identity "github.com/sourcenetwork/defradb/acp/identity"
+
 	immutable "github.com/sourcenetwork/immutable"
 
 	mock "github.com/stretchr/testify/mock"
@@ -553,7 +555,7 @@ func (_c *DB_DeleteDocActorRelationship_Call) RunAndReturn(run func(context.Cont
 }
 
 // DeleteReplicator provides a mock function with given fields: ctx, rep
-func (_m *DB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (_m *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	ret := _m.Called(ctx, rep)
 
 	if len(ret) == 0 {
@@ -561,7 +563,7 @@ func (_m *DB) DeleteReplicator(ctx context.Context, rep client.Replicator) error
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Replicator) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.ReplicatorParams) error); ok {
 		r0 = rf(ctx, rep)
 	} else {
 		r0 = ret.Error(0)
@@ -577,14 +579,14 @@ type DB_DeleteReplicator_Call struct {
 
 // DeleteReplicator is a helper method to define mock.On call
 //   - ctx context.Context
-//   - rep client.Replicator
+//   - rep client.ReplicatorParams
 func (_e *DB_Expecter) DeleteReplicator(ctx interface{}, rep interface{}) *DB_DeleteReplicator_Call {
 	return &DB_DeleteReplicator_Call{Call: _e.mock.On("DeleteReplicator", ctx, rep)}
 }
 
-func (_c *DB_DeleteReplicator_Call) Run(run func(ctx context.Context, rep client.Replicator)) *DB_DeleteReplicator_Call {
+func (_c *DB_DeleteReplicator_Call) Run(run func(ctx context.Context, rep client.ReplicatorParams)) *DB_DeleteReplicator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.Replicator))
+		run(args[0].(context.Context), args[1].(client.ReplicatorParams))
 	})
 	return _c
 }
@@ -594,7 +596,7 @@ func (_c *DB_DeleteReplicator_Call) Return(_a0 error) *DB_DeleteReplicator_Call 
 	return _c
 }
 
-func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(context.Context, client.Replicator) error) *DB_DeleteReplicator_Call {
+func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(context.Context, client.ReplicatorParams) error) *DB_DeleteReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1045,6 +1047,62 @@ func (_c *DB_GetCollections_Call) Return(_a0 []client.Collection, _a1 error) *DB
 }
 
 func (_c *DB_GetCollections_Call) RunAndReturn(run func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)) *DB_GetCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetNodeIdentity provides a mock function with given fields: _a0
+func (_m *DB) GetNodeIdentity(_a0 context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNodeIdentity")
+	}
+
+	var r0 immutable.Option[identity.PublicRawIdentity]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (immutable.Option[identity.PublicRawIdentity], error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) immutable.Option[identity.PublicRawIdentity]); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(immutable.Option[identity.PublicRawIdentity])
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetNodeIdentity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNodeIdentity'
+type DB_GetNodeIdentity_Call struct {
+	*mock.Call
+}
+
+// GetNodeIdentity is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *DB_Expecter) GetNodeIdentity(_a0 interface{}) *DB_GetNodeIdentity_Call {
+	return &DB_GetNodeIdentity_Call{Call: _e.mock.On("GetNodeIdentity", _a0)}
+}
+
+func (_c *DB_GetNodeIdentity_Call) Run(run func(_a0 context.Context)) *DB_GetNodeIdentity_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_GetNodeIdentity_Call) Return(_a0 immutable.Option[identity.PublicRawIdentity], _a1 error) *DB_GetNodeIdentity_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetNodeIdentity_Call) RunAndReturn(run func(context.Context) (immutable.Option[identity.PublicRawIdentity], error)) *DB_GetNodeIdentity_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1892,7 +1950,7 @@ func (_c *DB_SetMigration_Call) RunAndReturn(run func(context.Context, client.Le
 }
 
 // SetReplicator provides a mock function with given fields: ctx, rep
-func (_m *DB) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (_m *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	ret := _m.Called(ctx, rep)
 
 	if len(ret) == 0 {
@@ -1900,7 +1958,7 @@ func (_m *DB) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Replicator) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.ReplicatorParams) error); ok {
 		r0 = rf(ctx, rep)
 	} else {
 		r0 = ret.Error(0)
@@ -1916,14 +1974,14 @@ type DB_SetReplicator_Call struct {
 
 // SetReplicator is a helper method to define mock.On call
 //   - ctx context.Context
-//   - rep client.Replicator
+//   - rep client.ReplicatorParams
 func (_e *DB_Expecter) SetReplicator(ctx interface{}, rep interface{}) *DB_SetReplicator_Call {
 	return &DB_SetReplicator_Call{Call: _e.mock.On("SetReplicator", ctx, rep)}
 }
 
-func (_c *DB_SetReplicator_Call) Run(run func(ctx context.Context, rep client.Replicator)) *DB_SetReplicator_Call {
+func (_c *DB_SetReplicator_Call) Run(run func(ctx context.Context, rep client.ReplicatorParams)) *DB_SetReplicator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.Replicator))
+		run(args[0].(context.Context), args[1].(client.ReplicatorParams))
 	})
 	return _c
 }
@@ -1933,7 +1991,7 @@ func (_c *DB_SetReplicator_Call) Return(_a0 error) *DB_SetReplicator_Call {
 	return _c
 }
 
-func (_c *DB_SetReplicator_Call) RunAndReturn(run func(context.Context, client.Replicator) error) *DB_SetReplicator_Call {
+func (_c *DB_SetReplicator_Call) RunAndReturn(run func(context.Context, client.ReplicatorParams) error) *DB_SetReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }

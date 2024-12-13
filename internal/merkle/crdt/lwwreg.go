@@ -15,49 +15,49 @@ import (
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
-	*baseMerkleCRDT
-
-	reg corecrdt.LWWRegister
+	clock *clock.MerkleClock
+	reg   corecrdt.LWWRegister
 }
+
+var _ FieldLevelMerkleCRDT = (*MerkleLWWRegister)(nil)
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewMerkleLWWRegister(
 	store Stores,
-	schemaVersionKey core.CollectionSchemaVersionKey,
-	key core.DataStoreKey,
+	schemaVersionKey keys.CollectionSchemaVersionKey,
+	key keys.DataStoreKey,
 	fieldName string,
 ) *MerkleLWWRegister {
 	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionKey, key, fieldName)
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(), register)
-	base := &baseMerkleCRDT{clock: clk, crdt: register}
+
 	return &MerkleLWWRegister{
-		baseMerkleCRDT: base,
-		reg:            register,
+		clock: clk,
+		reg:   register,
 	}
 }
 
+func (m *MerkleLWWRegister) Clock() *clock.MerkleClock {
+	return m.clock
+}
+
 // Save the value of the register to the DAG.
-func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (cidlink.Link, []byte, error) {
-	value, ok := data.(*DocField)
-	if !ok {
-		return cidlink.Link{}, nil, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
-	}
-	bytes, err := value.FieldValue.Bytes()
+func (m *MerkleLWWRegister) Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error) {
+	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
-	delta := mlwwreg.reg.Set(bytes)
-	return mlwwreg.clock.AddDelta(ctx, delta)
+	delta := m.reg.Set(bytes)
+	return m.clock.AddDelta(ctx, delta)
 }

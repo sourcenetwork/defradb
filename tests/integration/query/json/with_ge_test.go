@@ -270,10 +270,10 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Name": "David",
 						},
 						{
-							"Name": "David",
+							"Name": "John",
 						},
 					},
 				},

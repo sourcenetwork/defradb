@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	errFailedToLoadKeys       string = "failed to load given keys"
-	errMethodIsNotImplemented string = "the method is not implemented"
-	errFailedToGetContext     string = "failed to get context"
+	errFailedToLoadKeys             string = "failed to load given keys"
+	errMethodIsNotImplemented       string = "the method is not implemented"
+	errFailedToGetContext           string = "failed to get context"
+	errPurgeRequestNonDeveloperMode string = "cannot purge database when development mode is disabled"
 )
 
 // Errors returnable from this package.
@@ -29,17 +30,16 @@ const (
 // This list is incomplete. Undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrNoListener                = errors.New("cannot serve with no listener")
-	ErrNoEmail                   = errors.New("email address must be specified for tls with autocert")
-	ErrInvalidRequestBody        = errors.New("invalid request body")
-	ErrStreamingNotSupported     = errors.New("streaming not supported")
-	ErrMigrationNotFound         = errors.New("migration not found")
-	ErrMissingRequest            = errors.New("missing request")
-	ErrInvalidTransactionId      = errors.New("invalid transaction id")
-	ErrP2PDisabled               = errors.New("p2p network is disabled")
-	ErrMethodIsNotImplemented    = errors.New(errMethodIsNotImplemented)
-	ErrMissingIdentityPrivateKey = errors.New("identity has no private key")
-	ErrMissingIdentityPublicKey  = errors.New("identity has no public key")
+	ErrNoListener             = errors.New("cannot serve with no listener")
+	ErrNoEmail                = errors.New("email address must be specified for tls with autocert")
+	ErrInvalidRequestBody     = errors.New("invalid request body")
+	ErrStreamingNotSupported  = errors.New("streaming not supported")
+	ErrMigrationNotFound      = errors.New("migration not found")
+	ErrMissingRequest         = errors.New("missing request")
+	ErrInvalidTransactionId   = errors.New("invalid transaction id")
+	ErrP2PDisabled            = errors.New("p2p network is disabled")
+	ErrMethodIsNotImplemented = errors.New(errMethodIsNotImplemented)
+	ErrMissingIdentity        = errors.New("required identity is missing")
 )
 
 type errorResponse struct {

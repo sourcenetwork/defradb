@@ -26,15 +26,18 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 
 		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used (only for update requests),
+				// so test that separately.
+				testUtils.GQLRequestMutationType,
+			},
+		),
 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -98,7 +101,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -111,7 +114,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -131,7 +134,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				DocID: 0,
 
@@ -145,9 +148,9 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -159,7 +162,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Now this identity can read.
+				Identity: testUtils.ClientIdentity(2), // Now this identity can read.
 
 				Request: `
 					query {
@@ -185,7 +188,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 			testUtils.UpdateDoc{ // But this actor still can't update.
 				CollectionID: 0,
 
-				Identity: immutable.Some(2),
+				Identity: testUtils.ClientIdentity(2),
 
 				DocID: 0,
 

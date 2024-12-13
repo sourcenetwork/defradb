@@ -30,16 +30,11 @@ type PropertyIndex struct {
 	Index int
 }
 
-func (k *PropertyIndex) GetProp(data any) any {
+func (k *PropertyIndex) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
 	if data == nil {
-		return nil
+		return nil, defaultOp, nil
 	}
-
-	return data.(core.Doc).Fields[k.Index]
-}
-
-func (k *PropertyIndex) GetOperatorOrDefault(defaultOp string) string {
-	return defaultOp
+	return data.(core.Doc).Fields[k.Index], defaultOp, nil
 }
 
 func (k *PropertyIndex) Equal(other connor.FilterKey) bool {
@@ -57,12 +52,8 @@ type Operator struct {
 	Operation string
 }
 
-func (k *Operator) GetProp(data any) any {
-	return data
-}
-
-func (k *Operator) GetOperatorOrDefault(defaultOp string) string {
-	return k.Operation
+func (k *Operator) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
+	return data, k.Operation, nil
 }
 
 func (k *Operator) Equal(other connor.FilterKey) bool {
@@ -81,16 +72,15 @@ type ObjectProperty struct {
 	Name string
 }
 
-func (k *ObjectProperty) GetProp(data any) any {
+func (k *ObjectProperty) PropertyAndOperator(data any, defaultOp string) (any, string, error) {
 	if data == nil {
-		return nil
+		return nil, defaultOp, nil
 	}
-	object := data.(map[string]any)
-	return object[k.Name]
-}
-
-func (k *ObjectProperty) GetOperatorOrDefault(defaultOp string) string {
-	return defaultOp
+	docMap, ok := data.(map[string]any)
+	if !ok {
+		return nil, defaultOp, NewErrFieldOrAliasNotFound(k.Name)
+	}
+	return docMap[k.Name], defaultOp, nil
 }
 
 func (k *ObjectProperty) Equal(other connor.FilterKey) bool {
@@ -165,7 +155,7 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 					logicMapEntries[i] = filterObjectToMap(mapping, itemMap)
 				}
 				outmap[keyType.Operation] = logicMapEntries
-			case request.FilterOpNot:
+			case request.FilterOpNot, request.AliasFieldName:
 				itemMap, ok := v.(map[connor.FilterKey]any)
 				if ok {
 					outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)

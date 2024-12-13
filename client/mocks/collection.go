@@ -73,7 +73,7 @@ func (_c *Collection_Create_Call) RunAndReturn(run func(context.Context, *client
 }
 
 // CreateIndex provides a mock function with given fields: _a0, _a1
-func (_m *Collection) CreateIndex(_a0 context.Context, _a1 client.IndexDescription) (client.IndexDescription, error) {
+func (_m *Collection) CreateIndex(_a0 context.Context, _a1 client.IndexDescriptionCreateRequest) (client.IndexDescription, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -82,16 +82,16 @@ func (_m *Collection) CreateIndex(_a0 context.Context, _a1 client.IndexDescripti
 
 	var r0 client.IndexDescription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.IndexDescription) (client.IndexDescription, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.IndexDescriptionCreateRequest) (client.IndexDescription, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.IndexDescription) client.IndexDescription); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.IndexDescriptionCreateRequest) client.IndexDescription); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(client.IndexDescription)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.IndexDescription) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, client.IndexDescriptionCreateRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -107,14 +107,14 @@ type Collection_CreateIndex_Call struct {
 
 // CreateIndex is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 client.IndexDescription
+//   - _a1 client.IndexDescriptionCreateRequest
 func (_e *Collection_Expecter) CreateIndex(_a0 interface{}, _a1 interface{}) *Collection_CreateIndex_Call {
 	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex", _a0, _a1)}
 }
 
-func (_c *Collection_CreateIndex_Call) Run(run func(_a0 context.Context, _a1 client.IndexDescription)) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) Run(run func(_a0 context.Context, _a1 client.IndexDescriptionCreateRequest)) *Collection_CreateIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.IndexDescription))
+		run(args[0].(context.Context), args[1].(client.IndexDescriptionCreateRequest))
 	})
 	return _c
 }
@@ -124,7 +124,7 @@ func (_c *Collection_CreateIndex_Call) Return(_a0 client.IndexDescription, _a1 e
 	return _c
 }
 
-func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context.Context, client.IndexDescription) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context.Context, client.IndexDescriptionCreateRequest) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }

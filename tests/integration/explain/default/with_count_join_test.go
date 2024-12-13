@@ -84,11 +84,8 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 							"filter":         nil,
 							"collectionID":   "3",
 							"collectionName": "Author",
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -100,11 +97,8 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 							"filter":         nil,
 							"collectionID":   "2",
 							"collectionName": "Book",
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},
@@ -195,11 +189,8 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -211,11 +202,8 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 							"collectionID":   "2",
 							"collectionName": "Book",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/2",
-									"end":   "/3",
-								},
+							"prefixes": []string{
+								"/2",
 							},
 						},
 					},
@@ -237,11 +225,8 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -253,11 +238,8 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 							"collectionID":   "1",
 							"collectionName": "Article",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/1",
-									"end":   "/2",
-								},
+							"prefixes": []string{
+								"/1",
 							},
 						},
 					},

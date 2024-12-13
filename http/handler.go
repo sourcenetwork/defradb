@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -21,6 +20,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 )
+
+// Global variable for the development mode flag
+// This is checked by the http/handler_extras.go/Purge function to determine which response to send
+var IsDevMode bool = false
 
 // Version is the identifier for the current API version.
 var Version string = "v0"
@@ -100,9 +103,10 @@ func NewHandler(db client.DB) (*Handler, error) {
 func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
 	tx, ok := h.txs.Load(id)
 	if !ok {
-		return nil, fmt.Errorf("invalid transaction id")
+		return nil, ErrInvalidTransactionId
 	}
-	return tx.(datastore.Txn), nil
+
+	return mustGetDataStoreTxn(tx), nil
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

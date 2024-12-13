@@ -208,8 +208,12 @@ func toSelect(
 		}
 	}
 
+	targetable, err := toTargetable(thisIndex, selectRequest, mapping)
+	if err != nil {
+		return nil, err
+	}
 	return &Select{
-		Targetable:      toTargetable(thisIndex, selectRequest, mapping),
+		Targetable:      targetable,
 		DocumentMapping: mapping,
 		Cid:             selectRequest.CID,
 		CollectionName:  collectionName,
@@ -239,6 +243,11 @@ outer:
 	for _, condition := range source.Value().Conditions {
 		fields := condition.Fields[:] // copy slice
 		for {
+			// alias fields are guaranteed to be resolved
+			// because they refer to existing fields
+			if fields[0] == request.AliasFieldName {
+				continue outer
+			}
 			numFields := len(fields)
 			// <2 fields: Direct field on the root type: {age: DESC}
 			// 2 fields: Single depth related type: {author: {age: DESC}}
@@ -405,11 +414,15 @@ func resolveAggregates(
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
 					childMapping := mapping.ChildMappings[childObjectIndex]
 					convertedFilter = ToFilter(target.filter.Value(), childMapping)
+					orderBy, err := toOrderBy(target.order, childMapping)
+					if err != nil {
+						return nil, err
+					}
 					host, hasHost = tryGetTarget(
 						target.hostExternalName,
 						convertedFilter,
 						target.limit,
-						toOrderBy(target.order, childMapping),
+						orderBy,
 						fields,
 					)
 				}
@@ -479,7 +492,10 @@ func resolveAggregates(
 				// If the child was not mapped, the filter will not have been converted yet
 				// so we must do that now.
 				convertedFilter = ToFilter(target.filter.Value(), mapping.ChildMappings[index])
-
+				orderBy, err := toOrderBy(target.order, childMapping)
+				if err != nil {
+					return nil, err
+				}
 				dummyJoin := &Select{
 					Targetable: Targetable{
 						Field: Field{
@@ -488,7 +504,7 @@ func resolveAggregates(
 						},
 						Filter:  convertedFilter,
 						Limit:   target.limit,
-						OrderBy: toOrderBy(target.order, childMapping),
+						OrderBy: orderBy,
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: childMapping,
@@ -992,6 +1008,12 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key, value := range source {
+		// alias fields are guaranteed to be resolved
+		// because they refer to existing fields
+		if key == request.AliasFieldName {
+			continue
+		}
+
 		if key == request.FilterOpAnd || key == request.FilterOpOr {
 			if value == nil {
 				continue
@@ -1284,16 +1306,20 @@ func toMutation(
 	}, nil
 }
 
-func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
+func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) (Targetable, error) {
+	orderBy, err := toOrderBy(selectRequest.OrderBy, docMap)
+	if err != nil {
+		return Targetable{}, err
+	}
 	return Targetable{
 		Field:       toField(index, selectRequest),
 		DocIDs:      selectRequest.DocIDs,
 		Filter:      ToFilter(selectRequest.Filter.Value(), docMap),
 		Limit:       toLimit(selectRequest.Limit, selectRequest.Offset),
 		GroupBy:     toGroupBy(selectRequest.GroupBy, docMap),
-		OrderBy:     toOrderBy(selectRequest.OrderBy, docMap),
+		OrderBy:     orderBy,
 		ShowDeleted: selectRequest.ShowDeleted,
-	}
+	}, nil
 }
 
 func toField(index int, selectRequest *request.Select) Field {
@@ -1335,8 +1361,27 @@ func toFilterKeyValue(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
+	var propIndex = -1
+	if mapping != nil {
+		// if we have a mapping available check if the
+		// source key is a field or alias (render key)
+		if indexes, ok := mapping.IndexesByName[sourceKey]; ok {
+			// If there are multiple properties of the same name we can just take the first as
+			// we have no other reasonable way of identifying which property they mean if multiple
+			// consumer specified requestables are available.  Aggregate dependencies should not
+			// impact this as they are added after selects.
+			propIndex = indexes[0]
+		} else if index, ok := mapping.TryToFindIndexFromRenderKey(sourceKey); ok {
+			propIndex = index
+		}
+	}
+
 	var returnKey connor.FilterKey
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
+	if propIndex >= 0 {
+		returnKey = &PropertyIndex{
+			Index: propIndex,
+		}
+	} else if strings.HasPrefix(sourceKey, "_") {
 		returnKey = &Operator{
 			Operation: sourceKey,
 		}
@@ -1344,14 +1389,6 @@ func toFilterKeyValue(
 		// it does not require further expansion
 		if connor.IsOpSimple(sourceKey) {
 			return returnKey, sourceClause
-		}
-	} else if mapping != nil && len(mapping.IndexesByName[sourceKey]) > 0 {
-		// If there are multiple properties of the same name we can just take the first as
-		// we have no other reasonable way of identifying which property they mean if multiple
-		// consumer specified requestables are available.  Aggregate dependencies should not
-		// impact this as they are added after selects.
-		returnKey = &PropertyIndex{
-			Index: mapping.FirstIndexOfName(sourceKey),
 		}
 	} else {
 		returnKey = &ObjectProperty{
@@ -1466,23 +1503,37 @@ func toGroupBy(source immutable.Option[request.GroupBy], mapping *core.DocumentM
 	}
 }
 
-func toOrderBy(source immutable.Option[request.OrderBy], mapping *core.DocumentMapping) *OrderBy {
+func toOrderBy(source immutable.Option[request.OrderBy], mapping *core.DocumentMapping) (*OrderBy, error) {
 	if !source.HasValue() {
-		return nil
+		return nil, nil
 	}
 
 	conditions := make([]OrderCondition, len(source.Value().Conditions))
 	for conditionIndex, condition := range source.Value().Conditions {
-		fieldIndexes := make([]int, len(condition.Fields))
+		fieldIndexes := make([]int, 0)
 		currentMapping := mapping
-		for fieldIndex, field := range condition.Fields {
-			// If there are multiple properties of the same name we can just take the first as
-			// we have no other reasonable way of identifying which property they mean if multiple
-			// consumer specified requestables are available.  Aggregate dependencies should not
-			// impact this as they are added after selects.
-			firstFieldIndex := currentMapping.FirstIndexOfName(field)
-			fieldIndexes[fieldIndex] = firstFieldIndex
-			if fieldIndex != len(condition.Fields)-1 {
+		for _, field := range condition.Fields {
+			// flatten alias fields
+			if field == request.AliasFieldName {
+				continue
+			}
+			var firstFieldIndex int
+			// if we have a mapping available check if the
+			// source key is a field or alias (render key)
+			if indexes, ok := currentMapping.IndexesByName[field]; ok {
+				// If there are multiple properties of the same name we can just take the first as
+				// we have no other reasonable way of identifying which property they mean if multiple
+				// consumer specified requestables are available.  Aggregate dependencies should not
+				// impact this as they are added after selects.
+				firstFieldIndex = indexes[0]
+			} else if index, ok := currentMapping.TryToFindIndexFromRenderKey(field); ok {
+				firstFieldIndex = index
+			} else {
+				return nil, NewErrFieldOrAliasNotFound(field)
+			}
+
+			fieldIndexes = append(fieldIndexes, firstFieldIndex)
+			if firstFieldIndex < len(currentMapping.ChildMappings) {
 				// no need to do this for the last (and will panic)
 				currentMapping = currentMapping.ChildMappings[firstFieldIndex]
 			}
@@ -1496,7 +1547,7 @@ func toOrderBy(source immutable.Option[request.OrderBy], mapping *core.DocumentM
 
 	return &OrderBy{
 		Conditions: conditions,
-	}
+	}, nil
 }
 
 // RunFilter runs the given filter expression

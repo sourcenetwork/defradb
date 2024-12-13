@@ -113,6 +113,7 @@ linters:
     - errcheck
     - errorlint
     - forbidigo
+    - forcetypeassert
     - goconst
     - gofmt
     - goheader
@@ -150,6 +151,69 @@ issues:
     - path: "(net|datastore/badger/v4/compat_logger.go|datastore/badger/v4/datastore.go|connor|encoding)"
       linters:
         - goheader
+
+    # Exclude running force type assert check in these file paths, we are ignoring these files for now
+    # because there are many linter complaints in them, we want to resolve all of them eventually.
+    # TODO: https://github.com/sourcenetwork/defradb/issues/3154
+    # Note: The last item must not have a `|` at the end otherwise linter ignores everyfile.
+    - path: "(\
+             client/document.go|\
+             client/normal_value_test.go|\
+             net/grpc.go|\
+             node/store_badger.go|\
+             internal/connor/eq.go|\
+             internal/core/block/block.go|\
+             internal/core/block/block_test.go|\
+             internal/core/key_test.go|\
+             internal/core/view_item.go|\
+             internal/db/backup.go|\
+             internal/db/base/compare.go|\
+             internal/db/collection.go|\
+             internal/db/context.go|\
+             internal/db/fetcher/indexer_iterators.go|\
+             internal/db/index_test.go|\
+             internal/db/indexed_docs_test.go|\
+             internal/db/merge.go|\
+             internal/db/merge_test.go|\
+             internal/db/p2p_replicator.go|\
+             internal/db/p2p_replicator_test.go|\
+             internal/db/p2p_schema_root.go|\
+             internal/db/p2p_schema_root_test.go|\
+             internal/lens/fetcher.go|\
+             internal/merkle/clock/clock.go|\
+             internal/merkle/crdt/merklecrdt.go|\
+             internal/planner/arbitrary_join.go|\
+             internal/planner/filter/complex.go|\
+             internal/planner/filter/copy.go|\
+             internal/planner/filter/copy_field.go|\
+             internal/planner/filter/copy_test.go|\
+             internal/planner/filter/extract_properties.go|\
+             internal/planner/filter/normalize.go|\
+             internal/planner/filter/unwrap_relation.go|\
+             internal/planner/group.go|\
+             internal/planner/lens.go|\
+             internal/planner/mapper/mapper.go|\
+             internal/planner/mapper/targetable.go|\
+             internal/planner/planner.go|\
+             internal/planner/sum.go|\
+             internal/planner/view.go|\
+             internal/request/graphql/parser/commit.go|\
+             internal/request/graphql/parser/filter.go|\
+             internal/request/graphql/parser/mutation.go|\
+             internal/request/graphql/parser/query.go|\
+             internal/request/graphql/parser/request.go|\
+             internal/request/graphql/schema/collection.go|\
+             internal/request/graphql/schema/generate.go|\
+             tests/gen|\
+             tests/integration/utils.go|\
+             tests/integration/explain.go|\
+             tests/integration/events.go|\
+             tests/integration/acp.go|\
+             tests/integration/schema/default_fields.go|\
+             tests/predefined/gen_predefined.go\
+             )"
+      linters:
+        - forcetypeassert
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all

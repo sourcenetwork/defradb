@@ -87,11 +87,8 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 									"_eq": "Bob",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"end":   "/4",
-									"start": "/3",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},

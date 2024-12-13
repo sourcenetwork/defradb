@@ -38,9 +38,9 @@ Example:
 			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
-			rep := client.Replicator{
-				Info:    info,
-				Schemas: collections,
+			rep := client.ReplicatorParams{
+				Info:        info,
+				Collections: collections,
 			}
 			return p2p.SetReplicator(cmd.Context(), rep)
 		},

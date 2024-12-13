@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -98,7 +99,7 @@ func (n *orderNode) Init() error {
 }
 func (n *orderNode) Start() error { return n.plan.Start() }
 
-func (n *orderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *orderNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
 
 func (n *orderNode) Value() core.Doc {
 	return n.valueIter.Value()

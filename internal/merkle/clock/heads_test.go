@@ -22,8 +22,8 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func newRandomCID() cid.Cid {
@@ -45,7 +45,7 @@ func newHeadSet() *heads {
 
 	return NewHeadSet(
 		datastore.AsDSReaderWriter(s),
-		core.HeadStoreKey{}.WithDocID("myDocID").WithFieldID("1"),
+		keys.HeadstoreDocKey{}.WithDocID("myDocID").WithFieldID("1"),
 	)
 }
 

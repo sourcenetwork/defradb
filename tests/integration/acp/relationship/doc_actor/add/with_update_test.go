@@ -26,15 +26,17 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 
 		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -98,7 +100,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -111,7 +113,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -131,7 +133,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not update yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
 
 				DocID: 0,
 
@@ -145,9 +147,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -159,9 +161,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -184,15 +186,17 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 
 		Description: "Test acp, owner gives write(update) access to another actor",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -256,7 +260,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -269,7 +273,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -289,7 +293,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not update yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
 
 				DocID: 0,
 
@@ -303,9 +307,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -319,7 +323,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can now update.
+				Identity: testUtils.ClientIdentity(2), // This identity can now update.
 
 				DocID: 0,
 
@@ -331,7 +335,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can now also read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `
 					query {
@@ -369,7 +373,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -433,7 +437,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -446,9 +450,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -462,7 +466,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can now update.
+				Identity: testUtils.ClientIdentity(2), // This identity can now update.
 
 				DocID: 0,
 
@@ -474,7 +478,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can now also read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `
 					query {
@@ -500,7 +504,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(1), // Owner can still also update (ownership not transferred)
+				Identity: testUtils.ClientIdentity(1), // Owner can still also update (ownership not transferred)
 
 				DocID: 0,
 
@@ -512,7 +516,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Owner can still also read (ownership not transferred)
+				Identity: testUtils.ClientIdentity(2), // Owner can still also read (ownership not transferred)
 
 				Request: `
 					query {

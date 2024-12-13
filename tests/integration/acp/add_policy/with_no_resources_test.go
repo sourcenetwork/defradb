@@ -27,7 +27,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -56,7 +56,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -85,7 +85,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 		}),
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: " ",
 

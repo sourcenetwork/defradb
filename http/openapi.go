@@ -15,6 +15,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -31,10 +32,12 @@ var openApiSchemas = map[string]any{
 	"schema":                          &client.SchemaDescription{},
 	"collection_definition":           &client.CollectionDefinition{},
 	"index":                           &client.IndexDescription{},
+	"index_create_request":            &client.IndexDescriptionCreateRequest{},
 	"delete_result":                   &client.DeleteResult{},
 	"update_result":                   &client.UpdateResult{},
 	"lens_config":                     &client.LensConfig{},
 	"replicator":                      &client.Replicator{},
+	"replicator_params":               &client.ReplicatorParams{},
 	"ccip_request":                    &CCIPRequest{},
 	"ccip_response":                   &CCIPResponse{},
 	"patch_schema_request":            &patchSchemaRequest{},
@@ -46,6 +49,7 @@ var openApiSchemas = map[string]any{
 	"acp_relationship_add_result":     &client.AddDocActorRelationshipResult{},
 	"acp_relationship_delete_request": &deleteDocActorRelationshipRequest{},
 	"acp_relationship_delete_result":  &client.DeleteDocActorRelationshipResult{},
+	"identity":                        &identity.PublicRawIdentity{},
 }
 
 func NewOpenAPISpec() (*openapi3.T, error) {
@@ -108,7 +112,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Servers: openapi3.Servers{
 			&openapi3.Server{
 				Description: "Local DefraDB instance",
-				URL:         "http://localhost:9181/api/v0",
+				URL:         "/api/v0",
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{

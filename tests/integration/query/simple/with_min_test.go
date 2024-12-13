@@ -127,3 +127,21 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithAliasedMinOnEmptyCollection_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query aliased min on empty",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					minimum: _min(Users: {field: Age})
+				}`,
+				Results: map[string]any{
+					"minimum": nil,
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

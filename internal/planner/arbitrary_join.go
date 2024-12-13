@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -79,13 +80,13 @@ func (n *dataSource) Start() error {
 	return nil
 }
 
-func (n *dataSource) Spans(spans core.Spans) {
+func (n *dataSource) Prefixes(prefixes []keys.Walkable) {
 	if n.parentSource != nil {
-		n.parentSource.Spans(spans)
+		n.parentSource.Prefixes(prefixes)
 	}
 
 	if n.childSource != nil {
-		n.childSource.Spans(spans)
+		n.childSource.Prefixes(prefixes)
 	}
 }
 

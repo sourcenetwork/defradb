@@ -12,6 +12,7 @@ package tests
 
 import (
 	"testing"
+	"time"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
@@ -293,7 +294,10 @@ type CreateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[identity]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -362,7 +366,10 @@ type DeleteDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -392,7 +399,10 @@ type UpdateDoc struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -432,7 +442,10 @@ type UpdateWithFilter struct {
 	//
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -586,7 +599,10 @@ type Request struct {
 	//
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
-	Identity immutable.Option[int]
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -777,4 +793,23 @@ type BackupImport struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+}
+
+// GetNodeIdentity is an action that calls the [DB.GetNodeIdentity] method and asserts the result.
+// It checks if a node at the given index has an identity matching another identity under the same index.
+type GetNodeIdentity struct {
+	// NodeID holds the ID (index) of a node to get the identity from.
+	NodeID int
+
+	// ExpectedIdentity holds the identity that is expected to be found.
+	//
+	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	ExpectedIdentity immutable.Option[identity]
+}
+
+// Wait is an action that will wait for the given duration.
+type Wait struct {
+	// Duration is the duration to wait.
+	Duration time.Duration
 }

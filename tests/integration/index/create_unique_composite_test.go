@@ -178,3 +178,79 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "create unique composite index if all docs have unique fields combinations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int 
+						email: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21,
+						"email": "some@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	35,
+						"email": "another@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy",
+						"age":	35,
+						"email": "different@gmail.com"
+					}`,
+			},
+			testUtils.CreateIndex{
+				CollectionID: 0,
+				Fields:       []testUtils.IndexedField{{Name: "name", Descending: true}, {Name: "age", Descending: false}, {Name: "email"}},
+				IndexName:    "name_age_unique_index",
+				Unique:       true,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "name_age_unique_index",
+						ID:     1,
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "name",
+								Descending: true,
+							},
+							{
+								Name:       "age",
+								Descending: false,
+							},
+							{
+								Name:       "email",
+								Descending: false,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

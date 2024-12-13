@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/internal/db/fetcher/mocks"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -154,8 +155,8 @@ func (b *indexKeyBuilder) Unique() *indexKeyBuilder {
 	return b
 }
 
-func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
-	key := core.IndexDataStoreKey{}
+func (b *indexKeyBuilder) Build() keys.IndexDataStoreKey {
+	key := keys.IndexDataStoreKey{}
 
 	if b.colName == "" {
 		return key
@@ -238,11 +239,11 @@ indexLoop:
 			if i < len(b.descendingFields) {
 				descending = b.descendingFields[i]
 			}
-			key.Fields = append(key.Fields, core.IndexedField{Value: val, Descending: descending})
+			key.Fields = append(key.Fields, keys.IndexedField{Value: val, Descending: descending})
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.Fields = append(key.Fields, core.IndexedField{Value: client.NewNormalString(b.doc.ID().String())})
+			key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(b.doc.ID().String())})
 		}
 	}
 
@@ -283,11 +284,16 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 		f.users = f.addUsersCollection()
 	}
 	desc := getUsersIndexDescOnName()
-	desc.ID = 1
-	indexOnNameDescData, err := json.Marshal(desc)
+	descWithID := client.IndexDescription{
+		Name:   desc.Name,
+		ID:     1,
+		Fields: desc.Fields,
+		Unique: desc.Unique,
+	}
+	indexOnNameDescData, err := json.Marshal(descWithID)
 	require.NoError(f.t, err)
 
-	colIndexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "")
+	colIndexKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), "")
 	matchPrefixFunc := func(q query.Query) bool {
 		return q.Prefix == colIndexKey.ToDS().String()
 	}
@@ -301,11 +307,11 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	colIndexOnNameKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), testUsersColIndexName)
+	colIndexOnNameKey := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
 	if f.users != nil {
-		sequenceKey := core.NewIndexIDSequenceKey(f.users.ID())
+		sequenceKey := keys.NewIndexIDSequenceKey(f.users.ID())
 		systemStoreOn.Get(mock.Anything, sequenceKey.ToDS()).Maybe().Return([]byte{0, 0, 0, 0, 0, 0, 0, 1}, nil)
 	}
 
@@ -684,7 +690,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
-	fieldKeyString := core.DataStoreKey{
+	fieldKeyString := keys.DataStoreKey{
 		CollectionRootID: f.users.Description().RootID,
 	}.WithDocID(doc.ID().String()).
 		WithFieldID("1").
@@ -1512,13 +1518,12 @@ func TestArrayIndex_With2ArrayFieldsIfDocIsDeleted_ShouldRemoveIndex(t *testing.
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexDesc := client.IndexDescription{
+	indexDesc := client.IndexDescriptionCreateRequest{
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},
 			{Name: usersHobbiesFieldName},
 		},
 	}
-
 	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
 	require.NoError(f.t, err)
 
@@ -1540,7 +1545,7 @@ func TestArrayIndex_With2ArrayFieldsIfDocIsDeletedButOneArrayElementHasNoIndexRe
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexDesc := client.IndexDescription{
+	indexDesc := client.IndexDescriptionCreateRequest{
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},
 			{Name: usersHobbiesFieldName},
@@ -1571,7 +1576,7 @@ func TestArrayIndex_WithUniqueIndexIfDocIsDeleted_ShouldRemoveIndex(t *testing.T
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indexDesc := client.IndexDescription{
+	indexDesc := client.IndexDescriptionCreateRequest{
 		Unique: true,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},

@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -77,9 +78,9 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return info
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	args := []string{"client", "p2p", "replicator", "set"}
-	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
+	args = append(args, "--collection", strings.Join(rep.Collections, ","))
 
 	info, err := json.Marshal(rep.Info)
 	if err != nil {
@@ -91,9 +92,9 @@ func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) erro
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
-	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
+	args = append(args, "--collection", strings.Join(rep.Collections, ","))
 
 	info, err := json.Marshal(rep.Info)
 	if err != nil {
@@ -550,7 +551,10 @@ func (w *Wrapper) MaxTxnRetries() int {
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return w.node.DB.PrintDump(ctx)
+	args := []string{"dump"}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
@@ -559,4 +563,18 @@ func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
 
 func (w *Wrapper) Host() string {
 	return w.httpServer.URL
+}
+
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	args := []string{"client", "node-identity"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return immutable.None[identity.PublicRawIdentity](), err
+	}
+	var res identity.PublicRawIdentity
+	if err := json.Unmarshal(data, &res); err != nil {
+		return immutable.None[identity.PublicRawIdentity](), err
+	}
+	return immutable.Some(res), nil
 }

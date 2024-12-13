@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func TestNewServerSimple(t *testing.T) {
@@ -74,7 +75,7 @@ func TestGetHeadLog(t *testing.T) {
 }
 
 func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
-	prefix := core.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToString()
+	prefix := keys.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToString()
 	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return cid.Undef, err
@@ -85,7 +86,7 @@ func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, er
 	}
 
 	if len(entries) > 0 {
-		hsKey, err := core.NewHeadStoreKey(entries[0].Key)
+		hsKey, err := keys.NewHeadstoreDocKey(entries[0].Key)
 		if err != nil {
 			return cid.Undef, err
 		}

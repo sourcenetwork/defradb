@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -126,8 +127,8 @@ historyLoop:
 	)
 }
 
-func (f *lensedFetcher) Start(ctx context.Context, spans core.Spans) error {
-	return f.source.Start(ctx, spans)
+func (f *lensedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
+	return f.source.Start(ctx, prefixes...)
 }
 
 func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error) {
@@ -294,10 +295,10 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		return core.ErrInvalidKey
 	}
 
-	datastoreKeyBase := core.DataStoreKey{
+	datastoreKeyBase := keys.DataStoreKey{
 		CollectionRootID: f.col.Description().RootID,
 		DocID:            docID,
-		InstanceType:     core.ValueKey,
+		InstanceType:     keys.ValueKey,
 	}
 
 	for fieldName, value := range modifiedFieldValuesByName {
@@ -320,7 +321,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 	}
 
-	versionKey := datastoreKeyBase.WithFieldID(core.DATASTORE_DOC_VERSION_FIELD_ID)
+	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
 	if err != nil {
 		return err

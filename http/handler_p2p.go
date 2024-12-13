@@ -21,7 +21,7 @@ import (
 type p2pHandler struct{}
 
 func (s *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -30,13 +30,13 @@ func (s *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
 
-	var rep client.Replicator
+	var rep client.ReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -50,13 +50,13 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
 
-	var rep client.Replicator
+	var rep client.ReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -70,7 +70,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 }
 
 func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -85,7 +85,7 @@ func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 }
 
 func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -105,7 +105,7 @@ func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request)
 }
 
 func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -125,7 +125,7 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 }
 
 func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := tryGetContextClientP2P(req)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -151,6 +151,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	}
 	replicatorSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/replicator",
+	}
+	replicatorParamsSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/replicator_params",
 	}
 
 	peerInfoResponse := openapi3.NewResponse().
@@ -178,7 +181,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 
 	replicatorRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorParamsSchema))
 
 	setReplicator := openapi3.NewOperation()
 	setReplicator.Description = "Add peer replicators"

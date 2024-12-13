@@ -13,7 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -28,6 +28,8 @@ type averageNode struct {
 	virtualFieldIndex int
 
 	execInfo averageExecInfo
+
+	aggregateFilter *mapper.Filter
 }
 
 type averageExecInfo struct {
@@ -37,6 +39,7 @@ type averageExecInfo struct {
 
 func (p *Planner) Average(
 	field *mapper.Aggregate,
+	filter *mapper.Filter,
 ) (*averageNode, error) {
 	var sumField *mapper.Aggregate
 	var countField *mapper.Aggregate
@@ -57,6 +60,7 @@ func (p *Planner) Average(
 		countFieldIndex:   countField.Index,
 		virtualFieldIndex: field.Index,
 		docMapper:         docMapper{field.DocumentMapping},
+		aggregateFilter:   filter,
 	}, nil
 }
 
@@ -64,45 +68,54 @@ func (n *averageNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *averageNode) Kind() string           { return "averageNode" }
-func (n *averageNode) Start() error           { return n.plan.Start() }
-func (n *averageNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *averageNode) Close() error           { return n.plan.Close() }
-func (n *averageNode) Source() planNode       { return n.plan }
+func (n *averageNode) Kind() string                      { return "averageNode" }
+func (n *averageNode) Start() error                      { return n.plan.Start() }
+func (n *averageNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
+func (n *averageNode) Close() error                      { return n.plan.Close() }
+func (n *averageNode) Source() planNode                  { return n.plan }
 
 func (n *averageNode) Next() (bool, error) {
-	n.execInfo.iterations++
+	for {
+		n.execInfo.iterations++
 
-	hasNext, err := n.plan.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
-	}
+		hasNext, err := n.plan.Next()
+		if err != nil || !hasNext {
+			return hasNext, err
+		}
 
-	n.currentValue = n.plan.Value()
+		n.currentValue = n.plan.Value()
 
-	countProp := n.currentValue.Fields[n.countFieldIndex]
-	typedCount, isInt := countProp.(int)
-	if !isInt {
-		return false, client.NewErrUnexpectedType[int]("count", countProp)
-	}
-	count := typedCount
+		countProp := n.currentValue.Fields[n.countFieldIndex]
+		typedCount, isInt := countProp.(int)
+		if !isInt {
+			return false, client.NewErrUnexpectedType[int]("count", countProp)
+		}
+		count := typedCount
 
-	if count == 0 {
-		n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
+		if count == 0 {
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
+			return true, nil
+		}
+
+		sumProp := n.currentValue.Fields[n.sumFieldIndex]
+		switch sum := sumProp.(type) {
+		case float64:
+			n.currentValue.Fields[n.virtualFieldIndex] = sum / float64(count)
+		case int64:
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
+		default:
+			return false, client.NewErrUnhandledType("sum", sumProp)
+		}
+
+		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)
+		if err != nil {
+			return false, err
+		}
+		if !passes {
+			continue
+		}
 		return true, nil
 	}
-
-	sumProp := n.currentValue.Fields[n.sumFieldIndex]
-	switch sum := sumProp.(type) {
-	case float64:
-		n.currentValue.Fields[n.virtualFieldIndex] = sum / float64(count)
-	case int64:
-		n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
-	default:
-		return false, client.NewErrUnhandledType("sum", sumProp)
-	}
-
-	return true, nil
 }
 
 func (n *averageNode) SetPlan(p planNode) { n.plan = p }

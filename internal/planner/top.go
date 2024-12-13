@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -35,7 +36,7 @@ type topLevelNode struct {
 	isInRecurse bool
 }
 
-func (n *topLevelNode) Spans(spans core.Spans) {
+func (n *topLevelNode) Prefixes(prefixes []keys.Walkable) {
 	if n.isInRecurse {
 		return
 	}
@@ -45,7 +46,7 @@ func (n *topLevelNode) Spans(spans core.Spans) {
 	}()
 
 	for _, child := range n.children {
-		child.Spans(spans)
+		child.Prefixes(prefixes)
 	}
 }
 
@@ -198,15 +199,15 @@ func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 			var err error
 			switch field.GetName() {
 			case request.CountFieldName:
-				child, err = p.Count(f, m)
+				child, err = p.Count(f, m, nil)
 			case request.SumFieldName:
-				child, err = p.Sum(f, m)
+				child, err = p.Sum(f, m, nil)
 			case request.AverageFieldName:
-				child, err = p.Average(f)
+				child, err = p.Average(f, nil)
 			case request.MaxFieldName:
-				child, err = p.Max(f, m)
+				child, err = p.Max(f, m, nil)
 			case request.MinFieldName:
-				child, err = p.Min(f, m)
+				child, err = p.Min(f, m, nil)
 			}
 			if err != nil {
 				return nil, err

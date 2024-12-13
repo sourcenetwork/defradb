@@ -58,11 +58,8 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"cid":     nil,
 							"fieldId": "1",
-							"spans": []dataMap{
-								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
-								},
+							"prefixes": []string{
+								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
 							},
 						},
 					},
@@ -101,11 +98,8 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"cid":     nil,
 							"fieldId": nil,
-							"spans": []dataMap{
-								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e85",
-								},
+							"prefixes": []string{
+								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
 							},
 						},
 					},
@@ -145,11 +139,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"cid":     nil,
 							"fieldId": "1",
-							"spans": []dataMap{
-								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/2",
-								},
+							"prefixes": []string{
+								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
 							},
 						},
 					},
@@ -189,11 +180,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"cid":     nil,
 							"fieldId": "C",
-							"spans": []dataMap{
-								{
-									"start": "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
-									"end":   "/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/D",
-								},
+							"prefixes": []string{
+								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
 							},
 						},
 					},

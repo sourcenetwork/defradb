@@ -133,7 +133,10 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// Decrypted is a list of document indexes that are expected to be merged and synced decrypted.
+	Decrypted []int
+}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
@@ -153,8 +156,8 @@ func connectPeers(
 	err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
 	require.NoError(s.t, err)
 
-	s.nodeP2P[cfg.SourceNodeID].connections[cfg.TargetNodeID] = struct{}{}
-	s.nodeP2P[cfg.TargetNodeID].connections[cfg.SourceNodeID] = struct{}{}
+	s.nodes[cfg.SourceNodeID].p2p.connections[cfg.TargetNodeID] = struct{}{}
+	s.nodes[cfg.TargetNodeID].p2p.connections[cfg.SourceNodeID] = struct{}{}
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
@@ -174,7 +177,7 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
+	err := sourceNode.SetReplicator(s.ctx, client.ReplicatorParams{
 		Info: targetNode.PeerInfo(),
 	})
 
@@ -193,7 +196,7 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+	err := sourceNode.DeleteReplicator(s.ctx, client.ReplicatorParams{
 		Info: targetNode.PeerInfo(),
 	})
 	require.NoError(s.t, err)
@@ -216,7 +219,7 @@ func subscribeToCollection(
 			continue
 		}
 
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
@@ -250,7 +253,7 @@ func unsubscribeToCollection(
 			continue
 		}
 
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
@@ -278,7 +281,7 @@ func getAllP2PCollections(
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
-		col := s.collections[action.NodeID][collectionIndex]
+		col := s.nodes[action.NodeID].collections[collectionIndex]
 		expectedCollections = append(expectedCollections, col.SchemaRoot())
 	}
 
@@ -291,8 +294,8 @@ func getAllP2PCollections(
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
 func reconnectPeers(s *state) {
-	for i, n := range s.nodeP2P {
-		for j := range n.connections {
+	for i, n := range s.nodes {
+		for j := range n.p2p.connections {
 			sourceNode := s.nodes[i]
 			targetNode := s.nodes[j]
 

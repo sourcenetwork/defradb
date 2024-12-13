@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/container"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -46,9 +47,9 @@ func (p *Planner) newContainerValuesNode(ordering []mapper.OrderCondition) *valu
 	}
 }
 
-func (n *valuesNode) Init() error            { return nil }
-func (n *valuesNode) Start() error           { return nil }
-func (n *valuesNode) Spans(spans core.Spans) {}
+func (n *valuesNode) Init() error                       { return nil }
+func (n *valuesNode) Start() error                      { return nil }
+func (n *valuesNode) Prefixes(prefixes []keys.Walkable) {}
 
 func (n *valuesNode) Kind() string {
 	return "valuesNode"

@@ -18,7 +18,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -69,7 +70,7 @@ func (n *selectTopNode) Start() error { return n.planNode.Start() }
 
 func (n *selectTopNode) Next() (bool, error) { return n.planNode.Next() }
 
-func (n *selectTopNode) Spans(spans core.Spans) { n.planNode.Spans(spans) }
+func (n *selectTopNode) Prefixes(prefixes []keys.Walkable) { n.planNode.Prefixes(prefixes) }
 
 func (n *selectTopNode) Value() core.Doc { return n.planNode.Value() }
 
@@ -181,8 +182,8 @@ func (n *selectNode) Next() (bool, error) {
 	}
 }
 
-func (n *selectNode) Spans(spans core.Spans) {
-	n.source.Spans(spans)
+func (n *selectNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
 }
 
 func (n *selectNode) Close() error {
@@ -255,32 +256,37 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		origScan.filter = n.filter
 		n.filter = nil
 
-		// If we have both a DocID and a CID, then we need to run
-		// a TimeTravel (History-Traversing Versioned) query, which means
-		// we need to propagate the values to the underlying VersionedFetcher
+		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
+		// query, which means we need to propagate the values to the underlying VersionedFetcher
 		if n.selectReq.Cid.HasValue() {
 			c, err := cid.Decode(n.selectReq.Cid.Value())
 			if err != nil {
 				return nil, err
 			}
-			spans := fetcher.NewVersionedSpan(
-				core.DataStoreKey{DocID: n.selectReq.DocIDs.Value()[0]},
-				c,
-			) // @todo check len
-			origScan.Spans(spans)
+
+			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
+			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
+			// as a prefix. And with this design limitation this is
+			// currently the least bad way of passing the cid in to the fetcher.
+			origScan.Prefixes(
+				[]keys.Walkable{
+					keys.HeadstoreDocKey{
+						Cid: c,
+					},
+				},
+			)
 		} else if n.selectReq.DocIDs.HasValue() {
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
-			// if we have a FindByDocID filter, create a span for it
+			// if we have a FindByDocID filter, create a prefix for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			spans := make([]core.Span, len(n.selectReq.DocIDs.Value()))
+			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
 			for i, docID := range n.selectReq.DocIDs.Value() {
-				docIDIndexKey := base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
-				spans[i] = core.NewSpan(docIDIndexKey, docIDIndexKey.PrefixEnd())
+				prefixes[i] = base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
 			}
-			origScan.Spans(core.NewSpans(spans...))
+			origScan.Prefixes(prefixes)
 		}
 	}
 
@@ -339,18 +345,21 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 		case *mapper.Aggregate:
 			var plan aggregateNode
 			var aggregateError error
+			var aggregateFilter *mapper.Filter
 
+			// extract aggregate filters from the select
+			selectReq.Filter, aggregateFilter = filter.SplitByFields(selectReq.Filter, f.Field)
 			switch f.Name {
 			case request.CountFieldName:
-				plan, aggregateError = n.planner.Count(f, selectReq)
+				plan, aggregateError = n.planner.Count(f, selectReq, aggregateFilter)
 			case request.SumFieldName:
-				plan, aggregateError = n.planner.Sum(f, selectReq)
+				plan, aggregateError = n.planner.Sum(f, selectReq, aggregateFilter)
 			case request.AverageFieldName:
-				plan, aggregateError = n.planner.Average(f)
+				plan, aggregateError = n.planner.Average(f, aggregateFilter)
 			case request.MaxFieldName:
-				plan, aggregateError = n.planner.Max(f, selectReq)
+				plan, aggregateError = n.planner.Max(f, selectReq, aggregateFilter)
 			case request.MinFieldName:
-				plan, aggregateError = n.planner.Min(f, selectReq)
+				plan, aggregateError = n.planner.Min(f, selectReq, aggregateFilter)
 			}
 
 			if aggregateError != nil {

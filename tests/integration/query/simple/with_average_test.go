@@ -95,3 +95,21 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithAliasedAverage_OnEmptyCollection_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, aliased average on empty",
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
+					average: _avg(Users: {field: Age})
+				}`,
+				Results: map[string]any{
+					"average": float64(0),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

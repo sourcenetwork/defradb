@@ -26,15 +26,17 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 
 		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -98,7 +100,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -111,7 +113,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -131,7 +133,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not update yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
 
 				DocID: 0,
 
@@ -145,9 +147,9 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -161,7 +163,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can now update.
+				Identity: testUtils.ClientIdentity(2), // This identity can now update.
 
 				DocID: 0,
 
@@ -173,7 +175,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can now also read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `
 					query {
@@ -211,7 +213,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -275,7 +277,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.CreateDoc{
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
 
@@ -288,7 +290,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can not read yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
 					query {
@@ -308,7 +310,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can not delete yet.
+				Identity: testUtils.ClientIdentity(2), // This identity can not delete yet.
 
 				DocID: 0,
 
@@ -316,9 +318,9 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
@@ -330,7 +332,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // This identity can now read.
+				Identity: testUtils.ClientIdentity(2), // This identity can now read.
 
 				Request: `
 					query {
@@ -356,13 +358,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: immutable.Some(2), // This identity can now delete.
+				Identity: testUtils.ClientIdentity(2), // This identity can now delete.
 
 				DocID: 0,
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Check if actually deleted.
+				Identity: testUtils.ClientIdentity(2), // Check if actually deleted.
 
 				Request: `
 					query {

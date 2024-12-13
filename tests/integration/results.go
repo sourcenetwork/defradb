@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,22 +24,37 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// Validator instances can be substituted in place of concrete values
+// and will be asserted on using their [Validate] function instead of
+// asserting direct equality.
+//
+// They may mutate test state.
+//
+// Todo: This does not currently support chaining/nesting of Validators,
+// although we would like that long term:
+// https://github.com/sourcenetwork/defradb/issues/3189
+type Validator interface {
+	Validate(s *state, actualValue any, msgAndArgs ...any)
+}
+
 // AnyOf may be used as `Results` field where the value may
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
 type AnyOf []any
 
-// assertResultsAnyOf asserts that actual result is equal to at least one of the expected results.
+var _ Validator = (AnyOf)(nil)
+
+// Validate asserts that actual result is equal to at least one of the expected results.
 //
 // The comparison is relaxed when using client types other than goClientType.
-func assertResultsAnyOf(t testing.TB, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
-	switch client {
+func (a AnyOf) Validate(s *state, actualValue any, msgAndArgs ...any) {
+	switch s.clientType {
 	case HTTPClientType, CLIClientType:
-		if !areResultsAnyOf(expected, actual) {
-			assert.Contains(t, expected, actual, msgAndArgs...)
+		if !areResultsAnyOf(a, actualValue) {
+			assert.Contains(s.t, a, actualValue, msgAndArgs...)
 		}
 	default:
-		assert.Contains(t, expected, actual, msgAndArgs...)
+		assert.Contains(s.t, a, actualValue, msgAndArgs...)
 	}
 }
 
@@ -66,6 +82,55 @@ func areResultsAnyOf(expected AnyOf, actual any) bool {
 		}
 	}
 	return false
+}
+
+// UniqueCid allows the referencing of Cids by an arbitrary test-defined ID.
+//
+// Instead of asserting on a specific Cid value, this type will assert that
+// no other [UniqueCid]s with different [ID]s has the first Cid value that this instance
+// describes.
+//
+// It will also ensure that all Cids described by this [UniqueCid] have the same
+// valid, Cid value.
+type UniqueCid struct {
+	// ID is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
+	ID any
+}
+
+var _ Validator = (*UniqueCid)(nil)
+
+// NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
+// id.
+//
+// All results described by [UniqueCid]s with the given id must have the same valid Cid value.
+// No other [UniqueCid] ids may describe the same Cid value.
+func NewUniqueCid(id any) *UniqueCid {
+	return &UniqueCid{
+		ID: id,
+	}
+}
+
+func (ucid *UniqueCid) Validate(s *state, actualValue any, msgAndArgs ...any) {
+	isNew := true
+	for id, value := range s.cids {
+		if id == ucid.ID {
+			require.Equal(s.t, value, actualValue)
+			isNew = false
+		} else {
+			require.NotEqual(s.t, value, actualValue, "UniqueCid must be unique!", msgAndArgs)
+		}
+	}
+
+	if isNew {
+		require.IsType(s.t, "", actualValue)
+
+		cid, err := cid.Decode(actualValue.(string))
+		if err != nil {
+			require.NoError(s.t, err)
+		}
+
+		s.cids[ucid.ID] = cid.String()
+	}
 }
 
 // areResultsEqual returns true if the expected and actual results are of equal value.
@@ -209,6 +274,7 @@ func assertCollectionDescriptions(
 
 		require.Equal(s.t, expected.Name, actual.Name)
 		require.Equal(s.t, expected.IsMaterialized, actual.IsMaterialized)
+		require.Equal(s.t, expected.IsBranchable, actual.IsBranchable)
 
 		if expected.Indexes != nil || len(actual.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.

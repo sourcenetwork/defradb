@@ -13,7 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -67,8 +67,8 @@ func (n *deleteNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *deleteNode) Spans(spans core.Spans) {
-	n.source.Spans(spans)
+func (n *deleteNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
 }
 
 func (n *deleteNode) Kind() string {

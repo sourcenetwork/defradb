@@ -13,9 +13,9 @@ package fetcher
 import (
 	"container/list"
 	"context"
+	"fmt"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
@@ -27,7 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -89,16 +89,11 @@ type VersionedFetcher struct {
 	root  datastore.Rootstore
 	store datastore.Txn
 
-	dsKey   core.DataStoreKey
-	version cid.Cid
-
 	queuedCids *list.List
 
 	acp immutable.Option[acp.ACP]
 
 	col client.Collection
-	// @todo index  *client.IndexDescription
-	mCRDTs map[uint32]merklecrdt.MerkleCRDT
 }
 
 // Init initializes the VersionedFetcher.
@@ -117,7 +112,6 @@ func (vf *VersionedFetcher) Init(
 	vf.acp = acp
 	vf.col = col
 	vf.queuedCids = list.New()
-	vf.mCRDTs = make(map[uint32]merklecrdt.MerkleCRDT)
 	vf.txn = txn
 
 	// create store
@@ -153,59 +147,30 @@ func (vf *VersionedFetcher) Init(
 }
 
 // Start serializes the correct state according to the Key and CID.
-func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
-	if vf.col == nil {
-		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
-	}
-
-	if len(spans.Value) != 1 {
-		return ErrSingleSpanOnly
-	}
-
-	// For the VersionedFetcher, the spans needs to be in the format
-	// Span{Start: DocID, End: CID}
-	dk := spans.Value[0].Start()
-	cidRaw := spans.Value[0].End()
-	if dk.DocID == "" {
-		return client.NewErrUninitializeProperty("Spans", "DocID")
-	} else if cidRaw.DocID == "" { // todo: dont abuse DataStoreKey/Span like this!
-		return client.NewErrUninitializeProperty("Spans", "CID")
-	}
-
-	// decode cidRaw from core.Key to cid.Cid
-	// need to remove '/' prefix from the core.Key
-
-	c, err := cid.Decode(cidRaw.DocID)
-	if err != nil {
-		return NewErrFailedToDecodeCIDForVFetcher(err)
-	}
+func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
+	// VersionedFetcher only ever recieves a headstore key
+	//nolint:forcetypeassert
+	prefix := prefixes[0].(keys.HeadstoreDocKey)
 
 	vf.ctx = ctx
-	vf.dsKey = dk
-	vf.version = c
 
-	if err := vf.seekTo(vf.version); err != nil {
-		return NewErrFailedToSeek(c, err)
+	if err := vf.seekTo(prefix.Cid); err != nil {
+		return NewErrFailedToSeek(prefix.Cid, err)
 	}
 
-	return vf.DocumentFetcher.Start(ctx, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx)
 }
 
-// Rootstore returns the rootstore of the VersionedFetcher.
-func (vf *VersionedFetcher) Rootstore() ds.Datastore {
-	return vf.root
-}
-
-// Start a fetcher with the needed info (cid embedded in a span)
+// Start a fetcher with the needed info (cid embedded in a prefix)
 
 /*
 1. Init with DocID (VersionedFetched is scoped to a single doc)
 2. - Create transient stores (head, data, block)
-3. Start with a given Txn and CID span set (length 1 for now)
+3. Start with a given Txn and CID prefix set (length 1 for now)
 4. call traverse with the target cid
 5.
 
-err := VersionFetcher.Start(txn, spans) {
+err := VersionFetcher.Start(txn, prefixes) {
 	vf.traverse(cid)
 }
 */
@@ -217,7 +182,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx)
 }
 
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
@@ -345,66 +310,69 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	link, err := block.GenerateLink()
+	var mcrdt merklecrdt.MerkleCRDT
+	switch {
+	case block.Delta.IsCollection():
+		mcrdt = merklecrdt.NewMerkleCollection(
+			vf.store,
+			keys.NewCollectionSchemaVersionKey(vf.col.Description().SchemaVersionID, vf.col.Description().ID),
+			keys.NewHeadstoreColKey(vf.col.Description().RootID),
+		)
+
+	case block.Delta.IsComposite():
+		mcrdt = merklecrdt.NewMerkleCompositeDAG(
+			vf.store,
+			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			keys.DataStoreKey{
+				CollectionRootID: vf.col.Description().RootID,
+				DocID:            string(block.Delta.GetDocID()),
+				FieldID:          fmt.Sprint(core.COMPOSITE_NAMESPACE),
+			},
+		)
+
+	default:
+		field, ok := vf.col.Definition().GetFieldByName(block.Delta.GetFieldName())
+		if !ok {
+			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
+		}
+
+		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
+			vf.store,
+			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			field.Typ,
+			field.Kind,
+			keys.DataStoreKey{
+				CollectionRootID: vf.col.Description().RootID,
+				DocID:            string(block.Delta.GetDocID()),
+				FieldID:          fmt.Sprint(field.ID),
+			},
+			field.Name,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = mcrdt.Clock().ProcessBlock(
+		vf.ctx,
+		block,
+		cidlink.Link{
+			Cid: c,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	// first arg 0 is the index for the composite DAG in the mCRDTs cache
-	if err := vf.processBlock(0, block, link, client.COMPOSITE, client.FieldKind_None, ""); err != nil {
-		return err
-	}
-
 	// handle subgraphs
-	for _, l := range block.Links {
-		// get node
-		subBlock, err := vf.getDAGBlock(l.Link.Cid)
+	for _, l := range block.AllLinks() {
+		err = vf.merge(l.Cid)
 		if err != nil {
-			return err
-		}
-
-		field, ok := vf.col.Definition().GetFieldByName(l.Name)
-		if !ok {
-			return client.NewErrFieldNotExist(l.Name)
-		}
-		if err := vf.processBlock(uint32(field.ID), subBlock, l.Link, field.Typ, field.Kind, l.Name); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (vf *VersionedFetcher) processBlock(
-	crdtIndex uint32,
-	block *coreblock.Block,
-	blockLink cidlink.Link,
-	ctype client.CType,
-	kind client.FieldKind,
-	fieldName string,
-) (err error) {
-	// handle CompositeDAG
-	mcrdt, exists := vf.mCRDTs[crdtIndex]
-	if !exists {
-		dsKey, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Definition(), ctype, vf.dsKey, fieldName)
-		if err != nil {
-			return err
-		}
-		mcrdt, err = merklecrdt.InstanceWithStore(
-			vf.store,
-			core.CollectionSchemaVersionKey{},
-			ctype,
-			kind,
-			dsKey,
-			fieldName,
-		)
-		if err != nil {
-			return err
-		}
-		vf.mCRDTs[crdtIndex] = mcrdt
-	}
-
-	return mcrdt.Clock().ProcessBlock(vf.ctx, block, blockLink)
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
@@ -424,10 +392,4 @@ func (vf *VersionedFetcher) Close() error {
 	}
 
 	return vf.DocumentFetcher.Close()
-}
-
-// NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
-func NewVersionedSpan(dsKey core.DataStoreKey, version cid.Cid) core.Spans {
-	// Todo: Dont abuse DataStoreKey for version cid!
-	return core.NewSpans(core.NewSpan(dsKey, core.DataStoreKey{DocID: version.String()}))
 }

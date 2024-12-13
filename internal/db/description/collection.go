@@ -21,7 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // SaveCollection saves the given collection to the system store overwriting any
@@ -41,14 +41,14 @@ func SaveCollection(
 		return client.CollectionDescription{}, err
 	}
 
-	key := core.NewCollectionKey(desc.ID)
+	key := keys.NewCollectionKey(desc.ID)
 	err = txn.Systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
 
 	if existing.Name.HasValue() && existing.Name != desc.Name {
-		nameKey := core.NewCollectionNameKey(existing.Name.Value())
+		nameKey := keys.NewCollectionNameKey(existing.Name.Value())
 		idBuf, err := txn.Systemstore().Get(ctx, nameKey.ToDS())
 		nameIndexExsts := true
 		if err != nil {
@@ -82,7 +82,7 @@ func SaveCollection(
 			return client.CollectionDescription{}, err
 		}
 
-		nameKey := core.NewCollectionNameKey(desc.Name.Value())
+		nameKey := keys.NewCollectionNameKey(desc.Name.Value())
 		err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
 		if err != nil {
 			return client.CollectionDescription{}, err
@@ -91,13 +91,13 @@ func SaveCollection(
 
 	// The need for this key is temporary, we should replace it with the global collection ID
 	// https://github.com/sourcenetwork/defradb/issues/1085
-	schemaVersionKey := core.NewCollectionSchemaVersionKey(desc.SchemaVersionID, desc.ID)
+	schemaVersionKey := keys.NewCollectionSchemaVersionKey(desc.SchemaVersionID, desc.ID)
 	err = txn.Systemstore().Put(ctx, schemaVersionKey.ToDS(), []byte{})
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
 
-	rootKey := core.NewCollectionRootKey(desc.RootID, desc.ID)
+	rootKey := keys.NewCollectionRootKey(desc.RootID, desc.ID)
 	err = txn.Systemstore().Put(ctx, rootKey.ToDS(), []byte{})
 	if err != nil {
 		return client.CollectionDescription{}, err
@@ -111,7 +111,7 @@ func GetCollectionByID(
 	txn datastore.Txn,
 	id uint32,
 ) (client.CollectionDescription, error) {
-	key := core.NewCollectionKey(id)
+	key := keys.NewCollectionKey(id)
 	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return client.CollectionDescription{}, err
@@ -134,7 +134,7 @@ func GetCollectionByName(
 	txn datastore.Txn,
 	name string,
 ) (client.CollectionDescription, error) {
-	nameKey := core.NewCollectionNameKey(name)
+	nameKey := keys.NewCollectionNameKey(name)
 	idBuf, err := txn.Systemstore().Get(ctx, nameKey.ToDS())
 	if err != nil {
 		return client.CollectionDescription{}, err
@@ -154,7 +154,7 @@ func GetCollectionsByRoot(
 	txn datastore.Txn,
 	root uint32,
 ) ([]client.CollectionDescription, error) {
-	rootKey := core.NewCollectionRootKey(root, 0)
+	rootKey := keys.NewCollectionRootKey(root, 0)
 
 	rootQuery, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix:   rootKey.ToString(),
@@ -173,7 +173,7 @@ func GetCollectionsByRoot(
 			return nil, err
 		}
 
-		rootKey, err := core.NewCollectionRootKeyFromString(string(res.Key))
+		rootKey, err := keys.NewCollectionRootKeyFromString(string(res.Key))
 		if err != nil {
 			if err := rootQuery.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
@@ -201,7 +201,7 @@ func GetCollectionsBySchemaVersionID(
 	txn datastore.Txn,
 	schemaVersionID string,
 ) ([]client.CollectionDescription, error) {
-	schemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID, 0)
+	schemaVersionKey := keys.NewCollectionSchemaVersionKey(schemaVersionID, 0)
 
 	schemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix:   schemaVersionKey.ToString(),
@@ -220,7 +220,7 @@ func GetCollectionsBySchemaVersionID(
 			return nil, err
 		}
 
-		colSchemaVersionKey, err := core.NewCollectionSchemaVersionKeyFromString(string(res.Key))
+		colSchemaVersionKey, err := keys.NewCollectionSchemaVersionKeyFromString(string(res.Key))
 		if err != nil {
 			if err := schemaVersionQuery.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
@@ -233,7 +233,7 @@ func GetCollectionsBySchemaVersionID(
 
 	cols := make([]client.CollectionDescription, len(colIDs))
 	for i, colID := range colIDs {
-		key := core.NewCollectionKey(colID)
+		key := keys.NewCollectionKey(colID)
 		buf, err := txn.Systemstore().Get(ctx, key.ToDS())
 		if err != nil {
 			return nil, err
@@ -286,7 +286,7 @@ func GetCollections(
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
 	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: core.COLLECTION_ID,
+		Prefix: keys.COLLECTION_ID,
 	})
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)
@@ -322,7 +322,7 @@ func GetActiveCollections(
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
 	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: core.NewCollectionNameKey("").ToString(),
+		Prefix: keys.NewCollectionNameKey("").ToString(),
 	})
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)
@@ -364,6 +364,6 @@ func HasCollectionByName(
 	txn datastore.Txn,
 	name string,
 ) (bool, error) {
-	nameKey := core.NewCollectionNameKey(name)
+	nameKey := keys.NewCollectionNameKey(name)
 	return txn.Systemstore().Has(ctx, nameKey.ToDS())
 }

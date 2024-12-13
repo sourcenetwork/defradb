@@ -15,7 +15,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -23,8 +22,15 @@ import (
 type extrasHandler struct{}
 
 func (s *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
-	rw.WriteHeader(http.StatusOK) // write the response before we restart to purge
+	db := mustGetContextClientDB(req)
+
+	// Send either 200 or 400 response based on whether the server is in dev mode
+	if IsDevMode {
+		rw.WriteHeader(http.StatusOK)
+	} else {
+		responseJSON(rw, http.StatusBadRequest, errPurgeRequestNonDeveloperMode)
+	}
+
 	db.Events().Publish(event.NewMessage(event.PurgeName, nil))
 }
 

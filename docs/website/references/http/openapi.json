@@ -195,6 +195,9 @@
                         },
                         "type": "array"
                     },
+                    "IsBranchable": {
+                        "type": "boolean"
+                    },
                     "IsMaterialized": {
                         "type": "boolean"
                     },
@@ -275,6 +278,9 @@
                                     "type": "object"
                                 },
                                 "type": "array"
+                            },
+                            "IsBranchable": {
+                                "type": "boolean"
                             },
                             "IsMaterialized": {
                                 "type": "boolean"
@@ -395,6 +401,17 @@
                 },
                 "type": "object"
             },
+            "identity": {
+                "properties": {
+                    "DID": {
+                        "type": "string"
+                    },
+                    "PublicKey": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "index": {
                 "properties": {
                     "Fields": {
@@ -415,6 +432,31 @@
                         "maximum": 4294967295,
                         "minimum": 0,
                         "type": "integer"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Unique": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "index_create_request": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Descending": {
+                                    "type": "boolean"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
                     },
                     "Name": {
                         "type": "string"
@@ -523,6 +565,29 @@
                         "maximum": 255,
                         "minimum": 0,
                         "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "replicator_params": {
+                "properties": {
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Info": {
+                        "properties": {
+                            "Addrs": {
+                                "items": {},
+                                "type": "array"
+                            },
+                            "ID": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -1205,7 +1270,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index"
+                                "$ref": "#/components/schemas/index_create_request"
                             }
                         }
                     },
@@ -1677,6 +1742,34 @@
                 ]
             }
         },
+        "/node/identity": {
+            "get": {
+                "description": "Get node's public identity",
+                "operationId": "node_identity",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/identity"
+                                }
+                            }
+                        },
+                        "description": "Identity"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "node",
+                    "identity"
+                ]
+            }
+        },
         "/p2p/collections": {
             "delete": {
                 "description": "Remove peer collections",
@@ -1803,7 +1896,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator"
+                                "$ref": "#/components/schemas/replicator_params"
                             }
                         }
                     },
@@ -1859,7 +1952,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator"
+                                "$ref": "#/components/schemas/replicator_params"
                             }
                         }
                     },
@@ -2295,7 +2388,7 @@
     "servers": [
         {
             "description": "Local DefraDB instance",
-            "url": "http://localhost:9181/api/v0"
+            "url": "/api/v0"
         }
     ],
     "tags": [

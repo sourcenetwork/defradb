@@ -20,8 +20,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPurge(t *testing.T) {
+func TestPurgeDevModeTrue(t *testing.T) {
 	cdb := setupDatabase(t)
+
+	IsDevMode = true
+
 	url := "http://localhost:9181/api/v0/purge"
 
 	req := httptest.NewRequest(http.MethodPost, url, nil)
@@ -36,6 +39,30 @@ func TestPurge(t *testing.T) {
 
 	res := rec.Result()
 	require.Equal(t, 200, res.StatusCode)
+
+	// test will timeout if purge never received
+	<-purgeSub.Message()
+}
+
+func TestPurgeDevModeFalse(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	IsDevMode = false
+
+	url := "http://localhost:9181/api/v0/purge"
+
+	req := httptest.NewRequest(http.MethodPost, url, nil)
+	rec := httptest.NewRecorder()
+
+	purgeSub, err := cdb.Events().Subscribe(event.PurgeName)
+	require.NoError(t, err)
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	require.Equal(t, 400, res.StatusCode)
 
 	// test will timeout if purge never received
 	<-purgeSub.Message()

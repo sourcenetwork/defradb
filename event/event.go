@@ -96,6 +96,15 @@ type Merge struct {
 	SchemaRoot string
 }
 
+// MergeComplete is a notification that a merge has been completed.
+type MergeComplete struct {
+	// Merge is the merge that was completed.
+	Merge Merge
+
+	// Decrypted specifies if the merge payload was decrypted.
+	Decrypted bool
+}
+
 // Message contains event info.
 type Message struct {
 	// Name is the name of the event this message was generated from.

@@ -298,3 +298,15 @@ func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string,
 
 	return "", false
 }
+
+// TryToFindIndexFromRenderKey returns the corresponding index of the given render key.
+//
+// Additionally, will also return true if the render key was found, and false otherwise.
+func (mapping *DocumentMapping) TryToFindIndexFromRenderKey(key string) (int, bool) {
+	for _, renderKey := range mapping.RenderKeys {
+		if renderKey.Key == key {
+			return renderKey.Index, true
+		}
+	}
+	return -1, false
+}

@@ -72,11 +72,8 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 								"filter":         nil,
 								"collectionID":   "3",
 								"collectionName": "Author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
+								"prefixes": []string{
+									"/3",
 								},
 							},
 						},
@@ -95,11 +92,8 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 										"filter":         nil,
 										"collectionID":   "4",
 										"collectionName": "AuthorContact",
-										"spans": []dataMap{
-											{
-												"start": "/4",
-												"end":   "/5",
-											},
+										"prefixes": []string{
+											"/4",
 										},
 									},
 								},
@@ -182,11 +176,8 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 								"filter":         nil,
 								"collectionID":   "3",
 								"collectionName": "Author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
+								"prefixes": []string{
+									"/3",
 								},
 							},
 						},
@@ -215,11 +206,8 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 								"filter":         nil,
 								"collectionID":   "4",
 								"collectionName": "AuthorContact",
-								"spans": []dataMap{
-									{
-										"start": "/4",
-										"end":   "/5",
-									},
+								"prefixes": []string{
+									"/4",
 								},
 							},
 						},
@@ -237,11 +225,8 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 										"filter":         nil,
 										"collectionID":   "5",
 										"collectionName": "ContactAddress",
-										"spans": []dataMap{
-											{
-												"start": "/5",
-												"end":   "/6",
-											},
+										"prefixes": []string{
+											"/5",
 										},
 									},
 								},

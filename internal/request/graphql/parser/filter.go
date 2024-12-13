@@ -93,20 +93,20 @@ func parseFilterFieldsForDescriptionMap(
 	fields := make([]client.FieldDefinition, 0)
 	for k, v := range conditions {
 		switch k {
-		case "_or", "_and":
+		case request.FilterOpOr, request.FilterOpAnd:
 			conds := v.([]any)
-			parsedFileds, err := parseFilterFieldsForDescriptionSlice(conds, col)
+			parsedFields, err := parseFilterFieldsForDescriptionSlice(conds, col)
 			if err != nil {
 				return nil, err
 			}
-			fields = append(fields, parsedFileds...)
-		case "_not":
+			fields = append(fields, parsedFields...)
+		case request.FilterOpNot, request.AliasFieldName:
 			conds := v.(map[string]any)
-			parsedFileds, err := parseFilterFieldsForDescriptionMap(conds, col)
+			parsedFields, err := parseFilterFieldsForDescriptionMap(conds, col)
 			if err != nil {
 				return nil, err
 			}
-			fields = append(fields, parsedFileds...)
+			fields = append(fields, parsedFields...)
 		default:
 			f, found := col.GetFieldByName(k)
 			if !found || f.Kind.IsObject() {

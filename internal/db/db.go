@@ -27,12 +27,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
@@ -74,6 +76,9 @@ type db struct {
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
+
+	// The identity of the current node
+	nodeIdentity immutable.Option[identity.Identity]
 
 	// Contains ACP if it exists
 	acp immutable.Option[acp.ACP]
@@ -139,6 +144,8 @@ func newDB(
 	if opts.maxTxnRetries.HasValue() {
 		db.maxTxnRetries = opts.maxTxnRetries
 	}
+
+	db.nodeIdentity = opts.identity
 
 	if lens != nil {
 		lens.Init(db)
@@ -208,11 +215,9 @@ func (db *db) AddPolicy(
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	identity := GetContextIdentity(ctx)
-
 	policyID, err := db.acp.Value().AddPolicy(
 		ctx,
-		identity.Value(),
+		identity.FromContext(ctx).Value(),
 		policy,
 	)
 	if err != nil {
@@ -220,6 +225,35 @@ func (db *db) AddPolicy(
 	}
 
 	return client.AddPolicyResult{PolicyID: policyID}, nil
+}
+
+// publishDocUpdateEvent publishes an update event for a document.
+// It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
+// using a transaction.
+func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
+	if err != nil {
+		return err
+	}
+
+	for {
+		hasValue, err := headsIterator.Next()
+		if err != nil {
+			return err
+		}
+		if !hasValue {
+			break
+		}
+
+		updateEvent := event.Update{
+			DocID:      docID,
+			Cid:        headsIterator.CurrentCid(),
+			SchemaRoot: collection.Schema().Root,
+			Block:      headsIterator.CurrentRawBlock(),
+		}
+		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+	}
+	return nil
 }
 
 func (db *db) AddDocActorRelationship(
@@ -243,20 +277,25 @@ func (db *db) AddDocActorRelationship(
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
-	identity := GetContextIdentity(ctx)
-
 	exists, err := db.acp.Value().AddDocActorRelationship(
 		ctx,
 		policyID,
 		resourceName,
 		docID,
 		relation,
-		identity.Value(),
+		identity.FromContext(ctx).Value(),
 		targetActor,
 	)
 
 	if err != nil {
 		return client.AddDocActorRelationshipResult{}, err
+	}
+
+	if !exists {
+		err = db.publishDocUpdateEvent(ctx, docID, collection)
+		if err != nil {
+			return client.AddDocActorRelationshipResult{}, err
+		}
 	}
 
 	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
@@ -283,15 +322,13 @@ func (db *db) DeleteDocActorRelationship(
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
-	identity := GetContextIdentity(ctx)
-
 	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
 		ctx,
 		policyID,
 		resourceName,
 		docID,
 		relation,
-		identity.Value(),
+		identity.FromContext(ctx).Value(),
 		targetActor,
 	)
 
@@ -300,6 +337,13 @@ func (db *db) DeleteDocActorRelationship(
 	}
 
 	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
+}
+
+func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	if db.nodeIdentity.HasValue() {
+		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
+	}
+	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
@@ -347,7 +391,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, core.CollectionIDSequenceKey{})
+	_, err = db.getSequence(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}

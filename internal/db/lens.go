@@ -18,8 +18,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
@@ -35,7 +35,7 @@ func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		return err
 	}
 
-	colSeq, err := db.getSequence(ctx, core.CollectionIDSequenceKey{})
+	colSeq, err := db.getSequence(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
 				}
 
 				if schemaFound {
-					schemaRootKey := core.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
+					schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
 					err = txn.Systemstore().Put(ctx, schemaRootKey.ToDS(), []byte{})
 					if err != nil {
 						return err

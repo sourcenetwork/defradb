@@ -43,7 +43,7 @@ func TestSetReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {
 	db, err := newDefraMemoryDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
-	err = db.SetReplicator(ctx, client.Replicator{})
+	err = db.SetReplicator(ctx, client.ReplicatorParams{})
 	require.ErrorContains(t, err, "empty peer ID")
 }
 
@@ -56,7 +56,7 @@ func TestSetReplicator_WithSelfTarget_ShouldError(t *testing.T) {
 	require.NoError(t, err)
 	db.events.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: peer.AddrInfo{ID: "self"}}))
 	waitForPeerInfo(db, sub)
-	err = db.SetReplicator(ctx, client.Replicator{Info: peer.AddrInfo{ID: "self"}})
+	err = db.SetReplicator(ctx, client.ReplicatorParams{Info: peer.AddrInfo{ID: "self"}})
 	require.ErrorIs(t, err, ErrSelfTargetForReplicator)
 }
 
@@ -69,9 +69,9 @@ func TestSetReplicator_WithInvalidCollection_ShouldError(t *testing.T) {
 	require.NoError(t, err)
 	db.events.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: peer.AddrInfo{ID: "self"}}))
 	waitForPeerInfo(db, sub)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: "other"},
-		Schemas: []string{"invalidCollection"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: "other"},
+		Collections: []string{"invalidCollection"},
 	})
 	require.ErrorIs(t, err, ErrReplicatorCollections)
 }
@@ -87,9 +87,9 @@ func TestSetReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	schema, err := db.GetSchemaByVersionID(ctx, cols[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: "other"},
-		Schemas: []string{"User"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: "other"},
+		Collections: []string{"User"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()
@@ -113,9 +113,9 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 	require.NoError(t, err)
 	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: peerID},
-		Schemas: []string{"User"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: peerID},
+		Collections: []string{"User"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()
@@ -127,9 +127,9 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 	require.NoError(t, err)
 	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: peerID},
-		Schemas: []string{"Book"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: peerID},
+		Collections: []string{"Book"},
 	})
 	require.NoError(t, err)
 	msg = <-sub.Message()
@@ -154,9 +154,9 @@ func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: "other"},
-		Schemas: []string{"User"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: "other"},
+		Collections: []string{"User"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()
@@ -173,7 +173,7 @@ func TestDeleteReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {
 	db, err := newDefraMemoryDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
-	err = db.DeleteReplicator(ctx, client.Replicator{})
+	err = db.DeleteReplicator(ctx, client.ReplicatorParams{})
 	require.ErrorContains(t, err, "empty peer ID")
 }
 
@@ -182,7 +182,7 @@ func TestDeleteReplicator_WithNonExistantReplicator_ShouldError(t *testing.T) {
 	db, err := newDefraMemoryDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
-	err = db.DeleteReplicator(ctx, client.Replicator{Info: peer.AddrInfo{ID: "other"}})
+	err = db.DeleteReplicator(ctx, client.ReplicatorParams{Info: peer.AddrInfo{ID: "other"}})
 	require.ErrorIs(t, err, ErrReplicatorNotFound)
 }
 
@@ -201,16 +201,16 @@ func TestDeleteReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	schema, err := db.GetSchemaByVersionID(ctx, cols[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: peerID},
-		Schemas: []string{"User"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: peerID},
+		Collections: []string{"User"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()
 	replicator := msg.Data.(event.Replicator)
 	require.Equal(t, peerID, replicator.Info.ID)
 	require.Equal(t, map[string]struct{}{schema.Root: {}}, replicator.Schemas)
-	err = db.DeleteReplicator(ctx, client.Replicator{Info: peer.AddrInfo{ID: peerID}})
+	err = db.DeleteReplicator(ctx, client.ReplicatorParams{Info: peer.AddrInfo{ID: peerID}})
 	require.NoError(t, err)
 	msg = <-sub.Message()
 	replicator = msg.Data.(event.Replicator)
@@ -237,9 +237,9 @@ func TestDeleteReplicator_PartialWithValidCollections_ShouldSucceed(t *testing.T
 	require.NoError(t, err)
 	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: peerID},
-		Schemas: []string{"User", "Book"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: peerID},
+		Collections: []string{"User", "Book"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()
@@ -247,7 +247,7 @@ func TestDeleteReplicator_PartialWithValidCollections_ShouldSucceed(t *testing.T
 	require.Equal(t, peerID, replicator.Info.ID)
 	require.Equal(t, map[string]struct{}{schema1.Root: {}, schema2.Root: {}}, replicator.Schemas)
 
-	err = db.DeleteReplicator(ctx, client.Replicator{Info: peer.AddrInfo{ID: peerID}, Schemas: []string{"User"}})
+	err = db.DeleteReplicator(ctx, client.ReplicatorParams{Info: peer.AddrInfo{ID: peerID}, Collections: []string{"User"}})
 	require.NoError(t, err)
 	msg = <-sub.Message()
 	replicator = msg.Data.(event.Replicator)
@@ -270,9 +270,9 @@ func TestGetAllReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	schema, err := db.GetSchemaByVersionID(ctx, cols[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: peerID},
-		Schemas: []string{"User"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: peerID},
+		Collections: []string{"User"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()
@@ -301,9 +301,9 @@ func TestLoadReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	schema, err := db.GetSchemaByVersionID(ctx, cols[0].SchemaVersionID)
 	require.NoError(t, err)
-	err = db.SetReplicator(ctx, client.Replicator{
-		Info:    peer.AddrInfo{ID: peerID},
-		Schemas: []string{"User"},
+	err = db.SetReplicator(ctx, client.ReplicatorParams{
+		Info:        peer.AddrInfo{ID: peerID},
+		Collections: []string{"User"},
 	})
 	require.NoError(t, err)
 	msg := <-sub.Message()

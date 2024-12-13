@@ -26,7 +26,7 @@ import (
 type storeHandler struct{}
 
 func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
@@ -42,7 +42,7 @@ func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
@@ -58,7 +58,7 @@ func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	schema, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -74,7 +74,7 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var message patchSchemaRequest
 	err := requestJSON(req, &message)
@@ -92,7 +92,7 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var patch string
 	err := requestJSON(req, &patch)
@@ -110,7 +110,7 @@ func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 }
 
 func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	schemaVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -126,7 +126,7 @@ func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.
 }
 
 func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -145,7 +145,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var cfg client.LensConfig
 	if err := requestJSON(req, &cfg); err != nil {
@@ -162,7 +162,7 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	options := client.CollectionFetchOptions{}
 	if req.URL.Query().Has("name") {
@@ -198,7 +198,7 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 }
 
 func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	options := client.SchemaFetchOptions{}
 	if req.URL.Query().Has("version_id") {
@@ -220,7 +220,7 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	options := client.CollectionFetchOptions{}
 	if req.URL.Query().Has("name") {
@@ -252,7 +252,7 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	indexes, err := store.GetAllIndexes(req.Context())
 	if err != nil {
@@ -263,7 +263,7 @@ func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 }
 
 func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
-	db := req.Context().Value(dbContextKey).(client.DB)
+	db := mustGetContextClientDB(req)
 
 	if err := db.PrintDump(req.Context()); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -279,12 +279,26 @@ type GraphQLRequest struct {
 }
 
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(dbContextKey).(client.Store)
+	store := mustGetContextClientStore(req)
 
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
+
 		request.Query = req.URL.Query().Get("query")
+
+		request.OperationName = req.URL.Query().Get("operationName")
+
+		variablesFromQuery := req.URL.Query().Get("variables")
+		if variablesFromQuery != "" {
+			var variables map[string]any
+			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+				return
+			}
+			request.Variables = variables
+		}
+
 	case req.Body != nil:
 		if err := requestJSON(req, &request); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -294,7 +308,6 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
 		return
 	}
-
 	var options []client.RequestOption
 	if request.OperationName != "" {
 		options = append(options, client.WithOperationName(request.OperationName))
@@ -342,6 +355,17 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	identity, err := db.GetNodeIdentity(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, identity)
+}
+
 func (h *storeHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -372,6 +396,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
+	}
+	identitySchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/identity",
 	}
 
 	graphQLResponseSchema := openapi3.NewObjectSchema().
@@ -518,13 +545,13 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchCollection.Responses.Set("200", successResponse)
 	patchCollection.Responses.Set("400", errorResponse)
 
-	collectionDefintionsSchema := openapi3.NewArraySchema()
-	collectionDefintionsSchema.Items = collectionDefinitionSchema
+	collectionDefinitionsSchema := openapi3.NewArraySchema()
+	collectionDefinitionsSchema.Items = collectionDefinitionSchema
 
 	addViewResponseSchema := openapi3.NewOneOfSchema()
 	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
 		collectionDefinitionSchema,
-		openapi3.NewSchemaRef("", collectionDefintionsSchema),
+		openapi3.NewSchemaRef("", collectionDefinitionsSchema),
 	}
 
 	addViewResponse := openapi3.NewResponse().
@@ -629,6 +656,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	debugDump.Responses.Set("200", successResponse)
 	debugDump.Responses.Set("400", errorResponse)
 
+	identityResponse := openapi3.NewResponse().
+		WithDescription("Identity").
+		WithJSONSchemaRef(identitySchema)
+
+	nodeIdentity := openapi3.NewOperation()
+	nodeIdentity.OperationID = "node_identity"
+	nodeIdentity.Description = "Get node's public identity"
+	nodeIdentity.Tags = []string{"node", "identity"}
+	nodeIdentity.AddResponse(200, identityResponse)
+	nodeIdentity.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
@@ -643,4 +681,5 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/schema", http.MethodGet, schemaDescribe, h.GetSchema)
 	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

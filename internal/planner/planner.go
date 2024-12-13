@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -34,9 +35,9 @@ type planNode interface {
 	// Starts any internal logic or processes required by the planNode. Should be called *after* Init().
 	Start() error
 
-	// Spans sets the planNodes target spans. This is primarily only used for a scanNode,
+	// Prefixes sets the planNodes target prefixes. This is primarily only used for a scanNode,
 	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
-	Spans(core.Spans)
+	Prefixes([]keys.Walkable)
 
 	// Next processes the next result doc from the request. Can only be called *after* Start().
 	// Can't be called again if any previous call returns false.

@@ -104,8 +104,11 @@ const (
 	errFailedToHandleEncKeysReceivedEvent       string = "failed to handle encryption-keys-received event"
 	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                       string = "non-materialized collections are not supported"
+	errColMutatingIsBranchable                  string = "mutating IsBranchable is not supported"
 	errMaterializedViewAndACPNotSupported       string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
+	errDocIDNotFound                            string = "docID not found"
+	errCollectionWithSchemaRootNotFound         string = "collection with schema root not found"
 )
 
 var (
@@ -152,6 +155,9 @@ var (
 	ErrContextDone                              = errors.New("context done")
 	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
 	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
+	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
+	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
+	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -676,6 +682,13 @@ func NewErrColNotMaterialized(collection string) error {
 	)
 }
 
+func NewErrColMutatingIsBranchable(collection string) error {
+	return errors.New(
+		errColMutatingIsBranchable,
+		errors.NewKV("Collection", collection),
+	)
+}
+
 func NewErrMaterializedViewAndACPNotSupported(collection string) error {
 	return errors.New(
 		errMaterializedViewAndACPNotSupported,
@@ -689,4 +702,12 @@ func NewErrDefaultFieldValueInvalid(collection string, inner error) error {
 		errors.NewKV("Collection", collection),
 		errors.NewKV("Inner", inner),
 	)
+}
+
+func NewErrDocIDNotFound(docID string) error {
+	return errors.New(errDocIDNotFound, errors.NewKV("DocID", docID))
+}
+
+func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
+	return errors.New(errCollectionWithSchemaRootNotFound, errors.NewKV("SchemaRoot", schemaRoot))
 }

@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -34,6 +35,7 @@ type countNode struct {
 
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+	aggregateFilter   *mapper.Filter
 
 	execInfo countExecInfo
 }
@@ -43,11 +45,12 @@ type countExecInfo struct {
 	iterations uint64
 }
 
-func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNode, error) {
+func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select, filter *mapper.Filter) (*countNode, error) {
 	return &countNode{
 		p:                 p,
 		virtualFieldIndex: field.Index,
 		aggregateMapping:  field.AggregateTargets,
+		aggregateFilter:   filter,
 		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
 }
@@ -62,7 +65,7 @@ func (n *countNode) Init() error {
 
 func (n *countNode) Start() error { return n.plan.Start() }
 
-func (n *countNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *countNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
 
 func (n *countNode) Close() error { return n.plan.Close() }
 
@@ -122,65 +125,74 @@ func (n *countNode) Explain(explainType request.ExplainType) (map[string]any, er
 }
 
 func (n *countNode) Next() (bool, error) {
-	n.execInfo.iterations++
+	for {
+		n.execInfo.iterations++
 
-	hasValue, err := n.plan.Next()
-	if err != nil || !hasValue {
-		return hasValue, err
-	}
+		hasValue, err := n.plan.Next()
+		if err != nil || !hasValue {
+			return hasValue, err
+		}
 
-	n.currentValue = n.plan.Value()
-	// Can just scan for now, can be replaced later by something fancier if needed
-	var count int
-	for _, source := range n.aggregateMapping {
-		property := n.currentValue.Fields[source.Index]
-		v := reflect.ValueOf(property)
-		switch v.Kind() {
-		// v.Len will panic if v is not one of these types, we don't want it to panic
-		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			if source.Filter == nil && source.Limit == nil {
-				count = count + v.Len()
-			} else {
-				var arrayCount int
-				var err error
-				switch array := property.(type) {
-				case []core.Doc:
-					arrayCount = countDocs(array)
+		n.currentValue = n.plan.Value()
+		// Can just scan for now, can be replaced later by something fancier if needed
+		var count int
+		for _, source := range n.aggregateMapping {
+			property := n.currentValue.Fields[source.Index]
+			v := reflect.ValueOf(property)
+			switch v.Kind() {
+			// v.Len will panic if v is not one of these types, we don't want it to panic
+			case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
+				if source.Filter == nil && source.Limit == nil {
+					count = count + v.Len()
+				} else {
+					var arrayCount int
+					var err error
+					switch array := property.(type) {
+					case []core.Doc:
+						arrayCount = countDocs(array)
 
-				case []bool:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []bool:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []immutable.Option[bool]:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []immutable.Option[bool]:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []int64:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []int64:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []immutable.Option[int64]:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []immutable.Option[int64]:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []float64:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []float64:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []immutable.Option[float64]:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []immutable.Option[float64]:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []string:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []string:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []immutable.Option[string]:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					case []immutable.Option[string]:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
+					}
+					if err != nil {
+						return false, err
+					}
+					count += arrayCount
 				}
-				if err != nil {
-					return false, err
-				}
-				count += arrayCount
 			}
 		}
-	}
+		n.currentValue.Fields[n.virtualFieldIndex] = count
 
-	n.currentValue.Fields[n.virtualFieldIndex] = count
-	return true, nil
+		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)
+		if err != nil {
+			return false, err
+		}
+		if !passes {
+			continue
+		}
+		return true, nil
+	}
 }
 
 // countDocs counts the number of documents in a slice, skipping over hidden items

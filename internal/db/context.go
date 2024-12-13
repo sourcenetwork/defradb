@@ -13,17 +13,11 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // txnContextKey is the key type for transaction context values.
 type txnContextKey struct{}
-
-// identityContextKey is the key type for ACP identity context values.
-type identityContextKey struct{}
 
 // explicitTxn is a transaction that is managed outside of a db operation.
 type explicitTxn struct {
@@ -84,25 +78,4 @@ func TryGetContextTxn(ctx context.Context) (datastore.Txn, bool) {
 // This will overwrite any previously set transaction value.
 func SetContextTxn(ctx context.Context, txn datastore.Txn) context.Context {
 	return context.WithValue(ctx, txnContextKey{}, txn)
-}
-
-// GetContextIdentity returns the identity from the given context.
-//
-// If an identity does not exist `NoIdentity` is returned.
-func GetContextIdentity(ctx context.Context) immutable.Option[acpIdentity.Identity] {
-	identity, ok := ctx.Value(identityContextKey{}).(acpIdentity.Identity)
-	if ok {
-		return immutable.Some(identity)
-	}
-	return acpIdentity.None
-}
-
-// SetContextTxn returns a new context with the identity value set.
-//
-// This will overwrite any previously set identity value.
-func SetContextIdentity(ctx context.Context, identity immutable.Option[acpIdentity.Identity]) context.Context {
-	if identity.HasValue() {
-		return context.WithValue(ctx, identityContextKey{}, identity.Value())
-	}
-	return context.WithValue(ctx, identityContextKey{}, nil)
 }

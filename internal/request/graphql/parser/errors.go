@@ -14,7 +14,8 @@ import "github.com/sourcenetwork/defradb/errors"
 
 var (
 	ErrFilterMissingArgumentType      = errors.New("couldn't find filter argument type")
-	ErrInvalidOrderDirection          = errors.New("invalid order direction string")
+	ErrInvalidOrderDirection          = errors.New("invalid order direction")
+	ErrInvalidOrderInput              = errors.New("invalid order input")
 	ErrFailedToParseConditionsFromAST = errors.New("couldn't parse conditions value from AST")
 	ErrFailedToParseConditionValue    = errors.New("failed to parse condition value from query filter statement")
 	ErrEmptyDataPayload               = errors.New("given data payload is empty")

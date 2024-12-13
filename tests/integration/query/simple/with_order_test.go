@@ -451,3 +451,451 @@ func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order ASC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {UserAge: ASC}}) {
+						Name
+						UserAge: Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":    "Alice",
+							"UserAge": int64(19),
+						},
+						{
+							"Name":    "John",
+							"UserAge": int64(21),
+						},
+						{
+							"Name":    "Bob",
+							"UserAge": int64(32),
+						},
+						{
+							"Name":    "Carlo",
+							"UserAge": int64(55),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithAliasOrderOnNonAliasedField_ShouldOrderResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order on non aliased field ASC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {Age: ASC}}) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(32),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithAliasOrderOnNonExistantField_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order on non existant field ASC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {UserAge: ASC}}) {
+						Name
+						Age
+					}
+				}`,
+				ExpectedError: `field or alias not found. Name: UserAge`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithInvalidAliasOrder_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order invalid",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {UserAge: invalid}}) {
+						Name
+						UserAge: Age
+					}
+				}`,
+				ExpectedError: `invalid order direction`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order empty",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {}}) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(32),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order null",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: null}) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(32),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic alias order empty",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: 1}) {
+						Name
+						Age
+					}
+				}`,
+				ExpectedError: `invalid order input`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithCompoundAliasOrder_ShouldOrderResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with compound alias order",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 21,
+					"Verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: [{_alias: {userAge: DESC}}, {_alias: {isVerified: ASC}}]) {
+						Name
+						userAge: Age
+						isVerified: Verified
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":       "Carlo",
+							"userAge":    int64(55),
+							"isVerified": true,
+						},
+						{
+							"Name":       "Bob",
+							"userAge":    int64(21),
+							"isVerified": false,
+						},
+						{
+							"Name":       "John",
+							"userAge":    int64(21),
+							"isVerified": true,
+						},
+						{
+							"Name":       "Alice",
+							"userAge":    int64(19),
+							"isVerified": false,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

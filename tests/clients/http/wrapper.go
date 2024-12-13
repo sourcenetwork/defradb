@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -62,11 +63,11 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	return w.client.SetReplicator(ctx, rep)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	return w.client.DeleteReplicator(ctx, rep)
 }
 
@@ -280,4 +281,8 @@ func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
 
 func (w *Wrapper) Host() string {
 	return w.httpServer.URL
+}
+
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	return w.client.GetNodeIdentity(ctx)
 }

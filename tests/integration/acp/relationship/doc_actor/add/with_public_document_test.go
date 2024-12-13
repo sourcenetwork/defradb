@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +27,7 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 		Actions: []any{
 			testUtils.AddPolicy{
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: Test Policy
@@ -104,7 +102,7 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 			},
 
 			testUtils.Request{
-				Identity: immutable.Some(2), // Can read as it is a public document
+				Identity: testUtils.ClientIdentity(2), // Can read as it is a public document
 
 				Request: `
 					query {
@@ -128,9 +126,9 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 			},
 
 			testUtils.AddDocActorRelationship{
-				RequestorIdentity: 1,
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-				TargetIdentity: 2,
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 

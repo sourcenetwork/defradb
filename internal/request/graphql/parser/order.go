@@ -44,7 +44,23 @@ func parseOrderCondition(arg map[string]any) (*request.OrderCondition, error) {
 		fieldName = name
 	}
 	switch t := arg[fieldName].(type) {
+	case string:
+		if fieldName == request.AliasFieldName {
+			return nil, ErrInvalidOrderInput
+		}
+		dir, err := parseOrderDirectionString(t)
+		if err != nil {
+			return nil, err
+		}
+		return &request.OrderCondition{
+			Fields:    []string{fieldName},
+			Direction: dir,
+		}, nil
+
 	case int:
+		if fieldName == request.AliasFieldName {
+			return nil, ErrInvalidOrderInput
+		}
 		dir, err := parseOrderDirection(t)
 		if err != nil {
 			return nil, err
@@ -70,13 +86,28 @@ func parseOrderCondition(arg map[string]any) (*request.OrderCondition, error) {
 		cond.Fields = append([]string{fieldName}, cond.Fields...)
 		return cond, nil
 
-	default:
-		// field value is null so don't include the condition
+	case nil:
 		return nil, nil
+
+	default:
+		return nil, ErrInvalidOrderInput
 	}
 }
 
-func parseOrderDirection(v int) (request.OrderDirection, error) {
+func parseOrderDirectionString(v string) (request.OrderDirection, error) {
+	switch v {
+	case string(request.ASC):
+		return request.ASC, nil
+
+	case string(request.DESC):
+		return request.DESC, nil
+
+	default:
+		return request.ASC, ErrInvalidOrderDirection
+	}
+}
+
+func parseOrderDirection(v any) (request.OrderDirection, error) {
 	switch v {
 	case 0:
 		return request.ASC, nil

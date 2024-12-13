@@ -66,11 +66,8 @@ func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -132,11 +129,8 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 									"_gt": int32(26),
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},

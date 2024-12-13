@@ -20,10 +20,12 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
@@ -144,9 +146,8 @@ func (db *db) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 
 func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
 	txn := mustGetContextTxn(ctx)
-	identity := GetContextIdentity(ctx)
 
-	p := planner.New(ctx, identity, db.acp, db, txn)
+	p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
 
 	// temporarily disable the cache in order to query without using it
 	col.Description.IsMaterialized = false
@@ -210,7 +211,7 @@ func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		itemKey := core.NewViewCacheKey(col.Description.RootID, itemID)
+		itemKey := keys.NewViewCacheKey(col.Description.RootID, itemID)
 		err = txn.Datastore().Put(ctx, itemKey.ToDS(), serializedItem)
 		if err != nil {
 			return err
@@ -227,7 +228,7 @@ func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 
 func (db *db) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewViewCacheColPrefix(col.Description.RootID)
+	prefix := keys.NewViewCacheColPrefix(col.Description.RootID)
 
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),

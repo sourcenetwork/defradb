@@ -50,7 +50,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 
 	// Now that we know acp is available and the collection is permissioned, before checking access with
 	// acp directly we need to make sure that the document is not public, as public documents will not
-	// be regestered with acp. We give unrestricted access to public documents, so it does not matter
+	// be registered with acp. We give unrestricted access to public documents, so it does not matter
 	// whether the request has a signature identity or not at this stage of the check.
 	isRegistered, err := acpSystem.IsDocRegistered(
 		ctx,
@@ -67,18 +67,22 @@ func CheckAccessOfDocOnCollectionWithACP(
 		return true, nil
 	}
 
-	// At this point if the request is not signatured, then it has no access, because:
-	// the collection has a policy on it, and the acp is enabled/available,
-	// and the document is not public (is regestered with acp).
+	var identityValue string
 	if !identity.HasValue() {
-		return false, nil
+		// We can't assume that there is no-access just because there is no identity even if the document
+		// is registered with acp, this is because it is possible that acp has a registered relation targeting
+		// "*" (any) actor which would mean that even a request without an identity might be able to access
+		// a document registered with acp. So we pass an empty `did` to accommodate that case.
+		identityValue = ""
+	} else {
+		identityValue = identity.Value().DID
 	}
 
 	// Now actually check using the signature if this identity has access or not.
 	hasAccess, err := acpSystem.CheckDocAccess(
 		ctx,
 		permission,
-		identity.Value().DID,
+		identityValue,
 		policyID,
 		resourceName,
 		docID,

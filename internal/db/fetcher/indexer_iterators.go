@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
-	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	"github.com/ipfs/go-datastore/query"
@@ -62,7 +62,7 @@ type indexIterator interface {
 }
 
 type indexIterResult struct {
-	key      core.IndexDataStoreKey
+	key      keys.IndexDataStoreKey
 	foundKey bool
 	value    []byte
 }
@@ -71,7 +71,7 @@ type indexIterResult struct {
 type indexPrefixIterator struct {
 	indexDesc     client.IndexDescription
 	indexedFields []client.FieldDefinition
-	indexKey      core.IndexDataStoreKey
+	indexKey      keys.IndexDataStoreKey
 	matchers      []valueMatcher
 	execInfo      *ExecInfo
 	resultIter    query.Results
@@ -114,7 +114,7 @@ func (iter *indexPrefixIterator) nextResult() (indexIterResult, error) {
 	if !hasVal {
 		return indexIterResult{}, nil
 	}
-	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc, iter.indexedFields)
+	key, err := keys.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc, iter.indexedFields)
 	if err != nil {
 		return indexIterResult{}, err
 	}
@@ -151,7 +151,7 @@ func (iter *indexPrefixIterator) Close() error {
 }
 
 type eqSingleIndexIterator struct {
-	indexKey core.IndexDataStoreKey
+	indexKey keys.IndexDataStoreKey
 	execInfo *ExecInfo
 
 	ctx   context.Context
@@ -305,7 +305,7 @@ func (iter *arrayIndexIterator) Close() error {
 	return iter.inner.Close()
 }
 
-func executeValueMatchers(matchers []valueMatcher, fields []core.IndexedField) (bool, error) {
+func executeValueMatchers(matchers []valueMatcher, fields []keys.IndexedField) (bool, error) {
 	for i := range matchers {
 		res, err := matchers[i].Match(fields[i].Value)
 		if err != nil {
@@ -576,7 +576,7 @@ func (f *IndexFetcher) newPrefixIteratorFromConditions(
 }
 
 func (f *IndexFetcher) newPrefixIterator(
-	indexKey core.IndexDataStoreKey,
+	indexKey keys.IndexDataStoreKey,
 	matchers []valueMatcher,
 	execInfo *ExecInfo,
 ) *indexPrefixIterator {
@@ -624,7 +624,7 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
-		indexKey.Fields = []core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
+		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
 		iter = f.newPrefixIterator(indexKey, matchers, &f.execInfo)
 	}
@@ -634,18 +634,18 @@ func (f *IndexFetcher) newInIndexIterator(
 	}, nil
 }
 
-func (f *IndexFetcher) newIndexDataStoreKey() core.IndexDataStoreKey {
-	key := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
+func (f *IndexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
+	key := keys.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
 	return key
 }
 
-func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) core.IndexDataStoreKey {
-	fields := make([]core.IndexedField, len(values))
+func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
+	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
-	return core.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
+	return keys.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
 }
 
 func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {

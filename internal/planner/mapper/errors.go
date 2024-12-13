@@ -15,6 +15,7 @@ import "github.com/sourcenetwork/defradb/errors"
 const (
 	errInvalidFieldToGroupBy string = "invalid field value to groupBy"
 	errTypeNotFound          string = "type not found"
+	errFieldOrAliasNotFound  string = "field or alias not found"
 )
 
 var (
@@ -32,4 +33,8 @@ func NewErrInvalidFieldToGroupBy(field string) error {
 
 func NewErrTypeNotFound(name string) error {
 	return errors.New(errTypeNotFound, errors.NewKV("Type", name))
+}
+
+func NewErrFieldOrAliasNotFound(name string) error {
+	return errors.New(errFieldOrAliasNotFound, errors.NewKV("Name", name))
 }

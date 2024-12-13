@@ -20,13 +20,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
@@ -34,7 +35,7 @@ import (
 func (db *db) createCollectionIndex(
 	ctx context.Context,
 	collectionName string,
-	desc client.IndexDescription,
+	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
 	col, err := db.getCollectionByName(ctx, collectionName)
 	if err != nil {
@@ -60,9 +61,9 @@ func (db *db) getAllIndexDescriptions(
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewCollectionIndexKey(immutable.None[uint32](), "")
+	prefix := keys.NewCollectionIndexKey(immutable.None[uint32](), "")
 
-	keys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
+	indexKeys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
 
 	if err != nil {
@@ -71,8 +72,8 @@ func (db *db) getAllIndexDescriptions(
 
 	indexes := make(map[client.CollectionName][]client.IndexDescription)
 
-	for i := range keys {
-		indexKey, err := core.NewCollectionIndexKeyFromString(keys[i])
+	for i := range indexKeys {
+		indexKey, err := keys.NewCollectionIndexKeyFromString(indexKeys[i])
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
@@ -97,7 +98,7 @@ func (db *db) fetchCollectionIndexDescriptions(
 ) ([]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewCollectionIndexKey(immutable.Some(colID), "")
+	prefix := keys.NewCollectionIndexKey(immutable.Some(colID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
 		ctx,
 		prefix.ToString(),
@@ -217,7 +218,7 @@ func (c *collection) deleteIndexedDocWithID(
 // the documents will be indexed by the new index.
 func (c *collection) CreateIndex(
 	ctx context.Context,
-	desc client.IndexDescription,
+	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -234,7 +235,7 @@ func (c *collection) CreateIndex(
 
 func (c *collection) createIndex(
 	ctx context.Context,
-	desc client.IndexDescription,
+	desc client.IndexDescriptionCreateRequest,
 ) (CollectionIndex, error) {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return nil, schema.NewErrIndexWithInvalidName("!")
@@ -256,7 +257,7 @@ func (c *collection) createIndex(
 
 	colSeq, err := c.db.getSequence(
 		ctx,
-		core.NewIndexIDSequenceKey(c.ID()),
+		keys.NewIndexIDSequenceKey(c.ID()),
 	)
 	if err != nil {
 		return nil, err
@@ -265,9 +266,15 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	desc.ID = uint32(colID)
 
-	buf, err := json.Marshal(desc)
+	descWithID := client.IndexDescription{
+		Name:   desc.Name,
+		ID:     uint32(colID),
+		Fields: desc.Fields,
+		Unique: desc.Unique,
+	}
+
+	buf, err := json.Marshal(descWithID)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +284,7 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	colIndex, err := NewCollectionIndex(c, desc)
+	colIndex, err := NewCollectionIndex(c, descWithID)
 	if err != nil {
 		return nil, err
 	}
@@ -297,12 +304,11 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	txn := mustGetContextTxn(ctx)
-	identity := GetContextIdentity(ctx)
 
 	df := c.newFetcher()
 	err := df.Init(
 		ctx,
-		identity,
+		identity.FromContext(ctx),
 		txn,
 		c.db.acp,
 		c,
@@ -315,10 +321,8 @@ func (c *collection) iterateAllDocs(
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}
-	start := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
-	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
-
-	err = df.Start(ctx, spans)
+	prefix := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
+	err = df.Start(ctx, prefix)
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}
@@ -411,7 +415,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 			break
 		}
 	}
-	key := core.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
+	key := keys.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -423,7 +427,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 func (c *collection) dropAllIndexes(ctx context.Context) error {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := core.NewCollectionIndexKey(immutable.Some(c.ID()), "")
+	prefix := keys.NewCollectionIndexKey(immutable.Some(c.ID()), "")
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
@@ -493,20 +497,20 @@ func (c *collection) checkExistingFieldsAndAdjustRelFieldNames(
 
 func (c *collection) generateIndexNameIfNeededAndCreateKey(
 	ctx context.Context,
-	desc *client.IndexDescription,
-) (core.CollectionIndexKey, error) {
+	desc *client.IndexDescriptionCreateRequest,
+) (keys.CollectionIndexKey, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
 
-	var indexKey core.CollectionIndexKey
+	var indexKey keys.CollectionIndexKey
 	if desc.Name == "" {
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 			if err != nil {
-				return core.CollectionIndexKey{}, err
+				return keys.CollectionIndexKey{}, err
 			}
 			if !exists {
 				break
@@ -514,22 +518,19 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 		if err != nil {
-			return core.CollectionIndexKey{}, err
+			return keys.CollectionIndexKey{}, err
 		}
 		if exists {
-			return core.CollectionIndexKey{}, NewErrIndexWithNameAlreadyExists(desc.Name)
+			return keys.CollectionIndexKey{}, NewErrIndexWithNameAlreadyExists(desc.Name)
 		}
 	}
 	return indexKey, nil
 }
 
-func validateIndexDescription(desc client.IndexDescription) error {
-	if desc.ID != 0 {
-		return NewErrNonZeroIndexIDProvided(desc.ID)
-	}
+func validateIndexDescription(desc client.IndexDescriptionCreateRequest) error {
 	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields
 	}

@@ -1188,17 +1188,21 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 		func() (gql.InputObjectConfigFieldMap, error) {
 			fields := gql.InputObjectConfigFieldMap{}
 
-			fields["_and"] = &gql.InputObjectFieldConfig{
+			fields[request.FilterOpAnd] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.AndOperatorDescription,
 				Type:        gql.NewList(gql.NewNonNull(selfRefType)),
 			}
-			fields["_or"] = &gql.InputObjectFieldConfig{
+			fields[request.FilterOpOr] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.OrOperatorDescription,
 				Type:        gql.NewList(gql.NewNonNull(selfRefType)),
 			}
-			fields["_not"] = &gql.InputObjectFieldConfig{
+			fields[request.FilterOpNot] = &gql.InputObjectFieldConfig{
 				Description: schemaTypes.NotOperatorDescription,
 				Type:        selfRefType,
+			}
+			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
+				Description: "The alias operator allows filters to target aliased fields.",
+				Type:        schemaTypes.JSONScalarType(),
 			}
 
 			// generate basic filter operator blocks
@@ -1287,6 +1291,10 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(
 		func() (gql.InputObjectConfigFieldMap, error) {
 			fields := gql.InputObjectConfigFieldMap{}
+			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
+				Description: "The alias field allows ordering by aliased fields.",
+				Type:        schemaTypes.JSONScalarType(),
+			}
 
 			for f, field := range obj.Fields() {
 				if _, ok := request.ReservedFields[f]; ok && f != request.DocIDFieldName {

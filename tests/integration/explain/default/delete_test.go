@@ -76,11 +76,8 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 									"_eq": "Shahzad",
 								},
 							},
-							"spans": []dataMap{
-								{
-									"start": "/3",
-									"end":   "/4",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -127,11 +124,8 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"end":   "/4",
-									"start": "/3",
-								},
+							"prefixes": []string{
+								"/3",
 							},
 						},
 					},
@@ -180,11 +174,8 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
 					},
@@ -237,15 +228,9 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans": []dataMap{
-								{
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-								},
-								{
-									"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-									"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
 						},
 					},
@@ -292,7 +277,9 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter":         nil,
-							"spans":          []dataMap{},
+							"prefixes": []string{
+								"/3",
+							},
 						},
 					},
 				},
@@ -375,15 +362,9 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 									},
 								},
 							},
-							"spans": []dataMap{
-								{
-									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-								},
-								{
-									"end":   "/3/tesu",
-									"start": "/3/test",
-								},
+							"prefixes": []string{
+								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"/3/test",
 							},
 						},
 					},

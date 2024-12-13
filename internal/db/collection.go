@@ -17,10 +17,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -34,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -280,7 +279,7 @@ func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
 	txn := mustGetContextTxn(ctx)
-	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
+	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionRootID: c.Description().RootID,
 	}
 	q, err := txn.Datastore().Query(ctx, query.Query{
@@ -420,15 +419,15 @@ func (c *collection) CreateMany(
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	doc *client.Document,
-) (client.DocID, core.PrimaryDataStoreKey, error) {
+) (client.DocID, keys.PrimaryDataStoreKey, error) {
 	docID, err := doc.GenerateDocID()
 	if err != nil {
-		return client.DocID{}, core.PrimaryDataStoreKey{}, err
+		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
 	}
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 	if primaryKey.DocID != doc.ID().String() {
-		return client.DocID{}, core.PrimaryDataStoreKey{},
+		return client.DocID{}, keys.PrimaryDataStoreKey{},
 			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
 	}
 	return docID, primaryKey, nil
@@ -466,7 +465,7 @@ func (c *collection) create(
 	}
 
 	// write data to DB via MerkleClock/CRDT
-	_, err = c.save(ctx, doc, true)
+	err = c.save(ctx, doc, true)
 	if err != nil {
 		return err
 	}
@@ -534,7 +533,7 @@ func (c *collection) update(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	_, err = c.save(ctx, doc, false)
+	err = c.save(ctx, doc, false)
 	if err != nil {
 		return err
 	}
@@ -604,15 +603,15 @@ func (c *collection) save(
 	ctx context.Context,
 	doc *client.Document,
 	isCreate bool,
-) (cid.Cid, error) {
+) error {
 	if err := c.validateEncryptedFields(ctx); err != nil {
-		return cid.Undef, err
+		return err
 	}
 
 	if !isCreate {
 		err := c.updateIndexedDoc(ctx, doc)
 		if err != nil {
-			return cid.Undef, err
+			return err
 		}
 	}
 	txn := mustGetContextTxn(ctx)
@@ -636,19 +635,19 @@ func (c *collection) save(
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
-			return cid.Undef, err
+			return err
 		}
 
 		if val.IsDirty() {
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
 
 			if !fieldExists {
-				return cid.Undef, client.NewErrFieldNotExist(k)
+				return client.NewErrFieldNotExist(k)
 			}
 
 			fieldDescription, valid := c.Definition().GetFieldByName(k)
 			if !valid {
-				return cid.Undef, client.NewErrFieldNotExist(k)
+				return client.NewErrFieldNotExist(k)
 			}
 
 			// by default the type will have been set to LWW_REGISTER. We need to ensure
@@ -662,38 +661,39 @@ func (c *collection) save(
 				val.Value(),
 			)
 			if err != nil {
-				return cid.Undef, err
+				return err
 			}
 
-			merkleCRDT, err := merklecrdt.InstanceWithStore(
+			merkleCRDT, err := merklecrdt.FieldLevelCRDTWithStore(
 				txn,
-				core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+				keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 				val.Type(),
 				fieldDescription.Kind,
 				fieldKey,
 				fieldDescription.Name,
 			)
 			if err != nil {
-				return cid.Undef, err
+				return err
 			}
 
 			link, _, err := merkleCRDT.Save(ctx, merklecrdt.NewDocField(primaryKey.DocID, k, val))
 			if err != nil {
-				return cid.Undef, err
+				return err
 			}
 
 			links = append(links, coreblock.NewDAGLink(k, link))
 		}
 	}
 
-	link, headNode, err := c.saveCompositeToMerkleCRDT(
-		ctx,
-		primaryKey.ToDataStoreKey(),
-		links,
-		client.Active,
+	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
+		txn,
+		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
+
+	link, headNode, err := merkleCRDT.Save(ctx, links)
 	if err != nil {
-		return cid.Undef, err
+		return err
 	}
 
 	// publish an update event when the txn succeeds
@@ -711,7 +711,30 @@ func (c *collection) save(
 		doc.SetHead(link.Cid)
 	})
 
-	return link.Cid, nil
+	if c.def.Description.IsBranchable {
+		collectionCRDT := merklecrdt.NewMerkleCollection(
+			txn,
+			keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+			keys.NewHeadstoreColKey(c.def.Description.RootID),
+		)
+
+		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})
+		if err != nil {
+			return err
+		}
+
+		updateEvent := event.Update{
+			Cid:        link.Cid,
+			SchemaRoot: c.Schema().Root,
+			Block:      headNode,
+		}
+
+		txn.OnSuccess(func() {
+			c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		})
+	}
+
+	return nil
 }
 
 func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
@@ -860,7 +883,7 @@ func (c *collection) Exists(
 // check if a document exists with the given primary key
 func (c *collection) exists(
 	ctx context.Context,
-	primaryKey core.PrimaryDataStoreKey,
+	primaryKey keys.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
 	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
@@ -887,54 +910,28 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
-// saveCompositeToMerkleCRDT saves the composite to the merkle CRDT.
-// It returns the CID of the block and the encoded block.
-// saveCompositeToMerkleCRDT MUST not be called outside the `c.save`
-// and `c.applyDelete` methods as we wrap the acp logic around those methods.
-// Calling it elsewhere could cause the omission of acp checks.
-func (c *collection) saveCompositeToMerkleCRDT(
-	ctx context.Context,
-	dsKey core.DataStoreKey,
-	links []coreblock.DAGLink,
-	status client.DocumentStatus,
-) (cidlink.Link, []byte, error) {
-	txn := mustGetContextTxn(ctx)
-	dsKey = dsKey.WithFieldID(core.COMPOSITE_NAMESPACE)
-	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
-		txn,
-		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
-		dsKey,
-	)
-
-	if status.IsDeleted() {
-		return merkleCRDT.Delete(ctx, links)
-	}
-
-	return merkleCRDT.Save(ctx, links)
-}
-
-func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) core.PrimaryDataStoreKey {
-	return core.PrimaryDataStoreKey{
+func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) keys.PrimaryDataStoreKey {
+	return keys.PrimaryDataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            docID.String(),
 	}
 }
 
-func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) core.DataStoreKey {
-	return core.DataStoreKey{
+func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) keys.DataStoreKey {
+	return keys.DataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            docID.String(),
-		InstanceType:     core.ValueKey,
+		InstanceType:     keys.ValueKey,
 	}
 }
 
-func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
+func (c *collection) tryGetFieldKey(primaryKey keys.PrimaryDataStoreKey, fieldName string) (keys.DataStoreKey, bool) {
 	fieldID, hasField := c.tryGetFieldID(fieldName)
 	if !hasField {
-		return core.DataStoreKey{}, false
+		return keys.DataStoreKey{}, false
 	}
 
-	return core.DataStoreKey{
+	return keys.DataStoreKey{
 		CollectionRootID: c.Description().RootID,
 		DocID:            primaryKey.DocID,
 		FieldID:          strconv.FormatUint(uint64(fieldID), 10),

@@ -13,6 +13,7 @@ package fetcher
 import (
 	"bytes"
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/bits-and-blooms/bitset"
@@ -28,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
@@ -71,14 +73,14 @@ type Fetcher interface {
 		reverse bool,
 		showDeleted bool,
 	) error
-	Start(ctx context.Context, spans core.Spans) error
+	Start(ctx context.Context, prefixes ...keys.Walkable) error
 	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
 	Close() error
 }
 
 // keyValue is a KV store response containing the resulting core.Key and byte array value.
 type keyValue struct {
-	Key   core.DataStoreKey
+	Key   keys.DataStoreKey
 	Value []byte
 }
 
@@ -96,10 +98,10 @@ type DocumentFetcher struct {
 	reverse     bool
 	deletedDocs bool
 
-	txn          datastore.Txn
-	spans        core.Spans
-	order        []dsq.Order
-	curSpanIndex int
+	txn            datastore.Txn
+	prefixes       []keys.DataStoreKey
+	order          []dsq.Order
+	curPrefixIndex int
 
 	filter       *mapper.Filter
 	ranFilter    bool // did we run the filter
@@ -242,21 +244,21 @@ func (df *DocumentFetcher) init(
 	return nil
 }
 
-func (df *DocumentFetcher) Start(ctx context.Context, spans core.Spans) error {
-	err := df.start(ctx, spans, false)
+func (df *DocumentFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
+	err := df.start(ctx, prefixes, false)
 	if err != nil {
 		return err
 	}
 
 	if df.deletedDocFetcher != nil {
-		return df.deletedDocFetcher.start(ctx, spans, true)
+		return df.deletedDocFetcher.start(ctx, prefixes, true)
 	}
 
 	return nil
 }
 
 // Start implements DocumentFetcher.
-func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDeleted bool) error {
+func (df *DocumentFetcher) start(ctx context.Context, prefixes []keys.Walkable, withDeleted bool) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
 	}
@@ -266,35 +268,46 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 
 	df.deletedDocs = withDeleted
 
-	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
-		start := base.MakeDataStoreKeyWithCollectionDescription(df.col.Description())
+	if len(prefixes) == 0 { // no specified prefixes so create a prefix scan key for the entire collection
+		prefix := base.MakeDataStoreKeyWithCollectionDescription(df.col.Description())
 		if withDeleted {
-			start = start.WithDeletedFlag()
+			prefix = prefix.WithDeletedFlag()
 		} else {
-			start = start.WithValueFlag()
+			prefix = prefix.WithValueFlag()
 		}
-		df.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
+		df.prefixes = []keys.DataStoreKey{prefix}
 	} else {
-		valueSpans := make([]core.Span, len(spans.Value))
-		for i, span := range spans.Value {
-			// We can only handle value keys, so here we ensure we only read value keys
+		valuePrefixes := make([]keys.DataStoreKey, len(prefixes))
+		prefixCache := make(map[string]struct{})
+		for i, prefix := range prefixes {
+			// if we have a duplicate prefix, skip it
+			if _, exists := prefixCache[prefix.ToString()]; exists {
+				continue
+			}
+			prefixCache[prefix.ToString()] = struct{}{}
 			if withDeleted {
-				valueSpans[i] = core.NewSpan(span.Start().WithDeletedFlag(), span.End().WithDeletedFlag())
+				// DocumentFetcher only ever recieves document keys
+				//nolint:forcetypeassert
+				valuePrefixes[i] = prefix.(keys.DataStoreKey).WithDeletedFlag()
 			} else {
-				valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+				// DocumentFetcher only ever recieves document keys
+				//nolint:forcetypeassert
+				valuePrefixes[i] = prefix.(keys.DataStoreKey).WithValueFlag()
 			}
 		}
 
-		spans := core.MergeAscending(valueSpans)
+		slices.SortFunc(valuePrefixes, func(a, b keys.DataStoreKey) int {
+			return strings.Compare(a.ToString(), b.ToString())
+		})
+
 		if df.reverse {
-			for i, j := 0, len(spans)-1; i < j; i, j = i+1, j-1 {
-				spans[i], spans[j] = spans[j], spans[i]
+			for i, j := 0, len(valuePrefixes)-1; i < j; i, j = i+1, j-1 {
+				valuePrefixes[i], valuePrefixes[j] = valuePrefixes[j], valuePrefixes[i]
 			}
 		}
-		df.spans = core.NewSpans(spans...)
+		df.prefixes = valuePrefixes
 	}
-
-	df.curSpanIndex = -1
+	df.curPrefixIndex = -1
 
 	if df.reverse {
 		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
@@ -302,13 +315,13 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 		df.order = []dsq.Order{dsq.OrderByKey{}}
 	}
 
-	_, err := df.startNextSpan(ctx)
+	_, err := df.startNextPrefix(ctx)
 	return err
 }
 
-func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
-	nextSpanIndex := df.curSpanIndex + 1
-	if nextSpanIndex >= len(df.spans.Value) {
+func (df *DocumentFetcher) startNextPrefix(ctx context.Context) (bool, error) {
+	nextPrefixIndex := df.curPrefixIndex + 1
+	if nextPrefixIndex >= len(df.prefixes) {
 		return false, nil
 	}
 
@@ -329,12 +342,12 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 		}
 	}
 
-	span := df.spans.Value[nextSpanIndex]
-	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
+	prefix := df.prefixes[nextPrefixIndex]
+	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, prefix.ToDS(), prefix.PrefixEnd().ToDS())
 	if err != nil {
 		return false, err
 	}
-	df.curSpanIndex = nextSpanIndex
+	df.curPrefixIndex = nextPrefixIndex
 
 	_, _, err = df.nextKey(ctx, false)
 	return err == nil, err
@@ -343,7 +356,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed.
 // The first call to nextKey CANNOT have seekNext be true (ErrFailedToSeek)
-func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone bool, docDone bool, err error) {
+func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (prefixDone bool, docDone bool, err error) {
 	// safety against seekNext on first call
 	if seekNext && df.kv == nil {
 		return false, false, ErrFailedToSeek
@@ -353,37 +366,37 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 		curKey := df.kv.Key
 		curKey.FieldID = "" // clear field so prefixEnd applies to docID
 		seekKey := curKey.PrefixEnd().ToString()
-		spanDone, df.kv, err = df.seekKV(seekKey)
+		prefixDone, df.kv, err = df.seekKV(seekKey)
 		// handle any internal errors
 		if err != nil {
 			return false, false, err
 		}
 	} else {
-		spanDone, df.kv, err = df.nextKV()
+		prefixDone, df.kv, err = df.nextKV()
 		// handle any internal errors
 		if err != nil {
 			return false, false, err
 		}
 	}
 
-	if df.kv != nil && (df.kv.Key.InstanceType != core.ValueKey && df.kv.Key.InstanceType != core.DeletedKey) {
+	if df.kv != nil && (df.kv.Key.InstanceType != keys.ValueKey && df.kv.Key.InstanceType != keys.DeletedKey) {
 		// We can only ready value values, if we escape the collection's value keys
 		// then we must be done and can stop reading
-		spanDone = true
+		prefixDone = true
 	}
 
-	df.kvEnd = spanDone
+	df.kvEnd = prefixDone
 	if df.kvEnd {
 		err = df.kvResultsIter.Close()
 		if err != nil {
 			return false, false, err
 		}
-		moreSpans, err := df.startNextSpan(ctx)
+		morePrefixes, err := df.startNextPrefix(ctx)
 		if err != nil {
 			return false, false, err
 		}
 		df.isReadingDocument = false
-		return !moreSpans, true, nil
+		return !morePrefixes, true, nil
 	}
 
 	// check if we've crossed document boundries
@@ -396,7 +409,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 
 // nextKV is a lower-level utility compared to nextKey. The differences are as follows:
 // - It directly interacts with the KVIterator.
-// - Returns true if the entire iterator/span is exhausted
+// - Returns true if the entire iterator/prefix is exhausted
 // - Returns a kv pair instead of internally updating
 func (df *DocumentFetcher) nextKV() (iterDone bool, kv *keyValue, err error) {
 	done, dsKey, res, err := df.nextKVRaw()
@@ -448,21 +461,21 @@ func (df *DocumentFetcher) seekKV(key string) (bool, *keyValue, error) {
 
 // nextKV is a lower-level utility compared to nextKey. The differences are as follows:
 // - It directly interacts with the KVIterator.
-// - Returns true if the entire iterator/span is exhausted
+// - Returns true if the entire iterator/prefix is exhausted
 // - Returns a kv pair instead of internally updating
-func (df *DocumentFetcher) nextKVRaw() (bool, core.DataStoreKey, dsq.Result, error) {
+func (df *DocumentFetcher) nextKVRaw() (bool, keys.DataStoreKey, dsq.Result, error) {
 	res, available := df.kvResultsIter.NextSync()
 	if !available {
-		return true, core.DataStoreKey{}, res, nil
+		return true, keys.DataStoreKey{}, res, nil
 	}
 	err := res.Error
 	if err != nil {
-		return true, core.DataStoreKey{}, res, err
+		return true, keys.DataStoreKey{}, res, err
 	}
 
-	dsKey, err := core.NewDataStoreKey(res.Key)
+	dsKey, err := keys.NewDataStoreKey(res.Key)
 	if err != nil {
-		return true, core.DataStoreKey{}, res, err
+		return true, keys.DataStoreKey{}, res, err
 	}
 
 	return false, dsKey, res, nil
@@ -504,7 +517,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		}
 	}
 
-	if kv.Key.FieldID == core.DATASTORE_DOC_VERSION_FIELD_ID {
+	if kv.Key.FieldID == keys.DATASTORE_DOC_VERSION_FIELD_ID {
 		df.doc.schemaVersionID = string(kv.Value)
 		return nil
 	}
@@ -648,7 +661,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 
 		// if we don't pass the filter (ran and pass) or if we don't have access to document then
 		// there is no point in collecting other select fields, so we seek to the next doc.
-		spansDone, docDone, err := df.nextKey(ctx, !df.passedPermissionCheck || !df.passedFilter && df.ranFilter)
+		prefixsDone, docDone, err := df.nextKey(ctx, !df.passedPermissionCheck || !df.passedFilter && df.ranFilter)
 
 		if err != nil {
 			return nil, ExecInfo{}, err
@@ -683,7 +696,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			}
 		}
 
-		if spansDone {
+		if prefixsDone {
 			return nil, df.execInfo, nil
 		}
 	}

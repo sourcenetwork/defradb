@@ -35,7 +35,7 @@ func (c *Client) PeerInfo() peer.AddrInfo {
 	return res
 }
 
-func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)
@@ -50,7 +50,7 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error
 	return err
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)

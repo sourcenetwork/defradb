@@ -36,7 +36,8 @@ An optional value that skips the given number of results that would have
 Commit represents an individual commit to a MerkleCRDT, every mutation to a
  document will result in a new commit per modified field, and one composite
  commit composed of the field level commits and, in the case of an update,
- the prior composite commit.
+ the prior composite commit.  If the collection is branchable, there will
+ also be a collection-level commit for each mutation.
 `
 	commitDocIDArgDescription string = `
 An optional docID parameter for this commit query. Only commits for a document
@@ -60,10 +61,10 @@ An optional value that specifies the maximum depth to which the commit DAG graph
 	commitLinksDescription string = `
 Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
- the single mutation.
+ the single mutation.  Collection commits will link to composites.
 `
 	commitHeightFieldDescription string = `
-Height represents the location of the commit in the DAG. All commits (composite,
+Height represents the location of the commit in the DAG. All commits (collection, composite,
  and field level) on create will have a height of '1', each subsequent local update
  will increment this by one for the new commits.
 `
@@ -82,12 +83,12 @@ The ID of the schema version that this commit was committed against. This ID all
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `
-The name of the field that this commit was committed against. If this is a composite field
- the value will be null.
+The name of the field that this commit was committed against. If this is a composite
+ or a collection the value will be null.
 `
 	commitFieldIDFieldDescription string = `
 The id of the field that this commit was committed against. If this is a composite field
- the value will be "C".
+ the value will be "C". If it is a collection level commit it will be null.
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.

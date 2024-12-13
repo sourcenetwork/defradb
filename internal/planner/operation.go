@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -28,9 +29,9 @@ type operationNode struct {
 	isDone   bool
 }
 
-func (n *operationNode) Spans(spans core.Spans) {
+func (n *operationNode) Prefixes(prefixes []keys.Walkable) {
 	for _, child := range n.children {
-		child.Spans(spans)
+		child.Prefixes(prefixes)
 	}
 }
 
