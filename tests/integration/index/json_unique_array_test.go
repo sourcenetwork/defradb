@@ -79,12 +79,12 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					"name": "Keenan",
 					"custom": map[string]any{
 						// use existing nil value
-						"numbers": []any{8, nil},
+						"numbers": []any{6, nil},
 					},
 				},
 				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-f87bacb3-4741-5208-a432-cbfec654080d",
-					errors.NewKV("custom", map[string]any{"numbers": []any{8, nil}})).Error(),
+					"bae-bde18215-f623-568e-868d-1156c30e45d3",
+					errors.NewKV("custom", map[string]any{"numbers": []any{6, nil}})).Error(),
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
