@@ -521,7 +521,6 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 			jsonPath := []string{}
 			if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
-
 			jsonPathLoop:
 				for {
 					for key, filterVal := range condMap {

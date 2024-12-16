@@ -23,6 +23,21 @@ type traverseNode struct {
 	path  string
 }
 
+// Helper functions to safely get values
+func getObjectValue(j JSON) map[string]JSON {
+	if val, ok := j.Value().(map[string]JSON); ok {
+		return val
+	}
+	panic("expected object value")
+}
+
+func getArrayValue(j JSON) []JSON {
+	if val, ok := j.Value().([]JSON); ok {
+		return val
+	}
+	panic("expected array value")
+}
+
 func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 	// Create a complex JSON structure for testing
 	json := newJSONObject(map[string]JSON{
@@ -63,11 +78,11 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				{path: "number", value: newJSONNumber(42, nil)},
 				{path: "bool", value: newJSONBool(true, nil)},
 				{path: "null", value: newJSONNull(nil)},
-				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object", value: getObjectValue(json)["object"]},
 				{path: "object/nested", value: newJSONString("inside", nil)},
-				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
 				{path: "object/deep/level", value: newJSONNumber(3, nil)},
-				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array", value: getObjectValue(json)["array"]},
 			},
 		},
 		{
@@ -90,9 +105,9 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				TraverseJSONWithPrefix([]string{"object"}),
 			},
 			expected: []traverseNode{
-				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object", value: getObjectValue(json)["object"]},
 				{path: "object/nested", value: newJSONString("inside", nil)},
-				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
 				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 			},
 		},
@@ -102,7 +117,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				TraverseJSONWithPrefix([]string{"object", "deep"}),
 			},
 			expected: []traverseNode{
-				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
 				{path: "object/deep/level", value: newJSONNumber(3, nil)},
 			},
 		},
@@ -117,16 +132,16 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				{path: "number", value: newJSONNumber(42, nil)},
 				{path: "bool", value: newJSONBool(true, nil)},
 				{path: "null", value: newJSONNull(nil)},
-				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object", value: getObjectValue(json)["object"]},
 				{path: "object/nested", value: newJSONString("inside", nil)},
-				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
 				{path: "object/deep/level", value: newJSONNumber(3, nil)},
-				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array", value: getObjectValue(json)["array"]},
 				{path: "array", value: newJSONNumber(1, nil)},
 				{path: "array", value: newJSONString("two", nil)},
-				{path: "array", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[2]},
+				{path: "array", value: getArrayValue(getObjectValue(json)["array"])[2]},
 				{path: "array/key", value: newJSONString("value", nil)},
-				{path: "array", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[3]},
+				{path: "array", value: getArrayValue(getObjectValue(json)["array"])[3]},
 				{path: "array", value: newJSONNumber(4, nil)},
 				{path: "array", value: newJSONNumber(5, nil)},
 			},
@@ -142,11 +157,11 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				{path: "number", value: newJSONNumber(42, nil)},
 				{path: "bool", value: newJSONBool(true, nil)},
 				{path: "null", value: newJSONNull(nil)},
-				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object", value: getObjectValue(json)["object"]},
 				{path: "object/nested", value: newJSONString("inside", nil)},
-				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
 				{path: "object/deep/level", value: newJSONNumber(3, nil)},
-				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array", value: getObjectValue(json)["array"]},
 				{path: "array", value: newJSONNumber(1, nil)},
 				{path: "array", value: newJSONString("two", nil)},
 			},
@@ -163,16 +178,16 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 				{path: "number", value: newJSONNumber(42, nil)},
 				{path: "bool", value: newJSONBool(true, nil)},
 				{path: "null", value: newJSONNull(nil)},
-				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object", value: getObjectValue(json)["object"]},
 				{path: "object/nested", value: newJSONString("inside", nil)},
-				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
 				{path: "object/deep/level", value: newJSONNumber(3, nil)},
-				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array", value: getObjectValue(json)["array"]},
 				{path: "array/0", value: newJSONNumber(1, nil)},
 				{path: "array/1", value: newJSONString("two", nil)},
-				{path: "array/2", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[2]},
+				{path: "array/2", value: getArrayValue(getObjectValue(json)["array"])[2]},
 				{path: "array/2/key", value: newJSONString("value", nil)},
-				{path: "array/3", value: json.Value().(map[string]JSON)["array"].Value().([]JSON)[3]},
+				{path: "array/3", value: getArrayValue(getObjectValue(json)["array"])[3]},
 				{path: "array/3/0", value: newJSONNumber(4, nil)},
 				{path: "array/3/1", value: newJSONNumber(5, nil)},
 			},
