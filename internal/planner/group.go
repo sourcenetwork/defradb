@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -59,9 +61,6 @@ type groupExecInfo struct {
 }
 
 // Creates a new group node.
-
-// The function is recursive and will construct the node-chain for any child (`_group`) collections.
-// `groupSelect` is optional and will typically be nil if the child `_group` is not requested.
 func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects []*mapper.Select) (*groupNode, error) {
 	if n == nil {
 		return nil, nil
@@ -83,6 +82,9 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 			// group by fields have to be propagated downwards to ensure correct sub-grouping, otherwise child
 			// groups will only group on the fields they explicitly reference
 			childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
+			for _, field := range childSelect.GroupBy.Fields {
+				fmt.Println("field", field)
+			}
 		}
 		dataSources = append(dataSources, newDataSource(childSelect.Index))
 	}

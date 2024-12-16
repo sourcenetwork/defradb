@@ -53,3 +53,9 @@ func (s *systemKeyring) Get(name string) ([]byte, error) {
 func (s *systemKeyring) Delete(user string) error {
 	return keyring.Delete(s.service, user)
 }
+
+func (s *systemKeyring) List() ([]string, error) {
+	// List does not need to be returned here
+	// This function is a stub
+	return nil, nil
+}
