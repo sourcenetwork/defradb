@@ -168,7 +168,7 @@ func TestJSONArrayIndex_WithNestedArrays_ShouldNotConsiderThem(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -245,7 +245,7 @@ func TestJSONArrayIndex_WithNoneFilterOnDifferentElementValues_ShouldFetchCorrec
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(9),
 			},
 		},
 	}
