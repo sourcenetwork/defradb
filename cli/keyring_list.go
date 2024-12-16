@@ -16,7 +16,7 @@ defined with the --secret-file flag.
 
 Example:
   defradb keyring list`,
-		Args: cobra.NoArgs, // No arguments expected
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyring, err := openKeyring(cmd)
 			if err != nil {

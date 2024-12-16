@@ -65,23 +65,17 @@ func (f *fileKeyring) Delete(user string) error {
 	return err
 }
 
-// List is a method that lists all keys in the file-based keyring directory.
 func (f *fileKeyring) List() ([]string, error) {
-	return listKeys(f.dir)
-}
 
-// listKeys is a helper function to list all keys in the given keyring directory.
-func listKeys(keyringDir string) ([]string, error) {
-	// Read all the files in the keyring directory
-	files, err := os.ReadDir(keyringDir)
+	files, err := os.ReadDir(f.dir)
 	if err != nil {
-		return nil, err // Return an error if the directory cannot be read
+		return nil, err
 	}
 
-	// Extract file names
+	// File names are key names
 	var keyNames []string
 	for _, file := range files {
-		if !file.IsDir() { // Only include files, not subdirectories
+		if !file.IsDir() {
 			keyNames = append(keyNames, file.Name())
 		}
 	}
