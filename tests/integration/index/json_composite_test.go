@@ -28,10 +28,10 @@ func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Unique combination. Non-unique custom.val",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {val: {_eq: 3}}}, 
-					{age: {_eq: 25}}
-				]}) {
+				User(filter: {
+					custom: {val: {_eq: 3}}, 
+					age: {_eq: 25}
+				}) {
 					name
 				}
 			}`,
@@ -45,10 +45,10 @@ func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Unique combination. Non-unique age",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {val: {_eq: 3}}}, 
-					{age: {_eq: 30}}
-				]}) {
+				User(filter: {
+					custom: {val: {_eq: 3}}, 
+					age: {_eq: 30}
+				}) {
 					name
 				}
 			}`,
@@ -68,8 +68,8 @@ func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "John"},
 					{"name": "Islam"},
+					{"name": "John"},
 				},
 			},
 			indexFetches: 2,
@@ -77,17 +77,17 @@ func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Non-unique combination",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {val: {_eq: 5}}}, 
-					{age: {_eq: 35}}
-				]}) {
+				User(filter: {
+					custom: {val: {_eq: 5}},
+					age: {_eq: 35},
+				}) {
 					name
 				}
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
 					{"name": "Addo"},
-					{"name": "Kennan"},
+					{"name": "Keenan"},
 				},
 			},
 			indexFetches: 2,
@@ -95,7 +95,7 @@ func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Match second part of the composite index",
 			req: `query {
-				User(filter: { {age: {_eq: 40}}) {
+				User(filter: {age: {_eq: 40}}) {
 					name
 				}
 			}`,
@@ -220,10 +220,10 @@ func TestJSONArrayCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Unique combination. Non-unique custom.val",
 			req: `query {
-				User(filter: {_and: [
-					{age: {_eq: 25}}, 
-					{custom: {val: {_eq: 3}}}
-				]}) {
+				User(filter: {
+					age: {_eq: 25}, 
+					custom: {val: {_eq: 3}}
+				}) {
 					name
 				}
 			}`,
@@ -237,10 +237,10 @@ func TestJSONArrayCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Unique combination. Non-unique age",
 			req: `query {
-				User(filter: {_and: [
-					{age: {_eq: 30}}, 
-					{custom: {val: {_eq: 3}}}
-				]}) {
+				User(filter: {
+					age: {_eq: 30}, 
+					custom: {val: {_eq: 3}}
+				}) {
 					name
 				}
 			}`,
@@ -260,8 +260,8 @@ func TestJSONArrayCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Shahzad"},
 					{"name": "Islam"},
+					{"name": "Shahzad"},
 				},
 			},
 			indexFetches: 2,
@@ -269,10 +269,10 @@ func TestJSONArrayCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing
 		{
 			name: "Non-unique combination",
 			req: `query {
-				User(filter: {_and: [
-					{age: {_eq: 35}}, 
-					{custom: {val: {_eq: 5}}}
-				]}) {
+				User(filter: {
+					age: {_eq: 35}, 
+					custom: {val: {_eq: 5}}
+				}) {
 					name
 				}
 			}`,
@@ -282,7 +282,7 @@ func TestJSONArrayCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing
 					{"name": "Keenan"},
 				},
 			},
-			indexFetches: 1,
+			indexFetches: 2,
 		},
 		{
 			name: "Match second part of the composite index",
@@ -412,10 +412,10 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 		{
 			name: "Unique combination. Non-unique custom.numbers element",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {numbers: {_any: {_eq: 3}}}}, 
-					{age: {_eq: 25}}
-				]}) {
+				User(filter: {
+					custom: {numbers: {_any: {_eq: 3}}}, 
+					age: {_eq: 25}
+				}) {
 					name
 				}
 			}`,
@@ -429,10 +429,10 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 		{
 			name: "Unique combination. Non-unique age",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {numbers: {_any: {_eq: 3}}}}, 
-					{age: {_eq: 30}}
-				]}) {
+				User(filter: {
+					custom: {numbers: {_any: {_eq: 3}}}, 
+					age: {_eq: 30}
+				}) {
 					name
 				}
 			}`,
@@ -452,8 +452,8 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "John"},
 					{"name": "Islam"},
+					{"name": "John"},
 				},
 			},
 			indexFetches: 2,
@@ -461,17 +461,17 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 		{
 			name: "Non-unique combination",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {numbers: {_any: {_eq: 5}}}}, 
-					{age: {_eq: 35}}
-				]}) {
+				User(filter: {
+					custom: {numbers: {_any: {_eq: 5}}}, 
+					age: {_eq: 35}
+				}) {
 					name
 				}
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Addo"},
 					{"name": "Keenan"},
+					{"name": "Addo"},
 				},
 			},
 			indexFetches: 2,
@@ -498,7 +498,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 				Actions: []any{
 					testUtils.SchemaUpdate{
 						Schema: `
-							type User @index(includes: [{field: "custom.numbers"}, {field: "age"}]) {
+							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
 								name: String 
 								custom: JSON 
 								age: Int
@@ -604,16 +604,16 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 		{
 			name: "Unique combination. Non-unique custom.numbers element",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {numbers: {_any: {_eq: 3}}}}, 
-					{tags: {_any: {_eq: "friend"}}}
-				]}) {
+				User(filter: {
+					custom: {numbers: {_any: {_eq: 3}}},
+					tags: {_any: {_eq: "unique"}}
+				}) {
 					name
 				}
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Islam"},
+					{"name": "John"},
 				},
 			},
 			indexFetches: 1,
@@ -621,16 +621,16 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 		{
 			name: "Unique combination. Non-unique tags",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {numbers: {_any: {_eq: 5}}}}, 
-					{tags: {_any: {_eq: "mentor"}}}
-				]}) {
+				User(filter: {
+					custom: {numbers: {_any: {_eq: 15}}},
+					tags: {_any: {_eq: "mentor"}}
+				}) {
 					name
 				}
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "John"},
+					{"name": "Islam"},
 				},
 			},
 			indexFetches: 1,
@@ -638,14 +638,14 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 		{
 			name: "Match first part of the composite index",
 			req: `query {
-				User(filter: {custom: {numbers: {_any: {_eq: 3}}}}) {
+				User(filter: {custom: {numbers: {_any: {_eq: 5}}}}) {
 					name
 				}
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "John"},
-					{"name": "Islam"},
+					{"name": "Addo"},
+					{"name": "Keenan"},
 				},
 			},
 			indexFetches: 2,
@@ -653,10 +653,10 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 		{
 			name: "Non-unique combination",
 			req: `query {
-				User(filter: {_and: [
-					{custom: {numbers: {_any: {_eq: 5}}}}, 
-					{tags: {_any: {_eq: "family"}}}
-				]}) {
+				User(filter: {
+					custom: {numbers: {_any: {_eq: 5}}},
+					tags: {_any: {_eq: "family"}}
+				}) {
 					name
 				}
 			}`,
@@ -690,10 +690,9 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 				Actions: []any{
 					testUtils.SchemaUpdate{
 						Schema: `
-							type User @index(includes: [{field: "custom.numbers"}, {field: "tags"}]) {
+							type User @index(includes: [{field: "custom"}, {field: "tags"}]) {
 								name: String 
 								custom: JSON 
-								age: Int
 								tags: [String]
 							}`,
 					},
@@ -703,16 +702,16 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{3, 4},
 							},
-							"tags": []string{"colleague", "mentor"},
+							"tags": []any{"colleague", "mentor", "unique"},
 						},
 					},
 					testUtils.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Islam",
 							"custom": map[string]any{
-								"numbers": []int{3, 5},
+								"numbers": []int{3, 15},
 							},
-							"tags": []string{"friend", "mentor"},
+							"tags": []any{"friend", "mentor"},
 						},
 					},
 					testUtils.CreateDoc{
@@ -721,7 +720,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{4, 6},
 							},
-							"tags": []string{"colleague"},
+							"tags": []any{"colleague"},
 						},
 					},
 					testUtils.CreateDoc{
@@ -730,7 +729,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{5, 7},
 							},
-							"tags": []string{"family"},
+							"tags": []any{"family"},
 						},
 					},
 					testUtils.CreateDoc{
@@ -739,7 +738,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{1, 5, 8},
 							},
-							"tags": []string{"family"},
+							"tags": []any{"family"},
 						},
 					},
 					testUtils.CreateDoc{
@@ -748,7 +747,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{6, 9},
 							},
-							"tags": []string{"dude"},
+							"tags": []any{"dude"},
 						},
 					},
 					testUtils.CreateDoc{
@@ -757,7 +756,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{},
 							},
-							"tags": []string{"friend"},
+							"tags": []any{"friend"},
 						},
 					},
 					testUtils.CreateDoc{
@@ -766,7 +765,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"custom": map[string]any{
 								"numbers": []int{7, 10},
 							},
-							"tags": []string{"colleague"},
+							"tags": []any{"colleague"},
 						},
 					},
 					testUtils.Request{

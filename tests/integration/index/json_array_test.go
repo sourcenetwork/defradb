@@ -99,7 +99,6 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Andy"},
 						{"name": "Shahzad"},
 					},
 				},
@@ -114,7 +113,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestJSONArrayIndex_WithNestedArrays_ShouldTreatThemAsFlatten(t *testing.T) {
+func TestJSONArrayIndex_WithNestedArrays_ShouldNotConsiderThem(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {numbers: {_any: {_eq: 4}}}}) {
 			name
@@ -164,10 +163,7 @@ func TestJSONArrayIndex_WithNestedArrays_ShouldTreatThemAsFlatten(t *testing.T) 
 			testUtils.Request{
 				Request: req,
 				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "Fred"},
-						{"name": "John"},
-					},
+					"User": []map[string]any{},
 				},
 			},
 			testUtils.Request{
@@ -227,6 +223,8 @@ func TestJSONArrayIndex_WithNoneFilterOnDifferentElementValues_ShouldFetchCorrec
 					},
 				},
 			},
+			// TODO: This document should be part of the query result, but it needs additional work
+			// with json encoding https://github.com/sourcenetwork/defradb/issues/3329
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
@@ -240,6 +238,7 @@ func TestJSONArrayIndex_WithNoneFilterOnDifferentElementValues_ShouldFetchCorrec
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Islam"},
+						{"name": "Fred"},
 						{"name": "John"},
 					},
 				},
@@ -303,6 +302,14 @@ func TestJSONArrayIndex_WithAllFilterOnDifferentElementValues_ShouldFetchCorrect
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
+					"name": "Bruno",
+					"custom": map[string]any{
+						"numbers": []any{4, 4, 4},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
 						"numbers": 3,
@@ -313,14 +320,13 @@ func TestJSONArrayIndex_WithAllFilterOnDifferentElementValues_ShouldFetchCorrect
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
-						{"name": "Fred"},
+						{"name": "Bruno"},
 					},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
 		},
 	}

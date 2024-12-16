@@ -76,10 +76,8 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "John"},
 						{"name": "Shahzad"},
-						{"name": "Keenan"},
-						{"name": "Andy"},
+						{"name": "Fred"},
 					},
 				},
 			},
@@ -137,9 +135,7 @@ func TestQueryJSON_WithAllFilterAndNestedArray_ShouldFilter(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "Islam"},
 						{"name": "Shahzad"},
-						{"name": "Keenan"},
 					},
 				},
 			},

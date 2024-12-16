@@ -118,6 +118,12 @@ func TestQueryJSON_WithAnyFilterAndNestedArray_ShouldFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
+					"name": "Bruno",
+					"custom": [null, 3]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 					"name": "Andy",
 					"custom": ""
 				}`,
@@ -136,8 +142,7 @@ func TestQueryJSON_WithAnyFilterAndNestedArray_ShouldFilter(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "Keenan"},
-						{"name": "Fred"},
+						{"name": "Bruno"},
 					},
 				},
 			},

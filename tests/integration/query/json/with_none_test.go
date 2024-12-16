@@ -71,24 +71,24 @@ func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
-					"custom": [1, false, "second", {"one": 1}, [1, 2]]
+					"custom": [1, false, "second", {"one": 3}, [1, 3]]
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "Fred",
-					"custom": [null, false, "second", {"one": 1}, [1, 2]]
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Andy",
-					"custom": [false, "second", {"one": 1}, [1, [2, null]]]
+					"custom": [null, false, "second", 3, {"one": 1}, [1, 2]]
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "Islam",
+					"custom": 3
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
 					"custom": null
 				}`,
 			},
@@ -100,7 +100,7 @@ func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_none: {_eq: null}}}) {
+					Users(filter: {custom: {_none: {_eq: 3}}}) {
 						name
 					}
 				}`,
@@ -108,6 +108,8 @@ func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 					"Users": []map[string]any{
 						{"name": "Shahzad"},
 						{"name": "John"},
+						{"name": "Islam"},
+						{"name": "Bruno"},
 					},
 				},
 			},
