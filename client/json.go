@@ -80,7 +80,7 @@ func TraverseJSON(j JSON, visitor JSONVisitor, opts ...traverseJSONOption) error
 	for _, opt := range opts {
 		opt(&options)
 	}
-	if shouldVisitPath(options.PathPrefix, nil) {
+	if shouldVisitPath(options.pathPrefix, nil) {
 		return j.accept(visitor, []string{}, options)
 	}
 	return nil
@@ -92,7 +92,7 @@ type traverseJSONOption func(*traverseJSONOptions)
 // Only nodes with paths that start with the prefix will be visited.
 func TraverseJSONWithPrefix(prefix []string) traverseJSONOption {
 	return func(opts *traverseJSONOptions) {
-		opts.PathPrefix = prefix
+		opts.pathPrefix = prefix
 	}
 }
 
@@ -101,22 +101,24 @@ func TraverseJSONWithPrefix(prefix []string) traverseJSONOption {
 // be called for objects or arrays and proceed with theirs children.
 func TraverseJSONOnlyLeaves() traverseJSONOption {
 	return func(opts *traverseJSONOptions) {
-		opts.OnlyLeaves = true
+		opts.onlyLeaves = true
 	}
 }
 
 // TraverseJSONVisitArrayElements returns a traverseJSONOption that sets the traversal to visit array elements.
 // When this option is set, the visitor function will be called for each element of an array.
-func TraverseJSONVisitArrayElements() traverseJSONOption {
+// If recurseElements is true, the visitor function will be called for each array element of type object or array.
+func TraverseJSONVisitArrayElements(recurseElements bool) traverseJSONOption {
 	return func(opts *traverseJSONOptions) {
-		opts.VisitArrayElements = true
+		opts.visitArrayElements = true
+		opts.recurseVisitedArrayElements = recurseElements
 	}
 }
 
 // TraverseJSONWithArrayIndexInPath returns a traverseJSONOption that includes array indices in the path.
 func TraverseJSONWithArrayIndexInPath() traverseJSONOption {
 	return func(opts *traverseJSONOptions) {
-		opts.IncludeArrayIndexInPath = true
+		opts.includeArrayIndexInPath = true
 	}
 }
 
@@ -127,14 +129,16 @@ type JSONVisitor func(value JSON) error
 
 // traverseJSONOptions configures how the JSON tree is traversed.
 type traverseJSONOptions struct {
-	// OnlyLeaves when true visits only leaf nodes (not objects or arrays)
-	OnlyLeaves bool
-	// PathPrefix when set visits only paths that start with this prefix
-	PathPrefix []string
-	// VisitArrayElements when true visits array elements
-	VisitArrayElements bool
-	// IncludeArrayIndexInPath when true includes array indices in the path
-	IncludeArrayIndexInPath bool
+	// onlyLeaves when true visits only leaf nodes (not objects or arrays)
+	onlyLeaves bool
+	// pathPrefix when set visits only paths that start with this prefix
+	pathPrefix []string
+	// visitArrayElements when true visits array elements
+	visitArrayElements bool
+	// recurseVisitedArrayElements when true visits array elements recursively
+	recurseVisitedArrayElements bool
+	// includeArrayIndexInPath when true includes array indices in the path
+	includeArrayIndexInPath bool
 }
 
 type jsonVoid struct{}
@@ -217,7 +221,7 @@ func (obj jsonObject) Unwrap() any {
 
 func (obj jsonObject) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	obj.path = path
-	if !opts.OnlyLeaves && len(path) >= len(opts.PathPrefix) {
+	if !opts.onlyLeaves && len(path) >= len(opts.pathPrefix) {
 		if err := visitor(obj); err != nil {
 			return err
 		}
@@ -225,7 +229,7 @@ func (obj jsonObject) accept(visitor JSONVisitor, path []string, opts traverseJS
 
 	for k, v := range obj.val {
 		newPath := append(path, k)
-		if !shouldVisitPath(opts.PathPrefix, newPath) {
+		if !shouldVisitPath(opts.pathPrefix, newPath) {
 			continue
 		}
 
@@ -260,21 +264,24 @@ func (arr jsonArray) Unwrap() any {
 
 func (arr jsonArray) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	arr.path = path
-	if !opts.OnlyLeaves {
+	if !opts.onlyLeaves {
 		if err := visitor(arr); err != nil {
 			return err
 		}
 	}
 
-	if opts.VisitArrayElements {
+	if opts.visitArrayElements {
 		for i := range arr.val {
+			if !opts.recurseVisitedArrayElements && isCompositeJSON(arr.val[i]) {
+				continue
+			}
 			var newPath []string
-			if opts.IncludeArrayIndexInPath {
+			if opts.includeArrayIndexInPath {
 				newPath = append(path, strconv.Itoa(i))
 			} else {
 				newPath = path
 			}
-			if !shouldVisitPath(opts.PathPrefix, newPath) {
+			if !shouldVisitPath(opts.pathPrefix, newPath) {
 				continue
 			}
 
@@ -604,4 +611,13 @@ func shouldVisitPath(prefix, path []string) bool {
 		}
 	}
 	return true
+}
+
+func isCompositeJSON(v JSON) bool {
+	_, isObject := v.Object()
+	if isObject {
+		return true
+	}
+	_, isArray := v.Array()
+	return isArray
 }

@@ -153,7 +153,7 @@ The system can represent the "iPhone" value as a `JSON` type with its complete p
 
 For JSON fields, DefraDB uses inverted indexes with the following key format:
 ```
-<collection_id>/<index_id>(/<json_path><json_value>)+/<doc_id>
+<collection_id>/<index_id>(/<json_path>/<json_value>)+/<doc_id>
 ```
 
 The term "inverted" comes from how these indexes reverse the typical document-to-value relationship. Instead of starting with a document and finding its values, we start with a value and can quickly find all documents containing that value at any path.
