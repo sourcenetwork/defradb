@@ -66,7 +66,6 @@ func (f *fileKeyring) Delete(user string) error {
 }
 
 func (f *fileKeyring) List() ([]string, error) {
-
 	files, err := os.ReadDir(f.dir)
 	if err != nil {
 		return nil, err
