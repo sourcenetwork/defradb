@@ -80,7 +80,7 @@ var (
 // within a new fetcher?
 type VersionedFetcher struct {
 	// embed the regular doc fetcher
-	*DocumentFetcher
+	Fetcher
 
 	txn datastore.Txn
 	ctx context.Context
@@ -106,7 +106,6 @@ func (vf *VersionedFetcher) Init(
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
-	reverse bool,
 	showDeleted bool,
 ) error {
 	vf.acp = acp
@@ -131,8 +130,8 @@ func (vf *VersionedFetcher) Init(
 	}
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
-	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(
+	vf.Fetcher = NewDocumentFetcher()
+	return vf.Fetcher.Init(
 		ctx,
 		identity,
 		vf.store,
@@ -141,7 +140,6 @@ func (vf *VersionedFetcher) Init(
 		fields,
 		filter,
 		docmapper,
-		reverse,
 		showDeleted,
 	)
 }
@@ -158,7 +156,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable
 		return NewErrFailedToSeek(prefix.Cid, err)
 	}
 
-	return vf.DocumentFetcher.Start(ctx)
+	return vf.Fetcher.Start(ctx)
 }
 
 // Start a fetcher with the needed info (cid embedded in a prefix)
@@ -182,7 +180,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx)
+	return vf.Fetcher.Start(ctx)
 }
 
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
@@ -391,5 +389,5 @@ func (vf *VersionedFetcher) Close() error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Close()
+	return vf.Fetcher.Close()
 }

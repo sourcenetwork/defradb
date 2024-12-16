@@ -119,7 +119,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(4),
 												"docFetches":   uint64(4),
-												"fieldFetches": uint64(6),
+												"fieldFetches": uint64(8),
 												"indexFetches": uint64(0),
 											},
 										},

@@ -345,7 +345,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				// we make 1 index fetch to get the only address with city == "London"
 				// then we scan all 10 users to find one with matching "address_id"
 				// after this we fetch the name of the user
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(20).WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -362,7 +362,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 				// we make 3 index fetch to get the 3 address with city == "Montreal"
 				// then we scan all 10 users to find one with matching "address_id" for each address
 				// after this we fetch the name of each user
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(33).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(60).WithIndexFetches(3),
 			},
 		},
 	}

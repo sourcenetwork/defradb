@@ -316,7 +316,6 @@ func (c *collection) iterateAllDocs(
 		nil,
 		nil,
 		false,
-		false,
 	)
 	if err != nil {
 		return errors.Join(err, df.Close())

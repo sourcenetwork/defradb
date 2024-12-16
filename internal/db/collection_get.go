@@ -63,7 +63,7 @@ func (c *collection) get(
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
-	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, c, fields, nil, nil, false, showDeleted)
+	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, c, fields, nil, nil, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

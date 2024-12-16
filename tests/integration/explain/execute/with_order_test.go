@@ -201,7 +201,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 											"subTypeScanNode": dataMap{
 												"iterations":   uint64(5),
 												"docFetches":   uint64(6),
-												"fieldFetches": uint64(9),
+												"fieldFetches": uint64(12),
 												"indexFetches": uint64(0),
 											},
 										},
@@ -266,7 +266,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 												"subTypeScanNode": dataMap{
 													"iterations":   uint64(5),
 													"docFetches":   uint64(6),
-													"fieldFetches": uint64(9),
+													"fieldFetches": uint64(12),
 													"indexFetches": uint64(0),
 												},
 											},
