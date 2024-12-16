@@ -129,7 +129,7 @@ func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.No
 			return err
 		}
 		return f(val)
-	}, client.TraverseJSONOnlyLeaves(), client.TraverseJSONVisitArrayElements()) // TODO: add option to traverse array elements
+	}, client.TraverseJSONOnlyLeaves(), client.TraverseJSONVisitArrayElements(false))
 }
 
 // getFieldGenerator returns appropriate generator for the field type

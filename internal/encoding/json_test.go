@@ -59,7 +59,7 @@ func TestJSONEncodingAndDecoding_ShouldEncodeAndDecodeBack(t *testing.T) {
 		jsons = append(jsons, value)
 		pathMap[p] = jsons
 		return nil
-	}, client.TraverseJSONOnlyLeaves(), client.TraverseJSONVisitArrayElements())
+	}, client.TraverseJSONOnlyLeaves(), client.TraverseJSONVisitArrayElements(true))
 	assert.NoError(t, err)
 
 	for path, jsons := range pathMap {

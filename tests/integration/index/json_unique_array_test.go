@@ -98,18 +98,6 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					"bae-54e76159-66c6-56be-ad65-7ff83edda058",
 					errors.NewKV("custom", map[string]any{"numbers": 3})).Error(),
 			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name": "Chris",
-					"custom": map[string]any{
-						// existing nested value
-						"numbers": []any{9, []int{3}},
-					},
-				},
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-8dba1343-148c-590c-a942-dd6c80f204fb",
-					errors.NewKV("custom", map[string]any{"numbers": []any{9, []int{3}}})).Error(),
-			},
 			testUtils.Request{
 				Request: req,
 				Results: map[string]any{

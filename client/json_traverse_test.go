@@ -109,7 +109,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 		{
 			name: "VisitArrayElements",
 			options: []traverseJSONOption{
-				TraverseJSONVisitArrayElements(),
+				TraverseJSONVisitArrayElements(true),
 			},
 			expected: []traverseNode{
 				{path: "", value: json},
@@ -132,9 +132,29 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "VisitArrayElements without recursion",
+			options: []traverseJSONOption{
+				TraverseJSONVisitArrayElements(false),
+			},
+			expected: []traverseNode{
+				{path: "", value: json},
+				{path: "string", value: newJSONString("value", nil)},
+				{path: "number", value: newJSONNumber(42, nil)},
+				{path: "bool", value: newJSONBool(true, nil)},
+				{path: "null", value: newJSONNull(nil)},
+				{path: "object", value: json.Value().(map[string]JSON)["object"]},
+				{path: "object/nested", value: newJSONString("inside", nil)},
+				{path: "object/deep", value: json.Value().(map[string]JSON)["object"].Value().(map[string]JSON)["deep"]},
+				{path: "object/deep/level", value: newJSONNumber(3, nil)},
+				{path: "array", value: json.Value().(map[string]JSON)["array"]},
+				{path: "array", value: newJSONNumber(1, nil)},
+				{path: "array", value: newJSONString("two", nil)},
+			},
+		},
+		{
 			name: "VisitArrayElementsWithIndex",
 			options: []traverseJSONOption{
-				TraverseJSONVisitArrayElements(),
+				TraverseJSONVisitArrayElements(true),
 				TraverseJSONWithArrayIndexInPath(),
 			},
 			expected: []traverseNode{
@@ -161,7 +181,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			name: "CombinedOptions",
 			options: []traverseJSONOption{
 				TraverseJSONOnlyLeaves(),
-				TraverseJSONVisitArrayElements(),
+				TraverseJSONVisitArrayElements(true),
 				TraverseJSONWithPrefix([]string{"array"}),
 				TraverseJSONWithArrayIndexInPath(),
 			},
