@@ -19,7 +19,7 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.3.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/ipfs/boxo v0.24.3
+	github.com/ipfs/boxo v0.25.0
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
@@ -32,7 +32,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
 	github.com/lestrrat-go/jwx/v2 v2.1.3
-	github.com/libp2p/go-libp2p v0.37.0
+	github.com/libp2p/go-libp2p v0.37.2
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.28.1
 	github.com/libp2p/go-libp2p-pubsub v0.12.0
@@ -152,6 +152,8 @@ require (
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
+	github.com/gammazero/chanqueue v1.0.0 // indirect
+	github.com/gammazero/deque v1.0.0 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
@@ -276,9 +278,9 @@ require (
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.2.0 // indirect
-	github.com/multiformats/go-multiaddr-dns v0.4.0 // indirect
+	github.com/multiformats/go-multiaddr-dns v0.4.1 // indirect
 	github.com/multiformats/go-multiaddr-fmt v0.1.0 // indirect
-	github.com/multiformats/go-multistream v0.5.0 // indirect
+	github.com/multiformats/go-multistream v0.6.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
