@@ -75,38 +75,47 @@ func (n *averageNode) Close() error                      { return n.plan.Close()
 func (n *averageNode) Source() planNode                  { return n.plan }
 
 func (n *averageNode) Next() (bool, error) {
-	n.execInfo.iterations++
+	for {
+		n.execInfo.iterations++
 
-	hasNext, err := n.plan.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
-	}
+		hasNext, err := n.plan.Next()
+		if err != nil || !hasNext {
+			return hasNext, err
+		}
 
-	n.currentValue = n.plan.Value()
+		n.currentValue = n.plan.Value()
 
-	countProp := n.currentValue.Fields[n.countFieldIndex]
-	typedCount, isInt := countProp.(int)
-	if !isInt {
-		return false, client.NewErrUnexpectedType[int]("count", countProp)
-	}
-	count := typedCount
+		countProp := n.currentValue.Fields[n.countFieldIndex]
+		typedCount, isInt := countProp.(int)
+		if !isInt {
+			return false, client.NewErrUnexpectedType[int]("count", countProp)
+		}
+		count := typedCount
 
-	if count == 0 {
-		n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
+		if count == 0 {
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
+			return true, nil
+		}
+
+		sumProp := n.currentValue.Fields[n.sumFieldIndex]
+		switch sum := sumProp.(type) {
+		case float64:
+			n.currentValue.Fields[n.virtualFieldIndex] = sum / float64(count)
+		case int64:
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
+		default:
+			return false, client.NewErrUnhandledType("sum", sumProp)
+		}
+
+		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)
+		if err != nil {
+			return false, err
+		}
+		if !passes {
+			continue
+		}
 		return true, nil
 	}
-
-	sumProp := n.currentValue.Fields[n.sumFieldIndex]
-	switch sum := sumProp.(type) {
-	case float64:
-		n.currentValue.Fields[n.virtualFieldIndex] = sum / float64(count)
-	case int64:
-		n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
-	default:
-		return false, client.NewErrUnhandledType("sum", sumProp)
-	}
-
-	return mapper.RunFilter(n.currentValue, n.aggregateFilter)
 }
 
 func (n *averageNode) SetPlan(p planNode) { n.plan = p }

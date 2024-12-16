@@ -332,7 +332,7 @@ func (c *Collection) GetAllDocIDs(
 
 func (c *Collection) CreateIndex(
 	ctx context.Context,
-	indexDesc client.IndexDescription,
+	indexDesc client.IndexDescriptionCreateRequest,
 ) (index client.IndexDescription, err error) {
 	if !c.Description().Name.HasValue() {
 		return client.IndexDescription{}, client.ErrOperationNotPermittedOnNamelessCols

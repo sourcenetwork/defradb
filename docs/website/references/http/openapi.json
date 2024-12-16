@@ -442,6 +442,31 @@
                 },
                 "type": "object"
             },
+            "index_create_request": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Descending": {
+                                    "type": "boolean"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Unique": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "lens_config": {
                 "properties": {
                     "DestinationSchemaVersionID": {
@@ -1245,7 +1270,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index"
+                                "$ref": "#/components/schemas/index_create_request"
                             }
                         }
                     },

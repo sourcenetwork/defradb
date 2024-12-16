@@ -1,3 +1,70 @@
+<a name="v0.15.0"></a>
+## [v0.15.0](https://github.com/sourcenetwork/defradb/compare/v0.14.0...v0.15.0)
+
+> 2024-12-13
+
+DefraDB v0.15 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.14.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Add support for branchable collections ([#3216](https://github.com/sourcenetwork/defradb/issues/3216))
+* Aggregate filter alias targeting ([#3252](https://github.com/sourcenetwork/defradb/issues/3252))
+* Aggregate order alias targeting ([#3293](https://github.com/sourcenetwork/defradb/issues/3293))
+* Add ability to add/delete relationship for all actors ([#3254](https://github.com/sourcenetwork/defradb/issues/3254))
+* Add support for branchable collection time-traveling ([#3260](https://github.com/sourcenetwork/defradb/issues/3260))
+* Add support for cid-only time travel queries ([#3256](https://github.com/sourcenetwork/defradb/issues/3256))
+* Support for descending fields CLI index creation ([#3237](https://github.com/sourcenetwork/defradb/issues/3237))
+* Order alias target ([#3217](https://github.com/sourcenetwork/defradb/issues/3217))
+* Error if purge request made with dev mode disabled ([#3295](https://github.com/sourcenetwork/defradb/issues/3295))
+* Add ACP to pubsub KMS ([#3206](https://github.com/sourcenetwork/defradb/issues/3206))
+* Filter alias target ([#3201](https://github.com/sourcenetwork/defradb/issues/3201))
+* Add node identity ([#3125](https://github.com/sourcenetwork/defradb/issues/3125))
+
+### Fixes
+
+* Adjust OpenAPI index POST example request body ([#3268](https://github.com/sourcenetwork/defradb/issues/3268))
+* Make requests with no identity work with "*" target ([#3278](https://github.com/sourcenetwork/defradb/issues/3278))
+* Add support for operationName and variables in HTTP GET ([#3292](https://github.com/sourcenetwork/defradb/issues/3292))
+* Resolve CORS errors in OpenAPI tab of Playground ([#3263](https://github.com/sourcenetwork/defradb/issues/3263))
+* Prevent over span ([#3258](https://github.com/sourcenetwork/defradb/issues/3258))
+* Add Authorization header to CORS allowed headers ([#3178](https://github.com/sourcenetwork/defradb/issues/3178))
+
+### Documentation
+
+* Update discord link ([#3231](https://github.com/sourcenetwork/defradb/issues/3231))
+
+### Refactoring
+
+* Add unified JSON interface ([#3265](https://github.com/sourcenetwork/defradb/issues/3265))
+* Consolidate node-related fields into a struct ([#3232](https://github.com/sourcenetwork/defradb/issues/3232))
+* Rework core.Spans ([#3210](https://github.com/sourcenetwork/defradb/issues/3210))
+* Simplify merkle/crdt code ([#3200](https://github.com/sourcenetwork/defradb/issues/3200))
+* Breakup core/keys.go file ([#3198](https://github.com/sourcenetwork/defradb/issues/3198))
+* Remove indirection from crdt packages ([#3192](https://github.com/sourcenetwork/defradb/issues/3192))
+
+### Testing
+
+* Allow soft-referencing of Cids in tests ([#3176](https://github.com/sourcenetwork/defradb/issues/3176))
+
+### Continuous integration
+
+* Fix the gql mutation running in all tests ([#3267](https://github.com/sourcenetwork/defradb/issues/3267))
+* Freeze goreleaser version and fix amd64 path ([#3170](https://github.com/sourcenetwork/defradb/issues/3170))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 10-12-2024 ([#3312](https://github.com/sourcenetwork/defradb/issues/3312))
+* Update dependencies (bulk dependabot PRs) 09-12-2024 ([#3307](https://github.com/sourcenetwork/defradb/issues/3307))
+* Update dependencies (bulk dependabot PRs) 08-12-2024 ([#3296](https://github.com/sourcenetwork/defradb/issues/3296))
+* Update dependencies (bulk dependabot PRs) 03-12-2024 ([#3288](https://github.com/sourcenetwork/defradb/issues/3288))
+* Update dependencies (bulk dependabot PRs) 25-11-2024 ([#3273](https://github.com/sourcenetwork/defradb/issues/3273))
+* Update dependencies (bulk dependabot PRs) 11-11-2024 ([#3235](https://github.com/sourcenetwork/defradb/issues/3235))
+* Update dependencies (bulk dependabot PRs) 04-11-2024 ([#3207](https://github.com/sourcenetwork/defradb/issues/3207))
+* Update dependencies (bulk dependabot PRs) 2024-10-28 ([#3188](https://github.com/sourcenetwork/defradb/issues/3188))
+* Update dependencies (bulk dependabot PRs) 21-10-2024 ([#3168](https://github.com/sourcenetwork/defradb/issues/3168))
+
 <a name="v0.14.0"></a>
 ## [v0.14.0](https://github.com/sourcenetwork/defradb/compare/v0.13.0...v0.14.0)
 

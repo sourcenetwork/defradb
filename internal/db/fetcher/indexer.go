@@ -65,7 +65,6 @@ func (f *IndexFetcher) Init(
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
-	reverse bool,
 	showDeleted bool,
 ) error {
 	f.resetState()
@@ -117,7 +116,6 @@ outer:
 			f.docFields,
 			filter,
 			f.mapping,
-			false,
 			false,
 		)
 	}

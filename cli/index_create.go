@@ -69,7 +69,7 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 				})
 			}
 
-			desc := client.IndexDescription{
+			desc := client.IndexDescriptionCreateRequest{
 				Name:   nameArg,
 				Fields: fields,
 				Unique: uniqueArg,
@@ -79,11 +79,11 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 				return err
 			}
 
-			desc, err = col.CreateIndex(cmd.Context(), desc)
+			descWithID, err := col.CreateIndex(cmd.Context(), desc)
 			if err != nil {
 				return err
 			}
-			return writeJSON(cmd, desc)
+			return writeJSON(cmd, descWithID)
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")

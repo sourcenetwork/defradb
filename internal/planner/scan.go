@@ -47,7 +47,6 @@ type scanNode struct {
 	showDeleted bool
 
 	prefixes []keys.Walkable
-	reverse  bool
 
 	filter *mapper.Filter
 	slct   *mapper.Select
@@ -72,7 +71,6 @@ func (n *scanNode) Init() error {
 		n.fields,
 		n.filter,
 		n.slct.DocumentMapping,
-		n.reverse,
 		n.showDeleted,
 	); err != nil {
 		return err
@@ -162,7 +160,7 @@ func (scan *scanNode) initFetcher(
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
-		f = new(fetcher.DocumentFetcher)
+		f = fetcher.NewDocumentFetcher()
 
 		if index.HasValue() {
 			fieldsToMove := make([]mapper.Field, 0, len(index.Value().Fields))
