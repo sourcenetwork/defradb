@@ -433,7 +433,6 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.WaitForSync{},
 			testUtils.Close{
 				NodeID: immutable.Some(0),
 			},

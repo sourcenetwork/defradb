@@ -14,8 +14,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/acp"
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
@@ -29,6 +32,8 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		db1.Blockstore(),
 		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		nil,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -36,8 +41,10 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	n2, err := NewPeer(
 		ctx,
 		db2.Blockstore(),
-		db1.Encstore(),
+		db2.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		nil,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -61,6 +68,8 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		db1.Blockstore(),
 		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		nil,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -68,8 +77,10 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	n2, err := NewPeer(
 		ctx,
 		db2.Blockstore(),
-		db1.Encstore(),
+		db2.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		nil,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -96,6 +107,8 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		db1.Blockstore(),
 		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		nil,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -103,8 +116,10 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 	n2, err := NewPeer(
 		ctx,
 		db2.Blockstore(),
-		db1.Encstore(),
+		db2.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		nil,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)

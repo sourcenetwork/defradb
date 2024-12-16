@@ -30,14 +30,27 @@ import (
 
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
+	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 )
+
+// DB hold the database related methods that are required by Peer.
+type DB interface {
+	// GetCollections returns the list of collections according to the given options.
+	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
+	// GetNodeIndentityToken returns an identity token for the given audience.
+	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	// GetNodeIdentity returns the node's public raw identity.
+	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+}
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
@@ -61,6 +74,9 @@ type Peer struct {
 	// peer DAG service
 	bserv blockservice.BlockService
 
+	acp immutable.Option[acp.ACP]
+	db  DB
+
 	bootCloser io.Closer
 }
 
@@ -70,6 +86,8 @@ func NewPeer(
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
 	bus *event.Bus,
+	acp immutable.Option[acp.ACP],
+	db DB,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
 	ctx, cancel := context.WithCancel(ctx)
@@ -111,9 +129,6 @@ func NewPeer(
 		corelog.Any("Address", options.ListenAddresses),
 	)
 
-	bswapnet := network.NewFromIpfsHost(h, ddht)
-	bswap := bitswap.New(ctx, bswapnet, blockstore)
-
 	p = &Peer{
 		host:       h,
 		dht:        ddht,
@@ -122,8 +137,9 @@ func NewPeer(
 		ctx:        ctx,
 		cancel:     cancel,
 		bus:        bus,
+		acp:        acp,
+		db:         db,
 		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
-		bserv:      blockservice.New(blockstore, bswap),
 	}
 
 	if options.EnablePubSub {
@@ -148,6 +164,10 @@ func NewPeer(
 	if err != nil {
 		return nil, err
 	}
+
+	bswapnet := network.NewFromIpfsHost(h, ddht)
+	bswap := bitswap.New(ctx, bswapnet, blockstore, bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
+	p.bserv = blockservice.New(blockstore, bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
