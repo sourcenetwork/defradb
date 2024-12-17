@@ -13,9 +13,11 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fastjson"
 )
@@ -119,13 +121,13 @@ func TestNewJSONFomString_WithInvalidInput_Error(t *testing.T) {
 
 func TestJSONObject_Methods_ShouldWorkAsExpected(t *testing.T) {
 	m := map[string]JSON{
-		"key": newJSONString("value"),
+		"key": newJSONString("value", nil),
 		"nested": newJSONObject(map[string]JSON{
-			"inner": newJSONNumber(42),
-			"array": newJSONArray([]JSON{newJSONString("test"), newJSONBool(true)}),
-		}),
+			"inner": newJSONNumber(42, nil),
+			"array": newJSONArray([]JSON{newJSONString("test", nil), newJSONBool(true, nil)}, nil),
+		}, nil),
 	}
-	obj := newJSONObject(m)
+	obj := newJSONObject(m, nil)
 	expectedUnwrapped := map[string]any{
 		"key": "value",
 		"nested": map[string]any{
@@ -155,14 +157,14 @@ func TestJSONObject_Methods_ShouldWorkAsExpected(t *testing.T) {
 
 func TestJSONArray_Methods_ShouldWorkAsExpected(t *testing.T) {
 	arr := []JSON{
-		newJSONString("item1"),
+		newJSONString("item1", nil),
 		newJSONObject(map[string]JSON{
-			"key": newJSONString("value"),
-			"num": newJSONNumber(42),
-		}),
-		newJSONNumber(2),
+			"key": newJSONString("value", nil),
+			"num": newJSONNumber(42, nil),
+		}, nil),
+		newJSONNumber(2, nil),
 	}
-	jsonArr := newJSONArray(arr)
+	jsonArr := newJSONArray(arr, nil)
 	expectedUnwrapped := []any{
 		"item1",
 		map[string]any{
@@ -192,7 +194,7 @@ func TestJSONArray_Methods_ShouldWorkAsExpected(t *testing.T) {
 }
 
 func TestJSONNumber_Methods_ShouldWorkAsExpected(t *testing.T) {
-	num := newJSONNumber(2.5)
+	num := newJSONNumber(2.5, nil)
 	expected := 2.5
 
 	// Positive tests
@@ -215,7 +217,7 @@ func TestJSONNumber_Methods_ShouldWorkAsExpected(t *testing.T) {
 }
 
 func TestJSONString_Methods_ShouldWorkAsExpected(t *testing.T) {
-	str := newJSONString("value")
+	str := newJSONString("value", nil)
 	expected := "value"
 
 	// Positive tests
@@ -238,7 +240,7 @@ func TestJSONString_Methods_ShouldWorkAsExpected(t *testing.T) {
 }
 
 func TestJSONBool_Methods_ShouldWorkAsExpected(t *testing.T) {
-	b := newJSONBool(true)
+	b := newJSONBool(true, nil)
 	expected := true
 
 	// Positive tests
@@ -261,7 +263,7 @@ func TestJSONBool_Methods_ShouldWorkAsExpected(t *testing.T) {
 }
 
 func TestJSONNull_Methods_ShouldWorkAsExpected(t *testing.T) {
-	null := newJSONNull()
+	null := newJSONNull(nil)
 
 	// Positive tests
 	require.True(t, null.IsNull())
@@ -292,193 +294,207 @@ func TestNewJSONAndMarshalJSON(t *testing.T) {
 		{
 			name:         "Nil",
 			input:        nil,
-			expected:     newJSONNull(),
+			expected:     newJSONNull(nil),
 			expectedJSON: "null",
 		},
 		{
 			name:         "FastJSON",
 			input:        fastjson.MustParse(`{"key": "value"}`),
-			expected:     newJSONObject(map[string]JSON{"key": newJSONString("value")}),
+			expected:     newJSONObject(map[string]JSON{"key": newJSONString("value", nil)}, nil),
 			expectedJSON: `{"key":"value"}`,
 		},
 		{
 			name:         "Map",
 			input:        map[string]any{"key": "value"},
-			expected:     newJSONObject(map[string]JSON{"key": newJSONString("value")}),
+			expected:     newJSONObject(map[string]JSON{"key": newJSONString("value", nil)}, nil),
 			expectedJSON: `{"key":"value"}`,
 		},
 		{
 			name:         "Bool",
 			input:        true,
-			expected:     newJSONBool(true),
+			expected:     newJSONBool(true, nil),
 			expectedJSON: "true",
 		},
 		{
 			name:         "String",
 			input:        "str",
-			expected:     newJSONString("str"),
+			expected:     newJSONString("str", nil),
 			expectedJSON: `"str"`,
 		},
 		{
 			name:         "Int8",
 			input:        int8(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Int16",
 			input:        int16(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Int32",
 			input:        int32(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Int64",
 			input:        int64(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Int",
 			input:        42,
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Uint8",
 			input:        uint8(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Uint16",
 			input:        uint16(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Uint32",
 			input:        uint32(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Uint64",
 			input:        uint64(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Uint",
 			input:        uint(42),
-			expected:     newJSONNumber(42),
+			expected:     newJSONNumber(42, nil),
 			expectedJSON: "42",
 		},
 		{
 			name:         "Float32",
 			input:        float32(2.5),
-			expected:     newJSONNumber(2.5),
+			expected:     newJSONNumber(2.5, nil),
 			expectedJSON: "2.5",
 		},
 		{
 			name:         "Float64",
 			input:        float64(2.5),
-			expected:     newJSONNumber(2.5),
+			expected:     newJSONNumber(2.5, nil),
 			expectedJSON: "2.5",
 		},
 		{
 			name:         "BoolArray",
 			input:        []bool{true, false},
-			expected:     newJSONArray([]JSON{newJSONBool(true), newJSONBool(false)}),
+			expected:     newJSONArray([]JSON{newJSONBool(true, nil), newJSONBool(false, nil)}, nil),
 			expectedJSON: "[true,false]",
 		},
 		{
-			name:         "StringArray",
-			input:        []string{"a", "b", "c"},
-			expected:     newJSONArray([]JSON{newJSONString("a"), newJSONString("b"), newJSONString("c")}),
+			name:  "StringArray",
+			input: []string{"a", "b", "c"},
+			expected: newJSONArray([]JSON{newJSONString("a", nil), newJSONString("b", nil),
+				newJSONString("c", nil)}, nil),
 			expectedJSON: `["a","b","c"]`,
 		},
 		{
-			name:         "AnyArray",
-			input:        []any{"a", 1, true},
-			expected:     newJSONArray([]JSON{newJSONString("a"), newJSONNumber(1), newJSONBool(true)}),
+			name:  "AnyArray",
+			input: []any{"a", 1, true},
+			expected: newJSONArray([]JSON{newJSONString("a", nil), newJSONNumber(1, nil),
+				newJSONBool(true, nil)}, nil),
 			expectedJSON: `["a",1,true]`,
 		},
 		{
-			name:         "Int8Array",
-			input:        []int8{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Int8Array",
+			input: []int8{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Int16Array",
-			input:        []int16{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Int16Array",
+			input: []int16{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Int32Array",
-			input:        []int32{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Int32Array",
+			input: []int32{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Int64Array",
-			input:        []int64{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Int64Array",
+			input: []int64{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "IntArray",
-			input:        []int{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "IntArray",
+			input: []int{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Uint8Array",
-			input:        []uint8{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Uint8Array",
+			input: []uint8{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Uint16Array",
-			input:        []uint16{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Uint16Array",
+			input: []uint16{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Uint32Array",
-			input:        []uint32{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Uint32Array",
+			input: []uint32{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Uint64Array",
-			input:        []uint64{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "Uint64Array",
+			input: []uint64{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "UintArray",
-			input:        []uint{1, 2, 3},
-			expected:     newJSONArray([]JSON{newJSONNumber(1), newJSONNumber(2), newJSONNumber(3)}),
+			name:  "UintArray",
+			input: []uint{1, 2, 3},
+			expected: newJSONArray([]JSON{newJSONNumber(1, nil), newJSONNumber(2, nil),
+				newJSONNumber(3, nil)}, nil),
 			expectedJSON: "[1,2,3]",
 		},
 		{
-			name:         "Float32Array",
-			input:        []float32{1.0, 2.25, 3.5},
-			expected:     newJSONArray([]JSON{newJSONNumber(1.0), newJSONNumber(2.25), newJSONNumber(3.5)}),
+			name:  "Float32Array",
+			input: []float32{1.0, 2.25, 3.5},
+			expected: newJSONArray([]JSON{newJSONNumber(1.0, nil), newJSONNumber(2.25, nil),
+				newJSONNumber(3.5, nil)}, nil),
 			expectedJSON: "[1,2.25,3.5]",
 		},
 		{
-			name:         "Float64Array",
-			input:        []float64{1.0, 2.25, 3.5},
-			expected:     newJSONArray([]JSON{newJSONNumber(1.0), newJSONNumber(2.25), newJSONNumber(3.5)}),
+			name:  "Float64Array",
+			input: []float64{1.0, 2.25, 3.5},
+			expected: newJSONArray([]JSON{newJSONNumber(1.0, nil), newJSONNumber(2.25, nil),
+				newJSONNumber(3.5, nil)}, nil),
 			expectedJSON: "[1,2.25,3.5]",
 		},
 		{
@@ -488,22 +504,41 @@ func TestNewJSONAndMarshalJSON(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := NewJSON(tt.input)
-			if tt.expectError {
-				require.Error(t, err, "Expected error, but got nil")
-				return
-			}
-			require.NoError(t, err, "NewJSON failed with error %v", err)
-			require.Equal(t, result, tt.expected)
+	path := []string{"some", "path"}
 
-			if !tt.expectError {
-				jsonBytes, err := result.MarshalJSON()
-				require.NoError(t, err, "MarshalJSON failed with error %v", err)
-				require.Equal(t, tt.expectedJSON, string(jsonBytes))
-			}
-		})
+	for _, tt := range tests {
+		for _, withPath := range []bool{true, false} {
+			t.Run(fmt.Sprintf("Test: %s, withPath: %v", tt.name, withPath), func(t *testing.T) {
+				var result JSON
+				var err error
+				if withPath {
+					result, err = NewJSONWithPath(tt.input, path)
+				} else {
+					result, err = NewJSON(tt.input)
+				}
+				if tt.expectError {
+					require.Error(t, err, "Expected error, but got nil")
+					return
+				}
+				require.NoError(t, err, "NewJSON failed with error %v", err)
+
+				if withPath {
+					traverseAndAssertPaths(t, result, path)
+					require.Equal(t, result.Unwrap(), tt.expected.Unwrap())
+					require.Equal(t, path, result.GetPath())
+				} else {
+					traverseAndAssertPaths(t, result, nil)
+					require.Equal(t, result.Unwrap(), tt.expected.Unwrap())
+					require.Empty(t, result.GetPath())
+				}
+
+				if !tt.expectError {
+					jsonBytes, err := result.MarshalJSON()
+					require.NoError(t, err, "MarshalJSON failed with error %v", err)
+					require.Equal(t, tt.expectedJSON, string(jsonBytes))
+				}
+			})
+		}
 	}
 }
 
@@ -516,4 +551,89 @@ func TestNewJSONFromMap_WithInvalidValue_ShouldFail(t *testing.T) {
 
 	_, err := NewJSONFromMap(input)
 	require.Error(t, err)
+}
+
+func TestNewJSONFromMap_WithPaths(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]any
+		expected []struct {
+			path  []string
+			value any
+		}
+	}{
+		{
+			name: "flat object",
+			input: map[string]any{
+				"string": "value",
+				"number": 42,
+				"bool":   true,
+				"null":   nil,
+			},
+			expected: []struct {
+				path  []string
+				value any
+			}{
+				{path: []string{"string"}, value: "value"},
+				{path: []string{"number"}, value: float64(42)},
+				{path: []string{"bool"}, value: true},
+				{path: []string{"null"}, value: nil},
+			},
+		},
+		{
+			name: "nested object",
+			input: map[string]any{
+				"obj": map[string]any{
+					"nested": "value",
+					"deep": map[string]any{
+						"number": 42,
+					},
+				},
+				"arr": []any{
+					"first",
+					map[string]any{
+						"inside_arr": true,
+					},
+					[]any{1, "nested"},
+				},
+			},
+			expected: []struct {
+				path  []string
+				value any
+			}{
+				{path: []string{"obj", "nested"}, value: "value"},
+				{path: []string{"obj", "deep", "number"}, value: float64(42)},
+				{path: []string{"arr"}, value: "first"},
+				{path: []string{"arr", "inside_arr"}, value: true},
+				{path: []string{"arr"}, value: float64(1)},
+				{path: []string{"arr"}, value: "nested"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			json, err := NewJSONFromMap(tt.input)
+			require.NoError(t, err)
+
+			traverseAndAssertPaths(t, json, nil)
+		})
+	}
+}
+
+func traverseAndAssertPaths(t *testing.T, j JSON, parentPath []string) {
+	assert.Equal(t, parentPath, j.GetPath(), "Expected path %v, got %v", parentPath, j.GetPath())
+
+	if obj, isObj := j.Object(); isObj {
+		for k, v := range obj {
+			newPath := append(parentPath, k)
+			traverseAndAssertPaths(t, v, newPath)
+		}
+	}
+
+	if arr, isArr := j.Array(); isArr {
+		for _, v := range arr {
+			traverseAndAssertPaths(t, v, parentPath)
+		}
+	}
 }

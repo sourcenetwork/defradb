@@ -28,6 +28,9 @@ const (
 	bytesMarker
 	bytesDescMarker
 	timeMarker
+	falseMarker
+	trueMarker
+	jsonMarker
 
 	// These constants define a range of values and are used to determine how many bytes are
 	// needed to represent the given uint64 value. The constants IntMin and IntMax define the
