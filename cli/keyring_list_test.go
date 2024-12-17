@@ -61,5 +61,5 @@ func TestKeyringList(t *testing.T) {
 		extractedKeys = append(extractedKeys, match[1])
 	}
 
-	assert.ElementsMatch(t, keyNames, extractedKeys, "The extracted keys do not match the expected keys.")
+	assert.ElementsMatch(t, keyNames, extractedKeys, "The listed keys do not match the expected keys.")
 }

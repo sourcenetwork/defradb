@@ -55,7 +55,8 @@ func (s *systemKeyring) Delete(user string) error {
 }
 
 func (s *systemKeyring) List() ([]string, error) {
-	// List does not need to be returned here
-	// This function is a stub
+	// The OS keyring does not support listing keys
+	// This function is a stub for now because the Keyring interface requires it
+	// Currently, the 'defradb keyring list' command uses only fileKeyring
 	return nil, nil
 }
