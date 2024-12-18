@@ -53,7 +53,8 @@ func TestKeyringList(t *testing.T) {
 	outputString := output.String()
 
 	// Use regex to extract the keys, and compare with the expected values
-	// We know the format the output should be, which is: "Keys in the keyring:\n- keyname1\n- keyname2\n- keyname3\n"
+	// We know what the format the output should be, which is:
+	// "Keys in the keyring:\n- keyname1\n- keyname2\n- keyname3\n"
 	re := regexp.MustCompile(`-\s([^\n]+)`)
 	matches := re.FindAllStringSubmatch(outputString, -1)
 	var extractedKeys []string
