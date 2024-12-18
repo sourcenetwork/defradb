@@ -58,5 +58,5 @@ func (s *systemKeyring) List() ([]string, error) {
 	// The OS keyring does not support listing keys
 	// This function is a stub for now because the Keyring interface requires it
 	// Currently, the 'defradb keyring list' command uses only fileKeyring
-	return nil, nil
+	return nil, ErrSystemKeyringListInvoked
 }
