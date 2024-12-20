@@ -17,6 +17,7 @@ import (
 )
 
 var (
-	ErrNotFound                 = keyring.ErrNotFound // ErrNotFound is returned when a keyring item is not found.
+	// ErrNotFound is returned when a keyring item is not found.
+	ErrNotFound                 = keyring.ErrNotFound
 	ErrSystemKeyringListInvoked = errors.New("listing keys is not supported by OS keyring")
 )

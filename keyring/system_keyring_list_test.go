@@ -13,7 +13,7 @@ package keyring
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSystemKeyringListThrowsError(t *testing.T) {
@@ -22,7 +22,6 @@ func TestSystemKeyringListThrowsError(t *testing.T) {
 
 	keys, err := systemKeyring.List()
 
-	assert.Nil(t, keys, "keys should be nil when List is called")
-	assert.Error(t, err, "an error should be returned when List is called")
-	assert.Equal(t, ErrSystemKeyringListInvoked, err, "the error should be ErrSystemKeyringListInvoked")
+	require.Nil(t, keys, "keys should be nil when List is called")
+	require.ErrorIs(t, err, ErrSystemKeyringListInvoked, "function should throw ErrSystemKeyringListInvoked error")
 }
