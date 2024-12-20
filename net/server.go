@@ -548,8 +548,9 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 
 // trySelfHasAccess checks if the local node has access to the given block.
 //
-// This is a best-effort check and returns true unless we explicitly find that we don't have access
-// or if we get an error.
+// This is a best-effort check and returns true unless we explicitly find that the local node
+// doesn't have access or if we get an error. The node sending is ultimately responsible for
+// ensuring that the recipient has access.
 func (s *server) trySelfHasAccess(block *coreblock.Block) (bool, error) {
 	if !s.peer.acp.HasValue() {
 		return true, nil
@@ -575,9 +576,11 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) (bool, error) {
 		return true, nil
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithDID(
+	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
 		s.peer.ctx,
-		ident.Value().DID,
+		func() immutable.Option[identity.Identity] {
+			return immutable.Some(identity.Identity{DID: ident.Value().DID})
+		},
 		s.peer.acp.Value(),
 		cols[0], // For now we assume there is only one collection.
 		acp.ReadPermission,
