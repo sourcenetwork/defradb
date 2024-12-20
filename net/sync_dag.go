@@ -23,9 +23,9 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
-// syncDAGTimeout is the maximum amount of time
-// to wait for a dag to be fetched.
-var syncDAGTimeout = 60 * time.Second
+// syncBlockLinkTimeout is the maximum amount of time
+// to wait for a block link to be fetched.
+var syncBlockLinkTimeout = 5 * time.Second
 
 // syncDAG synchronizes the DAG starting with the given block
 // using the blockservice to fetch remote blocks.
@@ -60,9 +60,8 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 // If it encounters errors in the concurrent loading of links, it will return
 // the first error it encountered.
 func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblock.Block) error {
-	ctx, cancel := context.WithTimeout(ctx, syncDAGTimeout)
+	ctxWithCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
-
 	var wg sync.WaitGroup
 	var asyncErr error
 	var asyncErrOnce sync.Once
@@ -76,10 +75,12 @@ func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblo
 		wg.Add(1)
 		go func(lnk cidlink.Link) {
 			defer wg.Done()
-			if ctx.Err() != nil {
+			if ctxWithCancel.Err() != nil {
 				return
 			}
-			nd, err := lsys.Load(linking.LinkContext{Ctx: ctx}, lnk, coreblock.SchemaPrototype)
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, syncBlockLinkTimeout)
+			defer cancel()
+			nd, err := lsys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.SchemaPrototype)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return

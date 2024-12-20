@@ -25,7 +25,7 @@ type sequence struct {
 	val uint64
 }
 
-func (db *db) getSequence(ctx context.Context, key keys.Key) (*sequence, error) {
+func (db *DB) getSequence(ctx context.Context, key keys.Key) (*sequence, error) {
 	seq := &sequence{
 		key: key,
 		val: uint64(0),

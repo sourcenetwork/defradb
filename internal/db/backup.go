@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
+func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		return NewErrOpenFile(err, filepath)
@@ -115,7 +115,7 @@ func (db *db) basicImport(ctx context.Context, filepath string) (err error) {
 	return nil
 }
 
-func (db *db) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
+func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
 	// old key -> new Key
 	keyChangeCache := map[string]string{}
 

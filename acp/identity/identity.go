@@ -18,6 +18,7 @@ import (
 	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
 	acptypes "github.com/sourcenetwork/sourcehub/x/acp/bearer_token"
@@ -127,6 +128,28 @@ func (identity *Identity) UpdateToken(
 	audience immutable.Option[string],
 	authorizedAccount immutable.Option[string],
 ) error {
+	signedToken, err := identity.NewToken(duration, audience, authorizedAccount)
+	if err != nil {
+		return err
+	}
+
+	identity.BearerToken = string(signedToken)
+	return nil
+}
+
+// NewToken creates and returns a new `BearerToken`.
+//
+//   - duration: The [time.Duration] that this identity is valid for.
+//   - audience: The audience that this identity is valid for.  This is required
+//     by the Defra http client.  For example `github.com/sourcenetwork/defradb`
+//   - authorizedAccount: An account that this identity is authorizing to make
+//     SourceHub calls on behalf of this actor.  This is currently required when
+//     using SourceHub ACP.
+func (identity Identity) NewToken(
+	duration time.Duration,
+	audience immutable.Option[string],
+	authorizedAccount immutable.Option[string],
+) ([]byte, error) {
 	var signedToken []byte
 	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
 	now := time.Now()
@@ -144,21 +167,39 @@ func (identity *Identity) UpdateToken(
 
 	token, err := jwtBuilder.Build()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if authorizedAccount.HasValue() {
 		err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, identity.PrivateKey.ToECDSA()))
 	if err != nil {
+		return nil, err
+	}
+
+	return signedToken, nil
+}
+
+// VerifyAuthToken verifies that the jwt auth token is valid and that the signature
+// matches the identity of the subject.
+func VerifyAuthToken(ident Identity, audience string) error {
+	_, err := jwt.Parse([]byte(ident.BearerToken), jwt.WithVerify(false), jwt.WithAudience(audience))
+	if err != nil {
 		return err
 	}
 
-	identity.BearerToken = string(signedToken)
+	_, err = jws.Verify(
+		[]byte(ident.BearerToken),
+		jws.WithKey(BearerTokenSignatureScheme, ident.PublicKey.ToECDSA()),
+	)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

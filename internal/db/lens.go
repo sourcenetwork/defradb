@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	txn := mustGetContextTxn(ctx)
 
 	dstCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, cfg.DestinationSchemaVersionID)

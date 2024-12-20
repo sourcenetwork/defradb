@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
-func (db *db) addView(
+func (db *DB) addView(
 	ctx context.Context,
 	inputQuery string,
 	sdl string,
@@ -96,7 +96,7 @@ func (db *db) addView(
 	return returnDescriptions, nil
 }
 
-func (db *db) refreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
@@ -126,7 +126,7 @@ func (db *db) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	return nil
 }
 
-func (db *db) getViews(ctx context.Context, opts client.CollectionFetchOptions) ([]client.CollectionDefinition, error) {
+func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) ([]client.CollectionDefinition, error) {
 	cols, err := db.getCollections(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (db *db) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 	return views, nil
 }
 
-func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
+func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
 	txn := mustGetContextTxn(ctx)
 
 	p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
@@ -226,7 +226,7 @@ func (db *db) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 	return nil
 }
 
-func (db *db) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
+func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
 	prefix := keys.NewViewCacheColPrefix(col.Description.RootID)
 
@@ -252,7 +252,7 @@ func (db *db) clearViewCache(ctx context.Context, col client.CollectionDefinitio
 	return q.Close()
 }
 
-func (db *db) generateMaximalSelectFromCollection(
+func (db *DB) generateMaximalSelectFromCollection(
 	ctx context.Context,
 	col client.CollectionDefinition,
 	fieldName immutable.Option[string],

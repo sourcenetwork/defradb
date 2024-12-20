@@ -14,8 +14,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lestrrat-go/jwx/v2/jws"
-	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -29,24 +27,6 @@ const (
 	// authorization header value.
 	authSchemaPrefix = "Bearer "
 )
-
-// verifyAuthToken verifies that the jwt auth token is valid and that the signature
-// matches the identity of the subject.
-func verifyAuthToken(identity acpIdentity.Identity, audience string) error {
-	_, err := jwt.Parse([]byte(identity.BearerToken), jwt.WithVerify(false), jwt.WithAudience(audience))
-	if err != nil {
-		return err
-	}
-
-	_, err = jws.Verify(
-		[]byte(identity.BearerToken),
-		jws.WithKey(acpIdentity.BearerTokenSignatureScheme, identity.PublicKey.ToECDSA()),
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 // AuthMiddleware authenticates an actor and sets their identity for all subsequent actions.
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -63,7 +43,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		err = verifyAuthToken(ident, strings.ToLower(req.Host))
+		err = acpIdentity.VerifyAuthToken(ident, strings.ToLower(req.Host))
 		if err != nil {
 			http.Error(rw, "forbidden", http.StatusForbidden)
 			return

@@ -32,7 +32,7 @@ import (
 )
 
 // createCollectionIndex creates a new collection index and saves it to the database in its system store.
-func (db *db) createCollectionIndex(
+func (db *DB) createCollectionIndex(
 	ctx context.Context,
 	collectionName string,
 	desc client.IndexDescriptionCreateRequest,
@@ -44,7 +44,7 @@ func (db *db) createCollectionIndex(
 	return col.CreateIndex(ctx, desc)
 }
 
-func (db *db) dropCollectionIndex(
+func (db *DB) dropCollectionIndex(
 	ctx context.Context,
 	collectionName, indexName string,
 ) error {
@@ -56,7 +56,7 @@ func (db *db) dropCollectionIndex(
 }
 
 // getAllIndexDescriptions returns all the index descriptions in the database.
-func (db *db) getAllIndexDescriptions(
+func (db *DB) getAllIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
@@ -92,7 +92,7 @@ func (db *db) getAllIndexDescriptions(
 	return indexes, nil
 }
 
-func (db *db) fetchCollectionIndexDescriptions(
+func (db *DB) fetchCollectionIndexDescriptions(
 	ctx context.Context,
 	colID uint32,
 ) ([]client.IndexDescription, error) {

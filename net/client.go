@@ -71,3 +71,26 @@ func (s *server) pushLog(evt event.Update, pid peer.ID) (err error) {
 	}
 	return nil
 }
+
+// getIdentity creates a getIdentity request and sends it to another node
+func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply, error) {
+	client, err := s.dial(pid) // grpc dial over P2P stream
+	if err != nil {
+		return getIdentityReply{}, NewErrPushLog(err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, PushTimeout)
+	defer cancel()
+
+	req := getIdentityRequest{
+		PeerID: s.peer.host.ID().String(),
+	}
+	resp := getIdentityReply{}
+	if err := client.Invoke(ctx, serviceGetIdentityName, req, &resp); err != nil {
+		return getIdentityReply{}, NewErrFailedToGetIdentity(
+			err,
+			errors.NewKV("PeerID", pid),
+		)
+	}
+	return resp, nil
+}

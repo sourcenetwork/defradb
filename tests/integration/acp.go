@@ -219,7 +219,7 @@ func addDocActorRelationshipACP(
 			docID: {},
 		}
 
-		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect)
+		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect, action.TargetIdentity)
 	}
 }
 
@@ -471,7 +471,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	//
 	// We need to lock before getting the ports, otherwise they may try and use the port we use for locking.
 	// We can only unlock after the source hub node has started and begun listening on the assigned ports.
-	unlock, err := crossLock(55555)
+	unlock, err := crossLock(44444)
 	if err != nil {
 		return nil, err
 	}

@@ -36,7 +36,7 @@ import (
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
-func (db *db) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
+func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ type mergeProcessor struct {
 	availableEncryptionBlocks map[cidlink.Link]*coreblock.Encryption
 }
 
-func (db *db) newMergeProcessor(
+func (db *DB) newMergeProcessor(
 	txn datastore.Txn,
 	col *collection,
 ) (*mergeProcessor, error) {
@@ -487,7 +487,7 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 	}
 }
 
-func getCollectionFromRootSchema(ctx context.Context, db *db, rootSchema string) (*collection, error) {
+func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string) (*collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
