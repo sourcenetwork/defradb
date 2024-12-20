@@ -4,7 +4,12 @@ DefraDB provides a powerful and flexible secondary indexing system that enables 
 
 ## Overview
 
-The indexing system consists of two main components. The first is index storage, which handles storing and maintaining index information. The second is index-based document fetching, which manages retrieving documents using these indexes. Together, these components provide a robust foundation for efficient data access patterns.
+The indexing system consists of two main components:
+
+- Index storage (handles storing and maintaining index information).
+- Index-based document fetching (manages retrieving documents using these indexes). 
+
+Together, these components provide a robust foundation for efficient data access patterns.
 
 ## Index storage
 
@@ -51,7 +56,12 @@ Unique indexes follow a similar pattern but store the document ID as the value i
 
 ### Value encoding
 
-While DefraDB primarily uses CBOR for encoding, the indexing system employs a custom encoding/decoding solution inspired by CockroachDB. This decision was made because CBOR doesn't guarantee ordering preservation, which is crucial for index functionality. Our custom encoding ensures that numeric values maintain their natural ordering, strings are properly collated, and complex types like arrays and objects have deterministic ordering.
+DefraDB primarily uses CBOR for encoding. However, the indexing system uses a custom encoding/decoding solution, because CBOR doesn't guarantee ordering preservation, which is crucial for index functionality. 
+
+Our custom encoding ensures that: 
+- numeric values maintain their natural ordering,  
+- strings are properly collated, and  
+- complex types like arrays and objects have deterministic ordering.  
 
 ### Index maintenance
 
@@ -59,11 +69,17 @@ Index maintenance happens through three primary operations: document creation, u
 
 ## Index-based document fetching
 
-The IndexFetcher is the cornerstone of document retrieval, orchestrating the process of fetching documents using indexes. It operates in two phases: first retrieving indexed fields (including document IDs), then using a standard fetcher to get any additional requested fields.
+The IndexFetcher is central to document retrieval, managing the process through two phases. First, it retrieves indexed fields, such as document IDs. Then, it uses a standard fetcher to obtain any additional requested fields.  
 
-For each query, the system creates specialized result iterators based on the document filter conditions. These iterators are smart about how they handle different types of operations. For simple equality comparisons (`_eq`) or membership tests (`_in`), the iterator can often directly build the exact keys needed. For range operations (`_gt`, `_le`, ...) or pattern matching (`_like`, ...), the system employs dedicated value matchers to validate the results.
+For each query, the system generates specialized result iterators based on the document filter conditions. These iterators optimize how operations are handled:  
+- For simple equality (_eq) or membership tests (_in), the iterator often constructs the exact keys directly.  
+- For range operations (_gt, _le, etc.) or pattern matching (_like, etc.), dedicated value matchers are used to validate the results.  
 
-The performance characteristics of these operations vary. Direct match operations are typically the fastest as they can precisely target the needed keys. Range and pattern operations require more work as they must scan a range of keys and validate each result. The system is designed to minimize both key-value operations during mutations and memory usage during result streaming.
+The performance of these operations varies:  
+- Direct match operations are typically the fastest, as they precisely target the required keys.  
+- Range and pattern operations involve more work, scanning a range of keys and validating each result.  
+
+The system is optimized to reduce key-value operations during mutations and minimize memory usage during result streaming.  
 
 Note: the index fetcher can not benefit at the moment from ordered indexes, as the underlying storage does not support such range queries yet.
 
@@ -75,7 +91,7 @@ Index selection should be driven by your query patterns and data distribution. I
 
 ## Indexing related objects
 
-DefraDB's indexing system provides powerful capabilities for handling relationships between documents. Let's explore how this works with a practical example.
+DefraDB's indexing system is capable of handling relationships between documents. See example below.  
 
 Consider a schema defining a relationship between Users and Addresses:
 
@@ -105,12 +121,19 @@ query {
 }
 ```
 
-For requests on not indexed relations, the normal approach is from top to bottom, meaning that first all `User` documents are fetched and then for each `User` document the corresponding `Address` document is fetched. This can be very inefficient for large collections.
-With indexing, we use so called inverted fetching, meaning that we first fetch the `Address` documents with the matching `city` value and then for each `Address` document the corresponding `User` document is fetched. This is much more efficient as we can use the index to directly fetch the `User` document.
+For queries on non-indexed relationships, the standard approach is a top-to-bottom strategy:  
+1. All User documents are fetched.  
+1. For each User document, the corresponding Address document is retrieved.  
+This approach can be highly inefficient for large collections.  
+
+With indexing, an inverted fetching strategy is used instead:  
+1. The Address documents with the matching city value are fetched first.  
+1. For each Address document, the corresponding User document is retrieved.  
+This method is significantly more efficient, as the index allows direct retrieval of the relevant User documents.  
 
 ### Relationship cardinality using indexes
 
-The indexing system also plays a crucial role in enforcing relationship cardinality. By marking an index as unique, you can enforce one-to-one relationships between documents. Here's how you would modify the schema to ensure each User has exactly one Address:
+The indexing system also plays a crucial role in enforcing relationship cardinality. By marking an index as unique, you can enforce one-to-one relationships between documents. The code below shows how to modify the schema to ensure each user has exactly one address:  
 
 ```graphql
 type User {
