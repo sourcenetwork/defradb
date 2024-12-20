@@ -54,45 +54,6 @@ func CheckAccessOfDocOnCollectionWithACP(
 	)
 }
 
-// CheckAccessDocAccessWithDID handles the check, which tells us if access to the target
-// document is valid, with respect to the permission type, and the specified collection.
-//
-// The identity is determined by a DID.
-//
-// This function should only be called if acp is available. As we have unrestricted
-// access when acp is not available (acp turned off).
-//
-// Since we know acp is enabled we have these components to check in this function:
-// (1) the request is permissioned (has an identity),
-// (2) the collection is permissioned (has a policy),
-//
-// Unrestricted Access to document if:
-// - (2) is false.
-// - Document is public (unregistered), whether signatured request or not doesn't matter.
-func CheckDocAccessWithDID(
-	ctx context.Context,
-	did string,
-	acpSystem acp.ACP,
-	collection client.Collection,
-	permission acp.DPIPermission,
-	docID string,
-) (bool, error) {
-	identityFunc := func() immutable.Option[acpIdentity.Identity] {
-		if did == "" {
-			return immutable.None[acpIdentity.Identity]()
-		}
-		return immutable.Some[acpIdentity.Identity](acpIdentity.Identity{DID: did})
-	}
-	return CheckDocAccessWithIdentityFunc(
-		ctx,
-		identityFunc,
-		acpSystem,
-		collection,
-		permission,
-		docID,
-	)
-}
-
 // CheckDocAccessWithIdentityFunc handles the check, which tells us if access to the target
 // document is valid, with respect to the permission type, and the specified collection.
 //
