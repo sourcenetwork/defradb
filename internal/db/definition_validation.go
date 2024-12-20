@@ -103,7 +103,7 @@ func newDefinitionState(
 // validation functions should follow.
 type definitionValidator = func(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error
@@ -175,7 +175,7 @@ var createValidators = append(
 	globalValidators...,
 )
 
-func (db *db) validateSchemaUpdate(
+func (db *DB) validateSchemaUpdate(
 	ctx context.Context,
 	oldDefinitions []client.CollectionDefinition,
 	newDefinitions []client.CollectionDefinition,
@@ -193,7 +193,7 @@ func (db *db) validateSchemaUpdate(
 	return nil
 }
 
-func (db *db) validateCollectionChanges(
+func (db *DB) validateCollectionChanges(
 	ctx context.Context,
 	oldCols []client.CollectionDescription,
 	newColsByID map[uint32]client.CollectionDescription,
@@ -216,7 +216,7 @@ func (db *db) validateCollectionChanges(
 	return nil
 }
 
-func (db *db) validateNewCollection(
+func (db *DB) validateNewCollection(
 	ctx context.Context,
 	newDefinitions []client.CollectionDefinition,
 	oldDefinitions []client.CollectionDefinition,
@@ -236,7 +236,7 @@ func (db *db) validateNewCollection(
 
 func validateRelationPointsToValidKind(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -276,7 +276,7 @@ func validateRelationPointsToValidKind(
 
 func validateSecondaryFieldsPairUp(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -341,7 +341,7 @@ func validateSecondaryFieldsPairUp(
 
 func validateSingleSidePrimary(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -398,7 +398,7 @@ func validateSingleSidePrimary(
 
 func validateCollectionNameUnique(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -419,7 +419,7 @@ func validateCollectionNameUnique(
 
 func validateSingleVersionActive(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -445,7 +445,7 @@ func validateSingleVersionActive(
 // cannot be redirected to other collections.
 func validateSourcesNotRedefined(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -485,7 +485,7 @@ func validateSourcesNotRedefined(
 
 func validateIndexesNotModified(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -506,7 +506,7 @@ func validateIndexesNotModified(
 
 func validateFieldsNotModified(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -527,7 +527,7 @@ func validateFieldsNotModified(
 
 func validatePolicyNotModified(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -548,7 +548,7 @@ func validatePolicyNotModified(
 
 func validateIDNotZero(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -563,7 +563,7 @@ func validateIDNotZero(
 
 func validateIDUnique(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -580,7 +580,7 @@ func validateIDUnique(
 
 func validateIDExists(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -595,7 +595,7 @@ func validateIDExists(
 
 func validateRootIDNotMutated(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -630,7 +630,7 @@ func validateRootIDNotMutated(
 
 func validateSchemaVersionIDNotMutated(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -658,7 +658,7 @@ func validateSchemaVersionIDNotMutated(
 
 func validateCollectionNotRemoved(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -684,7 +684,7 @@ oldLoop:
 // this function might also make relevant remote calls using the acp system.
 func validateCollectionDefinitionPolicyDesc(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -721,7 +721,7 @@ func validateCollectionDefinitionPolicyDesc(
 
 func validateSchemaFieldNotDeleted(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -748,7 +748,7 @@ func validateSchemaFieldNotDeleted(
 
 func validateTypeAndKindCompatible(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -765,7 +765,7 @@ func validateTypeAndKindCompatible(
 
 func validateTypeSupported(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -782,7 +782,7 @@ func validateTypeSupported(
 
 func validateFieldNotMoved(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -806,7 +806,7 @@ func validateFieldNotMoved(
 
 func validateFieldNotMutated(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -833,7 +833,7 @@ func validateFieldNotMutated(
 
 func validateFieldNotDuplicated(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -853,7 +853,7 @@ func validateFieldNotDuplicated(
 
 func validateSelfReferences(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -905,7 +905,7 @@ func validateSelfReferences(
 
 func validateSecondaryNotOnSchema(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -922,7 +922,7 @@ func validateSecondaryNotOnSchema(
 
 func validateRelationalFieldIDType(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -951,7 +951,7 @@ func validateRelationalFieldIDType(
 
 func validateSchemaNotAdded(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -972,7 +972,7 @@ func validateSchemaNotAdded(
 
 func validateSchemaNameNotEmpty(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -990,7 +990,7 @@ func validateSchemaNameNotEmpty(
 // Long term we wish to support this, however for now we block it off.
 func validateCollectionMaterialized(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -1008,7 +1008,7 @@ func validateCollectionMaterialized(
 // Long term we wish to support this, however for now we block it off.
 func validateMaterializedHasNoPolicy(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -1023,7 +1023,7 @@ func validateMaterializedHasNoPolicy(
 
 func validateCollectionFieldDefaultValue(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
@@ -1043,7 +1043,7 @@ func validateCollectionFieldDefaultValue(
 // https://github.com/sourcenetwork/defradb/issues/3219
 func validateCollectionIsBranchableNotMutated(
 	ctx context.Context,
-	db *db,
+	db *DB,
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
