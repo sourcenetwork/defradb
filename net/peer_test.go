@@ -79,8 +79,6 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,
@@ -97,14 +95,14 @@ func TestNewPeer_NoError(t *testing.T) {
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
-	p, err := NewPeer(ctx, db.Blockstore(), db.Encstore(), db.Events(), immutable.None[acp.ACP](), db)
+	p, err := NewPeer(ctx, db.Events(), immutable.None[acp.ACP](), db)
 	require.NoError(t, err)
 	p.Close()
 }
 
 func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	ctx := context.Background()
-	_, err := NewPeer(ctx, nil, nil, nil, immutable.None[acp.ACP](), nil)
+	_, err := NewPeer(ctx, nil, immutable.None[acp.ACP](), nil)
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
@@ -122,8 +120,6 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
 		immutable.None[acp.ACP](),
 		db1,
@@ -133,8 +129,6 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db2.Encstore(),
 		db2.Events(),
 		immutable.None[acp.ACP](),
 		db2,
@@ -274,8 +268,6 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,
@@ -294,8 +286,6 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,
@@ -315,8 +305,6 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,
@@ -337,8 +325,6 @@ func TestNodeClose_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,
@@ -356,8 +342,6 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,
@@ -377,8 +361,6 @@ func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
 		immutable.None[acp.ACP](),
 		db,

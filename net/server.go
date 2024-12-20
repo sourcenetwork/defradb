@@ -122,23 +122,22 @@ func (s *server) processPushlog(
 		return nil, err
 	}
 
-	if !isReplicator && !s.trySelfHasAccess(block) {
-		// If we know we don't have access, we can skip the rest of the processing.
-		// No need to check access if the message is for replication as the node sending
-		// will have done so deliberately.
-		log.InfoContext(ctx, "Skipping pushlog due to known lack of access",
-			corelog.Any("PeerID", pid.String()),
-			corelog.Any("DocID", req.DocID))
-		return &pushLogReply{}, nil
+	// No need to check access if the message is for replication as the node sending
+	// will have done so deliberately.
+	if !isReplicator {
+		mightHaveAccess, err := s.trySelfHasAccess(block)
+		if err != nil {
+			return nil, err
+		}
+		if !mightHaveAccess {
+			// If we know we don't have access, we can skip the rest of the processing.
+			return &pushLogReply{}, nil
+		}
 	}
 
 	log.InfoContext(ctx, "Received pushlog",
 		corelog.Any("PeerID", pid.String()),
 		corelog.Any("Creator", byPeer.String()),
-		corelog.Any("DocID", req.DocID))
-
-	log.InfoContext(ctx, "Starting DAG sync",
-		corelog.Any("PeerID", pid.String()),
 		corelog.Any("DocID", req.DocID))
 
 	err = syncDAG(ctx, s.peer.bserv, block)
@@ -470,7 +469,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		return true
 	}
 
-	rawblock, err := s.peer.blockstore.Get(s.peer.ctx, c)
+	rawblock, err := s.peer.db.Blockstore().Get(s.peer.ctx, c)
 	if err != nil {
 		log.ErrorE("Failed to get block", err)
 		return false
@@ -549,10 +548,11 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 
 // trySelfHasAccess checks if the local node has access to the given block.
 //
-// This is a best-effort check and returns true unless we explicitly find that we don't have access.
-func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
+// This is a best-effort check and returns true unless we explicitly find that we don't have access
+// or if we get an error.
+func (s *server) trySelfHasAccess(block *coreblock.Block) (bool, error) {
 	if !s.peer.acp.HasValue() {
-		return true
+		return true, nil
 	}
 
 	cols, err := s.peer.db.GetCollections(
@@ -562,21 +562,17 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
 		},
 	)
 	if err != nil {
-		log.ErrorE("Failed to get collections", err)
-		return true
+		return false, err
 	}
 	if len(cols) == 0 {
-		log.Info("No collections found", corelog.Any("Schema Version ID", block.Delta.GetSchemaVersionID()))
-		return true
+		return false, client.ErrCollectionNotFound
 	}
 	ident, err := s.peer.db.GetNodeIdentity(s.peer.ctx)
 	if err != nil {
-		log.ErrorE("Failed to get node identity", err)
-		return true
+		return false, err
 	}
 	if !ident.HasValue() {
-		log.Info("No node identity found")
-		return true
+		return true, nil
 	}
 
 	peerHasAccess, err := permission.CheckDocAccessWithDID(
@@ -588,9 +584,8 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) bool {
 		string(block.Delta.GetDocID()),
 	)
 	if err != nil {
-		log.ErrorE("Failed to check access", err)
-		return true
+		return false, err
 	}
 
-	return peerHasAccess
+	return peerHasAccess, nil
 }

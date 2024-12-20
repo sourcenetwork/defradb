@@ -157,8 +157,6 @@ func (n *Node) Start(ctx context.Context) error {
 		// setup net node
 		n.Peer, err = net.NewPeer(
 			ctx,
-			coreDB.Blockstore(),
-			coreDB.Encstore(),
 			coreDB.Events(),
 			acp,
 			coreDB,
