@@ -29,8 +29,6 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
 		immutable.None[acp.ACP](),
 		nil,
@@ -40,8 +38,6 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db2.Encstore(),
 		db2.Events(),
 		immutable.None[acp.ACP](),
 		nil,
@@ -65,8 +61,6 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
 		immutable.None[acp.ACP](),
 		nil,
@@ -76,8 +70,6 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db2.Encstore(),
 		db2.Events(),
 		immutable.None[acp.ACP](),
 		nil,
@@ -104,8 +96,6 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
 		immutable.None[acp.ACP](),
 		nil,
@@ -115,8 +105,6 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db2.Encstore(),
 		db2.Events(),
 		immutable.None[acp.ACP](),
 		nil,

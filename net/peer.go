@@ -44,6 +44,10 @@ import (
 
 // DB hold the database related methods that are required by Peer.
 type DB interface {
+	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
+	Blockstore() datastore.Blockstore
+	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
+	Encstore() datastore.Blockstore
 	// GetCollections returns the list of collections according to the given options.
 	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
@@ -55,9 +59,6 @@ type DB interface {
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	blockstore datastore.Blockstore
-	encstore   datastore.Blockstore
-
 	bus       *event.Bus
 	updateSub *event.Subscription
 
@@ -83,8 +84,6 @@ type Peer struct {
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
 	ctx context.Context,
-	blockstore datastore.Blockstore,
-	encstore datastore.Blockstore,
 	bus *event.Bus,
 	acp immutable.Option[acp.ACP],
 	db DB,
@@ -99,7 +98,7 @@ func NewPeer(
 		}
 	}()
 
-	if blockstore == nil || encstore == nil {
+	if db == nil {
 		return nil, ErrNilDB
 	}
 
@@ -130,16 +129,14 @@ func NewPeer(
 	)
 
 	p = &Peer{
-		host:       h,
-		dht:        ddht,
-		blockstore: blockstore,
-		encstore:   encstore,
-		ctx:        ctx,
-		cancel:     cancel,
-		bus:        bus,
-		acp:        acp,
-		db:         db,
-		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
+		host:   h,
+		dht:    ddht,
+		ctx:    ctx,
+		cancel: cancel,
+		bus:    bus,
+		acp:    acp,
+		db:     db,
+		p2pRPC: grpc.NewServer(options.GRPCServerOptions...),
 	}
 
 	if options.EnablePubSub {
@@ -166,8 +163,8 @@ func NewPeer(
 	}
 
 	bswapnet := network.NewFromIpfsHost(h)
-	bswap := bitswap.New(ctx, bswapnet, ddht, blockstore, bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
-	p.bserv = blockservice.New(blockstore, bswap)
+	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
+	p.bserv = blockservice.New(db.Blockstore(), bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
