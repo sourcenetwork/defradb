@@ -137,6 +137,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeKeyringGenerateCommand(),
 		MakeKeyringImportCommand(),
 		MakeKeyringExportCommand(),
+		MakeKeyringListCommand(),
 	)
 
 	identity := MakeIdentityCommand()
