@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
@@ -28,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/internal/db/fetcher/mocks"
