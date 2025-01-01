@@ -13,7 +13,6 @@ package description
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"sort"
 
 	ds "github.com/ipfs/go-datastore"
@@ -21,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 

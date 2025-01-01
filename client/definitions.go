@@ -12,7 +12,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -20,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // CollectionDefinition contains the metadata defining what a Collection is.

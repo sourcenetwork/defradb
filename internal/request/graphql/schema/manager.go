@@ -11,9 +11,8 @@
 package schema
 
 import (
-	"errors"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
