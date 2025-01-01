@@ -53,3 +53,10 @@ func (s *systemKeyring) Get(name string) ([]byte, error) {
 func (s *systemKeyring) Delete(user string) error {
 	return keyring.Delete(s.service, user)
 }
+
+func (s *systemKeyring) List() ([]string, error) {
+	// The OS keyring does not support listing keys
+	// This function is a stub for now because the Keyring interface requires it
+	// Currently, the 'defradb keyring list' command uses only fileKeyring
+	return nil, ErrSystemKeyringListInvoked
+}

@@ -11,13 +11,17 @@
 package keyring
 
 import (
-	"github.com/zalando/go-keyring"
+	"testing"
 
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/stretchr/testify/require"
 )
 
-var (
-	// ErrNotFound is returned when a keyring item is not found.
-	ErrNotFound                 = keyring.ErrNotFound
-	ErrSystemKeyringListInvoked = errors.New("listing keys is not supported by OS keyring")
-)
+func TestSystemKeyringListThrowsError(t *testing.T) {
+	service := "test-service"
+	systemKeyring := OpenSystemKeyring(service)
+
+	keys, err := systemKeyring.List()
+
+	require.Nil(t, keys, "keys should be nil when List is called")
+	require.ErrorIs(t, err, ErrSystemKeyringListInvoked, "function should throw ErrSystemKeyringListInvoked error")
+}
