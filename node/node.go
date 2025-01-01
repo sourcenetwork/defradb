@@ -12,7 +12,6 @@ package node
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	gohttp "net/http"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"

@@ -12,7 +12,6 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
 	"regexp"
 	"strings"
 	"sync"
@@ -24,6 +23,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
