@@ -111,8 +111,8 @@ func NewPeer(
 		corelog.Any("Address", options.ListenAddresses),
 	)
 
-	bswapnet := network.NewFromIpfsHost(h, ddht)
-	bswap := bitswap.New(ctx, bswapnet, blockstore)
+	bswapnet := network.NewFromIpfsHost(h)
+	bswap := bitswap.New(ctx, bswapnet, ddht, blockstore)
 
 	p = &Peer{
 		host:       h,
