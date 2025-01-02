@@ -13,11 +13,13 @@ package encoding
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestEncodeDecodeFieldValue(t *testing.T) {
@@ -40,6 +42,8 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 	nullJSON, err := client.NewJSON(nil)
 	require.NoError(t, err)
 	normalNullJSON := client.NewNormalJSON(nullJSON)
+
+	date := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
 		name               string
@@ -70,8 +74,29 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 			expectedDecodedVal: client.NewNormalBool(false),
 		},
 		{
+			name:               "nillable bool true",
+			inputVal:           client.NewNormalNillableBool(immutable.Some(true)),
+			expectedBytes:      EncodeBoolAscending(nil, true),
+			expectedBytesDesc:  EncodeBoolDescending(nil, true),
+			expectedDecodedVal: client.NewNormalBool(true),
+		},
+		{
+			name:               "nillable bool false",
+			inputVal:           client.NewNormalNillableBool(immutable.Some(false)),
+			expectedBytes:      EncodeBoolAscending(nil, false),
+			expectedBytesDesc:  EncodeBoolDescending(nil, false),
+			expectedDecodedVal: client.NewNormalBool(false),
+		},
+		{
 			name:               "int",
 			inputVal:           client.NewNormalInt(55),
+			expectedBytes:      EncodeVarintAscending(nil, 55),
+			expectedBytesDesc:  EncodeVarintDescending(nil, 55),
+			expectedDecodedVal: client.NewNormalInt(55),
+		},
+		{
+			name:               "nillable int",
+			inputVal:           client.NewNormalNillableInt(immutable.Some(55)),
 			expectedBytes:      EncodeVarintAscending(nil, 55),
 			expectedBytesDesc:  EncodeVarintDescending(nil, 55),
 			expectedDecodedVal: client.NewNormalInt(55),
@@ -84,11 +109,39 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 			expectedDecodedVal: client.NewNormalFloat(0.2),
 		},
 		{
+			name:               "nillable float",
+			inputVal:           client.NewNormalNillableFloat(immutable.Some(0.2)),
+			expectedBytes:      EncodeFloatAscending(nil, 0.2),
+			expectedBytesDesc:  EncodeFloatDescending(nil, 0.2),
+			expectedDecodedVal: client.NewNormalFloat(0.2),
+		},
+		{
 			name:               "string",
 			inputVal:           client.NewNormalString("str"),
 			expectedBytes:      EncodeBytesAscending(nil, []byte("str")),
 			expectedBytesDesc:  EncodeBytesDescending(nil, []byte("str")),
 			expectedDecodedVal: client.NewNormalString("str"),
+		},
+		{
+			name:               "nillable string",
+			inputVal:           client.NewNormalNillableString(immutable.Some("str")),
+			expectedBytes:      EncodeBytesAscending(nil, []byte("str")),
+			expectedBytesDesc:  EncodeBytesDescending(nil, []byte("str")),
+			expectedDecodedVal: client.NewNormalString("str"),
+		},
+		{
+			name:               "time",
+			inputVal:           client.NewNormalTime(date),
+			expectedBytes:      EncodeTimeAscending(nil, date),
+			expectedBytesDesc:  EncodeTimeDescending(nil, date),
+			expectedDecodedVal: client.NewNormalTime(date),
+		},
+		{
+			name:               "nillable time",
+			inputVal:           client.NewNormalNillableTime(immutable.Some(date)),
+			expectedBytes:      EncodeTimeAscending(nil, date),
+			expectedBytesDesc:  EncodeTimeDescending(nil, date),
+			expectedDecodedVal: client.NewNormalTime(date),
 		},
 		{
 			name:               "json string",
