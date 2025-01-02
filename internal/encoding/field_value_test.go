@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,8 +18,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestEncodeDecodeFieldValue(t *testing.T) {
