@@ -14,10 +14,10 @@ import (
 	"context"
 	"net/http/httptest"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -249,7 +249,7 @@ func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }
 
-func (w *Wrapper) Headstore() ds.Read {
+func (w *Wrapper) Headstore() corekv.Reader {
 	return w.node.DB.Headstore()
 }
 

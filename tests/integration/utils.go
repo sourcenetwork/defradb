@@ -25,6 +25,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -1726,7 +1727,7 @@ func withRetryOnNode(
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
 		err := action()
-		if errors.Is(err, datastore.ErrTxnConflict) {
+		if errors.Is(err, corekv.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -1858,6 +1859,10 @@ func executeSubscriptionRequest(
 					results = append(results, &s)
 
 				case <-s.allActionsDone:
+					// If the last action(s) do not result in any new subscription results, the test harness may
+					// close the database before subscription queries have finished executing, this can result in
+					// unexpected paniccs or errors that we don't really care about as the database is closing.
+					time.Sleep(50 * time.Millisecond)
 					allActionsAreDone = true
 				}
 			}

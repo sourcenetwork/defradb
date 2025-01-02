@@ -28,8 +28,8 @@ func (t *explicitTxn) Commit(ctx context.Context) error {
 	return nil // do nothing
 }
 
-func (t *explicitTxn) Discard(ctx context.Context) {
-	// do nothing
+func (t *explicitTxn) Discard(ctx context.Context) error {
+	return nil // do nothing
 }
 
 // transactionDB is a db that can create transactions.

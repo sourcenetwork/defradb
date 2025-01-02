@@ -36,11 +36,12 @@ func (w *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
-func (w *Transaction) Discard(ctx context.Context) {
+func (w *Transaction) Discard(ctx context.Context) error {
 	args := []string{"client", "tx", "discard"}
 	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
 
-	w.cmd.execute(ctx, args) //nolint:errcheck
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Transaction) OnSuccess(fn func()) {

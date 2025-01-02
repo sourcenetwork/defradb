@@ -12,12 +12,11 @@ package datastore
 
 import (
 	"github.com/ipfs/boxo/blockstore"
-	ds "github.com/ipfs/go-datastore"
 	"github.com/ipld/go-ipld-prime/storage"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/namespace"
 	"github.com/sourcenetwork/corelog"
-
-	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 var (
@@ -26,8 +25,7 @@ var (
 
 // Rootstore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
 type Rootstore interface {
-	ds.Batching
-	ds.TxnDatastore
+	corekv.TxnStore
 }
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for MerkleCRDTs.
@@ -65,9 +63,8 @@ type MultiStore interface {
 // Which means we can't swap between the two for Datastores that
 // support TxnDatastore.
 type DSReaderWriter interface {
-	ds.Read
-	ds.Write
-	iterable.Iterable
+	corekv.Reader
+	corekv.Writer
 }
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
@@ -80,4 +77,21 @@ type Blockstore interface {
 type IPLDStorage interface {
 	storage.ReadableStorage
 	storage.WritableStorage
+}
+
+// shim to satisfy the namespace.Wrap method which
+// expects a `corekv.Store` interface which includes
+// a `Close()` method, but our DSReaderWriter doens't
+// have it, so we add this stubbed type to shim it
+type shimDSReadWriteCloser struct {
+	DSReaderWriter
+}
+
+func (shimDSReadWriteCloser) Close() error { // todo - not closing the store here is a really bad idea (deadlocks)
+	return nil
+}
+
+func prefix(root DSReaderWriter, prefix []byte) DSReaderWriter {
+	shimCloser := shimDSReadWriteCloser{root}
+	return namespace.Wrap(shimCloser, prefix)
 }

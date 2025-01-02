@@ -33,8 +33,8 @@ func (w *TxWrapper) Commit(ctx context.Context) error {
 	return w.client.Commit(ctx)
 }
 
-func (w *TxWrapper) Discard(ctx context.Context) {
-	w.client.Discard(ctx)
+func (w *TxWrapper) Discard(ctx context.Context) error {
+	return w.client.Discard(ctx)
 }
 
 func (w *TxWrapper) OnSuccess(fn func()) {

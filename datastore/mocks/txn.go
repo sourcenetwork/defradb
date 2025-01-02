@@ -163,8 +163,21 @@ func (_c *Txn_Datastore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 }
 
 // Discard provides a mock function with given fields: ctx
-func (_m *Txn) Discard(ctx context.Context) {
-	_m.Called(ctx)
+func (_m *Txn) Discard(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Discard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Txn_Discard_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Discard'
@@ -185,12 +198,12 @@ func (_c *Txn_Discard_Call) Run(run func(ctx context.Context)) *Txn_Discard_Call
 	return _c
 }
 
-func (_c *Txn_Discard_Call) Return() *Txn_Discard_Call {
-	_c.Call.Return()
+func (_c *Txn_Discard_Call) Return(_a0 error) *Txn_Discard_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard_Call {
+func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context) error) *Txn_Discard_Call {
 	_c.Call.Return(run)
 	return _c
 }

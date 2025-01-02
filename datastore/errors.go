@@ -11,7 +11,7 @@
 package datastore
 
 import (
-	datastoreErrors "github.com/sourcenetwork/defradb/datastore/errors"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -29,9 +29,8 @@ var (
 	// defradb/store.ErrNotFound => error
 	// ipfs-blockstore.ErrNotFound => error
 	// ErrNotFound is an error returned when a block is not found.
-	ErrNotFound    = errors.New("blockstore: block not found")
-	ErrClosed      = datastoreErrors.ErrClosed
-	ErrTxnConflict = datastoreErrors.ErrTxnConflict
+	ErrNotFound = errors.New("blockstore: block not found")
+	ErrClosed   = corekv.ErrDBClosed
 )
 
 // NewErrInvalidStoredValue returns a new error indicating that the stored

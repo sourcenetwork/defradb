@@ -13,10 +13,6 @@ package errors
 import "errors"
 
 var (
-	ErrClosed = errors.New("datastore closed")
-	// ErrConflict is returned when a transaction conflicts with another transaction. This can
-	// happen if the read rows had been updated concurrently by another transaction.
-	ErrTxnConflict = errors.New("transaction Conflict. Please retry")
 	// ErrDiscardedTxn is returned if a previously discarded transaction is re-used.
 	ErrTxnDiscarded = errors.New("this transaction has been discarded. Create a new one")
 	// ErrReadOnlyTxn is returned if an update function is called on a read-only transaction.

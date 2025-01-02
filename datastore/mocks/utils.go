@@ -13,8 +13,8 @@ package mocks
 import (
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	corekv "github.com/sourcenetwork/corekv"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -31,15 +31,15 @@ type MultiStoreTxn struct {
 
 func prepareDataStore(t *testing.T) *DSReaderWriter {
 	dataStore := NewDSReaderWriter(t)
-	dataStore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, ds.ErrNotFound).Maybe()
-	dataStore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	dataStore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, corekv.ErrNotFound).Maybe()
+	dataStore.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	dataStore.EXPECT().Has(mock.Anything, mock.Anything).Return(true, nil).Maybe()
 	return dataStore
 }
 
 func prepareEncStore(t *testing.T) *Blockstore {
 	encStore := NewBlockstore(t)
-	encStore.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, ds.ErrNotFound).Maybe()
+	encStore.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, corekv.ErrNotFound).Maybe()
 	encStore.EXPECT().Put(mock.Anything, mock.Anything).Return(nil).Maybe()
 	encStore.EXPECT().Has(mock.Anything, mock.Anything).Return(true, nil).Maybe()
 	return encStore
@@ -47,18 +47,6 @@ func prepareEncStore(t *testing.T) *Blockstore {
 
 func prepareRootstore(t *testing.T) *DSReaderWriter {
 	return NewDSReaderWriter(t)
-}
-
-func prepareHeadStore(t *testing.T) *DSReaderWriter {
-	headStore := NewDSReaderWriter(t)
-
-	headStore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(NewQueryResultsWithValues(t), nil).Maybe()
-
-	headStore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, ds.ErrNotFound).Maybe()
-	headStore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	headStore.EXPECT().Has(mock.Anything, mock.Anything).Return(false, nil).Maybe()
-	return headStore
 }
 
 func prepareSystemStore(t *testing.T) *DSReaderWriter {
@@ -85,7 +73,6 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 		MockRootstore:   prepareRootstore(t),
 		MockDatastore:   prepareDataStore(t),
 		MockEncstore:    prepareEncStore(t),
-		MockHeadstore:   prepareHeadStore(t),
 		MockDAGstore:    prepareDAGStore(t),
 		MockSystemstore: prepareSystemStore(t),
 	}

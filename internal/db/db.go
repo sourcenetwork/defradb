@@ -20,8 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -171,13 +170,13 @@ func newDB(
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly), nil
 }
 
 // Rootstore returns the root datastore.
@@ -201,7 +200,7 @@ func (db *DB) Peerstore() datastore.DSReaderWriter {
 }
 
 // Headstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Headstore() ds.Read {
+func (db *DB) Headstore() corekv.Reader {
 	return db.multistore.Headstore()
 }
 
@@ -384,8 +383,8 @@ func (db *DB) initialize(ctx context.Context) error {
 		}
 	}
 
-	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
@@ -414,7 +413,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -465,20 +464,25 @@ func (db *DB) Close() {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	q := dsq.Query{
-		Prefix:   "",
-		KeysOnly: false,
-		Orders:   []dsq.Order{dsq.OrderByKey{}},
+	iter := store.Iterator(ctx, corekv.IterOptions{})
+
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if !hasNext {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		log.InfoContext(ctx, "", corelog.Any(string(iter.Key()), value))
 	}
 
-	results, err := store.Query(ctx, q)
-	if err != nil {
-		return err
-	}
-
-	for r := range results.Next() {
-		log.InfoContext(ctx, "", corelog.Any(r.Key, r.Value))
-	}
-
-	return results.Close()
+	return iter.Close()
 }
