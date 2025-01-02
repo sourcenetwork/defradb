@@ -133,16 +133,7 @@ func (m *boolMatcher) Match(value client.NormalValue) (bool, error) {
 		if boolOptVal, ok := value.NillableBool(); ok {
 			boolVal = boolOptVal.Value()
 		} else {
-			// TODO: check is this is still needed after encoding of bool changed
-			intVal, ok := value.Int()
-			if !ok {
-				if intOptVal, ok := value.NillableInt(); ok {
-					intVal = intOptVal.Value()
-				} else {
-					return false, NewErrUnexpectedTypeValue[bool](value)
-				}
-			}
-			boolVal = intVal != 0
+			return false, NewErrUnexpectedTypeValue[bool](value)
 		}
 	}
 	return boolVal == m.value == m.isEq, nil
