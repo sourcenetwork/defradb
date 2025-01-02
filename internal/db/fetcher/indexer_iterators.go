@@ -12,9 +12,6 @@ package fetcher
 
 import (
 	"context"
-	"strings"
-	"time"
-	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 	"golang.org/x/exp/slices"
