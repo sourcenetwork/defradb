@@ -38,6 +38,6 @@ func DecodeBoolAscending(b []byte) ([]byte, bool, error) {
 
 // DecodeBoolDescending decodes a boolean value encoded in descending order.
 func DecodeBoolDescending(b []byte) ([]byte, bool, error) {
-	leftover, v, err := DecodeBoolAscending(b)
-	return leftover, !v, err
+	b, v, err := DecodeBoolAscending(b)
+	return b, !v, err
 }
