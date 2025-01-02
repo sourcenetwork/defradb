@@ -48,7 +48,6 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 			var schemas []string
 			switch {
-
 			case len(schemaFiles) > 0:
 				// Read schemas from files
 				for _, schemaFile := range schemaFiles {
