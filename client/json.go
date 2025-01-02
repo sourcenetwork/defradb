@@ -61,8 +61,8 @@ type JSON interface {
 	// GetPath returns the path of the JSON value in the JSON tree.
 	GetPath() []string
 
-	// accept calls the visitor function for the JSON value at the given path.
-	accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error
+	// visit calls the visitor function for the JSON value at the given path.
+	visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error
 }
 
 // MakeVoidJSON creates a JSON value that represents a void value with just a path.
@@ -81,7 +81,7 @@ func TraverseJSON(j JSON, visitor JSONVisitor, opts ...traverseJSONOption) error
 		opt(&options)
 	}
 	if shouldVisitPath(options.pathPrefix, nil) {
-		return j.accept(visitor, []string{}, options)
+		return j.visit(visitor, []string{}, options)
 	}
 	return nil
 }
@@ -166,7 +166,7 @@ func (v jsonVoid) IsNull() bool {
 	return false
 }
 
-func (v jsonVoid) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (v jsonVoid) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	return nil
 }
 
@@ -218,7 +218,7 @@ func (obj jsonObject) Unwrap() any {
 	return result
 }
 
-func (obj jsonObject) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (obj jsonObject) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	obj.path = path
 	if !opts.onlyLeaves && len(path) >= len(opts.pathPrefix) {
 		if err := visitor(obj); err != nil {
@@ -232,7 +232,7 @@ func (obj jsonObject) accept(visitor JSONVisitor, path []string, opts traverseJS
 			continue
 		}
 
-		if err := v.accept(visitor, newPath, opts); err != nil {
+		if err := v.visit(visitor, newPath, opts); err != nil {
 			return err
 		}
 	}
@@ -261,7 +261,7 @@ func (arr jsonArray) Unwrap() any {
 	return result
 }
 
-func (arr jsonArray) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (arr jsonArray) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	arr.path = path
 	if !opts.onlyLeaves {
 		if err := visitor(arr); err != nil {
@@ -284,7 +284,7 @@ func (arr jsonArray) accept(visitor JSONVisitor, path []string, opts traverseJSO
 				continue
 			}
 
-			if err := arr.val[i].accept(visitor, newPath, opts); err != nil {
+			if err := arr.val[i].visit(visitor, newPath, opts); err != nil {
 				return err
 			}
 		}
@@ -302,7 +302,7 @@ func (n jsonNumber) Number() (float64, bool) {
 	return n.val, true
 }
 
-func (n jsonNumber) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonNumber) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
@@ -317,7 +317,7 @@ func (s jsonString) String() (string, bool) {
 	return s.val, true
 }
 
-func (n jsonString) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonString) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
@@ -332,7 +332,7 @@ func (b jsonBool) Bool() (bool, bool) {
 	return b.val, true
 }
 
-func (n jsonBool) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonBool) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
@@ -347,7 +347,7 @@ func (n jsonNull) IsNull() bool {
 	return true
 }
 
-func (n jsonNull) accept(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonNull) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }

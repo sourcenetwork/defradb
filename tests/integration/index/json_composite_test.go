@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing.T) {
+func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *testing.T) {
 	type testCase struct {
 		name         string
 		req          string
@@ -208,7 +208,170 @@ func TestJSONArrayCompositeIndex_JSONWithScalar_ShouldFetchUsingIndex(t *testing
 	}
 }
 
-func TestJSONArrayCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
+func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex2(t *testing.T) {
+	type testCase struct {
+		name         string
+		req          string
+		result       map[string]any
+		indexFetches int
+	}
+
+	testCases := []testCase{
+		{
+			name: "With _le and _gt filters",
+			req: `query {
+				User(filter: {
+					age: {_le: 35},
+					custom: {val: {_gt: 4}} 
+				}) {
+					name
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Keenan"},
+					{"name": "Addo"},
+				},
+			},
+			indexFetches: 8,
+		},
+		{
+			name: "With _lt and _eq filters",
+			req: `query {
+				User(filter: {
+					age: {_lt: 100},
+					custom: {val: {_eq: null}} 
+				}) {
+					name
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Andy"},
+				},
+			},
+			indexFetches: 8,
+		},
+		{
+			name: "With _ne and _ge filters",
+			req: `query {
+				User(filter: {
+					_and: [{ age: {_ne: 35} }, { age: {_ne: 40} }],
+					custom: {val: {_ge: 5}} 
+				}) {
+					name
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Chris"},
+				},
+			},
+			indexFetches: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := testUtils.TestCase{
+				Actions: []any{
+					testUtils.SchemaUpdate{
+						Schema: `
+							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
+								name: String 
+								custom: JSON 
+								age: Int
+							}`,
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "John",
+							"custom": map[string]any{
+								"val": 3,
+							},
+							"age": 30,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Islam",
+							"custom": map[string]any{
+								"val": 3,
+							},
+							"age": 25,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Shahzad",
+							"custom": map[string]any{
+								"val": 4,
+							},
+							"age": 25,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Keenan",
+							"custom": map[string]any{
+								"val": 5,
+							},
+							"age": 35,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Addo",
+							"custom": map[string]any{
+								"val": 6,
+							},
+							"age": 35,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Bruno",
+							"custom": map[string]any{
+								"val": 6,
+							},
+							"age": 40,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Andy",
+							"custom": map[string]any{
+								"val": nil,
+							},
+							"age": 50,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Chris",
+							"custom": map[string]any{
+								"val": 7,
+							},
+							"age": nil,
+						},
+					},
+					testUtils.Request{
+						Request: tc.req,
+						Results: tc.result,
+					},
+					testUtils.Request{
+						Request:  makeExplainQuery(tc.req),
+						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
+					},
+				},
+			}
+
+			testUtils.ExecuteTestCase(t, test)
+		})
+	}
+}
+
+func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 	type testCase struct {
 		name         string
 		req          string

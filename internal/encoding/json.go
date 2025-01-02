@@ -144,7 +144,6 @@ func encodeJSONPath(b []byte, v client.JSON) []byte {
 	b = append(b, jsonMarker)
 	for _, part := range v.GetPath() {
 		pathBytes := unsafeConvertStringToBytes(part)
-		//b = encodeBytesAscendingWithTerminator(b, pathBytes, ascendingBytesEscapes.escapedTerm)
 		b = EncodeBytesAscending(b, pathBytes)
 	}
 	b = append(b, ascendingBytesEscapes.escapedTerm)

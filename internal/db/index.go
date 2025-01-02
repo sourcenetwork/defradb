@@ -146,7 +146,7 @@ func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
 type collectionBaseIndex struct {
 	collection client.Collection
 	desc       client.IndexDescription
-	// fieldsDescs is a slice of field descriptions for the fields that are indexed by the index
+	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
 	fieldsDescs     []client.SchemaFieldDescription
 	fieldGenerators []FieldIndexGenerator
@@ -241,10 +241,12 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 	return index.desc
 }
 
-func (index *collectionBaseIndex) generateIndexKeys(
+// generateKeysAndProcess generates index keys for the given document and calls the provided function
+// for each generated key
+func (index *collectionBaseIndex) generateKeysAndProcess(
 	doc *client.Document,
 	appendDocID bool,
-	f func(keys.IndexDataStoreKey) error,
+	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
 	baseKey, err := index.getDocumentsIndexKey(doc, appendDocID)
@@ -253,17 +255,17 @@ func (index *collectionBaseIndex) generateIndexKeys(
 	}
 
 	// Start with first field
-	return index.generateKeysForField(0, baseKey, f)
+	return index.generateKeysForFieldAndProcess(0, baseKey, processKey)
 }
 
-func (index *collectionBaseIndex) generateKeysForField(
+func (index *collectionBaseIndex) generateKeysForFieldAndProcess(
 	fieldIdx int,
 	baseKey keys.IndexDataStoreKey,
-	f func(keys.IndexDataStoreKey) error,
+	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// If we've processed all fields, call the handler
 	if fieldIdx >= len(index.fieldsDescs) {
-		return f(baseKey)
+		return processKey(baseKey)
 	}
 
 	// Generate values for current field
@@ -277,7 +279,7 @@ func (index *collectionBaseIndex) generateKeysForField(
 			newKey.Fields[fieldIdx].Value = val
 
 			// Process next field
-			return index.generateKeysForField(fieldIdx+1, newKey, f)
+			return index.generateKeysForFieldAndProcess(fieldIdx+1, newKey, processKey)
 		},
 	)
 }
@@ -296,7 +298,7 @@ func (index *collectionSimpleIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateIndexKeys(doc, true, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
 		return txn.Datastore().Put(ctx, key.ToDS(), []byte{})
 	})
 }
@@ -319,7 +321,7 @@ func (index *collectionSimpleIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateIndexKeys(doc, true, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
 		return index.deleteIndexKey(ctx, txn, key)
 	})
 }
@@ -345,7 +347,7 @@ func (index *collectionUniqueIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateIndexKeys(doc, false, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
 		return addNewUniqueKey(ctx, txn, doc, key, index.fieldsDescs)
 	})
 }
@@ -427,7 +429,7 @@ func (index *collectionUniqueIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateIndexKeys(doc, false, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
 		key, _, err := makeUniqueKeyValueRecord(key, doc)
 		if err != nil {
 			return err

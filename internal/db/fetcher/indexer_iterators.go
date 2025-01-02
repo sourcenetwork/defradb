@@ -460,7 +460,6 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
 	} else {
 		key := f.newIndexDataStoreKey()
-		// TODO: can we test fieldConditions[not 0]?
 		if fieldConditions[0].kind == client.FieldKind_NILLABLE_JSON {
 			key.Fields = []keys.IndexedField{{
 				Descending: f.indexDesc.Fields[0].Descending,
@@ -544,7 +543,6 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					if cond.op == compOpAny || cond.op == compOpAll || cond.op == compOpNone {
 						subCondMap := filterVal.(map[connor.FilterKey]any)
 						for subKey, subVal := range subCondMap {
-							// TODO: check what happens with _any: {_eq: [1, 2]}
 							cond.arrOp = cond.op
 							cond.op = subKey.(*mapper.Operator).Operation
 							jsonVal, err = client.NewJSONWithPath(subVal, jsonPath)

@@ -1313,7 +1313,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 					},
 				},
 			},
-			/*testUtils.Request{
+			testUtils.Request{
 				Request: `
 					query {
 						User(filter: {name: {_eq: null}}) {
@@ -1342,7 +1342,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						{"about": "nil_nil -> bob_nil"},
 					},
 				},
-			},*/
+			},
 		},
 	}
 
