@@ -122,8 +122,7 @@ func TraverseJSONWithArrayIndexInPath() traverseJSONOption {
 	}
 }
 
-// JSONVisitor is a function that processes a JSON value at a given path.
-// path represents the location of the value in the JSON tree.
+// JSONVisitor is a function that processes a JSON value at every node of the JSON tree.
 // Returns an error if the processing fails.
 type JSONVisitor func(value JSON) error
 
