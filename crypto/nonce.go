@@ -12,10 +12,11 @@ package crypto
 
 import (
 	"crypto/rand"
-	"errors"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const AESNonceSize = 12

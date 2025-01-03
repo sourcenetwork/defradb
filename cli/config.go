@@ -11,13 +11,13 @@
 package cli
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )

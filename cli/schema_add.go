@@ -46,16 +46,16 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
-			var schemas []string
+			var combinedSchema string
 			switch {
 			case len(schemaFiles) > 0:
-				// Read schemas from files
+				// Read schemas from files and concatenate them
 				for _, schemaFile := range schemaFiles {
 					data, err := os.ReadFile(schemaFile)
 					if err != nil {
 						return fmt.Errorf("failed to read file %s: %w", schemaFile, err)
 					}
-					schemas = append(schemas, string(data))
+					combinedSchema += string(data) + "\n"
 				}
 
 			case len(args) > 0 && args[0] == "-":
@@ -64,24 +64,23 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				if err != nil {
 					return fmt.Errorf("failed to read schema from stdin: %w", err)
 				}
-				schemas = append(schemas, string(data))
+				combinedSchema += string(data) + "\n"
 
 			case len(args) > 0:
 				// Read schema from argument string
-				schemas = append(schemas, args[0])
+				combinedSchema += args[0] + "\n"
 
 			default:
 				return fmt.Errorf("schema cannot be empty")
 			}
 
-			for _, schema := range schemas {
-				cols, err := store.AddSchema(cmd.Context(), schema)
-				if err != nil {
-					return fmt.Errorf("failed to add schema: %w", err)
-				}
-				if err := writeJSON(cmd, cols); err != nil {
-					return err
-				}
+			// Process the combined schema
+			cols, err := store.AddSchema(cmd.Context(), combinedSchema)
+			if err != nil {
+				return fmt.Errorf("failed to add schema: %w", err)
+			}
+			if err := writeJSON(cmd, cols); err != nil {
+				return err
 			}
 
 			return nil
