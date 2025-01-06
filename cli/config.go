@@ -17,9 +17,10 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
