@@ -35,7 +35,7 @@ func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := store.BasicImport(req.Context(), config.Filepath)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -51,7 +51,7 @@ func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := store.BasicExport(req.Context(), &config)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -67,7 +67,7 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	}
 	cols, err := store.AddSchema(req.Context(), string(schema))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, cols)
@@ -85,7 +85,7 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 
 	err = store.PatchSchema(req.Context(), message.Patch, message.Migration, message.SetAsDefaultVersion)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -103,7 +103,7 @@ func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 
 	err = store.PatchCollection(req.Context(), patch)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -119,7 +119,7 @@ func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.
 	}
 	err = store.SetActiveSchemaVersion(req.Context(), string(schemaVersionID))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -137,7 +137,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 
 	defs, err := store.AddView(req.Context(), message.Query, message.SDL, message.Transform)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
@@ -155,7 +155,7 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 
 	err := store.SetMigration(req.Context(), cfg)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -187,7 +187,7 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 
 	cols, err := store.GetCollections(req.Context(), options)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	colDesc := make([]client.CollectionDefinition, len(cols))
@@ -213,7 +213,7 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 
 	schema, err := store.GetSchemas(req.Context(), options)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, schema)
@@ -245,7 +245,7 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 
 	err := store.RefreshViews(req.Context(), options)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -256,7 +256,7 @@ func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 
 	indexes, err := store.GetAllIndexes(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
@@ -266,7 +266,7 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	if err := db.PrintDump(req.Context()); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -305,7 +305,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{ErrMissingRequest})
 		return
 	}
 	var options []client.RequestOption
@@ -360,7 +360,7 @@ func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 
 	identity, err := db.GetNodeIdentity(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, identity)

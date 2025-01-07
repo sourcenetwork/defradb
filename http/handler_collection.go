@@ -70,7 +70,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if err := col.CreateMany(ctx, docList); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
@@ -81,7 +81,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if err := col.Create(ctx, doc); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
@@ -99,7 +99,7 @@ func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 
 	result, err := col.DeleteWithFilter(req.Context(), request.Filter)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -116,7 +116,7 @@ func (s *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 
 	result, err := col.UpdateWithFilter(req.Context(), request.Filter, request.Updater)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -153,7 +153,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	}
 	err = col.Update(req.Context(), doc)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -170,7 +170,7 @@ func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 
 	_, err = col.Delete(req.Context(), docID)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -188,18 +188,19 @@ func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 
 	doc, err := col.Get(req.Context(), docID, showDeleted)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
 	if doc == nil {
+		// To do: This may be better as a new error type
 		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
 	docMap, err := doc.ToMap()
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, docMap)
@@ -221,7 +222,7 @@ func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 
 	docIDsResult, err := col.GetAllDocIDs(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
@@ -266,7 +267,7 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 	}
 	index, err := col.CreateIndex(req.Context(), descWithoutID)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, index)
@@ -277,7 +278,7 @@ func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 	indexesMap, err := store.GetAllIndexes(req.Context())
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	indexes := make([]client.IndexDescription, 0, len(indexesMap))
@@ -292,7 +293,7 @@ func (s *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 
 	err := col.DropIndex(req.Context(), chi.URLParam(req, "index"))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)

@@ -24,7 +24,7 @@ func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
 
 	err := store.LensRegistry().ReloadLenses(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -41,7 +41,7 @@ func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 
 	err := store.LensRegistry().SetMigration(req.Context(), request.CollectionID, request.Config)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -66,7 +66,7 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 		value = append(value, item)
 	})
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, value)
@@ -91,7 +91,7 @@ func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
 		value = append(value, item)
 	})
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, value)

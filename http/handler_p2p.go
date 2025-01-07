@@ -43,7 +43,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := p2p.SetReplicator(req.Context(), rep)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -63,7 +63,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	}
 	err := p2p.DeleteReplicator(req.Context(), rep)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -78,7 +78,7 @@ func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 
 	reps, err := p2p.GetAllReplicators(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, reps)
@@ -98,7 +98,7 @@ func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request)
 	}
 	err := p2p.AddP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -118,7 +118,7 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 	}
 	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -133,7 +133,7 @@ func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 
 	cols, err := p2p.GetAllP2PCollections(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, cols)
