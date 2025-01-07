@@ -12,7 +12,6 @@ package encoding
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,7 +54,7 @@ func TestJSONEncodingAndDecoding_ShouldEncodeAndDecodeBack(t *testing.T) {
 	pathMap := make(map[string][]client.JSON)
 
 	err = client.TraverseJSON(testJSON, func(value client.JSON) error {
-		p := strings.Join(value.GetPath(), "/")
+		p := value.GetPath().String()
 		jsons := pathMap[p]
 		jsons = append(jsons, value)
 		pathMap[p] = jsons
@@ -94,7 +93,7 @@ func TestJSONEncodingAndDecoding_ShouldEncodeAndDecodeBack(t *testing.T) {
 }
 
 func TestJSONEncodingDecoding_WithVoidValue_ShouldEncodeAndDecodeOnlyPath(t *testing.T) {
-	void := client.MakeVoidJSON([]string{"path", "to", "void"})
+	void := client.MakeVoidJSON(client.MakeJSONPath("path", "to", "void"))
 	encoded := EncodeJSONAscending(nil, void)
 
 	remaining, decodedPath, err := decodeJSONPath(encoded[1:]) // skip the marker

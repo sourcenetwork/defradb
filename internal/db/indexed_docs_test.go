@@ -1663,7 +1663,7 @@ func TestJSONIndex_IfDocIsDeleted_ShouldRemoveAllRelatedIndexes(t *testing.T) {
 	require.Equal(t, 1, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes after delete")
 
 	// make sure the second doc is still indexed
-	obj2Height, err := client.NewJSONWithPath(178, []string{"height"})
+	obj2Height, err := client.NewJSONWithPath(178, client.MakeJSONPath("height"))
 	require.NoError(t, err, "Failed to create JSON with path")
 	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
 		Values(client.NewNormalJSON(obj2Height)).Doc(doc2).Build()
@@ -1743,7 +1743,7 @@ func TestJSONUniqueIndex_IfDocIsDeleted_ShouldRemoveAllRelatedIndexes(t *testing
 	require.Equal(t, 1, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes after delete")
 
 	// make sure the second doc is still indexed
-	obj2Height, err := client.NewJSONWithPath(178, []string{"height"})
+	obj2Height, err := client.NewJSONWithPath(178, client.MakeJSONPath("height"))
 	require.NoError(t, err, "Failed to create JSON with path")
 	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
 		Values(client.NewNormalJSON(obj2Height)).Unique().Doc(doc2).Build()

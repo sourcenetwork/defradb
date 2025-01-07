@@ -14,10 +14,101 @@ import (
 	"encoding/json"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/valyala/fastjson"
 	"golang.org/x/exp/constraints"
 )
+
+// JSONPathPart represents a part of a JSON path.
+// Json path can be either a property of an object or an index of an element in an array.
+type JSONPathPart interface {
+	// Property returns the property name if the part is a property, and a boolean indicating if the part is a property.
+	Property() (string, bool)
+	// Index returns the index if the part is an index, and a boolean indicating if the part is an index.
+	Index() (uint64, bool)
+}
+
+type propPathPart string
+type indexPathPart uint64
+
+func (p propPathPart) Property() (string, bool) {
+	return string(p), true
+}
+
+func (p propPathPart) Index() (uint64, bool) {
+	return 0, false
+}
+
+func (p indexPathPart) Property() (string, bool) {
+	return "", false
+}
+
+func (p indexPathPart) Index() (uint64, bool) {
+	return uint64(p), true
+}
+
+// JSONPath represents a path to a JSON value in a JSON tree.
+type JSONPath []JSONPathPart
+
+// Parts returns the parts of the JSON path.
+func (p JSONPath) Parts() []JSONPathPart {
+	return p
+}
+
+// Append appends a part to the JSON path.
+func (p JSONPath) Append(part JSONPathPart) JSONPath {
+	return append(p, part)
+}
+
+// AppendProperty appends a property part to the JSON path.
+func (p JSONPath) AppendProperty(part string) JSONPath {
+	return append(p, propPathPart(part))
+}
+
+// AppendIndex appends an index part to the JSON path.
+func (p JSONPath) AppendIndex(part uint64) JSONPath {
+	return append(p, indexPathPart(part))
+}
+
+// String returns the string representation of the JSON path.
+func (p JSONPath) String() string {
+	var sb strings.Builder
+	for i, part := range p {
+		if prop, ok := part.Property(); ok {
+			if i > 0 {
+				sb.WriteByte('.')
+			}
+			sb.WriteString(prop)
+		} else if index, ok := part.Index(); ok {
+			sb.WriteByte('[')
+			sb.WriteString(strconv.FormatUint(index, 10))
+			sb.WriteByte(']')
+		}
+	}
+	return sb.String()
+}
+
+func toJSONPathPart[T string | int | uint64](v T) JSONPathPart {
+	switch val := any(v).(type) {
+	case string:
+		return propPathPart(val)
+	case int:
+		return indexPathPart(uint64(val))
+	case uint64:
+		return indexPathPart(val)
+	}
+	return nil
+}
+
+// Creates a path from mixed string/integer values
+func MakeJSONPath[T string | int | uint64](parts ...T) JSONPath {
+	path := make(JSONPath, len(parts))
+	for i, part := range parts {
+		path[i] = toJSONPathPart(part)
+	}
+	return path
+}
 
 // JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
 // It provides type-safe access to the underlying value through various accessor methods.
@@ -59,17 +150,17 @@ type JSON interface {
 	Marshal(w io.Writer) error
 
 	// GetPath returns the path of the JSON value in the JSON tree.
-	GetPath() []string
+	GetPath() JSONPath
 
 	// visit calls the visitor function for the JSON value at the given path.
-	visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error
+	visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error
 }
 
 // MakeVoidJSON creates a JSON value that represents a void value with just a path.
 // This is necessary purely for creating a json path prefix for storage queries.
 // All other json values will be encoded with some value after the path which makes
 // them unsuitable to build a path prefix.
-func MakeVoidJSON(path []string) JSON {
+func MakeVoidJSON(path JSONPath) JSON {
 	return jsonBase[any]{path: path}
 }
 
@@ -81,7 +172,7 @@ func TraverseJSON(j JSON, visitor JSONVisitor, opts ...traverseJSONOption) error
 		opt(&options)
 	}
 	if shouldVisitPath(options.pathPrefix, nil) {
-		return j.visit(visitor, []string{}, options)
+		return j.visit(visitor, JSONPath{}, options)
 	}
 	return nil
 }
@@ -90,7 +181,7 @@ type traverseJSONOption func(*traverseJSONOptions)
 
 // TraverseJSONWithPrefix returns a traverseJSONOption that sets the path prefix for the traversal.
 // Only nodes with paths that start with the prefix will be visited.
-func TraverseJSONWithPrefix(prefix []string) traverseJSONOption {
+func TraverseJSONWithPrefix(prefix JSONPath) traverseJSONOption {
 	return func(opts *traverseJSONOptions) {
 		opts.pathPrefix = prefix
 	}
@@ -131,7 +222,7 @@ type traverseJSONOptions struct {
 	// onlyLeaves when true visits only leaf nodes (not objects or arrays)
 	onlyLeaves bool
 	// pathPrefix when set visits only paths that start with this prefix
-	pathPrefix []string
+	pathPrefix JSONPath
 	// visitArrayElements when true visits array elements
 	visitArrayElements bool
 	// recurseVisitedArrayElements when true visits array elements recursively
@@ -166,14 +257,14 @@ func (v jsonVoid) IsNull() bool {
 	return false
 }
 
-func (v jsonVoid) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (v jsonVoid) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	return nil
 }
 
 type jsonBase[T any] struct {
 	jsonVoid
 	val  T
-	path []string
+	path JSONPath
 }
 
 func (v jsonBase[T]) Value() any {
@@ -192,7 +283,7 @@ func (v jsonBase[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.val)
 }
 
-func (v jsonBase[T]) GetPath() []string {
+func (v jsonBase[T]) GetPath() JSONPath {
 	return v.path
 }
 
@@ -218,7 +309,7 @@ func (obj jsonObject) Unwrap() any {
 	return result
 }
 
-func (obj jsonObject) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (obj jsonObject) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	obj.path = path
 	if !opts.onlyLeaves && len(path) >= len(opts.pathPrefix) {
 		if err := visitor(obj); err != nil {
@@ -227,7 +318,7 @@ func (obj jsonObject) visit(visitor JSONVisitor, path []string, opts traverseJSO
 	}
 
 	for k, v := range obj.val {
-		newPath := append(path, k)
+		newPath := path.AppendProperty(k)
 		if !shouldVisitPath(opts.pathPrefix, newPath) {
 			continue
 		}
@@ -261,7 +352,7 @@ func (arr jsonArray) Unwrap() any {
 	return result
 }
 
-func (arr jsonArray) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (arr jsonArray) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	arr.path = path
 	if !opts.onlyLeaves {
 		if err := visitor(arr); err != nil {
@@ -274,9 +365,9 @@ func (arr jsonArray) visit(visitor JSONVisitor, path []string, opts traverseJSON
 			if !opts.recurseVisitedArrayElements && isCompositeJSON(arr.val[i]) {
 				continue
 			}
-			var newPath []string
+			var newPath JSONPath
 			if opts.includeArrayIndexInPath {
-				newPath = append(path, strconv.Itoa(i))
+				newPath = path.AppendIndex(uint64(i))
 			} else {
 				newPath = path
 			}
@@ -302,7 +393,7 @@ func (n jsonNumber) Number() (float64, bool) {
 	return n.val, true
 }
 
-func (n jsonNumber) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonNumber) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
@@ -317,7 +408,7 @@ func (s jsonString) String() (string, bool) {
 	return s.val, true
 }
 
-func (n jsonString) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonString) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
@@ -332,7 +423,7 @@ func (b jsonBool) Bool() (bool, bool) {
 	return b.val, true
 }
 
-func (n jsonBool) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonBool) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
@@ -347,32 +438,32 @@ func (n jsonNull) IsNull() bool {
 	return true
 }
 
-func (n jsonNull) visit(visitor JSONVisitor, path []string, opts traverseJSONOptions) error {
+func (n jsonNull) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
 	n.path = path
 	return visitor(n)
 }
 
-func newJSONObject(val map[string]JSON, path []string) jsonObject {
+func newJSONObject(val map[string]JSON, path JSONPath) jsonObject {
 	return jsonObject{jsonBase[map[string]JSON]{val: val, path: path}}
 }
 
-func newJSONArray(val []JSON, path []string) jsonArray {
+func newJSONArray(val []JSON, path JSONPath) jsonArray {
 	return jsonArray{jsonBase[[]JSON]{val: val, path: path}}
 }
 
-func newJSONNumber(val float64, path []string) jsonNumber {
+func newJSONNumber(val float64, path JSONPath) jsonNumber {
 	return jsonNumber{jsonBase[float64]{val: val, path: path}}
 }
 
-func newJSONString(val string, path []string) jsonString {
+func newJSONString(val string, path JSONPath) jsonString {
 	return jsonString{jsonBase[string]{val: val, path: path}}
 }
 
-func newJSONBool(val bool, path []string) jsonBool {
+func newJSONBool(val bool, path JSONPath) jsonBool {
 	return jsonBool{jsonBase[bool]{val: val, path: path}}
 }
 
-func newJSONNull(path []string) jsonNull {
+func newJSONNull(path JSONPath) jsonNull {
 	return jsonNull{jsonBase[any]{path: path}}
 }
 
@@ -426,12 +517,12 @@ func NewJSON(v any) (JSON, error) {
 // - slice of any above type
 // - []any
 // Returns error if the input cannot be converted to JSON.
-func NewJSONWithPath(v any, path []string) (JSON, error) {
+func NewJSONWithPath(v any, path JSONPath) (JSON, error) {
 	return newJSON(v, path)
 }
 
 // newJSON is an internal function that creates a new JSON value with parent and property name
-func newJSON(v any, path []string) (JSON, error) {
+func newJSON(v any, path JSONPath) (JSON, error) {
 	if v == nil {
 		return newJSONNull(path), nil
 	} else {
@@ -505,7 +596,7 @@ func newJSON(v any, path []string) (JSON, error) {
 	return nil, NewErrInvalidJSONPayload(v)
 }
 
-func newJsonArrayFromAnyArray(arr []any, path []string) (JSON, error) {
+func newJsonArrayFromAnyArray(arr []any, path JSONPath) (JSON, error) {
 	result := make([]JSON, len(arr))
 	for i := range arr {
 		jsonVal, err := newJSON(arr[i], path)
@@ -517,7 +608,7 @@ func newJsonArrayFromAnyArray(arr []any, path []string) (JSON, error) {
 	return newJSONArray(result, path), nil
 }
 
-func newJSONBoolArray(v []bool, path []string) JSON {
+func newJSONBoolArray(v []bool, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
 		arr[i] = newJSONBool(v[i], path)
@@ -525,7 +616,7 @@ func newJSONBoolArray(v []bool, path []string) JSON {
 	return newJSONArray(arr, path)
 }
 
-func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path []string) JSON {
+func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
 		arr[i] = newJSONNumber(float64(v[i]), path)
@@ -533,7 +624,7 @@ func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path [
 	return newJSONArray(arr, path)
 }
 
-func newJSONStringArray(v []string, path []string) JSON {
+func newJSONStringArray(v []string, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
 		arr[i] = newJSONString(v[i], path)
@@ -542,14 +633,14 @@ func newJSONStringArray(v []string, path []string) JSON {
 }
 
 // newJSONFromFastJSON is an internal function that creates a new JSON value with parent and property name
-func newJSONFromFastJSON(v *fastjson.Value, path []string) JSON {
+func newJSONFromFastJSON(v *fastjson.Value, path JSONPath) JSON {
 	switch v.Type() {
 	case fastjson.TypeObject:
 		fastObj := v.GetObject()
 		obj := make(map[string]JSON, fastObj.Len())
 		fastObj.Visit(func(k []byte, v *fastjson.Value) {
 			key := string(k)
-			obj[key] = newJSONFromFastJSON(v, append(path, key))
+			obj[key] = newJSONFromFastJSON(v, path.Append(propPathPart(key)))
 		})
 		return newJSONObject(obj, path)
 	case fastjson.TypeArray:
@@ -585,10 +676,10 @@ func NewJSONFromMap(data map[string]any) (JSON, error) {
 	return newJSONFromMap(data, nil)
 }
 
-func newJSONFromMap(data map[string]any, path []string) (JSON, error) {
+func newJSONFromMap(data map[string]any, path JSONPath) (JSON, error) {
 	obj := make(map[string]JSON, len(data))
 	for k, v := range data {
-		jsonVal, err := newJSON(v, append(path, k))
+		jsonVal, err := newJSON(v, path.AppendProperty(k))
 		if err != nil {
 			return nil, err
 		}
@@ -597,7 +688,7 @@ func newJSONFromMap(data map[string]any, path []string) (JSON, error) {
 	return newJSONObject(obj, path), nil
 }
 
-func shouldVisitPath(prefix, path []string) bool {
+func shouldVisitPath(prefix, path JSONPath) bool {
 	if len(prefix) == 0 {
 		return true
 	}

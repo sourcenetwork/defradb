@@ -143,8 +143,10 @@ func decodeJSONPath(b []byte) ([]byte, []string, error) {
 func encodeJSONPath(b []byte, v client.JSON) []byte {
 	b = append(b, jsonMarker)
 	for _, part := range v.GetPath() {
-		pathBytes := unsafeConvertStringToBytes(part)
-		b = EncodeBytesAscending(b, pathBytes)
+		if prop, ok := part.Property(); ok {
+			pathBytes := unsafeConvertStringToBytes(prop)
+			b = EncodeBytesAscending(b, pathBytes)
+		}
 	}
 	b = append(b, ascendingBytesEscapes.escapedTerm)
 	return b

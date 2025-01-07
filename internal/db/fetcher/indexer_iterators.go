@@ -487,7 +487,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 type fieldFilterCond struct {
 	op       string
 	arrOp    string
-	jsonPath []string
+	jsonPath client.JSONPath
 	val      client.NormalValue
 	kind     client.FieldKind
 }
@@ -515,7 +515,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 			condMap := indexFilterCond.(map[connor.FilterKey]any)
 
-			jsonPath := []string{}
+			jsonPath := client.JSONPath{}
 			if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
 			jsonPathLoop:
 				for {
@@ -524,7 +524,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 						if !ok {
 							break jsonPathLoop
 						}
-						jsonPath = append(jsonPath, prop.Name)
+						jsonPath = jsonPath.AppendProperty(prop.Name)
 						condMap = filterVal.(map[connor.FilterKey]any)
 					}
 				}
