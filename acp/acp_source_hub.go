@@ -12,6 +12,7 @@ package acp
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
@@ -260,6 +261,10 @@ func (a *acpSourceHub) VerifyAccessRequest(
 
 func (a *acpSourceHub) Close() error {
 	return nil
+}
+
+func (a *acpSourceHub) DropAll(_ context.Context) error {
+	return fmt.Errorf("SourceHub.DropAll() unimplemented.")
 }
 
 func (a *acpSourceHub) AddActorRelationship(

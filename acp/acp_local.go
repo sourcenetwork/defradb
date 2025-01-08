@@ -13,6 +13,8 @@ package acp
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/acp_core/pkg/auth"
@@ -103,6 +105,40 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 
 func (l *ACPLocal) Close() error {
 	return l.manager.Terminate()
+}
+
+func (l *ACPLocal) DropAll(ctx context.Context) error {
+	err := l.Close()
+	if err != nil {
+		return err
+	}
+
+	// delete state (applicable to persistent store)
+	if l.pathToStore.HasValue() {
+		storeLocation := l.pathToStore.Value()
+		path := storeLocation + "/" + localACPStoreName
+		info, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("drop all: path to store does not exist")
+		} else if err != nil {
+			return fmt.Errorf("drop all: os stat: %w", err)
+		}
+
+		if info.IsDir() {
+			// remove dir
+			if err := os.RemoveAll(path); err != nil {
+				return fmt.Errorf("drop all: delete directory: %w", err)
+			}
+		} else {
+			// remove file
+			if err := os.Remove(path); err != nil {
+				return fmt.Errorf("drop all: delete file: %w", err)
+			}
+		}
+	}
+
+	// Start again
+	return l.Start(ctx)
 }
 
 func (l *ACPLocal) AddPolicy(

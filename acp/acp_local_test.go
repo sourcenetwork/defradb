@@ -128,6 +128,91 @@ func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterWipeReturnsSameID(t
 	require.Nil(t, errClose)
 }
 
+func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterDropAllReturnsSameID(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	localACP.Init(ctx, "")
+	errStart := localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	policyID, errAddPolicy := localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	errDrop := localACP.DropAll(ctx)
+	require.Nil(t, errDrop)
+
+	// Since nothing is persisted should allow adding same policy again with same ID
+
+	policyID, errAddPolicy = localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	errClose := localACP.Close()
+	require.Nil(t, errClose)
+}
+
+func Test_LocalACP_Persistent_AddPolicy_CreatingSamePolicyAfterDropAllReturnsSameID(t *testing.T) {
+	ctx := context.Background()
+	localACP := NewLocalACP()
+
+	acpPath := t.TempDir()
+	localACP.Init(ctx, acpPath)
+	errStart := localACP.Start(ctx)
+	require.Nil(t, errStart)
+
+	policyID, errAddPolicy := localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	errDrop := localACP.DropAll(ctx)
+	require.Nil(t, errDrop)
+
+	// Since nothing is persisted should allow adding same policy again with same ID
+
+	policyID, errAddPolicy = localACP.AddPolicy(
+		ctx,
+		identity1,
+		validPolicy,
+	)
+	require.Nil(t, errAddPolicy)
+	require.Equal(
+		t,
+		validPolicyID,
+		policyID,
+	)
+
+	errClose := localACP.Close()
+	require.Nil(t, errClose)
+}
+
 func Test_LocalACP_PersistentMemory_AddPolicy_CreatingSamePolicyReturnsDifferentIDs(t *testing.T) {
 	acpPath := t.TempDir()
 	require.NotEqual(t, "", acpPath)

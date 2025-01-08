@@ -43,6 +43,9 @@ type ACP interface {
 	// Close closes the resources in use by acp.
 	Close() error
 
+	// DropAll purges the entire ACP state.
+	DropAll(ctx context.Context) error
+
 	// AddPolicy attempts to add the given policy. Detects the format of the policy automatically
 	// by assuming YAML format if JSON validation fails. Upon success a policyID is returned,
 	// otherwise returns error.
