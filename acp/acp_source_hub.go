@@ -264,7 +264,7 @@ func (a *acpSourceHub) Close() error {
 }
 
 func (a *acpSourceHub) DropAll(_ context.Context) error {
-	return fmt.Errorf("SourceHub.DropAll() unimplemented.")
+	return fmt.Errorf("sourcehub acp DropAll() unimplemented")
 }
 
 func (a *acpSourceHub) AddActorRelationship(
