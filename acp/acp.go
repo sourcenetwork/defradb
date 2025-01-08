@@ -44,6 +44,7 @@ type ACP interface {
 	Close() error
 
 	// ResetState purges the entire ACP state.
+	// Resetting will close the ACP engine, purge the state, then restart it
 	ResetState(ctx context.Context) error
 
 	// AddPolicy attempts to add the given policy. Detects the format of the policy automatically

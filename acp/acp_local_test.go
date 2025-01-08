@@ -149,8 +149,8 @@ func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterResetStateReturnsSa
 		policyID,
 	)
 
-	errDrop := localACP.ResetState(ctx)
-	require.Nil(t, errDrop)
+	errReset := localACP.ResetState(ctx)
+	require.Nil(t, errReset)
 
 	// Since nothing is persisted should allow adding same policy again with same ID
 
@@ -192,8 +192,8 @@ func Test_LocalACP_Persistent_AddPolicy_CreatingSamePolicyAfterResetStateReturns
 		policyID,
 	)
 
-	errDrop := localACP.ResetState(ctx)
-	require.Nil(t, errDrop)
+	errReset := localACP.ResetState(ctx)
+	require.Nil(t, errReset)
 
 	// Since nothing is persisted should allow adding same policy again with same ID
 

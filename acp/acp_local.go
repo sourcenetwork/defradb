@@ -107,8 +107,11 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 
 func (l *ACPLocal) Close() error {
 	if !l.closed {
+		err := l.manager.Terminate()
+		if err != nil {
+			return err
+		}
 		l.closed = true
-		return l.manager.Terminate()
 	}
 	return nil
 }
