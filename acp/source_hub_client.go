@@ -131,8 +131,8 @@ type sourceHubClient interface {
 	// Close closes any resources in use by acp.
 	Close() error
 
-	// DropAll purges the entire ACP state.
-	DropAll(context.Context) error
+	// ResetState purges the entire ACP state.
+	ResetState(context.Context) error
 }
 
 // sourceHubBridge wraps a sourceHubClient, hosting the Defra-specific logic away from client-specific
@@ -565,6 +565,6 @@ func (a *sourceHubBridge) Close() error {
 	return a.client.Close()
 }
 
-func (a *sourceHubBridge) DropAll(ctx context.Context) error {
-	return a.client.DropAll(ctx)
+func (a *sourceHubBridge) ResetState(ctx context.Context) error {
+	return a.client.ResetState(ctx)
 }

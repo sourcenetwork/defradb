@@ -12,8 +12,7 @@ package acp
 
 import (
 	"context"
-	"errors"
-	"fmt"
+
 	"os"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
@@ -24,6 +23,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const localACPStoreName = "local_acp"
@@ -33,6 +33,7 @@ type ACPLocal struct {
 	pathToStore immutable.Option[string]
 	engine      types.ACPEngineServer
 	manager     runtime.RuntimeManager
+	closed      bool
 }
 
 var _ sourceHubClient = (*ACPLocal)(nil)
@@ -84,6 +85,7 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 	var opts []runtime.Opt
 	var storeLocation string
 
+	l.closed = false
 	if !l.pathToStore.HasValue() { // Use a non-persistent, i.e. in memory store.
 		storeLocation = "in-memory"
 		opts = append(opts, runtime.WithMemKV())
@@ -104,10 +106,14 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 }
 
 func (l *ACPLocal) Close() error {
-	return l.manager.Terminate()
+	if !l.closed {
+		l.closed = true
+		return l.manager.Terminate()
+	}
+	return nil
 }
 
-func (l *ACPLocal) DropAll(ctx context.Context) error {
+func (l *ACPLocal) ResetState(ctx context.Context) error {
 	err := l.Close()
 	if err != nil {
 		return err
@@ -119,20 +125,20 @@ func (l *ACPLocal) DropAll(ctx context.Context) error {
 		path := storeLocation + "/" + localACPStoreName
 		info, err := os.Stat(path)
 		if os.IsNotExist(err) {
-			return fmt.Errorf("drop all: path to store does not exist")
+			return errors.Join(ErrACPResetState, err)
 		} else if err != nil {
-			return fmt.Errorf("drop all: os stat: %w", err)
+			return errors.Join(ErrACPResetState, err)
 		}
 
 		if info.IsDir() {
 			// remove dir
 			if err := os.RemoveAll(path); err != nil {
-				return fmt.Errorf("drop all: delete directory: %w", err)
+				return errors.Join(ErrACPResetState, err)
 			}
 		} else {
 			// remove file
 			if err := os.Remove(path); err != nil {
-				return fmt.Errorf("drop all: delete file: %w", err)
+				return errors.Join(ErrACPResetState, err)
 			}
 		}
 	}

@@ -244,7 +244,7 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	}
 	if n.acp.HasValue() {
 		acp := n.acp.Value()
-		err := acp.DropAll(ctx)
+		err := acp.ResetState(ctx)
 		if err != nil {
 			// for now we will just log this error, since SourceHub ACP doesn't yet
 			// implement the DropAll.
