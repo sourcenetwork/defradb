@@ -246,7 +246,9 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		acp := n.acp.Value()
 		err := acp.DropAll(ctx)
 		if err != nil {
-			return err
+			// for now we will just log this error, since SourceHub ACP doesn't yet
+			// implement the DropAll.
+			log.ErrorE("Failed to drop ACP state", err)
 		}
 		// follow up close call on ACP is required since the node.Start function starts
 		// ACP again anyways so we need to gracefully close before starting again
