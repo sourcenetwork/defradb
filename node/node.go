@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
@@ -88,6 +89,7 @@ type Node struct {
 	Peer       *net.Peer
 	Server     *http.Server
 	kmsService kms.Service
+	acp        immutable.Option[acp.ACP]
 
 	options    *Options
 	dbOpts     []db.Option
@@ -137,7 +139,7 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	acp, err := NewACP(ctx, n.acpOpts...)
+	n.acp, err = NewACP(ctx, n.acpOpts...)
 	if err != nil {
 		return err
 	}
@@ -147,7 +149,7 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, acp, lens, n.dbOpts...)
+	n.DB, err = db.NewDB(ctx, rootstore, n.acp, lens, n.dbOpts...)
 	if err != nil {
 		return err
 	}
@@ -173,7 +175,7 @@ func (n *Node) Start(ctx context.Context) error {
 					n.Peer.Server(),
 					n.DB.Events(),
 					n.DB.Encstore(),
-					acp,
+					n.acp,
 					db.NewCollectionRetriever(n.DB),
 					ident.Value().DID,
 				)
@@ -240,5 +242,19 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if n.acp.HasValue() {
+		acp := n.acp.Value()
+		err := acp.DropAll(ctx)
+		if err != nil {
+			return err
+		}
+		// follow up close call on ACP is required since the node.Start function starts
+		// ACP again anyways so we need to gracefully close before starting again
+		err = acp.Close()
+		if err != nil {
+			return err
+		}
+	}
+
 	return n.Start(ctx)
 }
