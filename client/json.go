@@ -599,7 +599,7 @@ func newJSON(v any, path JSONPath) (JSON, error) {
 func newJsonArrayFromAnyArray(arr []any, path JSONPath) (JSON, error) {
 	result := make([]JSON, len(arr))
 	for i := range arr {
-		jsonVal, err := newJSON(arr[i], path)
+		jsonVal, err := newJSON(arr[i], path.AppendIndex(uint64(i)))
 		if err != nil {
 			return nil, err
 		}
@@ -611,7 +611,7 @@ func newJsonArrayFromAnyArray(arr []any, path JSONPath) (JSON, error) {
 func newJSONBoolArray(v []bool, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
-		arr[i] = newJSONBool(v[i], path)
+		arr[i] = newJSONBool(v[i], path.AppendIndex(uint64(i)))
 	}
 	return newJSONArray(arr, path)
 }
@@ -619,7 +619,7 @@ func newJSONBoolArray(v []bool, path JSONPath) JSON {
 func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
-		arr[i] = newJSONNumber(float64(v[i]), path)
+		arr[i] = newJSONNumber(float64(v[i]), path.AppendIndex(uint64(i)))
 	}
 	return newJSONArray(arr, path)
 }
@@ -627,7 +627,7 @@ func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path J
 func newJSONStringArray(v []string, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
-		arr[i] = newJSONString(v[i], path)
+		arr[i] = newJSONString(v[i], path.AppendIndex(uint64(i)))
 	}
 	return newJSONArray(arr, path)
 }
@@ -647,7 +647,7 @@ func newJSONFromFastJSON(v *fastjson.Value, path JSONPath) JSON {
 		fastArr := v.GetArray()
 		arr := make([]JSON, len(fastArr))
 		for i := range fastArr {
-			arr[i] = NewJSONFromFastJSON(fastArr[i])
+			arr[i] = newJSONFromFastJSON(fastArr[i], path.Append(indexPathPart(uint64(i))))
 		}
 		return newJSONArray(arr, path)
 	case fastjson.TypeNumber:

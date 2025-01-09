@@ -123,6 +123,10 @@ type NormalValue interface {
 	// The second return flag is true if the value is a [[]*Document].
 	// Otherwise it will return nil and false.
 	DocumentArray() ([]*Document, bool)
+	// JSONArray returns the value as a JSON array.
+	// The second return flag is true if the value is a JSON array.
+	// Otherwise it will return nil and false.
+	JSONArray() ([]JSON, bool)
 
 	// NillableBoolArray returns the value as nillable array of bool elements.
 	// The second return flag is true if the value is [immutable.Option[[]bool]].

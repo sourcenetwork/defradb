@@ -134,6 +134,8 @@ func NewNormalValue(val any) (NormalValue, error) {
 		return NewNormalTimeArray(v), nil
 	case []*Document:
 		return NewNormalDocumentArray(v), nil
+	case []JSON:
+		return NewNormalJSONArray(v), nil
 
 	case []immutable.Option[bool]:
 		return NewNormalNillableBoolArray(v), nil

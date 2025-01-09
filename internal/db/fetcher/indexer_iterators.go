@@ -50,6 +50,10 @@ const (
 	opAny = "__any"
 )
 
+func isArrayCondition(op string) bool {
+	return op == compOpAny || op == compOpAll || op == compOpNone
+}
+
 // indexIterator is an iterator over index keys.
 // It is used to iterate over the index keys that match a specific condition.
 // For example, iteration over condition _eq and _gt will have completely different logic.
@@ -522,6 +526,12 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					for key, filterVal := range condMap {
 						prop, ok := key.(*mapper.ObjectProperty)
 						if !ok {
+							// if filter contains an array condition, we need to append index 0 to the json path
+							// to limit the search only to array elements
+							op, ok := key.(*mapper.Operator)
+							if ok && isArrayCondition(op.Operation) {
+								jsonPath = jsonPath.AppendIndex(0)
+							}
 							break jsonPathLoop
 						}
 						jsonPath = jsonPath.AppendProperty(prop.Name)
@@ -539,22 +549,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 				var err error
 				if len(jsonPath) > 0 {
-					var jsonVal client.JSON
-					if cond.op == compOpAny || cond.op == compOpAll || cond.op == compOpNone {
-						subCondMap := filterVal.(map[connor.FilterKey]any)
-						for subKey, subVal := range subCondMap {
-							cond.arrOp = cond.op
-							cond.op = subKey.(*mapper.Operator).Operation
-							jsonVal, err = client.NewJSONWithPath(subVal, jsonPath)
-							// the sub condition is supposed to have only 1 record
-							break
-						}
-					} else {
-						jsonVal, err = client.NewJSONWithPath(filterVal, jsonPath)
-					}
-					if err == nil {
-						cond.val = client.NewNormalJSON(jsonVal)
-					}
+					err = determineJSONFilterCondition(&cond, filterVal, jsonPath)
 				} else if filterVal == nil {
 					cond.val, err = client.NewNormalNil(cond.kind)
 				} else if !f.indexedFields[i].Kind.IsArray() {
@@ -592,6 +587,68 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 		}
 	}
 	return result, nil
+}
+
+func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath client.JSONPath) error {
+	var jsonVal client.JSON
+	var err error
+	if isArrayCondition(cond.op) {
+		subCondMap := filterVal.(map[connor.FilterKey]any)
+		for subKey, subVal := range subCondMap {
+			cond.arrOp = cond.op
+			cond.op = subKey.(*mapper.Operator).Operation
+			jsonVal, err = client.NewJSONWithPath(subVal, jsonPath)
+			if err == nil {
+				cond.val = client.NewNormalJSON(jsonVal)
+			}
+			// the sub condition is supposed to have only 1 record
+			break
+		}
+	} else if cond.op == opIn {
+		var jsonVals []client.JSON
+		if anyArr, ok := filterVal.([]any); ok {
+			// if filter value is []any we convert each value separately because JSON might have 
+			// array elements of different types. That's why we can't just pass it directly to 
+			// client.ToArrayOfNormalValues 
+			jsonVals = make([]client.JSON, 0, len(anyArr))
+			for _, val := range anyArr {
+				jsonVal, err = client.NewJSONWithPath(val, jsonPath)
+				if err != nil {
+					return err
+				}
+				jsonVals = append(jsonVals, jsonVal)
+			}
+		} else {
+			normValue, err := client.NewNormalValue(filterVal)
+			if err != nil {
+				return err
+			}
+			normArr, err := client.ToArrayOfNormalValues(normValue)
+			if err != nil {
+				return err
+			}
+			jsonVals = make([]client.JSON, 0, len(normArr))
+			for _, val := range normArr {
+				jsonVal, err = client.NewJSONWithPath(val.Unwrap(), jsonPath)
+				if err != nil {
+					return err
+				}
+				jsonVals = append(jsonVals, jsonVal)
+			}
+		}
+		normJSONs, err := client.NewNormalValue(jsonVals)
+		if err != nil {
+			return err
+		}
+		cond.val = normJSONs
+	} else {
+		jsonVal, err = client.NewJSONWithPath(filterVal, jsonPath)
+		if err != nil {
+			return err
+		}
+		cond.val = client.NewNormalJSON(jsonVal)
+	}
+	return nil
 }
 
 // isUniqueFetchByFullKey checks if the only index key can be fetched by the full index key.

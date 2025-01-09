@@ -47,6 +47,7 @@ const (
 	BytesArray    nType = "BytesArray"
 	TimeArray     nType = "TimeArray"
 	DocumentArray nType = "DocumentArray"
+	JSONArray     nType = "JSONArray"
 
 	NillableBoolArray     nType = "NillableBoolArray"
 	NillableIntArray      nType = "NillableIntArray"
@@ -135,6 +136,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		BytesArray:    func(v NormalValue) (any, bool) { return v.BytesArray() },
 		TimeArray:     func(v NormalValue) (any, bool) { return v.TimeArray() },
 		DocumentArray: func(v NormalValue) (any, bool) { return v.DocumentArray() },
+		JSONArray:     func(v NormalValue) (any, bool) { return v.JSONArray() },
 
 		BoolNillableArray:     func(v NormalValue) (any, bool) { return v.BoolNillableArray() },
 		IntNillableArray:      func(v NormalValue) (any, bool) { return v.IntNillableArray() },
@@ -188,6 +190,7 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		BytesArray:    func(v any) NormalValue { return NewNormalBytesArray(v.([][]byte)) },
 		TimeArray:     func(v any) NormalValue { return NewNormalTimeArray(v.([]time.Time)) },
 		DocumentArray: func(v any) NormalValue { return NewNormalDocumentArray(v.([]*Document)) },
+		JSONArray:     func(v any) NormalValue { return NewNormalJSONArray(v.([]JSON)) },
 
 		NillableBoolArray: func(v any) NormalValue {
 			return NewNormalNillableBoolArray(v.([]immutable.Option[bool]))
@@ -405,6 +408,11 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		{
 			nType:   DocumentArray,
 			input:   []*Document{{}, {}},
+			isArray: true,
+		},
+		{
+			nType:   JSONArray,
+			input:   []JSON{newJSONNumber(3, nil), newJSONString("test", nil)},
 			isArray: true,
 		},
 		{
@@ -1478,6 +1486,14 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 			name:     "document elements",
 			input:    NewNormalDocumentArray([]*Document{doc1, doc2}),
 			expected: []NormalValue{NewNormalDocument(doc1), NewNormalDocument(doc2)},
+		},
+		{
+			name:  "json elements",
+			input: NewNormalJSONArray([]JSON{newJSONBool(true, nil), newJSONString("test", nil)}),
+			expected: []NormalValue{
+				NewNormalJSON(newJSONBool(true, nil)),
+				NewNormalJSON(newJSONString("test", nil)),
+			},
 		},
 		{
 			name: "nillable bool elements",

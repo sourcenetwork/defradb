@@ -632,8 +632,8 @@ func traverseAndAssertPaths(t *testing.T, j JSON, parentPath JSONPath) {
 	}
 
 	if arr, isArr := j.Array(); isArr {
-		for _, v := range arr {
-			traverseAndAssertPaths(t, v, parentPath)
+		for i, v := range arr {
+			traverseAndAssertPaths(t, v, parentPath.AppendIndex(uint64(i)))
 		}
 	}
 }

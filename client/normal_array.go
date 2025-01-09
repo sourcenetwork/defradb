@@ -120,6 +120,18 @@ func (v normalDocumentArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.DocumentArray)
 }
 
+type normalJSONArray struct {
+	baseArrayNormalValue[[]JSON]
+}
+
+func (v normalJSONArray) JSONArray() ([]JSON, bool) {
+	return v.val, true
+}
+
+func (v normalJSONArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.JSONArray)
+}
+
 // NewNormalBoolArray creates a new NormalValue that represents a `[]bool` value.
 func NewNormalBoolArray(val []bool) NormalValue {
 	return normalBoolArray{newBaseArrayNormalValue(val)}
@@ -153,6 +165,11 @@ func NewNormalTimeArray(val []time.Time) NormalValue {
 // NewNormalDocumentArray creates a new NormalValue that represents a `[]*Document` value.
 func NewNormalDocumentArray(val []*Document) NormalValue {
 	return normalDocumentArray{newBaseArrayNormalValue(val)}
+}
+
+// NewNormalJSONArray creates a new NormalValue that represents a `[]JSON` value.
+func NewNormalJSONArray(val []JSON) NormalValue {
+	return normalJSONArray{newBaseArrayNormalValue(val)}
 }
 
 func normalizeNumArr[R int64 | float64, T constraints.Integer | constraints.Float](val []T) []R {

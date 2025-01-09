@@ -94,9 +94,8 @@ func NewErrVarintOverflow(b []byte, value uint64) error {
 	return errors.New(errVarintOverflow, errors.NewKV("Buffer", b), errors.NewKV("Value", value))
 }
 
-// NewErrInvalidJSONPayload returns a new error indicating that the buffer contains
-// an invalid JSON payload.
-func NewErrInvalidJSONPayload(b []byte, path []string, err ...error) error {
+// NewErrInvalidJSONPayload returns a new error indicating that the buffer
+func NewErrInvalidJSONPayload(b []byte, path string, err ...error) error {
 	kvs := []errors.KV{errors.NewKV("Buffer", b), errors.NewKV("Path", path)}
 	if len(err) > 0 {
 		kvs = append(kvs, errors.NewKV("Error", err[0]))

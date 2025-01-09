@@ -104,14 +104,14 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 	case Null:
 		b = decodeNull(b)
 	default:
-		err = NewErrInvalidJSONPayload(b, path)
+		err = NewErrInvalidJSONPayload(b, path.String())
 	}
 
 	if err != nil {
 		return b, nil, err
 	}
 
-	result, err := client.NewJSON(jsonValue)
+	result, err := client.NewJSONWithPath(jsonValue, path)
 
 	if err != nil {
 		return b, nil, err
@@ -120,8 +120,8 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 	return b, result, nil
 }
 
-func decodeJSONPath(b []byte) ([]byte, []string, error) {
-	var path []string
+func decodeJSONPath(b []byte) ([]byte, client.JSONPath, error) {
+	var path client.JSONPath
 	for {
 		if len(b) == 0 {
 			break
@@ -130,12 +130,22 @@ func decodeJSONPath(b []byte) ([]byte, []string, error) {
 			b = b[1:]
 			break
 		}
-		rem, part, err := DecodeBytesAscending(b)
-		if err != nil {
-			return b, nil, NewErrInvalidJSONPath(b, err)
+
+		if PeekType(b) == Bytes {
+			rem, part, err := DecodeBytesAscending(b)
+			if err != nil {
+				return b, nil, NewErrInvalidJSONPath(b, err)
+			}
+			path = path.AppendProperty(string(part))
+			b = rem
+		} else {
+			rem, part, err := DecodeUvarintAscending(b)
+			if err != nil {
+				return b, nil, NewErrInvalidJSONPath(b, err)
+			}
+			path = path.AppendIndex(part)
+			b = rem
 		}
-		path = append(path, string(part))
-		b = rem
 	}
 	return b, path, nil
 }
@@ -146,6 +156,8 @@ func encodeJSONPath(b []byte, v client.JSON) []byte {
 		if prop, ok := part.Property(); ok {
 			pathBytes := unsafeConvertStringToBytes(prop)
 			b = EncodeBytesAscending(b, pathBytes)
+		} else if _, ok := part.Index(); ok {
+			b = EncodeUvarintAscending(b, 0)
 		}
 	}
 	b = append(b, ascendingBytesEscapes.escapedTerm)
