@@ -257,7 +257,7 @@ func (c *collection) createIndex(
 
 	colSeq, err := c.db.getSequence(
 		ctx,
-		keys.NewIndexIDSequenceKey(c.ID()),
+		keys.NewIndexIDSequenceKey(c.Description().RootID),
 	)
 	if err != nil {
 		return nil, err
@@ -444,7 +444,7 @@ func (c *collection) dropAllIndexes(ctx context.Context) error {
 }
 
 func (c *collection) loadIndexes(ctx context.Context) error {
-	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.ID())
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.Description().RootID)
 	if err != nil {
 		return err
 	}
@@ -506,7 +506,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 			if err != nil {
 				return keys.CollectionIndexKey{}, err
@@ -517,7 +517,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 		if err != nil {
 			return keys.CollectionIndexKey{}, err
