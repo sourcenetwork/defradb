@@ -13,6 +13,7 @@ package description
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 
 	ds "github.com/ipfs/go-datastore"
@@ -240,6 +241,8 @@ func GetCollectionsBySchemaVersionID(
 		}
 
 		var col client.CollectionDescription
+		fmt.Println("raw description:")
+		fmt.Println(string(buf))
 		err = json.Unmarshal(buf, &col)
 		if err != nil {
 			return nil, err

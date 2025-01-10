@@ -1,0 +1,109 @@
+# Organization type definitions
+
+
+type AnymalOrganizationRequest @policy(
+    id: "9bc0f428b632251ac4582a27aba6a697f97bd05b181c887690ef32cbba81e0c6",
+    resource: "anymal_organization_request"
+){
+    id: String
+    message: String
+    anymal_organization: AnymalOrganization
+    user_pid: String
+    request_type: String
+    documents: JSON
+}
+
+type AnymalOrganizationDocument @policy(
+    id: "9bc0f428b632251ac4582a27aba6a697f97bd05b181c887690ef32cbba81e0c6",
+    resource: "anymal_organization_document"
+){
+    id: String
+    anymal_organization: AnymalOrganization
+    filename: String
+    filetype: String
+    url: String
+    label: String
+    timeAddedUtc: Int           # UTC Time record was created
+    timeUpdatedUtc: Int         # UTC time record was last updated
+}
+
+type AnymalOrganizationMember @policy(
+    id: "9bc0f428b632251ac4582a27aba6a697f97bd05b181c887690ef32cbba81e0c6",
+    resource: "anymal_organization_member"
+){
+    anymal_organization: AnymalOrganization
+    pid: String
+    name: String
+    email: String
+    role: String
+    enabled: Boolean
+    accepted: Boolean
+}
+
+type AnymalOrganizationMeta @policy(
+    id: "9bc0f428b632251ac4582a27aba6a697f97bd05b181c887690ef32cbba81e0c6",
+    resource: "anymal_organization_meta"
+){
+    anymal_organization: AnymalOrganization
+    baseWalletAddress: String   # The organization wallet address
+    nearWalletAddress: String   # Near wallet address
+}
+
+type AnymalOrganizationMessage @policy(
+    id: "9bc0f428b632251ac4582a27aba6a697f97bd05b181c887690ef32cbba81e0c6",
+    resource: "anymal_organization_message"
+){
+    anymal_organization: AnymalOrganization
+    id: String
+    message: String
+    finished: Boolean
+    timeAddedUtc: Int           # UTC Time record was created
+    timeUpdatedUtc: Int         # UTC time record was last updated
+
+    documents: JSON             # arbitrary data
+    submitted: JSON             # arbitrary data
+
+}
+
+type AnymalOrganization @policy(
+    id: "9bc0f428b632251ac4582a27aba6a697f97bd05b181c887690ef32cbba81e0c6",
+    resource: "anymal_organization"
+){
+    # Public Fields
+
+    name: String @index# Name of the Org
+    path: String
+
+
+    type: String # Organization Type
+    pid: String # PID
+    contact_email: String
+    contact_phone: String
+
+    location_address_1: String
+    location_address_2: String
+    location_country: String
+    location_postal_code: String
+    location_state: String
+    location_city: String
+
+    source: String # Where did this org come from? (petfinder, etc)
+    source_id: String # The ID of this org within that source (e.g. display_id)
+    source_url: String
+    source_inventory_url: String
+
+    timeAddedUtc: Int           # UTC Time record was created
+    timeUpdatedUtc: Int         # UTC time record was last updated
+
+    claimed: Boolean            # Was the organization claimed / verified
+    status: String              # Status
+
+
+    # Internal data, Only viewable by owner or authorized custodian.
+    metadata: [AnymalOrganizationMeta]
+    members: [AnymalOrganizationMember]
+    documents: [AnymalOrganizationDocument]
+    messages: [AnymalOrganizationMessage]
+    requests: [AnymalOrganizationRequest]
+
+}

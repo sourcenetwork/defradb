@@ -1,0 +1,13 @@
+{
+    "name": "SaveOurScruff",
+    "path": "saveourscruff.ca",
+    "type": "nonprofit",
+    "pid": "1",
+    "contact_email": "hi@saveourscruff.ca",
+    "contact_phone": "6474471955",
+    "source": "petfinder",
+    "source_id": "1",
+    "timeAddedUtc": 1,
+    "claimed": true,
+    "status": "active"
+}

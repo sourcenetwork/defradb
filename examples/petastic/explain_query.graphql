@@ -1,0 +1,6 @@
+query @explain(type: execute) {
+  AnymalOrganization(filter: {name: {_eq: "SaveOurScruff"}}) {
+  	_docID
+    type
+  }
+}

@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 
@@ -315,9 +317,11 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 		indexes := colDesc.GetIndexesOnField(field.Name)
 		if len(indexes) > 0 {
 			// we return the first found index. We will optimize it later.
+			fmt.Println("WEVE FOUND AN INDEX")
 			return immutable.Some(indexes[0])
 		}
 	}
+	fmt.Println("WE DID NOT FIND AN INDEX")
 	return immutable.None[client.IndexDescription]()
 }
 

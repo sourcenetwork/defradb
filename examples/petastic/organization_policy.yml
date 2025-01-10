@@ -1,0 +1,214 @@
+name: Organization Policy
+
+description: A Policy for Organizations
+
+actor:
+  name: actor
+
+resources:
+  anymal_organization_request:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+          - writer
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor
+  anymal_organization_message:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+          - writer
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor
+  anymal_organization_meta:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+          - writer
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor
+  anymal_organization_document:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+          - writer
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor
+
+  anymal_organization_member:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+          - writer
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor
+
+  anymal_organization:
+    permissions:
+      read:
+        expr: owner + reader + writer
+
+      write:
+        expr: owner + writer
+
+      nothing:
+        expr: dummy
+
+    relations:
+      owner:
+        types:
+          - actor
+
+      reader:
+        types:
+          - actor
+
+      writer:
+        types:
+          - actor
+
+      admin:
+        manages:
+          - reader
+          - writer
+        types:
+          - actor
+
+      dummy:
+        types:
+          - actor

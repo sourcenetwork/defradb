@@ -117,6 +117,9 @@ func (db *db) patchSchema(
 		return err
 	}
 
+	fmt.Println("existing schemas:")
+	fmt.Println(string(existingDescriptionJson))
+
 	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
 	if err != nil {
 		return err
@@ -400,10 +403,17 @@ func (db *db) updateSchema(
 			return err
 		}
 
+		fmt.Println("cols:", cols[0].Name.Value())
+		buf, _ := json.Marshal(cols[0].Indexes)
+		fmt.Println(string(buf))
+
 		existingCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schema.VersionID)
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("existing cols:")
+		fmt.Println(existingCols)
 
 		definitions := make([]client.CollectionDefinition, 0, len(cols))
 
@@ -517,6 +527,9 @@ func (db *db) updateSchema(
 		}
 
 		for _, def := range definitions {
+			fmt.Println("Saving definitions:")
+			buf, _ := json.Marshal(def.Description)
+			fmt.Println(string(buf))
 			_, err = description.SaveCollection(ctx, txn, def.Description)
 			if err != nil {
 				return err

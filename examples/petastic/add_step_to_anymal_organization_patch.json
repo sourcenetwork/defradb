@@ -1,0 +1,10 @@
+[
+  {
+    "op": "add",
+    "path": "/AnymalOrganization/Fields/-",
+    "value": {
+      "Name": "step",
+      "Kind": "String"
+    }
+  }
+]
