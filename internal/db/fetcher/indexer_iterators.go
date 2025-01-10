@@ -396,7 +396,7 @@ func (f *IndexFetcher) newInIndexIterator(
 }
 
 func (f *IndexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
-	return keys.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
+	return keys.IndexDataStoreKey{CollectionID: f.col.Description().RootID, IndexID: f.indexDesc.ID}
 }
 
 func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
@@ -405,7 +405,7 @@ func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		fields[i].Value = values[i]
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
-	return keys.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
+	return keys.NewIndexDataStoreKey(f.col.Description().RootID, f.indexDesc.ID, fields)
 }
 
 func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
