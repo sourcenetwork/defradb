@@ -13,6 +13,9 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,7 +27,6 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndex(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String @index
-						age:  Int    @index
 					}
 				`,
 			},
@@ -35,17 +37,65 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndex(t *testing.T) {
 					]
 				`,
 			},
+			// It is important to test that the index shows up in both the `GetIndexes` call,
+			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
+			// where patching a schema would result in the index disappearing from one of those locations.
+			testUtils.GetIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "Users_name_ASC",
+						ID:     1,
+						Unique: false,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
+						},
+					},
+				},
+			},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionDescription{
+					{
+						ID:             2,
+						Name:           immutable.Some("Users"),
+						IsMaterialized: true,
+						Indexes: []client.IndexDescription{
+							{
+								Name:   "Users_name_ASC",
+								ID:     1,
+								Unique: false,
+								Fields: []client.IndexedFieldDescription{
+									{
+										Name: "name",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Shahzad"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John"
+					}`,
+			},
 			testUtils.Request{
-				Request: `query {
-					Users {
+				Request: `query @explain(type: execute) {
+					Users(filter: {name: {_eq: "John"}}) {
 						name
-						age
-						email
 					}
 				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(1),
 			},
 		},
 	}
