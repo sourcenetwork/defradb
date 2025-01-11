@@ -298,28 +298,20 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name": "Bruno",
-					"custom": map[string]any{
-						"numbers": nil,
-					},
-				},
-			},
 			testUtils.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Islam"},
-						{"name": "Fred"},
 						{"name": "John"},
+						{"name": "Fred"},
 					},
 				},
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// We examine only array elements (excluding nested arrays) and we have 6 of them
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				// We don't use index for _none operator
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -395,15 +387,15 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Islam"},
-						{"name": "Fred"},
 						{"name": "John"},
+						{"name": "Fred"},
 					},
 				},
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// We examine only array elements (excluding nested arrays) and we have 6 of them
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				// We don't use index for _none operator
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}

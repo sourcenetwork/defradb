@@ -530,6 +530,10 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 							// to limit the search only to array elements
 							op, ok := key.(*mapper.Operator)
 							if ok && isArrayCondition(op.Operation) {
+								if op.Operation == compOpNone {
+									// if the array condition is _none it doesn't make sense to use index
+									return nil, nil
+								}
 								jsonPath = jsonPath.AppendIndex(0)
 							}
 							break jsonPathLoop
@@ -607,9 +611,9 @@ func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath
 	} else if cond.op == opIn {
 		var jsonVals []client.JSON
 		if anyArr, ok := filterVal.([]any); ok {
-			// if filter value is []any we convert each value separately because JSON might have 
-			// array elements of different types. That's why we can't just pass it directly to 
-			// client.ToArrayOfNormalValues 
+			// if filter value is []any we convert each value separately because JSON might have
+			// array elements of different types. That's why we can't just pass it directly to
+			// client.ToArrayOfNormalValues
 			jsonVals = make([]client.JSON, 0, len(anyArr))
 			for _, val := range anyArr {
 				jsonVal, err = client.NewJSONWithPath(val, jsonPath)

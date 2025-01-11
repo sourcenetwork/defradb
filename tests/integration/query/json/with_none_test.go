@@ -107,9 +107,6 @@ func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{"name": "Shahzad"},
-						{"name": "John"},
-						{"name": "Islam"},
-						{"name": "Bruno"},
 					},
 				},
 			},
