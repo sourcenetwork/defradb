@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	"github.com/ipfs/go-datastore/query"
@@ -418,7 +419,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, err
 	}
 
-	// this can happen if a query contains an empty condition like User(filter: {name: {}})
+	// fieldConditions might be empty if a query contains an empty condition like User(filter: {name: {}})
 	if len(fieldConditions) == 0 {
 		return nil, nil
 	}
@@ -504,80 +505,84 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 	for i := range f.indexedFields {
 		fieldInd := f.mapping.FirstIndexOfName(f.indexedFields[i].Name)
 		found := false
-		// iterate through conditions and find the one that matches the current field
-		for filterKey, indexFilterCond := range f.indexFilter.Conditions {
-			propKey, ok := filterKey.(*mapper.PropertyIndex)
-			if !ok || fieldInd != propKey.Index {
-				continue
-			}
+		var err error
 
-			found = true
+		filter.TraverseProperties(
+			f.indexFilter.Conditions,
+			func(prop *mapper.PropertyIndex, condMap map[connor.FilterKey]any) bool {
+				if fieldInd != prop.Index {
+					return true
+				}
 
-			fieldDef := f.indexedFields[slices.IndexFunc(f.indexedFields, func(f client.FieldDefinition) bool {
-				return int(f.ID) == fieldInd
-			})]
+				found = true
 
-			condMap := indexFilterCond.(map[connor.FilterKey]any)
+				fieldDef := f.indexedFields[slices.IndexFunc(f.indexedFields, func(f client.FieldDefinition) bool {
+					return int(f.ID) == fieldInd
+				})]
 
-			jsonPath := client.JSONPath{}
-			if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
-			jsonPathLoop:
-				for {
-					for key, filterVal := range condMap {
-						prop, ok := key.(*mapper.ObjectProperty)
-						if !ok {
-							// if filter contains an array condition, we need to append index 0 to the json path
-							// to limit the search only to array elements
-							op, ok := key.(*mapper.Operator)
-							if ok && isArrayCondition(op.Operation) {
-								jsonPath = jsonPath.AppendIndex(0)
+				jsonPath := client.JSONPath{}
+				if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
+				jsonPathLoop:
+					for {
+						for key, filterVal := range condMap {
+							prop, ok := key.(*mapper.ObjectProperty)
+							if !ok {
+								// if filter contains an array condition, we need to append index 0 to the json path
+								// to limit the search only to array elements
+								op, ok := key.(*mapper.Operator)
+								if ok && isArrayCondition(op.Operation) {
+									jsonPath = jsonPath.AppendIndex(0)
+								}
+								break jsonPathLoop
 							}
-							break jsonPathLoop
+							jsonPath = jsonPath.AppendProperty(prop.Name)
+							condMap = filterVal.(map[connor.FilterKey]any)
 						}
-						jsonPath = jsonPath.AppendProperty(prop.Name)
-						condMap = filterVal.(map[connor.FilterKey]any)
-					}
-				}
-			}
-
-			for key, filterVal := range condMap {
-				cond := fieldFilterCond{
-					op:       key.(*mapper.Operator).Operation,
-					jsonPath: jsonPath,
-					kind:     f.indexedFields[i].Kind,
-				}
-
-				var err error
-				if len(jsonPath) > 0 {
-					err = determineJSONFilterCondition(&cond, filterVal, jsonPath)
-				} else if filterVal == nil {
-					cond.val, err = client.NewNormalNil(cond.kind)
-				} else if !f.indexedFields[i].Kind.IsArray() {
-					cond.val, err = client.NewNormalValue(filterVal)
-				} else {
-					subCondMap := filterVal.(map[connor.FilterKey]any)
-					for subKey, subVal := range subCondMap {
-						if subVal == nil {
-							arrKind := cond.kind.(client.ScalarArrayKind)
-							cond.val, err = client.NewNormalNil(arrKind.SubKind())
-						} else {
-							cond.val, err = client.NewNormalValue(subVal)
-						}
-						cond.arrOp = cond.op
-						cond.op = subKey.(*mapper.Operator).Operation
-						// the sub condition is supposed to have only 1 record
-						break
 					}
 				}
 
-				if err != nil {
-					return nil, err
+				for key, filterVal := range condMap {
+					cond := fieldFilterCond{
+						op:       key.(*mapper.Operator).Operation,
+						jsonPath: jsonPath,
+						kind:     f.indexedFields[i].Kind,
+					}
+
+					if len(jsonPath) > 0 {
+						err = determineJSONFilterCondition(&cond, filterVal, jsonPath)
+					} else if filterVal == nil {
+						cond.val, err = client.NewNormalNil(cond.kind)
+					} else if !f.indexedFields[i].Kind.IsArray() {
+						cond.val, err = client.NewNormalValue(filterVal)
+					} else {
+						subCondMap := filterVal.(map[connor.FilterKey]any)
+						for subKey, subVal := range subCondMap {
+							if subVal == nil {
+								arrKind := cond.kind.(client.ScalarArrayKind)
+								cond.val, err = client.NewNormalNil(arrKind.SubKind())
+							} else {
+								cond.val, err = client.NewNormalValue(subVal)
+							}
+							cond.arrOp = cond.op
+							cond.op = subKey.(*mapper.Operator).Operation
+							// the sub condition is supposed to have only 1 record
+							break
+						}
+					}
+
+					if err != nil {
+						return false
+					}
+					result = append(result, cond)
+					break
 				}
-				result = append(result, cond)
-				break
-			}
-			break
+				return false
+			})
+
+		if err != nil {
+			return nil, err
 		}
+
 		if !found {
 			result = append(result, fieldFilterCond{
 				op:   opAny,
@@ -607,9 +612,9 @@ func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath
 	} else if cond.op == opIn {
 		var jsonVals []client.JSON
 		if anyArr, ok := filterVal.([]any); ok {
-			// if filter value is []any we convert each value separately because JSON might have 
-			// array elements of different types. That's why we can't just pass it directly to 
-			// client.ToArrayOfNormalValues 
+			// if filter value is []any we convert each value separately because JSON might have
+			// array elements of different types. That's why we can't just pass it directly to
+			// client.ToArrayOfNormalValues
 			jsonVals = make([]client.JSON, 0, len(anyArr))
 			for _, val := range anyArr {
 				jsonVal, err = client.NewJSONWithPath(val, jsonPath)

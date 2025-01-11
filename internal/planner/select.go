@@ -308,17 +308,24 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	}
 	colDesc := scanNode.col.Description()
 
-	for _, field := range scanNode.col.Schema().Fields {
-		if _, isFiltered := scanNode.filter.ExternalConditions[field.Name]; !isFiltered {
-			continue
+	result := immutable.None[client.IndexDescription]()
+	conditions := scanNode.filter.ExternalConditions
+	filter.TraverseFields(conditions, func(path []string, val any) bool {
+		for _, field := range scanNode.col.Schema().Fields {
+			if field.Name != path[0] {
+				continue
+			}
+			indexes := colDesc.GetIndexesOnField(field.Name)
+			if len(indexes) > 0 {
+				// we return the first found index. We will optimize it later.
+				// https://github.com/sourcenetwork/defradb/issues/2680
+				result = immutable.Some(indexes[0])
+				return false
+			}
 		}
-		indexes := colDesc.GetIndexesOnField(field.Name)
-		if len(indexes) > 0 {
-			// we return the first found index. We will optimize it later.
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
+		return true
+	})
+	return result
 }
 
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
