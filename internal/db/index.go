@@ -195,7 +195,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	if appendDocID {
 		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
-	return keys.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields), nil
+	return keys.NewIndexDataStoreKey(index.collection.Description().RootID, index.desc.ID, fields), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -217,7 +217,7 @@ func (index *collectionBaseIndex) deleteIndexKey(
 // field values for all documents.
 func (index *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
 	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionID = index.collection.ID()
+	prefixKey.CollectionID = index.collection.Description().RootID
 	prefixKey.IndexID = index.desc.ID
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.ToString(), txn.Datastore())
