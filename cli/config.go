@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,8 +20,6 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (

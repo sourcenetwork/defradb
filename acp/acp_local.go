@@ -12,6 +12,7 @@ package acp
 
 import (
 	"context"
+	"errors"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/acp_core/pkg/auth"
@@ -19,8 +20,6 @@ import (
 	"github.com/sourcenetwork/acp_core/pkg/runtime"
 	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
