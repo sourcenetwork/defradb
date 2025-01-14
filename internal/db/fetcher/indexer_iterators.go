@@ -593,6 +593,10 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 	return result, nil
 }
 
+// determineJSONFilterCondition determines the condition and its corresponding operation for a
+// JSON filter condition.
+// It mutates the given condition to make it match the filter value and JSON path so that
+// it can be used to fetch the indexed data.
 func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath client.JSONPath) error {
 	var jsonVal client.JSON
 	var err error
@@ -605,7 +609,7 @@ func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath
 			if err == nil {
 				cond.val = client.NewNormalJSON(jsonVal)
 			}
-			// the sub condition is supposed to have only 1 record
+			// the array sub condition (_any, _all or _none) is supposed to have only 1 record
 			break
 		}
 	} else if cond.op == opIn {
