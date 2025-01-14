@@ -14,7 +14,6 @@ import (
 	"context"
 
 	ds "github.com/ipfs/go-datastore"
-	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -502,8 +501,19 @@ type fieldFilterCond struct {
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
 func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
-	for i := range f.indexedFields {
-		fieldInd := f.mapping.FirstIndexOfName(f.indexedFields[i].Name)
+	for i := range f.indexDesc.Fields {
+		var indexedField client.FieldDefinition
+		for j := range f.indexedFields {
+			if f.indexedFields[j].Name == f.indexDesc.Fields[i].Name {
+				indexedField = f.indexedFields[j]
+				break
+			}
+		}
+		if indexedField.Name == "" {
+			return result, nil
+		}
+
+		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
 		found := false
 		var err error
 
@@ -514,14 +524,8 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					return true
 				}
 
-				found = true
-
-				fieldDef := f.indexedFields[slices.IndexFunc(f.indexedFields, func(f client.FieldDefinition) bool {
-					return int(f.ID) == fieldInd
-				})]
-
 				jsonPath := client.JSONPath{}
-				if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
+				if indexedField.Kind == client.FieldKind_NILLABLE_JSON {
 				jsonPathLoop:
 					for {
 						for key, filterVal := range condMap {
@@ -531,10 +535,6 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 								// to limit the search only to array elements
 								op, ok := key.(*mapper.Operator)
 								if ok && isArrayCondition(op.Operation) {
-									if op.Operation == compOpNone {
-										// if the array condition is _none it doesn't make sense to use index
-										return false
-									}
 									jsonPath = jsonPath.AppendIndex(0)
 								}
 								break jsonPathLoop
@@ -549,14 +549,19 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					cond := fieldFilterCond{
 						op:       key.(*mapper.Operator).Operation,
 						jsonPath: jsonPath,
-						kind:     f.indexedFields[i].Kind,
+						kind:     indexedField.Kind,
+					}
+
+					if cond.op == compOpNone || cond.op == opNe {
+						// if the array condition is _none it doesn't make sense to use index
+						return true
 					}
 
 					if len(jsonPath) > 0 {
 						err = determineJSONFilterCondition(&cond, filterVal, jsonPath)
 					} else if filterVal == nil {
 						cond.val, err = client.NewNormalNil(cond.kind)
-					} else if !f.indexedFields[i].Kind.IsArray() {
+					} else if !indexedField.Kind.IsArray() {
 						cond.val, err = client.NewNormalValue(filterVal)
 					} else {
 						subCondMap := filterVal.(map[connor.FilterKey]any)
@@ -577,13 +582,16 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					if err != nil {
 						return false
 					}
+
+					found = true
+
 					result = append(result, cond)
 					break
 				}
 				return false
 			})
 
-		if err != nil {
+		if err != nil || len(result) == 0 {
 			return nil, err
 		}
 
@@ -591,7 +599,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 			result = append(result, fieldFilterCond{
 				op:   opAny,
 				val:  client.NormalVoid{},
-				kind: f.indexedFields[i].Kind,
+				kind: indexedField.Kind,
 			})
 		}
 	}

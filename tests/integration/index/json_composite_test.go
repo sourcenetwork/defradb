@@ -222,7 +222,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			req: `query {
 				User(filter: {
 					age: {_le: 35},
-					custom: {val: {_gt: 4}} 
+					custom: {val: {_gt: 4}}
 				}) {
 					name
 				}
@@ -240,7 +240,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			req: `query {
 				User(filter: {
 					age: {_lt: 100},
-					custom: {val: {_eq: null}} 
+					custom: {val: {_eq: null}}
 				}) {
 					name
 				}
@@ -267,6 +267,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 					{"name": "Chris"},
 				},
 			},
+			// we shouldn't use index as _ne filter is present
 			indexFetches: 0,
 		},
 	}
