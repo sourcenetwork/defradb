@@ -115,15 +115,6 @@ func toJSONPathPart[T string | int | uint64](v T) JSONPathPart {
 	return nil
 }
 
-// Creates a path from mixed string/integer values
-func MakeJSONPath[T string | int | uint64](parts ...T) JSONPath {
-	path := make(JSONPath, len(parts))
-	for i, part := range parts {
-		path[i] = toJSONPathPart(part)
-	}
-	return path
-}
-
 // JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
 // It provides type-safe access to the underlying value through various accessor methods.
 type JSON interface {

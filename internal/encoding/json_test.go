@@ -93,7 +93,7 @@ func TestJSONEncodingAndDecoding_ShouldEncodeAndDecodeBack(t *testing.T) {
 }
 
 func TestJSONEncodingDecoding_WithVoidValue_ShouldEncodeAndDecodeOnlyPath(t *testing.T) {
-	void := client.MakeVoidJSON(client.MakeJSONPath("path", "to", "void"))
+	void := client.MakeVoidJSON(client.JSONPath{}.AppendProperty("path").AppendProperty("to").AppendProperty("void"))
 	encoded := EncodeJSONAscending(nil, void)
 
 	remaining, decodedPath, err := decodeJSONPath(encoded[1:]) // skip the marker

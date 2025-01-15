@@ -504,7 +504,7 @@ func TestNewJSONAndMarshalJSON(t *testing.T) {
 		},
 	}
 
-	path := MakeJSONPath("some", "path")
+	path := makeJSONPath("some", "path")
 
 	for _, tt := range tests {
 		for _, withPath := range []bool{true, false} {
