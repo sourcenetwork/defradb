@@ -22,6 +22,20 @@ import (
 
 // JSONPathPart represents a part of a JSON path.
 // Json path can be either a property of an object or an index of an element in an array.
+// For example, the paths to both values 1 are very similar:
+//
+//	{
+//	  "0": {
+//		"val": 1
+//	  }
+//	}
+//	[
+//	  {
+//	    "val": 1
+//	  }
+//	]
+//
+// It can be described as "0.val" but they are different.
 type JSONPathPart interface {
 	// Property returns the property name if the part is a property, and a boolean indicating if the part is a property.
 	Property() (string, bool)
