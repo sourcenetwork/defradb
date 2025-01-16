@@ -130,11 +130,13 @@ func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.No
 		}
 		return f(val)
 	},
-		// we don't want to traverse intermediate nodes
+		// we don't want to traverse intermediate nodes, because we encode only values that can be filtered on
 		client.TraverseJSONOnlyLeaves(),
-		// we want to include array elements' indexes in json path
+		// we want to include array elements' indexes in json path, because we want to differentiate
+		// between array elements in order to be able to run array-specific queries like _all, _any and _none
 		client.TraverseJSONWithArrayIndexInPath(),
-		// we want to traverse array elements, but not recurse into them
+		// we want to traverse array elements, but not recurse into them, because we don't have any way
+		// to query nested arrays elements.
 		// this effectively means that we traverse only leave array elements (string, float, bool, null)
 		client.TraverseJSONVisitArrayElements(false),
 	)

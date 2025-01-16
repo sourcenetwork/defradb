@@ -103,18 +103,6 @@ func (p JSONPath) String() string {
 	return sb.String()
 }
 
-func toJSONPathPart[T string | int | uint64](v T) JSONPathPart {
-	switch val := any(v).(type) {
-	case string:
-		return propPathPart(val)
-	case int:
-		return indexPathPart(uint64(val))
-	case uint64:
-		return indexPathPart(val)
-	}
-	return nil
-}
-
 // JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
 // It provides type-safe access to the underlying value through various accessor methods.
 type JSON interface {
