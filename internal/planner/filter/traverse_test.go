@@ -274,3 +274,62 @@ func TestTraverseProperties_EarlyExit(t *testing.T) {
 
 	assert.Equal(t, 2, visitCount, "should have stopped after visiting 2 properties")
 }
+
+func TestTraversePropertiesWithIgnoreNodes(t *testing.T) {
+	tests := []struct {
+		name       string
+		conditions map[connor.FilterKey]any
+		skipOps    []string
+		expected   []int
+	}{
+		{
+			name: "ignore _not operator",
+			conditions: map[connor.FilterKey]any{
+				&mapper.Operator{Operation: "_not"}: map[connor.FilterKey]any{
+					&mapper.PropertyIndex{Index: 1}: map[connor.FilterKey]any{
+						&mapper.Operator{Operation: "_eq"}: "John",
+					},
+				},
+				&mapper.PropertyIndex{Index: 2}: map[connor.FilterKey]any{
+					&mapper.Operator{Operation: "_gt"}: 18,
+				},
+			},
+			skipOps:  []string{"_not"},
+			expected: []int{2},
+		},
+		{
+			name: "ignore multiple operators",
+			conditions: map[connor.FilterKey]any{
+				&mapper.Operator{Operation: "_not"}: map[connor.FilterKey]any{
+					&mapper.PropertyIndex{Index: 1}: map[connor.FilterKey]any{
+						&mapper.Operator{Operation: "_eq"}: "John",
+					},
+				},
+				&mapper.Operator{Operation: "_and"}: map[connor.FilterKey]any{
+					&mapper.PropertyIndex{Index: 2}: map[connor.FilterKey]any{
+						&mapper.Operator{Operation: "_eq"}: true,
+					},
+				},
+				&mapper.Operator{Operation: "_or"}: map[connor.FilterKey]any{
+					&mapper.PropertyIndex{Index: 3}: map[connor.FilterKey]any{
+						&mapper.Operator{Operation: "_gt"}: 18,
+					},
+				},
+			},
+			skipOps:  []string{"_not", "_or"},
+			expected: []int{2},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var visited []int
+			TraverseProperties(tt.conditions, func(p *mapper.PropertyIndex, conditions map[connor.FilterKey]any) bool {
+				visited = append(visited, p.Index)
+				return true
+			}, tt.skipOps...)
+
+			assert.ElementsMatch(t, tt.expected, visited)
+		})
+	}
+}

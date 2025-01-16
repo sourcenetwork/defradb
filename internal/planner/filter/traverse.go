@@ -75,14 +75,16 @@ func traverseFields(path []string, conditions any, f func([]string, any) bool) b
 func TraverseProperties(
 	conditions map[connor.FilterKey]any,
 	f func(*mapper.PropertyIndex, map[connor.FilterKey]any) bool,
+	skipOps ...string,
 ) {
-	traverseProperties(nil, conditions, f)
+	traverseProperties(nil, conditions, f, skipOps)
 }
 
 func traverseProperties(
 	path []string,
 	conditions map[connor.FilterKey]any,
 	f func(*mapper.PropertyIndex, map[connor.FilterKey]any) bool,
+	skipOps []string,
 ) bool {
 	for filterKey, cond := range conditions {
 		switch t := filterKey.(type) {
@@ -93,15 +95,27 @@ func traverseProperties(
 				}
 			}
 		case *mapper.Operator:
+			// Skip this operator if it's in the ignore list
+			shouldIgnore := false
+			for _, ignore := range skipOps {
+				if t.Operation == ignore {
+					shouldIgnore = true
+					break
+				}
+			}
+			if shouldIgnore {
+				continue
+			}
+
 			switch condVal := cond.(type) {
 			case map[connor.FilterKey]any:
-				if !traverseProperties(path, condVal, f) {
+				if !traverseProperties(path, condVal, f, skipOps) {
 					return false
 				}
 			case []any:
 				for _, elem := range condVal {
 					if elemMap, ok := elem.(map[connor.FilterKey]any); ok {
-						if !traverseProperties(path, elemMap, f) {
+						if !traverseProperties(path, elemMap, f, skipOps) {
 							return false
 						}
 					}
