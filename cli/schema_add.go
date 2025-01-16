@@ -85,6 +85,6 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			return nil
 		},
 	}
-	cmd.Flags().StringSliceVarP(&schemaFiles, "file", "f", []string{}, "File(s) to load schema from")
+	cmd.Flags().StringSliceVarP(&schemaFiles, "file", "f", []string{}, "File to load schema from")
 	return cmd
 }

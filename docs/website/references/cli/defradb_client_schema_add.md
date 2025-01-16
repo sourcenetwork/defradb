@@ -32,7 +32,7 @@ defradb client schema add [schema] [flags]
 ### Options
 
 ```
-  -f, --file strings   File(s) to load schema from
+  -f, --file strings   File to load schema from
   -h, --help           help for add
 ```
 
