@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -53,7 +52,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				for _, schemaFile := range schemaFiles {
 					data, err := os.ReadFile(schemaFile)
 					if err != nil {
-						return fmt.Errorf("failed to read file %s: %w", schemaFile, err)
+						return NewErrFailedToReadSchemaFile(schemaFile, err)
 					}
 					combinedSchema += string(data) + "\n"
 				}
@@ -62,7 +61,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				// Read schema from stdin
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return fmt.Errorf("failed to read schema from stdin: %w", err)
+					return NewErrFailedToReadSchemaFromStdin(err)
 				}
 				combinedSchema += string(data) + "\n"
 
@@ -71,13 +70,13 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				combinedSchema += args[0] + "\n"
 
 			default:
-				return fmt.Errorf("schema cannot be empty")
+				return ErrEmptySchemaString
 			}
 
 			// Process the combined schema
 			cols, err := store.AddSchema(cmd.Context(), combinedSchema)
 			if err != nil {
-				return fmt.Errorf("failed to add schema: %w", err)
+				return NewErrFailedToAddSchema(err)
 			}
 			if err := writeJSON(cmd, cols); err != nil {
 				return err
