@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/corelog"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	dbErrors "github.com/sourcenetwork/defradb/errors"
@@ -156,6 +157,8 @@ func (db *db) getDocsHeads(
 		}
 		defer txn.Discard(ctx)
 		ctx = SetContextTxn(ctx, txn)
+		// This is a node specific action which means the actor is the node itself.
+		ctx = identity.WithContext(ctx, db.nodeIdentity)
 		for _, col := range cols {
 			keysCh, err := col.GetAllDocIDs(ctx)
 			if err != nil {
