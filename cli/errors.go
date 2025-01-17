@@ -22,6 +22,7 @@ const (
 	errRequiredFlag                 string = "the required flag [--%s|-%s] is %s"
 	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
 	errInvalidInxedFieldDescription string = "invalid or malformed field description"
+	errEmptySchemaString            string = "schema cannot be empty"
 )
 
 var (
@@ -36,6 +37,7 @@ var (
 	ErrPolicyFileArgCanNotBeEmpty = errors.New("policy file argument can not be empty")
 	ErrPurgeForceFlagRequired     = errors.New("run this command again with --force if you really want to purge all data")
 	ErrMissingKeyringSecret       = errors.New("missing keyring secret")
+	ErrEmptySchemaString          = errors.New(errEmptySchemaString)
 )
 
 func NewErrRequiredFlagEmpty(longName string, shortName string) error {
@@ -64,4 +66,16 @@ func NewErrInvalidAscensionOrder(fieldName string) error {
 
 func NewErrInvalidInxedFieldDescription(fieldName string) error {
 	return errors.New(errInvalidInxedFieldDescription, errors.NewKV("Field", fieldName))
+}
+
+func NewErrFailedToReadSchemaFile(schemaFile string, inner error) error {
+	return errors.Wrap(fmt.Sprintf("failed to read file %s", schemaFile), inner)
+}
+
+func NewErrFailedToReadSchemaFromStdin(inner error) error {
+	return errors.Wrap("failed to read schema from stdin", inner)
+}
+
+func NewErrFailedToAddSchema(inner error) error {
+	return errors.Wrap("failed to add schema", inner)
 }
