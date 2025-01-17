@@ -36,30 +36,20 @@ import (
 //	]
 //
 // It can be described as "0.val" but they are different.
-type JSONPathPart interface {
-	// Property returns the property name if the part is a property, and a boolean indicating if the part is a property.
-	Property() (string, bool)
-	// Index returns the index if the part is an index, and a boolean indicating if the part is an index.
-	Index() (uint64, bool)
+type JSONPathPart struct {
+	value any
 }
 
-type propPathPart string
-type indexPathPart uint64
-
-func (p propPathPart) Property() (string, bool) {
-	return string(p), true
+// Property returns the property name if the part is a property, and a boolean indicating if the part is a property.
+func (p JSONPathPart) Property() (string, bool) {
+	v, ok := p.value.(string)
+	return v, ok
 }
 
-func (p propPathPart) Index() (uint64, bool) {
-	return 0, false
-}
-
-func (p indexPathPart) Property() (string, bool) {
-	return "", false
-}
-
-func (p indexPathPart) Index() (uint64, bool) {
-	return uint64(p), true
+// Index returns the index if the part is an index, and a boolean indicating if the part is an index.
+func (p JSONPathPart) Index() (uint64, bool) {
+	v, ok := p.value.(uint64)
+	return v, ok
 }
 
 // JSONPath represents a path to a JSON value in a JSON tree.
@@ -70,19 +60,14 @@ func (p JSONPath) Parts() []JSONPathPart {
 	return p
 }
 
-// Append appends a part to the JSON path.
-func (p JSONPath) Append(part JSONPathPart) JSONPath {
-	return append(p, part)
-}
-
 // AppendProperty appends a property part to the JSON path.
 func (p JSONPath) AppendProperty(part string) JSONPath {
-	return append(p, propPathPart(part))
+	return append(p, JSONPathPart{value: part})
 }
 
 // AppendIndex appends an index part to the JSON path.
 func (p JSONPath) AppendIndex(part uint64) JSONPath {
-	return append(p, indexPathPart(part))
+	return append(p, JSONPathPart{value: part})
 }
 
 // String returns the string representation of the JSON path.
@@ -633,14 +618,14 @@ func newJSONFromFastJSON(v *fastjson.Value, path JSONPath) JSON {
 		obj := make(map[string]JSON, fastObj.Len())
 		fastObj.Visit(func(k []byte, v *fastjson.Value) {
 			key := string(k)
-			obj[key] = newJSONFromFastJSON(v, path.Append(propPathPart(key)))
+			obj[key] = newJSONFromFastJSON(v, path.AppendProperty(key))
 		})
 		return newJSONObject(obj, path)
 	case fastjson.TypeArray:
 		fastArr := v.GetArray()
 		arr := make([]JSON, len(fastArr))
 		for i := range fastArr {
-			arr[i] = newJSONFromFastJSON(fastArr[i], path.Append(indexPathPart(uint64(i))))
+			arr[i] = newJSONFromFastJSON(fastArr[i], path.AppendIndex(uint64(i)))
 		}
 		return newJSONArray(arr, path)
 	case fastjson.TypeNumber:
