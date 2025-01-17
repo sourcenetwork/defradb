@@ -779,7 +779,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	}
 
 	filter := fmt.Sprintf(
-		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
+		`%s: {_ne: "%s"}, %s: {_eq: "%s"}`,
 		request.DocIDFieldName,
 		docID,
 		fieldDescription.Name,
