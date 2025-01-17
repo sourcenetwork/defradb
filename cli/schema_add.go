@@ -38,6 +38,9 @@ Example: add from file:
 Example: add from multiple files:
   defradb client schema add -f schema1.graphql -f schema2.graphql
 
+Example: add from multiple files:
+  defradb client schema add -f schema1.graphql,schema2.graphql
+
 Example: add from stdin:
   cat schema.graphql | defradb client schema add -
 
