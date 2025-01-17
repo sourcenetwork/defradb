@@ -17,6 +17,12 @@ Example: add from an argument string:
 Example: add from file:
   defradb client schema add -f schema.graphql
 
+Example: add from multiple files:
+  defradb client schema add -f schema1.graphql -f schema2.graphql
+
+Example: add from multiple files:
+  defradb client schema add -f schema1.graphql,schema2.graphql
+
 Example: add from stdin:
   cat schema.graphql | defradb client schema add -
 
@@ -29,8 +35,8 @@ defradb client schema add [schema] [flags]
 ### Options
 
 ```
-  -f, --file string   File to load a schema from
-  -h, --help          help for add
+  -f, --file strings   File to load schema from
+  -h, --help           help for add
 ```
 
 ### Options inherited from parent commands
