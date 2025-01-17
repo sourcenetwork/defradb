@@ -11,9 +11,9 @@
 package fetcher
 
 import (
-	"errors"
-
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // multiFetcher is a fetcher that orchastrates the fetching of documents via multiple child fetchers.

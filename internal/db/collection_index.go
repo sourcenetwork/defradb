@@ -257,7 +257,7 @@ func (c *collection) createIndex(
 
 	colSeq, err := c.db.getSequence(
 		ctx,
-		keys.NewIndexIDSequenceKey(c.ID()),
+		keys.NewIndexIDSequenceKey(c.Description().RootID),
 	)
 	if err != nil {
 		return nil, err
@@ -414,7 +414,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 			break
 		}
 	}
-	key := keys.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
+	key := keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), indexName)
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -426,7 +426,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 func (c *collection) dropAllIndexes(ctx context.Context) error {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := keys.NewCollectionIndexKey(immutable.Some(c.ID()), "")
+	prefix := keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), "")
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
@@ -444,7 +444,7 @@ func (c *collection) dropAllIndexes(ctx context.Context) error {
 }
 
 func (c *collection) loadIndexes(ctx context.Context) error {
-	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.ID())
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.Description().RootID)
 	if err != nil {
 		return err
 	}
@@ -506,7 +506,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 			if err != nil {
 				return keys.CollectionIndexKey{}, err
@@ -517,7 +517,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
+		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 		if err != nil {
 			return keys.CollectionIndexKey{}, err
@@ -549,7 +549,7 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	if col.Name().HasValue() {
 		sb.WriteString(col.Name().Value())
 	} else {
-		sb.WriteString(fmt.Sprint(col.ID()))
+		sb.WriteString(fmt.Sprint(col.Description().RootID))
 	}
 	sb.WriteByte('_')
 	// we can safely assume that there is at least one field in the slice

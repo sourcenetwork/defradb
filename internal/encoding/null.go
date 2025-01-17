@@ -35,7 +35,14 @@ func EncodeNullDescending(b []byte) []byte {
 // This function handles both ascendingly and descendingly encoded NULLs.
 func DecodeIfNull(b []byte) ([]byte, bool) {
 	if PeekType(b) == Null {
-		return b[1:], true
+		return decodeNull(b), true
 	}
 	return b, false
+}
+
+// decodeNull decodes a NULL value from the input buffer. The input buffer is
+// expected to start with the NULL value encoding. The decoded NULL value is
+// removed from the input buffer and the remaining buffer is returned.
+func decodeNull(b []byte) []byte {
+	return b[1:]
 }

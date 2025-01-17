@@ -1,30 +1,25 @@
-## defradb keyring
+## defradb keyring list
 
-Manage DefraDB private keys
+List all keys in the keyring
 
 ### Synopsis
 
-Manage DefraDB private keys.
-Generate, import, and export private keys.
+List all keys in the keyring.
+The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+This can also be done with a .env file in the working directory or at a path
+defined with the --secret-file flag.
 
-The following keys are loaded from the keyring on start:
-	peer-key: Ed25519 private key (required)
-	encryption-key: AES-128, AES-192, or AES-256 key (optional)
+Example:
+  defradb keyring list
 
-To randomly generate the required keys, run the following command:
-	defradb keyring generate
-
-To import externally generated keys, run the following command:
-	defradb keyring import <name> <private-key-hex>
-
-To learn more about the available options:
-	defradb keyring --help
-
+```
+defradb keyring list [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for keyring
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
@@ -49,9 +44,5 @@ To learn more about the available options:
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
-* [defradb keyring export](defradb_keyring_export.md)	 - Export a private key
-* [defradb keyring generate](defradb_keyring_generate.md)	 - Generate private keys
-* [defradb keyring import](defradb_keyring_import.md)	 - Import a private key
-* [defradb keyring list](defradb_keyring_list.md)	 - List all keys in the keyring
+* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
 

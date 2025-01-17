@@ -14,13 +14,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encryption"

@@ -57,6 +57,7 @@ var (
 
 	ErrPolicyDataMustNotBeEmpty    = errors.New("policy data can not be empty")
 	ErrPolicyCreatorMustNotBeEmpty = errors.New("policy creator can not be empty")
+	ErrACPResetState               = errors.New("acp could not be reset")
 	ErrObjectDidNotRegister        = errors.New(errObjectDidNotRegister)
 	ErrNoPolicyArgs                = errors.New(errNoPolicyArgs)
 	ErrPolicyIDMustNotBeEmpty      = errors.New(errPolicyIDMustNotBeEmpty)

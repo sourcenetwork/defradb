@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,6 +14,11 @@ package client
 // is an array. If the given value is not an array, an error is returned.
 func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 	if !val.IsArray() {
+		if jsonVal, ok := val.JSON(); ok {
+			if jsonArr, ok := jsonVal.Array(); ok {
+				return toNormalArray(jsonArr, NewNormalJSON), nil
+			}
+		}
 		return nil, NewCanNotTurnNormalValueIntoArray(val)
 	}
 	if !val.IsNillable() {

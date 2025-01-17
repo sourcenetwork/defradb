@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestArrayUniqueIndex_UponDocCreationWithArrayElementThatExists_Error(t *testing.T) {
+func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T) {
 	req := `query {
 		User(filter: {nfts: {_any: {_eq: 30}}}) {
 			name

@@ -64,3 +64,20 @@ func (f *fileKeyring) Delete(user string) error {
 	}
 	return err
 }
+
+func (f *fileKeyring) List() ([]string, error) {
+	files, err := os.ReadDir(f.dir)
+	if err != nil {
+		return nil, err
+	}
+
+	// File names are key names
+	var keyNames []string
+	for _, file := range files {
+		if !file.IsDir() {
+			keyNames = append(keyNames, file.Name())
+		}
+	}
+
+	return keyNames, nil
+}

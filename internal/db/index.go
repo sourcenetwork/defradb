@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -41,6 +41,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_INT_ARRAY,
 		client.FieldKind_BOOL_ARRAY,
 		client.FieldKind_FLOAT_ARRAY,
+		client.FieldKind_NILLABLE_JSON,
 		client.FieldKind_NILLABLE_STRING,
 		client.FieldKind_NILLABLE_INT,
 		client.FieldKind_NILLABLE_FLOAT,
@@ -65,9 +66,12 @@ func NewCollectionIndex(
 	if len(desc.Fields) == 0 {
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
-	base := collectionBaseIndex{collection: collection, desc: desc}
-	base.fieldsDescs = make([]client.SchemaFieldDescription, len(desc.Fields))
-	isArray := false
+	base := collectionBaseIndex{
+		collection:      collection,
+		desc:            desc,
+		fieldsDescs:     make([]client.SchemaFieldDescription, len(desc.Fields)),
+		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
+	}
 	for i := range desc.Fields {
 		field, foundField := collection.Schema().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
@@ -77,27 +81,78 @@ func NewCollectionIndex(
 		if !isSupportedKind(field.Kind) {
 			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
-		isArray = isArray || field.Kind.IsArray()
+		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
-	if isArray {
-		if desc.Unique {
-			return newCollectionArrayUniqueIndex(base), nil
-		} else {
-			return newCollectionArrayIndex(base), nil
-		}
-	} else if desc.Unique {
+	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
-	} else {
-		return &collectionSimpleIndex{collectionBaseIndex: base}, nil
 	}
+	return &collectionSimpleIndex{collectionBaseIndex: base}, nil
+}
+
+// FieldIndexGenerator generates index entries for a single field
+type FieldIndexGenerator interface {
+	// Generate calls the provided function for each value that should be indexed
+	Generate(value client.NormalValue, f func(client.NormalValue) error) error
+}
+
+type SimpleFieldGenerator struct{}
+
+func (g *SimpleFieldGenerator) Generate(value client.NormalValue, f func(client.NormalValue) error) error {
+	return f(value)
+}
+
+type ArrayFieldGenerator struct{}
+
+func (g *ArrayFieldGenerator) Generate(value client.NormalValue, f func(client.NormalValue) error) error {
+	normVals, err := client.ToArrayOfNormalValues(value)
+	if err != nil {
+		return err
+	}
+
+	// Remove duplicates to avoid duplicate index entries
+	uniqueVals := slice.RemoveDuplicates(normVals)
+	for _, val := range uniqueVals {
+		if err := f(val); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type JSONFieldGenerator struct{}
+
+func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.NormalValue) error) error {
+	json, _ := value.JSON()
+	return client.TraverseJSON(json, func(value client.JSON) error {
+		val, err := client.NewNormalValue(value)
+		if err != nil {
+			return err
+		}
+		return f(val)
+	}, client.TraverseJSONOnlyLeaves(), client.TraverseJSONVisitArrayElements(false))
+}
+
+// getFieldGenerator returns appropriate generator for the field type
+func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
+	if kind.IsArray() {
+		return &ArrayFieldGenerator{}
+	}
+	if kind == client.FieldKind_NILLABLE_JSON {
+		return &JSONFieldGenerator{}
+	}
+	return &SimpleFieldGenerator{}
 }
 
 type collectionBaseIndex struct {
-	collection  client.Collection
-	desc        client.IndexDescription
-	fieldsDescs []client.SchemaFieldDescription
+	collection client.Collection
+	desc       client.IndexDescription
+	// fieldsDescs is a slice of field descriptions for the fields that form the index
+	// If there is more than 1 field, the index is composite
+	fieldsDescs     []client.SchemaFieldDescription
+	fieldGenerators []FieldIndexGenerator
 }
 
+// getDocFieldValues retrieves the values of the indexed fields from the given document.
 func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]client.NormalValue, error) {
 	result := make([]client.NormalValue, 0, len(index.fieldsDescs))
 	for iter := range index.fieldsDescs {
@@ -136,7 +191,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	if appendDocID {
 		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
-	return keys.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields), nil
+	return keys.NewIndexDataStoreKey(index.collection.Description().RootID, index.desc.ID, fields), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -158,7 +213,7 @@ func (index *collectionBaseIndex) deleteIndexKey(
 // field values for all documents.
 func (index *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
 	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionID = index.collection.ID()
+	prefixKey.CollectionID = index.collection.Description().RootID
 	prefixKey.IndexID = index.desc.ID
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.ToString(), txn.Datastore())
@@ -186,6 +241,49 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 	return index.desc
 }
 
+// generateKeysAndProcess generates index keys for the given document and calls the provided function
+// for each generated key
+func (index *collectionBaseIndex) generateKeysAndProcess(
+	doc *client.Document,
+	appendDocID bool,
+	processKey func(keys.IndexDataStoreKey) error,
+) error {
+	// Get initial key with base values
+	baseKey, err := index.getDocumentsIndexKey(doc, appendDocID)
+	if err != nil {
+		return err
+	}
+
+	// Start with first field
+	return index.generateKeysForFieldAndProcess(0, baseKey, processKey)
+}
+
+func (index *collectionBaseIndex) generateKeysForFieldAndProcess(
+	fieldIdx int,
+	baseKey keys.IndexDataStoreKey,
+	processKey func(keys.IndexDataStoreKey) error,
+) error {
+	// If we've processed all fields, call the handler
+	if fieldIdx >= len(index.fieldsDescs) {
+		return processKey(baseKey)
+	}
+
+	// Generate values for current field
+	return index.fieldGenerators[fieldIdx].Generate(
+		baseKey.Fields[fieldIdx].Value,
+		func(val client.NormalValue) error {
+			// Create new key with generated value
+			newKey := baseKey
+			newKey.Fields = make([]keys.IndexedField, len(baseKey.Fields))
+			copy(newKey.Fields, baseKey.Fields)
+			newKey.Fields[fieldIdx].Value = val
+
+			// Process next field
+			return index.generateKeysForFieldAndProcess(fieldIdx+1, newKey, processKey)
+		},
+	)
+}
+
 // collectionSimpleIndex is an non-unique index that indexes documents by a single field.
 // Single-field indexes store values only in ascending order.
 type collectionSimpleIndex struct {
@@ -194,28 +292,15 @@ type collectionSimpleIndex struct {
 
 var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 
-func (index *collectionSimpleIndex) getDocumentsIndexKey(
-	doc *client.Document,
-) (keys.IndexDataStoreKey, error) {
-	// docID is appended, as it's part of the key for non-unique indexes
-	return index.collectionBaseIndex.getDocumentsIndexKey(doc, true)
-}
-
 // Save indexes a document by storing the indexed field value.
 func (index *collectionSimpleIndex) Save(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, err := index.getDocumentsIndexKey(doc)
-	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToString(), err)
-	}
-	return nil
+	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
+		return txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+	})
 }
 
 func (index *collectionSimpleIndex) Update(
@@ -224,7 +309,7 @@ func (index *collectionSimpleIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	err := index.deleteDocIndex(ctx, txn, oldDoc)
+	err := index.Delete(ctx, txn, oldDoc)
 	if err != nil {
 		return err
 	}
@@ -236,19 +321,9 @@ func (index *collectionSimpleIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.deleteDocIndex(ctx, txn, doc)
-}
-
-func (index *collectionSimpleIndex) deleteDocIndex(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
-	key, err := index.getDocumentsIndexKey(doc)
-	if err != nil {
-		return err
-	}
-	return index.deleteIndexKey(ctx, txn, key)
+	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
+		return index.deleteIndexKey(ctx, txn, key)
+	})
 }
 
 // hasIndexKeyNilField returns true if the index key has a field with nil value
@@ -267,29 +342,14 @@ type collectionUniqueIndex struct {
 
 var _ CollectionIndex = (*collectionUniqueIndex)(nil)
 
-func (index *collectionUniqueIndex) save(
-	ctx context.Context,
-	txn datastore.Txn,
-	key *keys.IndexDataStoreKey,
-	val []byte,
-) error {
-	err := txn.Datastore().Put(ctx, key.ToDS(), val)
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
-	}
-	return nil
-}
-
 func (index *collectionUniqueIndex) Save(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, val, err := index.prepareUniqueIndexRecordToStore(ctx, txn, doc)
-	if err != nil {
-		return err
-	}
-	return index.save(ctx, txn, &key, val)
+	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
+		return addNewUniqueKey(ctx, txn, doc, key, index.fieldsDescs)
+	})
 }
 
 func newUniqueIndexError(doc *client.Document, fieldsDescs []client.SchemaFieldDescription) error {
@@ -310,16 +370,6 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.SchemaFieldD
 	return NewErrCanNotIndexNonUniqueFields(doc.ID().String(), kvs...)
 }
 
-func (index *collectionBaseIndex) getDocumentsUniqueIndexRecord(
-	doc *client.Document,
-) (keys.IndexDataStoreKey, []byte, error) {
-	key, err := index.getDocumentsIndexKey(doc, false)
-	if err != nil {
-		return keys.IndexDataStoreKey{}, nil, err
-	}
-	return makeUniqueKeyValueRecord(key, doc)
-}
-
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
 	doc *client.Document,
@@ -330,18 +380,6 @@ func makeUniqueKeyValueRecord(
 	} else {
 		return key, []byte(doc.ID().String()), nil
 	}
-}
-
-func (index *collectionUniqueIndex) prepareUniqueIndexRecordToStore(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) (keys.IndexDataStoreKey, []byte, error) {
-	key, val, err := index.getDocumentsUniqueIndexRecord(doc)
-	if err != nil {
-		return keys.IndexDataStoreKey{}, nil, err
-	}
-	return key, val, validateUniqueKeyValue(ctx, txn, key, val, doc, index.fieldsDescs)
 }
 
 func validateUniqueKeyValue(
@@ -364,12 +402,40 @@ func validateUniqueKeyValue(
 	return nil
 }
 
+func addNewUniqueKey(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+	key keys.IndexDataStoreKey,
+	fieldsDescs []client.SchemaFieldDescription,
+) error {
+	key, val, err := makeUniqueKeyValueRecord(key, doc)
+	if err != nil {
+		return err
+	}
+	err = validateUniqueKeyValue(ctx, txn, key, val, doc, fieldsDescs)
+	if err != nil {
+		return err
+	}
+	err = txn.Datastore().Put(ctx, key.ToDS(), val)
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToString(), err)
+	}
+	return nil
+}
+
 func (index *collectionUniqueIndex) Delete(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.deleteDocIndex(ctx, txn, doc)
+	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
+		key, _, err := makeUniqueKeyValueRecord(key, doc)
+		if err != nil {
+			return err
+		}
+		return txn.Datastore().Delete(ctx, key.ToDS())
+	})
 }
 
 func (index *collectionUniqueIndex) Update(
@@ -383,27 +449,13 @@ func (index *collectionUniqueIndex) Update(
 	if !isUpdatingIndexedFields(index, oldDoc, newDoc) {
 		return nil
 	}
-	newKey, newVal, err := index.prepareUniqueIndexRecordToStore(ctx, txn, newDoc)
-	if err != nil {
-		return err
-	}
-	err = index.deleteDocIndex(ctx, txn, oldDoc)
-	if err != nil {
-		return err
-	}
-	return index.save(ctx, txn, &newKey, newVal)
-}
 
-func (index *collectionUniqueIndex) deleteDocIndex(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
-	key, _, err := index.getDocumentsUniqueIndexRecord(doc)
+	err := index.Delete(ctx, txn, oldDoc)
 	if err != nil {
 		return err
 	}
-	return index.deleteIndexKey(ctx, txn, key)
+
+	return index.Save(ctx, txn, newDoc)
 }
 
 func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
@@ -421,325 +473,9 @@ func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Docum
 			continue
 		case getOldValErr != nil && getNewValErr == nil:
 			return true
-		case oldVal.Value() != newVal.Value():
+		case !oldVal.NormalValue().Equal(newVal.NormalValue()):
 			return true
 		}
 	}
 	return false
-}
-
-type collectionArrayBaseIndex struct {
-	collectionBaseIndex
-	arrFieldsIndexes []int
-}
-
-func newCollectionArrayBaseIndex(base collectionBaseIndex) collectionArrayBaseIndex {
-	ind := collectionArrayBaseIndex{collectionBaseIndex: base}
-	for i := range base.fieldsDescs {
-		if base.fieldsDescs[i].Kind.IsArray() {
-			ind.arrFieldsIndexes = append(ind.arrFieldsIndexes, i)
-		}
-	}
-	if len(ind.arrFieldsIndexes) == 0 {
-		return collectionArrayBaseIndex{}
-	}
-	return ind
-}
-
-// newIndexKeyGenerator creates a function that generates index keys for a document
-// with multiple array fields.
-// All generated keys are unique.
-// For example for a doc with these values {{"a", "b", "a"}, {"c", "d", "e"}, {"f", "g"}} it generates:
-// "acf", "acg", "adf", "adg", "aef", "aeg", "bcf", "bcg", "bdf", "bdg", "bef", "beg"
-// Note: the example is simplified and doesn't include field separation
-func (index *collectionArrayBaseIndex) newIndexKeyGenerator(
-	doc *client.Document,
-	appendDocID bool,
-) (func() (keys.IndexDataStoreKey, bool), error) {
-	key, err := index.getDocumentsIndexKey(doc, appendDocID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Collect unique values to use as source for generating keys
-	normValsArr := make([][]client.NormalValue, 0, len(index.arrFieldsIndexes))
-	for _, arrFieldIndex := range index.arrFieldsIndexes {
-		arrVal := key.Fields[arrFieldIndex].Value
-		normVals, err := client.ToArrayOfNormalValues(arrVal)
-		if err != nil {
-			return nil, err
-		}
-		normValsArr = append(normValsArr, slice.RemoveDuplicates(normVals))
-	}
-
-	// arrFieldCounter keeps track of indexes into arrays of normal values
-	arrFieldCounter := make([]int, len(index.arrFieldsIndexes))
-	done := false
-
-	// This function generates the next key by iterating through all possible combinations.
-	// It works pretty much like a digital clock that first iterates through seconds, then minutes, etc.
-	return func() (keys.IndexDataStoreKey, bool) {
-		if done {
-			return keys.IndexDataStoreKey{}, false
-		}
-
-		resultKey := keys.IndexDataStoreKey{
-			CollectionID: key.CollectionID,
-			IndexID:      key.IndexID,
-			Fields:       make([]keys.IndexedField, len(key.Fields)),
-		}
-		copy(resultKey.Fields, key.Fields)
-
-		// Use current indexes in arrFieldsIndexes to replace corresponding fields in the key
-		for i, counter := range arrFieldCounter {
-			field := &resultKey.Fields[index.arrFieldsIndexes[i]]
-			field.Value = normValsArr[i][counter]
-		}
-
-		// iterate in reverse order so that we exhaust all combination for the last field first,
-		// {"f", "g"} in the example above. This way we guarantee that the order of generated keys
-		// is from left to right, "acf" -> "acg" -> "adf" -> "adg" -> ...
-		for i := len(arrFieldCounter) - 1; i >= 0; i-- {
-			arrFieldCounter[i]++
-			if arrFieldCounter[i] < len(normValsArr[i]) {
-				break
-			}
-			// if we iterated through all combinations for the current field, reset the counter
-			// so that we do it again for the next field from the left side
-			arrFieldCounter[i] = 0
-			// if the current side happens to be the leftmost one (the first), we are done
-			if i == 0 {
-				done = true
-			}
-		}
-
-		return resultKey, true
-	}, nil
-}
-
-func (index *collectionArrayBaseIndex) getAllKeys(
-	doc *client.Document,
-	appendDocID bool,
-) ([]keys.IndexDataStoreKey, error) {
-	getNextOldKey, err := index.newIndexKeyGenerator(doc, appendDocID)
-	if err != nil {
-		return nil, err
-	}
-	keys := make([]keys.IndexDataStoreKey, 0)
-	for {
-		key, ok := getNextOldKey()
-		if !ok {
-			break
-		}
-		keys = append(keys, key)
-	}
-	return keys, nil
-}
-
-func (index *collectionArrayBaseIndex) deleteRetiredKeysAndReturnNew(
-	ctx context.Context,
-	txn datastore.Txn,
-	oldDoc *client.Document,
-	newDoc *client.Document,
-	appendDocID bool,
-) ([]keys.IndexDataStoreKey, error) {
-	prevKeys, err := index.getAllKeys(oldDoc, appendDocID)
-	if err != nil {
-		return nil, err
-	}
-	currentKeys, err := index.getAllKeys(newDoc, appendDocID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, prevKey := range prevKeys {
-		keyEqual := func(key keys.IndexDataStoreKey) bool { return prevKey.Equal(key) }
-		rem, removedVal := slice.RemoveFirstIf(currentKeys, keyEqual)
-		// If a previous keys is not among the current keys, it should be retired
-		if !removedVal.HasValue() {
-			err = index.deleteIndexKey(ctx, txn, prevKey)
-			if err != nil {
-				return nil, err
-			}
-		}
-		currentKeys = rem
-	}
-
-	return currentKeys, nil
-}
-
-type collectionArrayIndex struct {
-	collectionArrayBaseIndex
-}
-
-var _ CollectionIndex = (*collectionArrayIndex)(nil)
-
-func newCollectionArrayIndex(base collectionBaseIndex) *collectionArrayIndex {
-	return &collectionArrayIndex{collectionArrayBaseIndex: newCollectionArrayBaseIndex(base)}
-}
-
-// Save indexes a document by storing the indexed field value.
-func (index *collectionArrayIndex) Save(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
-	getNextKey, err := index.newIndexKeyGenerator(doc, true)
-	if err != nil {
-		return err
-	}
-
-	for {
-		key, hasKey := getNextKey()
-		if !hasKey {
-			break
-		}
-		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
-		if err != nil {
-			return NewErrFailedToStoreIndexedField(key.ToString(), err)
-		}
-	}
-	return nil
-}
-
-func (index *collectionArrayIndex) Update(
-	ctx context.Context,
-	txn datastore.Txn,
-	oldDoc *client.Document,
-	newDoc *client.Document,
-) error {
-	newKeys, err := index.deleteRetiredKeysAndReturnNew(ctx, txn, oldDoc, newDoc, true)
-	if err != nil {
-		return err
-	}
-
-	for _, key := range newKeys {
-		err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
-		if err != nil {
-			return NewErrFailedToStoreIndexedField(key.ToString(), err)
-		}
-	}
-
-	return nil
-}
-
-func (index *collectionArrayIndex) Delete(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
-	getNextKey, err := index.newIndexKeyGenerator(doc, true)
-	if err != nil {
-		return err
-	}
-
-	for {
-		key, ok := getNextKey()
-		if !ok {
-			break
-		}
-		err = index.deleteIndexKey(ctx, txn, key)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-type collectionArrayUniqueIndex struct {
-	collectionArrayBaseIndex
-}
-
-var _ CollectionIndex = (*collectionArrayUniqueIndex)(nil)
-
-func newCollectionArrayUniqueIndex(base collectionBaseIndex) *collectionArrayUniqueIndex {
-	return &collectionArrayUniqueIndex{collectionArrayBaseIndex: newCollectionArrayBaseIndex(base)}
-}
-
-func (index *collectionArrayUniqueIndex) Save(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
-	getNextKey, err := index.newIndexKeyGenerator(doc, false)
-	if err != nil {
-		return err
-	}
-
-	for {
-		key, ok := getNextKey()
-		if !ok {
-			break
-		}
-		err := index.addNewUniqueKey(ctx, txn, doc, key)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (index *collectionArrayUniqueIndex) addNewUniqueKey(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-	key keys.IndexDataStoreKey,
-) error {
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
-	if err != nil {
-		return err
-	}
-	err = validateUniqueKeyValue(ctx, txn, key, val, doc, index.fieldsDescs)
-	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), val)
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToString(), err)
-	}
-	return nil
-}
-
-func (index *collectionArrayUniqueIndex) Update(
-	ctx context.Context,
-	txn datastore.Txn,
-	oldDoc *client.Document,
-	newDoc *client.Document,
-) error {
-	newKeys, err := index.deleteRetiredKeysAndReturnNew(ctx, txn, oldDoc, newDoc, false)
-	if err != nil {
-		return err
-	}
-
-	for _, key := range newKeys {
-		err := index.addNewUniqueKey(ctx, txn, newDoc, key)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (index *collectionArrayUniqueIndex) Delete(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
-	getNextKey, err := index.newIndexKeyGenerator(doc, false)
-	if err != nil {
-		return err
-	}
-
-	for {
-		key, ok := getNextKey()
-		if !ok {
-			break
-		}
-		err = index.deleteIndexKey(ctx, txn, key)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
