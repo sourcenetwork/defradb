@@ -22,20 +22,29 @@ import (
 
 // JSONPathPart represents a part of a JSON path.
 // Json path can be either a property of an object or an index of an element in an array.
-// For example, the paths to both values 1 are very similar:
+// For example, consider the following JSON:
 //
 //	{
+//	  "custom": {
+//	    "name": "John"
+//	  },
 //	  "0": {
-//		"val": 1
-//	  }
-//	}
-//	[
-//	  {
 //	    "val": 1
-//	  }
-//	]
+//	  },
+//	  [
+//	    {
+//	      "val": 2
+//		}
+//	  ]
+//	}
 //
-// It can be described as "0.val" but they are different.
+// The path to a top-level document is empty.
+// The path to subtree { "name": "John" } can be described as "custom".
+// The path to value "John" can be described as "custom.name".
+// The paths to both values 1 and 2 can be described as "0.val":
+// - for value 1 it's "0" property of the object and "val" property of the object
+// - for value 2 it's "0" index of the array and "val" property of the object
+// That's why we need to distinguish between properties and indices in the path.
 type JSONPathPart struct {
 	value any
 }
@@ -89,6 +98,7 @@ func (p JSONPath) String() string {
 }
 
 // JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
+// It can also represent a subtree of a JSON tree.
 // It provides type-safe access to the underlying value through various accessor methods.
 type JSON interface {
 	json.Marshaler
@@ -127,7 +137,7 @@ type JSON interface {
 	// Returns an error if marshaling fails.
 	Marshal(w io.Writer) error
 
-	// GetPath returns the path of the JSON value in the JSON tree.
+	// GetPath returns the path of the JSON value (or subtree) in the JSON tree.
 	GetPath() JSONPath
 
 	// visit calls the visitor function for the JSON value at the given path.

@@ -38,23 +38,18 @@ func getArrayValue(j JSON) []JSON {
 	panic("expected array value")
 }
 
-func toJSONPathPart[T string | int | uint64](v T) JSONPathPart {
-	switch val := any(v).(type) {
-	case string:
-		return propPathPart(val)
-	case int:
-		return indexPathPart(uint64(val))
-	case uint64:
-		return indexPathPart(val)
-	}
-	return nil
-}
-
 // Creates a path from mixed string/integer values
 func makeJSONPath[T string | int | uint64](parts ...T) JSONPath {
-	path := make(JSONPath, len(parts))
-	for i, part := range parts {
-		path[i] = toJSONPathPart(part)
+	path := JSONPath{}
+	for _, part := range parts {
+		switch val := any(part).(type) {
+		case string:
+			path = path.AppendProperty(val)
+		case int:
+			path = path.AppendIndex(uint64(val))
+		case uint64:
+			path = path.AppendIndex(val)
+		}
 	}
 	return path
 }
