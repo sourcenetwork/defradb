@@ -96,6 +96,8 @@ type DB struct {
 	retryIntervals []time.Duration
 }
 
+var _ client.DB = (*DB)(nil)
+
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
