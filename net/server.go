@@ -461,7 +461,7 @@ func (s *server) SendPubSubMessage(
 	return t.Publish(ctx, data)
 }
 
-// hasAccess checks if the requesting peer has access to the given ci.
+// hasAccess checks if the requesting peer has access to the given cid.
 //
 // This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
 func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
@@ -496,12 +496,15 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 	}
 
 	// If the requesting peer is in the replicators list for that collection, then they have access.
+	s.mu.Lock()
 	if peerList, ok := s.replicators[cols[0].SchemaRoot()]; ok {
 		_, exists := peerList[p]
 		if exists {
+			s.mu.Unlock()
 			return true
 		}
 	}
+	s.mu.Unlock()
 
 	identFunc := func() immutable.Option[identity.Identity] {
 		s.piMux.RLock()
