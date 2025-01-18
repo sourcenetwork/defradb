@@ -249,13 +249,12 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
-	var database client.DB
+func FixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
-	database, err = db.NewDB(ctx, rootstore, acp.NoACP, nil)
+	database, err := db.NewDB(ctx, rootstore, acp.NoACP, nil)
 	require.NoError(t, err)
 	return database
 }

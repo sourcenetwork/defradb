@@ -31,7 +31,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		ctx,
 		db1.Events(),
 		immutable.None[acp.ACP](),
-		nil,
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -40,7 +40,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		ctx,
 		db2.Events(),
 		immutable.None[acp.ACP](),
-		nil,
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		ctx,
 		db1.Events(),
 		immutable.None[acp.ACP](),
-		nil,
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		ctx,
 		db2.Events(),
 		immutable.None[acp.ACP](),
-		nil,
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -98,7 +98,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		ctx,
 		db1.Events(),
 		immutable.None[acp.ACP](),
-		nil,
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -107,7 +107,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		ctx,
 		db2.Events(),
 		immutable.None[acp.ACP](),
-		nil,
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
