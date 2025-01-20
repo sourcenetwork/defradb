@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
-func newMemoryDB(ctx context.Context) (*db, error) {
+func newMemoryDB(ctx context.Context) (*DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -30,7 +30,7 @@ func newMemoryDB(ctx context.Context) (*db, error) {
 	return newDB(ctx, rootstore, acp.NoACP, nil)
 }
 
-func newDefraMemoryDB(ctx context.Context) (*db, error) {
+func newDefraMemoryDB(ctx context.Context) (*DB, error) {
 	rootstore := memory.NewDatastore(ctx)
 	return newDB(ctx, rootstore, acp.NoACP, nil)
 }

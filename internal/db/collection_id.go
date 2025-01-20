@@ -21,7 +21,7 @@ import (
 )
 
 // setCollectionIDs sets the IDs on a collection description, including field IDs, mutating the input set.
-func (db *db) setCollectionIDs(ctx context.Context, newCollections []client.CollectionDefinition) error {
+func (db *DB) setCollectionIDs(ctx context.Context, newCollections []client.CollectionDefinition) error {
 	err := db.setCollectionID(ctx, newCollections)
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (db *db) setCollectionIDs(ctx context.Context, newCollections []client.Coll
 
 // setCollectionID sets the IDs directly on a collection description, excluding stuff like field IDs,
 // mutating the input set.
-func (db *db) setCollectionID(ctx context.Context, newCollections []client.CollectionDefinition) error {
+func (db *DB) setCollectionID(ctx context.Context, newCollections []client.CollectionDefinition) error {
 	colSeq, err := db.getSequence(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (db *db) setCollectionID(ctx context.Context, newCollections []client.Colle
 }
 
 // setFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
-func (db *db) setFieldIDs(ctx context.Context, definitions []client.CollectionDefinition) error {
+func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDefinition) error {
 	collectionsByName := map[string]client.CollectionDescription{}
 	schemasByName := map[string]client.SchemaDescription{}
 	for _, def := range definitions {

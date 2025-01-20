@@ -23,14 +23,18 @@ import (
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
 
+	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
 // server is the request/response instance for all P2P RPC communication.
@@ -48,6 +52,9 @@ type server struct {
 	mu          sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
+
+	peerIdentities map[libpeer.ID]identity.Identity
+	piMux          sync.RWMutex
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -61,10 +68,11 @@ type pubsubTopic struct {
 // underlying DB instance.
 func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	s := &server{
-		peer:        p,
-		conns:       make(map[libpeer.ID]*grpc.ClientConn),
-		topics:      make(map[string]pubsubTopic),
-		replicators: make(map[string]map[libpeer.ID]struct{}),
+		peer:           p,
+		conns:          make(map[libpeer.ID]*grpc.ClientConn),
+		topics:         make(map[string]pubsubTopic),
+		replicators:    make(map[string]map[libpeer.ID]struct{}),
+		peerIdentities: make(map[libpeer.ID]identity.Identity),
 	}
 
 	cred := insecure.NewCredentials()
@@ -79,29 +87,17 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	return s, nil
 }
 
-// GetDocGraph receives a get graph request
-func (s *server) GetDocGraph(
+// pushLogHandler receives a push log request from the grpc server (replicator)
+func (s *server) pushLogHandler(ctx context.Context, req *pushLogRequest) (*pushLogReply, error) {
+	return s.processPushlog(ctx, req, true)
+}
+
+// processPushlog processes a push log request
+func (s *server) processPushlog(
 	ctx context.Context,
-	req *getDocGraphRequest,
-) (*getDocGraphReply, error) {
-	return nil, nil
-}
-
-// PushDocGraph receives a push graph request
-func (s *server) PushDocGraph(
-	ctx context.Context,
-	req *pushDocGraphRequest,
-) (*pushDocGraphReply, error) {
-	return nil, nil
-}
-
-// GetLog receives a get log request
-func (s *server) GetLog(ctx context.Context, req *getLogRequest) (*getLogReply, error) {
-	return nil, nil
-}
-
-// PushLog receives a push log request
-func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogReply, error) {
+	req *pushLogRequest,
+	isReplicator bool,
+) (*pushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -126,13 +122,22 @@ func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogRepl
 		return nil, err
 	}
 
+	// No need to check access if the message is for replication as the node sending
+	// will have done so deliberately.
+	if !isReplicator {
+		mightHaveAccess, err := s.trySelfHasAccess(block, req.SchemaRoot)
+		if err != nil {
+			return nil, err
+		}
+		if !mightHaveAccess {
+			// If we know we don't have access, we can skip the rest of the processing.
+			return &pushLogReply{}, nil
+		}
+	}
+
 	log.InfoContext(ctx, "Received pushlog",
 		corelog.Any("PeerID", pid.String()),
 		corelog.Any("Creator", byPeer.String()),
-		corelog.Any("DocID", req.DocID))
-
-	log.InfoContext(ctx, "Starting DAG sync",
-		corelog.Any("PeerID", pid.String()),
 		corelog.Any("DocID", req.DocID))
 
 	err = syncDAG(ctx, s.peer.bserv, block)
@@ -164,12 +169,20 @@ func (s *server) PushLog(ctx context.Context, req *pushLogRequest) (*pushLogRepl
 	return &pushLogReply{}, nil
 }
 
-// GetHeadLog receives a get head log request
-func (s *server) GetHeadLog(
+// getIdentityHandler receives a get identity request and returns the identity token
+// with the requesting peer as the audience.
+func (s *server) getIdentityHandler(
 	ctx context.Context,
-	req *getHeadLogRequest,
-) (*getHeadLogReply, error) {
-	return nil, nil
+	req *getIdentityRequest,
+) (*getIdentityReply, error) {
+	if !s.peer.acp.HasValue() {
+		return &getIdentityReply{}, nil
+	}
+	token, err := s.peer.db.GetNodeIdentityToken(ctx, immutable.Some(req.PeerID))
+	if err != nil {
+		return nil, err
+	}
+	return &getIdentityReply{IdentityToken: token}, nil
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network
@@ -327,7 +340,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
 		Addr: addr{from},
 	})
-	if _, err := s.PushLog(ctx, req); err != nil {
+	if _, err := s.processPushlog(ctx, req, false); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
@@ -446,4 +459,139 @@ func (s *server) SendPubSubMessage(
 		return nil, NewErrTopicDoesNotExist(topic)
 	}
 	return t.Publish(ctx, data)
+}
+
+// hasAccess checks if the requesting peer has access to the given cid.
+//
+// This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
+func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
+	if !s.peer.acp.HasValue() {
+		return true
+	}
+
+	rawblock, err := s.peer.db.Blockstore().Get(s.peer.ctx, c)
+	if err != nil {
+		log.ErrorE("Failed to get block", err)
+		return false
+	}
+	block, err := coreblock.GetFromBytes(rawblock.RawData())
+	if err != nil {
+		log.ErrorE("Failed to get doc from block", err)
+		return false
+	}
+
+	cols, err := s.peer.db.GetCollections(
+		s.peer.ctx,
+		client.CollectionFetchOptions{
+			SchemaVersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
+		},
+	)
+	if err != nil {
+		log.ErrorE("Failed to get collections", err)
+		return false
+	}
+	if len(cols) == 0 {
+		log.Info("No collections found", corelog.Any("Schema Version ID", block.Delta.GetSchemaVersionID()))
+		return false
+	}
+
+	// If the requesting peer is in the replicators list for that collection, then they have access.
+	s.mu.Lock()
+	if peerList, ok := s.replicators[cols[0].SchemaRoot()]; ok {
+		_, exists := peerList[p]
+		if exists {
+			s.mu.Unlock()
+			return true
+		}
+	}
+	s.mu.Unlock()
+
+	identFunc := func() immutable.Option[identity.Identity] {
+		s.piMux.RLock()
+		ident, ok := s.peerIdentities[p]
+		s.piMux.RUnlock()
+		if !ok {
+			resp, err := s.getIdentity(s.peer.ctx, p)
+			if err != nil {
+				log.ErrorE("Failed to get identity", err)
+				return immutable.None[identity.Identity]()
+			}
+			ident, err = identity.FromToken(resp.IdentityToken)
+			if err != nil {
+				log.ErrorE("Failed to parse identity token", err)
+				return immutable.None[identity.Identity]()
+			}
+			err = identity.VerifyAuthToken(ident, s.peer.PeerID().String())
+			if err != nil {
+				log.ErrorE("Failed to verify auth token", err)
+				return immutable.None[identity.Identity]()
+			}
+			s.piMux.Lock()
+			s.peerIdentities[p] = ident
+			s.piMux.Unlock()
+		}
+		return immutable.Some(ident)
+	}
+
+	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+		s.peer.ctx,
+		identFunc,
+		s.peer.acp.Value(),
+		cols[0], // For now we assume there is only one collection.
+		acp.ReadPermission,
+		string(block.Delta.GetDocID()),
+	)
+	if err != nil {
+		log.ErrorE("Failed to check access", err)
+		return false
+	}
+
+	return peerHasAccess
+}
+
+// trySelfHasAccess checks if the local node has access to the given block.
+//
+// This is a best-effort check and returns true unless we explicitly find that the local node
+// doesn't have access or if we get an error. The node sending is ultimately responsible for
+// ensuring that the recipient has access.
+func (s *server) trySelfHasAccess(block *coreblock.Block, schemaRoot string) (bool, error) {
+	if !s.peer.acp.HasValue() {
+		return true, nil
+	}
+
+	cols, err := s.peer.db.GetCollections(
+		s.peer.ctx,
+		client.CollectionFetchOptions{
+			SchemaRoot: immutable.Some(schemaRoot),
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+	if len(cols) == 0 {
+		return false, client.ErrCollectionNotFound
+	}
+	ident, err := s.peer.db.GetNodeIdentity(s.peer.ctx)
+	if err != nil {
+		return false, err
+	}
+	if !ident.HasValue() {
+		return true, nil
+	}
+
+	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+		s.peer.ctx,
+		func() immutable.Option[identity.Identity] {
+			return immutable.Some(identity.Identity{DID: ident.Value().DID})
+		},
+		s.peer.acp.Value(),
+		cols[0], // For now we assume there is only one collection.
+		acp.ReadPermission,
+		string(block.Delta.GetDocID()),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return peerHasAccess, nil
 }
