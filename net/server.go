@@ -125,7 +125,7 @@ func (s *server) processPushlog(
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := s.trySelfHasAccess(block)
+		mightHaveAccess, err := s.trySelfHasAccess(block, req.SchemaRoot)
 		if err != nil {
 			return nil, err
 		}
@@ -554,7 +554,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
-func (s *server) trySelfHasAccess(block *coreblock.Block) (bool, error) {
+func (s *server) trySelfHasAccess(block *coreblock.Block, schemaRoot string) (bool, error) {
 	if !s.peer.acp.HasValue() {
 		return true, nil
 	}
@@ -562,7 +562,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block) (bool, error) {
 	cols, err := s.peer.db.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
-			SchemaVersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
+			SchemaRoot: immutable.Some(schemaRoot),
 		},
 	)
 	if err != nil {
