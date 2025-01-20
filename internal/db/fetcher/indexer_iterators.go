@@ -531,9 +531,13 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 							op, ok := key.(*mapper.Operator)
 							if ok && isArrayCondition(op.Operation) {
 								if op.Operation == compOpNone {
-									// if the array condition is _none it doesn't make sense to use index
-									// because the power of indexer is in efficiently looking up specific
-									// values, not a value different from specific.
+									// if the array condition is _none it doesn't make sense to use index  because
+									// values picked by the index is random guessing. For example if we have doc1
+									// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
+									// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
+									// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
+									// so on until it exhaust all prefixes in ascending order.
+									// It might be even less effective than just scanning all documents.
 									return nil, nil
 								}
 								jsonPath = jsonPath.AppendIndex(0)
