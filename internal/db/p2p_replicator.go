@@ -39,7 +39,7 @@ const (
 	retryTimeout = 10 * time.Second
 )
 
-func (db *db) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func (db *db) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 	return txn.Commit(ctx)
 }
 
-func (db *db) getDocsHeads(
+func (db *DB) getDocsHeads(
 	ctx context.Context,
 	cols []client.Collection,
 ) <-chan event.Update {
@@ -213,7 +213,7 @@ func (db *db) getDocsHeads(
 	return updateChan
 }
 
-func (db *db) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (db *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -306,7 +306,7 @@ func (db *db) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams)
 	return txn.Commit(ctx)
 }
 
-func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -333,7 +333,7 @@ func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 	return reps, nil
 }
 
-func (db *db) loadAndPublishReplicators(ctx context.Context) error {
+func (db *DB) loadAndPublishReplicators(ctx context.Context) error {
 	replicators, err := db.GetAllReplicators(ctx)
 	if err != nil {
 		return err
@@ -353,7 +353,7 @@ func (db *db) loadAndPublishReplicators(ctx context.Context) error {
 }
 
 // handleReplicatorRetries manages retries for failed replication attempts.
-func (db *db) handleReplicatorRetries(ctx context.Context) {
+func (db *DB) handleReplicatorRetries(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -365,7 +365,7 @@ func (db *db) handleReplicatorRetries(ctx context.Context) {
 	}
 }
 
-func (db *db) handleReplicatorFailure(ctx context.Context, peerID, docID string) error {
+func (db *DB) handleReplicatorFailure(ctx context.Context, peerID, docID string) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -387,7 +387,7 @@ func (db *db) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 	return txn.Commit(ctx)
 }
 
-func (db *db) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
+func (db *DB) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -491,7 +491,7 @@ func createIfNotExistsReplicatorRetry(
 	return nil
 }
 
-func (db *db) retryReplicators(ctx context.Context) {
+func (db *DB) retryReplicators(ctx context.Context) {
 	q := query.Query{
 		Prefix: keys.REPLICATOR_RETRY_ID,
 	}
@@ -546,7 +546,7 @@ func (db *db) retryReplicators(ctx context.Context) {
 	}
 }
 
-func (db *db) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+func (db *DB) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
 	rInfo.Retrying = true
 	rInfo.NumRetries++
 	b, err := cbor.Marshal(rInfo)
@@ -598,7 +598,7 @@ func setReplicatorNextRetry(
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryDoc step, there
 // would be a high chance of unnecessary transaction conflicts.
-func (db *db) retryReplicator(ctx context.Context, peerID string) {
+func (db *DB) retryReplicator(ctx context.Context, peerID string) {
 	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
 	key := keys.NewReplicatorRetryDocIDKey(peerID, "")
 	q := query.Query{
@@ -642,7 +642,7 @@ func (db *db) retryReplicator(ctx context.Context, peerID string) {
 	}
 }
 
-func (db *db) retryDoc(ctx context.Context, docID string) error {
+func (db *DB) retryDoc(ctx context.Context, docID string) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -728,7 +728,7 @@ func deleteReplicatorRetryIfNoMoreDocs(
 }
 
 // deleteReplicatorRetryAndDocs deletes the replicator retry and all retry docs.
-func (db *db) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) error {
+func (db *DB) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) error {
 	key := keys.NewReplicatorRetryIDKey(peerID)
 	err := db.Peerstore().Delete(ctx, key.ToDS())
 	if err != nil {

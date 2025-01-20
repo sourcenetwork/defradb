@@ -168,9 +168,10 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 					"name": "John",
 				},
 			},
-			testUtils.WaitForSync{},
 			testUtils.Request{
-				// Ensure that the document is accessible on all nodes to authorized actors
+				// The document will only be accessible on node 0 since node 1 is not authorized to
+				// access the document.
+				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -185,6 +186,22 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 							"name": "John",
 						},
 					},
+				},
+			},
+			testUtils.Request{
+				// Since node 1 is not authorized to access the document, it won't have to document
+				// so even if requesting with an authorized identity, the document won't be returned.
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
 				},
 			},
 			testUtils.Request{

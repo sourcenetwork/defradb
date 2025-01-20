@@ -19,28 +19,9 @@ import (
 const (
 	grpcServiceName = "defradb.net.Service"
 
-	serviceGetDocGraphName  = "/" + grpcServiceName + "/GetDocGraph"
-	servicePushDocGraphName = "/" + grpcServiceName + "/PushDocGraph"
-	serviceGetLogName       = "/" + grpcServiceName + "/GetLog"
-	servicePushLogName      = "/" + grpcServiceName + "/PushLog"
-	serviceGetHeadLogName   = "/" + grpcServiceName + "/GetHeadLog"
+	servicePushLogName     = "/" + grpcServiceName + "/PushLog"
+	serviceGetIdentityName = "/" + grpcServiceName + "/GetIdentity"
 )
-
-type getDocGraphRequest struct{}
-
-type getDocGraphReply struct{}
-
-type getHeadLogRequest struct{}
-
-type getHeadLogReply struct{}
-
-type getLogRequest struct{}
-
-type getLogReply struct{}
-
-type pushDocGraphRequest struct{}
-
-type pushDocGraphReply struct{}
 
 type pushLogRequest struct {
 	DocID      string
@@ -52,17 +33,45 @@ type pushLogRequest struct {
 
 type pushLogReply struct{}
 
+type getIdentityRequest struct {
+	// PeerID is the ID of the requesting peer.
+	// It will be used as the audience for the identity token.
+	PeerID string
+}
+
+type getIdentityReply struct {
+	// IdentityToken is the token that can be used to authenticate the peer.
+	IdentityToken []byte
+}
+
 type serviceServer interface {
-	// GetDocGraph from this peer.
-	GetDocGraph(context.Context, *getDocGraphRequest) (*getDocGraphReply, error)
-	// PushDocGraph to this peer.
-	PushDocGraph(context.Context, *pushDocGraphRequest) (*pushDocGraphReply, error)
-	// GetLog from this peer.
-	GetLog(context.Context, *getLogRequest) (*getLogReply, error)
-	// PushLog to this peer.
-	PushLog(context.Context, *pushLogRequest) (*pushLogReply, error)
-	// GetHeadLog from this peer
-	GetHeadLog(context.Context, *getHeadLogRequest) (*getHeadLogReply, error)
+	// pushLogHandler handles a push log request to sync blocks.
+	pushLogHandler(context.Context, *pushLogRequest) (*pushLogReply, error)
+	// getIdentityHandler handles an indentity request and returns the local node's identity.
+	getIdentityHandler(context.Context, *getIdentityRequest) (*getIdentityReply, error)
+}
+
+func getIdentityHandler(
+	srv any,
+	ctx context.Context,
+	dec func(any) error,
+	interceptor grpc.UnaryServerInterceptor,
+) (any, error) {
+	in := new(getIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(serviceServer).getIdentityHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: serviceGetIdentityName,
+	}
+	handler := func(ctx context.Context, req any) (any, error) {
+		return srv.(serviceServer).getIdentityHandler(ctx, req.(*getIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func pushLogHandler(
@@ -76,14 +85,14 @@ func pushLogHandler(
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(serviceServer).PushLog(ctx, in)
+		return srv.(serviceServer).pushLogHandler(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
 		FullMethod: servicePushLogName,
 	}
 	handler := func(ctx context.Context, req any) (any, error) {
-		return srv.(serviceServer).PushLog(ctx, req.(*pushLogRequest))
+		return srv.(serviceServer).pushLogHandler(ctx, req.(*pushLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,6 +105,10 @@ func registerServiceServer(s grpc.ServiceRegistrar, srv serviceServer) {
 			{
 				MethodName: "PushLog",
 				Handler:    pushLogHandler,
+			},
+			{
+				MethodName: "GetIdentity",
+				Handler:    getIdentityHandler,
 			},
 		},
 		Streams:  []grpc.StreamDesc{},

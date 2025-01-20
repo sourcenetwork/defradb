@@ -25,6 +25,7 @@ const (
 	errRequestingEncryptionKeys = "failed to request encryption keys with %v"
 	errTopicAlreadyExist        = "topic with name \"%s\" already exists"
 	errTopicDoesNotExist        = "topic with name \"%s\" does not exists"
+	errFailedToGetIdentity      = "failed to get identity"
 )
 
 var (
@@ -58,4 +59,8 @@ func NewErrTopicAlreadyExist(topic string) error {
 
 func NewErrTopicDoesNotExist(topic string) error {
 	return errors.New(fmt.Sprintf(errTopicDoesNotExist, topic))
+}
+
+func NewErrFailedToGetIdentity(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errFailedToGetIdentity, inner, kv...)
 }
