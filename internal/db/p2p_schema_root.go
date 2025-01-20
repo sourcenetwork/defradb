@@ -25,7 +25,7 @@ import (
 
 const marker = byte(0xff)
 
-func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	return txn.Commit(ctx)
 }
 
-func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	return txn.Commit(ctx)
 }
 
-func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return collectionIDs, nil
 }
 
-func (db *db) PeerInfo() peer.AddrInfo {
+func (db *DB) PeerInfo() peer.AddrInfo {
 	peerInfo := db.peerInfo.Load()
 	if peerInfo != nil {
 		return peerInfo.(peer.AddrInfo)
@@ -186,7 +186,7 @@ func (db *db) PeerInfo() peer.AddrInfo {
 	return peer.AddrInfo{}
 }
 
-func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
+func (db *DB) loadAndPublishP2PCollections(ctx context.Context) error {
 	schemaRoots, err := db.GetAllP2PCollections(ctx)
 	if err != nil {
 		return err

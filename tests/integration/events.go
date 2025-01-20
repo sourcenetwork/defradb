@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -155,6 +156,7 @@ func waitForUpdateEvents(
 	nodeID immutable.Option[int],
 	collectionIndex int,
 	docIDs map[string]struct{},
+	ident immutable.Option[identity],
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -197,7 +199,7 @@ func waitForUpdateEvents(
 			// we only need to update the network state if the nodes
 			// are configured for networking
 			if s.isNetworkEnabled {
-				updateNetworkState(s, i, evt)
+				updateNetworkState(s, i, evt, ident)
 			}
 		}
 	}
@@ -271,7 +273,7 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state, nodeID int, evt event.Update) {
+func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {
@@ -297,6 +299,13 @@ func updateNetworkState(s *state, nodeID int, evt event.Update) {
 		// connected nodes share updates of documents they have in common
 		if _, ok := s.nodes[id].p2p.actualDAGHeads[getUpdateEventKey(evt)]; ok {
 			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		}
+		if ident.HasValue() && ident.Value().selector != strconv.Itoa(id) {
+			// If the document is created by a specific identity, only the node with the
+			// same index as the identity can initially access it.
+			// If this network state update comes from the adding of an actor relationship,
+			// then the identity reflects that of the target node.
+			continue
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.nodes[id].p2p.peerCollections[collectionID]; ok {
