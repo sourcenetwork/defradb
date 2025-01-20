@@ -129,6 +129,10 @@ func (NormalVoid) DocumentArray() ([]*Document, bool) {
 	return nil, false
 }
 
+func (NormalVoid) JSONArray() ([]JSON, bool) {
+	return nil, false
+}
+
 func (NormalVoid) NillableBoolArray() ([]immutable.Option[bool], bool) {
 	return nil, false
 }

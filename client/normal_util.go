@@ -43,6 +43,9 @@ func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 		if v, ok := val.DocumentArray(); ok {
 			return toNormalArray(v, NewNormalDocument), nil
 		}
+		if v, ok := val.JSONArray(); ok {
+			return toNormalArray(v, NewNormalJSON), nil
+		}
 		if v, ok := val.NillableBoolArray(); ok {
 			return toNormalArray(v, NewNormalNillableBool), nil
 		}

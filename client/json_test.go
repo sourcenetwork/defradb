@@ -504,7 +504,7 @@ func TestNewJSONAndMarshalJSON(t *testing.T) {
 		},
 	}
 
-	path := []string{"some", "path"}
+	path := JSONPath{}.AppendProperty("some").AppendProperty("path")
 
 	for _, tt := range tests {
 		for _, withPath := range []bool{true, false} {
@@ -621,19 +621,19 @@ func TestNewJSONFromMap_WithPaths(t *testing.T) {
 	}
 }
 
-func traverseAndAssertPaths(t *testing.T, j JSON, parentPath []string) {
+func traverseAndAssertPaths(t *testing.T, j JSON, parentPath JSONPath) {
 	assert.Equal(t, parentPath, j.GetPath(), "Expected path %v, got %v", parentPath, j.GetPath())
 
 	if obj, isObj := j.Object(); isObj {
 		for k, v := range obj {
-			newPath := append(parentPath, k)
+			newPath := parentPath.AppendProperty(k)
 			traverseAndAssertPaths(t, v, newPath)
 		}
 	}
 
 	if arr, isArr := j.Array(); isArr {
-		for _, v := range arr {
-			traverseAndAssertPaths(t, v, parentPath)
+		for i, v := range arr {
+			traverseAndAssertPaths(t, v, parentPath.AppendIndex(uint64(i)))
 		}
 	}
 }

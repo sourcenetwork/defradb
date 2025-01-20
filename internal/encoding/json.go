@@ -104,14 +104,14 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 	case Null:
 		b = decodeNull(b)
 	default:
-		err = NewErrInvalidJSONPayload(b, path)
+		err = NewErrInvalidJSONPayload(b, path.String())
 	}
 
 	if err != nil {
 		return b, nil, err
 	}
 
-	result, err := client.NewJSON(jsonValue)
+	result, err := client.NewJSONWithPath(jsonValue, path)
 
 	if err != nil {
 		return b, nil, err
@@ -120,8 +120,8 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 	return b, result, nil
 }
 
-func decodeJSONPath(b []byte) ([]byte, []string, error) {
-	var path []string
+func decodeJSONPath(b []byte) ([]byte, client.JSONPath, error) {
+	var path client.JSONPath
 	for {
 		if len(b) == 0 {
 			break
@@ -130,12 +130,24 @@ func decodeJSONPath(b []byte) ([]byte, []string, error) {
 			b = b[1:]
 			break
 		}
-		rem, part, err := DecodeBytesAscending(b)
-		if err != nil {
-			return b, nil, NewErrInvalidJSONPath(b, err)
+
+		if PeekType(b) == Bytes {
+			remainder, part, err := DecodeBytesAscending(b)
+			if err != nil {
+				return b, nil, NewErrInvalidJSONPath(b, err)
+			}
+			path = path.AppendProperty(string(part))
+			b = remainder
+		} else {
+			// a part of the path can be either a property or an index, so if the type of the underlying
+			// encoded value is not Bytes it must be Uvarint.
+			rem, part, err := DecodeUvarintAscending(b)
+			if err != nil {
+				return b, nil, NewErrInvalidJSONPath(b, err)
+			}
+			path = path.AppendIndex(part)
+			b = rem
 		}
-		path = append(path, string(part))
-		b = rem
 	}
 	return b, path, nil
 }
@@ -143,8 +155,15 @@ func decodeJSONPath(b []byte) ([]byte, []string, error) {
 func encodeJSONPath(b []byte, v client.JSON) []byte {
 	b = append(b, jsonMarker)
 	for _, part := range v.GetPath() {
-		pathBytes := unsafeConvertStringToBytes(part)
-		b = EncodeBytesAscending(b, pathBytes)
+		if prop, ok := part.Property(); ok {
+			pathBytes := unsafeConvertStringToBytes(prop)
+			b = EncodeBytesAscending(b, pathBytes)
+		} else if _, ok := part.Index(); ok {
+			// the given json value is an array element and we want all array elements to be
+			// distinguishable. That's why we add a constant 0 prefix.
+			// We ignore the actual array index value because we have no way of using it at the moment.
+			b = EncodeUvarintAscending(b, 0)
+		}
 	}
 	b = append(b, ascendingBytesEscapes.escapedTerm)
 	return b

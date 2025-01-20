@@ -50,6 +50,10 @@ const (
 	opAny = "__any"
 )
 
+func isArrayCondition(op string) bool {
+	return op == compOpAny || op == compOpAll || op == compOpNone
+}
+
 // indexIterator is an iterator over index keys.
 // It is used to iterate over the index keys that match a specific condition.
 // For example, iteration over condition _eq and _gt will have completely different logic.
@@ -487,7 +491,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 type fieldFilterCond struct {
 	op       string
 	arrOp    string
-	jsonPath []string
+	jsonPath client.JSONPath
 	val      client.NormalValue
 	kind     client.FieldKind
 }
@@ -515,16 +519,32 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 			condMap := indexFilterCond.(map[connor.FilterKey]any)
 
-			jsonPath := []string{}
+			jsonPath := client.JSONPath{}
 			if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
 			jsonPathLoop:
 				for {
 					for key, filterVal := range condMap {
 						prop, ok := key.(*mapper.ObjectProperty)
 						if !ok {
+							// if filter contains an array condition, we need to append index 0 to the json path
+							// to limit the search only to array elements
+							op, ok := key.(*mapper.Operator)
+							if ok && isArrayCondition(op.Operation) {
+								if op.Operation == compOpNone {
+									// if the array condition is _none it doesn't make sense to use index  because
+									// values picked by the index is random guessing. For example if we have doc1
+									// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
+									// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
+									// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
+									// so on until it exhaust all prefixes in ascending order.
+									// It might be even less effective than just scanning all documents.
+									return nil, nil
+								}
+								jsonPath = jsonPath.AppendIndex(0)
+							}
 							break jsonPathLoop
 						}
-						jsonPath = append(jsonPath, prop.Name)
+						jsonPath = jsonPath.AppendProperty(prop.Name)
 						condMap = filterVal.(map[connor.FilterKey]any)
 					}
 				}
@@ -539,22 +559,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 				var err error
 				if len(jsonPath) > 0 {
-					var jsonVal client.JSON
-					if cond.op == compOpAny || cond.op == compOpAll || cond.op == compOpNone {
-						subCondMap := filterVal.(map[connor.FilterKey]any)
-						for subKey, subVal := range subCondMap {
-							cond.arrOp = cond.op
-							cond.op = subKey.(*mapper.Operator).Operation
-							jsonVal, err = client.NewJSONWithPath(subVal, jsonPath)
-							// the sub condition is supposed to have only 1 record
-							break
-						}
-					} else {
-						jsonVal, err = client.NewJSONWithPath(filterVal, jsonPath)
-					}
-					if err == nil {
-						cond.val = client.NewNormalJSON(jsonVal)
-					}
+					err = setJSONFilterCondition(&cond, filterVal, jsonPath)
 				} else if filterVal == nil {
 					cond.val, err = client.NewNormalNil(cond.kind)
 				} else if !f.indexedFields[i].Kind.IsArray() {
@@ -592,6 +597,72 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 		}
 	}
 	return result, nil
+}
+
+// setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that
+// it can be used to fetch the indexed data.
+func setJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath client.JSONPath) error {
+	if isArrayCondition(cond.op) {
+		subCondMap := filterVal.(map[connor.FilterKey]any)
+		for subKey, subVal := range subCondMap {
+			cond.arrOp = cond.op
+			cond.op = subKey.(*mapper.Operator).Operation
+			jsonVal, err := client.NewJSONWithPath(subVal, jsonPath)
+			if err != nil {
+				return err
+			}
+			cond.val = client.NewNormalJSON(jsonVal)
+			// the array sub condition (_any, _all or _none) is supposed to have only 1 record
+			break
+		}
+	} else if cond.op == opIn {
+		// values in _in operator should not be considered as array elements just because they happened
+		// to be written as an array in the filter. We need to convert them to normal values and
+		// treat them individually.
+		var jsonVals []client.JSON
+		if anyArr, ok := filterVal.([]any); ok {
+			// if filter value is []any we convert each value separately because JSON might have
+			// array elements of different types. That's why we can't just pass it directly to
+			// client.ToArrayOfNormalValues
+			jsonVals = make([]client.JSON, 0, len(anyArr))
+			for _, val := range anyArr {
+				jsonVal, err := client.NewJSONWithPath(val, jsonPath)
+				if err != nil {
+					return err
+				}
+				jsonVals = append(jsonVals, jsonVal)
+			}
+		} else {
+			normValue, err := client.NewNormalValue(filterVal)
+			if err != nil {
+				return err
+			}
+			normArr, err := client.ToArrayOfNormalValues(normValue)
+			if err != nil {
+				return err
+			}
+			jsonVals = make([]client.JSON, 0, len(normArr))
+			for _, val := range normArr {
+				jsonVal, err := client.NewJSONWithPath(val.Unwrap(), jsonPath)
+				if err != nil {
+					return err
+				}
+				jsonVals = append(jsonVals, jsonVal)
+			}
+		}
+		normJSONs, err := client.NewNormalValue(jsonVals)
+		if err != nil {
+			return err
+		}
+		cond.val = normJSONs
+	} else {
+		jsonVal, err := client.NewJSONWithPath(filterVal, jsonPath)
+		if err != nil {
+			return err
+		}
+		cond.val = client.NewNormalJSON(jsonVal)
+	}
+	return nil
 }
 
 // isUniqueFetchByFullKey checks if the only index key can be fetched by the full index key.
