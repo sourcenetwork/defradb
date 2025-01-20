@@ -123,13 +123,13 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	var top fetcher
 	top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &execInfo)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	if f.showDeleted {
 		deletedFetcher, err := newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Deleted, &execInfo)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		top = newMultiFetcher(top, deletedFetcher)
