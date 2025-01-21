@@ -132,13 +132,15 @@ func decodeJSONPath(b []byte) ([]byte, client.JSONPath, error) {
 		}
 
 		if PeekType(b) == Bytes {
-			rem, part, err := DecodeBytesAscending(b)
+			remainder, part, err := DecodeBytesAscending(b)
 			if err != nil {
 				return b, nil, NewErrInvalidJSONPath(b, err)
 			}
 			path = path.AppendProperty(string(part))
-			b = rem
+			b = remainder
 		} else {
+			// a part of the path can be either a property or an index, so if the type of the underlying
+			// encoded value is not Bytes it must be Uvarint.
 			rem, part, err := DecodeUvarintAscending(b)
 			if err != nil {
 				return b, nil, NewErrInvalidJSONPath(b, err)
@@ -157,6 +159,9 @@ func encodeJSONPath(b []byte, v client.JSON) []byte {
 			pathBytes := unsafeConvertStringToBytes(prop)
 			b = EncodeBytesAscending(b, pathBytes)
 		} else if _, ok := part.Index(); ok {
+			// the given json value is an array element and we want all array elements to be
+			// distinguishable. That's why we add a constant 0 prefix.
+			// We ignore the actual array index value because we have no way of using it at the moment.
 			b = EncodeUvarintAscending(b, 0)
 		}
 	}

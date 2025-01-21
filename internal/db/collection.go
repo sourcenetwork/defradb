@@ -42,7 +42,7 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *db
+	db             *DB
 	def            client.CollectionDefinition
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
@@ -55,7 +55,7 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
+func (db *DB) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
 	return &collection{
 		db:  db,
 		def: client.CollectionDefinition{Description: desc, Schema: schema},
@@ -77,7 +77,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
 }
 
-func (db *db) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
+func (db *DB) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
 	txn := mustGetContextTxn(ctx)
 
 	col, err := description.GetCollectionByID(ctx, txn, id)
@@ -101,7 +101,7 @@ func (db *db) getCollectionByID(ctx context.Context, id uint32) (client.Collecti
 }
 
 // getCollectionByName returns an existing collection within the database.
-func (db *db) getCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
 		return nil, ErrCollectionNameEmpty
 	}
@@ -120,7 +120,7 @@ func (db *db) getCollectionByName(ctx context.Context, name string) (client.Coll
 //
 // Inactive collections are not returned by default unless a specific schema version ID
 // is provided.
-func (db *db) getCollections(
+func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
@@ -219,7 +219,7 @@ func (db *db) getCollections(
 }
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
-func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
+func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
 	txn := mustGetContextTxn(ctx)
 
 	cols, err := description.GetActiveCollections(ctx, txn)
@@ -779,7 +779,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	}
 
 	filter := fmt.Sprintf(
-		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
+		`%s: {_ne: "%s"}, %s: {_eq: "%s"}`,
 		request.DocIDFieldName,
 		docID,
 		fieldDescription.Name,

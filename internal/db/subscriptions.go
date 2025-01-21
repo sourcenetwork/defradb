@@ -23,7 +23,7 @@ import (
 // handleSubscription checks for a subscription within the given request and
 // starts a new go routine that will return all subscription results on the returned
 // channel. If a subscription does not exist on the given request nil will be returned.
-func (db *db) handleSubscription(ctx context.Context, r *request.Request) (<-chan client.GQLResult, error) {
+func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-chan client.GQLResult, error) {
 	if len(r.Subscription) == 0 || len(r.Subscription[0].Selections) == 0 {
 		return nil, nil // This is not a subscription request and we have nothing to do here
 	}

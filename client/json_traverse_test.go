@@ -38,6 +38,22 @@ func getArrayValue(j JSON) []JSON {
 	panic("expected array value")
 }
 
+// Creates a path from mixed string/integer values
+func makeJSONPath[T string | int | uint64](parts ...T) JSONPath {
+	path := JSONPath{}
+	for _, part := range parts {
+		switch val := any(part).(type) {
+		case string:
+			path = path.AppendProperty(val)
+		case int:
+			path = path.AppendIndex(uint64(val))
+		case uint64:
+			path = path.AppendIndex(val)
+		}
+	}
+	return path
+}
+
 func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 	// Create a complex JSON structure for testing
 	json := newJSONObject(map[string]JSON{
@@ -102,7 +118,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 		{
 			name: "WithPrefix_Object",
 			options: []traverseJSONOption{
-				TraverseJSONWithPrefix(MakeJSONPath("object")),
+				TraverseJSONWithPrefix(makeJSONPath("object")),
 			},
 			expected: []traverseNode{
 				{path: "object", value: getObjectValue(json)["object"]},
@@ -114,7 +130,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 		{
 			name: "WithPrefix_Deep",
 			options: []traverseJSONOption{
-				TraverseJSONWithPrefix(MakeJSONPath("object", "deep")),
+				TraverseJSONWithPrefix(makeJSONPath("object", "deep")),
 			},
 			expected: []traverseNode{
 				{path: "object.deep", value: getObjectValue(getObjectValue(json)["object"])["deep"]},
@@ -197,7 +213,7 @@ func TestTraverseJSON_ShouldVisitAccordingToConfig(t *testing.T) {
 			options: []traverseJSONOption{
 				TraverseJSONOnlyLeaves(),
 				TraverseJSONVisitArrayElements(true),
-				TraverseJSONWithPrefix(MakeJSONPath("array")),
+				TraverseJSONWithPrefix(makeJSONPath("array")),
 				TraverseJSONWithArrayIndexInPath(),
 			},
 			expected: []traverseNode{
@@ -406,37 +422,37 @@ func TestShouldVisitPath(t *testing.T) {
 		{
 			name:     "EmptyPrefix",
 			prefix:   JSONPath{},
-			path:     MakeJSONPath("a", "b"),
+			path:     makeJSONPath("a", "b"),
 			expected: true,
 		},
 		{
 			name:     "ExactMatch",
-			prefix:   MakeJSONPath("a", "b"),
-			path:     MakeJSONPath("a", "b"),
+			prefix:   makeJSONPath("a", "b"),
+			path:     makeJSONPath("a", "b"),
 			expected: true,
 		},
 		{
 			name:     "PrefixMatch",
-			prefix:   MakeJSONPath("a"),
-			path:     MakeJSONPath("a", "b"),
+			prefix:   makeJSONPath("a"),
+			path:     makeJSONPath("a", "b"),
 			expected: true,
 		},
 		{
 			name:     "NoMatch",
-			prefix:   MakeJSONPath("a", "b"),
-			path:     MakeJSONPath("a", "c"),
+			prefix:   makeJSONPath("a", "b"),
+			path:     makeJSONPath("a", "c"),
 			expected: false,
 		},
 		{
 			name:     "PathTooShort",
-			prefix:   MakeJSONPath("a", "b"),
-			path:     MakeJSONPath("a"),
+			prefix:   makeJSONPath("a", "b"),
+			path:     makeJSONPath("a"),
 			expected: true,
 		},
 		{
 			name:     "PathLonger",
-			prefix:   MakeJSONPath("a", "b"),
-			path:     MakeJSONPath("a", "b", "c"),
+			prefix:   makeJSONPath("a", "b"),
+			path:     makeJSONPath("a", "b", "c"),
 			expected: true,
 		},
 	}

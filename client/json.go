@@ -22,44 +22,43 @@ import (
 
 // JSONPathPart represents a part of a JSON path.
 // Json path can be either a property of an object or an index of an element in an array.
-// For example, the paths to both values 1 are very similar:
+// For example, consider the following JSON:
 //
 //	{
+//	  "custom": {
+//	    "name": "John"
+//	  },
 //	  "0": {
-//		"val": 1
-//	  }
-//	}
-//	[
-//	  {
 //	    "val": 1
-//	  }
-//	]
+//	  },
+//	  [
+//	    {
+//	      "val": 2
+//		}
+//	  ]
+//	}
 //
-// It can be described as "0.val" but they are different.
-type JSONPathPart interface {
-	// Property returns the property name if the part is a property, and a boolean indicating if the part is a property.
-	Property() (string, bool)
-	// Index returns the index if the part is an index, and a boolean indicating if the part is an index.
-	Index() (uint64, bool)
+// The path to a top-level document is empty.
+// The path to subtree { "name": "John" } can be described as "custom".
+// The path to value "John" can be described as "custom.name".
+// The paths to both values 1 and 2 can be described as "0.val":
+// - for value 1 it's "0" property of the object and "val" property of the object
+// - for value 2 it's "0" index of the array and "val" property of the object
+// That's why we need to distinguish between properties and indices in the path.
+type JSONPathPart struct {
+	value any
 }
 
-type propPathPart string
-type indexPathPart uint64
-
-func (p propPathPart) Property() (string, bool) {
-	return string(p), true
+// Property returns the property name if the part is a property, and a boolean indicating if the part is a property.
+func (p JSONPathPart) Property() (string, bool) {
+	v, ok := p.value.(string)
+	return v, ok
 }
 
-func (p propPathPart) Index() (uint64, bool) {
-	return 0, false
-}
-
-func (p indexPathPart) Property() (string, bool) {
-	return "", false
-}
-
-func (p indexPathPart) Index() (uint64, bool) {
-	return uint64(p), true
+// Index returns the index if the part is an index, and a boolean indicating if the part is an index.
+func (p JSONPathPart) Index() (uint64, bool) {
+	v, ok := p.value.(uint64)
+	return v, ok
 }
 
 // JSONPath represents a path to a JSON value in a JSON tree.
@@ -70,19 +69,14 @@ func (p JSONPath) Parts() []JSONPathPart {
 	return p
 }
 
-// Append appends a part to the JSON path.
-func (p JSONPath) Append(part JSONPathPart) JSONPath {
-	return append(p, part)
-}
-
 // AppendProperty appends a property part to the JSON path.
 func (p JSONPath) AppendProperty(part string) JSONPath {
-	return append(p, propPathPart(part))
+	return append(p, JSONPathPart{value: part})
 }
 
 // AppendIndex appends an index part to the JSON path.
 func (p JSONPath) AppendIndex(part uint64) JSONPath {
-	return append(p, indexPathPart(part))
+	return append(p, JSONPathPart{value: part})
 }
 
 // String returns the string representation of the JSON path.
@@ -103,28 +97,8 @@ func (p JSONPath) String() string {
 	return sb.String()
 }
 
-func toJSONPathPart[T string | int | uint64](v T) JSONPathPart {
-	switch val := any(v).(type) {
-	case string:
-		return propPathPart(val)
-	case int:
-		return indexPathPart(uint64(val))
-	case uint64:
-		return indexPathPart(val)
-	}
-	return nil
-}
-
-// Creates a path from mixed string/integer values
-func MakeJSONPath[T string | int | uint64](parts ...T) JSONPath {
-	path := make(JSONPath, len(parts))
-	for i, part := range parts {
-		path[i] = toJSONPathPart(part)
-	}
-	return path
-}
-
 // JSON represents a JSON value that can be any valid JSON type: object, array, number, string, boolean, or null.
+// It can also represent a subtree of a JSON tree.
 // It provides type-safe access to the underlying value through various accessor methods.
 type JSON interface {
 	json.Marshaler
@@ -163,7 +137,7 @@ type JSON interface {
 	// Returns an error if marshaling fails.
 	Marshal(w io.Writer) error
 
-	// GetPath returns the path of the JSON value in the JSON tree.
+	// GetPath returns the path of the JSON value (or subtree) in the JSON tree.
 	GetPath() JSONPath
 
 	// visit calls the visitor function for the JSON value at the given path.
@@ -654,14 +628,14 @@ func newJSONFromFastJSON(v *fastjson.Value, path JSONPath) JSON {
 		obj := make(map[string]JSON, fastObj.Len())
 		fastObj.Visit(func(k []byte, v *fastjson.Value) {
 			key := string(k)
-			obj[key] = newJSONFromFastJSON(v, path.Append(propPathPart(key)))
+			obj[key] = newJSONFromFastJSON(v, path.AppendProperty(key))
 		})
 		return newJSONObject(obj, path)
 	case fastjson.TypeArray:
 		fastArr := v.GetArray()
 		arr := make([]JSON, len(fastArr))
 		for i := range fastArr {
-			arr[i] = newJSONFromFastJSON(fastArr[i], path.Append(indexPathPart(uint64(i))))
+			arr[i] = newJSONFromFastJSON(fastArr[i], path.AppendIndex(uint64(i)))
 		}
 		return newJSONArray(arr, path)
 	case fastjson.TypeNumber:

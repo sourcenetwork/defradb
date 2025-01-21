@@ -535,6 +535,16 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 								// to limit the search only to array elements
 								op, ok := key.(*mapper.Operator)
 								if ok && isArrayCondition(op.Operation) {
+									if op.Operation == compOpNone {
+										// if the array condition is _none it doesn't make sense to use index  because
+										// values picked by the index is random guessing. For example if we have doc1
+										// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
+										// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
+										// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
+										// so on until it exhaust all prefixes in ascending order.
+										// It might be even less effective than just scanning all documents.
+										return true
+									}
 									jsonPath = jsonPath.AppendIndex(0)
 								}
 								break jsonPathLoop
@@ -552,16 +562,18 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 						kind:     indexedField.Kind,
 					}
 
-					if cond.op == compOpNone || cond.op == opNe {
-						// if the array condition is _none it doesn't make sense to use index
-						return true
-					}
+					// TODO: check what of this is needed if any
+					//if cond.op == opNe {
+					// if the array condition is _none it doesn't make sense to use index
+					//return true
+					//}
 
+					var err error
 					if len(jsonPath) > 0 {
-						err = determineJSONFilterCondition(&cond, filterVal, jsonPath)
+						err = setJSONFilterCondition(&cond, filterVal, jsonPath)
 					} else if filterVal == nil {
 						cond.val, err = client.NewNormalNil(cond.kind)
-					} else if !indexedField.Kind.IsArray() {
+					} else if !f.indexedFields[i].Kind.IsArray() {
 						cond.val, err = client.NewNormalValue(filterVal)
 					} else {
 						subCondMap := filterVal.(map[connor.FilterKey]any)
@@ -606,26 +618,26 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 	return result, nil
 }
 
-// determineJSONFilterCondition determines the condition and its corresponding operation for a
-// JSON filter condition.
-// It mutates the given condition to make it match the filter value and JSON path so that
+// setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that
 // it can be used to fetch the indexed data.
-func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath client.JSONPath) error {
-	var jsonVal client.JSON
-	var err error
+func setJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath client.JSONPath) error {
 	if isArrayCondition(cond.op) {
 		subCondMap := filterVal.(map[connor.FilterKey]any)
 		for subKey, subVal := range subCondMap {
 			cond.arrOp = cond.op
 			cond.op = subKey.(*mapper.Operator).Operation
-			jsonVal, err = client.NewJSONWithPath(subVal, jsonPath)
-			if err == nil {
-				cond.val = client.NewNormalJSON(jsonVal)
+			jsonVal, err := client.NewJSONWithPath(subVal, jsonPath)
+			if err != nil {
+				return err
 			}
+			cond.val = client.NewNormalJSON(jsonVal)
 			// the array sub condition (_any, _all or _none) is supposed to have only 1 record
 			break
 		}
 	} else if cond.op == opIn {
+		// values in _in operator should not be considered as array elements just because they happened
+		// to be written as an array in the filter. We need to convert them to normal values and
+		// treat them individually.
 		var jsonVals []client.JSON
 		if anyArr, ok := filterVal.([]any); ok {
 			// if filter value is []any we convert each value separately because JSON might have
@@ -633,7 +645,7 @@ func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath
 			// client.ToArrayOfNormalValues
 			jsonVals = make([]client.JSON, 0, len(anyArr))
 			for _, val := range anyArr {
-				jsonVal, err = client.NewJSONWithPath(val, jsonPath)
+				jsonVal, err := client.NewJSONWithPath(val, jsonPath)
 				if err != nil {
 					return err
 				}
@@ -650,7 +662,7 @@ func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath
 			}
 			jsonVals = make([]client.JSON, 0, len(normArr))
 			for _, val := range normArr {
-				jsonVal, err = client.NewJSONWithPath(val.Unwrap(), jsonPath)
+				jsonVal, err := client.NewJSONWithPath(val.Unwrap(), jsonPath)
 				if err != nil {
 					return err
 				}
@@ -663,7 +675,7 @@ func determineJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath
 		}
 		cond.val = normJSONs
 	} else {
-		jsonVal, err = client.NewJSONWithPath(filterVal, jsonPath)
+		jsonVal, err := client.NewJSONWithPath(filterVal, jsonPath)
 		if err != nil {
 			return err
 		}

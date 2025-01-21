@@ -504,7 +504,7 @@ func TestNewJSONAndMarshalJSON(t *testing.T) {
 		},
 	}
 
-	path := MakeJSONPath("some", "path")
+	path := JSONPath{}.AppendProperty("some").AppendProperty("path")
 
 	for _, tt := range tests {
 		for _, withPath := range []bool{true, false} {
