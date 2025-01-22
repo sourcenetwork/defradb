@@ -10,7 +10,7 @@ In the report we will benchmark the following DefraDB ACP Operations:
 - Registering Document(s) With Local ACP
 - Checking Document Access With Local ACP
 - Checking If Document Is Registered With Local ACP
-- Comparing the results with the previous benchmarks done in `acp_bench_report_10e0f38f.md`
+- Comparing the results with the previous benchmarks done in `acp_bench_report_20250114.md`
 
 ## Pre-Requisites
 
@@ -40,7 +40,7 @@ LOG_LEVEL=error humanbench go test -bench=. -benchmem -benchtime=10x
 ```
 
 ### Local ACP Setup
-- The setup remains the same as our previous report: `acp_bench_report_10e0f38f.md`
+- The setup remains the same as our previous report: `acp_bench_report_20250114.md`
 
 
 ## Benchmarking Local ACP Register Call
