@@ -27,7 +27,7 @@ func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	ctx, span := tracer.Start(ctx, "Collection.DeleteWithFilter")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)

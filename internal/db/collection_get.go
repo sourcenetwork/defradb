@@ -25,7 +25,7 @@ func (c *collection) Get(
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
-	ctx, span := tracer.Start(ctx, "Collection.Get")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	// create txn

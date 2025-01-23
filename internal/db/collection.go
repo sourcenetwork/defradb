@@ -268,7 +268,7 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	ctx, span := tracer.Start(ctx, "Collection.GetAllDocIDs")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
@@ -385,7 +385,7 @@ func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	ctx, span := tracer.Start(ctx, "Collection.Create")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -408,7 +408,7 @@ func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
-	ctx, span := tracer.Start(ctx, "Collection.CreateMany")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -494,7 +494,7 @@ func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	ctx, span := tracer.Start(ctx, "Collection.Update")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -558,7 +558,7 @@ func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	ctx, span := tracer.Start(ctx, "Collection.Save")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -856,7 +856,7 @@ func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	ctx, span := tracer.Start(ctx, "Collection.Delete")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -884,7 +884,7 @@ func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	ctx, span := tracer.Start(ctx, "Collection.Exists")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)

@@ -24,7 +24,6 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
-	"go.opentelemetry.io/otel"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -35,12 +34,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/metric"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 )
 
 var (
 	log    = corelog.NewLogger("db")
-	tracer = otel.Tracer("github.com/sourcenetwork/defradb/internal/db")
+	tracer = metric.NewTracer()
 )
 
 // make sure we match our client interface
@@ -213,7 +213,7 @@ func (db *DB) AddPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	ctx, span := tracer.Start(ctx, "AddPolicy")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.acp.HasValue() {
@@ -268,7 +268,7 @@ func (db *DB) AddDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddDocActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx, "AddDocActorRelationship")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.acp.HasValue() {
@@ -316,7 +316,7 @@ func (db *DB) DeleteDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteDocActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx, "DeleteDocActorRelationship")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.acp.HasValue() {

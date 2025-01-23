@@ -220,7 +220,7 @@ func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
-	ctx, span := tracer.Start(ctx, "Collection.CreateIndex")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -375,7 +375,7 @@ func (c *collection) indexExistingDocs(
 //
 // All index artifacts for existing documents related the index will be removed.
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	ctx, span := tracer.Start(ctx, "Collection.DropIndex")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -469,7 +469,7 @@ func (c *collection) loadIndexes(ctx context.Context) error {
 
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	ctx, span := tracer.Start(ctx, "Collection.GetIndexes")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)

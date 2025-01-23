@@ -40,7 +40,7 @@ const (
 )
 
 func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	ctx, span := tracer.Start(ctx, "SetReplicator")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	txn, err := db.NewTxn(ctx, false)
@@ -217,7 +217,7 @@ func (db *DB) getDocsHeads(
 }
 
 func (db *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	ctx, span := tracer.Start(ctx, "DeleteReplicator")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	txn, err := db.NewTxn(ctx, false)
@@ -313,7 +313,7 @@ func (db *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams)
 }
 
 func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	ctx, span := tracer.Start(ctx, "GetAllReplicators")
+	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	txn, err := db.NewTxn(ctx, true)
