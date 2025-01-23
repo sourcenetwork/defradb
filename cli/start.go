@@ -152,6 +152,10 @@ func MakeStartCommand() *cobra.Command {
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
+			err := configureTelemetry(cmd.Context(), cfg)
+			if err != nil {
+				log.ErrorE("failed to configure telemetry", err)
+			}
 			n, err := node.New(cmd.Context(), opts...)
 			if err != nil {
 				return err

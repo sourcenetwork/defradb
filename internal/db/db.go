@@ -22,9 +22,9 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	"go.opentelemetry.io/otel"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -39,7 +39,8 @@ import (
 )
 
 var (
-	log = corelog.NewLogger("db")
+	log    = corelog.NewLogger("db")
+	tracer = otel.Tracer("github.com/sourcenetwork/defradb/internal/db")
 )
 
 // make sure we match our client interface
@@ -212,6 +213,9 @@ func (db *DB) AddPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
+	ctx, span := tracer.Start(ctx, "AddPolicy")
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -264,6 +268,9 @@ func (db *DB) AddDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddDocActorRelationshipResult, error) {
+	ctx, span := tracer.Start(ctx, "AddDocActorRelationship")
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -309,6 +316,9 @@ func (db *DB) DeleteDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteDocActorRelationshipResult, error) {
+	ctx, span := tracer.Start(ctx, "DeleteDocActorRelationship")
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}

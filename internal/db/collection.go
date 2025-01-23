@@ -268,6 +268,9 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
+	ctx, span := tracer.Start(ctx, "Collection.GetAllDocIDs")
+	defer span.End()
+
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
@@ -382,6 +385,9 @@ func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx, "Collection.Create")
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -402,6 +408,9 @@ func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx, "Collection.CreateMany")
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -485,6 +494,9 @@ func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx, "Collection.Update")
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -546,6 +558,9 @@ func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx, "Collection.Save")
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -841,6 +856,9 @@ func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+	ctx, span := tracer.Start(ctx, "Collection.Delete")
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
@@ -866,6 +884,9 @@ func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+	ctx, span := tracer.Start(ctx, "Collection.Exists")
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err

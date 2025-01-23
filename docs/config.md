@@ -164,3 +164,11 @@ SourceHub ACP requests in order to create protected data.
 ## `secretfile`
 
 Path to the file containing secrets. Defaults to `.env`.
+
+## `telemetry.enabled`
+
+Enables OpenTelemetry HTTP exporters. Defaults to `false`.
+
+## `telemetry.endpoint`
+
+Sets the URL to send telemetry to. Defaults to `localhost:4318`.

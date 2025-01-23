@@ -25,6 +25,9 @@ func (c *collection) Get(
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
+	ctx, span := tracer.Start(ctx, "Collection.Get")
+	defer span.End()
+
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
