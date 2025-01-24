@@ -274,14 +274,14 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		return NewNormalString(v), nil
 
 	case FieldKind_STRING_ARRAY:
-		v, err := getArray(val, getString)
+		v, err := getArray(val, getString, field.Size)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalStringArray(v), nil
 
 	case FieldKind_NILLABLE_STRING_ARRAY:
-		v, err := getNillableArray(val, getString)
+		v, err := getNillableArray(val, getString, field.Size)
 		if err != nil {
 			return nil, err
 		}
@@ -295,39 +295,60 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		return NewNormalBool(v), nil
 
 	case FieldKind_BOOL_ARRAY:
-		v, err := getArray(val, getBool)
+		v, err := getArray(val, getBool, field.Size)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalBoolArray(v), nil
 
 	case FieldKind_NILLABLE_BOOL_ARRAY:
-		v, err := getNillableArray(val, getBool)
+		v, err := getNillableArray(val, getBool, field.Size)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalNillableBoolArray(v), nil
 
-	case FieldKind_NILLABLE_FLOAT:
+	case FieldKind_NILLABLE_FLOAT64:
 		v, err := getFloat64(val)
 		if err != nil {
 			return nil, err
 		}
-		return NewNormalFloat(v), nil
+		return NewNormalFloat64(v), nil
 
-	case FieldKind_FLOAT_ARRAY:
-		v, err := getArray(val, getFloat64)
+	case FieldKind_FLOAT64_ARRAY:
+		v, err := getArray(val, getFloat64, field.Size)
 		if err != nil {
 			return nil, err
 		}
-		return NewNormalFloatArray(v), nil
+		return NewNormalFloat64Array(v), nil
 
-	case FieldKind_NILLABLE_FLOAT_ARRAY:
-		v, err := getNillableArray(val, getFloat64)
+	case FieldKind_NILLABLE_FLOAT64_ARRAY:
+		v, err := getNillableArray(val, getFloat64, field.Size)
 		if err != nil {
 			return nil, err
 		}
-		return NewNormalNillableFloatArray(v), nil
+		return NewNormalNillableFloat64Array(v), nil
+
+	case FieldKind_NILLABLE_FLOAT32:
+		v, err := getFloat32(val)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalFloat32(v), nil
+
+	case FieldKind_FLOAT32_ARRAY:
+		v, err := getArray(val, getFloat32, field.Size)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalFloat32Array(v), nil
+
+	case FieldKind_NILLABLE_FLOAT32_ARRAY:
+		v, err := getNillableArray(val, getFloat32, field.Size)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableFloat32Array(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
 		v, err := getDateTime(val)
@@ -344,14 +365,14 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		return NewNormalInt(v), nil
 
 	case FieldKind_INT_ARRAY:
-		v, err := getArray(val, getInt64)
+		v, err := getArray(val, getInt64, field.Size)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalIntArray(v), nil
 
 	case FieldKind_NILLABLE_INT_ARRAY:
-		v, err := getNillableArray(val, getInt64)
+		v, err := getNillableArray(val, getInt64, field.Size)
 		if err != nil {
 			return nil, err
 		}
@@ -397,10 +418,35 @@ func getFloat64(v any) (float64, error) {
 		return float64(val), nil
 	case int64:
 		return float64(val), nil
+	case float32:
+		return float64(val), nil
 	case float64:
 		return val, nil
 	default:
 		return 0, NewErrUnexpectedType[float64]("field", v)
+	}
+}
+
+func getFloat32(v any) (float32, error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		f64, err := val.Float64()
+		if err != nil {
+			return 0, err
+		}
+		return float32(f64), nil
+	case int:
+		return float32(val), nil
+	case int32:
+		return float32(val), nil
+	case int64:
+		return float32(val), nil
+	case float32:
+		return val, nil
+	case float64:
+		return float32(val), nil
+	default:
+		return 0, NewErrUnexpectedType[float32]("field", v)
 	}
 }
 
@@ -441,7 +487,9 @@ func getDateTime(v any) (time.Time, error) {
 func getArray[T any](
 	v any,
 	typeGetter func(any) (T, error),
+	size int,
 ) ([]T, error) {
+	array := []T{}
 	switch val := v.(type) {
 	case *fastjson.Value:
 		if val.Type() == fastjson.TypeNull {
@@ -463,8 +511,7 @@ func getArray[T any](
 				return nil, err
 			}
 		}
-
-		return arr, nil
+		array = arr
 	case []any:
 		arr := make([]T, len(val))
 		for i, arrItem := range val {
@@ -475,18 +522,22 @@ func getArray[T any](
 			}
 		}
 
-		return arr, nil
+		array = arr
 	case []T:
-		return val, nil
-	default:
-		return []T{}, nil
+		array = val
 	}
+	if size != 0 && len(array) != size {
+		return nil, NewErrArraySizeMismatch(array, size)
+	}
+	return array, nil
 }
 
 func getNillableArray[T any](
 	v any,
 	typeGetter func(any) (T, error),
+	size int,
 ) ([]immutable.Option[T], error) {
+	array := []immutable.Option[T]{}
 	switch val := v.(type) {
 	case *fastjson.Value:
 		if val.Type() == fastjson.TypeNull {
@@ -511,7 +562,7 @@ func getNillableArray[T any](
 			arr[i] = immutable.Some(v)
 		}
 
-		return arr, nil
+		array = arr
 	case []any:
 		arr := make([]immutable.Option[T], len(val))
 		for i, arrItem := range val {
@@ -526,12 +577,14 @@ func getNillableArray[T any](
 			arr[i] = immutable.Some(v)
 		}
 
-		return arr, nil
+		array = arr
 	case []immutable.Option[T]:
-		return val, nil
-	default:
-		return []immutable.Option[T]{}, nil
+		array = val
 	}
+	if size != 0 && len(array) != size {
+		return nil, NewErrArraySizeMismatch(array, size)
+	}
+	return array, nil
 }
 
 // Head returns the current head CID of the document.

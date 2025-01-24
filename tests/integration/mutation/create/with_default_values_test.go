@@ -31,6 +31,8 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
+						points32: Float32 @default(float32: 11)
+						points64: Float64 @default(float64: 12)
 						metadata: JSON @default(json: "{\"one\":1}")
 						image: Blob @default(blob: "ff0099")
 					}
@@ -47,6 +49,8 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 						active
 						name
 						points
+						points32
+						points64
 						created
 						metadata
 						image
@@ -59,6 +63,8 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 							"active":   true,
 							"name":     "Bob",
 							"points":   float64(10),
+							"points32": float64(11),
+							"points64": float64(12),
 							"created":  time.Time(time.Date(2000, time.July, 23, 3, 0, 0, 0, time.UTC)),
 							"metadata": "{\"one\":1}",
 							"image":    "ff0099",
@@ -84,6 +90,8 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
+						points32: Float @default(float: 11)
+						points64: Float @default(float: 12)
 						metadata: JSON @default(json: "{\"one\":1}")
 						image: Blob @default(blob: "ff0099")
 					}
@@ -95,6 +103,8 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 					"active":   nil,
 					"name":     nil,
 					"points":   nil,
+					"points32": nil,
+					"points64": nil,
 					"created":  nil,
 					"metadata": nil,
 					"image":    nil,
@@ -107,6 +117,8 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 						active
 						name
 						points
+						points32
+						points64
 						created
 						metadata
 						image
@@ -119,6 +131,8 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 							"active":   nil,
 							"name":     nil,
 							"points":   nil,
+							"points32": nil,
+							"points64": nil,
 							"created":  nil,
 							"metadata": nil,
 							"image":    nil,
@@ -144,6 +158,8 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
+						points32: Float @default(float: 11)
+						points64: Float @default(float: 12)
 						metadata: JSON @default(json: "{\"one\":1}")
 						image: Blob @default(blob: "ff0099")
 					}
@@ -155,6 +171,8 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 					"active":   false,
 					"name":     "Alice",
 					"points":   float64(5),
+					"points32": float32(6),
+					"points64": float64(7),
 					"created":  time.Time(time.Date(2024, time.June, 18, 1, 0, 0, 0, time.UTC)),
 					"metadata": "{\"two\":2}",
 					"image":    "aabb33",
@@ -167,6 +185,8 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 						active
 						name
 						points
+						points32
+						points64
 						created
 						metadata
 						image
@@ -179,6 +199,8 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 							"active":   false,
 							"name":     "Alice",
 							"points":   float64(5),
+							"points32": float32(6),
+							"points64": float64(7),
 							"created":  time.Time(time.Date(2024, time.June, 18, 1, 0, 0, 0, time.UTC)),
 							"metadata": "{\"two\":2}",
 							"image":    "aabb33",

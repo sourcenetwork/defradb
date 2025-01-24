@@ -57,6 +57,8 @@ const (
 	DefaultDirectivePropBool     = "bool"
 	DefaultDirectivePropInt      = "int"
 	DefaultDirectivePropFloat    = "float"
+	DefaultDirectivePropFloat32  = "float32"
+	DefaultDirectivePropFloat64  = "float64"
 	DefaultDirectivePropDateTime = "dateTime"
 	DefaultDirectivePropJSON     = "json"
 	DefaultDirectivePropBlob     = "blob"
@@ -129,6 +131,12 @@ func DefaultDirective() *gql.Directive {
 			},
 			DefaultDirectivePropFloat: &gql.ArgumentConfig{
 				Type: gql.Float,
+			},
+			DefaultDirectivePropFloat32: &gql.ArgumentConfig{
+				Type: Float32,
+			},
+			DefaultDirectivePropFloat64: &gql.ArgumentConfig{
+				Type: Float64,
 			},
 			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
 				Type: gql.DateTime,

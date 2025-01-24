@@ -76,3 +76,63 @@ func TestQueryPerformance_Simple(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test1)
 }
+
+func TestQueryPerformance_WithFloat32(t *testing.T) {
+	const benchReps = 10
+
+	getOptions := func(col string) []gen.Option {
+		return []gen.Option{
+			gen.WithTypeDemand(col, 500),
+			gen.WithFieldRange(col, "points", float32(0), float32(99)),
+		}
+	}
+
+	test1 := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name:   String
+						points:    Float32 
+						email:  String
+					}`,
+			},
+			testUtils.SchemaUpdate{
+				Schema: `
+					type IndexedUser {
+						name:   String
+						points:    Float32 @index
+						email:  String
+					}`,
+			},
+			testUtils.GenerateDocs{
+				Options: append(getOptions("User"), getOptions("IndexedUser")...),
+			},
+			testUtils.Benchmark{
+				Reps: benchReps,
+				BaseCase: testUtils.Request{Request: `
+					query {
+						User(filter: {points: {_eq: 33}}) {
+							name
+							points
+							email
+						}
+					}`,
+				},
+				OptimizedCase: testUtils.Request{Request: `
+					query {
+						IndexedUser(filter: {points: {_eq: 33}}) {
+							name
+							points
+							email
+						}
+					}`,
+				},
+				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
+				Factor:       2,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test1)
+}

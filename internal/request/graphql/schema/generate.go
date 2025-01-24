@@ -984,7 +984,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			hasSumableFields := false
 			// generate basic filter operator blocks for all the sumable types
 			for _, field := range obj.Fields() {
-				if field.Type == gql.Float || field.Type == gql.Int {
+				if field.Type == schemaTypes.Float32 || field.Type == schemaTypes.Float64 || field.Type == gql.Int {
 					hasSumableFields = true
 					fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					continue
@@ -1385,10 +1385,12 @@ func genTypeName(obj gql.Type, name string) string {
 func isNumericArray(list *gql.List) bool {
 	// We have to compare the names here, as the gql lib we use
 	// does not have an easier way to compare non-nullable types
-	return list.OfType.Name() == gql.NewNonNull(gql.Float).Name() ||
+	return list.OfType.Name() == gql.NewNonNull(schemaTypes.Float64).Name() ||
+		list.OfType.Name() == gql.NewNonNull(schemaTypes.Float32).Name() ||
 		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
 		list.OfType == gql.Int ||
-		list.OfType == gql.Float
+		list.OfType == schemaTypes.Float64 ||
+		list.OfType == schemaTypes.Float32
 }
 
 func genFilterOperatorName(fieldType gql.Type) string {

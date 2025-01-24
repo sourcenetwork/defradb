@@ -84,7 +84,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 							},
 							{
 								Name: "points",
-								Kind: client.FieldKind_NILLABLE_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT64,
 								Typ:  client.PN_COUNTER,
 							},
 						},
@@ -196,7 +196,85 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 							},
 							{
 								Name: "points",
-								Kind: client.FieldKind_NILLABLE_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT64,
+								Typ:  client.P_COUNTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
+	schemaVersionID := "bafkreifcyba45ov5zqi6dbhlu72rmf4wp3crjynjvvpq6iuauns2ofbvzi"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						points: Float64 @crdt(type: pcounter)
+					}
+				`,
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersionID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersionID,
+						Root:      schemaVersionID,
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "points",
+								Kind: client.FieldKind_NILLABLE_FLOAT64,
+								Typ:  client.P_COUNTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
+	schemaVersionID := "bafkreiaaxlm4lyqhdntsuvaotxqi2essky7oae34n7lyupqy64mxbtfwu4"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						points: Float32 @crdt(type: pcounter)
+					}
+				`,
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersionID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersionID,
+						Root:      schemaVersionID,
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "points",
+								Kind: client.FieldKind_NILLABLE_FLOAT32,
 								Typ:  client.P_COUNTER,
 							},
 						},

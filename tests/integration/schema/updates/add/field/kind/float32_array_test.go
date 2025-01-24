@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package create
+package kind
 
 import (
 	"testing"
@@ -16,128 +16,128 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestPCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Document creation with P Counter",
+		Description: "Test schema update, add field with kind float32 array (23)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John",
-					"points": 10
-				}`,
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 23} }
+					]
+				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
-						points
+						foo
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"_docID": "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d",
-							"name":   "John",
-							"points": int64(10),
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloat32ArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Document creation with float32 P Counter",
+		Description: "Test schema update, add field with kind float32 array (23) with create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						points: Float32 @crdt(type: pcounter)
 					}
 				`,
 			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 23} }
+					]
+				`,
+			},
 			testUtils.CreateDoc{
+				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"points": 10.1
+					"foo": [3.1, -8.1, 0]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
-						points
+						foo
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-311c7181-a73a-5695-98af-8c1d5c14c7a3",
-							"name":   "John",
-							"points": float32(10.1),
+							"name": "John",
+							"foo":  []float32{3.1, -8.1, 0},
 						},
 					},
 				},
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloat32ArraySubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Document creation with float64 P Counter",
+		Description: "Test schema update, add field with kind float32 array substitution with create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						points: Float64 @crdt(type: pcounter)
 					}
 				`,
 			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "[Float32!]"} }
+					]
+				`,
+			},
 			testUtils.CreateDoc{
+				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"points": 10.1
+					"foo": [3.1, -8.1, 0]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
-						points
+						foo
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-f7238bdc-2610-532c-a8ae-564f9ad8ee9f",
-							"name":   "John",
-							"points": float64(10.1),
+							"name": "John",
+							"foo":  []float32{3.1, -8.1, 0},
 						},
 					},
 				},
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }

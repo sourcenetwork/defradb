@@ -126,8 +126,10 @@ func (k ScalarKind) String() string {
 		return "Int"
 	case FieldKind_NILLABLE_DATETIME:
 		return "DateTime"
-	case FieldKind_NILLABLE_FLOAT:
-		return "Float"
+	case FieldKind_NILLABLE_FLOAT64:
+		return "Float64"
+	case FieldKind_NILLABLE_FLOAT32:
+		return "Float32"
 	case FieldKind_NILLABLE_STRING:
 		return "String"
 	case FieldKind_NILLABLE_BLOB:
@@ -161,10 +163,14 @@ func (k ScalarArrayKind) String() string {
 		return "[Int]"
 	case FieldKind_INT_ARRAY:
 		return "[Int!]"
-	case FieldKind_NILLABLE_FLOAT_ARRAY:
-		return "[Float]"
-	case FieldKind_FLOAT_ARRAY:
-		return "[Float!]"
+	case FieldKind_NILLABLE_FLOAT64_ARRAY:
+		return "[Float64]"
+	case FieldKind_FLOAT64_ARRAY:
+		return "[Float64!]"
+	case FieldKind_NILLABLE_FLOAT32_ARRAY:
+		return "[Float32]"
+	case FieldKind_FLOAT32_ARRAY:
+		return "[Float32!]"
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return "[String]"
 	case FieldKind_STRING_ARRAY:
@@ -196,10 +202,14 @@ func (k ScalarArrayKind) SubKind() FieldKind {
 		return FieldKind_NILLABLE_INT
 	case FieldKind_INT_ARRAY:
 		return FieldKind_NILLABLE_INT
-	case FieldKind_NILLABLE_FLOAT_ARRAY:
-		return FieldKind_NILLABLE_FLOAT
-	case FieldKind_FLOAT_ARRAY:
-		return FieldKind_NILLABLE_FLOAT
+	case FieldKind_NILLABLE_FLOAT64_ARRAY:
+		return FieldKind_NILLABLE_FLOAT64
+	case FieldKind_FLOAT64_ARRAY:
+		return FieldKind_NILLABLE_FLOAT64
+	case FieldKind_NILLABLE_FLOAT32_ARRAY:
+		return FieldKind_NILLABLE_FLOAT32
+	case FieldKind_FLOAT32_ARRAY:
+		return FieldKind_NILLABLE_FLOAT32
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return FieldKind_NILLABLE_STRING
 	case FieldKind_STRING_ARRAY:
@@ -322,28 +332,31 @@ func (k *NamedKind) IsArray() bool {
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
-	FieldKind_None                  ScalarKind      = 0
-	FieldKind_DocID                 ScalarKind      = 1
-	FieldKind_NILLABLE_BOOL         ScalarKind      = 2
-	FieldKind_BOOL_ARRAY            ScalarArrayKind = 3
-	FieldKind_NILLABLE_INT          ScalarKind      = 4
-	FieldKind_INT_ARRAY             ScalarArrayKind = 5
-	FieldKind_NILLABLE_FLOAT        ScalarKind      = 6
-	FieldKind_FLOAT_ARRAY           ScalarArrayKind = 7
-	_                               ScalarKind      = 8 // safe to repurpose (was never used)
-	_                               ScalarKind      = 9 // safe to repurpose (previously old field)
-	FieldKind_NILLABLE_DATETIME     ScalarKind      = 10
-	FieldKind_NILLABLE_STRING       ScalarKind      = 11
-	FieldKind_STRING_ARRAY          ScalarArrayKind = 12
-	FieldKind_NILLABLE_BLOB         ScalarKind      = 13
-	FieldKind_NILLABLE_JSON         ScalarKind      = 14
-	_                               ScalarKind      = 15 // safe to repurpose (was never used)
-	_                               ScalarKind      = 16 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT
-	_                               ScalarKind      = 17 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT_ARRAY
-	FieldKind_NILLABLE_BOOL_ARRAY   ScalarArrayKind = 18
-	FieldKind_NILLABLE_INT_ARRAY    ScalarArrayKind = 19
-	FieldKind_NILLABLE_FLOAT_ARRAY  ScalarArrayKind = 20
-	FieldKind_NILLABLE_STRING_ARRAY ScalarArrayKind = 21
+	FieldKind_None                   ScalarKind      = 0
+	FieldKind_DocID                  ScalarKind      = 1
+	FieldKind_NILLABLE_BOOL          ScalarKind      = 2
+	FieldKind_BOOL_ARRAY             ScalarArrayKind = 3
+	FieldKind_NILLABLE_INT           ScalarKind      = 4
+	FieldKind_INT_ARRAY              ScalarArrayKind = 5
+	FieldKind_NILLABLE_FLOAT64       ScalarKind      = 6
+	FieldKind_FLOAT64_ARRAY          ScalarArrayKind = 7
+	_                                ScalarKind      = 8 // safe to repurpose (was never used)
+	_                                ScalarKind      = 9 // safe to repurpose (previously old field)
+	FieldKind_NILLABLE_DATETIME      ScalarKind      = 10
+	FieldKind_NILLABLE_STRING        ScalarKind      = 11
+	FieldKind_STRING_ARRAY           ScalarArrayKind = 12
+	FieldKind_NILLABLE_BLOB          ScalarKind      = 13
+	FieldKind_NILLABLE_JSON          ScalarKind      = 14
+	_                                ScalarKind      = 15 // safe to repurpose (was never used)
+	_                                ScalarKind      = 16 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT
+	_                                ScalarKind      = 17 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT_ARRAY
+	FieldKind_NILLABLE_BOOL_ARRAY    ScalarArrayKind = 18
+	FieldKind_NILLABLE_INT_ARRAY     ScalarArrayKind = 19
+	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
+	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
+	FieldKind_NILLABLE_FLOAT32       ScalarKind      = 22
+	FieldKind_FLOAT32_ARRAY          ScalarArrayKind = 23
+	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 24
 )
 
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to
@@ -362,9 +375,15 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[Int]":              FieldKind_NILLABLE_INT_ARRAY,
 	"[Int!]":             FieldKind_INT_ARRAY,
 	"DateTime":           FieldKind_NILLABLE_DATETIME,
-	"Float":              FieldKind_NILLABLE_FLOAT,
-	"[Float]":            FieldKind_NILLABLE_FLOAT_ARRAY,
-	"[Float!]":           FieldKind_FLOAT_ARRAY,
+	"Float":              FieldKind_NILLABLE_FLOAT64,
+	"[Float]":            FieldKind_NILLABLE_FLOAT64_ARRAY,
+	"[Float!]":           FieldKind_FLOAT64_ARRAY,
+	"Float64":            FieldKind_NILLABLE_FLOAT64,
+	"[Float64]":          FieldKind_NILLABLE_FLOAT64_ARRAY,
+	"[Float64!]":         FieldKind_FLOAT64_ARRAY,
+	"Float32":            FieldKind_NILLABLE_FLOAT32,
+	"[Float32]":          FieldKind_NILLABLE_FLOAT32_ARRAY,
+	"[Float32!]":         FieldKind_FLOAT32_ARRAY,
 	"String":             FieldKind_NILLABLE_STRING,
 	"[String]":           FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":          FieldKind_STRING_ARRAY,
@@ -449,9 +468,10 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 			return nil, err
 		}
 		switch intKind {
-		case uint8(FieldKind_BOOL_ARRAY), uint8(FieldKind_INT_ARRAY), uint8(FieldKind_FLOAT_ARRAY),
+		case uint8(FieldKind_BOOL_ARRAY), uint8(FieldKind_INT_ARRAY), uint8(FieldKind_FLOAT64_ARRAY),
 			uint8(FieldKind_STRING_ARRAY), uint8(FieldKind_NILLABLE_BOOL_ARRAY), uint8(FieldKind_NILLABLE_INT_ARRAY),
-			uint8(FieldKind_NILLABLE_FLOAT_ARRAY), uint8(FieldKind_NILLABLE_STRING_ARRAY):
+			uint8(FieldKind_NILLABLE_FLOAT64_ARRAY), uint8(FieldKind_NILLABLE_STRING_ARRAY),
+			uint8(FieldKind_FLOAT32_ARRAY), uint8(FieldKind_NILLABLE_FLOAT32_ARRAY):
 			return ScalarArrayKind(intKind), nil
 		default:
 			return ScalarKind(intKind), nil

@@ -148,12 +148,20 @@ These are the set of filter operators available for use when filtering on Boolea
 These are the set of filter operators available for use when filtering on DateTime
  values.
 `
-	floatOperatorBlockDescription string = `
-These are the set of filter operators available for use when filtering on Float
+	float32OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float32
  values.
 `
-	notNullFloatOperatorBlockDescription string = `
-These are the set of filter operators available for use when filtering on Float!
+	notNullFloat32OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float32!
+ values.
+`
+	float64OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float64
+ values.
+`
+	notNullFloat64OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float64!
  values.
 `
 	intOperatorBlockDescription string = `

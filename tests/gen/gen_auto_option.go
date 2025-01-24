@@ -30,7 +30,7 @@ func WithTypeDemandRange(typeName string, min, max int) Option {
 }
 
 // WithTypeDemandRange configures the value range for a field.
-func WithFieldRange[T int | float64](typeName, fieldName string, min, max T) Option {
+func WithFieldRange[T int | float64 | float32](typeName, fieldName string, min, max T) Option {
 	return func(g *docsGenConfigurator) {
 		conf := g.config.ForField(typeName, fieldName)
 		conf.props["min"] = min

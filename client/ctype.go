@@ -40,7 +40,7 @@ func (t CType) IsSupportedFieldCType() bool {
 func (t CType) IsCompatibleWith(kind FieldKind) bool {
 	switch t {
 	case PN_COUNTER, P_COUNTER:
-		if kind == FieldKind_NILLABLE_INT || kind == FieldKind_NILLABLE_FLOAT {
+		if kind == FieldKind_NILLABLE_INT || kind == FieldKind_NILLABLE_FLOAT64 || kind == FieldKind_NILLABLE_FLOAT32 {
 			return true
 		}
 		return false

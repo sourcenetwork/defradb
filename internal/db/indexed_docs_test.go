@@ -234,7 +234,7 @@ indexLoop:
 					if fieldName == usersAgeFieldName {
 						kind = client.FieldKind_NILLABLE_INT
 					} else if fieldName == usersWeightFieldName {
-						kind = client.FieldKind_NILLABLE_FLOAT
+						kind = client.FieldKind_NILLABLE_FLOAT64
 					}
 					val, err = client.NewNormalNil(kind)
 					require.NoError(b.f.t, err)

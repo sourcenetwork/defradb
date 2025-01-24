@@ -375,3 +375,141 @@ func TestSchemaSimple_WithJSONField_CreatesSchemaGivenType(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaSimple_WithFloat32Field_CreatesSchemaGivenType(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						data: Float32
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users",
+						"fields": DefaultFields.Append(
+							Field{
+								"name": "data",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Float32",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaSimple_WithFloat64Field_CreatesSchemaGivenType(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						data: Float64
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users",
+						"fields": DefaultFields.Append(
+							Field{
+								"name": "data",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Float64",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaSimple_WithFloatField_CreatesSchemaGivenType(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						data: Float
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users",
+						"fields": DefaultFields.Append(
+							Field{
+								"name": "data",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Float64",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

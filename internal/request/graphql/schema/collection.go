@@ -13,6 +13,7 @@ package schema
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -30,6 +31,8 @@ const (
 	typeBoolean  string = "Boolean"
 	typeInt      string = "Int"
 	typeFloat    string = "Float"
+	typeFloat32  string = "Float32"
+	typeFloat64  string = "Float64"
 	typeDateTime string = "DateTime"
 	typeString   string = "String"
 	typeBlob     string = "Blob"
@@ -43,6 +46,8 @@ var TypeToDefaultPropName = map[string]string{
 	typeBoolean:  types.DefaultDirectivePropBool,
 	typeInt:      types.DefaultDirectivePropInt,
 	typeFloat:    types.DefaultDirectivePropFloat,
+	typeFloat32:  types.DefaultDirectivePropFloat32,
+	typeFloat64:  types.DefaultDirectivePropFloat64,
 	typeDateTime: types.DefaultDirectivePropDateTime,
 	typeJSON:     types.DefaultDirectivePropJSON,
 	typeBlob:     types.DefaultDirectivePropBlob,
@@ -435,6 +440,10 @@ func defaultFromAST(
 		value = gql.Int.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropFloat:
 		value = gql.Float.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropFloat32:
+		value = types.Float32.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropFloat64:
+		value = types.Float64.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropBool:
 		value = gql.Boolean.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropString:
@@ -742,8 +751,10 @@ func astTypeToKind(
 				return client.FieldKind_BOOL_ARRAY, nil
 			case typeInt:
 				return client.FieldKind_INT_ARRAY, nil
-			case typeFloat:
-				return client.FieldKind_FLOAT_ARRAY, nil
+			case typeFloat, typeFloat64:
+				return client.FieldKind_FLOAT64_ARRAY, nil
+			case typeFloat32:
+				return client.FieldKind_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
 			default:
@@ -756,8 +767,10 @@ func astTypeToKind(
 				return client.FieldKind_NILLABLE_BOOL_ARRAY, nil
 			case typeInt:
 				return client.FieldKind_NILLABLE_INT_ARRAY, nil
-			case typeFloat:
-				return client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
+			case typeFloat, typeFloat64:
+				return client.FieldKind_NILLABLE_FLOAT64_ARRAY, nil
+			case typeFloat32:
+				return client.FieldKind_NILLABLE_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
 			default:
@@ -773,8 +786,10 @@ func astTypeToKind(
 			return client.FieldKind_NILLABLE_BOOL, nil
 		case typeInt:
 			return client.FieldKind_NILLABLE_INT, nil
-		case typeFloat:
-			return client.FieldKind_NILLABLE_FLOAT, nil
+		case typeFloat, typeFloat64:
+			return client.FieldKind_NILLABLE_FLOAT64, nil
+		case typeFloat32:
+			return client.FieldKind_NILLABLE_FLOAT32, nil
 		case typeDateTime:
 			return client.FieldKind_NILLABLE_DATETIME, nil
 		case typeString:

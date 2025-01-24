@@ -17,6 +17,38 @@ import (
 	"math"
 )
 
+// EncodeUint32Ascending encodes the uint32 value using a big-endian 4 byte
+// representation. The bytes are appended to the supplied buffer and
+// the final buffer is returned.
+func EncodeUint32Ascending(b []byte, v uint32) []byte {
+	return append(b,
+		byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
+}
+
+// EncodeUint32Descending encodes the uint32 value so that it sorts in
+// reverse order, from largest to smallest.
+func EncodeUint32Descending(b []byte, v uint32) []byte {
+	return EncodeUint32Ascending(b, ^v)
+}
+
+// DecodeUint32Ascending decodes a uint32 from the input buffer, treating
+// the input as a big-endian 4 byte uint32 representation. The remainder
+// of the input buffer and the decoded uint32 are returned.
+func DecodeUint32Ascending(b []byte) ([]byte, uint32, error) {
+	if len(b) < 4 {
+		return nil, 0, NewErrInsufficientBytesToDecode(b, "uint32")
+	}
+	v := binary.BigEndian.Uint32(b)
+	return b[4:], v, nil
+}
+
+// DecodeUint32Descending decodes a uint32 value which was encoded
+// using EncodeUint32Descending.
+func DecodeUint32Descending(b []byte) ([]byte, uint32, error) {
+	leftover, v, err := DecodeUint32Ascending(b)
+	return leftover, ^v, err
+}
+
 // EncodeUint64Ascending encodes the uint64 value using a big-endian 8 byte
 // representation. The bytes are appended to the supplied buffer and
 // the final buffer is returned.

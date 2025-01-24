@@ -55,16 +55,34 @@ func (m *intMatcher) Match(value client.NormalValue) (bool, error) {
 	return false, NewErrUnexpectedTypeValue[int64](value)
 }
 
-type floatMatcher struct {
+type float32Matcher struct {
+	value    float32
+	evalFunc func(float32, float32) bool
+}
+
+func (m *float32Matcher) Match(value client.NormalValue) (bool, error) {
+	if floatVal, ok := value.Float32(); ok {
+		return m.evalFunc(floatVal, m.value), nil
+	}
+	if floatOptVal, ok := value.NillableFloat32(); ok {
+		if !floatOptVal.HasValue() {
+			return false, nil
+		}
+		return m.evalFunc(floatOptVal.Value(), m.value), nil
+	}
+	return false, NewErrUnexpectedTypeValue[float32](value)
+}
+
+type float64Matcher struct {
 	value    float64
 	evalFunc func(float64, float64) bool
 }
 
-func (m *floatMatcher) Match(value client.NormalValue) (bool, error) {
-	if floatVal, ok := value.Float(); ok {
+func (m *float64Matcher) Match(value client.NormalValue) (bool, error) {
+	if floatVal, ok := value.Float64(); ok {
 		return m.evalFunc(floatVal, m.value), nil
 	}
-	if floatOptVal, ok := value.NillableFloat(); ok {
+	if floatOptVal, ok := value.NillableFloat64(); ok {
 		if !floatOptVal.HasValue() {
 			return false, nil
 		}
