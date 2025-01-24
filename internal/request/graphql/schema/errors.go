@@ -43,7 +43,7 @@ const (
 	errDirectiveWithUnknownArg       string = "directive with unknown argument"
 	errConstraintsInvalidProp        string = "constraints directive with invalid property"
 	errEmbeddingInvalidProp          string = "embedding directive with invalid property"
-	errInvalidTypeForEmbedding       string = "embedding can only be applied to array of float32 fields"
+	errInvalidTypeForEmbedding       string = "embedding can only be applied to array of non-nillable float32 fields"
 )
 
 var (

@@ -29,7 +29,7 @@ func TestMutationCreate_WithIntForEmbedding_ShouldError(t *testing.T) {
 						name_v: [Int!] @embedding
 					}
 				`,
-				ExpectedError: "embedding can only be applied to array of float32 fields",
+				ExpectedError: "embedding can only be applied to array of non-nillable float32 fields",
 			},
 		},
 	}
@@ -47,7 +47,43 @@ func TestMutationCreate_WithFloatForEmbedding_ShouldError(t *testing.T) {
 						name_v: [Float!] @embedding
 					}
 				`,
-				ExpectedError: "embedding can only be applied to array of float32 fields",
+				ExpectedError: "embedding can only be applied to array of non-nillable float32 fields",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Create mutation with invalid type for embedding",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name_v: [Float64!] @embedding
+					}
+				`,
+				ExpectedError: "embedding can only be applied to array of non-nillable float32 fields",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Create mutation with invalid type for embedding",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name_v: [Float32] @embedding
+					}
+				`,
+				ExpectedError: "embedding can only be applied to array of non-nillable float32 fields",
 			},
 		},
 	}
