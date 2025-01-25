@@ -33,7 +33,7 @@ func getEmbeddingFunc(provider, model, url string) (chromem.EmbeddingFunc, error
 			apiURL = chromem.BaseURLOpenAI
 		}
 		return chromem.NewEmbeddingFuncOpenAICompat(
-			chromem.BaseURLOpenAI,
+			apiURL,
 			os.Getenv("OPENAI_API_KEY"),
 			model,
 			&normalized,

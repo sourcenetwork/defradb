@@ -123,7 +123,7 @@ func JSONScalarType() *graphql.Scalar {
 	})
 }
 
-func coerceFloat32(value interface{}) interface{} {
+func coerceFloat32(value any) any {
 	switch value := value.(type) {
 	case bool:
 		if value {
@@ -247,7 +247,7 @@ var Float32 = graphql.NewScalar(graphql.ScalarConfig{
 	// ParseValue converts the value to float32 value
 	ParseValue: coerceFloat32,
 	// ParseLiteral converts the ast value to a float32 value
-	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]any) any {
 		switch valueAST := valueAST.(type) {
 		case *ast.FloatValue:
 			if floatValue, err := strconv.ParseFloat(valueAST.Value, 32); err == nil {
@@ -262,7 +262,7 @@ var Float32 = graphql.NewScalar(graphql.ScalarConfig{
 	},
 })
 
-func coerceFloat64(value interface{}) interface{} {
+func coerceFloat64(value any) any {
 	switch value := value.(type) {
 	case bool:
 		if value {
@@ -386,7 +386,7 @@ var Float64 = graphql.NewScalar(graphql.ScalarConfig{
 	// ParseValue converts the value to float64 value
 	ParseValue: coerceFloat64,
 	// ParseLiteral converts the ast value to a float64 value
-	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]any) any {
 		switch valueAST := valueAST.(type) {
 		case *ast.FloatValue:
 			if floatValue, err := strconv.ParseFloat(valueAST.Value, 64); err == nil {

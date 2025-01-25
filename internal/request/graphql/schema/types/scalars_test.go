@@ -177,8 +177,8 @@ func stringPtr(i string) *string {
 
 func TestCoerceFloat32(t *testing.T) {
 	tests := []struct {
-		in   interface{}
-		want interface{}
+		in   any
+		want any
 	}{
 		{
 			in:   false,
@@ -361,7 +361,7 @@ func TestCoerceFloat32(t *testing.T) {
 			want: nil,
 		},
 		{
-			in:   make(map[string]interface{}),
+			in:   make(map[string]any),
 			want: nil,
 		},
 	}
@@ -375,8 +375,8 @@ func TestCoerceFloat32(t *testing.T) {
 
 func TestCoerceFloat64(t *testing.T) {
 	tests := []struct {
-		in   interface{}
-		want interface{}
+		in   any
+		want any
 	}{
 		{
 			in:   false,
@@ -559,7 +559,7 @@ func TestCoerceFloat64(t *testing.T) {
 			want: nil,
 		},
 		{
-			in:   make(map[string]interface{}),
+			in:   make(map[string]any),
 			want: nil,
 		},
 	}

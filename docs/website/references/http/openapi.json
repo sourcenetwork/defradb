@@ -142,6 +142,30 @@
                         "items": {
                             "properties": {
                                 "DefaultValue": {},
+                                "Embedding": {
+                                    "nullable": true,
+                                    "properties": {
+                                        "Fields": {
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "Model": {
+                                            "type": "string"
+                                        },
+                                        "Provider": {
+                                            "type": "string"
+                                        },
+                                        "Template": {
+                                            "type": "string"
+                                        },
+                                        "URL": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
                                 "ID": {
                                     "maximum": 4294967295,
                                     "minimum": 0,
@@ -151,7 +175,10 @@
                                 "Name": {
                                     "type": "string"
                                 },
-                                "RelationName": {}
+                                "RelationName": {},
+                                "Size": {
+                                    "type": "integer"
+                                }
                             },
                             "type": "object"
                         },
@@ -226,6 +253,30 @@
                                 "items": {
                                     "properties": {
                                         "DefaultValue": {},
+                                        "Embedding": {
+                                            "nullable": true,
+                                            "properties": {
+                                                "Fields": {
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": "array"
+                                                },
+                                                "Model": {
+                                                    "type": "string"
+                                                },
+                                                "Provider": {
+                                                    "type": "string"
+                                                },
+                                                "Template": {
+                                                    "type": "string"
+                                                },
+                                                "URL": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
                                         "ID": {
                                             "maximum": 4294967295,
                                             "minimum": 0,
@@ -235,7 +286,10 @@
                                         "Name": {
                                             "type": "string"
                                         },
-                                        "RelationName": {}
+                                        "RelationName": {},
+                                        "Size": {
+                                            "type": "integer"
+                                        }
                                     },
                                     "type": "object"
                                 },
