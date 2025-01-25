@@ -74,6 +74,12 @@ jobs:
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
 
     steps:
+      - name: Install ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+      - name: Run ollama
+        run: |
+          ollama serve &
+          ollama pull nomic-embed-text
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 

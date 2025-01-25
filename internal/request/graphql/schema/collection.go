@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
@@ -478,9 +479,25 @@ func fieldsFromAST(
 	hostMap[field.Name.Value] = cType
 
 	var defaultValue any
+	var constraints constraintDescription
+	var embedding *client.EmbeddingDescription
 	for _, directive := range field.Directives {
-		if directive.Name.Value == types.DefaultDirectiveLabel {
+		switch directive.Name.Value {
+		case types.DefaultDirectiveLabel:
 			defaultValue, err = defaultFromAST(field, directive)
+			if err != nil {
+				return nil, nil, err
+			}
+		case types.ConstraintsDirectiveLabel:
+			constraints, err = contraintsFromAST(kind, directive)
+			if err != nil {
+				return nil, nil, err
+			}
+		case types.EmbeddingDirectiveLabel:
+			if kind != client.FieldKind_FLOAT32_ARRAY {
+				return nil, nil, NewErrInvalidTypeForEmbedding(kind)
+			}
+			embedding, err = embeddingFromAST(directive)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -564,6 +581,8 @@ func fieldsFromAST(
 			client.CollectionFieldDescription{
 				Name:         field.Name.Value,
 				DefaultValue: defaultValue,
+				Size:         constraints.Size,
+				Embedding:    embedding,
 			},
 		)
 	}
@@ -594,6 +613,92 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 		}
 	}
 	return policyDesc, nil
+}
+
+func embeddingFromAST(directive *ast.Directive) (*client.EmbeddingDescription, error) {
+	embedding := &client.EmbeddingDescription{}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.EmbeddingDirectivePropFields:
+			val, ok := arg.Value.(*ast.ListValue)
+			if !ok {
+				return nil,
+					NewErrEmbeddingInvalidProp[[]string](types.ConstraintsDirectivePropSize, arg.Value.GetValue())
+			}
+			fields := make([]string, len(val.Values))
+			for i, untypedField := range val.Values {
+				field, ok := untypedField.(*ast.StringValue)
+				if !ok {
+					return nil,
+						NewErrEmbeddingInvalidProp[[]string](types.ConstraintsDirectivePropSize, field.GetValue())
+				}
+				fields[i] = field.Value
+			}
+			embedding.Fields = fields
+		case types.EmbeddingDirectivePropModel:
+			val, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return nil,
+					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropModel, arg.Value.GetValue())
+			}
+			embedding.Model = val.Value
+		case types.EmbeddingDirectivePropProvider:
+			val, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return nil,
+					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropProvider, arg.Value.GetValue())
+			}
+			embedding.Provider = val.Value
+		case types.EmbeddingDirectivePropTemplate:
+			val, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return nil,
+					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropTemplate, arg.Value.GetValue())
+			}
+			embedding.Template = val.Value
+		case types.EmbeddingDirectivePropURL:
+			val, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return nil,
+					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropURL, arg.Value.GetValue())
+			}
+			embedding.URL = val.Value
+		default:
+			return nil,
+				NewErrDirectiveWithUnknownArg(types.ConstraintsDirectiveLabel, arg.Name.Value)
+		}
+	}
+	return embedding, nil
+}
+
+type constraintDescription struct {
+	Size int
+}
+
+func contraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
+	constraints := constraintDescription{}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.ConstraintsDirectivePropSize:
+			if !kind.IsArray() {
+				return constraintDescription{}, errors.New("size constraint can only be applied to array fields")
+			}
+			val, ok := arg.Value.(*ast.IntValue)
+			if !ok {
+				return constraintDescription{},
+					NewErrContraintsInvalidProp[int](types.ConstraintsDirectivePropSize, arg.Value.GetValue())
+			}
+			size, err := strconv.Atoi(val.Value)
+			if err != nil {
+				return constraintDescription{}, err
+			}
+			constraints.Size = size
+		default:
+			return constraintDescription{},
+				NewErrDirectiveWithUnknownArg(types.ConstraintsDirectiveLabel, arg.Name.Value)
+		}
+	}
+	return constraints, nil
 }
 
 func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CType, error) {

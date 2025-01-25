@@ -90,7 +90,7 @@ func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
 
 // This test is currently the first unsupported value, if it becomes supported
 // please update this test to be the newly lowest unsupported value.
-func TestSchemaUpdatesAddFieldKind22(t *testing.T) {
+func TestSchemaUpdatesAddFieldKind25(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind unsupported (22)",
 		Actions: []any{
@@ -104,10 +104,10 @@ func TestSchemaUpdatesAddFieldKind22(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 25} }
 					]
 				`,
-				ExpectedError: "no type found for given name. Type: 22",
+				ExpectedError: "no type found for given name. Type: 25",
 			},
 		},
 	}

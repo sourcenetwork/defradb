@@ -43,6 +43,17 @@ type CollectionFieldDescription struct {
 	//
 	// This value has no effect on views.
 	DefaultValue any
+
+	// Size is a constraint that can be applied to fields that are arrays.
+	//
+	// Mutations on fields with a size constraint will fail if the size of the array
+	// does not match the constraint.
+	Size int
+
+	// Embedding contains the configuration for generating embedding vectors.
+	//
+	// This is only usable with array fields.
+	Embedding *EmbeddingDescription
 }
 
 func (f FieldID) String() string {
@@ -56,6 +67,8 @@ type collectionFieldDescription struct {
 	ID           FieldID
 	RelationName immutable.Option[string]
 	DefaultValue any
+	Size         int
+	Embedding    *EmbeddingDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
@@ -72,6 +85,8 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 	f.ID = descMap.ID
 	f.DefaultValue = descMap.DefaultValue
 	f.RelationName = descMap.RelationName
+	f.Size = descMap.Size
+	f.Embedding = descMap.Embedding
 	kind, err := parseFieldKind(descMap.Kind)
 	if err != nil {
 		return err
@@ -82,4 +97,12 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	return nil
+}
+
+type EmbeddingDescription struct {
+	Fields   []string
+	Model    string
+	Provider string
+	Template string
+	URL      string
 }

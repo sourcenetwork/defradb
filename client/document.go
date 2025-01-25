@@ -886,7 +886,11 @@ func (doc *Document) setDocID(docID DocID) {
 	doc.id = docID
 }
 
-// generateAndSetDocID generates the DocID and then (re)sets `doc.id`.
+// GenerateAndSetDocID generates the DocID and then (re)sets `doc.id`.
+func (doc *Document) GenerateAndSetDocID() error {
+	return doc.generateAndSetDocID()
+}
+
 func (doc *Document) generateAndSetDocID() error {
 	docID, err := doc.GenerateDocID()
 	if err != nil {

@@ -10,7 +10,12 @@
 
 package schema
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 const (
 	errDuplicateField                string = "duplicate field"
@@ -35,6 +40,10 @@ const (
 	errDefaultValueInvalid           string = "default value is invalid"
 	errDefaultValueOneArg            string = "default value must specify one argument"
 	errFieldTypeNotSpecified         string = "field type not specified"
+	errDirectiveWithUnknownArg       string = "directive with unknown argument"
+	errConstraintsInvalidProp        string = "constraints directive with invalid property"
+	errEmbeddingInvalidProp          string = "embedding directive with invalid property"
+	errInvalidTypeForEmbedding       string = "embedding can only be applied to array of float32 fields"
 )
 
 var (
@@ -62,6 +71,10 @@ var (
 	ErrPolicyInvalidIDProp       = errors.New(errPolicyInvalidIDProp)
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
+	ErrrDirectiveWithUnknownArg  = errors.New(errDirectiveWithUnknownArg)
+	ErrConstraintsInvalidSize    = errors.New(errConstraintsInvalidProp)
+	ErrEmbedingInvalidSize       = errors.New(errEmbeddingInvalidProp)
+	ErrInvalidTypeForEmbedding   = errors.New(errInvalidTypeForEmbedding)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -180,5 +193,40 @@ func NewErrFieldTypeNotSpecified(objectName, fieldName string) error {
 		errFieldTypeNotSpecified,
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrDirectiveWithUnknownArg(directive, arg string) error {
+	return errors.New(
+		errDirectiveWithUnknownArg,
+		errors.NewKV("Directive", directive),
+		errors.NewKV("Argument", arg),
+	)
+}
+
+func NewErrContraintsInvalidProp[TExpected any](name string, actual any) error {
+	var expected TExpected
+	return errors.New(
+		errConstraintsInvalidProp,
+		errors.NewKV("Prop", name),
+		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
+		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
+	)
+}
+
+func NewErrEmbeddingInvalidProp[TExpected any](name string, actual any) error {
+	var expected TExpected
+	return errors.New(
+		errEmbeddingInvalidProp,
+		errors.NewKV("Prop", name),
+		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
+		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
+	)
+}
+
+func NewErrInvalidTypeForEmbedding(actual client.FieldKind) error {
+	return errors.New(
+		errInvalidTypeForEmbedding,
+		errors.NewKV("Actual", actual.String()),
 	)
 }

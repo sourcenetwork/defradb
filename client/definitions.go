@@ -148,6 +148,17 @@ type FieldDefinition struct {
 
 	// DefaultValue contains the default value for this field.
 	DefaultValue any
+
+	// Size is a constraint that can be applied to fields that are arrays.
+	//
+	// Mutations on fields with a size constraint will fail if the size of the array
+	// does not match the constraint.
+	Size int
+
+	// Embedding contains the configuration for generating embedding vectors.
+	//
+	// This is only usable with array fields.
+	Embedding *EmbeddingDescription
 }
 
 // NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
@@ -168,6 +179,8 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		Typ:               global.Typ,
 		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
 		DefaultValue:      local.DefaultValue,
+		Size:              local.Size,
+		Embedding:         local.Embedding,
 	}
 }
 
@@ -179,6 +192,8 @@ func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 		Kind:         local.Kind.Value(),
 		RelationName: local.RelationName.Value(),
 		DefaultValue: local.DefaultValue,
+		Size:         local.Size,
+		Embedding:    local.Embedding,
 	}
 }
 

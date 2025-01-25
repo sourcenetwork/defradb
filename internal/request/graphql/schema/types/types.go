@@ -29,6 +29,16 @@ const (
 	CRDTDirectiveLabel    = "crdt"
 	CRDTDirectivePropType = "type"
 
+	ConstraintsDirectiveLabel    = "constraints"
+	ConstraintsDirectivePropSize = "size"
+
+	EmbeddingDirectiveLabel        = "embedding"
+	EmbeddingDirectivePropProvider = "provider"
+	EmbeddingDirectivePropModel    = "model"
+	EmbeddingDirectivePropURL      = "url"
+	EmbeddingDirectivePropFields   = "fields"
+	EmbeddingDirectivePropTemplate = "template"
+
 	PolicySchemaDirectiveLabel        = "policy"
 	PolicySchemaDirectivePropID       = "id"
 	PolicySchemaDirectivePropResource = "resource"
@@ -308,6 +318,56 @@ func CRDTFieldDirective(crdtEnum *gql.Enum) *gql.Directive {
 		},
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
+// ConstraintsDirective @constraints is used to define various constraints on a field.
+func ConstraintsDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        ConstraintsDirectiveLabel,
+		Description: constraintsDirectiveDescription,
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+		Args: gql.FieldConfigArgument{
+			ConstraintsDirectivePropSize: &gql.ArgumentConfig{
+				Type:        gql.Int,
+				Description: "The size constraint for array fields.",
+			},
+		},
+	})
+}
+
+// EmbeddingDirective @embedding is used to configure the generation of embedding vectors.
+func EmbeddingDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        EmbeddingDirectiveLabel,
+		Description: embeddingDirectiveDescription,
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+		Args: gql.FieldConfigArgument{
+			EmbeddingDirectivePropProvider: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The provider to use for embedding. (ollama, openAI, etc.)",
+			},
+			EmbeddingDirectivePropModel: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The model to use for embedding. (nomic-embed-text, etc.)",
+			},
+			EmbeddingDirectivePropURL: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The URL of the provider API.",
+			},
+			EmbeddingDirectivePropFields: &gql.ArgumentConfig{
+				Type:        gql.NewList(gql.String),
+				Description: "The fields to pass to the model.",
+			},
+			EmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The template to use with the fields to create the content to feed the model.",
+			},
 		},
 	})
 }

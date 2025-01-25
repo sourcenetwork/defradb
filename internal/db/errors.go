@@ -109,6 +109,7 @@ const (
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 	errDocIDNotFound                            string = "docID not found"
 	errCollectionWithSchemaRootNotFound         string = "collection with schema root not found"
+	errUnknownEmbeddingProvider                 string = "unknown embedding provider"
 )
 
 var (
@@ -158,6 +159,7 @@ var (
 	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
 	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
 	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
+	ErrUnknownEmbeddingProvider                 = errors.New(errUnknownEmbeddingProvider)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -710,4 +712,8 @@ func NewErrDocIDNotFound(docID string) error {
 
 func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
 	return errors.New(errCollectionWithSchemaRootNotFound, errors.NewKV("SchemaRoot", schemaRoot))
+}
+
+func NewErrUnknownEmbeddingProvider(provider string) error {
+	return errors.New(errUnknownEmbeddingProvider, errors.NewKV("Provider", provider))
 }

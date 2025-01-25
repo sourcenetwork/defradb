@@ -1223,14 +1223,13 @@ func createDoc(
 	}
 	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
 
+	docIDMap := make(map[string]struct{})
+	for _, docID := range docIDs {
+		docIDMap[docID.String()] = struct{}{}
+	}
+
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(
-			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForCreateDoc(s, action),
-			action.Identity,
-		)
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, docIDMap, action.Identity)
 	}
 }
 

@@ -35,6 +35,7 @@ const (
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
 	errFailedToParseKind                   string = "failed to parse kind"
 	errCannotSetRelationFromSecondarySide  string = "cannot set relation from secondary side"
+	errArraySizeMismatch                   string = "array size mismatch"
 )
 
 // Errors returnable from this package.
@@ -62,6 +63,7 @@ var (
 	ErrCanNotMakeNormalNilFromFieldKind     = errors.New(errCanNotMakeNormalNilFromFieldKind)
 	ErrCollectionNotFound                   = errors.New(errCollectionNotFound)
 	ErrFailedToParseKind                    = errors.New(errFailedToParseKind)
+	ErrArraySizeMismatch                    = errors.New(errArraySizeMismatch)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -194,4 +196,8 @@ func ReviveError(message string) error {
 
 func NewErrCannotSetRelationFromSecondarySide(name string) error {
 	return errors.New(errCannotSetRelationFromSecondarySide, errors.NewKV("Name", name))
+}
+
+func NewErrArraySizeMismatch[T any](array []T, expected int) error {
+	return errors.New(errArraySizeMismatch, errors.NewKV("Actual", len(array)), errors.NewKV("Expected", expected))
 }
