@@ -10,6 +10,7 @@
 package filter
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -31,34 +32,45 @@ import (
 //
 // The callback would receive path=["author", "books", "title"] and value="Sample"
 func TraverseFields(conditions map[string]any, f func([]string, any) bool) {
-	traverseFields(nil, conditions, f)
+	traverseFields(nil, "", conditions, f)
 }
 
-func traverseFields(path []string, conditions any, f func([]string, any) bool) bool {
-	switch t := conditions.(type) {
+func traverseFields(path []string, key string, value any, f func([]string, any) bool) bool {
+	isKeyOp := func(k string) bool { return len(k) > 0 && k[0] == '_' && k != request.DocIDFieldName }
+	canOpBeScalar := func(k string) bool {
+		switch k {
+		case request.AliasFieldName, request.FilterOpOr, request.FilterOpAnd, request.FilterOpNot:
+			return false
+		}
+		return true
+	}
+	switch t := value.(type) {
 	case map[string]any:
 		for k, v := range t {
-			if k[0] != '_' {
+			if !isKeyOp(k) {
 				newPath := make([]string, len(path), len(path)+1)
 				copy(newPath, path)
 				newPath = append(newPath, k)
-				if !traverseFields(newPath, v, f) {
+				if !traverseFields(newPath, k, v, f) {
 					return false
 				}
 			} else {
-				if !traverseFields(path, v, f) {
+				if !traverseFields(path, k, v, f) {
 					return false
 				}
 			}
 		}
 	case []any:
 		for _, v := range t {
-			if !traverseFields(path, v, f) {
+			if !traverseFields(path, "", v, f) {
 				return false
 			}
 		}
 	default:
-		return f(path, conditions)
+		if isKeyOp(key) && !canOpBeScalar(key) {
+			return false
+		}
+		return f(path, value)
 	}
 	return true
 }

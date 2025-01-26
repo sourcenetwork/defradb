@@ -12,6 +12,7 @@ package filter
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/stretchr/testify/assert"
@@ -58,9 +59,9 @@ func TestTraverseFields(t *testing.T) {
 			expectedVals:  []any{"Sample Book"},
 		},
 		{
-			name: "with array operator",
+			name: "with _or operator",
 			input: map[string]any{
-				"_or": []any{
+				request.FilterOpOr: []any{
 					map[string]any{
 						"name": map[string]any{"_eq": "John"},
 					},
@@ -71,6 +72,163 @@ func TestTraverseFields(t *testing.T) {
 			},
 			expectedPaths: [][]string{{"name"}, {"age"}},
 			expectedVals:  []any{"John", 30},
+		},
+		{
+			name: "with _or operator with nil value",
+			input: map[string]any{
+				request.FilterOpOr: nil,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _or operator with empty array value",
+			input: map[string]any{
+				request.FilterOpOr: []any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _or operator with empty map value",
+			input: map[string]any{
+				request.FilterOpOr: map[string]any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _or operator with invalid value",
+			input: map[string]any{
+				request.FilterOpOr: 1,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _and operator",
+			input: map[string]any{
+				request.FilterOpAnd: []any{
+					map[string]any{
+						"name": map[string]any{"_eq": "John"},
+					},
+					map[string]any{
+						"age": map[string]any{"_gt": 30},
+					},
+				},
+			},
+			expectedPaths: [][]string{{"name"}, {"age"}},
+			expectedVals:  []any{"John", 30},
+		},
+		{
+			name: "with _and operator with nil value",
+			input: map[string]any{
+				request.FilterOpAnd: nil,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _and operator with empty array value",
+			input: map[string]any{
+				request.FilterOpAnd: []any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _and operator with empty map value",
+			input: map[string]any{
+				request.FilterOpAnd: map[string]any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _and operator with invalid value",
+			input: map[string]any{
+				request.FilterOpAnd: 1,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _not operator",
+			input: map[string]any{
+				request.FilterOpNot: []any{
+					map[string]any{
+						"name": map[string]any{"_eq": "John"},
+					},
+				},
+			},
+			expectedPaths: [][]string{{"name"}},
+			expectedVals:  []any{"John"},
+		},
+		{
+			name: "with _not operator with nil value",
+			input: map[string]any{
+				request.FilterOpNot: nil,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _not operator with empty array value",
+			input: map[string]any{
+				request.FilterOpNot: []any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _not operator with empty map value",
+			input: map[string]any{
+				request.FilterOpNot: map[string]any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with _not operator with invalid value",
+			input: map[string]any{
+				request.FilterOpNot: 1,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with alias operator with nil value",
+			input: map[string]any{
+				request.AliasFieldName: nil,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with alias operator",
+			input: map[string]any{
+				request.AliasFieldName: map[string]any{
+					"age": map[string]any{"_eq": 30},
+				},
+			},
+			expectedPaths: [][]string{{"age"}},
+			expectedVals:  []any{30},
+		},
+		{
+			name: "with empty alias operator",
+			input: map[string]any{
+				request.AliasFieldName: map[string]any{},
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
+		},
+		{
+			name: "with alias operator of invalid type",
+			input: map[string]any{
+				request.AliasFieldName: 1,
+			},
+			expectedPaths: [][]string{},
+			expectedVals:  []any{},
 		},
 	}
 
