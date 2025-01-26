@@ -804,3 +804,213 @@ func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndex_WithNeFilterAgainstNonNilValue_ShouldFetchNilValues(t *testing.T) {
+	type testCase struct {
+		name    string
+		req     string
+		results map[string]any
+	}
+
+	testCases := []testCase{
+		{
+			name: "query int field",
+			req: `query {
+				User(filter: {age: {_ne: 48}}) {
+					name
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Andy"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query float field",
+			req: `query {
+				User(filter: {rating: {_ne: 4.5}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Andy"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query string field",
+			req: `query {
+				User(filter: {city: {_ne: "Istanbul"}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Andy"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query date field",
+			req: `query {
+				User(filter: {birthdate: {_ne: "2020-01-01T00:00:00Z"}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Andy"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query bool field",
+			req: `query {
+				User(filter: {verified: {_ne: true}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Andy"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query null int field",
+			req: `query {
+				User(filter: {age: {_ne: null}}) {
+					name
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "John"},
+				},
+			},
+		},
+		{
+			name: "query null float field",
+			req: `query {
+				User(filter: {rating: {_ne: null}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "John"},
+				},
+			},
+		},
+		{
+			name: "query null string field",
+			req: `query {
+				User(filter: {city: {_ne: null}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "John"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query null date field",
+			req: `query {
+				User(filter: {birthdate: {_ne: null}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "John"},
+					{"name": "Shahzad"},
+				},
+			},
+		},
+		{
+			name: "query null bool field",
+			req: `query {
+				User(filter: {verified: {_ne: null}}) {
+					name	
+				}
+			}`,
+			results: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "John"},
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := testUtils.TestCase{
+				Actions: []any{
+					testUtils.SchemaUpdate{
+						Schema: `
+							type User {
+								name: String 
+								age: Int @index
+								rating: Float @index
+								city: String @index
+								birthdate: DateTime @index
+								verified: Boolean @index
+							}`,
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name":      "John",
+							"age":       48,
+							"city":      "Istanbul",
+							"rating":    4.5,
+							"birthdate": "2020-01-01T00:00:00Z",
+							"verified":  true,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name":      "Andy",
+							"age":       nil,
+							"city":      nil,
+							"rating":    nil,
+							"birthdate": nil,
+							"verified":  nil,
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name":      "Shahzad",
+							"age":       42,
+							"city":      "Lucerne",
+							"rating":    4.2,
+							"birthdate": "2024-01-01T00:00:00Z",
+							"verified":  false,
+						},
+					},
+					testUtils.Request{
+						Request: tc.req,
+						Results: tc.results,
+					},
+					testUtils.Request{
+						Request:  makeExplainQuery(tc.req),
+						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+					},
+				},
+			}
+
+			testUtils.ExecuteTestCase(t, test)
+		})
+	}
+}

@@ -417,7 +417,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
@@ -505,6 +505,158 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilter(t *tes
 						},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String @index
+						manufacturer: String
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Chris"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Addo"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "Walkman",
+					"manufacturer": "Sony",
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "Walkman",
+					"manufacturer": "The Proclaimers",
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "Running Man",
+					"manufacturer": "Braveworld Productions",
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {
+						devices: {model: {_eq: "Walkman"}}
+					}) {
+						name
+						devices(filter: {manufacturer: {_ne: "Sony"}}) {
+							model
+							manufacturer
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Chris",
+							"devices": []map[string]any{
+								{
+									"model":        "Walkman",
+									"manufacturer": "The Proclaimers",
+								},
+								{
+									"model":        "Running Man",
+									"manufacturer": "Braveworld Productions",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func _TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilterOnIndexField_ShouldUseIndex(t *testing.T) {
+	// only 2 users have a Playstation: Islam and Addo
+	req := `query {
+		User(filter: {
+			devices: {model: {_eq: "Playstation 5"}}
+		}) {
+			name
+			devices(filter: {type: {_eq: "phone"}}) {
+				model
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-N relations",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						devices: [Device]
+					}
+
+					type Device {
+						model: String @index
+						type: String @index
+						owner: User @index
+					}
+				`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Islam",
+							"devices": []map[string]any{
+								{"model": "iPhone 12s"},
+								{"model": "Nokia 7610"},
+							},
+						},
+						{
+							"name": "Addo",
+							"devices": []map[string]any{
+								{"model": "iPhone 10"},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}

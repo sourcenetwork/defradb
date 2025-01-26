@@ -163,3 +163,129 @@ func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryJSON_WithNeFilterAgainstNonNullValue_ShouldFetchNullValues(t *testing.T) {
+	type testCase struct {
+		name   string
+		req    string
+		result map[string]any
+	}
+
+	testCases := []testCase{
+		{
+			name: "query number field",
+			req: `query {
+				User(filter: {custom: {age: {_ne: 48}}}) {
+					name
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "Andy"},
+				},
+			},
+		},
+		{
+			name: "query string field",
+			req: `query {
+				User(filter: {custom: {city: {_ne: "Istanbul"}}}) {
+					name	
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "Andy"},
+				},
+			},
+		},
+		{
+			name: "query bool field",
+			req: `query {
+				User(filter: {custom: {verified: {_ne: true}}}) {
+					name	
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "Andy"},
+				},
+			},
+		},
+		{
+			name: "query null field",
+			req: `query {
+				User(filter: {custom: {age: {_ne: null}}}) {
+					name	
+				}
+			}`,
+			result: map[string]any{
+				"User": []map[string]any{
+					{"name": "Shahzad"},
+					{"name": "John"},
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := testUtils.TestCase{
+				Actions: []any{
+					testUtils.SchemaUpdate{
+						Schema: `
+							type User {
+								name: String 
+								custom: JSON 
+							}`,
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "John",
+							"custom": map[string]any{
+								"age":      48,
+								"city":     "Istanbul",
+								"verified": true,
+							},
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Andy",
+							"custom": map[string]any{
+								"age":      nil,
+								"city":     nil,
+								"verified": nil,
+							},
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Shahzad",
+							"custom": map[string]any{
+								"age":      42,
+								"city":     "Lucerne",
+								"verified": false,
+							},
+						},
+					},
+					testUtils.CreateDoc{
+						DocMap: map[string]any{
+							"name": "Fred",
+							"custom": map[string]any{
+								"other": "value",
+							},
+						},
+					},
+					testUtils.Request{
+						Request: tc.req,
+						Results: tc.result,
+					},
+				},
+			}
+
+			testUtils.ExecuteTestCase(t, test)
+		})
+	}
+}
