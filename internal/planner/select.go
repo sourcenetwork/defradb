@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"slices"
+
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 
@@ -308,8 +310,8 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	}
 	colDesc := scanNode.col.Description()
 
-	result := immutable.None[client.IndexDescription]()
 	conditions := scanNode.filter.ExternalConditions
+	var indexCandidates []client.IndexDescription
 	filter.TraverseFields(conditions, func(path []string, val any) bool {
 		for _, field := range scanNode.col.Schema().Fields {
 			if field.Name != path[0] {
@@ -317,15 +319,29 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 			}
 			indexes := colDesc.GetIndexesOnField(field.Name)
 			if len(indexes) > 0 {
-				// we return the first found index. We will optimize it later.
-				// https://github.com/sourcenetwork/defradb/issues/2680
-				result = immutable.Some(indexes[0])
-				return false
+				indexCandidates = append(indexCandidates, indexes...)
+				return true
 			}
 		}
 		return true
 	})
-	return result
+	if len(indexCandidates) == 0 {
+		return immutable.Option[client.IndexDescription]{}
+	}
+	slices.SortFunc(indexCandidates, func(a, b client.IndexDescription) int {
+		switch {
+		case a.Name < b.Name:
+			return -1
+		case a.Name > b.Name:
+			return 1
+		default:
+			return 0
+		}
+	})
+	// we return the first found index. We will optimize it later.
+	// https://github.com/sourcenetwork/defradb/issues/2680
+	//fmt.Printf(">>>>> findIndexByFilteringField: index: %s\n", indexes[0].Name)
+	return immutable.Some(indexCandidates[0])
 }
 
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {

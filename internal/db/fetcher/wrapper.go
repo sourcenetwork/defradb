@@ -31,11 +31,12 @@ type wrappingFetcher struct {
 	fetcher  fetcher
 	execInfo *ExecInfo
 
-	// The below properties are only held in state in order to temporarily adhear to the [Fetcher]
+	// The below properties are only held in state in order to temporarily adhere to the [Fetcher]
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
 	identity    immutable.Option[acpIdentity.Identity]
 	txn         datastore.Txn
 	acp         immutable.Option[acp.ACP]
+	index       immutable.Option[client.IndexDescription]
 	col         client.Collection
 	fields      []client.FieldDefinition
 	filter      *mapper.Filter
@@ -45,8 +46,8 @@ type wrappingFetcher struct {
 
 var _ Fetcher = (*wrappingFetcher)(nil)
 
-func NewDocumentFetcher() Fetcher {
-	return &wrappingFetcher{}
+func NewDocumentFetcher(index immutable.Option[client.IndexDescription]) Fetcher {
+	return &wrappingFetcher{index: index}
 }
 
 func (f *wrappingFetcher) Init(
@@ -121,9 +122,24 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	f.execInfo = &execInfo
 
 	var top fetcher
-	top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &execInfo)
-	if err != nil {
-		return err
+	// TODO: check what happens if we query docs with certain ids
+	if f.index.HasValue() {
+		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col, f.fields, f.docMapper)
+		if err != nil {
+			return err
+		}
+		if indexFetcher != nil {
+			top = indexFetcher
+		}
+	}
+
+	// the index fetcher might not have been created if there is no efficient way to use fetch indexes
+	// with given filter conditions. In this case we call back to the prefix fetcher
+	if top == nil {
+		top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &execInfo)
+		if err != nil {
+			return err
+		}
 	}
 
 	if f.showDeleted {

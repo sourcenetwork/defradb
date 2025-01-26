@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
-	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
@@ -160,37 +159,7 @@ func (scan *scanNode) initFetcher(
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
-		f = fetcher.NewDocumentFetcher()
-
-		if index.HasValue() {
-			fieldsToMove := make([]mapper.Field, 0, len(index.Value().Fields))
-			fieldsToCopy := make([]mapper.Field, 0, len(index.Value().Fields))
-			for _, field := range index.Value().Fields {
-				fieldName := field.Name
-				typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
-				indexField := mapper.Field{Index: typeIndex, Name: fieldName}
-				fd, _ := scan.col.Definition().Schema.GetFieldByName(fieldName)
-				// if the field is an array, we need to copy it instead of moving so that the
-				// top select node can do final filter check on the whole array of the document
-				// because indexes can not assert conditions like _any, _all, _none
-				// TODO: we don't have to do this for all json fields, only for those that filter
-				// on it's array fields. We should be able to optimize this.
-				// https://github.com/sourcenetwork/defradb/issues/3306
-				if fd.Kind.IsArray() || fd.Kind == client.FieldKind_NILLABLE_JSON {
-					fieldsToCopy = append(fieldsToCopy, indexField)
-				} else {
-					fieldsToMove = append(fieldsToMove, indexField)
-				}
-			}
-			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fieldsToMove...)
-			for i := range fieldsToCopy {
-				indexFilter = filter.Merge(indexFilter, filter.CopyField(scan.filter, fieldsToCopy[i]))
-			}
-			if indexFilter != nil {
-				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
-			}
-		}
+		f = fetcher.NewDocumentFetcher(index)
 
 		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
 	}

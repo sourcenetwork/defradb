@@ -130,7 +130,7 @@ func (vf *VersionedFetcher) Init(
 	}
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
-	vf.Fetcher = NewDocumentFetcher()
+	vf.Fetcher = NewDocumentFetcher(immutable.Option[client.IndexDescription]{})
 	return vf.Fetcher.Init(
 		ctx,
 		identity,

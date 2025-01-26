@@ -42,6 +42,7 @@ const (
 	compOpAny  = "_any"
 	compOpAll  = "_all"
 	compOpNone = "_none"
+	opNot      = "_not"
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have
@@ -309,7 +310,7 @@ func (iter *memorizingIndexIterator) Close() error {
 
 // newPrefixIteratorFromConditions creates a new eqPrefixIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *IndexFetcher) newPrefixIteratorFromConditions(
+func (f *indexFetcher) newPrefixIteratorFromConditions(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*indexPrefixIterator, error) {
@@ -343,7 +344,7 @@ func (f *IndexFetcher) newPrefixIteratorFromConditions(
 	return f.newPrefixIterator(key, matchers, &f.execInfo), nil
 }
 
-func (f *IndexFetcher) newPrefixIterator(
+func (f *indexFetcher) newPrefixIterator(
 	indexKey keys.IndexDataStoreKey,
 	matchers []valueMatcher,
 	execInfo *ExecInfo,
@@ -359,7 +360,7 @@ func (f *IndexFetcher) newPrefixIterator(
 
 // newInIndexIterator creates a new inIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *IndexFetcher) newInIndexIterator(
+func (f *indexFetcher) newInIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*inIndexIterator, error) {
@@ -399,11 +400,11 @@ func (f *IndexFetcher) newInIndexIterator(
 	}, nil
 }
 
-func (f *IndexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
+func (f *indexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
 	return keys.IndexDataStoreKey{CollectionID: f.col.Description().RootID, IndexID: f.indexDesc.ID}
 }
 
-func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
+func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
@@ -412,7 +413,7 @@ func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	return keys.NewIndexDataStoreKey(f.col.Description().RootID, f.indexDesc.ID, fields)
 }
 
-func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
+func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions, err := f.determineFieldFilterConditions()
 	if err != nil {
 		return nil, err
@@ -426,24 +427,6 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
 		return nil, err
-	}
-
-	hasArray := false
-	for i := range fieldConditions {
-		if len(fieldConditions[i].arrOp) > 0 {
-			hasArray = true
-			if fieldConditions[i].arrOp == compOpNone {
-				matchers[i] = &invertedMatcher{matcher: matchers[i]}
-			}
-		}
-	}
-
-	hasJSON := false
-	for i := range fieldConditions {
-		if fieldConditions[i].kind == client.FieldKind_NILLABLE_JSON {
-			hasJSON = true
-			break
-		}
 	}
 
 	var iter indexIterator
@@ -464,6 +447,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
 	} else {
 		key := f.newIndexDataStoreKey()
+		// if the first field is JSON, we want to add the JSON path prefix to scope the search
 		if fieldConditions[0].kind == client.FieldKind_NILLABLE_JSON {
 			key.Fields = []keys.IndexedField{{
 				Descending: f.indexDesc.Fields[0].Descending,
@@ -481,11 +465,21 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 	}
 
-	if hasJSON || hasArray {
+	if doConditionsHaveArrayOrJSON(fieldConditions) {
 		iter = &memorizingIndexIterator{inner: iter}
 	}
 
 	return iter, nil
+}
+
+func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
+	hasArray := false
+	hasJSON := false
+	for i := range conditions {
+		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON
+		hasArray = hasArray || conditions[i].kind.IsArray()
+	}
+	return hasArray || hasJSON
 }
 
 type fieldFilterCond struct {
@@ -499,7 +493,7 @@ type fieldFilterCond struct {
 // determineFieldFilterConditions determines the conditions and their corresponding operation
 // for each indexed field.
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
-func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
+func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
 	for i := range f.indexDesc.Fields {
 		var indexedField client.FieldDefinition
@@ -535,16 +529,6 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 								// to limit the search only to array elements
 								op, ok := key.(*mapper.Operator)
 								if ok && isArrayCondition(op.Operation) {
-									if op.Operation == compOpNone {
-										// if the array condition is _none it doesn't make sense to use index  because
-										// values picked by the index is random guessing. For example if we have doc1
-										// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
-										// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
-										// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
-										// so on until it exhaust all prefixes in ascending order.
-										// It might be even less effective than just scanning all documents.
-										return true
-									}
 									jsonPath = jsonPath.AppendIndex(0)
 								}
 								break jsonPathLoop
@@ -562,11 +546,16 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 						kind:     indexedField.Kind,
 					}
 
-					// TODO: check what of this is needed if any
-					//if cond.op == opNe {
-					// if the array condition is _none it doesn't make sense to use index
-					//return true
-					//}
+					// if the array condition is _none it doesn't make sense to use index  because
+					// values picked by the index is random guessing. For example if we have doc1
+					// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
+					// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
+					// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
+					// so on until it exhaust all prefixes in ascending order.
+					// It might be even less effective than just scanning all documents.
+					if cond.op == compOpNone {
+						return true
+					}
 
 					var err error
 					if len(jsonPath) > 0 {
@@ -601,9 +590,9 @@ func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					break
 				}
 				return false
-			})
+			}, opNot)
 
-		if err != nil || len(result) == 0 {
+		if len(result) == 0 {
 			return nil, err
 		}
 

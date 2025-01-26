@@ -12,68 +12,66 @@ package fetcher
 
 import (
 	"context"
-	"errors"
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// IndexFetcher is a fetcher that fetches documents by index.
+// indexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
-type IndexFetcher struct {
-	docFetcher    Fetcher
-	col           client.Collection
+type indexFetcher struct {
+	ctx           context.Context
 	txn           datastore.Txn
+	col           client.Collection
 	indexFilter   *mapper.Filter
-	doc           *encodedDocument
 	mapping       *core.DocumentMapping
 	indexedFields []client.FieldDefinition
-	docFields     []client.FieldDefinition
+	fieldsByID    map[uint32]client.FieldDefinition
 	indexDesc     client.IndexDescription
 	indexIter     indexIterator
+	currentDocID  immutable.Option[string]
 	execInfo      ExecInfo
 }
 
-var _ Fetcher = (*IndexFetcher)(nil)
+// var _ Fetcher = (*IndexFetcher)(nil)
+var _ fetcher = (*indexFetcher)(nil)
 
-// NewIndexFetcher creates a new IndexFetcher.
-func NewIndexFetcher(
-	docFetcher Fetcher,
-	indexDesc client.IndexDescription,
-	indexFilter *mapper.Filter,
-) *IndexFetcher {
-	return &IndexFetcher{
-		docFetcher:  docFetcher,
-		indexDesc:   indexDesc,
-		indexFilter: indexFilter,
-	}
-}
-
-func (f *IndexFetcher) Init(
+// newIndexFetcher creates a new IndexFetcher.
+func newIndexFetcher(
 	ctx context.Context,
-	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACP],
+	fieldsByID map[uint32]client.FieldDefinition,
+	indexDesc client.IndexDescription,
+	docFilter *mapper.Filter,
 	col client.Collection,
 	fields []client.FieldDefinition,
-	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
-	showDeleted bool,
-) error {
-	f.resetState()
+) (*indexFetcher, error) {
+	f := &indexFetcher{
+		ctx:        ctx,
+		txn:        txn,
+		col:        col,
+		mapping:    docMapper,
+		indexDesc:  indexDesc,
+		fieldsByID: fieldsByID,
+	}
 
-	f.col = col
-	f.doc = &encodedDocument{}
-	f.mapping = docMapper
-	f.txn = txn
+	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
+	for _, field := range indexDesc.Fields {
+		typeIndex := docMapper.FirstIndexOfName(field.Name)
+		indexField := mapper.Field{Index: typeIndex, Name: field.Name}
+		fieldsToCopy = append(fieldsToCopy, indexField)
+	}
+	for i := range fieldsToCopy {
+		f.indexFilter = filter.Merge(f.indexFilter, filter.CopyField(docFilter, fieldsToCopy[i]))
+	}
 
 	for _, indexedField := range f.indexDesc.Fields {
 		field, ok := f.col.Definition().GetFieldByName(indexedField.Name)
@@ -82,158 +80,82 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	f.docFields = make([]client.FieldDefinition, 0, len(fields))
-outer:
-	for i := range fields {
-		for j := range f.indexedFields {
-			// If the field is array, we want to keep it also for the document fetcher
-			// because the index only contains one array elements, not the whole array.
-			// The doc fetcher will fetch the whole array for us.
-			if fields[i].Name == f.indexedFields[j].Name && !fields[i].Kind.IsArray() {
-				continue outer
-			}
-		}
-		f.docFields = append(f.docFields, fields[i])
-	}
-
 	iter, err := f.createIndexIterator()
-	if err != nil {
-		return err
+	if err != nil || iter == nil {
+		return nil, err
 	}
+
 	f.indexIter = iter
-
-	// if it turns out that we can't use the index, we need to fall back to the document fetcher
-	if f.indexIter == nil {
-		f.docFields = fields
-	}
-
-	if len(f.docFields) > 0 {
-		err = f.docFetcher.Init(
-			ctx,
-			identity,
-			f.txn,
-			acp,
-			f.col,
-			f.docFields,
-			filter,
-			f.mapping,
-			false,
-		)
-	}
-
-	return err
+	return f, iter.Init(ctx, txn.Datastore())
 }
 
-func (f *IndexFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
-	if f.indexIter == nil {
-		return f.docFetcher.Start(ctx, prefixes...)
-	}
-	return f.indexIter.Init(ctx, f.txn.Datastore())
-}
-
-func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
-	if f.indexIter == nil {
-		return f.docFetcher.FetchNext(ctx)
-	}
+func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	totalExecInfo := f.execInfo
 	defer func() { f.execInfo.Add(totalExecInfo) }()
 	f.execInfo.Reset()
-	for {
-		f.doc.Reset()
 
-		res, err := f.indexIter.Next()
-		if err != nil {
-			return nil, ExecInfo{}, err
-		}
+	f.currentDocID = immutable.None[string]()
 
-		if !res.foundKey {
-			return nil, f.execInfo, nil
-		}
-
-		hasNilField := false
-		for i, indexedField := range f.indexedFields {
-			property := &encProperty{Desc: indexedField}
-
-			field := res.key.Fields[i]
-			if field.Value.IsNil() {
-				hasNilField = true
-			}
-
-			// Index will fetch only 1 array element. So we skip it here and let doc fetcher
-			// fetch the whole array.
-			if indexedField.Kind.IsArray() {
-				continue
-			}
-
-			// We need to convert it to cbor bytes as this is what it will be encoded from on value retrieval.
-			// In the future we have to either get rid of CBOR or properly handle different encoding
-			// for properties in a single document.
-			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, field.Value).Bytes()
-			if err != nil {
-				return nil, ExecInfo{}, err
-			}
-			property.Raw = fieldBytes
-
-			f.doc.properties[indexedField] = property
-		}
-
-		if f.indexDesc.Unique && !hasNilField {
-			f.doc.id = res.value
-		} else {
-			lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-			if str, ok := lastVal.String(); ok {
-				f.doc.id = []byte(str)
-			} else if bytes, ok := lastVal.Bytes(); ok {
-				f.doc.id = bytes
-			} else {
-				return nil, ExecInfo{}, err
-			}
-		}
-
-		if len(f.docFields) > 0 {
-			targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), string(f.doc.id))
-			err := f.docFetcher.Start(ctx, targetKey)
-			if err != nil {
-				return nil, ExecInfo{}, err
-			}
-			encDoc, execInfo, err := f.docFetcher.FetchNext(ctx)
-			if err != nil {
-				return nil, ExecInfo{}, errors.Join(err, f.docFetcher.Close())
-			}
-			err = f.docFetcher.Close()
-			if err != nil {
-				return nil, ExecInfo{}, err
-			}
-			f.execInfo.Add(execInfo)
-			if encDoc == nil {
-				continue
-			}
-			f.doc.MergeProperties(encDoc)
-		} else {
-			f.execInfo.DocsFetched++
-		}
-		return f.doc, f.execInfo, nil
+	//for {
+	res, err := f.indexIter.Next()
+	if err != nil || !res.foundKey {
+		return immutable.None[string](), err
 	}
+
+	hasNilField := false
+	for i := range f.indexedFields {
+		hasNilField = hasNilField || res.key.Fields[i].Value.IsNil()
+	}
+
+	if f.indexDesc.Unique && !hasNilField {
+		f.currentDocID = immutable.Some(string(res.value))
+	} else {
+		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
+		if str, ok := lastVal.String(); ok {
+			f.currentDocID = immutable.Some(str)
+		} else if bytes, ok := lastVal.Bytes(); ok {
+			f.currentDocID = immutable.Some(string(bytes))
+		} else {
+			f.currentDocID = immutable.None[string]()
+		}
+	}
+	return f.currentDocID, nil
+	//}
 }
 
-func (f *IndexFetcher) Close() error {
-	if f.indexIter == nil {
-		return f.docFetcher.Close()
+func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
+	if !f.currentDocID.HasValue() {
+		return immutable.Option[EncodedDocument]{}, nil
 	}
-	return f.indexIter.Close()
+	var execInfo ExecInfo
+	prefix := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), f.currentDocID.Value())
+	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
+		f.fieldsByID, client.Active, &execInfo)
+	if err != nil {
+		return immutable.Option[EncodedDocument]{}, err
+	}
+	_, err = prefixFetcher.NextDoc()
+	if err != nil {
+		return immutable.Option[EncodedDocument]{}, err
+	}
+	return prefixFetcher.GetFields()
+}
+
+func (f *indexFetcher) Close() error {
+	if f.indexIter != nil {
+		return f.indexIter.Close()
+	}
+	return nil
 }
 
 // resetState resets the mutable state of this IndexFetcher, returning the state to how it
 // was immediately after construction.
-func (f *IndexFetcher) resetState() {
+func (f *indexFetcher) resetState() {
 	// WARNING: Do not reset properties set in the constructor!
 
 	f.col = nil
-	f.txn = nil
-	f.doc = nil
 	f.mapping = nil
 	f.indexedFields = nil
-	f.docFields = nil
 	f.indexIter = nil
 	f.execInfo.Reset()
 }
