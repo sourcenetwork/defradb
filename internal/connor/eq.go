@@ -13,7 +13,7 @@ import (
 
 // eq is an operator which performs object equality
 // tests.
-func eq(condition, data any) (bool, error) {
+func eq(condition, data any, propExists bool) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
 		return anySlice(condition, arr)
@@ -34,11 +34,11 @@ func eq(condition, data any) (bool, error) {
 	switch cn := condition.(type) {
 	case map[FilterKey]any:
 		for prop, cond := range cn {
-			d, op, err := prop.PropertyAndOperator(data, EqualOp)
-			if err != nil {
-				return false, err
+			res := prop.PropertyAndOperator(data, EqualOp)
+			if res.Err != nil {
+				return false, res.Err
 			}
-			m, err := matchWith(op, cond, d)
+			m, err := matchWith(res.Operator, cond, res.Data, !res.MissProp && propExists)
 			if err != nil {
 				return false, err
 			}
@@ -85,7 +85,7 @@ func objectsEqual(condition map[string]any, data any) (bool, error) {
 		return false, nil
 	}
 	for k, v := range d {
-		m, err := eq(condition[k], v)
+		m, err := eq(condition[k], v, true)
 		if err != nil {
 			return false, err
 		} else if !m {

@@ -8,7 +8,7 @@ func or(condition, data any) (bool, error) {
 	switch cn := condition.(type) {
 	case []any:
 		for _, c := range cn {
-			if m, err := eq(c, data); err != nil {
+			if m, err := eq(c, data, true); err != nil {
 				return false, err
 			} else if m {
 				return true, nil
