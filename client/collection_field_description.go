@@ -118,6 +118,19 @@ type EmbeddingDescription struct {
 	Provider string
 	// (Optional) Template is the local path of the template to use with the
 	// field values to form the content to send to the model.
+	//
+	// For example, with the following schema,
+	// ```
+	// type User {
+	//   name: String
+	//   age: Int
+	//   name_about_v: [Float32!] @embedding(fields: ["name", "age"], ...)
+	// }
+	// ````
+	// we can define the following Go template.
+	// ```
+	// {{ .name }} is {{ .age }} years old.
+	// ```
 	Template string
 	// URL is the url enpoint of the provider's API.
 	URL string
