@@ -53,6 +53,11 @@ type CollectionFieldDescription struct {
 	// Embedding contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
+	//
+	// When configured, embeddings may call 3rd party APIs inline with document mutations.
+	// This may cause increase latency in the completion of the mutation requests.
+	// This is necessary to ensure that the generated docID is representative of the
+	// content of the document.
 	Embedding *EmbeddingDescription
 }
 
@@ -99,10 +104,20 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+// EmbeddingDescription hold the relevant information to generate embeddings.
+//
+// Embeddings are vectors generated based on one or multiple fields, optionaly added to a template.
 type EmbeddingDescription struct {
-	Fields   []string
-	Model    string
+	// Fields are the fields in the parent schema that will be used as the basis of the
+	// vector generation.
+	Fields []string
+	// Model is the LLM of the provider to use for generating the embeddings.
+	Model string
+	// Provider is the API provider to use for generating the embeddings.
 	Provider string
+	// (Optional) Template is the local path of the template to use with the
+	// field values to form the content to send to the model.
 	Template string
-	URL      string
+	// URL is the url enpoint of the provider's API.
+	URL string
 }

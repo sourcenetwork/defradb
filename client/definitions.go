@@ -158,6 +158,11 @@ type FieldDefinition struct {
 	// Embedding contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
+	//
+	// When configured, embeddings may call 3rd party APIs inline with document mutations.
+	// This may cause increase latency in the completion of the mutation requests.
+	// This is necessary to ensure that the generated docID is representative of the
+	// content of the document.
 	Embedding *EmbeddingDescription
 }
 
