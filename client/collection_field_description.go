@@ -113,8 +113,10 @@ type EmbeddingDescription struct {
 	// vector generation.
 	Fields []string
 	// Model is the LLM of the provider to use for generating the embeddings.
+	// For example: text-embedding-3-small
 	Model string
 	// Provider is the API provider to use for generating the embeddings.
+	// For example: openai
 	Provider string
 	// (Optional) Template is the local path of the template to use with the
 	// field values to form the content to send to the model.
@@ -133,5 +135,9 @@ type EmbeddingDescription struct {
 	// ```
 	Template string
 	// URL is the url enpoint of the provider's API.
+	// For example: https://api.openai.com/v1
+	//
+	// Not providing a URL will result in the use of the default
+	// known URL for the given provider.
 	URL string
 }
