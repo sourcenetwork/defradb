@@ -106,7 +106,8 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 
 // EmbeddingDescription hold the relevant information to generate embeddings.
 //
-// Embeddings are vectors generated based on one or multiple fields, optionaly added to a template.
+// Embeddings are AI/ML specific vector representations of some content.
+// In the case of Defra, that content is one or multiple fields, optionaly added to a template.
 type EmbeddingDescription struct {
 	// Fields are the fields in the parent schema that will be used as the basis of the
 	// vector generation.
