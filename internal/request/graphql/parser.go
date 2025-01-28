@@ -23,11 +23,14 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/metric"
 	defrap "github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
 var _ core.Parser = (*parser)(nil)
+
+var tracer = metric.NewTracer()
 
 type parser struct {
 	schemaManager *schema.SchemaManager
@@ -46,7 +49,10 @@ func NewParser() (*parser, error) {
 	return p, nil
 }
 
-func (p *parser) BuildRequestAST(request string) (*ast.Document, error) {
+func (p *parser) BuildRequestAST(ctx context.Context, request string) (*ast.Document, error) {
+	_, span := tracer.Start(ctx)
+	defer span.End()
+
 	source := source.NewSource(&source.Source{
 		Body: []byte(request),
 		Name: "GraphQL request",
@@ -65,7 +71,10 @@ func (p *parser) IsIntrospection(ast *ast.Document) bool {
 	return defrap.IsIntrospectionQuery(*schema, ast)
 }
 
-func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
+func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *client.RequestResult {
+	_, span := tracer.Start(ctx)
+	defer span.End()
+
 	schema := p.schemaManager.Schema()
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
@@ -83,7 +92,10 @@ func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 	return res
 }
 
-func (p *parser) Parse(ast *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
+func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
+	_, span := tracer.Start(ctx)
+	defer span.End()
+
 	schema := p.schemaManager.Schema()
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
@@ -97,11 +109,17 @@ func (p *parser) Parse(ast *ast.Document, options *client.GQLOptions) (*request.
 	return defrap.ParseRequest(*schema, ast, options)
 }
 
-func (p *parser) ParseSDL(sdl string) ([]client.CollectionDefinition, error) {
+func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error) {
+	_, span := tracer.Start(ctx)
+	defer span.End()
+
 	return p.schemaManager.ParseSDL(sdl)
 }
 
 func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	schemaManager, err := schema.NewSchemaManager()
 	if err != nil {
 		return err

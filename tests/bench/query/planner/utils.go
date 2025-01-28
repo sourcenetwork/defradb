@@ -40,8 +40,8 @@ func runQueryParserBench(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ast, _ := parser.BuildRequestAST(query)
-		_, errs := parser.Parse(ast, &client.GQLOptions{})
+		ast, _ := parser.BuildRequestAST(ctx, query)
+		_, errs := parser.Parse(ctx, ast, &client.GQLOptions{})
 		if errs != nil {
 			return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 		}
@@ -68,8 +68,8 @@ func runMakePlanBench(
 		return err
 	}
 
-	ast, _ := parser.BuildRequestAST(query)
-	q, errs := parser.Parse(ast, &client.GQLOptions{})
+	ast, _ := parser.BuildRequestAST(ctx, query)
+	q, errs := parser.Parse(ctx, ast, &client.GQLOptions{})
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
@@ -115,7 +115,7 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionDescriptions, err := parser.ParseSDL(schema)
+	collectionDescriptions, err := parser.ParseSDL(ctx, schema)
 	if err != nil {
 		return nil, err
 	}
