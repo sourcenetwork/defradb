@@ -28,38 +28,20 @@ type Span interface {
 	End()
 }
 
-// callingPackageName returns the name of the calling package.
-func callingPackageName() string {
+// callerInfo returns the calling package name and calling func name.
+func callerInfo() (string, string) {
 	pc, _, _, ok := runtime.Caller(1)
 	if !ok {
-		return ""
+		return "", ""
 	}
 	fn := runtime.FuncForPC(pc)
 	if fn == nil {
-		return ""
+		return "", ""
 	}
 	name := fn.Name()
 	index := strings.LastIndex(name, ".")
 	if index < 0 {
-		return name
+		return "", ""
 	}
-	return name[:index]
-}
-
-// callingFuncName returns the name of the calling function.
-func callingFuncName() string {
-	pc, _, _, ok := runtime.Caller(1)
-	if !ok {
-		return ""
-	}
-	fn := runtime.FuncForPC(pc)
-	if fn == nil {
-		return ""
-	}
-	name := fn.Name()
-	index := strings.LastIndex(name, ".")
-	if index < 0 {
-		return name
-	}
-	return name[index+1:]
+	return name[:index], name[index+1:]
 }

@@ -8,16 +8,33 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build !telemetry
+
 package metric
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"context"
 )
 
-func TestCallerInfo(t *testing.T) {
-	pkg, fn := callerInfo()
-	assert.Equal(t, "TestCallerInfo", fn)
-	assert.Equal(t, "github.com/sourcenetwork/defradb/internal/metric", pkg)
+var (
+	_ Tracer = (*noopTracer)(nil)
+	_ Span   = (*noopSpan)(nil)
+)
+
+type noopTracer struct{}
+
+func NewTracer() Tracer {
+	return &noopTracer{}
+}
+
+func (t noopTracer) Start(ctx context.Context) (context.Context, Span) {
+	return ctx, &noopSpan{}
+}
+
+type noopSpan struct{}
+
+func (s *noopSpan) End() {}
+
+func ConfigureTelemetry(ctx context.Context) error {
+	return nil
 }

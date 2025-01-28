@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/metric"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
@@ -152,7 +153,7 @@ func MakeStartCommand() *cobra.Command {
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-			err := configureTelemetry(cmd.Context(), cfg)
+			err := metric.ConfigureTelemetry(cmd.Context())
 			if err != nil {
 				log.ErrorE("failed to configure telemetry", err)
 			}

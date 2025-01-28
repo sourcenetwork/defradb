@@ -8,12 +8,21 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build telemetry
+
 package metric
 
 import (
 	"context"
 
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -27,13 +36,13 @@ type otelTracer struct {
 }
 
 func NewTracer() Tracer {
-	name := callingPackageName()
+	name, _ := callerInfo()
 	tracer := otel.Tracer(name)
 	return &otelTracer{tracer}
 }
 
 func (t otelTracer) Start(ctx context.Context) (context.Context, Span) {
-	name := callingFuncName()
+	_, name := callerInfo()
 	ctx, span := t.inner.Start(ctx, name)
 	return ctx, &otelSpan{span}
 }
@@ -44,4 +53,44 @@ type otelSpan struct {
 
 func (s *otelSpan) End() {
 	s.inner.End()
+}
+
+// ConfigureTelemetry configures the global telemetry providers for
+// defradb and any dependencies that use the OpenTelemetry SDK.
+func ConfigureTelemetry(ctx context.Context) error {
+	opts := []resource.Option{
+		resource.WithSchemaURL(semconv.SchemaURL),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("DefraDB"),
+		),
+		resource.WithOS(),
+		resource.WithProcess(),
+	}
+	res, err := resource.New(ctx, opts...)
+	if err != nil {
+		return err
+	}
+	spanExporter, err := otlptracehttp.New(ctx)
+	if err != nil {
+		return err
+	}
+	metricExporter, err := otlpmetrichttp.New(ctx)
+	if err != nil {
+		return err
+	}
+	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithResource(res),
+		sdktrace.WithBatcher(spanExporter),
+	)
+	runtimeReader := sdkmetric.NewPeriodicReader(
+		metricExporter,
+		sdkmetric.WithProducer(runtime.NewProducer()),
+	)
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+		sdkmetric.WithReader(runtimeReader),
+	)
+	otel.SetMeterProvider(meterProvider)
+	otel.SetTracerProvider(tracerProvider)
+	return nil
 }
