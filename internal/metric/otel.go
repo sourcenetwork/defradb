@@ -63,17 +63,21 @@ func ConfigureTelemetry(ctx context.Context) error {
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String("DefraDB"),
 		),
+		// include all OS info
 		resource.WithOS(),
+		// include all process info
 		resource.WithProcess(),
 	}
 	res, err := resource.New(ctx, opts...)
 	if err != nil {
 		return err
 	}
+	// default to http exporter for traces
 	spanExporter, err := otlptracehttp.New(ctx)
 	if err != nil {
 		return err
 	}
+	// default to http exporter for metrics
 	metricExporter, err := otlpmetrichttp.New(ctx)
 	if err != nil {
 		return err
@@ -82,6 +86,9 @@ func ConfigureTelemetry(ctx context.Context) error {
 		sdktrace.WithResource(res),
 		sdktrace.WithBatcher(spanExporter),
 	)
+	// runtime metrics adds info from the Go runtime
+	// for more info see the link below:
+	// https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/runtime
 	runtimeReader := sdkmetric.NewPeriodicReader(
 		metricExporter,
 		sdkmetric.WithProducer(runtime.NewProducer()),
@@ -90,7 +97,9 @@ func ConfigureTelemetry(ctx context.Context) error {
 		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(runtimeReader),
 	)
+	// set the global meter provider for all otel instances
 	otel.SetMeterProvider(meterProvider)
+	// set the global trace provider for all otel instances
 	otel.SetTracerProvider(tracerProvider)
 	return nil
 }
