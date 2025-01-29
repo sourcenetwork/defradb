@@ -36,13 +36,13 @@ type otelTracer struct {
 }
 
 func NewTracer() Tracer {
-	name, _ := callerInfo()
+	name, _ := callerInfo(2)
 	tracer := otel.Tracer(name)
 	return &otelTracer{tracer}
 }
 
 func (t otelTracer) Start(ctx context.Context) (context.Context, Span) {
-	_, name := callerInfo()
+	_, name := callerInfo(2)
 	ctx, span := t.inner.Start(ctx, name)
 	return ctx, &otelSpan{span}
 }

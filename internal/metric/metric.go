@@ -29,8 +29,8 @@ type Span interface {
 }
 
 // callerInfo returns the calling package name and calling func name.
-func callerInfo() (string, string) {
-	pc, _, _, ok := runtime.Caller(1)
+func callerInfo(skip int) (string, string) {
+	pc, _, _, ok := runtime.Caller(skip)
 	if !ok {
 		return "", ""
 	}
