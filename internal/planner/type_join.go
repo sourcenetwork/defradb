@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -373,12 +372,17 @@ func (p *Planner) newInvertableTypeJoin(
 		isParent:           false,
 	}
 
-	return invertibleTypeJoin{
+	join := invertibleTypeJoin{
 		docMapper:  docMapper{parent.documentMapping},
 		parentSide: parentSide,
 		childSide:  childSide,
 		skipChild:  skipChild,
-	}, nil
+	}
+
+	// we store child's own filter in case an index kicks in and replaces it with it's own filter
+	join.subFilter = getScanNode(childSide.plan).filter
+
+	return join, nil
 }
 
 type joinSide struct {
@@ -436,53 +440,6 @@ func getForeignKey(node planNode, relFieldName string) string {
 	ind := node.DocumentMap().FirstIndexOfName(relFieldName + request.RelatedObjectID)
 	docIDStr, _ := node.Value().Fields[ind].(string)
 	return docIDStr
-}
-
-// fetchDocWithID fetches a document with the given docID from the given planNode.
-func fetchDocWithID(node planNode, docID string) (immutable.Option[core.Doc], error) {
-	scan := getScanNode(node)
-	newFilter := scan.filter
-
-	f := fetcher.NewDocumentFetcher(immutable.None[client.IndexDescription]())
-	if err := f.Init(
-		scan.p.ctx,
-		scan.p.identity,
-		scan.p.txn,
-		scan.p.acp,
-		scan.col,
-		scan.fields,
-		newFilter,
-		scan.slct.DocumentMapping,
-		scan.showDeleted,
-	); err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
-	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docID)
-
-	err := f.Start(scan.p.ctx, dsKey)
-	if err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
-	encodedDoc, execInfo, err := f.FetchNext(scan.p.ctx)
-	execInfo = execInfo
-
-	if err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
-	if encodedDoc == nil {
-		return immutable.None[core.Doc](), nil
-	}
-
-	doc, err := fetcher.DecodeToDoc(encodedDoc, scan.documentMapping, false)
-
-	if err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
-	return immutable.Some(doc), nil
 }
 
 // fetchDocWithIDAndItsSubDocs fetches a document with the given docID from the given planNode.
@@ -593,8 +550,8 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() e
 	r.resultPrimaryDocs, r.resultSecondaryDoc = joinPrimaryDocs(
 		primaryDocs,
 		r.targetSecondaryDoc,
-		r.secondarySide,
 		r.primarySide,
+		r.secondarySide,
 	)
 
 	return nil
@@ -630,44 +587,10 @@ func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
 	return docs, nil
 }
 
-func (r *primaryObjectsRetriever) cloneFetcher(
-	index immutable.Option[client.IndexDescription],
-	isPrimary bool,
-) (fetcher.Fetcher, error) {
-	var scan *scanNode
-	var newFilter *mapper.Filter
-	if isPrimary {
-		scan = r.primaryScan
-		newFilter = addFilterOnIDField(nil, r.primarySide.relIDFieldMapIndex.Value(), r.targetSecondaryDoc.GetID())
-	} else {
-		scan = getScanNode(r.secondarySide.plan)
-		newFilter = scan.filter
-	}
-
-	f := fetcher.NewDocumentFetcher(index)
-	if err := f.Init(
-		scan.p.ctx,
-		scan.p.identity,
-		scan.p.txn,
-		scan.p.acp,
-		scan.col,
-		scan.fields,
-		newFilter,
-		scan.slct.DocumentMapping,
-		scan.showDeleted,
-	); err != nil {
-		return nil, err
-	}
-
-	return f, nil
-}
-
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	//oldFilter := r.primaryScan.filter
-	r.primaryScan.filter = addFilterOnIDField(r.primaryScan.filter, r.primarySide.relIDFieldMapIndex.Value(), r.targetSecondaryDoc.GetID())
-	//r.primaryScan.filter = addFilterOnIDField(r.primaryScan.filter, r.primarySide.relIDFieldMapIndex.Value(), r.targetSecondaryDoc.GetID())
+	r.primaryScan.filter = addFilterOnIDField(r.filter, r.primarySide.relIDFieldMapIndex.Value(), r.targetSecondaryDoc.GetID())
 
 	oldFetcher := r.primaryScan.fetcher
 
@@ -685,50 +608,8 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	}
 
 	r.primaryScan.fetcher = oldFetcher
-	//r.primaryScan.filter = oldFilter
 
 	return docs, nil
-
-	// TODO: check if need to add the field explicitly
-	/*r.primaryScan.addField(r.relIDFieldDef)
-
-	indexOnRelation := findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
-	f, err := r.cloneFetcher(indexOnRelation, true)
-
-	if err != nil {
-		return nil, err
-	}
-
-	docs := []core.Doc{}
-
-	ctx := r.primaryScan.p.ctx
-	err = f.Start(ctx)
-	if err != nil {
-		return nil, errors.Join(err, f.Close())
-	}
-
-	for {
-		encodedDoc, execInfo, err := f.FetchNext(ctx)
-		execInfo = execInfo
-
-		if err != nil {
-			return nil, errors.Join(err, f.Close())
-		}
-
-		if encodedDoc == nil {
-			break
-		}
-
-		doc, err := fetcher.DecodeToDoc(encodedDoc, r.primaryScan.documentMapping, false)
-
-		if err != nil {
-			return nil, errors.Join(err, f.Close())
-		}
-
-		docs = append(docs, doc)
-	}
-
-	return docs, nil*/
 }
 
 func docsToDocIDs(docs []core.Doc) []string {
@@ -739,7 +620,7 @@ func docsToDocIDs(docs []core.Doc) []string {
 	return docIDs
 }
 
-func joinPrimaryDocs(primaryDocs []core.Doc, secondaryDoc core.Doc, secondarySide, primarySide *joinSide) ([]core.Doc, core.Doc) {
+func joinPrimaryDocs(primaryDocs []core.Doc, secondaryDoc core.Doc, primarySide, secondarySide *joinSide) ([]core.Doc, core.Doc) {
 	if secondarySide.relFieldMapIndex.HasValue() {
 		if !secondarySide.relFieldDef.HasValue() || secondarySide.relFieldDef.Value().Kind.IsArray() {
 			secondaryDoc.Fields[secondarySide.relFieldMapIndex.Value()] = primaryDocs
@@ -771,15 +652,16 @@ func joinPrimaryDocs(primaryDocs []core.Doc, secondaryDoc core.Doc, secondarySid
 	return primaryDocs, secondaryDoc
 }
 
-func (join *invertibleTypeJoin) fetchPrimaryDocsReferencingSecondaryDoc(
+func fetchPrimaryDocsReferencingSecondaryDoc(
+	primarySide, secondarySide *joinSide,
 	secondaryDoc core.Doc,
+	filter *mapper.Filter,
 ) ([]core.Doc, core.Doc, error) {
-	//retriever := newPrimaryObjectsRetriever(join.getPrimarySide(), join.getSecondarySide())
 	retriever := primaryObjectsRetriever{
-		primarySide:        join.getPrimarySide(),
-		secondarySide:      join.getSecondarySide(),
+		primarySide:        primarySide,
+		secondarySide:      secondarySide,
 		targetSecondaryDoc: secondaryDoc,
-		filter:             join.subFilter,
+		filter:             filter,
 	}
 	err := retriever.retrievePrimaryDocsReferencingSecondaryDoc()
 	return retriever.resultPrimaryDocs, retriever.resultSecondaryDoc, err
@@ -807,7 +689,8 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 	if firstSide.isPrimary() {
 		return join.fetchRelatedSecondaryDocWithChildren(firstSide.plan.Value())
 	} else {
-		primaryDocs, secondaryDoc, err := join.fetchPrimaryDocsReferencingSecondaryDoc(firstSide.plan.Value())
+		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(
+			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter)
 		if err != nil {
 			return false, err
 		}
@@ -874,9 +757,11 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 		// if child is not requested as part of the response, we just add the existing one (fetched by the secondary index
 		// on a filtered value) so that top select node that runs the filter again can yield it.
 		if join.skipChild {
-			primaryDocs, secondaryDoc = joinPrimaryDocs([]core.Doc{firstSide.plan.Value()}, secondaryDoc, secondSide, firstSide)
+			primaryDocs, secondaryDoc = joinPrimaryDocs(
+				[]core.Doc{firstSide.plan.Value()}, secondaryDoc, join.getPrimarySide(), join.getSecondSide())
 		} else {
-			primaryDocs, secondaryDoc, err = join.fetchPrimaryDocsReferencingSecondaryDoc(secondaryDoc)
+			primaryDocs, secondaryDoc, err = fetchPrimaryDocsReferencingSecondaryDoc(
+				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter)
 			if err != nil {
 				return false, err
 			}
@@ -911,12 +796,12 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	fieldFilter *mapper.Filter,
 	index client.IndexDescription,
 ) error {
-	p := join.childSide.plan
-	s := getScanNode(p)
-	s.tryAddFieldWithName(join.childSide.relFieldDef.Value().Name + request.RelatedObjectID)
-	join.subFilter = s.filter
-	s.filter = fieldFilter
-	s.initFetcher(immutable.Option[string]{}, immutable.Some(index))
+	childScan := getScanNode(join.childSide.plan)
+	childScan.tryAddFieldWithName(join.childSide.relFieldDef.Value().Name + request.RelatedObjectID)
+	// replace child's filter with the filter that utilizes the index
+	// the original child's filter is stored in join.subFilter
+	childScan.filter = fieldFilter
+	childScan.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 
 	join.childSide.isFirst = join.parentSide.isFirst
 	join.parentSide.isFirst = !join.parentSide.isFirst
