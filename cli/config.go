@@ -68,6 +68,7 @@ var configFlags = map[string]string{
 	"source-hub-address": "acp.sourceHub.address",
 	"development":        "development",
 	"secret-file":        "secretfile",
+	"no-telemetry":       "telemetry.disabled",
 }
 
 // configDefaults contains default values for config entries.
@@ -96,6 +97,7 @@ var configDefaults = map[string]any{
 	"log.source":                        false,
 	"log.stacktrace":                    false,
 	"secretfile":                        ".env",
+	"telemetry.disabled":                false,
 }
 
 // defaultConfig returns a new config with default values.

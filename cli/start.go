@@ -150,13 +150,16 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
+			if !cfg.GetBool("no-telemetry") {
+				err := metric.ConfigureTelemetry(cmd.Context())
+				if err != nil {
+					log.ErrorE("failed to configure telemetry", err)
+				}
+			}
+
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-			err := metric.ConfigureTelemetry(cmd.Context())
-			if err != nil {
-				log.ErrorE("failed to configure telemetry", err)
-			}
 			n, err := node.New(cmd.Context(), opts...)
 			if err != nil {
 				return err
@@ -255,6 +258,11 @@ func MakeStartCommand() *cobra.Command {
 		"no-encryption",
 		cfg.GetBool(configFlags["no-encryption"]),
 		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
+	cmd.PersistentFlags().Bool(
+		"no-telemetry",
+		cfg.GetBool(configFlags["no-telemetry"]),
+		"Disables telemetry reporting. Telemetry is only enabled in builds that use the `telemetry` flag.",
+	)
 	return cmd
 }
 
