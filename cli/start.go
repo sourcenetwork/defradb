@@ -153,7 +153,7 @@ func MakeStartCommand() *cobra.Command {
 			if !cfg.GetBool("no-telemetry") {
 				err := metric.ConfigureTelemetry(cmd.Context())
 				if err != nil {
-					log.ErrorE("failed to configure telemetry", err)
+					log.ErrorContextE(cmd.Context(), "failed to configure telemetry", err)
 				}
 			}
 
@@ -261,7 +261,7 @@ func MakeStartCommand() *cobra.Command {
 	cmd.PersistentFlags().Bool(
 		"no-telemetry",
 		cfg.GetBool(configFlags["no-telemetry"]),
-		"Disables telemetry reporting. Telemetry is only enabled in builds that use the `telemetry` flag.",
+		"Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.",
 	)
 	return cmd
 }
