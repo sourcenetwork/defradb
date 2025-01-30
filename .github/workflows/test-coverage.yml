@@ -255,7 +255,7 @@ jobs:
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
         with:
-          coverage-artifact-name: "coverage_encryption"
+          coverage-artifact-name: "coverage_telemetry"
           coverage-path: coverage.txt
 
   ## This job gathers all the coverage reports and uploads them to code-cov
