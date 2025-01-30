@@ -121,7 +121,6 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	f.execInfo.Reset()
 
 	var top fetcher
-	// TODO: check what happens if we query docs with certain ids
 	if f.index.HasValue() {
 		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
 			f.docMapper, &f.execInfo)
@@ -134,7 +133,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	}
 
 	// the index fetcher might not have been created if there is no efficient way to use fetch indexes
-	// with given filter conditions. In this case we call back to the prefix fetcher
+	// with given filter conditions. In this case we fall back to the prefix fetcher
 	if top == nil {
 		top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &f.execInfo)
 		if err != nil {

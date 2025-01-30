@@ -487,18 +487,9 @@ type fieldFilterCond struct {
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
 func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
+	// we process first the conditions that match composite index fields starting from the first one
 	for i := range f.indexDesc.Fields {
-		var indexedField client.FieldDefinition
-		for j := range f.indexedFields {
-			if f.indexedFields[j].Name == f.indexDesc.Fields[i].Name {
-				indexedField = f.indexedFields[j]
-				break
-			}
-		}
-		if indexedField.Name == "" {
-			return result, nil
-		}
-
+		indexedField := f.indexedFields[i]
 		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
 		found := false
 		var err error
@@ -582,7 +573,11 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					break
 				}
 				return false
-			}, opNot)
+			},
+			// if the filter contains _not operator, we ignore the entire branch because in this
+			// case index will do more harm. For example if we have _not: {_eq: 5} and the index
+			// fetches value 5, it will skip all documents with value 5, but we need to return them.
+			opNot)
 
 		if len(result) == 0 {
 			return nil, err

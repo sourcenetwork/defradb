@@ -340,7 +340,6 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	})
 	// we return the first found index. We will optimize it later.
 	// https://github.com/sourcenetwork/defradb/issues/2680
-	//fmt.Printf(">>>>> findIndexByFilteringField: index: %s\n", indexes[0].Name)
 	return immutable.Some(indexCandidates[0])
 }
 
