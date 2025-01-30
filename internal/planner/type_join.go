@@ -590,7 +590,8 @@ func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	r.primaryScan.filter = addFilterOnIDField(r.filter, r.primarySide.relIDFieldMapIndex.Value(), r.targetSecondaryDoc.GetID())
+	r.primaryScan.filter = addFilterOnIDField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+		r.targetSecondaryDoc.GetID())
 
 	oldFetcher := r.primaryScan.fetcher
 
@@ -620,7 +621,11 @@ func docsToDocIDs(docs []core.Doc) []string {
 	return docIDs
 }
 
-func joinPrimaryDocs(primaryDocs []core.Doc, secondaryDoc core.Doc, primarySide, secondarySide *joinSide) ([]core.Doc, core.Doc) {
+func joinPrimaryDocs(
+	primaryDocs []core.Doc,
+	secondaryDoc core.Doc,
+	primarySide, secondarySide *joinSide,
+) ([]core.Doc, core.Doc) {
 	if secondarySide.relFieldMapIndex.HasValue() {
 		if !secondarySide.relFieldDef.HasValue() || secondarySide.relFieldDef.Value().Kind.IsArray() {
 			secondaryDoc.Fields[secondarySide.relFieldMapIndex.Value()] = primaryDocs

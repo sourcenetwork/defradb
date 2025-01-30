@@ -12,10 +12,11 @@ package filter
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestTraverseFields(t *testing.T) {
