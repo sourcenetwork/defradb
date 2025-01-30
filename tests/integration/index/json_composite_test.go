@@ -267,8 +267,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 					{"name": "Chris"},
 				},
 			},
-			// we shouldn't use index as _ne filter is present
-			indexFetches: 0,
+			indexFetches: 8,
 		},
 	}
 

@@ -417,6 +417,7 @@ func createComparingMatcher(condition *fieldFilterCond) valueMatcher {
 	}
 
 	// for _ne filter on regular (non-JSON) fields the index should also accept nil values
+	// there won't be `_ne: null` because nil check is done before this function is called
 	if condition.op == opNe {
 		matcher = newCompositeMatcher(&nilMatcher{matchNil: true}, matcher)
 	}

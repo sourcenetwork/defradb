@@ -29,7 +29,7 @@ import (
 // and the newer [fetcher] interface.
 type wrappingFetcher struct {
 	fetcher  fetcher
-	execInfo *ExecInfo
+	execInfo ExecInfo
 
 	// The below properties are only held in state in order to temporarily adhere to the [Fetcher]
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
@@ -91,7 +91,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 
 	if f.filter != nil && len(f.fields) > 0 {
 		conditions := f.filter.ToMap(f.docMapper)
-		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, f.col.Definition())
+		parsedFilterFields, err := parser.ParseFilterFieldsForDescription(conditions, f.col.Definition())
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 			existingFields[field.ID] = struct{}{}
 		}
 
-		for _, field := range parsedfilterFields {
+		for _, field := range parsedFilterFields {
 			if _, ok := existingFields[field.ID]; !ok {
 				f.fields = append(f.fields, field)
 			}
@@ -118,13 +118,13 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 		fieldsByID[uint32(field.ID)] = field
 	}
 
-	var execInfo ExecInfo
-	f.execInfo = &execInfo
+	f.execInfo.Reset()
 
 	var top fetcher
 	// TODO: check what happens if we query docs with certain ids
 	if f.index.HasValue() {
-		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col, f.fields, f.docMapper)
+		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
+			f.docMapper, &f.execInfo)
 		if err != nil {
 			return err
 		}
@@ -136,14 +136,14 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	// the index fetcher might not have been created if there is no efficient way to use fetch indexes
 	// with given filter conditions. In this case we call back to the prefix fetcher
 	if top == nil {
-		top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &execInfo)
+		top, err = newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Active, &f.execInfo)
 		if err != nil {
 			return err
 		}
 	}
 
 	if f.showDeleted {
-		deletedFetcher, err := newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Deleted, &execInfo)
+		deletedFetcher, err := newPrefixFetcher(ctx, f.txn, dsPrefixes, f.col, fieldsByID, client.Deleted, &f.execInfo)
 		if err != nil {
 			return err
 		}
@@ -164,31 +164,29 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 }
 
 func (f *wrappingFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
-	docID, err := f.fetcher.NextDoc()
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-
-	if !docID.HasValue() {
-		execInfo := *f.execInfo
-		f.execInfo.Reset()
-
-		return nil, execInfo, nil
-	}
-
-	doc, err := f.fetcher.GetFields()
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-
-	if !doc.HasValue() {
-		return f.FetchNext(ctx)
-	}
-
-	execInfo := *f.execInfo
 	f.execInfo.Reset()
 
-	return doc.Value(), execInfo, nil
+	for {
+		docID, err := f.fetcher.NextDoc()
+		if err != nil {
+			return nil, ExecInfo{}, err
+		}
+
+		if !docID.HasValue() {
+			return nil, f.execInfo, nil
+		}
+
+		doc, err := f.fetcher.GetFields()
+		if err != nil {
+			return nil, ExecInfo{}, err
+		}
+
+		if !doc.HasValue() {
+			continue
+		}
+
+		return doc.Value(), f.execInfo, nil
+	}
 }
 
 func (f *wrappingFetcher) Close() error {

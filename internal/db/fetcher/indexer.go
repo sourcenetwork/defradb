@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -37,7 +38,7 @@ type indexFetcher struct {
 	indexDesc     client.IndexDescription
 	indexIter     indexIterator
 	currentDocID  immutable.Option[string]
-	execInfo      ExecInfo
+	execInfo      *ExecInfo
 }
 
 // var _ Fetcher = (*IndexFetcher)(nil)
@@ -51,8 +52,8 @@ func newIndexFetcher(
 	indexDesc client.IndexDescription,
 	docFilter *mapper.Filter,
 	col client.Collection,
-	fields []client.FieldDefinition,
 	docMapper *core.DocumentMapping,
+	execInfo *ExecInfo,
 ) (*indexFetcher, error) {
 	f := &indexFetcher{
 		ctx:        ctx,
@@ -61,6 +62,7 @@ func newIndexFetcher(
 		mapping:    docMapper,
 		indexDesc:  indexDesc,
 		fieldsByID: fieldsByID,
+		execInfo:   execInfo,
 	}
 
 	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
@@ -90,13 +92,8 @@ func newIndexFetcher(
 }
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
-	totalExecInfo := f.execInfo
-	defer func() { f.execInfo.Add(totalExecInfo) }()
-	f.execInfo.Reset()
-
 	f.currentDocID = immutable.None[string]()
 
-	//for {
 	res, err := f.indexIter.Next()
 	if err != nil || !res.foundKey {
 		return immutable.None[string](), err
@@ -120,17 +117,15 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		}
 	}
 	return f.currentDocID, nil
-	//}
 }
 
 func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	if !f.currentDocID.HasValue() {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
-	var execInfo ExecInfo
 	prefix := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), f.currentDocID.Value())
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
-		f.fieldsByID, client.Active, &execInfo)
+		f.fieldsByID, client.Active, f.execInfo)
 	if err != nil {
 		return immutable.Option[EncodedDocument]{}, err
 	}
@@ -138,7 +133,8 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	if err != nil {
 		return immutable.Option[EncodedDocument]{}, err
 	}
-	return prefixFetcher.GetFields()
+	doc, err := prefixFetcher.GetFields()
+	return doc, errors.Join(err, prefixFetcher.Close())
 }
 
 func (f *indexFetcher) Close() error {
@@ -146,16 +142,4 @@ func (f *indexFetcher) Close() error {
 		return f.indexIter.Close()
 	}
 	return nil
-}
-
-// resetState resets the mutable state of this IndexFetcher, returning the state to how it
-// was immediately after construction.
-func (f *indexFetcher) resetState() {
-	// WARNING: Do not reset properties set in the constructor!
-
-	f.col = nil
-	f.mapping = nil
-	f.indexedFields = nil
-	f.indexIter = nil
-	f.execInfo.Reset()
 }

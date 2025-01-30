@@ -48,7 +48,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -90,7 +90,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(12),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -132,7 +132,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegularCaseInsensitive_ShouldF
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}

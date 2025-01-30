@@ -340,8 +340,7 @@ func (f *indexFetcher) newPrefixIteratorFromConditions(
 	}
 
 	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-
-	return f.newPrefixIterator(key, matchers, &f.execInfo), nil
+	return f.newPrefixIterator(key, matchers, f.execInfo), nil
 }
 
 func (f *indexFetcher) newPrefixIterator(
@@ -383,21 +382,14 @@ func (f *indexFetcher) newInIndexIterator(
 		}
 
 		key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-
-		iter = &eqSingleIndexIterator{
-			indexKey: key,
-			execInfo: &f.execInfo,
-		}
+		iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
 		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
-		iter = f.newPrefixIterator(indexKey, matchers, &f.execInfo)
+		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo)
 	}
-	return &inIndexIterator{
-		indexIterator: iter,
-		inValues:      inValues,
-	}, nil
+	return &inIndexIterator{indexIterator: iter, inValues: inValues}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
@@ -439,7 +431,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 			}
 
 			key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-			iter = &eqSingleIndexIterator{indexKey: key, execInfo: &f.execInfo}
+			iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 		} else {
 			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
 		}
@@ -454,7 +446,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 				Value:      client.NewNormalJSON(client.MakeVoidJSON(fieldConditions[0].jsonPath)),
 			}}
 		}
-		iter, err = f.newPrefixIterator(key, matchers, &f.execInfo), nil
+		iter, err = f.newPrefixIterator(key, matchers, f.execInfo), nil
 	}
 
 	if err != nil {
