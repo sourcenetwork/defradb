@@ -111,7 +111,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	return node.DB, err
 }
 
-func getDefaultNodeOpts() []node.Option {
+func getDefaultNodeOpts() ([]node.Option, error) {
 	opts := []node.Option{
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
@@ -126,7 +126,7 @@ func getDefaultNodeOpts() []node.Option {
 	if badgerEncryption && encryptionKey == nil {
 		key, err := crypto.GenerateAES256()
 		if err != nil {
-			return nil
+			return []node.Option{}, err
 		}
 		encryptionKey = key
 	}
@@ -135,14 +135,19 @@ func getDefaultNodeOpts() []node.Option {
 		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	}
 
-	return opts
+	return opts, nil
 }
 
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
-	opts = append(getDefaultNodeOpts(), opts...)
+	defaultOpts, err := getDefaultNodeOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	opts = append(defaultOpts, opts...)
 
 	switch acpType {
 	case LocalACPType:
@@ -150,7 +155,6 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 
 	case SourceHubACPType:
 		if len(s.acpOptions) == 0 {
-			var err error
 			s.acpOptions, err = setupSourceHub(s)
 			require.NoError(s.t, err)
 		}
