@@ -70,7 +70,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 												"scanNode": dataMap{
 													"iterations":   uint64(3),
 													"docFetches":   uint64(2),
-													"fieldFetches": uint64(2),
+													"fieldFetches": uint64(4),
 													"indexFetches": uint64(0),
 												},
 											},
@@ -233,7 +233,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 												"scanNode": dataMap{
 													"iterations":   uint64(3),
 													"docFetches":   uint64(2),
-													"fieldFetches": uint64(2),
+													"fieldFetches": uint64(4),
 													"indexFetches": uint64(0),
 												},
 											},

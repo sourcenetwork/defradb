@@ -54,7 +54,7 @@ func TestExecuteExplainRequest_WithMaxOfInlineArrayField_Succeeds(t *testing.T) 
 											"scanNode": dataMap{
 												"iterations":   uint64(4),
 												"docFetches":   uint64(3),
-												"fieldFetches": uint64(5),
+												"fieldFetches": uint64(11),
 												"indexFetches": uint64(0),
 											},
 										},
@@ -113,13 +113,13 @@ func TestExecuteExplainRequest_MaxOfRelatedOneToManyField_Succeeds(t *testing.T)
 												"scanNode": dataMap{
 													"iterations":   uint64(3),
 													"docFetches":   uint64(2),
-													"fieldFetches": uint64(2),
+													"fieldFetches": uint64(8),
 													"indexFetches": uint64(0),
 												},
 												"subTypeScanNode": dataMap{
 													"iterations":   uint64(5),
 													"docFetches":   uint64(6),
-													"fieldFetches": uint64(12),
+													"fieldFetches": uint64(18),
 													"indexFetches": uint64(0),
 												},
 											},

@@ -51,7 +51,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(2),
 												"docFetches":   uint64(1),
-												"fieldFetches": uint64(1),
+												"fieldFetches": uint64(2),
 												"indexFetches": uint64(0),
 											},
 										},
@@ -103,7 +103,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(2),
 												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
+												"fieldFetches": uint64(8),
 												"indexFetches": uint64(0),
 											},
 										},
