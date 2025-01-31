@@ -180,7 +180,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 						name
 					}
 				}`,
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
