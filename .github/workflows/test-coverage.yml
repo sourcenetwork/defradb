@@ -41,6 +41,8 @@ env:
   DEFRA_LENS_TYPE: wasm-time
   DEFRA_ACP_TYPE: local
   DEFRA_VIEW_TYPE: cacheless
+  
+  DEFRA_VECTOR_EMBEDDINGS: false
 
 
 # We run all runners via the bash shell to provide us with a consistent set of env variables and commands
@@ -72,19 +74,18 @@ jobs:
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'file' }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
+      DEFRA_VECTOR_EMBEDDINGS: true
 
     steps:
-      - name: Install ollama
-        run: curl -fsSL https://ollama.com/install.sh | sh
-      - name: Run ollama
-        run: |
-          ollama serve &
-          ollama pull nomic-embed-text
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
+      
+      - name: Setup vector embedding dependencies
+        run: |
+          make deps:embedding
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact

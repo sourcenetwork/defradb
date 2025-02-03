@@ -170,6 +170,14 @@ deps\:mocks:
 deps\:playground:
 	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
 
+/PHONY: deps\:embedding
+deps\:embedding:
+	ifeq ($(OS_GENERAL), Linux)
+		curl -fsSL https://ollama.com/install.sh | sh
+	endif
+	ollama serve
+    ollama pull nomic-embed-text
+
 .PHONY: deps
 deps:
 	@$(MAKE) deps:modules && \
