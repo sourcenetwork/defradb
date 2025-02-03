@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/version"
 )
 
 const devModeBanner = `
@@ -151,7 +152,11 @@ func MakeStartCommand() *cobra.Command {
 			}
 
 			if !cfg.GetBool("no-telemetry") {
-				err := metric.ConfigureTelemetry(cmd.Context())
+				ver, err := version.NewDefraVersion()
+				if err != nil {
+					return err
+				}
+				err = metric.ConfigureTelemetry(cmd.Context(), ver.String())
 				if err != nil {
 					log.ErrorContextE(cmd.Context(), "failed to configure telemetry", err)
 				}
