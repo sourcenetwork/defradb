@@ -41,7 +41,7 @@ env:
   DEFRA_LENS_TYPE: wasm-time
   DEFRA_ACP_TYPE: local
   DEFRA_VIEW_TYPE: cacheless
-  
+
   DEFRA_VECTOR_EMBEDDINGS: false
 
 
@@ -82,10 +82,9 @@ jobs:
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
-      
+
       - name: Setup vector embedding dependencies
-        run: |
-          make deps:embedding
+        run: make deps:embedding
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
