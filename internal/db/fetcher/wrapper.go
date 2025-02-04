@@ -46,8 +46,8 @@ type wrappingFetcher struct {
 
 var _ Fetcher = (*wrappingFetcher)(nil)
 
-func NewDocumentFetcher(index immutable.Option[client.IndexDescription]) Fetcher {
-	return &wrappingFetcher{index: index}
+func NewDocumentFetcher() Fetcher {
+	return &wrappingFetcher{}
 }
 
 func (f *wrappingFetcher) Init(
@@ -55,6 +55,7 @@ func (f *wrappingFetcher) Init(
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
+	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -64,6 +65,7 @@ func (f *wrappingFetcher) Init(
 	f.identity = identity
 	f.txn = txn
 	f.acp = acp
+	f.index = index
 	f.col = col
 	f.fields = fields
 	f.filter = filter

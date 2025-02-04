@@ -298,7 +298,8 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	}
 
 	if isScanNode {
-		origScan.initFetcher(n.selectReq.Cid, findIndexByFilteringField(origScan))
+		origScan.index = findIndexByFilteringField(origScan)
+		origScan.initFetcher(n.selectReq.Cid)
 	}
 
 	return aggregates, nil

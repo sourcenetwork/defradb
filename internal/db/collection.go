@@ -71,7 +71,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	if c.fetcherFactory != nil {
 		innerFetcher = c.fetcherFactory()
 	} else {
-		innerFetcher = fetcher.NewDocumentFetcher(immutable.Option[client.IndexDescription]{})
+		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())

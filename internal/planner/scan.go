@@ -50,6 +50,7 @@ type scanNode struct {
 	filter *mapper.Filter
 	slct   *mapper.Select
 
+	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
 	execInfo scanExecInfo
@@ -66,6 +67,7 @@ func (n *scanNode) Init() error {
 		n.p.identity,
 		n.p.txn,
 		n.p.acp,
+		n.index,
 		n.col,
 		n.fields,
 		n.filter,
@@ -151,15 +153,12 @@ func (n *scanNode) addField(field client.FieldDefinition) {
 	}
 }
 
-func (scan *scanNode) initFetcher(
-	cid immutable.Option[string],
-	index immutable.Option[client.IndexDescription],
-) {
+func (scan *scanNode) initFetcher(cid immutable.Option[string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
-		f = fetcher.NewDocumentFetcher(index)
+		f = fetcher.NewDocumentFetcher()
 
 		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
 	}

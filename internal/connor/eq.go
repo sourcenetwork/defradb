@@ -11,8 +11,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 )
 
-// eq is an operator which performs object equality
-// tests.
+// eq is an operator which performs object equality tests.
+// It also takes a propExists boolean to indicate if the property exists in the data.
+// It's needed because the behavior of the operators can change if the property doesn't exist.
+// For example, _ne operator should return true if the property doesn't exist.
+// This can also be used in the future if we introduce operators line _has.
 func eq(condition, data any, propExists bool) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
@@ -34,10 +37,11 @@ func eq(condition, data any, propExists bool) (bool, error) {
 	switch cn := condition.(type) {
 	case map[FilterKey]any:
 		for prop, cond := range cn {
-			res := prop.PropertyAndOperator(data, EqualOp)
-			if res.Err != nil {
-				return false, res.Err
+			res, err := prop.PropertyAndOperator(data, EqualOp)
+			if err != nil {
+				return false, err
 			}
+			// If the property doesn't exist, we should pass it forward to nested operators.
 			m, err := matchWith(res.Operator, cond, res.Data, !res.MissProp && propExists)
 			if err != nil {
 				return false, err

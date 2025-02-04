@@ -55,6 +55,10 @@ func Match(conditions map[FilterKey]any, data any) (bool, error) {
 // matchWith can be used to specify the exact operator to use when performing
 // a match operation. This is primarily used when building custom operators or
 // if you wish to override the behavior of another operator.
+// It also takes a propExists boolean to indicate if the property exists in the data.
+// It's needed because the behavior of the operators can change if the property doesn't exist.
+// For example, _ne operator should return true if the property doesn't exist.
+// This can also be used in the future if we introduce operators line _has.
 func matchWith(op string, conditions, data any, propExists bool) (bool, error) {
 	switch op {
 	case AndOp:

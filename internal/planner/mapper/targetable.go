@@ -30,11 +30,11 @@ type PropertyIndex struct {
 	Index int
 }
 
-func (k *PropertyIndex) PropertyAndOperator(data any, defaultOp string) connor.KeyResult {
+func (k *PropertyIndex) PropertyAndOperator(data any, defaultOp string) (connor.KeyResult, error) {
 	if data == nil {
-		return connor.KeyResult{Data: nil, Operator: defaultOp}
+		return connor.KeyResult{Data: nil, Operator: defaultOp}, nil
 	}
-	return connor.KeyResult{Data: data.(core.Doc).Fields[k.Index], Operator: defaultOp}
+	return connor.KeyResult{Data: data.(core.Doc).Fields[k.Index], Operator: defaultOp}, nil
 }
 
 func (k *PropertyIndex) Equal(other connor.FilterKey) bool {
@@ -52,8 +52,8 @@ type Operator struct {
 	Operation string
 }
 
-func (k *Operator) PropertyAndOperator(data any, defaultOp string) connor.KeyResult {
-	return connor.KeyResult{Data: data, Operator: k.Operation}
+func (k *Operator) PropertyAndOperator(data any, defaultOp string) (connor.KeyResult, error) {
+	return connor.KeyResult{Data: data, Operator: k.Operation}, nil
 }
 
 func (k *Operator) Equal(other connor.FilterKey) bool {
@@ -72,16 +72,16 @@ type ObjectProperty struct {
 	Name string
 }
 
-func (k *ObjectProperty) PropertyAndOperator(data any, defaultOp string) connor.KeyResult {
+func (k *ObjectProperty) PropertyAndOperator(data any, defaultOp string) (connor.KeyResult, error) {
 	if data == nil {
-		return connor.KeyResult{Operator: defaultOp}
+		return connor.KeyResult{Operator: defaultOp}, nil
 	}
 	docMap, ok := data.(map[string]any)
 	if !ok {
-		return connor.KeyResult{Operator: defaultOp, Err: NewErrFieldOrAliasNotFound(k.Name)}
+		return connor.KeyResult{Operator: defaultOp}, NewErrFieldOrAliasNotFound(k.Name)
 	}
 	prop, hasProp := docMap[k.Name]
-	return connor.KeyResult{Data: prop, MissProp: !hasProp, Operator: defaultOp}
+	return connor.KeyResult{Data: prop, MissProp: !hasProp, Operator: defaultOp}, nil
 }
 
 func (k *ObjectProperty) Equal(other connor.FilterKey) bool {

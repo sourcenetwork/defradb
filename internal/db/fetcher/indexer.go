@@ -41,7 +41,6 @@ type indexFetcher struct {
 	execInfo      *ExecInfo
 }
 
-// var _ Fetcher = (*IndexFetcher)(nil)
 var _ fetcher = (*indexFetcher)(nil)
 
 // newIndexFetcher creates a new IndexFetcher.

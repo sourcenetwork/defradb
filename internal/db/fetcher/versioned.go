@@ -102,6 +102,7 @@ func (vf *VersionedFetcher) Init(
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
+	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -130,12 +131,13 @@ func (vf *VersionedFetcher) Init(
 	}
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
-	vf.Fetcher = NewDocumentFetcher(immutable.Option[client.IndexDescription]{})
+	vf.Fetcher = NewDocumentFetcher()
 	return vf.Fetcher.Init(
 		ctx,
 		identity,
 		vf.store,
 		acp,
+		index,
 		col,
 		fields,
 		filter,

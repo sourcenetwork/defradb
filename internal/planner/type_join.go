@@ -594,9 +594,10 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 		r.targetSecondaryDoc.GetID())
 
 	oldFetcher := r.primaryScan.fetcher
+	oldIndex := r.primaryScan.index
 
-	indexOnRelation := findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
-	r.primaryScan.initFetcher(immutable.None[string](), indexOnRelation)
+	r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
+	r.primaryScan.initFetcher(immutable.None[string]())
 
 	docs, err := r.collectDocs(0)
 	if err != nil {
@@ -609,6 +610,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	}
 
 	r.primaryScan.fetcher = oldFetcher
+	r.primaryScan.index = oldIndex
 
 	return docs, nil
 }
@@ -806,7 +808,8 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	// replace child's filter with the filter that utilizes the index
 	// the original child's filter is stored in join.subFilter
 	childScan.filter = fieldFilter
-	childScan.initFetcher(immutable.Option[string]{}, immutable.Some(index))
+	childScan.index = immutable.Some(index)
+	childScan.initFetcher(immutable.Option[string]{})
 
 	join.childSide.isFirst = join.parentSide.isFirst
 	join.parentSide.isFirst = !join.parentSide.isFirst
