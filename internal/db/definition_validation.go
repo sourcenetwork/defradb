@@ -168,6 +168,8 @@ var globalValidators = []definitionValidator{
 	validateCollectionMaterialized,
 	validateMaterializedHasNoPolicy,
 	validateCollectionFieldDefaultValue,
+	validateEmbeddingAndKindCompatible,
+	validateEmbeddingFieldsForGeneration,
 }
 
 var createValidators = append(
@@ -760,6 +762,46 @@ func validateTypeAndKindCompatible(
 		}
 	}
 
+	return nil
+}
+
+func validateEmbeddingAndKindCompatible(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, colDef := range newState.definitionsByName {
+		for _, embedding := range colDef.Description.Embeddings {
+			field, _ := colDef.GetFieldByName(embedding.FieldName)
+			if !field.Kind.IsNumericArray() {
+				return client.NewErrInvalidTypeForEmbedding(field.Kind)
+			}
+		}
+	}
+	return nil
+}
+
+func validateEmbeddingFieldsForGeneration(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, colDef := range newState.definitionsByName {
+		for _, embedding := range colDef.Description.Embeddings {
+			for _, fieldName := range embedding.Fields {
+				field, fieldExists := colDef.GetFieldByName(fieldName)
+				if !fieldExists {
+					return client.NewErrFieldForEmbeddingGenerationDoesNotExist(fieldName)
+				}
+				if !client.IsSupportedVectorEmbeddingSourceKind(field.Kind) {
+					return client.NewErrInvalidTypeForEmbeddingGeneration(field.Kind)
+				}
+			}
+
+		}
+	}
 	return nil
 }
 

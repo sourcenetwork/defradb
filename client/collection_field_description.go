@@ -49,16 +49,6 @@ type CollectionFieldDescription struct {
 	// Mutations on fields with a size constraint will fail if the size of the array
 	// does not match the constraint.
 	Size int
-
-	// Embedding contains the configuration for generating embedding vectors.
-	//
-	// This is only usable with array fields.
-	//
-	// When configured, embeddings may call 3rd party APIs inline with document mutations.
-	// This may cause increase latency in the completion of the mutation requests.
-	// This is necessary to ensure that the generated docID is representative of the
-	// content of the document.
-	Embedding *EmbeddingDescription
 }
 
 func (f FieldID) String() string {
@@ -73,7 +63,6 @@ type collectionFieldDescription struct {
 	RelationName immutable.Option[string]
 	DefaultValue any
 	Size         int
-	Embedding    *EmbeddingDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
@@ -91,7 +80,6 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 	f.DefaultValue = descMap.DefaultValue
 	f.RelationName = descMap.RelationName
 	f.Size = descMap.Size
-	f.Embedding = descMap.Embedding
 	kind, err := parseFieldKind(descMap.Kind)
 	if err != nil {
 		return err
@@ -102,42 +90,4 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	return nil
-}
-
-// EmbeddingDescription hold the relevant information to generate embeddings.
-//
-// Embeddings are AI/ML specific vector representations of some content.
-// In the case of Defra, that content is one or multiple fields, optionaly added to a template.
-type EmbeddingDescription struct {
-	// Fields are the fields in the parent schema that will be used as the basis of the
-	// vector generation.
-	Fields []string
-	// Model is the LLM of the provider to use for generating the embeddings.
-	// For example: text-embedding-3-small
-	Model string
-	// Provider is the API provider to use for generating the embeddings.
-	// For example: openai
-	Provider string
-	// (Optional) Template is the local path of the template to use with the
-	// field values to form the content to send to the model.
-	//
-	// For example, with the following schema,
-	// ```
-	// type User {
-	//   name: String
-	//   age: Int
-	//   name_about_v: [Float32!] @embedding(fields: ["name", "age"], ...)
-	// }
-	// ````
-	// we can define the following Go template.
-	// ```
-	// {{ .name }} is {{ .age }} years old.
-	// ```
-	Template string
-	// URL is the url enpoint of the provider's API.
-	// For example: https://api.openai.com/v1
-	//
-	// Not providing a URL will result in the use of the default
-	// known URL for the given provider.
-	URL string
 }

@@ -103,6 +103,16 @@ type CollectionDescription struct {
 	// Currently this property is immutable and can only be set on collection creation, however
 	// that will change in the future.
 	IsBranchable bool
+
+	// Embedding contains the configuration for generating embedding vectors.
+	//
+	// This is only usable with array fields.
+	//
+	// When configured, embeddings may call 3rd party APIs inline with document mutations.
+	// This may cause increase latency in the completion of the mutation requests.
+	// This is necessary to ensure that the generated docID is representative of the
+	// content of the document.
+	Embeddings []EmbeddingDescription
 }
 
 // QuerySource represents a collection data source from a query.
@@ -208,6 +218,7 @@ type collectionDescription struct {
 	Policy          immutable.Option[PolicyDescription]
 	Indexes         []IndexDescription
 	Fields          []CollectionFieldDescription
+	Embeddings      []EmbeddingDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Sources []map[string]json.RawMessage
@@ -230,6 +241,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))
 	c.Policy = descMap.Policy
+	c.Embeddings = descMap.Embeddings
 
 	for i, source := range descMap.Sources {
 		sourceJson, err := json.Marshal(source)
@@ -267,4 +279,57 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	return nil
+}
+
+// EmbeddingDescription hold the relevant information to generate embeddings.
+//
+// Embeddings are AI/ML specific vector representations of some content.
+// In the case of Defra, that content is one or multiple fields, optionaly added to a template.
+type EmbeddingDescription struct {
+	// FieldName is the name of the field on the collection that this embedding description applies to.
+	FieldName string
+	// Fields are the fields in the parent schema that will be used as the basis of the
+	// vector generation.
+	Fields []string
+	// Model is the LLM of the provider to use for generating the embeddings.
+	// For example: text-embedding-3-small
+	Model string
+	// Provider is the API provider to use for generating the embeddings.
+	// For example: openai
+	Provider string
+	// (Optional) Template is the local path of the template to use with the
+	// field values to form the content to send to the model.
+	//
+	// For example, with the following schema,
+	// ```
+	// type User {
+	//   name: String
+	//   age: Int
+	//   name_about_v: [Float32!] @embedding(fields: ["name", "age"], ...)
+	// }
+	// ````
+	// we can define the following Go template.
+	// ```
+	// {{ .name }} is {{ .age }} years old.
+	// ```
+	Template string
+	// URL is the url enpoint of the provider's API.
+	// For example: https://api.openai.com/v1
+	//
+	// Not providing a URL will result in the use of the default
+	// known URL for the given provider.
+	URL string
+}
+
+// IsSupportedVectorEmbeddingSourceKind return true if the fields used for embedding generation
+// are of supported type.
+//
+// Currently, the supported types are Float32, Float64, Int and String
+func IsSupportedVectorEmbeddingSourceKind(fieldKind FieldKind) bool {
+	switch fieldKind {
+	case FieldKind_NILLABLE_FLOAT32, FieldKind_NILLABLE_FLOAT64, FieldKind_NILLABLE_INT, FieldKind_NILLABLE_STRING:
+		return true
+	default:
+		return false
+	}
 }

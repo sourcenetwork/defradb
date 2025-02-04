@@ -32,6 +32,9 @@ type FieldKind interface {
 	// IsArray returns true if this FieldKind is an array type which includes inline arrays as well
 	// as relation arrays.
 	IsArray() bool
+
+	// IsNumericArray returns true if the FieldKind is an array that contains numerical scalars.
+	IsNumericArray() bool
 }
 
 // SchemaFieldDescription describes a field on a Schema and its associated metadata.
@@ -153,6 +156,10 @@ func (k ScalarKind) IsArray() bool {
 	return false
 }
 
+func (k ScalarKind) IsNumericArray() bool {
+	return false
+}
+
 func (k ScalarArrayKind) String() string {
 	switch k {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
@@ -190,6 +197,15 @@ func (k ScalarArrayKind) IsObject() bool {
 
 func (k ScalarArrayKind) IsArray() bool {
 	return true
+}
+
+func (k ScalarArrayKind) IsNumericArray() bool {
+	switch k {
+	case FieldKind_INT_ARRAY, FieldKind_FLOAT64_ARRAY, FieldKind_FLOAT32_ARRAY:
+		return true
+	default:
+		return false
+	}
 }
 
 func (k ScalarArrayKind) SubKind() FieldKind {
@@ -245,6 +261,10 @@ func (k *CollectionKind) IsArray() bool {
 	return k.Array
 }
 
+func (k *CollectionKind) IsNumericArray() bool {
+	return false
+}
+
 func NewSchemaKind(root string, isArray bool) *SchemaKind {
 	return &SchemaKind{
 		Root:  root,
@@ -269,6 +289,10 @@ func (k *SchemaKind) IsObject() bool {
 
 func (k *SchemaKind) IsArray() bool {
 	return k.Array
+}
+
+func (k *SchemaKind) IsNumericArray() bool {
+	return false
 }
 
 func NewSelfKind(relativeID string, isArray bool) *SelfKind {
@@ -304,6 +328,10 @@ func (k *SelfKind) IsArray() bool {
 	return k.Array
 }
 
+func (k *SelfKind) IsNumericArray() bool {
+	return false
+}
+
 func NewNamedKind(name string, isArray bool) *NamedKind {
 	return &NamedKind{
 		Name:  name,
@@ -330,6 +358,10 @@ func (k *NamedKind) IsArray() bool {
 	return k.Array
 }
 
+func (k *NamedKind) IsNumericArray() bool {
+	return false
+}
+
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
 	FieldKind_None                   ScalarKind      = 0
@@ -340,8 +372,8 @@ const (
 	FieldKind_INT_ARRAY              ScalarArrayKind = 5
 	FieldKind_NILLABLE_FLOAT64       ScalarKind      = 6
 	FieldKind_FLOAT64_ARRAY          ScalarArrayKind = 7
-	_                                ScalarKind      = 8 // safe to repurpose (was never used)
-	_                                ScalarKind      = 9 // safe to repurpose (previously old field)
+	FieldKind_NILLABLE_FLOAT32       ScalarKind      = 8
+	FieldKind_FLOAT32_ARRAY          ScalarArrayKind = 9
 	FieldKind_NILLABLE_DATETIME      ScalarKind      = 10
 	FieldKind_NILLABLE_STRING        ScalarKind      = 11
 	FieldKind_STRING_ARRAY           ScalarArrayKind = 12
@@ -354,9 +386,7 @@ const (
 	FieldKind_NILLABLE_INT_ARRAY     ScalarArrayKind = 19
 	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
-	FieldKind_NILLABLE_FLOAT32       ScalarKind      = 22
-	FieldKind_FLOAT32_ARRAY          ScalarArrayKind = 23
-	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 24
+	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 22
 )
 
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to

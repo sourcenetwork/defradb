@@ -42,8 +42,8 @@ const (
 	errFieldTypeNotSpecified         string = "field type not specified"
 	errDirectiveWithUnknownArg       string = "directive with unknown argument"
 	errConstraintsInvalidProp        string = "constraints directive with invalid property"
+	errInvalidTypeForContraint       string = "size constraint can only be applied to array fields"
 	errEmbeddingInvalidProp          string = "embedding directive with invalid property"
-	errInvalidTypeForEmbedding       string = "embedding can only be applied to array of non-nillable float32 fields"
 )
 
 var (
@@ -74,7 +74,7 @@ var (
 	ErrrDirectiveWithUnknownArg  = errors.New(errDirectiveWithUnknownArg)
 	ErrConstraintsInvalidSize    = errors.New(errConstraintsInvalidProp)
 	ErrEmbedingInvalidSize       = errors.New(errEmbeddingInvalidProp)
-	ErrInvalidTypeForEmbedding   = errors.New(errInvalidTypeForEmbedding)
+	ErrInvalidTypeForContraint   = errors.New(errInvalidTypeForContraint)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -224,9 +224,6 @@ func NewErrEmbeddingInvalidProp[TExpected any](name string, actual any) error {
 	)
 }
 
-func NewErrInvalidTypeForEmbedding(actual client.FieldKind) error {
-	return errors.New(
-		errInvalidTypeForEmbedding,
-		errors.NewKV("Actual", actual.String()),
-	)
+func NewErrInvalidTypeForContraint(actual client.FieldKind) error {
+	return errors.New(errInvalidTypeForContraint, errors.NewKV("Actual", actual.String()))
 }

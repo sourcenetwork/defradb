@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	errFieldNotExist                       string = "The given field does not exist"
+	errFieldNotExist                       string = "the given field does not exist"
 	errUnexpectedType                      string = "unexpected type"
 	errParsingFailed                       string = "failed to parse argument"
 	errUninitializeProperty                string = "invalid state, required property is uninitialized"
@@ -36,6 +36,8 @@ const (
 	errFailedToParseKind                   string = "failed to parse kind"
 	errCannotSetRelationFromSecondarySide  string = "cannot set relation from secondary side"
 	errArraySizeMismatch                   string = "array size mismatch"
+	errInvalidTypeForEmbedding             string = "invalid type for vector embedding"
+	errInvalidTypeForEmbeddingGeneration   string = "invalid field type for vector embedding generation"
 )
 
 // Errors returnable from this package.
@@ -64,6 +66,8 @@ var (
 	ErrCollectionNotFound                   = errors.New(errCollectionNotFound)
 	ErrFailedToParseKind                    = errors.New(errFailedToParseKind)
 	ErrArraySizeMismatch                    = errors.New(errArraySizeMismatch)
+	ErrInvalidTypeForEmbedding              = errors.New(errInvalidTypeForEmbedding)
+	ErrInvalidTypeForEmbeddingGeneration    = errors.New(errInvalidTypeForEmbeddingGeneration)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -200,4 +204,16 @@ func NewErrCannotSetRelationFromSecondarySide(name string) error {
 
 func NewErrArraySizeMismatch[T any](array []T, expected int) error {
 	return errors.New(errArraySizeMismatch, errors.NewKV("Actual", len(array)), errors.NewKV("Expected", expected))
+}
+
+func NewErrInvalidTypeForEmbedding(actual FieldKind) error {
+	return errors.New(errInvalidTypeForEmbedding, errors.NewKV("Actual", actual.String()))
+}
+
+func NewErrFieldForEmbeddingGenerationDoesNotExist(fieldName string) error {
+	return errors.New(errFieldNotExist, errors.NewKV("Embedding field", fieldName))
+}
+
+func NewErrInvalidTypeForEmbeddingGeneration(actual FieldKind) error {
+	return errors.New(errInvalidTypeForEmbeddingGeneration, errors.NewKV("Actual", actual.String()))
 }

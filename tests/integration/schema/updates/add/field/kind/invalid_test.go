@@ -104,10 +104,10 @@ func TestSchemaUpdatesAddFieldKind25(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 25} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 23} }
 					]
 				`,
-				ExpectedError: "no type found for given name. Type: 25",
+				ExpectedError: "no type found for given name. Type: 23",
 			},
 		},
 	}

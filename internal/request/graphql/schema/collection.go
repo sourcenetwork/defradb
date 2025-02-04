@@ -22,7 +22,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
@@ -123,6 +122,7 @@ func collectionFromAstDefinition(
 	policyDescription := immutable.None[client.PolicyDescription]()
 
 	indexDescriptions := []client.IndexDescription{}
+	embeddings := []client.EmbeddingDescription{}
 	for _, field := range def.Fields {
 		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -138,12 +138,19 @@ func collectionFromAstDefinition(
 		collectionFieldDescriptions = append(collectionFieldDescriptions, tmpCollectionFieldDescriptions...)
 
 		for _, directive := range field.Directives {
-			if directive.Name.Value == types.IndexDirectiveLabel {
+			switch directive.Name.Value {
+			case types.IndexDirectiveLabel:
 				index, err := indexFromAST(directive, field)
 				if err != nil {
 					return client.CollectionDefinition{}, err
 				}
 				indexDescriptions = append(indexDescriptions, index)
+			case types.EmbeddingDirectiveLabel:
+				embedding, err := embeddingFromAST(directive, field)
+				if err != nil {
+					return client.CollectionDefinition{}, err
+				}
+				embeddings = append(embeddings, embedding)
 			}
 		}
 	}
@@ -231,6 +238,7 @@ func collectionFromAstDefinition(
 			Fields:         collectionFieldDescriptions,
 			IsMaterialized: !isMaterialized.HasValue() || isMaterialized.Value(),
 			IsBranchable:   isBranchable,
+			Embeddings:     embeddings,
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
@@ -489,7 +497,6 @@ func fieldsFromAST(
 
 	var defaultValue any
 	var constraints constraintDescription
-	var embedding *client.EmbeddingDescription
 	for _, directive := range field.Directives {
 		switch directive.Name.Value {
 		case types.DefaultDirectiveLabel:
@@ -499,14 +506,6 @@ func fieldsFromAST(
 			}
 		case types.ConstraintsDirectiveLabel:
 			constraints, err = contraintsFromAST(kind, directive)
-			if err != nil {
-				return nil, nil, err
-			}
-		case types.EmbeddingDirectiveLabel:
-			if kind != client.FieldKind_FLOAT32_ARRAY {
-				return nil, nil, NewErrInvalidTypeForEmbedding(kind)
-			}
-			embedding, err = embeddingFromAST(directive)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -591,7 +590,6 @@ func fieldsFromAST(
 				Name:         field.Name.Value,
 				DefaultValue: defaultValue,
 				Size:         constraints.Size,
-				Embedding:    embedding,
 			},
 		)
 	}
@@ -624,21 +622,23 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 	return policyDesc, nil
 }
 
-func embeddingFromAST(directive *ast.Directive) (*client.EmbeddingDescription, error) {
-	embedding := &client.EmbeddingDescription{}
+func embeddingFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.EmbeddingDescription, error) {
+	embedding := client.EmbeddingDescription{
+		FieldName: fieldDef.Name.Value,
+	}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.EmbeddingDirectivePropFields:
 			val, ok := arg.Value.(*ast.ListValue)
 			if !ok {
-				return nil,
+				return client.EmbeddingDescription{},
 					NewErrEmbeddingInvalidProp[[]string](types.ConstraintsDirectivePropSize, arg.Value.GetValue())
 			}
 			fields := make([]string, len(val.Values))
 			for i, untypedField := range val.Values {
 				field, ok := untypedField.(*ast.StringValue)
 				if !ok {
-					return nil,
+					return client.EmbeddingDescription{},
 						NewErrEmbeddingInvalidProp[[]string](types.ConstraintsDirectivePropSize, field.GetValue())
 				}
 				fields[i] = field.Value
@@ -647,33 +647,33 @@ func embeddingFromAST(directive *ast.Directive) (*client.EmbeddingDescription, e
 		case types.EmbeddingDirectivePropModel:
 			val, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return nil,
+				return client.EmbeddingDescription{},
 					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropModel, arg.Value.GetValue())
 			}
 			embedding.Model = val.Value
 		case types.EmbeddingDirectivePropProvider:
 			val, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return nil,
+				return client.EmbeddingDescription{},
 					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropProvider, arg.Value.GetValue())
 			}
 			embedding.Provider = val.Value
 		case types.EmbeddingDirectivePropTemplate:
 			val, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return nil,
+				return client.EmbeddingDescription{},
 					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropTemplate, arg.Value.GetValue())
 			}
 			embedding.Template = val.Value
 		case types.EmbeddingDirectivePropURL:
 			val, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return nil,
+				return client.EmbeddingDescription{},
 					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropURL, arg.Value.GetValue())
 			}
 			embedding.URL = val.Value
 		default:
-			return nil,
+			return client.EmbeddingDescription{},
 				NewErrDirectiveWithUnknownArg(types.ConstraintsDirectiveLabel, arg.Name.Value)
 		}
 	}
@@ -690,7 +690,7 @@ func contraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constra
 		switch arg.Name.Value {
 		case types.ConstraintsDirectivePropSize:
 			if !kind.IsArray() {
-				return constraintDescription{}, errors.New("size constraint can only be applied to array fields")
+				return constraintDescription{}, NewErrInvalidTypeForContraint(kind)
 			}
 			val, ok := arg.Value.(*ast.IntValue)
 			if !ok {

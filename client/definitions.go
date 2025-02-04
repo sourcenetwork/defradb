@@ -154,16 +154,6 @@ type FieldDefinition struct {
 	// Mutations on fields with a size constraint will fail if the size of the array
 	// does not match the constraint.
 	Size int
-
-	// Embedding contains the configuration for generating embedding vectors.
-	//
-	// This is only usable with array fields.
-	//
-	// When configured, embeddings may call 3rd party APIs inline with document mutations.
-	// This may cause increase latency in the completion of the mutation requests.
-	// This is necessary to ensure that the generated docID is representative of the
-	// content of the document.
-	Embedding *EmbeddingDescription
 }
 
 // NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
@@ -185,7 +175,6 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
 		DefaultValue:      local.DefaultValue,
 		Size:              local.Size,
-		Embedding:         local.Embedding,
 	}
 }
 
@@ -198,7 +187,6 @@ func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 		RelationName: local.RelationName.Value(),
 		DefaultValue: local.DefaultValue,
 		Size:         local.Size,
-		Embedding:    local.Embedding,
 	}
 }
 
