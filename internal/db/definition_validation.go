@@ -33,40 +33,6 @@ type definitionState struct {
 	definitionCache   client.DefinitionCache
 }
 
-// newDefinitionStateFromCols creates a new definitionState object given the provided
-// collection descriptions.
-func newDefinitionStateFromCols(
-	collections []client.CollectionDescription,
-) *definitionState {
-	collectionsByID := map[uint32]client.CollectionDescription{}
-	definitionsByName := map[string]client.CollectionDefinition{}
-	definitions := []client.CollectionDefinition{}
-	schemaByName := map[string]client.SchemaDescription{}
-
-	for _, col := range collections {
-		if len(col.Fields) == 0 {
-			continue
-		}
-
-		definition := client.CollectionDefinition{
-			Description: col,
-		}
-
-		definitionsByName[definition.GetName()] = definition
-		definitions = append(definitions, definition)
-		collectionsByID[col.ID] = col
-	}
-
-	return &definitionState{
-		collections:       collections,
-		collectionsByID:   collectionsByID,
-		schemaByID:        map[string]client.SchemaDescription{},
-		schemaByName:      schemaByName,
-		definitionsByName: definitionsByName,
-		definitionCache:   client.NewDefinitionCache(definitions),
-	}
-}
-
 // newDefinitionState creates a new definitionState object given the provided
 // definitions.
 func newDefinitionState(
@@ -197,16 +163,11 @@ func (db *DB) validateSchemaUpdate(
 
 func (db *DB) validateCollectionChanges(
 	ctx context.Context,
-	oldCols []client.CollectionDescription,
-	newColsByID map[uint32]client.CollectionDescription,
+	oldDefinitions []client.CollectionDefinition,
+	newDefinitions []client.CollectionDefinition,
 ) error {
-	newCols := make([]client.CollectionDescription, 0, len(newColsByID))
-	for _, col := range newColsByID {
-		newCols = append(newCols, col)
-	}
-
-	newState := newDefinitionStateFromCols(newCols)
-	oldState := newDefinitionStateFromCols(oldCols)
+	newState := newDefinitionState(newDefinitions)
+	oldState := newDefinitionState(oldDefinitions)
 
 	for _, validator := range collectionUpdateValidators {
 		err := validator(ctx, db, newState, oldState)
@@ -773,7 +734,10 @@ func validateEmbeddingAndKindCompatible(
 ) error {
 	for _, colDef := range newState.definitionsByName {
 		for _, embedding := range colDef.Description.Embeddings {
-			field, _ := colDef.GetFieldByName(embedding.FieldName)
+			field, fieldExists := colDef.GetFieldByName(embedding.FieldName)
+			if !fieldExists {
+				return client.NewErrVectorFieldDoesNotExist(embedding.FieldName)
+			}
 			if !field.Kind.IsNumericArray() {
 				return client.NewErrInvalidTypeForEmbedding(field.Kind)
 			}
@@ -799,7 +763,6 @@ func validateEmbeddingFieldsForGeneration(
 					return client.NewErrInvalidTypeForEmbeddingGeneration(field.Kind)
 				}
 			}
-
 		}
 	}
 	return nil

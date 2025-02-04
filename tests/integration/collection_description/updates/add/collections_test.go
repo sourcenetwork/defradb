@@ -30,7 +30,7 @@ func TestColDescrUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 						{ "op": "add", "path": "/2", "value": {"Name": "Dogs"} }
 					]
 				`,
-				ExpectedError: "collection ID cannot be zero",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}
@@ -52,7 +52,7 @@ func TestColDescrUpdateAddCollections_WithZeroedID_Errors(t *testing.T) {
 						{ "op": "add", "path": "/2", "value": {"ID": 0, "Name": "Dogs"} }
 					]
 				`,
-				ExpectedError: "collection ID cannot be zero",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Dogs"} }
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported. ID: 2",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}

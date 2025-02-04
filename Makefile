@@ -173,9 +173,9 @@ deps\:playground:
 /PHONY: deps\:embedding
 deps\:embedding:
 	ifeq ($(OS_GENERAL), Linux)
-		curl -fsSL https://ollama.com/install.sh | sh
+		curl -fsSL https://ollama.com/install.sh | sh &&
 	endif
-	ollama serve
+	ollama serve && \
     ollama pull nomic-embed-text
 
 .PHONY: deps

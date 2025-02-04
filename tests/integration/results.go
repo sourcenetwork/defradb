@@ -291,5 +291,9 @@ func assertCollectionDescriptions(
 		if expected.Fields != nil {
 			require.Equal(s.t, expected.Fields, actual.Fields)
 		}
+
+		if expected.Embeddings != nil {
+			require.Equal(s.t, expected.Embeddings, actual.Embeddings)
+		}
 	}
 }

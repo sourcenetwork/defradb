@@ -835,5 +835,7 @@ func NewArrayDescription[T any](size int) ArrayDescription[T] {
 func (d ArrayDescription[T]) Validate(s *state, actualValue any, msgAndArgs ...any) {
 	var expT []T
 	require.IsType(s.t, expT, actualValue, msgAndArgs)
-	require.Equal(s.t, d.Size, len(actualValue.([]T)), msgAndArgs)
+	typedActualValue, ok := actualValue.([]T)
+	require.True(s.t, ok)
+	require.Equal(s.t, d.Size, len(typedActualValue), msgAndArgs)
 }

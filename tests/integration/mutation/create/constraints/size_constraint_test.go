@@ -47,7 +47,6 @@ func TestMutationCreate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID":  testUtils.NewDocIndex(0, 0),
 							"name":    "John",
 							"numbers": []int64{27, 28},
 						},

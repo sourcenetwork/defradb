@@ -211,7 +211,11 @@ func NewErrInvalidTypeForEmbedding(actual FieldKind) error {
 }
 
 func NewErrFieldForEmbeddingGenerationDoesNotExist(fieldName string) error {
-	return errors.New(errFieldNotExist, errors.NewKV("Embedding field", fieldName))
+	return errors.New(errFieldNotExist, errors.NewKV("Embedding generation field", fieldName))
+}
+
+func NewErrVectorFieldDoesNotExist(fieldName string) error {
+	return errors.New(errFieldNotExist, errors.NewKV("Vector field", fieldName))
 }
 
 func NewErrInvalidTypeForEmbeddingGeneration(actual FieldKind) error {

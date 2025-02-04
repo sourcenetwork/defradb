@@ -119,7 +119,6 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		if err != nil {
 			return err
 		}
-		fmt.Println(embedding.FieldName)
 		err = doc.Set(embedding.FieldName, embeddingVec)
 		if err != nil {
 			return err
