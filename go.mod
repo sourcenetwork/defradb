@@ -1,6 +1,6 @@
 module github.com/sourcenetwork/defradb
 
-go 1.22.0
+go 1.22.5
 
 toolchain go1.22.7
 
@@ -13,7 +13,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fxamacker/cbor/v2 v2.7.0
-	github.com/getkin/kin-openapi v0.128.0
+	github.com/getkin/kin-openapi v0.129.0
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
@@ -220,7 +220,6 @@ require (
 	github.com/ignite/cli/v28 v28.4.0 // indirect
 	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-ipfs-delay v0.0.1 // indirect
 	github.com/ipfs/go-ipfs-pq v0.0.3 // indirect
@@ -284,6 +283,8 @@ require (
 	github.com/multiformats/go-multistream v0.6.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/oasdiff/yaml v0.0.0-20241210131133-6b86fb107d80 // indirect
+	github.com/oasdiff/yaml3 v0.0.0-20241210130736-a94c01f36349 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
