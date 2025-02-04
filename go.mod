@@ -1,6 +1,7 @@
 module github.com/sourcenetwork/defradb
 
-go 1.22.0
+go 1.22.5
+
 toolchain go1.22.7
 
 require (
