@@ -52,7 +52,7 @@ require (
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274
 	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/btree v1.7.0
