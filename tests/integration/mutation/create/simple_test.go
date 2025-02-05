@@ -40,7 +40,7 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 					"name": "John",
 					"fieldDoesNotExist": 27
 				}`,
-				ExpectedError: "The given field does not exist. Name: fieldDoesNotExist",
+				ExpectedError: "the given field does not exist. Name: fieldDoesNotExist",
 			},
 			testUtils.Request{
 				// Ensure that no documents have been written.

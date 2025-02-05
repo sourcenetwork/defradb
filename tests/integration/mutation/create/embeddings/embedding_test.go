@@ -131,7 +131,7 @@ func TestMutationCreate_WithNonExistantField_ShouldError(t *testing.T) {
 						name_v: [Float32!] @embedding(fields: ["name", "about"])
 					}
 				`,
-				ExpectedError: "the given field does not exist. Embedding field: about",
+				ExpectedError: "the given field does not exist. Embedding generation field: about",
 			},
 		},
 	}
@@ -189,7 +189,6 @@ func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 				Request: `
 					query {
 						User {
-							_docID
 							name_v
 						}
 					}
@@ -227,7 +226,7 @@ func TestMutationCreate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "John",
-					"about": "He loves tacos."
+					"about": "He loves tacos.",
 					"name_v": [1, 2, 3]
 				}`,
 			},

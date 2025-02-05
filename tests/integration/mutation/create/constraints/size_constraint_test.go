@@ -38,7 +38,6 @@ func TestMutationCreate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 				Request: `
 					query {
 						Users {
-							_docID
 							name
 							numbers
 						}

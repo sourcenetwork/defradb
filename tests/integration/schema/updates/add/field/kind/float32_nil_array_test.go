@@ -20,7 +20,7 @@ import (
 
 func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable float32 array (24)",
+		Description: "Test schema update, add field with kind nillable float32 array (22)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -32,7 +32,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 24} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
 					]
 				`,
 			},
@@ -54,7 +54,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable int array (24) with create",
+		Description: "Test schema update, add field with kind nillable int array (22) with create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -66,7 +66,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 24} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
 					]
 				`,
 			},

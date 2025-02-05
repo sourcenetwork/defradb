@@ -34,7 +34,7 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 					"notName": "John Grisham",
 					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "the given field does not exist. Name: notName",
 			},
 		},
 	}

@@ -223,7 +223,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					"Author": []map[string]any{
 						{
 							"name":        "John Grisham",
-							"totalRating": 9.4,
+							"totalRating": 9.400000095367432,
 						},
 					},
 				},

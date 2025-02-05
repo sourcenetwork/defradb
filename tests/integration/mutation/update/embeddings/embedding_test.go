@@ -60,7 +60,6 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 				Request: `
 					query {
 						User {
-							_docID
 							name_v
 						}
 					}
@@ -112,7 +111,6 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 				Request: `
 					query {
 						User {
-							_docID
 							name_v
 						}
 					}

@@ -249,7 +249,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) 
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreiaaxlm4lyqhdntsuvaotxqi2essky7oae34n7lyupqy64mxbtfwu4"
+	schemaVersionID := "bafkreicza5tsxxy7v5qj2bbsd7ox6jrdaypwqk4qm4qda52wr6pwkis3cy"
 
 	test := testUtils.TestCase{
 		Actions: []any{

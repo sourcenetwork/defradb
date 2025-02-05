@@ -18,7 +18,7 @@ import (
 
 func TestSchemaUpdatesAddFieldKindFloat32(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float32 (22)",
+		Description: "Test schema update, add field with kind float32 (8)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldKindFloat32(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 8} }
 					]
 				`,
 			},
@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldKindFloat32(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindFloat32WithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float32 (22) with create",
+		Description: "Test schema update, add field with kind float32 (8) with create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -64,7 +64,7 @@ func TestSchemaUpdatesAddFieldKindFloat32WithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 8} }
 					]
 				`,
 			},

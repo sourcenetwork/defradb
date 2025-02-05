@@ -172,11 +172,16 @@ deps\:playground:
 
 /PHONY: deps\:embedding
 deps\:embedding:
-	ifeq ($(OS_GENERAL), Linux)
-		curl -fsSL https://ollama.com/install.sh | sh &&
-	endif
-	ollama serve && \
-    ollama pull nomic-embed-text
+ifeq ($(OS_GENERAL),Linux)
+	curl -fsSL https://ollama.com/install.sh | sh
+else
+# run ollama in the background
+	nohup ollama serve > ollama.log 2>&1 &
+endif
+# make sure ollama is running before continuing
+	time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
+# pull a model
+	ollama pull nomic-embed-text
 
 .PHONY: deps
 deps:

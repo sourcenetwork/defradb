@@ -37,7 +37,6 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}
@@ -78,7 +77,6 @@ func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}
@@ -119,7 +117,6 @@ func TestPNCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}

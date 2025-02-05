@@ -91,7 +91,7 @@ func checkAndValidateMinMax(field *client.FieldDefinition, conf *genConfig) erro
 			err = validateMinConfig[int](conf, field.Kind.IsArray())
 		} else if field.Kind == client.FieldKind_NILLABLE_FLOAT32 {
 			err = validateMinConfig[float32](conf, false)
-		} else if field.Kind == client.FieldKind_NILLABLE_FLOAT64 {
+		} else {
 			err = validateMinConfig[float64](conf, false)
 		}
 		if err != nil {

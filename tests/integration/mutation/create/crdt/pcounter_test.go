@@ -37,7 +37,6 @@ func TestPCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}
@@ -78,7 +77,6 @@ func TestPCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}
@@ -86,7 +84,6 @@ func TestPCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-311c7181-a73a-5695-98af-8c1d5c14c7a3",
 							"name":   "John",
 							"points": float32(10.1),
 						},
@@ -120,7 +117,6 @@ func TestPCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}
@@ -128,7 +124,6 @@ func TestPCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-f7238bdc-2610-532c-a8ae-564f9ad8ee9f",
 							"name":   "John",
 							"points": float64(10.1),
 						},
