@@ -110,8 +110,6 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
 		if str, ok := lastVal.String(); ok {
 			f.currentDocID = immutable.Some(str)
-		} else if bytes, ok := lastVal.Bytes(); ok {
-			f.currentDocID = immutable.Some(string(bytes))
 		} else {
 			f.currentDocID = immutable.None[string]()
 		}
